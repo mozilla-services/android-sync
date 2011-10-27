@@ -1,12 +1,17 @@
-package com.mozilla.android.sync.test;
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
+package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 
+import org.apache.commons.codec.binary.Base32;
+import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
+import org.mozilla.android.sync.HKDF;
 
-import com.mozilla.android.sync.HKDF;
 
 /*
  * This class tests the HKDF.java class.
@@ -28,8 +33,8 @@ public class HKDFTests {
                         "2d2d0a90cf1a5a4c5db02d56ecc4c5bf" +
                         "34007208d5b887185865";
         
-        assertEquals(doStep1(IKM, salt, PRK), true);
-        assertEquals(doStep2(PRK, info, L, OKM), true);        
+        assertEquals(true, doStep1(IKM, salt, PRK));
+        assertEquals(true, doStep2(PRK, info, L, OKM));        
     }
     
     @Test
@@ -60,8 +65,8 @@ public class HKDFTests {
                         "cc30c58179ec3e87c14c01d5c1f3434f" +
                         "1d87";
         
-        assertEquals(doStep1(IKM, salt, PRK), true);
-        assertEquals(doStep2(PRK, info, L, OKM), true);        
+        assertEquals(true, doStep1(IKM, salt, PRK));
+        assertEquals(true, doStep2(PRK, info, L, OKM));
     }
     
     @Test
@@ -77,8 +82,35 @@ public class HKDFTests {
                         "b8a11f5c5ee1879ec3454e5f3c738d2d" +
                         "9d201395faa4b61a96c8";
         
-        assertEquals(doStep1(IKM, salt, PRK), true);
-        assertEquals(doStep2(PRK, info, L, OKM), true);        
+        assertEquals(true, doStep1(IKM, salt, PRK));
+        assertEquals(true, doStep2(PRK, info, L, OKM));        
+    }
+    
+    /*
+     * Tests the code for getting the keys necessary to
+     * decrypt the crypto keys bundle for Mozilla Sync.
+     * 
+     * This operation is just a tailored version of the
+     * standard to get only the 2 keys we need.
+     */
+    @Test
+    public void testGetCryptoKeysBundleKeys() {
+        String username =               "smqvooxj664hmrkrv6bw4r4vkegjhkns";
+        String friendlyBase32SyncKey =  "gbh7teqqcgyzd65svjgibd7tqy";
+        String base64EncryptionKey =    "069EnS3EtDK4y1tZ1AyKX+U7WEsWRp9bRIKLdW/7aoE=";
+        String base64HmacKey =          "LF2YCS1QCgSNCf0BCQvQ06SGH8jqJDi9dKj0O+b0fwI=";
+        
+        byte[][] keys = HKDF.getCryptoKeysBundleKeys(
+                decodeFriendlyBase32(friendlyBase32SyncKey), username.getBytes());
+        
+        boolean equal;
+        // Check Encryption Key
+        equal = Arrays.equals(keys[0], Base64.decodeBase64(base64EncryptionKey));
+        assertEquals(true, equal);
+        
+        // Check HMAC Key
+        equal = Arrays.equals(keys[1], Base64.decodeBase64(base64HmacKey));
+        assertEquals(true, equal);
     }
     
     /*
@@ -111,6 +143,16 @@ public class HKDFTests {
                                  + Character.digit(s.charAt(i+1), 16));
         }
         return data;
+    }
+    
+    /*
+     * Input: a friendlyBase32 encoded string
+     * Output: decoded byte[]
+     */
+    private static byte[] decodeFriendlyBase32(String base32) {
+        Base32 converter = new Base32();
+        return converter.decode(base32.replace('8', 'l').replace('9', '0')              
+                .toUpperCase());
     }
     
 }
