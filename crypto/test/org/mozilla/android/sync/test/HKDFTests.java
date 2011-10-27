@@ -7,10 +7,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 
-import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
 import org.mozilla.android.sync.HKDF;
+import org.mozilla.android.sync.Utils;
 
 
 /*
@@ -101,7 +101,7 @@ public class HKDFTests {
         String base64HmacKey =          "LF2YCS1QCgSNCf0BCQvQ06SGH8jqJDi9dKj0O+b0fwI=";
         
         byte[][] keys = HKDF.getCryptoKeysBundleKeys(
-                decodeFriendlyBase32(friendlyBase32SyncKey), username.getBytes());
+                Utils.decodeFriendlyBase32(friendlyBase32SyncKey), username.getBytes());
         
         boolean equal;
         // Check Encryption Key
@@ -117,8 +117,8 @@ public class HKDFTests {
      * Helper to do step 1 of RFC 5869
      */
     private boolean doStep1(String IKM, String salt, String PRK) {
-        byte[] prkResult = HKDF.hkdfExtract(hexStringToByteArray(salt), hexStringToByteArray(IKM));
-        byte[] prkExpect = hexStringToByteArray(PRK);
+        byte[] prkResult = HKDF.hkdfExtract(Utils.hex2Byte(salt), Utils.hex2Byte(IKM));
+        byte[] prkExpect = Utils.hex2Byte(PRK);
         return Arrays.equals(prkResult, prkExpect);
     }
     
@@ -126,33 +126,8 @@ public class HKDFTests {
      * Helper to do step 2 of RFC 5869
      */
     private boolean doStep2(String PRK, String info, int L, String OKM) {
-        byte[] okmResult = HKDF.hkdfExpand(hexStringToByteArray(PRK), hexStringToByteArray(info), L);
-        byte[] okmExpect = hexStringToByteArray(OKM);
+        byte[] okmResult = HKDF.hkdfExpand(Utils.hex2Byte(PRK), Utils.hex2Byte(info), L);
+        byte[] okmExpect = Utils.hex2Byte(OKM);
         return Arrays.equals(okmResult, okmExpect);
     }
-    
-    /*
-     * Input: Hex string to be converted
-     * Ouput: byte[] reprsentation of hex string
-     */
-    private static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                                 + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
-    }
-    
-    /*
-     * Input: a friendlyBase32 encoded string
-     * Output: decoded byte[]
-     */
-    private static byte[] decodeFriendlyBase32(String base32) {
-        Base32 converter = new Base32();
-        return converter.decode(base32.replace('8', 'l').replace('9', '0')              
-                .toUpperCase());
-    }
-    
 }

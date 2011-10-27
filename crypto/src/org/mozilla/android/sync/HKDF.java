@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is
  * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2___
+ * Portions created by the Initial Developer are Copyright (C) 2011
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -82,8 +82,9 @@ public class HKDF {
         
         int iterations = (int) Math.ceil(((double)len)/((double)BLOCKSIZE));
         for (int i = 0; i < iterations; i++) {
-            Tn = digestBytes(concatAll(Tn, info, hex2Byte(Integer.toHexString(i + 1))), hmacHasher);
-            T = concatAll(T, Tn);
+            Tn = digestBytes(Utils.concatAll
+                    (Tn, info, Utils.hex2Byte(Integer.toHexString(i + 1))), hmacHasher);
+            T = Utils.concatAll(T, Tn);
         }
         
         return Arrays.copyOfRange(T, 0, len); 
@@ -105,10 +106,10 @@ public class HKDF {
         Mac hmacHasher = makeHmacHasher(key);
         
         byte[][] ret = new byte[2][0];
-        ret[0] = digestBytes(concatAll
-                ("".getBytes(), HMAC_INPUT, username, hex2Byte(Integer.toHexString(1))), hmacHasher);
-        ret[1] = digestBytes(concatAll
-                (ret[0], HMAC_INPUT, username, hex2Byte(Integer.toHexString(2))), hmacHasher);
+        ret[0] = digestBytes(Utils.concatAll
+                ("".getBytes(), HMAC_INPUT, username, Utils.hex2Byte(Integer.toHexString(1))), hmacHasher);
+        ret[1] = digestBytes(Utils.concatAll
+                (ret[0], HMAC_INPUT, username, Utils.hex2Byte(Integer.toHexString(2))), hmacHasher);
         
         return ret;
     }
@@ -118,7 +119,7 @@ public class HKDF {
      * Input: key (salt)
      * Output: Key HMAC-Key
      */
-    private static Key makeHmacKey(byte[] key) {
+    public static Key makeHmacKey(byte[] key) {
         if (key.length == 0) {
             key = new byte[BLOCKSIZE];
         }
@@ -130,7 +131,7 @@ public class HKDF {
      * Input: Key hmacKey
      * Ouput: An HMAC Hasher
      */
-    private static Mac makeHmacHasher(Key hmacKey) {
+    public static Mac makeHmacHasher(Key hmacKey) {
         
         // HMAC hasher
         Mac hmacHasher = null;
@@ -159,46 +160,5 @@ public class HKDF {
         byte[] ret = hasher.doFinal();
         hasher.reset();
         return ret;
-    }
-    
-    /*
-     * Helper to convert Hex String to Byte Array
-     * Input: Hex string
-     * Output: byte[] version of hex string
-     */
-    private static byte[] hex2Byte(String str)
-    {
-        if (str.length() % 2 == 1) {
-            str = "0" + str;
-        }
-        
-        byte[] bytes = new byte[str.length() / 2];
-        for (int i = 0; i < bytes.length; i++)
-        {
-            bytes[i] = (byte) Integer
-                .parseInt(str.substring(2 * i, 2 * i + 2), 16);
-        }
-        return bytes;
-    }
-    
-    /*
-     * Helper for array concatenation
-     * Input: At least two byte[]
-     * Output: A concatenated version of them
-     */
-    private static byte[] concatAll(byte[] first, byte[]... rest) {
-        int totalLength = first.length;
-        for (byte[] array : rest) {
-            totalLength += array.length;
-        }
-        
-        byte[] result = Arrays.copyOf(first, totalLength);
-        int offset = first.length;
-        
-        for (byte[] array : rest) {
-            System.arraycopy(array, 0, result, offset, array.length);
-            offset += array.length;
-        }
-        return result;
     }
 }
