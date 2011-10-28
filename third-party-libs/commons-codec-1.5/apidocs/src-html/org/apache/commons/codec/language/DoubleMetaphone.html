@@ -1,0 +1,1171 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     * contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     * this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     * The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     * (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     * the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     * <a name="line.8"></a>
+<FONT color="green">009</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     * <a name="line.10"></a>
+<FONT color="green">011</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     * See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     * limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    <a name="line.17"></a>
+<FONT color="green">018</FONT>    package org.apache.commons.codec.language;<a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    import org.apache.commons.codec.EncoderException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import org.apache.commons.codec.StringEncoder;<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    /**<a name="line.23"></a>
+<FONT color="green">024</FONT>     * Encodes a string into a double metaphone value.<a name="line.24"></a>
+<FONT color="green">025</FONT>     * This Implementation is based on the algorithm by &lt;CITE&gt;Lawrence Philips&lt;/CITE&gt;.<a name="line.25"></a>
+<FONT color="green">026</FONT>     * &lt;ul&gt;<a name="line.26"></a>
+<FONT color="green">027</FONT>     * &lt;li&gt;Original Article: &lt;a <a name="line.27"></a>
+<FONT color="green">028</FONT>     * href="http://www.cuj.com/documents/s=8038/cuj0006philips/"&gt;<a name="line.28"></a>
+<FONT color="green">029</FONT>     * http://www.cuj.com/documents/s=8038/cuj0006philips/&lt;/a&gt;&lt;/li&gt;<a name="line.29"></a>
+<FONT color="green">030</FONT>     * &lt;li&gt;Original Source Code: &lt;a href="ftp://ftp.cuj.com/pub/2000/1806/philips.zip"&gt;<a name="line.30"></a>
+<FONT color="green">031</FONT>     * ftp://ftp.cuj.com/pub/2000/1806/philips.zip&lt;/a&gt;&lt;/li&gt;<a name="line.31"></a>
+<FONT color="green">032</FONT>     * &lt;/ul&gt;<a name="line.32"></a>
+<FONT color="green">033</FONT>     * <a name="line.33"></a>
+<FONT color="green">034</FONT>     * @author Apache Software Foundation<a name="line.34"></a>
+<FONT color="green">035</FONT>     * @version $Id: DoubleMetaphone.java 1072742 2011-02-20 21:39:03Z ggregory $<a name="line.35"></a>
+<FONT color="green">036</FONT>     */<a name="line.36"></a>
+<FONT color="green">037</FONT>    public class DoubleMetaphone implements StringEncoder {<a name="line.37"></a>
+<FONT color="green">038</FONT>    <a name="line.38"></a>
+<FONT color="green">039</FONT>        /**<a name="line.39"></a>
+<FONT color="green">040</FONT>         * "Vowels" to test for<a name="line.40"></a>
+<FONT color="green">041</FONT>         */<a name="line.41"></a>
+<FONT color="green">042</FONT>        private static final String VOWELS = "AEIOUY";<a name="line.42"></a>
+<FONT color="green">043</FONT>    <a name="line.43"></a>
+<FONT color="green">044</FONT>        /**<a name="line.44"></a>
+<FONT color="green">045</FONT>         * Prefixes when present which are not pronounced<a name="line.45"></a>
+<FONT color="green">046</FONT>         */<a name="line.46"></a>
+<FONT color="green">047</FONT>        private static final String[] SILENT_START = <a name="line.47"></a>
+<FONT color="green">048</FONT>        { "GN", "KN", "PN", "WR", "PS" };<a name="line.48"></a>
+<FONT color="green">049</FONT>        private static final String[] L_R_N_M_B_H_F_V_W_SPACE = <a name="line.49"></a>
+<FONT color="green">050</FONT>        { "L", "R", "N", "M", "B", "H", "F", "V", "W", " " };<a name="line.50"></a>
+<FONT color="green">051</FONT>        private static final String[] ES_EP_EB_EL_EY_IB_IL_IN_IE_EI_ER = <a name="line.51"></a>
+<FONT color="green">052</FONT>        { "ES", "EP", "EB", "EL", "EY", "IB", "IL", "IN", "IE", "EI", "ER" };<a name="line.52"></a>
+<FONT color="green">053</FONT>        private static final String[] L_T_K_S_N_M_B_Z = <a name="line.53"></a>
+<FONT color="green">054</FONT>        { "L", "T", "K", "S", "N", "M", "B", "Z" };<a name="line.54"></a>
+<FONT color="green">055</FONT>    <a name="line.55"></a>
+<FONT color="green">056</FONT>        /**<a name="line.56"></a>
+<FONT color="green">057</FONT>         * Maximum length of an encoding, default is 4<a name="line.57"></a>
+<FONT color="green">058</FONT>         */<a name="line.58"></a>
+<FONT color="green">059</FONT>        private int maxCodeLen = 4;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>        /**<a name="line.61"></a>
+<FONT color="green">062</FONT>         * Creates an instance of this DoubleMetaphone encoder<a name="line.62"></a>
+<FONT color="green">063</FONT>         */<a name="line.63"></a>
+<FONT color="green">064</FONT>        public DoubleMetaphone() {<a name="line.64"></a>
+<FONT color="green">065</FONT>            super();<a name="line.65"></a>
+<FONT color="green">066</FONT>        }<a name="line.66"></a>
+<FONT color="green">067</FONT>        <a name="line.67"></a>
+<FONT color="green">068</FONT>        /**<a name="line.68"></a>
+<FONT color="green">069</FONT>         * Encode a value with Double Metaphone<a name="line.69"></a>
+<FONT color="green">070</FONT>         *<a name="line.70"></a>
+<FONT color="green">071</FONT>         * @param value String to encode<a name="line.71"></a>
+<FONT color="green">072</FONT>         * @return an encoded string<a name="line.72"></a>
+<FONT color="green">073</FONT>         */<a name="line.73"></a>
+<FONT color="green">074</FONT>        public String doubleMetaphone(String value) {<a name="line.74"></a>
+<FONT color="green">075</FONT>            return doubleMetaphone(value, false);<a name="line.75"></a>
+<FONT color="green">076</FONT>        }<a name="line.76"></a>
+<FONT color="green">077</FONT>        <a name="line.77"></a>
+<FONT color="green">078</FONT>        /**<a name="line.78"></a>
+<FONT color="green">079</FONT>         * Encode a value with Double Metaphone, optionally using the alternate<a name="line.79"></a>
+<FONT color="green">080</FONT>         * encoding.<a name="line.80"></a>
+<FONT color="green">081</FONT>         *<a name="line.81"></a>
+<FONT color="green">082</FONT>         * @param value String to encode<a name="line.82"></a>
+<FONT color="green">083</FONT>         * @param alternate use alternate encode<a name="line.83"></a>
+<FONT color="green">084</FONT>         * @return an encoded string<a name="line.84"></a>
+<FONT color="green">085</FONT>         */<a name="line.85"></a>
+<FONT color="green">086</FONT>        public String doubleMetaphone(String value, boolean alternate) {<a name="line.86"></a>
+<FONT color="green">087</FONT>            value = cleanInput(value);<a name="line.87"></a>
+<FONT color="green">088</FONT>            if (value == null) {<a name="line.88"></a>
+<FONT color="green">089</FONT>                return null;<a name="line.89"></a>
+<FONT color="green">090</FONT>            }<a name="line.90"></a>
+<FONT color="green">091</FONT>            <a name="line.91"></a>
+<FONT color="green">092</FONT>            boolean slavoGermanic = isSlavoGermanic(value);<a name="line.92"></a>
+<FONT color="green">093</FONT>            int index = isSilentStart(value) ? 1 : 0;<a name="line.93"></a>
+<FONT color="green">094</FONT>            <a name="line.94"></a>
+<FONT color="green">095</FONT>            DoubleMetaphoneResult result = new DoubleMetaphoneResult(this.getMaxCodeLen());<a name="line.95"></a>
+<FONT color="green">096</FONT>            <a name="line.96"></a>
+<FONT color="green">097</FONT>            while (!result.isComplete() &amp;&amp; index &lt;= value.length() - 1) {<a name="line.97"></a>
+<FONT color="green">098</FONT>                switch (value.charAt(index)) {<a name="line.98"></a>
+<FONT color="green">099</FONT>                case 'A':<a name="line.99"></a>
+<FONT color="green">100</FONT>                case 'E':<a name="line.100"></a>
+<FONT color="green">101</FONT>                case 'I':<a name="line.101"></a>
+<FONT color="green">102</FONT>                case 'O':<a name="line.102"></a>
+<FONT color="green">103</FONT>                case 'U':<a name="line.103"></a>
+<FONT color="green">104</FONT>                case 'Y':<a name="line.104"></a>
+<FONT color="green">105</FONT>                    index = handleAEIOUY(result, index);<a name="line.105"></a>
+<FONT color="green">106</FONT>                    break;<a name="line.106"></a>
+<FONT color="green">107</FONT>                case 'B':<a name="line.107"></a>
+<FONT color="green">108</FONT>                    result.append('P');<a name="line.108"></a>
+<FONT color="green">109</FONT>                    index = charAt(value, index + 1) == 'B' ? index + 2 : index + 1;<a name="line.109"></a>
+<FONT color="green">110</FONT>                    break;<a name="line.110"></a>
+<FONT color="green">111</FONT>                case '\u00C7':<a name="line.111"></a>
+<FONT color="green">112</FONT>                    // A C with a Cedilla<a name="line.112"></a>
+<FONT color="green">113</FONT>                    result.append('S');<a name="line.113"></a>
+<FONT color="green">114</FONT>                    index++;<a name="line.114"></a>
+<FONT color="green">115</FONT>                    break; <a name="line.115"></a>
+<FONT color="green">116</FONT>                case 'C':<a name="line.116"></a>
+<FONT color="green">117</FONT>                    index = handleC(value, result, index);<a name="line.117"></a>
+<FONT color="green">118</FONT>                    break;<a name="line.118"></a>
+<FONT color="green">119</FONT>                case 'D':<a name="line.119"></a>
+<FONT color="green">120</FONT>                    index = handleD(value, result, index);<a name="line.120"></a>
+<FONT color="green">121</FONT>                    break;<a name="line.121"></a>
+<FONT color="green">122</FONT>                case 'F':<a name="line.122"></a>
+<FONT color="green">123</FONT>                    result.append('F');<a name="line.123"></a>
+<FONT color="green">124</FONT>                    index = charAt(value, index + 1) == 'F' ? index + 2 : index + 1;<a name="line.124"></a>
+<FONT color="green">125</FONT>                    break;<a name="line.125"></a>
+<FONT color="green">126</FONT>                case 'G':<a name="line.126"></a>
+<FONT color="green">127</FONT>                    index = handleG(value, result, index, slavoGermanic);<a name="line.127"></a>
+<FONT color="green">128</FONT>                    break;<a name="line.128"></a>
+<FONT color="green">129</FONT>                case 'H':<a name="line.129"></a>
+<FONT color="green">130</FONT>                    index = handleH(value, result, index);<a name="line.130"></a>
+<FONT color="green">131</FONT>                    break;<a name="line.131"></a>
+<FONT color="green">132</FONT>                case 'J':<a name="line.132"></a>
+<FONT color="green">133</FONT>                    index = handleJ(value, result, index, slavoGermanic);<a name="line.133"></a>
+<FONT color="green">134</FONT>                    break;<a name="line.134"></a>
+<FONT color="green">135</FONT>                case 'K':<a name="line.135"></a>
+<FONT color="green">136</FONT>                    result.append('K');<a name="line.136"></a>
+<FONT color="green">137</FONT>                    index = charAt(value, index + 1) == 'K' ? index + 2 : index + 1;<a name="line.137"></a>
+<FONT color="green">138</FONT>                    break;<a name="line.138"></a>
+<FONT color="green">139</FONT>                case 'L':<a name="line.139"></a>
+<FONT color="green">140</FONT>                    index = handleL(value, result, index);<a name="line.140"></a>
+<FONT color="green">141</FONT>                    break;<a name="line.141"></a>
+<FONT color="green">142</FONT>                case 'M':<a name="line.142"></a>
+<FONT color="green">143</FONT>                    result.append('M');<a name="line.143"></a>
+<FONT color="green">144</FONT>                    index = conditionM0(value, index) ? index + 2 : index + 1;<a name="line.144"></a>
+<FONT color="green">145</FONT>                    break;<a name="line.145"></a>
+<FONT color="green">146</FONT>                case 'N':<a name="line.146"></a>
+<FONT color="green">147</FONT>                    result.append('N');<a name="line.147"></a>
+<FONT color="green">148</FONT>                    index = charAt(value, index + 1) == 'N' ? index + 2 : index + 1;<a name="line.148"></a>
+<FONT color="green">149</FONT>                    break;<a name="line.149"></a>
+<FONT color="green">150</FONT>                case '\u00D1':<a name="line.150"></a>
+<FONT color="green">151</FONT>                    // N with a tilde (spanish ene)<a name="line.151"></a>
+<FONT color="green">152</FONT>                    result.append('N');<a name="line.152"></a>
+<FONT color="green">153</FONT>                    index++;<a name="line.153"></a>
+<FONT color="green">154</FONT>                    break;<a name="line.154"></a>
+<FONT color="green">155</FONT>                case 'P':<a name="line.155"></a>
+<FONT color="green">156</FONT>                    index = handleP(value, result, index);<a name="line.156"></a>
+<FONT color="green">157</FONT>                    break;<a name="line.157"></a>
+<FONT color="green">158</FONT>                case 'Q':<a name="line.158"></a>
+<FONT color="green">159</FONT>                    result.append('K');<a name="line.159"></a>
+<FONT color="green">160</FONT>                    index = charAt(value, index + 1) == 'Q' ? index + 2 : index + 1;<a name="line.160"></a>
+<FONT color="green">161</FONT>                    break;<a name="line.161"></a>
+<FONT color="green">162</FONT>                case 'R':<a name="line.162"></a>
+<FONT color="green">163</FONT>                    index = handleR(value, result, index, slavoGermanic);<a name="line.163"></a>
+<FONT color="green">164</FONT>                    break;<a name="line.164"></a>
+<FONT color="green">165</FONT>                case 'S':<a name="line.165"></a>
+<FONT color="green">166</FONT>                    index = handleS(value, result, index, slavoGermanic);<a name="line.166"></a>
+<FONT color="green">167</FONT>                    break;<a name="line.167"></a>
+<FONT color="green">168</FONT>                case 'T':<a name="line.168"></a>
+<FONT color="green">169</FONT>                    index = handleT(value, result, index);<a name="line.169"></a>
+<FONT color="green">170</FONT>                    break;<a name="line.170"></a>
+<FONT color="green">171</FONT>                case 'V':<a name="line.171"></a>
+<FONT color="green">172</FONT>                    result.append('F');<a name="line.172"></a>
+<FONT color="green">173</FONT>                    index = charAt(value, index + 1) == 'V' ? index + 2 : index + 1;<a name="line.173"></a>
+<FONT color="green">174</FONT>                    break;<a name="line.174"></a>
+<FONT color="green">175</FONT>                case 'W':<a name="line.175"></a>
+<FONT color="green">176</FONT>                    index = handleW(value, result, index);<a name="line.176"></a>
+<FONT color="green">177</FONT>                    break;<a name="line.177"></a>
+<FONT color="green">178</FONT>                case 'X':<a name="line.178"></a>
+<FONT color="green">179</FONT>                    index = handleX(value, result, index);<a name="line.179"></a>
+<FONT color="green">180</FONT>                    break;<a name="line.180"></a>
+<FONT color="green">181</FONT>                case 'Z':<a name="line.181"></a>
+<FONT color="green">182</FONT>                    index = handleZ(value, result, index, slavoGermanic);<a name="line.182"></a>
+<FONT color="green">183</FONT>                    break;<a name="line.183"></a>
+<FONT color="green">184</FONT>                default:<a name="line.184"></a>
+<FONT color="green">185</FONT>                    index++;<a name="line.185"></a>
+<FONT color="green">186</FONT>                    break;<a name="line.186"></a>
+<FONT color="green">187</FONT>                }<a name="line.187"></a>
+<FONT color="green">188</FONT>            }<a name="line.188"></a>
+<FONT color="green">189</FONT>    <a name="line.189"></a>
+<FONT color="green">190</FONT>            return alternate ? result.getAlternate() : result.getPrimary();<a name="line.190"></a>
+<FONT color="green">191</FONT>        }<a name="line.191"></a>
+<FONT color="green">192</FONT>        <a name="line.192"></a>
+<FONT color="green">193</FONT>        /**<a name="line.193"></a>
+<FONT color="green">194</FONT>         * Encode the value using DoubleMetaphone.  It will only work if <a name="line.194"></a>
+<FONT color="green">195</FONT>         * &lt;code&gt;obj&lt;/code&gt; is a &lt;code&gt;String&lt;/code&gt; (like &lt;code&gt;Metaphone&lt;/code&gt;).<a name="line.195"></a>
+<FONT color="green">196</FONT>         *<a name="line.196"></a>
+<FONT color="green">197</FONT>         * @param obj Object to encode (should be of type String)<a name="line.197"></a>
+<FONT color="green">198</FONT>         * @return An encoded Object (will be of type String)<a name="line.198"></a>
+<FONT color="green">199</FONT>         * @throws EncoderException encode parameter is not of type String<a name="line.199"></a>
+<FONT color="green">200</FONT>         */<a name="line.200"></a>
+<FONT color="green">201</FONT>        public Object encode(Object obj) throws EncoderException {<a name="line.201"></a>
+<FONT color="green">202</FONT>            if (!(obj instanceof String)) {<a name="line.202"></a>
+<FONT color="green">203</FONT>                throw new EncoderException("DoubleMetaphone encode parameter is not of type String"); <a name="line.203"></a>
+<FONT color="green">204</FONT>            } <a name="line.204"></a>
+<FONT color="green">205</FONT>            return doubleMetaphone((String) obj);<a name="line.205"></a>
+<FONT color="green">206</FONT>        }<a name="line.206"></a>
+<FONT color="green">207</FONT>    <a name="line.207"></a>
+<FONT color="green">208</FONT>        /**<a name="line.208"></a>
+<FONT color="green">209</FONT>         * Encode the value using DoubleMetaphone.<a name="line.209"></a>
+<FONT color="green">210</FONT>         *<a name="line.210"></a>
+<FONT color="green">211</FONT>         * @param value String to encode<a name="line.211"></a>
+<FONT color="green">212</FONT>         * @return An encoded String<a name="line.212"></a>
+<FONT color="green">213</FONT>         */<a name="line.213"></a>
+<FONT color="green">214</FONT>        public String encode(String value) {<a name="line.214"></a>
+<FONT color="green">215</FONT>            return doubleMetaphone(value);   <a name="line.215"></a>
+<FONT color="green">216</FONT>        }<a name="line.216"></a>
+<FONT color="green">217</FONT>    <a name="line.217"></a>
+<FONT color="green">218</FONT>        /**<a name="line.218"></a>
+<FONT color="green">219</FONT>         * Check if the Double Metaphone values of two &lt;code&gt;String&lt;/code&gt; values<a name="line.219"></a>
+<FONT color="green">220</FONT>         * are equal.<a name="line.220"></a>
+<FONT color="green">221</FONT>         * <a name="line.221"></a>
+<FONT color="green">222</FONT>         * @param value1 The left-hand side of the encoded {@link String#equals(Object)}.<a name="line.222"></a>
+<FONT color="green">223</FONT>         * @param value2 The right-hand side of the encoded {@link String#equals(Object)}.<a name="line.223"></a>
+<FONT color="green">224</FONT>         * @return &lt;code&gt;true&lt;/code&gt; if the encoded &lt;code&gt;String&lt;/code&gt;s are equal;<a name="line.224"></a>
+<FONT color="green">225</FONT>         *          &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.225"></a>
+<FONT color="green">226</FONT>         * @see #isDoubleMetaphoneEqual(String,String,boolean)<a name="line.226"></a>
+<FONT color="green">227</FONT>         */<a name="line.227"></a>
+<FONT color="green">228</FONT>        public boolean isDoubleMetaphoneEqual(String value1, String value2) {<a name="line.228"></a>
+<FONT color="green">229</FONT>            return isDoubleMetaphoneEqual(value1, value2, false);<a name="line.229"></a>
+<FONT color="green">230</FONT>        }<a name="line.230"></a>
+<FONT color="green">231</FONT>        <a name="line.231"></a>
+<FONT color="green">232</FONT>        /**<a name="line.232"></a>
+<FONT color="green">233</FONT>         * Check if the Double Metaphone values of two &lt;code&gt;String&lt;/code&gt; values<a name="line.233"></a>
+<FONT color="green">234</FONT>         * are equal, optionally using the alternate value.<a name="line.234"></a>
+<FONT color="green">235</FONT>         * <a name="line.235"></a>
+<FONT color="green">236</FONT>         * @param value1 The left-hand side of the encoded {@link String#equals(Object)}.<a name="line.236"></a>
+<FONT color="green">237</FONT>         * @param value2 The right-hand side of the encoded {@link String#equals(Object)}.<a name="line.237"></a>
+<FONT color="green">238</FONT>         * @param alternate use the alternate value if &lt;code&gt;true&lt;/code&gt;.<a name="line.238"></a>
+<FONT color="green">239</FONT>         * @return &lt;code&gt;true&lt;/code&gt; if the encoded &lt;code&gt;String&lt;/code&gt;s are equal;<a name="line.239"></a>
+<FONT color="green">240</FONT>         *          &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.240"></a>
+<FONT color="green">241</FONT>         */<a name="line.241"></a>
+<FONT color="green">242</FONT>        public boolean isDoubleMetaphoneEqual(String value1, <a name="line.242"></a>
+<FONT color="green">243</FONT>                                              String value2, <a name="line.243"></a>
+<FONT color="green">244</FONT>                                              boolean alternate) {<a name="line.244"></a>
+<FONT color="green">245</FONT>            return doubleMetaphone(value1, alternate).equals(doubleMetaphone<a name="line.245"></a>
+<FONT color="green">246</FONT>                                                             (value2, alternate));<a name="line.246"></a>
+<FONT color="green">247</FONT>        }<a name="line.247"></a>
+<FONT color="green">248</FONT>        <a name="line.248"></a>
+<FONT color="green">249</FONT>        /**<a name="line.249"></a>
+<FONT color="green">250</FONT>         * Returns the maxCodeLen.<a name="line.250"></a>
+<FONT color="green">251</FONT>         * @return int<a name="line.251"></a>
+<FONT color="green">252</FONT>         */<a name="line.252"></a>
+<FONT color="green">253</FONT>        public int getMaxCodeLen() {<a name="line.253"></a>
+<FONT color="green">254</FONT>            return this.maxCodeLen;<a name="line.254"></a>
+<FONT color="green">255</FONT>        }<a name="line.255"></a>
+<FONT color="green">256</FONT>    <a name="line.256"></a>
+<FONT color="green">257</FONT>        /**<a name="line.257"></a>
+<FONT color="green">258</FONT>         * Sets the maxCodeLen.<a name="line.258"></a>
+<FONT color="green">259</FONT>         * @param maxCodeLen The maxCodeLen to set<a name="line.259"></a>
+<FONT color="green">260</FONT>         */<a name="line.260"></a>
+<FONT color="green">261</FONT>        public void setMaxCodeLen(int maxCodeLen) {<a name="line.261"></a>
+<FONT color="green">262</FONT>            this.maxCodeLen = maxCodeLen;<a name="line.262"></a>
+<FONT color="green">263</FONT>        }<a name="line.263"></a>
+<FONT color="green">264</FONT>    <a name="line.264"></a>
+<FONT color="green">265</FONT>        //-- BEGIN HANDLERS --//<a name="line.265"></a>
+<FONT color="green">266</FONT>    <a name="line.266"></a>
+<FONT color="green">267</FONT>        /**<a name="line.267"></a>
+<FONT color="green">268</FONT>         * Handles 'A', 'E', 'I', 'O', 'U', and 'Y' cases<a name="line.268"></a>
+<FONT color="green">269</FONT>         */<a name="line.269"></a>
+<FONT color="green">270</FONT>        private int handleAEIOUY(DoubleMetaphoneResult result, int <a name="line.270"></a>
+<FONT color="green">271</FONT>                                 index) {<a name="line.271"></a>
+<FONT color="green">272</FONT>            if (index == 0) {<a name="line.272"></a>
+<FONT color="green">273</FONT>                result.append('A');<a name="line.273"></a>
+<FONT color="green">274</FONT>            }<a name="line.274"></a>
+<FONT color="green">275</FONT>            return index + 1;<a name="line.275"></a>
+<FONT color="green">276</FONT>        }<a name="line.276"></a>
+<FONT color="green">277</FONT>        <a name="line.277"></a>
+<FONT color="green">278</FONT>        /**<a name="line.278"></a>
+<FONT color="green">279</FONT>         * Handles 'C' cases<a name="line.279"></a>
+<FONT color="green">280</FONT>         */<a name="line.280"></a>
+<FONT color="green">281</FONT>        private int handleC(String value, <a name="line.281"></a>
+<FONT color="green">282</FONT>                            DoubleMetaphoneResult result, <a name="line.282"></a>
+<FONT color="green">283</FONT>                            int index) {<a name="line.283"></a>
+<FONT color="green">284</FONT>            if (conditionC0(value, index)) {  // very confusing, moved out<a name="line.284"></a>
+<FONT color="green">285</FONT>                result.append('K');<a name="line.285"></a>
+<FONT color="green">286</FONT>                index += 2;<a name="line.286"></a>
+<FONT color="green">287</FONT>            } else if (index == 0 &amp;&amp; contains(value, index, 6, "CAESAR")) {<a name="line.287"></a>
+<FONT color="green">288</FONT>                result.append('S');<a name="line.288"></a>
+<FONT color="green">289</FONT>                index += 2;<a name="line.289"></a>
+<FONT color="green">290</FONT>            } else if (contains(value, index, 2, "CH")) {<a name="line.290"></a>
+<FONT color="green">291</FONT>                index = handleCH(value, result, index);<a name="line.291"></a>
+<FONT color="green">292</FONT>            } else if (contains(value, index, 2, "CZ") &amp;&amp; <a name="line.292"></a>
+<FONT color="green">293</FONT>                       !contains(value, index - 2, 4, "WICZ")) {<a name="line.293"></a>
+<FONT color="green">294</FONT>                //-- "Czerny" --//<a name="line.294"></a>
+<FONT color="green">295</FONT>                result.append('S', 'X');<a name="line.295"></a>
+<FONT color="green">296</FONT>                index += 2;<a name="line.296"></a>
+<FONT color="green">297</FONT>            } else if (contains(value, index + 1, 3, "CIA")) {<a name="line.297"></a>
+<FONT color="green">298</FONT>                //-- "focaccia" --//<a name="line.298"></a>
+<FONT color="green">299</FONT>                result.append('X');<a name="line.299"></a>
+<FONT color="green">300</FONT>                index += 3;<a name="line.300"></a>
+<FONT color="green">301</FONT>            } else if (contains(value, index, 2, "CC") &amp;&amp; <a name="line.301"></a>
+<FONT color="green">302</FONT>                       !(index == 1 &amp;&amp; charAt(value, 0) == 'M')) {<a name="line.302"></a>
+<FONT color="green">303</FONT>                //-- double "cc" but not "McClelland" --//<a name="line.303"></a>
+<FONT color="green">304</FONT>                return handleCC(value, result, index);<a name="line.304"></a>
+<FONT color="green">305</FONT>            } else if (contains(value, index, 2, "CK", "CG", "CQ")) {<a name="line.305"></a>
+<FONT color="green">306</FONT>                result.append('K');<a name="line.306"></a>
+<FONT color="green">307</FONT>                index += 2;<a name="line.307"></a>
+<FONT color="green">308</FONT>            } else if (contains(value, index, 2, "CI", "CE", "CY")) {<a name="line.308"></a>
+<FONT color="green">309</FONT>                //-- Italian vs. English --//<a name="line.309"></a>
+<FONT color="green">310</FONT>                if (contains(value, index, 3, "CIO", "CIE", "CIA")) {<a name="line.310"></a>
+<FONT color="green">311</FONT>                    result.append('S', 'X');<a name="line.311"></a>
+<FONT color="green">312</FONT>                } else {<a name="line.312"></a>
+<FONT color="green">313</FONT>                    result.append('S');<a name="line.313"></a>
+<FONT color="green">314</FONT>                }<a name="line.314"></a>
+<FONT color="green">315</FONT>                index += 2;<a name="line.315"></a>
+<FONT color="green">316</FONT>            } else {<a name="line.316"></a>
+<FONT color="green">317</FONT>                result.append('K');<a name="line.317"></a>
+<FONT color="green">318</FONT>                if (contains(value, index + 1, 2, " C", " Q", " G")) { <a name="line.318"></a>
+<FONT color="green">319</FONT>                    //-- Mac Caffrey, Mac Gregor --//<a name="line.319"></a>
+<FONT color="green">320</FONT>                    index += 3;<a name="line.320"></a>
+<FONT color="green">321</FONT>                } else if (contains(value, index + 1, 1, "C", "K", "Q") &amp;&amp; <a name="line.321"></a>
+<FONT color="green">322</FONT>                           !contains(value, index + 1, 2, "CE", "CI")) {<a name="line.322"></a>
+<FONT color="green">323</FONT>                    index += 2;<a name="line.323"></a>
+<FONT color="green">324</FONT>                } else {<a name="line.324"></a>
+<FONT color="green">325</FONT>                    index++;<a name="line.325"></a>
+<FONT color="green">326</FONT>                }<a name="line.326"></a>
+<FONT color="green">327</FONT>            }<a name="line.327"></a>
+<FONT color="green">328</FONT>            <a name="line.328"></a>
+<FONT color="green">329</FONT>            return index;<a name="line.329"></a>
+<FONT color="green">330</FONT>        }<a name="line.330"></a>
+<FONT color="green">331</FONT>    <a name="line.331"></a>
+<FONT color="green">332</FONT>        /**<a name="line.332"></a>
+<FONT color="green">333</FONT>         * Handles 'CC' cases<a name="line.333"></a>
+<FONT color="green">334</FONT>         */<a name="line.334"></a>
+<FONT color="green">335</FONT>        private int handleCC(String value, <a name="line.335"></a>
+<FONT color="green">336</FONT>                             DoubleMetaphoneResult result, <a name="line.336"></a>
+<FONT color="green">337</FONT>                             int index) {<a name="line.337"></a>
+<FONT color="green">338</FONT>            if (contains(value, index + 2, 1, "I", "E", "H") &amp;&amp; <a name="line.338"></a>
+<FONT color="green">339</FONT>                !contains(value, index + 2, 2, "HU")) {<a name="line.339"></a>
+<FONT color="green">340</FONT>                //-- "bellocchio" but not "bacchus" --//<a name="line.340"></a>
+<FONT color="green">341</FONT>                if ((index == 1 &amp;&amp; charAt(value, index - 1) == 'A') || <a name="line.341"></a>
+<FONT color="green">342</FONT>                    contains(value, index - 1, 5, "UCCEE", "UCCES")) {<a name="line.342"></a>
+<FONT color="green">343</FONT>                    //-- "accident", "accede", "succeed" --//<a name="line.343"></a>
+<FONT color="green">344</FONT>                    result.append("KS");<a name="line.344"></a>
+<FONT color="green">345</FONT>                } else {<a name="line.345"></a>
+<FONT color="green">346</FONT>                    //-- "bacci", "bertucci", other Italian --//<a name="line.346"></a>
+<FONT color="green">347</FONT>                    result.append('X');<a name="line.347"></a>
+<FONT color="green">348</FONT>                }<a name="line.348"></a>
+<FONT color="green">349</FONT>                index += 3;<a name="line.349"></a>
+<FONT color="green">350</FONT>            } else {    // Pierce's rule<a name="line.350"></a>
+<FONT color="green">351</FONT>                result.append('K');<a name="line.351"></a>
+<FONT color="green">352</FONT>                index += 2;<a name="line.352"></a>
+<FONT color="green">353</FONT>            }<a name="line.353"></a>
+<FONT color="green">354</FONT>            <a name="line.354"></a>
+<FONT color="green">355</FONT>            return index;<a name="line.355"></a>
+<FONT color="green">356</FONT>        }<a name="line.356"></a>
+<FONT color="green">357</FONT>        <a name="line.357"></a>
+<FONT color="green">358</FONT>        /**<a name="line.358"></a>
+<FONT color="green">359</FONT>         * Handles 'CH' cases<a name="line.359"></a>
+<FONT color="green">360</FONT>         */<a name="line.360"></a>
+<FONT color="green">361</FONT>        private int handleCH(String value, <a name="line.361"></a>
+<FONT color="green">362</FONT>                             DoubleMetaphoneResult result, <a name="line.362"></a>
+<FONT color="green">363</FONT>                             int index) {<a name="line.363"></a>
+<FONT color="green">364</FONT>            if (index &gt; 0 &amp;&amp; contains(value, index, 4, "CHAE")) {   // Michael<a name="line.364"></a>
+<FONT color="green">365</FONT>                result.append('K', 'X');<a name="line.365"></a>
+<FONT color="green">366</FONT>                return index + 2;<a name="line.366"></a>
+<FONT color="green">367</FONT>            } else if (conditionCH0(value, index)) {<a name="line.367"></a>
+<FONT color="green">368</FONT>                //-- Greek roots ("chemistry", "chorus", etc.) --//<a name="line.368"></a>
+<FONT color="green">369</FONT>                result.append('K');<a name="line.369"></a>
+<FONT color="green">370</FONT>                return index + 2;<a name="line.370"></a>
+<FONT color="green">371</FONT>            } else if (conditionCH1(value, index)) {<a name="line.371"></a>
+<FONT color="green">372</FONT>                //-- Germanic, Greek, or otherwise 'ch' for 'kh' sound --//<a name="line.372"></a>
+<FONT color="green">373</FONT>                result.append('K');<a name="line.373"></a>
+<FONT color="green">374</FONT>                return index + 2;<a name="line.374"></a>
+<FONT color="green">375</FONT>            } else {<a name="line.375"></a>
+<FONT color="green">376</FONT>                if (index &gt; 0) {<a name="line.376"></a>
+<FONT color="green">377</FONT>                    if (contains(value, 0, 2, "MC")) {<a name="line.377"></a>
+<FONT color="green">378</FONT>                        result.append('K');<a name="line.378"></a>
+<FONT color="green">379</FONT>                    } else {<a name="line.379"></a>
+<FONT color="green">380</FONT>                        result.append('X', 'K');<a name="line.380"></a>
+<FONT color="green">381</FONT>                    }<a name="line.381"></a>
+<FONT color="green">382</FONT>                } else {<a name="line.382"></a>
+<FONT color="green">383</FONT>                    result.append('X');<a name="line.383"></a>
+<FONT color="green">384</FONT>                }<a name="line.384"></a>
+<FONT color="green">385</FONT>                return index + 2;<a name="line.385"></a>
+<FONT color="green">386</FONT>            }<a name="line.386"></a>
+<FONT color="green">387</FONT>        }<a name="line.387"></a>
+<FONT color="green">388</FONT>    <a name="line.388"></a>
+<FONT color="green">389</FONT>        /**<a name="line.389"></a>
+<FONT color="green">390</FONT>         * Handles 'D' cases<a name="line.390"></a>
+<FONT color="green">391</FONT>         */<a name="line.391"></a>
+<FONT color="green">392</FONT>        private int handleD(String value, <a name="line.392"></a>
+<FONT color="green">393</FONT>                            DoubleMetaphoneResult result, <a name="line.393"></a>
+<FONT color="green">394</FONT>                            int index) {<a name="line.394"></a>
+<FONT color="green">395</FONT>            if (contains(value, index, 2, "DG")) {<a name="line.395"></a>
+<FONT color="green">396</FONT>                //-- "Edge" --//<a name="line.396"></a>
+<FONT color="green">397</FONT>                if (contains(value, index + 2, 1, "I", "E", "Y")) {<a name="line.397"></a>
+<FONT color="green">398</FONT>                    result.append('J');<a name="line.398"></a>
+<FONT color="green">399</FONT>                    index += 3;<a name="line.399"></a>
+<FONT color="green">400</FONT>                    //-- "Edgar" --//<a name="line.400"></a>
+<FONT color="green">401</FONT>                } else {<a name="line.401"></a>
+<FONT color="green">402</FONT>                    result.append("TK");<a name="line.402"></a>
+<FONT color="green">403</FONT>                    index += 2;<a name="line.403"></a>
+<FONT color="green">404</FONT>                }<a name="line.404"></a>
+<FONT color="green">405</FONT>            } else if (contains(value, index, 2, "DT", "DD")) {<a name="line.405"></a>
+<FONT color="green">406</FONT>                result.append('T');<a name="line.406"></a>
+<FONT color="green">407</FONT>                index += 2;<a name="line.407"></a>
+<FONT color="green">408</FONT>            } else {<a name="line.408"></a>
+<FONT color="green">409</FONT>                result.append('T');<a name="line.409"></a>
+<FONT color="green">410</FONT>                index++;<a name="line.410"></a>
+<FONT color="green">411</FONT>            }<a name="line.411"></a>
+<FONT color="green">412</FONT>            return index;<a name="line.412"></a>
+<FONT color="green">413</FONT>        }<a name="line.413"></a>
+<FONT color="green">414</FONT>    <a name="line.414"></a>
+<FONT color="green">415</FONT>        /**<a name="line.415"></a>
+<FONT color="green">416</FONT>         * Handles 'G' cases<a name="line.416"></a>
+<FONT color="green">417</FONT>         */<a name="line.417"></a>
+<FONT color="green">418</FONT>        private int handleG(String value, <a name="line.418"></a>
+<FONT color="green">419</FONT>                            DoubleMetaphoneResult result, <a name="line.419"></a>
+<FONT color="green">420</FONT>                            int index, <a name="line.420"></a>
+<FONT color="green">421</FONT>                            boolean slavoGermanic) {<a name="line.421"></a>
+<FONT color="green">422</FONT>            if (charAt(value, index + 1) == 'H') {<a name="line.422"></a>
+<FONT color="green">423</FONT>                index = handleGH(value, result, index);<a name="line.423"></a>
+<FONT color="green">424</FONT>            } else if (charAt(value, index + 1) == 'N') {<a name="line.424"></a>
+<FONT color="green">425</FONT>                if (index == 1 &amp;&amp; isVowel(charAt(value, 0)) &amp;&amp; !slavoGermanic) {<a name="line.425"></a>
+<FONT color="green">426</FONT>                    result.append("KN", "N");<a name="line.426"></a>
+<FONT color="green">427</FONT>                } else if (!contains(value, index + 2, 2, "EY") &amp;&amp; <a name="line.427"></a>
+<FONT color="green">428</FONT>                           charAt(value, index + 1) != 'Y' &amp;&amp; !slavoGermanic) {<a name="line.428"></a>
+<FONT color="green">429</FONT>                    result.append("N", "KN");<a name="line.429"></a>
+<FONT color="green">430</FONT>                } else {<a name="line.430"></a>
+<FONT color="green">431</FONT>                    result.append("KN");<a name="line.431"></a>
+<FONT color="green">432</FONT>                }<a name="line.432"></a>
+<FONT color="green">433</FONT>                index = index + 2;<a name="line.433"></a>
+<FONT color="green">434</FONT>            } else if (contains(value, index + 1, 2, "LI") &amp;&amp; !slavoGermanic) {<a name="line.434"></a>
+<FONT color="green">435</FONT>                result.append("KL", "L");<a name="line.435"></a>
+<FONT color="green">436</FONT>                index += 2;<a name="line.436"></a>
+<FONT color="green">437</FONT>            } else if (index == 0 &amp;&amp; (charAt(value, index + 1) == 'Y' || contains(value, index + 1, 2, ES_EP_EB_EL_EY_IB_IL_IN_IE_EI_ER))) {<a name="line.437"></a>
+<FONT color="green">438</FONT>                //-- -ges-, -gep-, -gel-, -gie- at beginning --//<a name="line.438"></a>
+<FONT color="green">439</FONT>                result.append('K', 'J');<a name="line.439"></a>
+<FONT color="green">440</FONT>                index += 2;<a name="line.440"></a>
+<FONT color="green">441</FONT>            } else if ((contains(value, index + 1, 2, "ER") || <a name="line.441"></a>
+<FONT color="green">442</FONT>                        charAt(value, index + 1) == 'Y') &amp;&amp;<a name="line.442"></a>
+<FONT color="green">443</FONT>                       !contains(value, 0, 6, "DANGER", "RANGER", "MANGER") &amp;&amp;<a name="line.443"></a>
+<FONT color="green">444</FONT>                       !contains(value, index - 1, 1, "E", "I") &amp;&amp; <a name="line.444"></a>
+<FONT color="green">445</FONT>                       !contains(value, index - 1, 3, "RGY", "OGY")) {<a name="line.445"></a>
+<FONT color="green">446</FONT>                //-- -ger-, -gy- --//<a name="line.446"></a>
+<FONT color="green">447</FONT>                result.append('K', 'J');<a name="line.447"></a>
+<FONT color="green">448</FONT>                index += 2;<a name="line.448"></a>
+<FONT color="green">449</FONT>            } else if (contains(value, index + 1, 1, "E", "I", "Y") || <a name="line.449"></a>
+<FONT color="green">450</FONT>                       contains(value, index - 1, 4, "AGGI", "OGGI")) {<a name="line.450"></a>
+<FONT color="green">451</FONT>                //-- Italian "biaggi" --//<a name="line.451"></a>
+<FONT color="green">452</FONT>                if ((contains(value, 0 ,4, "VAN ", "VON ") || contains(value, 0, 3, "SCH")) || contains(value, index + 1, 2, "ET")) {<a name="line.452"></a>
+<FONT color="green">453</FONT>                    //-- obvious germanic --//<a name="line.453"></a>
+<FONT color="green">454</FONT>                    result.append('K');<a name="line.454"></a>
+<FONT color="green">455</FONT>                } else if (contains(value, index + 1, 3, "IER")) {<a name="line.455"></a>
+<FONT color="green">456</FONT>                    result.append('J');<a name="line.456"></a>
+<FONT color="green">457</FONT>                } else {<a name="line.457"></a>
+<FONT color="green">458</FONT>                    result.append('J', 'K');<a name="line.458"></a>
+<FONT color="green">459</FONT>                }<a name="line.459"></a>
+<FONT color="green">460</FONT>                index += 2;<a name="line.460"></a>
+<FONT color="green">461</FONT>            } else if (charAt(value, index + 1) == 'G') {<a name="line.461"></a>
+<FONT color="green">462</FONT>                index += 2;<a name="line.462"></a>
+<FONT color="green">463</FONT>                result.append('K');<a name="line.463"></a>
+<FONT color="green">464</FONT>            } else {<a name="line.464"></a>
+<FONT color="green">465</FONT>                index++;<a name="line.465"></a>
+<FONT color="green">466</FONT>                result.append('K');<a name="line.466"></a>
+<FONT color="green">467</FONT>            }<a name="line.467"></a>
+<FONT color="green">468</FONT>            return index;<a name="line.468"></a>
+<FONT color="green">469</FONT>        }<a name="line.469"></a>
+<FONT color="green">470</FONT>        <a name="line.470"></a>
+<FONT color="green">471</FONT>        /**<a name="line.471"></a>
+<FONT color="green">472</FONT>         * Handles 'GH' cases<a name="line.472"></a>
+<FONT color="green">473</FONT>         */<a name="line.473"></a>
+<FONT color="green">474</FONT>        private int handleGH(String value, <a name="line.474"></a>
+<FONT color="green">475</FONT>                             DoubleMetaphoneResult result, <a name="line.475"></a>
+<FONT color="green">476</FONT>                             int index) {<a name="line.476"></a>
+<FONT color="green">477</FONT>            if (index &gt; 0 &amp;&amp; !isVowel(charAt(value, index - 1))) {<a name="line.477"></a>
+<FONT color="green">478</FONT>                result.append('K');<a name="line.478"></a>
+<FONT color="green">479</FONT>                index += 2;<a name="line.479"></a>
+<FONT color="green">480</FONT>            } else if (index == 0) {<a name="line.480"></a>
+<FONT color="green">481</FONT>                if (charAt(value, index + 2) == 'I') {<a name="line.481"></a>
+<FONT color="green">482</FONT>                    result.append('J');<a name="line.482"></a>
+<FONT color="green">483</FONT>                } else {<a name="line.483"></a>
+<FONT color="green">484</FONT>                    result.append('K');<a name="line.484"></a>
+<FONT color="green">485</FONT>                }<a name="line.485"></a>
+<FONT color="green">486</FONT>                index += 2;<a name="line.486"></a>
+<FONT color="green">487</FONT>            } else if ((index &gt; 1 &amp;&amp; contains(value, index - 2, 1, "B", "H", "D")) ||<a name="line.487"></a>
+<FONT color="green">488</FONT>                       (index &gt; 2 &amp;&amp; contains(value, index - 3, 1, "B", "H", "D")) ||<a name="line.488"></a>
+<FONT color="green">489</FONT>                       (index &gt; 3 &amp;&amp; contains(value, index - 4, 1, "B", "H"))) {<a name="line.489"></a>
+<FONT color="green">490</FONT>                //-- Parker's rule (with some further refinements) - "hugh"<a name="line.490"></a>
+<FONT color="green">491</FONT>                index += 2;<a name="line.491"></a>
+<FONT color="green">492</FONT>            } else {<a name="line.492"></a>
+<FONT color="green">493</FONT>                if (index &gt; 2 &amp;&amp; charAt(value, index - 1) == 'U' &amp;&amp; <a name="line.493"></a>
+<FONT color="green">494</FONT>                    contains(value, index - 3, 1, "C", "G", "L", "R", "T")) {<a name="line.494"></a>
+<FONT color="green">495</FONT>                    //-- "laugh", "McLaughlin", "cough", "gough", "rough", "tough"<a name="line.495"></a>
+<FONT color="green">496</FONT>                    result.append('F');<a name="line.496"></a>
+<FONT color="green">497</FONT>                } else if (index &gt; 0 &amp;&amp; charAt(value, index - 1) != 'I') {<a name="line.497"></a>
+<FONT color="green">498</FONT>                    result.append('K');<a name="line.498"></a>
+<FONT color="green">499</FONT>                }<a name="line.499"></a>
+<FONT color="green">500</FONT>                index += 2;<a name="line.500"></a>
+<FONT color="green">501</FONT>            }<a name="line.501"></a>
+<FONT color="green">502</FONT>            return index;<a name="line.502"></a>
+<FONT color="green">503</FONT>        }<a name="line.503"></a>
+<FONT color="green">504</FONT>    <a name="line.504"></a>
+<FONT color="green">505</FONT>        /**<a name="line.505"></a>
+<FONT color="green">506</FONT>         * Handles 'H' cases<a name="line.506"></a>
+<FONT color="green">507</FONT>         */<a name="line.507"></a>
+<FONT color="green">508</FONT>        private int handleH(String value, <a name="line.508"></a>
+<FONT color="green">509</FONT>                            DoubleMetaphoneResult result, <a name="line.509"></a>
+<FONT color="green">510</FONT>                            int index) {<a name="line.510"></a>
+<FONT color="green">511</FONT>            //-- only keep if first &amp; before vowel or between 2 vowels --//<a name="line.511"></a>
+<FONT color="green">512</FONT>            if ((index == 0 || isVowel(charAt(value, index - 1))) &amp;&amp; <a name="line.512"></a>
+<FONT color="green">513</FONT>                isVowel(charAt(value, index + 1))) {<a name="line.513"></a>
+<FONT color="green">514</FONT>                result.append('H');<a name="line.514"></a>
+<FONT color="green">515</FONT>                index += 2;<a name="line.515"></a>
+<FONT color="green">516</FONT>                //-- also takes car of "HH" --//<a name="line.516"></a>
+<FONT color="green">517</FONT>            } else {<a name="line.517"></a>
+<FONT color="green">518</FONT>                index++;<a name="line.518"></a>
+<FONT color="green">519</FONT>            }<a name="line.519"></a>
+<FONT color="green">520</FONT>            return index;<a name="line.520"></a>
+<FONT color="green">521</FONT>        }<a name="line.521"></a>
+<FONT color="green">522</FONT>        <a name="line.522"></a>
+<FONT color="green">523</FONT>        /**<a name="line.523"></a>
+<FONT color="green">524</FONT>         * Handles 'J' cases<a name="line.524"></a>
+<FONT color="green">525</FONT>         */<a name="line.525"></a>
+<FONT color="green">526</FONT>        private int handleJ(String value, DoubleMetaphoneResult result, int index, <a name="line.526"></a>
+<FONT color="green">527</FONT>                            boolean slavoGermanic) {<a name="line.527"></a>
+<FONT color="green">528</FONT>            if (contains(value, index, 4, "JOSE") || contains(value, 0, 4, "SAN ")) {<a name="line.528"></a>
+<FONT color="green">529</FONT>                    //-- obvious Spanish, "Jose", "San Jacinto" --//<a name="line.529"></a>
+<FONT color="green">530</FONT>                    if ((index == 0 &amp;&amp; (charAt(value, index + 4) == ' ') || <a name="line.530"></a>
+<FONT color="green">531</FONT>                         value.length() == 4) || contains(value, 0, 4, "SAN ")) {<a name="line.531"></a>
+<FONT color="green">532</FONT>                        result.append('H');<a name="line.532"></a>
+<FONT color="green">533</FONT>                    } else {<a name="line.533"></a>
+<FONT color="green">534</FONT>                        result.append('J', 'H');<a name="line.534"></a>
+<FONT color="green">535</FONT>                    }<a name="line.535"></a>
+<FONT color="green">536</FONT>                    index++;<a name="line.536"></a>
+<FONT color="green">537</FONT>                } else {<a name="line.537"></a>
+<FONT color="green">538</FONT>                    if (index == 0 &amp;&amp; !contains(value, index, 4, "JOSE")) {<a name="line.538"></a>
+<FONT color="green">539</FONT>                        result.append('J', 'A');<a name="line.539"></a>
+<FONT color="green">540</FONT>                    } else if (isVowel(charAt(value, index - 1)) &amp;&amp; !slavoGermanic &amp;&amp; <a name="line.540"></a>
+<FONT color="green">541</FONT>                                  (charAt(value, index + 1) == 'A' || charAt(value, index + 1) == 'O')) {<a name="line.541"></a>
+<FONT color="green">542</FONT>                        result.append('J', 'H');<a name="line.542"></a>
+<FONT color="green">543</FONT>                    } else if (index == value.length() - 1) {<a name="line.543"></a>
+<FONT color="green">544</FONT>                        result.append('J', ' ');<a name="line.544"></a>
+<FONT color="green">545</FONT>                    } else if (!contains(value, index + 1, 1, L_T_K_S_N_M_B_Z) &amp;&amp; !contains(value, index - 1, 1, "S", "K", "L")) {<a name="line.545"></a>
+<FONT color="green">546</FONT>                        result.append('J');<a name="line.546"></a>
+<FONT color="green">547</FONT>                    }<a name="line.547"></a>
+<FONT color="green">548</FONT>    <a name="line.548"></a>
+<FONT color="green">549</FONT>                    if (charAt(value, index + 1) == 'J') {<a name="line.549"></a>
+<FONT color="green">550</FONT>                        index += 2;<a name="line.550"></a>
+<FONT color="green">551</FONT>                    } else {<a name="line.551"></a>
+<FONT color="green">552</FONT>                        index++;<a name="line.552"></a>
+<FONT color="green">553</FONT>                    }<a name="line.553"></a>
+<FONT color="green">554</FONT>                }<a name="line.554"></a>
+<FONT color="green">555</FONT>            return index;<a name="line.555"></a>
+<FONT color="green">556</FONT>        }<a name="line.556"></a>
+<FONT color="green">557</FONT>        <a name="line.557"></a>
+<FONT color="green">558</FONT>        /**<a name="line.558"></a>
+<FONT color="green">559</FONT>         * Handles 'L' cases<a name="line.559"></a>
+<FONT color="green">560</FONT>         */<a name="line.560"></a>
+<FONT color="green">561</FONT>        private int handleL(String value, <a name="line.561"></a>
+<FONT color="green">562</FONT>                            DoubleMetaphoneResult result, <a name="line.562"></a>
+<FONT color="green">563</FONT>                            int index) {<a name="line.563"></a>
+<FONT color="green">564</FONT>            if (charAt(value, index + 1) == 'L') {<a name="line.564"></a>
+<FONT color="green">565</FONT>                if (conditionL0(value, index)) {<a name="line.565"></a>
+<FONT color="green">566</FONT>                    result.appendPrimary('L');<a name="line.566"></a>
+<FONT color="green">567</FONT>                } else {<a name="line.567"></a>
+<FONT color="green">568</FONT>                    result.append('L');<a name="line.568"></a>
+<FONT color="green">569</FONT>                }<a name="line.569"></a>
+<FONT color="green">570</FONT>                index += 2;<a name="line.570"></a>
+<FONT color="green">571</FONT>            } else {<a name="line.571"></a>
+<FONT color="green">572</FONT>                index++;<a name="line.572"></a>
+<FONT color="green">573</FONT>                result.append('L');<a name="line.573"></a>
+<FONT color="green">574</FONT>            }<a name="line.574"></a>
+<FONT color="green">575</FONT>            return index;<a name="line.575"></a>
+<FONT color="green">576</FONT>        }<a name="line.576"></a>
+<FONT color="green">577</FONT>    <a name="line.577"></a>
+<FONT color="green">578</FONT>        /**<a name="line.578"></a>
+<FONT color="green">579</FONT>         * Handles 'P' cases<a name="line.579"></a>
+<FONT color="green">580</FONT>         */<a name="line.580"></a>
+<FONT color="green">581</FONT>        private int handleP(String value, <a name="line.581"></a>
+<FONT color="green">582</FONT>                            DoubleMetaphoneResult result, <a name="line.582"></a>
+<FONT color="green">583</FONT>                            int index) {<a name="line.583"></a>
+<FONT color="green">584</FONT>            if (charAt(value, index + 1) == 'H') {<a name="line.584"></a>
+<FONT color="green">585</FONT>                result.append('F');<a name="line.585"></a>
+<FONT color="green">586</FONT>                index += 2;<a name="line.586"></a>
+<FONT color="green">587</FONT>            } else {<a name="line.587"></a>
+<FONT color="green">588</FONT>                result.append('P');<a name="line.588"></a>
+<FONT color="green">589</FONT>                index = contains(value, index + 1, 1, "P", "B") ? index + 2 : index + 1;<a name="line.589"></a>
+<FONT color="green">590</FONT>            }<a name="line.590"></a>
+<FONT color="green">591</FONT>            return index;<a name="line.591"></a>
+<FONT color="green">592</FONT>        }<a name="line.592"></a>
+<FONT color="green">593</FONT>    <a name="line.593"></a>
+<FONT color="green">594</FONT>        /**<a name="line.594"></a>
+<FONT color="green">595</FONT>         * Handles 'R' cases<a name="line.595"></a>
+<FONT color="green">596</FONT>         */<a name="line.596"></a>
+<FONT color="green">597</FONT>        private int handleR(String value, <a name="line.597"></a>
+<FONT color="green">598</FONT>                            DoubleMetaphoneResult result, <a name="line.598"></a>
+<FONT color="green">599</FONT>                            int index, <a name="line.599"></a>
+<FONT color="green">600</FONT>                            boolean slavoGermanic) {<a name="line.600"></a>
+<FONT color="green">601</FONT>            if (index == value.length() - 1 &amp;&amp; !slavoGermanic &amp;&amp; <a name="line.601"></a>
+<FONT color="green">602</FONT>                contains(value, index - 2, 2, "IE") &amp;&amp; <a name="line.602"></a>
+<FONT color="green">603</FONT>                !contains(value, index - 4, 2, "ME", "MA")) {<a name="line.603"></a>
+<FONT color="green">604</FONT>                result.appendAlternate('R');<a name="line.604"></a>
+<FONT color="green">605</FONT>            } else {<a name="line.605"></a>
+<FONT color="green">606</FONT>                result.append('R');<a name="line.606"></a>
+<FONT color="green">607</FONT>            }<a name="line.607"></a>
+<FONT color="green">608</FONT>            return charAt(value, index + 1) == 'R' ? index + 2 : index + 1;<a name="line.608"></a>
+<FONT color="green">609</FONT>        }<a name="line.609"></a>
+<FONT color="green">610</FONT>    <a name="line.610"></a>
+<FONT color="green">611</FONT>        /**<a name="line.611"></a>
+<FONT color="green">612</FONT>         * Handles 'S' cases<a name="line.612"></a>
+<FONT color="green">613</FONT>         */<a name="line.613"></a>
+<FONT color="green">614</FONT>        private int handleS(String value, <a name="line.614"></a>
+<FONT color="green">615</FONT>                            DoubleMetaphoneResult result, <a name="line.615"></a>
+<FONT color="green">616</FONT>                            int index, <a name="line.616"></a>
+<FONT color="green">617</FONT>                            boolean slavoGermanic) {<a name="line.617"></a>
+<FONT color="green">618</FONT>            if (contains(value, index - 1, 3, "ISL", "YSL")) {<a name="line.618"></a>
+<FONT color="green">619</FONT>                //-- special cases "island", "isle", "carlisle", "carlysle" --//<a name="line.619"></a>
+<FONT color="green">620</FONT>                index++;<a name="line.620"></a>
+<FONT color="green">621</FONT>            } else if (index == 0 &amp;&amp; contains(value, index, 5, "SUGAR")) {<a name="line.621"></a>
+<FONT color="green">622</FONT>                //-- special case "sugar-" --//<a name="line.622"></a>
+<FONT color="green">623</FONT>                result.append('X', 'S');<a name="line.623"></a>
+<FONT color="green">624</FONT>                index++;<a name="line.624"></a>
+<FONT color="green">625</FONT>            } else if (contains(value, index, 2, "SH")) {<a name="line.625"></a>
+<FONT color="green">626</FONT>                if (contains(value, index + 1, 4, <a name="line.626"></a>
+<FONT color="green">627</FONT>                             "HEIM", "HOEK", "HOLM", "HOLZ")) {<a name="line.627"></a>
+<FONT color="green">628</FONT>                    //-- germanic --//<a name="line.628"></a>
+<FONT color="green">629</FONT>                    result.append('S');<a name="line.629"></a>
+<FONT color="green">630</FONT>                } else {<a name="line.630"></a>
+<FONT color="green">631</FONT>                    result.append('X');<a name="line.631"></a>
+<FONT color="green">632</FONT>                }<a name="line.632"></a>
+<FONT color="green">633</FONT>                index += 2;<a name="line.633"></a>
+<FONT color="green">634</FONT>            } else if (contains(value, index, 3, "SIO", "SIA") || contains(value, index, 4, "SIAN")) {<a name="line.634"></a>
+<FONT color="green">635</FONT>                //-- Italian and Armenian --//<a name="line.635"></a>
+<FONT color="green">636</FONT>                if (slavoGermanic) {<a name="line.636"></a>
+<FONT color="green">637</FONT>                    result.append('S');<a name="line.637"></a>
+<FONT color="green">638</FONT>                } else {<a name="line.638"></a>
+<FONT color="green">639</FONT>                    result.append('S', 'X');<a name="line.639"></a>
+<FONT color="green">640</FONT>                }<a name="line.640"></a>
+<FONT color="green">641</FONT>                index += 3;<a name="line.641"></a>
+<FONT color="green">642</FONT>            } else if ((index == 0 &amp;&amp; contains(value, index + 1, 1, "M", "N", "L", "W")) || contains(value, index + 1, 1, "Z")) {<a name="line.642"></a>
+<FONT color="green">643</FONT>                //-- german &amp; anglicisations, e.g. "smith" match "schmidt" //<a name="line.643"></a>
+<FONT color="green">644</FONT>                // "snider" match "schneider" --//<a name="line.644"></a>
+<FONT color="green">645</FONT>                //-- also, -sz- in slavic language altho in hungarian it //<a name="line.645"></a>
+<FONT color="green">646</FONT>                //   is pronounced "s" --//<a name="line.646"></a>
+<FONT color="green">647</FONT>                result.append('S', 'X');<a name="line.647"></a>
+<FONT color="green">648</FONT>                index = contains(value, index + 1, 1, "Z") ? index + 2 : index + 1;<a name="line.648"></a>
+<FONT color="green">649</FONT>            } else if (contains(value, index, 2, "SC")) {<a name="line.649"></a>
+<FONT color="green">650</FONT>                index = handleSC(value, result, index);<a name="line.650"></a>
+<FONT color="green">651</FONT>            } else {<a name="line.651"></a>
+<FONT color="green">652</FONT>                if (index == value.length() - 1 &amp;&amp; contains(value, index - 2, <a name="line.652"></a>
+<FONT color="green">653</FONT>                                                            2, "AI", "OI")){<a name="line.653"></a>
+<FONT color="green">654</FONT>                    //-- french e.g. "resnais", "artois" --//<a name="line.654"></a>
+<FONT color="green">655</FONT>                    result.appendAlternate('S');<a name="line.655"></a>
+<FONT color="green">656</FONT>                } else {<a name="line.656"></a>
+<FONT color="green">657</FONT>                    result.append('S');<a name="line.657"></a>
+<FONT color="green">658</FONT>                }<a name="line.658"></a>
+<FONT color="green">659</FONT>                index = contains(value, index + 1, 1, "S", "Z") ? index + 2 : index + 1;<a name="line.659"></a>
+<FONT color="green">660</FONT>            }<a name="line.660"></a>
+<FONT color="green">661</FONT>            return index;<a name="line.661"></a>
+<FONT color="green">662</FONT>        }<a name="line.662"></a>
+<FONT color="green">663</FONT>    <a name="line.663"></a>
+<FONT color="green">664</FONT>        /**<a name="line.664"></a>
+<FONT color="green">665</FONT>         * Handles 'SC' cases<a name="line.665"></a>
+<FONT color="green">666</FONT>         */<a name="line.666"></a>
+<FONT color="green">667</FONT>        private int handleSC(String value, <a name="line.667"></a>
+<FONT color="green">668</FONT>                             DoubleMetaphoneResult result, <a name="line.668"></a>
+<FONT color="green">669</FONT>                             int index) {<a name="line.669"></a>
+<FONT color="green">670</FONT>            if (charAt(value, index + 2) == 'H') {<a name="line.670"></a>
+<FONT color="green">671</FONT>                //-- Schlesinger's rule --//<a name="line.671"></a>
+<FONT color="green">672</FONT>                if (contains(value, index + 3, <a name="line.672"></a>
+<FONT color="green">673</FONT>                             2, "OO", "ER", "EN", "UY", "ED", "EM")) {<a name="line.673"></a>
+<FONT color="green">674</FONT>                    //-- Dutch origin, e.g. "school", "schooner" --//<a name="line.674"></a>
+<FONT color="green">675</FONT>                    if (contains(value, index + 3, 2, "ER", "EN")) {<a name="line.675"></a>
+<FONT color="green">676</FONT>                        //-- "schermerhorn", "schenker" --//<a name="line.676"></a>
+<FONT color="green">677</FONT>                        result.append("X", "SK");<a name="line.677"></a>
+<FONT color="green">678</FONT>                    } else {<a name="line.678"></a>
+<FONT color="green">679</FONT>                        result.append("SK");<a name="line.679"></a>
+<FONT color="green">680</FONT>                    }<a name="line.680"></a>
+<FONT color="green">681</FONT>                } else {<a name="line.681"></a>
+<FONT color="green">682</FONT>                    if (index == 0 &amp;&amp; !isVowel(charAt(value, 3)) &amp;&amp; charAt(value, 3) != 'W') {<a name="line.682"></a>
+<FONT color="green">683</FONT>                        result.append('X', 'S');<a name="line.683"></a>
+<FONT color="green">684</FONT>                    } else {<a name="line.684"></a>
+<FONT color="green">685</FONT>                        result.append('X');<a name="line.685"></a>
+<FONT color="green">686</FONT>                    }<a name="line.686"></a>
+<FONT color="green">687</FONT>                }<a name="line.687"></a>
+<FONT color="green">688</FONT>            } else if (contains(value, index + 2, 1, "I", "E", "Y")) {<a name="line.688"></a>
+<FONT color="green">689</FONT>                result.append('S');<a name="line.689"></a>
+<FONT color="green">690</FONT>            } else {<a name="line.690"></a>
+<FONT color="green">691</FONT>                result.append("SK");<a name="line.691"></a>
+<FONT color="green">692</FONT>            }<a name="line.692"></a>
+<FONT color="green">693</FONT>            return index + 3;<a name="line.693"></a>
+<FONT color="green">694</FONT>        }<a name="line.694"></a>
+<FONT color="green">695</FONT>    <a name="line.695"></a>
+<FONT color="green">696</FONT>        /**<a name="line.696"></a>
+<FONT color="green">697</FONT>         * Handles 'T' cases<a name="line.697"></a>
+<FONT color="green">698</FONT>         */<a name="line.698"></a>
+<FONT color="green">699</FONT>        private int handleT(String value, <a name="line.699"></a>
+<FONT color="green">700</FONT>                            DoubleMetaphoneResult result, <a name="line.700"></a>
+<FONT color="green">701</FONT>                            int index) {<a name="line.701"></a>
+<FONT color="green">702</FONT>            if (contains(value, index, 4, "TION")) {<a name="line.702"></a>
+<FONT color="green">703</FONT>                result.append('X');<a name="line.703"></a>
+<FONT color="green">704</FONT>                index += 3;<a name="line.704"></a>
+<FONT color="green">705</FONT>            } else if (contains(value, index, 3, "TIA", "TCH")) {<a name="line.705"></a>
+<FONT color="green">706</FONT>                result.append('X');<a name="line.706"></a>
+<FONT color="green">707</FONT>                index += 3;<a name="line.707"></a>
+<FONT color="green">708</FONT>            } else if (contains(value, index, 2, "TH") || contains(value, index, <a name="line.708"></a>
+<FONT color="green">709</FONT>                                                                   3, "TTH")) {<a name="line.709"></a>
+<FONT color="green">710</FONT>                if (contains(value, index + 2, 2, "OM", "AM") || <a name="line.710"></a>
+<FONT color="green">711</FONT>                    //-- special case "thomas", "thames" or germanic --//<a name="line.711"></a>
+<FONT color="green">712</FONT>                    contains(value, 0, 4, "VAN ", "VON ") || <a name="line.712"></a>
+<FONT color="green">713</FONT>                    contains(value, 0, 3, "SCH")) {<a name="line.713"></a>
+<FONT color="green">714</FONT>                    result.append('T');<a name="line.714"></a>
+<FONT color="green">715</FONT>                } else {<a name="line.715"></a>
+<FONT color="green">716</FONT>                    result.append('0', 'T');<a name="line.716"></a>
+<FONT color="green">717</FONT>                }<a name="line.717"></a>
+<FONT color="green">718</FONT>                index += 2;<a name="line.718"></a>
+<FONT color="green">719</FONT>            } else {<a name="line.719"></a>
+<FONT color="green">720</FONT>                result.append('T');<a name="line.720"></a>
+<FONT color="green">721</FONT>                index = contains(value, index + 1, 1, "T", "D") ? index + 2 : index + 1;<a name="line.721"></a>
+<FONT color="green">722</FONT>            }<a name="line.722"></a>
+<FONT color="green">723</FONT>            return index;<a name="line.723"></a>
+<FONT color="green">724</FONT>        }<a name="line.724"></a>
+<FONT color="green">725</FONT>    <a name="line.725"></a>
+<FONT color="green">726</FONT>        /**<a name="line.726"></a>
+<FONT color="green">727</FONT>         * Handles 'W' cases<a name="line.727"></a>
+<FONT color="green">728</FONT>         */<a name="line.728"></a>
+<FONT color="green">729</FONT>        private int handleW(String value, <a name="line.729"></a>
+<FONT color="green">730</FONT>                            DoubleMetaphoneResult result, <a name="line.730"></a>
+<FONT color="green">731</FONT>                            int index) {<a name="line.731"></a>
+<FONT color="green">732</FONT>            if (contains(value, index, 2, "WR")) {<a name="line.732"></a>
+<FONT color="green">733</FONT>                //-- can also be in middle of word --//<a name="line.733"></a>
+<FONT color="green">734</FONT>                result.append('R');<a name="line.734"></a>
+<FONT color="green">735</FONT>                index += 2;<a name="line.735"></a>
+<FONT color="green">736</FONT>            } else {<a name="line.736"></a>
+<FONT color="green">737</FONT>                if (index == 0 &amp;&amp; (isVowel(charAt(value, index + 1)) || <a name="line.737"></a>
+<FONT color="green">738</FONT>                                   contains(value, index, 2, "WH"))) {<a name="line.738"></a>
+<FONT color="green">739</FONT>                    if (isVowel(charAt(value, index + 1))) {<a name="line.739"></a>
+<FONT color="green">740</FONT>                        //-- Wasserman should match Vasserman --//<a name="line.740"></a>
+<FONT color="green">741</FONT>                        result.append('A', 'F');<a name="line.741"></a>
+<FONT color="green">742</FONT>                    } else {<a name="line.742"></a>
+<FONT color="green">743</FONT>                        //-- need Uomo to match Womo --//<a name="line.743"></a>
+<FONT color="green">744</FONT>                        result.append('A');<a name="line.744"></a>
+<FONT color="green">745</FONT>                    }<a name="line.745"></a>
+<FONT color="green">746</FONT>                    index++;<a name="line.746"></a>
+<FONT color="green">747</FONT>                } else if ((index == value.length() - 1 &amp;&amp; isVowel(charAt(value, index - 1))) ||<a name="line.747"></a>
+<FONT color="green">748</FONT>                           contains(value, index - 1, <a name="line.748"></a>
+<FONT color="green">749</FONT>                                    5, "EWSKI", "EWSKY", "OWSKI", "OWSKY") ||<a name="line.749"></a>
+<FONT color="green">750</FONT>                           contains(value, 0, 3, "SCH")) {<a name="line.750"></a>
+<FONT color="green">751</FONT>                    //-- Arnow should match Arnoff --//<a name="line.751"></a>
+<FONT color="green">752</FONT>                    result.appendAlternate('F');<a name="line.752"></a>
+<FONT color="green">753</FONT>                    index++;<a name="line.753"></a>
+<FONT color="green">754</FONT>                } else if (contains(value, index, 4, "WICZ", "WITZ")) {<a name="line.754"></a>
+<FONT color="green">755</FONT>                    //-- Polish e.g. "filipowicz" --//<a name="line.755"></a>
+<FONT color="green">756</FONT>                    result.append("TS", "FX");<a name="line.756"></a>
+<FONT color="green">757</FONT>                    index += 4;<a name="line.757"></a>
+<FONT color="green">758</FONT>                } else {<a name="line.758"></a>
+<FONT color="green">759</FONT>                    index++;<a name="line.759"></a>
+<FONT color="green">760</FONT>                }<a name="line.760"></a>
+<FONT color="green">761</FONT>            }<a name="line.761"></a>
+<FONT color="green">762</FONT>            return index;<a name="line.762"></a>
+<FONT color="green">763</FONT>        }<a name="line.763"></a>
+<FONT color="green">764</FONT>        <a name="line.764"></a>
+<FONT color="green">765</FONT>        /**<a name="line.765"></a>
+<FONT color="green">766</FONT>         * Handles 'X' cases<a name="line.766"></a>
+<FONT color="green">767</FONT>         */<a name="line.767"></a>
+<FONT color="green">768</FONT>        private int handleX(String value, <a name="line.768"></a>
+<FONT color="green">769</FONT>                            DoubleMetaphoneResult result, <a name="line.769"></a>
+<FONT color="green">770</FONT>                            int index) {<a name="line.770"></a>
+<FONT color="green">771</FONT>            if (index == 0) {<a name="line.771"></a>
+<FONT color="green">772</FONT>                result.append('S');<a name="line.772"></a>
+<FONT color="green">773</FONT>                index++;<a name="line.773"></a>
+<FONT color="green">774</FONT>            } else {<a name="line.774"></a>
+<FONT color="green">775</FONT>                if (!((index == value.length() - 1) &amp;&amp; <a name="line.775"></a>
+<FONT color="green">776</FONT>                      (contains(value, index - 3, 3, "IAU", "EAU") || <a name="line.776"></a>
+<FONT color="green">777</FONT>                       contains(value, index - 2, 2, "AU", "OU")))) {<a name="line.777"></a>
+<FONT color="green">778</FONT>                    //-- French e.g. breaux --//<a name="line.778"></a>
+<FONT color="green">779</FONT>                    result.append("KS");<a name="line.779"></a>
+<FONT color="green">780</FONT>                }<a name="line.780"></a>
+<FONT color="green">781</FONT>                index = contains(value, index + 1, 1, "C", "X") ? index + 2 : index + 1;<a name="line.781"></a>
+<FONT color="green">782</FONT>            }<a name="line.782"></a>
+<FONT color="green">783</FONT>            return index;<a name="line.783"></a>
+<FONT color="green">784</FONT>        }<a name="line.784"></a>
+<FONT color="green">785</FONT>    <a name="line.785"></a>
+<FONT color="green">786</FONT>        /**<a name="line.786"></a>
+<FONT color="green">787</FONT>         * Handles 'Z' cases<a name="line.787"></a>
+<FONT color="green">788</FONT>         */<a name="line.788"></a>
+<FONT color="green">789</FONT>        private int handleZ(String value, DoubleMetaphoneResult result, int index, <a name="line.789"></a>
+<FONT color="green">790</FONT>                            boolean slavoGermanic) {<a name="line.790"></a>
+<FONT color="green">791</FONT>            if (charAt(value, index + 1) == 'H') {<a name="line.791"></a>
+<FONT color="green">792</FONT>                //-- Chinese pinyin e.g. "zhao" or Angelina "Zhang" --//<a name="line.792"></a>
+<FONT color="green">793</FONT>                result.append('J');<a name="line.793"></a>
+<FONT color="green">794</FONT>                index += 2;<a name="line.794"></a>
+<FONT color="green">795</FONT>            } else {<a name="line.795"></a>
+<FONT color="green">796</FONT>                if (contains(value, index + 1, 2, "ZO", "ZI", "ZA") || (slavoGermanic &amp;&amp; (index &gt; 0 &amp;&amp; charAt(value, index - 1) != 'T'))) {<a name="line.796"></a>
+<FONT color="green">797</FONT>                    result.append("S", "TS");<a name="line.797"></a>
+<FONT color="green">798</FONT>                } else {<a name="line.798"></a>
+<FONT color="green">799</FONT>                    result.append('S');<a name="line.799"></a>
+<FONT color="green">800</FONT>                }<a name="line.800"></a>
+<FONT color="green">801</FONT>                index = charAt(value, index + 1) == 'Z' ? index + 2 : index + 1;<a name="line.801"></a>
+<FONT color="green">802</FONT>            }<a name="line.802"></a>
+<FONT color="green">803</FONT>            return index;<a name="line.803"></a>
+<FONT color="green">804</FONT>        }<a name="line.804"></a>
+<FONT color="green">805</FONT>    <a name="line.805"></a>
+<FONT color="green">806</FONT>        //-- BEGIN CONDITIONS --//<a name="line.806"></a>
+<FONT color="green">807</FONT>    <a name="line.807"></a>
+<FONT color="green">808</FONT>        /**<a name="line.808"></a>
+<FONT color="green">809</FONT>         * Complex condition 0 for 'C'<a name="line.809"></a>
+<FONT color="green">810</FONT>         */<a name="line.810"></a>
+<FONT color="green">811</FONT>        private boolean conditionC0(String value, int index) {<a name="line.811"></a>
+<FONT color="green">812</FONT>            if (contains(value, index, 4, "CHIA")) {<a name="line.812"></a>
+<FONT color="green">813</FONT>                return true;<a name="line.813"></a>
+<FONT color="green">814</FONT>            } else if (index &lt;= 1) {<a name="line.814"></a>
+<FONT color="green">815</FONT>                return false;<a name="line.815"></a>
+<FONT color="green">816</FONT>            } else if (isVowel(charAt(value, index - 2))) {<a name="line.816"></a>
+<FONT color="green">817</FONT>                return false;<a name="line.817"></a>
+<FONT color="green">818</FONT>            } else if (!contains(value, index - 1, 3, "ACH")) {<a name="line.818"></a>
+<FONT color="green">819</FONT>                return false;<a name="line.819"></a>
+<FONT color="green">820</FONT>            } else {<a name="line.820"></a>
+<FONT color="green">821</FONT>                char c = charAt(value, index + 2);<a name="line.821"></a>
+<FONT color="green">822</FONT>                return (c != 'I' &amp;&amp; c != 'E') ||<a name="line.822"></a>
+<FONT color="green">823</FONT>                        contains(value, index - 2, 6, "BACHER", "MACHER");<a name="line.823"></a>
+<FONT color="green">824</FONT>            }<a name="line.824"></a>
+<FONT color="green">825</FONT>        }<a name="line.825"></a>
+<FONT color="green">826</FONT>        <a name="line.826"></a>
+<FONT color="green">827</FONT>        /**<a name="line.827"></a>
+<FONT color="green">828</FONT>         * Complex condition 0 for 'CH'<a name="line.828"></a>
+<FONT color="green">829</FONT>         */<a name="line.829"></a>
+<FONT color="green">830</FONT>        private boolean conditionCH0(String value, int index) {<a name="line.830"></a>
+<FONT color="green">831</FONT>            if (index != 0) {<a name="line.831"></a>
+<FONT color="green">832</FONT>                return false;<a name="line.832"></a>
+<FONT color="green">833</FONT>            } else if (!contains(value, index + 1, 5, "HARAC", "HARIS") &amp;&amp; <a name="line.833"></a>
+<FONT color="green">834</FONT>                       !contains(value, index + 1, 3, "HOR", "HYM", "HIA", "HEM")) {<a name="line.834"></a>
+<FONT color="green">835</FONT>                return false;<a name="line.835"></a>
+<FONT color="green">836</FONT>            } else if (contains(value, 0, 5, "CHORE")) {<a name="line.836"></a>
+<FONT color="green">837</FONT>                return false;<a name="line.837"></a>
+<FONT color="green">838</FONT>            } else {<a name="line.838"></a>
+<FONT color="green">839</FONT>                return true;<a name="line.839"></a>
+<FONT color="green">840</FONT>            }<a name="line.840"></a>
+<FONT color="green">841</FONT>        }<a name="line.841"></a>
+<FONT color="green">842</FONT>        <a name="line.842"></a>
+<FONT color="green">843</FONT>        /**<a name="line.843"></a>
+<FONT color="green">844</FONT>         * Complex condition 1 for 'CH'<a name="line.844"></a>
+<FONT color="green">845</FONT>         */<a name="line.845"></a>
+<FONT color="green">846</FONT>        private boolean conditionCH1(String value, int index) {<a name="line.846"></a>
+<FONT color="green">847</FONT>            return ((contains(value, 0, 4, "VAN ", "VON ") || contains(value, 0, <a name="line.847"></a>
+<FONT color="green">848</FONT>                                                                       3, "SCH")) ||<a name="line.848"></a>
+<FONT color="green">849</FONT>                    contains(value, index - 2, 6, "ORCHES", "ARCHIT", "ORCHID") ||<a name="line.849"></a>
+<FONT color="green">850</FONT>                    contains(value, index + 2, 1, "T", "S") ||<a name="line.850"></a>
+<FONT color="green">851</FONT>                    ((contains(value, index - 1, 1, "A", "O", "U", "E") || index == 0) &amp;&amp;<a name="line.851"></a>
+<FONT color="green">852</FONT>                     (contains(value, index + 2, 1, L_R_N_M_B_H_F_V_W_SPACE) || index + 1 == value.length() - 1)));<a name="line.852"></a>
+<FONT color="green">853</FONT>        }<a name="line.853"></a>
+<FONT color="green">854</FONT>        <a name="line.854"></a>
+<FONT color="green">855</FONT>        /**<a name="line.855"></a>
+<FONT color="green">856</FONT>         * Complex condition 0 for 'L'<a name="line.856"></a>
+<FONT color="green">857</FONT>         */<a name="line.857"></a>
+<FONT color="green">858</FONT>        private boolean conditionL0(String value, int index) {<a name="line.858"></a>
+<FONT color="green">859</FONT>            if (index == value.length() - 3 &amp;&amp; <a name="line.859"></a>
+<FONT color="green">860</FONT>                contains(value, index - 1, 4, "ILLO", "ILLA", "ALLE")) {<a name="line.860"></a>
+<FONT color="green">861</FONT>                return true;<a name="line.861"></a>
+<FONT color="green">862</FONT>            } else if ((contains(value, value.length() - 2, 2, "AS", "OS") || <a name="line.862"></a>
+<FONT color="green">863</FONT>                        contains(value, value.length() - 1, 1, "A", "O")) &amp;&amp;<a name="line.863"></a>
+<FONT color="green">864</FONT>                       contains(value, index - 1, 4, "ALLE")) {<a name="line.864"></a>
+<FONT color="green">865</FONT>                return true;<a name="line.865"></a>
+<FONT color="green">866</FONT>            } else {<a name="line.866"></a>
+<FONT color="green">867</FONT>                return false;<a name="line.867"></a>
+<FONT color="green">868</FONT>            }<a name="line.868"></a>
+<FONT color="green">869</FONT>        }<a name="line.869"></a>
+<FONT color="green">870</FONT>        <a name="line.870"></a>
+<FONT color="green">871</FONT>        /**<a name="line.871"></a>
+<FONT color="green">872</FONT>         * Complex condition 0 for 'M'<a name="line.872"></a>
+<FONT color="green">873</FONT>         */<a name="line.873"></a>
+<FONT color="green">874</FONT>        private boolean conditionM0(String value, int index) {<a name="line.874"></a>
+<FONT color="green">875</FONT>            if (charAt(value, index + 1) == 'M') {<a name="line.875"></a>
+<FONT color="green">876</FONT>                return true;<a name="line.876"></a>
+<FONT color="green">877</FONT>            }<a name="line.877"></a>
+<FONT color="green">878</FONT>            return contains(value, index - 1, 3, "UMB") &amp;&amp;<a name="line.878"></a>
+<FONT color="green">879</FONT>                    ((index + 1) == value.length() - 1 || contains(value,<a name="line.879"></a>
+<FONT color="green">880</FONT>                            index + 2, 2, "ER"));<a name="line.880"></a>
+<FONT color="green">881</FONT>        }<a name="line.881"></a>
+<FONT color="green">882</FONT>        <a name="line.882"></a>
+<FONT color="green">883</FONT>        //-- BEGIN HELPER FUNCTIONS --//<a name="line.883"></a>
+<FONT color="green">884</FONT>    <a name="line.884"></a>
+<FONT color="green">885</FONT>        /**<a name="line.885"></a>
+<FONT color="green">886</FONT>         * Determines whether or not a value is of slavo-germanic orgin. A value is<a name="line.886"></a>
+<FONT color="green">887</FONT>         * of slavo-germanic origin if it contians any of 'W', 'K', 'CZ', or 'WITZ'.<a name="line.887"></a>
+<FONT color="green">888</FONT>         */<a name="line.888"></a>
+<FONT color="green">889</FONT>        private boolean isSlavoGermanic(String value) {<a name="line.889"></a>
+<FONT color="green">890</FONT>            return value.indexOf('W') &gt; -1 || value.indexOf('K') &gt; -1 || <a name="line.890"></a>
+<FONT color="green">891</FONT>                value.indexOf("CZ") &gt; -1 || value.indexOf("WITZ") &gt; -1;<a name="line.891"></a>
+<FONT color="green">892</FONT>        }<a name="line.892"></a>
+<FONT color="green">893</FONT>    <a name="line.893"></a>
+<FONT color="green">894</FONT>        /**<a name="line.894"></a>
+<FONT color="green">895</FONT>         * Determines whether or not a character is a vowel or not<a name="line.895"></a>
+<FONT color="green">896</FONT>         */<a name="line.896"></a>
+<FONT color="green">897</FONT>        private boolean isVowel(char ch) {<a name="line.897"></a>
+<FONT color="green">898</FONT>            return VOWELS.indexOf(ch) != -1;<a name="line.898"></a>
+<FONT color="green">899</FONT>        }<a name="line.899"></a>
+<FONT color="green">900</FONT>    <a name="line.900"></a>
+<FONT color="green">901</FONT>        /**<a name="line.901"></a>
+<FONT color="green">902</FONT>         * Determines whether or not the value starts with a silent letter.  It will<a name="line.902"></a>
+<FONT color="green">903</FONT>         * return &lt;code&gt;true&lt;/code&gt; if the value starts with any of 'GN', 'KN',<a name="line.903"></a>
+<FONT color="green">904</FONT>         * 'PN', 'WR' or 'PS'.<a name="line.904"></a>
+<FONT color="green">905</FONT>         */    <a name="line.905"></a>
+<FONT color="green">906</FONT>        private boolean isSilentStart(String value) {<a name="line.906"></a>
+<FONT color="green">907</FONT>            boolean result = false;<a name="line.907"></a>
+<FONT color="green">908</FONT>            for (int i = 0; i &lt; SILENT_START.length; i++) {<a name="line.908"></a>
+<FONT color="green">909</FONT>                if (value.startsWith(SILENT_START[i])) {<a name="line.909"></a>
+<FONT color="green">910</FONT>                    result = true;<a name="line.910"></a>
+<FONT color="green">911</FONT>                    break;<a name="line.911"></a>
+<FONT color="green">912</FONT>                }<a name="line.912"></a>
+<FONT color="green">913</FONT>            }<a name="line.913"></a>
+<FONT color="green">914</FONT>            return result;<a name="line.914"></a>
+<FONT color="green">915</FONT>        }<a name="line.915"></a>
+<FONT color="green">916</FONT>    <a name="line.916"></a>
+<FONT color="green">917</FONT>        /**<a name="line.917"></a>
+<FONT color="green">918</FONT>         * Cleans the input<a name="line.918"></a>
+<FONT color="green">919</FONT>         */    <a name="line.919"></a>
+<FONT color="green">920</FONT>        private String cleanInput(String input) {<a name="line.920"></a>
+<FONT color="green">921</FONT>            if (input == null) {<a name="line.921"></a>
+<FONT color="green">922</FONT>                return null;<a name="line.922"></a>
+<FONT color="green">923</FONT>            }<a name="line.923"></a>
+<FONT color="green">924</FONT>            input = input.trim();<a name="line.924"></a>
+<FONT color="green">925</FONT>            if (input.length() == 0) {<a name="line.925"></a>
+<FONT color="green">926</FONT>                return null;<a name="line.926"></a>
+<FONT color="green">927</FONT>            }<a name="line.927"></a>
+<FONT color="green">928</FONT>            return input.toUpperCase(java.util.Locale.ENGLISH);<a name="line.928"></a>
+<FONT color="green">929</FONT>        }<a name="line.929"></a>
+<FONT color="green">930</FONT>    <a name="line.930"></a>
+<FONT color="green">931</FONT>        /**<a name="line.931"></a>
+<FONT color="green">932</FONT>         * Gets the character at index &lt;code&gt;index&lt;/code&gt; if available, otherwise<a name="line.932"></a>
+<FONT color="green">933</FONT>         * it returns &lt;code&gt;Character.MIN_VALUE&lt;/code&gt; so that there is some sort<a name="line.933"></a>
+<FONT color="green">934</FONT>         * of a default<a name="line.934"></a>
+<FONT color="green">935</FONT>         */    <a name="line.935"></a>
+<FONT color="green">936</FONT>        protected char charAt(String value, int index) {<a name="line.936"></a>
+<FONT color="green">937</FONT>            if (index &lt; 0 || index &gt;= value.length()) {<a name="line.937"></a>
+<FONT color="green">938</FONT>                return Character.MIN_VALUE;<a name="line.938"></a>
+<FONT color="green">939</FONT>            } <a name="line.939"></a>
+<FONT color="green">940</FONT>            return value.charAt(index);<a name="line.940"></a>
+<FONT color="green">941</FONT>        }<a name="line.941"></a>
+<FONT color="green">942</FONT>    <a name="line.942"></a>
+<FONT color="green">943</FONT>        /**<a name="line.943"></a>
+<FONT color="green">944</FONT>         * Shortcut method with 1 criteria<a name="line.944"></a>
+<FONT color="green">945</FONT>         */    <a name="line.945"></a>
+<FONT color="green">946</FONT>        private static boolean contains(String value, int start, int length, <a name="line.946"></a>
+<FONT color="green">947</FONT>                                        String criteria) {<a name="line.947"></a>
+<FONT color="green">948</FONT>            return contains(value, start, length, <a name="line.948"></a>
+<FONT color="green">949</FONT>                            new String[] { criteria });<a name="line.949"></a>
+<FONT color="green">950</FONT>        }<a name="line.950"></a>
+<FONT color="green">951</FONT>    <a name="line.951"></a>
+<FONT color="green">952</FONT>        /**<a name="line.952"></a>
+<FONT color="green">953</FONT>         * Shortcut method with 2 criteria<a name="line.953"></a>
+<FONT color="green">954</FONT>         */    <a name="line.954"></a>
+<FONT color="green">955</FONT>        private static boolean contains(String value, int start, int length, <a name="line.955"></a>
+<FONT color="green">956</FONT>                                        String criteria1, String criteria2) {<a name="line.956"></a>
+<FONT color="green">957</FONT>            return contains(value, start, length, <a name="line.957"></a>
+<FONT color="green">958</FONT>                            new String[] { criteria1, criteria2 });<a name="line.958"></a>
+<FONT color="green">959</FONT>        }<a name="line.959"></a>
+<FONT color="green">960</FONT>    <a name="line.960"></a>
+<FONT color="green">961</FONT>        /**<a name="line.961"></a>
+<FONT color="green">962</FONT>         * Shortcut method with 3 criteria<a name="line.962"></a>
+<FONT color="green">963</FONT>         */    <a name="line.963"></a>
+<FONT color="green">964</FONT>        private static boolean contains(String value, int start, int length, <a name="line.964"></a>
+<FONT color="green">965</FONT>                                        String criteria1, String criteria2, <a name="line.965"></a>
+<FONT color="green">966</FONT>                                        String criteria3) {<a name="line.966"></a>
+<FONT color="green">967</FONT>            return contains(value, start, length, <a name="line.967"></a>
+<FONT color="green">968</FONT>                            new String[] { criteria1, criteria2, criteria3 });<a name="line.968"></a>
+<FONT color="green">969</FONT>        }<a name="line.969"></a>
+<FONT color="green">970</FONT>    <a name="line.970"></a>
+<FONT color="green">971</FONT>        /**<a name="line.971"></a>
+<FONT color="green">972</FONT>         * Shortcut method with 4 criteria<a name="line.972"></a>
+<FONT color="green">973</FONT>         */    <a name="line.973"></a>
+<FONT color="green">974</FONT>        private static boolean contains(String value, int start, int length, <a name="line.974"></a>
+<FONT color="green">975</FONT>                                        String criteria1, String criteria2, <a name="line.975"></a>
+<FONT color="green">976</FONT>                                        String criteria3, String criteria4) {<a name="line.976"></a>
+<FONT color="green">977</FONT>            return contains(value, start, length, <a name="line.977"></a>
+<FONT color="green">978</FONT>                            new String[] { criteria1, criteria2, criteria3, <a name="line.978"></a>
+<FONT color="green">979</FONT>                                           criteria4 });<a name="line.979"></a>
+<FONT color="green">980</FONT>        }<a name="line.980"></a>
+<FONT color="green">981</FONT>    <a name="line.981"></a>
+<FONT color="green">982</FONT>        /**<a name="line.982"></a>
+<FONT color="green">983</FONT>         * Shortcut method with 5 criteria<a name="line.983"></a>
+<FONT color="green">984</FONT>         */    <a name="line.984"></a>
+<FONT color="green">985</FONT>        private static boolean contains(String value, int start, int length, <a name="line.985"></a>
+<FONT color="green">986</FONT>                                        String criteria1, String criteria2, <a name="line.986"></a>
+<FONT color="green">987</FONT>                                        String criteria3, String criteria4, <a name="line.987"></a>
+<FONT color="green">988</FONT>                                        String criteria5) {<a name="line.988"></a>
+<FONT color="green">989</FONT>            return contains(value, start, length, <a name="line.989"></a>
+<FONT color="green">990</FONT>                            new String[] { criteria1, criteria2, criteria3, <a name="line.990"></a>
+<FONT color="green">991</FONT>                                           criteria4, criteria5 });<a name="line.991"></a>
+<FONT color="green">992</FONT>        }<a name="line.992"></a>
+<FONT color="green">993</FONT>    <a name="line.993"></a>
+<FONT color="green">994</FONT>        /**<a name="line.994"></a>
+<FONT color="green">995</FONT>         * Shortcut method with 6 criteria<a name="line.995"></a>
+<FONT color="green">996</FONT>         */    <a name="line.996"></a>
+<FONT color="green">997</FONT>        private static boolean contains(String value, int start, int length, <a name="line.997"></a>
+<FONT color="green">998</FONT>                                        String criteria1, String criteria2, <a name="line.998"></a>
+<FONT color="green">999</FONT>                                        String criteria3, String criteria4, <a name="line.999"></a>
+<FONT color="green">1000</FONT>                                        String criteria5, String criteria6) {<a name="line.1000"></a>
+<FONT color="green">1001</FONT>            return contains(value, start, length, <a name="line.1001"></a>
+<FONT color="green">1002</FONT>                            new String[] { criteria1, criteria2, criteria3, <a name="line.1002"></a>
+<FONT color="green">1003</FONT>                                           criteria4, criteria5, criteria6 });<a name="line.1003"></a>
+<FONT color="green">1004</FONT>        }<a name="line.1004"></a>
+<FONT color="green">1005</FONT>        <a name="line.1005"></a>
+<FONT color="green">1006</FONT>        /**<a name="line.1006"></a>
+<FONT color="green">1007</FONT>         * Determines whether &lt;code&gt;value&lt;/code&gt; contains any of the criteria starting at index &lt;code&gt;start&lt;/code&gt; and<a name="line.1007"></a>
+<FONT color="green">1008</FONT>         * matching up to length &lt;code&gt;length&lt;/code&gt;<a name="line.1008"></a>
+<FONT color="green">1009</FONT>         */<a name="line.1009"></a>
+<FONT color="green">1010</FONT>        protected static boolean contains(String value, int start, int length, <a name="line.1010"></a>
+<FONT color="green">1011</FONT>                                          String[] criteria) {<a name="line.1011"></a>
+<FONT color="green">1012</FONT>            boolean result = false;<a name="line.1012"></a>
+<FONT color="green">1013</FONT>            if (start &gt;= 0 &amp;&amp; start + length &lt;= value.length()) {<a name="line.1013"></a>
+<FONT color="green">1014</FONT>                String target = value.substring(start, start + length);<a name="line.1014"></a>
+<FONT color="green">1015</FONT>    <a name="line.1015"></a>
+<FONT color="green">1016</FONT>                for (int i = 0; i &lt; criteria.length; i++) {<a name="line.1016"></a>
+<FONT color="green">1017</FONT>                    if (target.equals(criteria[i])) {<a name="line.1017"></a>
+<FONT color="green">1018</FONT>                        result = true;<a name="line.1018"></a>
+<FONT color="green">1019</FONT>                        break;<a name="line.1019"></a>
+<FONT color="green">1020</FONT>                    }<a name="line.1020"></a>
+<FONT color="green">1021</FONT>                }<a name="line.1021"></a>
+<FONT color="green">1022</FONT>            }<a name="line.1022"></a>
+<FONT color="green">1023</FONT>            return result;<a name="line.1023"></a>
+<FONT color="green">1024</FONT>        }<a name="line.1024"></a>
+<FONT color="green">1025</FONT>        <a name="line.1025"></a>
+<FONT color="green">1026</FONT>        //-- BEGIN INNER CLASSES --//<a name="line.1026"></a>
+<FONT color="green">1027</FONT>        <a name="line.1027"></a>
+<FONT color="green">1028</FONT>        /**<a name="line.1028"></a>
+<FONT color="green">1029</FONT>         * Inner class for storing results, since there is the optional alternate<a name="line.1029"></a>
+<FONT color="green">1030</FONT>         * encoding.<a name="line.1030"></a>
+<FONT color="green">1031</FONT>         */<a name="line.1031"></a>
+<FONT color="green">1032</FONT>        public class DoubleMetaphoneResult {<a name="line.1032"></a>
+<FONT color="green">1033</FONT>    <a name="line.1033"></a>
+<FONT color="green">1034</FONT>            private StringBuffer primary = new StringBuffer(getMaxCodeLen());<a name="line.1034"></a>
+<FONT color="green">1035</FONT>            private StringBuffer alternate = new StringBuffer(getMaxCodeLen());<a name="line.1035"></a>
+<FONT color="green">1036</FONT>            private int maxLength;<a name="line.1036"></a>
+<FONT color="green">1037</FONT>    <a name="line.1037"></a>
+<FONT color="green">1038</FONT>            public DoubleMetaphoneResult(int maxLength) {<a name="line.1038"></a>
+<FONT color="green">1039</FONT>                this.maxLength = maxLength;<a name="line.1039"></a>
+<FONT color="green">1040</FONT>            }<a name="line.1040"></a>
+<FONT color="green">1041</FONT>    <a name="line.1041"></a>
+<FONT color="green">1042</FONT>            public void append(char value) {<a name="line.1042"></a>
+<FONT color="green">1043</FONT>                appendPrimary(value);<a name="line.1043"></a>
+<FONT color="green">1044</FONT>                appendAlternate(value);<a name="line.1044"></a>
+<FONT color="green">1045</FONT>            }<a name="line.1045"></a>
+<FONT color="green">1046</FONT>    <a name="line.1046"></a>
+<FONT color="green">1047</FONT>            public void append(char primary, char alternate) {<a name="line.1047"></a>
+<FONT color="green">1048</FONT>                appendPrimary(primary);<a name="line.1048"></a>
+<FONT color="green">1049</FONT>                appendAlternate(alternate);<a name="line.1049"></a>
+<FONT color="green">1050</FONT>            }<a name="line.1050"></a>
+<FONT color="green">1051</FONT>    <a name="line.1051"></a>
+<FONT color="green">1052</FONT>            public void appendPrimary(char value) {<a name="line.1052"></a>
+<FONT color="green">1053</FONT>                if (this.primary.length() &lt; this.maxLength) {<a name="line.1053"></a>
+<FONT color="green">1054</FONT>                    this.primary.append(value);<a name="line.1054"></a>
+<FONT color="green">1055</FONT>                }<a name="line.1055"></a>
+<FONT color="green">1056</FONT>            }<a name="line.1056"></a>
+<FONT color="green">1057</FONT>    <a name="line.1057"></a>
+<FONT color="green">1058</FONT>            public void appendAlternate(char value) {<a name="line.1058"></a>
+<FONT color="green">1059</FONT>                if (this.alternate.length() &lt; this.maxLength) {<a name="line.1059"></a>
+<FONT color="green">1060</FONT>                    this.alternate.append(value);<a name="line.1060"></a>
+<FONT color="green">1061</FONT>                }<a name="line.1061"></a>
+<FONT color="green">1062</FONT>            }<a name="line.1062"></a>
+<FONT color="green">1063</FONT>    <a name="line.1063"></a>
+<FONT color="green">1064</FONT>            public void append(String value) {<a name="line.1064"></a>
+<FONT color="green">1065</FONT>                appendPrimary(value);<a name="line.1065"></a>
+<FONT color="green">1066</FONT>                appendAlternate(value);<a name="line.1066"></a>
+<FONT color="green">1067</FONT>            }<a name="line.1067"></a>
+<FONT color="green">1068</FONT>    <a name="line.1068"></a>
+<FONT color="green">1069</FONT>            public void append(String primary, String alternate) {<a name="line.1069"></a>
+<FONT color="green">1070</FONT>                appendPrimary(primary);<a name="line.1070"></a>
+<FONT color="green">1071</FONT>                appendAlternate(alternate);<a name="line.1071"></a>
+<FONT color="green">1072</FONT>            }<a name="line.1072"></a>
+<FONT color="green">1073</FONT>    <a name="line.1073"></a>
+<FONT color="green">1074</FONT>            public void appendPrimary(String value) {<a name="line.1074"></a>
+<FONT color="green">1075</FONT>                int addChars = this.maxLength - this.primary.length();<a name="line.1075"></a>
+<FONT color="green">1076</FONT>                if (value.length() &lt;= addChars) {<a name="line.1076"></a>
+<FONT color="green">1077</FONT>                    this.primary.append(value);<a name="line.1077"></a>
+<FONT color="green">1078</FONT>                } else {<a name="line.1078"></a>
+<FONT color="green">1079</FONT>                    this.primary.append(value.substring(0, addChars));<a name="line.1079"></a>
+<FONT color="green">1080</FONT>                }<a name="line.1080"></a>
+<FONT color="green">1081</FONT>            }<a name="line.1081"></a>
+<FONT color="green">1082</FONT>    <a name="line.1082"></a>
+<FONT color="green">1083</FONT>            public void appendAlternate(String value) {<a name="line.1083"></a>
+<FONT color="green">1084</FONT>                int addChars = this.maxLength - this.alternate.length();<a name="line.1084"></a>
+<FONT color="green">1085</FONT>                if (value.length() &lt;= addChars) {<a name="line.1085"></a>
+<FONT color="green">1086</FONT>                    this.alternate.append(value);<a name="line.1086"></a>
+<FONT color="green">1087</FONT>                } else {<a name="line.1087"></a>
+<FONT color="green">1088</FONT>                    this.alternate.append(value.substring(0, addChars));<a name="line.1088"></a>
+<FONT color="green">1089</FONT>                }<a name="line.1089"></a>
+<FONT color="green">1090</FONT>            }<a name="line.1090"></a>
+<FONT color="green">1091</FONT>    <a name="line.1091"></a>
+<FONT color="green">1092</FONT>            public String getPrimary() {<a name="line.1092"></a>
+<FONT color="green">1093</FONT>                return this.primary.toString();<a name="line.1093"></a>
+<FONT color="green">1094</FONT>            }<a name="line.1094"></a>
+<FONT color="green">1095</FONT>    <a name="line.1095"></a>
+<FONT color="green">1096</FONT>            public String getAlternate() {<a name="line.1096"></a>
+<FONT color="green">1097</FONT>                return this.alternate.toString();<a name="line.1097"></a>
+<FONT color="green">1098</FONT>            }<a name="line.1098"></a>
+<FONT color="green">1099</FONT>    <a name="line.1099"></a>
+<FONT color="green">1100</FONT>            public boolean isComplete() {<a name="line.1100"></a>
+<FONT color="green">1101</FONT>                return this.primary.length() &gt;= this.maxLength &amp;&amp; <a name="line.1101"></a>
+<FONT color="green">1102</FONT>                    this.alternate.length() &gt;= this.maxLength;<a name="line.1102"></a>
+<FONT color="green">1103</FONT>            }<a name="line.1103"></a>
+<FONT color="green">1104</FONT>        }<a name="line.1104"></a>
+<FONT color="green">1105</FONT>    }<a name="line.1105"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

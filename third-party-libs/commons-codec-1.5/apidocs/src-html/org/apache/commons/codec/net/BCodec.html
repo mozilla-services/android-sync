@@ -1,0 +1,274 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     * contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     * this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     * The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     * (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     * the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     * <a name="line.8"></a>
+<FONT color="green">009</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     * <a name="line.10"></a>
+<FONT color="green">011</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     * See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     * limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    <a name="line.17"></a>
+<FONT color="green">018</FONT>    package org.apache.commons.codec.net;<a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    import java.io.UnsupportedEncodingException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    <a name="line.21"></a>
+<FONT color="green">022</FONT>    import org.apache.commons.codec.DecoderException;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import org.apache.commons.codec.EncoderException;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import org.apache.commons.codec.CharEncoding;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import org.apache.commons.codec.StringDecoder;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import org.apache.commons.codec.StringEncoder;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import org.apache.commons.codec.binary.Base64;<a name="line.27"></a>
+<FONT color="green">028</FONT>    <a name="line.28"></a>
+<FONT color="green">029</FONT>    /**<a name="line.29"></a>
+<FONT color="green">030</FONT>     * &lt;p&gt;<a name="line.30"></a>
+<FONT color="green">031</FONT>     * Identical to the Base64 encoding defined by &lt;a href="http://www.ietf.org/rfc/rfc1521.txt"&gt;RFC<a name="line.31"></a>
+<FONT color="green">032</FONT>     * 1521&lt;/a&gt; and allows a character set to be specified.<a name="line.32"></a>
+<FONT color="green">033</FONT>     * &lt;/p&gt;<a name="line.33"></a>
+<FONT color="green">034</FONT>     * <a name="line.34"></a>
+<FONT color="green">035</FONT>     * &lt;p&gt;<a name="line.35"></a>
+<FONT color="green">036</FONT>     * &lt;a href="http://www.ietf.org/rfc/rfc1522.txt"&gt;RFC 1522&lt;/a&gt; describes techniques to allow the encoding of non-ASCII<a name="line.36"></a>
+<FONT color="green">037</FONT>     * text in various portions of a RFC 822 [2] message header, in a manner which is unlikely to confuse existing message<a name="line.37"></a>
+<FONT color="green">038</FONT>     * handling software.<a name="line.38"></a>
+<FONT color="green">039</FONT>     * &lt;/p&gt;<a name="line.39"></a>
+<FONT color="green">040</FONT>     * <a name="line.40"></a>
+<FONT color="green">041</FONT>     * @see &lt;a href="http://www.ietf.org/rfc/rfc1522.txt"&gt;MIME (Multipurpose Internet Mail Extensions) Part Two: Message<a name="line.41"></a>
+<FONT color="green">042</FONT>     *          Header Extensions for Non-ASCII Text&lt;/a&gt;<a name="line.42"></a>
+<FONT color="green">043</FONT>     * <a name="line.43"></a>
+<FONT color="green">044</FONT>     * @author Apache Software Foundation<a name="line.44"></a>
+<FONT color="green">045</FONT>     * @since 1.3<a name="line.45"></a>
+<FONT color="green">046</FONT>     * @version $Id: BCodec.java 797857 2009-07-25 23:43:33Z ggregory $<a name="line.46"></a>
+<FONT color="green">047</FONT>     */<a name="line.47"></a>
+<FONT color="green">048</FONT>    public class BCodec extends RFC1522Codec implements StringEncoder, StringDecoder {<a name="line.48"></a>
+<FONT color="green">049</FONT>        /**<a name="line.49"></a>
+<FONT color="green">050</FONT>         * The default charset used for string decoding and encoding.<a name="line.50"></a>
+<FONT color="green">051</FONT>         */<a name="line.51"></a>
+<FONT color="green">052</FONT>        private final String charset;<a name="line.52"></a>
+<FONT color="green">053</FONT>    <a name="line.53"></a>
+<FONT color="green">054</FONT>        /**<a name="line.54"></a>
+<FONT color="green">055</FONT>         * Default constructor.<a name="line.55"></a>
+<FONT color="green">056</FONT>         */<a name="line.56"></a>
+<FONT color="green">057</FONT>        public BCodec() {<a name="line.57"></a>
+<FONT color="green">058</FONT>            this(CharEncoding.UTF_8);<a name="line.58"></a>
+<FONT color="green">059</FONT>        }<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>        /**<a name="line.61"></a>
+<FONT color="green">062</FONT>         * Constructor which allows for the selection of a default charset<a name="line.62"></a>
+<FONT color="green">063</FONT>         * <a name="line.63"></a>
+<FONT color="green">064</FONT>         * @param charset<a name="line.64"></a>
+<FONT color="green">065</FONT>         *                  the default string charset to use.<a name="line.65"></a>
+<FONT color="green">066</FONT>         * <a name="line.66"></a>
+<FONT color="green">067</FONT>         * @see &lt;a href="http://java.sun.com/j2se/1.4.2/docs/api/java/nio/charset/Charset.html"&gt;Standard charsets&lt;/a&gt;<a name="line.67"></a>
+<FONT color="green">068</FONT>         */<a name="line.68"></a>
+<FONT color="green">069</FONT>        public BCodec(final String charset) {<a name="line.69"></a>
+<FONT color="green">070</FONT>            super();<a name="line.70"></a>
+<FONT color="green">071</FONT>            this.charset = charset;<a name="line.71"></a>
+<FONT color="green">072</FONT>        }<a name="line.72"></a>
+<FONT color="green">073</FONT>    <a name="line.73"></a>
+<FONT color="green">074</FONT>        protected String getEncoding() {<a name="line.74"></a>
+<FONT color="green">075</FONT>            return "B";<a name="line.75"></a>
+<FONT color="green">076</FONT>        }<a name="line.76"></a>
+<FONT color="green">077</FONT>    <a name="line.77"></a>
+<FONT color="green">078</FONT>        protected byte[] doEncoding(byte[] bytes) {<a name="line.78"></a>
+<FONT color="green">079</FONT>            if (bytes == null) {<a name="line.79"></a>
+<FONT color="green">080</FONT>                return null;<a name="line.80"></a>
+<FONT color="green">081</FONT>            }<a name="line.81"></a>
+<FONT color="green">082</FONT>            return Base64.encodeBase64(bytes);<a name="line.82"></a>
+<FONT color="green">083</FONT>        }<a name="line.83"></a>
+<FONT color="green">084</FONT>    <a name="line.84"></a>
+<FONT color="green">085</FONT>        protected byte[] doDecoding(byte[] bytes) {<a name="line.85"></a>
+<FONT color="green">086</FONT>            if (bytes == null) {<a name="line.86"></a>
+<FONT color="green">087</FONT>                return null;<a name="line.87"></a>
+<FONT color="green">088</FONT>            }<a name="line.88"></a>
+<FONT color="green">089</FONT>            return Base64.decodeBase64(bytes);<a name="line.89"></a>
+<FONT color="green">090</FONT>        }<a name="line.90"></a>
+<FONT color="green">091</FONT>    <a name="line.91"></a>
+<FONT color="green">092</FONT>        /**<a name="line.92"></a>
+<FONT color="green">093</FONT>         * Encodes a string into its Base64 form using the specified charset. Unsafe characters are escaped.<a name="line.93"></a>
+<FONT color="green">094</FONT>         * <a name="line.94"></a>
+<FONT color="green">095</FONT>         * @param value<a name="line.95"></a>
+<FONT color="green">096</FONT>         *                  string to convert to Base64 form<a name="line.96"></a>
+<FONT color="green">097</FONT>         * @param charset<a name="line.97"></a>
+<FONT color="green">098</FONT>         *                  the charset for &lt;code&gt;value&lt;/code&gt;<a name="line.98"></a>
+<FONT color="green">099</FONT>         * @return Base64 string<a name="line.99"></a>
+<FONT color="green">100</FONT>         * <a name="line.100"></a>
+<FONT color="green">101</FONT>         * @throws EncoderException<a name="line.101"></a>
+<FONT color="green">102</FONT>         *                  thrown if a failure condition is encountered during the encoding process.<a name="line.102"></a>
+<FONT color="green">103</FONT>         */<a name="line.103"></a>
+<FONT color="green">104</FONT>        public String encode(final String value, final String charset) throws EncoderException {<a name="line.104"></a>
+<FONT color="green">105</FONT>            if (value == null) {<a name="line.105"></a>
+<FONT color="green">106</FONT>                return null;<a name="line.106"></a>
+<FONT color="green">107</FONT>            }<a name="line.107"></a>
+<FONT color="green">108</FONT>            try {<a name="line.108"></a>
+<FONT color="green">109</FONT>                return encodeText(value, charset);<a name="line.109"></a>
+<FONT color="green">110</FONT>            } catch (UnsupportedEncodingException e) {<a name="line.110"></a>
+<FONT color="green">111</FONT>                throw new EncoderException(e.getMessage(), e);<a name="line.111"></a>
+<FONT color="green">112</FONT>            }<a name="line.112"></a>
+<FONT color="green">113</FONT>        }<a name="line.113"></a>
+<FONT color="green">114</FONT>    <a name="line.114"></a>
+<FONT color="green">115</FONT>        /**<a name="line.115"></a>
+<FONT color="green">116</FONT>         * Encodes a string into its Base64 form using the default charset. Unsafe characters are escaped.<a name="line.116"></a>
+<FONT color="green">117</FONT>         * <a name="line.117"></a>
+<FONT color="green">118</FONT>         * @param value<a name="line.118"></a>
+<FONT color="green">119</FONT>         *                  string to convert to Base64 form<a name="line.119"></a>
+<FONT color="green">120</FONT>         * @return Base64 string<a name="line.120"></a>
+<FONT color="green">121</FONT>         * <a name="line.121"></a>
+<FONT color="green">122</FONT>         * @throws EncoderException<a name="line.122"></a>
+<FONT color="green">123</FONT>         *                  thrown if a failure condition is encountered during the encoding process.<a name="line.123"></a>
+<FONT color="green">124</FONT>         */<a name="line.124"></a>
+<FONT color="green">125</FONT>        public String encode(String value) throws EncoderException {<a name="line.125"></a>
+<FONT color="green">126</FONT>            if (value == null) {<a name="line.126"></a>
+<FONT color="green">127</FONT>                return null;<a name="line.127"></a>
+<FONT color="green">128</FONT>            }<a name="line.128"></a>
+<FONT color="green">129</FONT>            return encode(value, getDefaultCharset());<a name="line.129"></a>
+<FONT color="green">130</FONT>        }<a name="line.130"></a>
+<FONT color="green">131</FONT>    <a name="line.131"></a>
+<FONT color="green">132</FONT>        /**<a name="line.132"></a>
+<FONT color="green">133</FONT>         * Decodes a Base64 string into its original form. Escaped characters are converted back to their original<a name="line.133"></a>
+<FONT color="green">134</FONT>         * representation.<a name="line.134"></a>
+<FONT color="green">135</FONT>         * <a name="line.135"></a>
+<FONT color="green">136</FONT>         * @param value<a name="line.136"></a>
+<FONT color="green">137</FONT>         *            Base64 string to convert into its original form<a name="line.137"></a>
+<FONT color="green">138</FONT>         * @return original string<a name="line.138"></a>
+<FONT color="green">139</FONT>         * @throws DecoderException<a name="line.139"></a>
+<FONT color="green">140</FONT>         *             A decoder exception is thrown if a failure condition is encountered during the decode process.<a name="line.140"></a>
+<FONT color="green">141</FONT>         */<a name="line.141"></a>
+<FONT color="green">142</FONT>        public String decode(String value) throws DecoderException {<a name="line.142"></a>
+<FONT color="green">143</FONT>            if (value == null) {<a name="line.143"></a>
+<FONT color="green">144</FONT>                return null;<a name="line.144"></a>
+<FONT color="green">145</FONT>            }<a name="line.145"></a>
+<FONT color="green">146</FONT>            try {<a name="line.146"></a>
+<FONT color="green">147</FONT>                return decodeText(value);<a name="line.147"></a>
+<FONT color="green">148</FONT>            } catch (UnsupportedEncodingException e) {<a name="line.148"></a>
+<FONT color="green">149</FONT>                throw new DecoderException(e.getMessage(), e);<a name="line.149"></a>
+<FONT color="green">150</FONT>            }<a name="line.150"></a>
+<FONT color="green">151</FONT>        }<a name="line.151"></a>
+<FONT color="green">152</FONT>    <a name="line.152"></a>
+<FONT color="green">153</FONT>        /**<a name="line.153"></a>
+<FONT color="green">154</FONT>         * Encodes an object into its Base64 form using the default charset. Unsafe characters are escaped.<a name="line.154"></a>
+<FONT color="green">155</FONT>         * <a name="line.155"></a>
+<FONT color="green">156</FONT>         * @param value<a name="line.156"></a>
+<FONT color="green">157</FONT>         *                  object to convert to Base64 form<a name="line.157"></a>
+<FONT color="green">158</FONT>         * @return Base64 object<a name="line.158"></a>
+<FONT color="green">159</FONT>         * <a name="line.159"></a>
+<FONT color="green">160</FONT>         * @throws EncoderException<a name="line.160"></a>
+<FONT color="green">161</FONT>         *                  thrown if a failure condition is encountered during the encoding process.<a name="line.161"></a>
+<FONT color="green">162</FONT>         */<a name="line.162"></a>
+<FONT color="green">163</FONT>        public Object encode(Object value) throws EncoderException {<a name="line.163"></a>
+<FONT color="green">164</FONT>            if (value == null) {<a name="line.164"></a>
+<FONT color="green">165</FONT>                return null;<a name="line.165"></a>
+<FONT color="green">166</FONT>            } else if (value instanceof String) {<a name="line.166"></a>
+<FONT color="green">167</FONT>                return encode((String) value);<a name="line.167"></a>
+<FONT color="green">168</FONT>            } else {<a name="line.168"></a>
+<FONT color="green">169</FONT>                throw new EncoderException("Objects of type " +<a name="line.169"></a>
+<FONT color="green">170</FONT>                      value.getClass().getName() +<a name="line.170"></a>
+<FONT color="green">171</FONT>                      " cannot be encoded using BCodec");<a name="line.171"></a>
+<FONT color="green">172</FONT>            }<a name="line.172"></a>
+<FONT color="green">173</FONT>        }<a name="line.173"></a>
+<FONT color="green">174</FONT>    <a name="line.174"></a>
+<FONT color="green">175</FONT>        /**<a name="line.175"></a>
+<FONT color="green">176</FONT>         * Decodes a Base64 object into its original form. Escaped characters are converted back to their original<a name="line.176"></a>
+<FONT color="green">177</FONT>         * representation.<a name="line.177"></a>
+<FONT color="green">178</FONT>         * <a name="line.178"></a>
+<FONT color="green">179</FONT>         * @param value<a name="line.179"></a>
+<FONT color="green">180</FONT>         *                  Base64 object to convert into its original form<a name="line.180"></a>
+<FONT color="green">181</FONT>         * <a name="line.181"></a>
+<FONT color="green">182</FONT>         * @return original object<a name="line.182"></a>
+<FONT color="green">183</FONT>         * <a name="line.183"></a>
+<FONT color="green">184</FONT>         * @throws DecoderException<a name="line.184"></a>
+<FONT color="green">185</FONT>         *                  Thrown if the argument is not a &lt;code&gt;String&lt;/code&gt;. Thrown if a failure condition is<a name="line.185"></a>
+<FONT color="green">186</FONT>         *                  encountered during the decode process.<a name="line.186"></a>
+<FONT color="green">187</FONT>         */<a name="line.187"></a>
+<FONT color="green">188</FONT>        public Object decode(Object value) throws DecoderException {<a name="line.188"></a>
+<FONT color="green">189</FONT>            if (value == null) {<a name="line.189"></a>
+<FONT color="green">190</FONT>                return null;<a name="line.190"></a>
+<FONT color="green">191</FONT>            } else if (value instanceof String) {<a name="line.191"></a>
+<FONT color="green">192</FONT>                return decode((String) value);<a name="line.192"></a>
+<FONT color="green">193</FONT>            } else {<a name="line.193"></a>
+<FONT color="green">194</FONT>                throw new DecoderException("Objects of type " +<a name="line.194"></a>
+<FONT color="green">195</FONT>                      value.getClass().getName() +<a name="line.195"></a>
+<FONT color="green">196</FONT>                      " cannot be decoded using BCodec");<a name="line.196"></a>
+<FONT color="green">197</FONT>            }<a name="line.197"></a>
+<FONT color="green">198</FONT>        }<a name="line.198"></a>
+<FONT color="green">199</FONT>    <a name="line.199"></a>
+<FONT color="green">200</FONT>        /**<a name="line.200"></a>
+<FONT color="green">201</FONT>         * The default charset used for string decoding and encoding.<a name="line.201"></a>
+<FONT color="green">202</FONT>         * <a name="line.202"></a>
+<FONT color="green">203</FONT>         * @return the default string charset.<a name="line.203"></a>
+<FONT color="green">204</FONT>         */<a name="line.204"></a>
+<FONT color="green">205</FONT>        public String getDefaultCharset() {<a name="line.205"></a>
+<FONT color="green">206</FONT>            return this.charset;<a name="line.206"></a>
+<FONT color="green">207</FONT>        }<a name="line.207"></a>
+<FONT color="green">208</FONT>    }<a name="line.208"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
