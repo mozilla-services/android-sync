@@ -108,8 +108,28 @@ public class Cryptographer {
     }
     
     
-    public static void encrypt(CryptoInfo info) {
+    public static CryptoInfo encrypt(CryptoInfo info) {
         
+        Cipher cipher = getCipher();
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(info.getKeys().getEncryptionKey(), 
+                        KEY_ALGORITHM_SPEC));
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        
+        // Encrypt
+        byte[] encryptedBytes = commonCrypto(cipher, info.getMessage());
+        info.setMessage(encryptedBytes);
+        
+        // Save IV
+        info.setIv(cipher.getIV());
+        
+        // Generate HMAC
+        info.setHmac(generateHmac(info));
+        
+        return info;
+    
     }
     
     /*
@@ -176,15 +196,21 @@ public class Cryptographer {
     
     /*
      * Helper to verify HMAC
-     * Input CyrptoInfo
+     * Input: CyrptoInfo
      * Output: true if HMAC is correct 
      */
     public static boolean verifyHmac(CryptoInfo bundle) {
-        
+        return Arrays.equals(generateHmac(bundle), bundle.getHmac());
+    }
+    
+    /*
+     * Helper to generate HMAC
+     * Input: CryptoInfo
+     * Output: a generated HMAC for given cipher text
+     */
+    public static byte[] generateHmac(CryptoInfo bundle) {
         Mac hmacHasher = HKDF.makeHmacHasher(HKDF.makeHmacKey(bundle.getKeys().getHmacKey()));
-        byte[] calculatedHmac = hmacHasher.doFinal(Base64.encodeBase64(bundle.getMessage()));
-        return Arrays.equals(calculatedHmac, bundle.getHmac());
-        
+        return hmacHasher.doFinal(Base64.encodeBase64(bundle.getMessage()));
     }
     
 }

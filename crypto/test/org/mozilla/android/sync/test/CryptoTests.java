@@ -137,5 +137,34 @@ public class CryptoTests {
         assertEquals(true, equals);
         
     }
+    
+    @Test
+    public void testEncryptDecrypt() {
+        String clearText =              "This is some cleartext written on" +
+                                        " Halloween 2011!";
+        String base64EncryptionKey =    "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYH" +
+                                        "qeg3KW9+m6Q=";
+        String base64HmacKey =          "MMntEfutgLTc8FlTLQFms8/xMPmCldqP" +
+                                        "lq/QQXEjx70=";
+        
+        // Encrypt
+        CryptoInfo encrypted = Cryptographer.encrypt(
+                new CryptoInfo(
+                    clearText.getBytes(),
+                    "".getBytes(),
+                    "".getBytes(),
+                    new KeyBundle(
+                        Base64.decodeBase64(base64EncryptionKey),
+                        Base64.decodeBase64(base64HmacKey))
+                ));
+        
+        // Decrypt
+        byte[] decrypted = Cryptographer.decrypt(encrypted);
+        
+        // Check result
+        boolean equals = Arrays.equals(clearText.getBytes(), decrypted);
+        assertEquals(true, equals);
+        
+    }
 
 }
