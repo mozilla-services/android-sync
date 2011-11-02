@@ -9,80 +9,13 @@ import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
-import org.mozilla.android.sync.CryptoInfo;
 import org.mozilla.android.sync.Cryptographer;
-import org.mozilla.android.sync.HKDF;
-import org.mozilla.android.sync.KeyBundle;
 import org.mozilla.android.sync.Utils;
+import org.mozilla.android.sync.domain.CryptoInfo;
+import org.mozilla.android.sync.domain.KeyBundle;
 
-/*
- * Note: Currently all tests are based on the fact that I get clear text
- * when I decrypt...these aren't taken from other Mozilla crypto libraries
- * where we know that the results are right...they are currently just sanity
- * tests by which I assume that since I get the correct clear text and HMAC's
- * check out, things are mostly correct. For now this is good enough, later,
- * not so much.
- */
 public class CryptoTests {
 
-    // TODO why am I doing byte conversion where I am when the Base64 methods can handle strings anyways!!!
-    
-    @Test
-    public void testConstructKeyBundleKeys() {
-        
-        String username =               "smqvooxj664hmrkrv6bw4r4vkegjhkns";
-        String friendlyBase32SyncKey =  "gbh7teqqcgyzd65svjgibd7tqy";
-        String base64EncryptionKey =    "069EnS3EtDK4y1tZ1AyKX+U7WEsWRp9bRIKLdW/7aoE=";
-        String base64HmacKey =          "LF2YCS1QCgSNCf0BCQvQ06SGH8jqJDi9dKj0O+b0fwI=";
-        
-        KeyBundle keys = Cryptographer.getCryptoKeysBundleKeys
-                (Utils.decodeFriendlyBase32(friendlyBase32SyncKey), username.getBytes());
-        
-        boolean equal;
-        // Check Encryption Key
-        equal = Arrays.equals(keys.getEncryptionKey(), Base64.decodeBase64(base64EncryptionKey));
-        assertEquals(true, equal);
-        
-        // Check HMAC Key
-        equal = Arrays.equals(keys.getHmacKey(), Base64.decodeBase64(base64HmacKey));
-        assertEquals(true, equal);
-        
-    }
-    
-    @Test
-    public void testExtractCryptoKeys() {
-        String username =                       "smqvooxj664hmrkrv6bw4r4vkegjhkns";
-        String friendlyBase32SyncKey =          "gbh7teqqcgyzd65svjgibd7tqy";
-        byte[] base64CipherText =               "lBsYDi/UPX/PwIdAUaBGaob2J6O3YmAEEWC4l4oD/aZajQ38zxp7UH9gNNeZ9oy3lMWCtcrDKM+EXWhQSB+Jfbl3fcKdaFP+8MbkxbFXAY/hNTiTq9XB9PxKJZnDte2i/uIa3Thy4jbU7eVHMxWL1s0Z6G+H7qiQBJIVRDuCehn3zeM0bNRcj6RJMnLMmd2/tn6qTIxwyT74sqpcTSVxhA==".getBytes();
-        byte[] base64IV =                       "RlBJdQcp6mPWKmCRisUrtQ==".getBytes();
-        String base16Hmac =                     "aa5fc1ba11bb4ef7660046ea285c93a9bbed2805a101d3a02b9301a1c3f852e1";
-        byte[] expectedBase64EncryptionKey =    "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=".getBytes();
-        byte[] expectedBase64HmacKey =          "MMntEfutgLTc8FlTLQFms8/xMPmCldqPlq/QQXEjx70=".getBytes();
-                
-        KeyBundle actualKeys = Cryptographer.extractCryptoKeys(Utils.decodeFriendlyBase32(friendlyBase32SyncKey), username.getBytes(), 
-                new CryptoInfo(Base64.decodeBase64(base64CipherText), Base64.decodeBase64(base64IV), Utils.hex2Byte(base16Hmac), null));
-        
-        
-        // Note...need to verify that the values we are getting are actually correct and decrypt stuff, but they look good :)
-        boolean equal;
-        // Check Encryption Key
-        equal = Arrays.equals(actualKeys.getEncryptionKey(), Base64.decodeBase64(expectedBase64EncryptionKey));
-        assertEquals(true, equal);
-        
-        // Check HMAC Key
-        equal = Arrays.equals(actualKeys.getHmacKey(), Base64.decodeBase64(expectedBase64HmacKey));
-        assertEquals(true, equal);
-        
-        
-    }
-    
-    @Test
-    public void testHmacVerification() {
-        
-        // Test 2 cases - 1 match, 1 doesn't
-    }
-    
-    
     @Test
     public void testDecrypt() {
 
@@ -165,6 +98,21 @@ public class CryptoTests {
         boolean equals = Arrays.equals(clearText.getBytes(), decrypted);
         assertEquals(true, equals);
         
+    }
+    
+    /*
+     * Basic sanity check to make sure length of keys is correct (32 bytes).
+     * Also make sure that the two keys are different.
+     */
+    @Test
+    public void testGenerateRandomKeys() {
+        KeyBundle keys = Cryptographer.generateKeys();
+        
+        assertEquals(keys.getEncryptionKey().length, 32); 
+        assertEquals(keys.getHmacKey().length, 32);
+        
+        boolean equal = Arrays.equals(keys.getEncryptionKey(), keys.getHmacKey());
+        assertEquals(false, equal);
     }
 
 }

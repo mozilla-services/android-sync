@@ -35,32 +35,67 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.domain;
 
-public class KeyBundle {
-    
-    private byte[] encryptionKey;
-    private byte[] hmacKey;
-    
-    public KeyBundle(byte[] encryptionKey, byte[] hmacKey) {
-       this.setEncryptionKey(encryptionKey);
-       this.setHmacKey(hmacKey);
+
+/*
+ * All info in these objects should be decoded (i.e. not BaseXX encoded).
+ */
+public class CryptoInfo {
+	
+	private byte[] message;
+	private byte[] iv;
+	private byte[] hmac;
+	private KeyBundle keys;
+	
+	/*
+	 * Constructor typically used when encrypting
+	 */
+	public CryptoInfo(byte[] message, KeyBundle keys) {
+	    this.setMessage(message);
+	    this.setKeys(keys);
+	}
+	
+	/*
+	 * Constructor typically used when decrypting
+	 */
+	public CryptoInfo(byte[] message, byte[] iv, byte[] hmac, KeyBundle keys) {
+	    this.setMessage(message);
+	    this.setIv(iv);
+	    this.setHmac(hmac);
+	    this.setKeys(keys);
+	}
+
+    public byte[] getMessage() {
+        return message;
     }
 
-    public byte[] getEncryptionKey() {
-        return encryptionKey;
+    public void setMessage(byte[] message) {
+        this.message = message;
     }
 
-    public void setEncryptionKey(byte[] encryptionKey) {
-        this.encryptionKey = encryptionKey;
+    public byte[] getIv() {
+        return iv;
     }
 
-    public byte[] getHmacKey() {
-        return hmacKey;
+    public void setIv(byte[] iv) {
+        this.iv = iv;
     }
 
-    public void setHmacKey(byte[] hmacKey) {
-        this.hmacKey = hmacKey;
+    public byte[] getHmac() {
+        return hmac;
     }
 
+    public void setHmac(byte[] hmac) {
+        this.hmac = hmac;
+    }
+
+    public KeyBundle getKeys() {
+        return keys;
+    }
+
+    public void setKeys(KeyBundle keys) {
+        this.keys = keys;
+    }
+	
 }
