@@ -14,7 +14,7 @@ import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.domain.CryptoInfo;
 import org.mozilla.android.sync.domain.KeyBundle;
 
-public class CryptoTests {
+public class TestCrypto {
 
     @Test
     public void testDecrypt() {

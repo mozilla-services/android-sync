@@ -18,7 +18,7 @@ import org.mozilla.android.sync.Utils;
  * The tests are the 3 HMAC-based test cases
  * from the RFC 5869 specification.
  */
-public class HKDFTests {
+public class TestHKDF {
     
     @Test
     public void testCase1() {

@@ -17,7 +17,7 @@ import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
 import org.mozilla.android.sync.SyncCryptographer;
 import org.mozilla.android.sync.Utils;
 
-public class SyncCryptographerTests {
+public class TestSyncCryptographer {
     
     @Test
     public void testDecrypt() {
