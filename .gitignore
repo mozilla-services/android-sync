@@ -5,3 +5,5 @@
 *.jar
 *.class
 target
+.project
+.classpath
