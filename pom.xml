@@ -24,5 +24,11 @@
       <optional>true</optional>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.simpleframework</groupId>
+      <artifactId>simple</artifactId>
+      <version>4.1.21</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
