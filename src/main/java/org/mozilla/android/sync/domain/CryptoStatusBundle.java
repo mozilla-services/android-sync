@@ -20,7 +20,7 @@
  *
  * Contributor(s):
  * Jason Voll
- * 
+ *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
  * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
@@ -38,19 +38,19 @@
 package org.mozilla.android.sync.domain;
 
 public class CryptoStatusBundle {
-    
+
     public enum CryptoStatus {
-        OK, 
+        OK,
         MISSING_KEYS,
         HMAC_VERIFY_FAIL,
         INVALID_JSON,
         INVALID_KEYS_BUNDLE,
         MISSING_SYNCKEY_OR_USER
     }
-    
+
     private CryptoStatus status;
     private String json;
-    
+
     public CryptoStatusBundle (CryptoStatus status, String json) {
        this.setStatus(status);
        this.setJson(json);

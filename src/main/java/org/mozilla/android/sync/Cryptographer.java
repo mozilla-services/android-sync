@@ -20,7 +20,7 @@
  *
  * Contributor(s):
  * Jason Voll
- * 
+ *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
  * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
@@ -63,48 +63,48 @@ public class Cryptographer {
     private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding";
     private static final String KEY_ALGORITHM_SPEC = "AES";
     private static final int KEY_SIZE = 256;
-    
+
     public static CryptoInfo encrypt(CryptoInfo info) {
-        
+
         Cipher cipher = getCipher();
         try {
-            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(info.getKeys().getEncryptionKey(), 
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(info.getKeys().getEncryptionKey(),
                         KEY_ALGORITHM_SPEC));
         } catch (InvalidKeyException e) {
             e.printStackTrace();
             return null;
         }
-        
+
         // Encrypt
         byte[] encryptedBytes = commonCrypto(cipher, info.getMessage());
         info.setMessage(encryptedBytes);
-        
+
         // Save IV
         info.setIv(cipher.getIV());
-        
+
         // Generate HMAC
         info.setHmac(generateHmac(info));
-        
+
         return info;
-    
+
     }
-    
+
     /*
      * Perform a decryption
-     * 
+     *
      * Input: info bundle for decryption
      * Ouput: decrypted byte[]
      */
     public static byte[] decrypt(CryptoInfo info) {
-        
+
         // Check HMAC
         if (!verifyHmac(info)) {
             return null;
         }
-        
+
         Cipher cipher = getCipher();
         try {
-            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(info.getKeys().getEncryptionKey(), 
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(info.getKeys().getEncryptionKey(),
                         KEY_ALGORITHM_SPEC), new IvParameterSpec(info.getIv()));
         } catch (InvalidKeyException e) {
             e.printStackTrace();
@@ -113,10 +113,10 @@ public class Cryptographer {
             e.printStackTrace();
             return null;
         }
-    
+
         return commonCrypto(cipher, info.getMessage());
     }
-    
+
     /*
      * Make 2 random 256 bit keys (encryption and hmac)
      */
@@ -128,17 +128,17 @@ public class Cryptographer {
             e.printStackTrace();
             return null;
         }
-        
+
         keygen.init(KEY_SIZE);
         byte[] encryptionKey = keygen.generateKey().getEncoded();
         byte[] hmacKey = keygen.generateKey().getEncoded();
         return new KeyBundle(encryptionKey, hmacKey);
     }
-    
+
     /*
      * Performs functionality common to both the
      * encryption and decryption operations
-     * 
+     *
      * Input: Cipher object, non-BaseXX-encoded byte[] input
      * Output: encrypted/decrypted byte[]
      */
@@ -153,7 +153,7 @@ public class Cryptographer {
         }
         return outputMessage;
     }
-    
+
     /*
      * Helper to get a Cipher object
      * Input: None
@@ -170,16 +170,16 @@ public class Cryptographer {
         }
         return cipher;
     }
-    
+
     /*
      * Helper to verify HMAC
      * Input: CyrptoInfo
-     * Output: true if HMAC is correct 
+     * Output: true if HMAC is correct
      */
     private static boolean verifyHmac(CryptoInfo bundle) {
         return Arrays.equals(generateHmac(bundle), bundle.getHmac());
     }
-    
+
     /*
      * Helper to generate HMAC
      * Input: CryptoInfo
@@ -189,5 +189,5 @@ public class Cryptographer {
         Mac hmacHasher = HKDF.makeHmacHasher(HKDF.makeHmacKey(bundle.getKeys().getHmacKey()));
         return hmacHasher.doFinal(Base64.encodeBase64(bundle.getMessage()));
     }
-    
+
 }

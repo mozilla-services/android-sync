@@ -20,7 +20,7 @@
  *
  * Contributor(s):
  * Jason Voll
- * 
+ *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
  * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
@@ -51,10 +51,10 @@ import javax.crypto.spec.SecretKeySpec;
  * HMAC uses HMAC SHA256 standard.
  */
 public class HKDF {
-    
+
     static final int BLOCKSIZE = 256/8;
     static final byte[] HMAC_INPUT = "Sync-AES_256_CBC-HMAC256".getBytes();
-    
+
     /*
      * Step 1 of RFC 5869
      * Get sha256HMAC Bytes
@@ -66,54 +66,54 @@ public class HKDF {
         Mac hmacHasher = makeHmacHasher(hmacKey);
         return digestBytes(IKM, hmacHasher);
     }
-    
+
     /*
      * Step 2 of RFC 5869
      * Input: PRK from step 1, info, length
      * Output: OKM (output keyring material)
      */
     public static byte[] hkdfExpand(byte[] prk, byte[] info, int len) {
-        
+
         Key hmacKey = makeHmacKey(prk);
         Mac hmacHasher = makeHmacHasher(hmacKey);
-        
+
         byte[] T = "".getBytes();
         byte[] Tn = "".getBytes();
-        
+
         int iterations = (int) Math.ceil(((double)len)/((double)BLOCKSIZE));
         for (int i = 0; i < iterations; i++) {
             Tn = digestBytes(Utils.concatAll
                     (Tn, info, Utils.hex2Byte(Integer.toHexString(i + 1))), hmacHasher);
             T = Utils.concatAll(T, Tn);
         }
-        
-        return Arrays.copyOfRange(T, 0, len); 
+
+        return Arrays.copyOfRange(T, 0, len);
     }
-    
+
     /*
      * Mozilla's modified version for getting keys to decrypt the
      * crypto keys bundle.
-     * 
+     *
      * We do exactly 2 iterations and make the first iteration the
      * encryption key and the second iteration the hmac key
-     * 
-     * Input: syncKey, username  
-     * Output: 2 keys returned in encryptionKey (at index 0) and hmacKey (at index 1) 
+     *
+     * Input: syncKey, username
+     * Output: 2 keys returned in encryptionKey (at index 0) and hmacKey (at index 1)
      */
     public static byte[][] getCryptoKeysBundleKeys(byte[] syncKey, byte[] username) {
-        
+
         Key key = makeHmacKey(syncKey);
         Mac hmacHasher = makeHmacHasher(key);
-        
+
         byte[][] ret = new byte[2][0];
         ret[0] = digestBytes(Utils.concatAll
                 ("".getBytes(), HMAC_INPUT, username, Utils.hex2Byte(Integer.toHexString(1))), hmacHasher);
         ret[1] = digestBytes(Utils.concatAll
                 (ret[0], HMAC_INPUT, username, Utils.hex2Byte(Integer.toHexString(2))), hmacHasher);
-        
+
         return ret;
     }
-    
+
     /*
      * Make HMAC key
      * Input: key (salt)
@@ -125,14 +125,14 @@ public class HKDF {
         }
         return new SecretKeySpec(key, "HmacSHA256");
     }
-    
+
     /*
      * Make an HMAC hasher
      * Input: Key hmacKey
      * Ouput: An HMAC Hasher
      */
     public static Mac makeHmacHasher(Key hmacKey) {
-        
+
         // HMAC hasher
         Mac hmacHasher = null;
         try {
@@ -140,16 +140,16 @@ public class HKDF {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        
+
         try {
             hmacHasher.init(hmacKey);
         } catch (InvalidKeyException e) {
             e.printStackTrace();
         }
-        
+
         return hmacHasher;
     }
-    
+
     /*
      * Hash bytes with given hasher
      * Input: message to hash, HMAC hasher

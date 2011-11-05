@@ -53,8 +53,8 @@ public class TestCrypto {
                                         "cnZlci93ZWF2ZS9sb2dzLyIsInZpc2l0" +
                                         "cyI6W3siZGF0ZSI6MTMxOTE0OTAxMjM3" +
                                         "MjQyNSwidHlwZSI6MX1dfQ==";
-        
-        
+
+
         byte[] decodedBytes = Cryptographer.decrypt(
                 new CryptoInfo(
                     Base64.decodeBase64(base64CipherText),
@@ -64,13 +64,13 @@ public class TestCrypto {
                             Base64.decodeBase64(base64EncryptionKey),
                             Base64.decodeBase64(base64HmacKey))
                 ));
-        
+
         // Check result
         boolean equals = Arrays.equals(decodedBytes, Base64.decodeBase64(base64ExpectedBytes));
         assertEquals(true, equals);
-        
+
     }
-    
+
     @Test
     public void testEncryptDecrypt() {
         String clearText =              "This is some cleartext written on" +
@@ -79,7 +79,7 @@ public class TestCrypto {
                                         "qeg3KW9+m6Q=";
         String base64HmacKey =          "MMntEfutgLTc8FlTLQFms8/xMPmCldqP" +
                                         "lq/QQXEjx70=";
-        
+
         // Encrypt
         CryptoInfo encrypted = Cryptographer.encrypt(
                 new CryptoInfo(
@@ -90,16 +90,16 @@ public class TestCrypto {
                         Base64.decodeBase64(base64EncryptionKey),
                         Base64.decodeBase64(base64HmacKey))
                 ));
-        
+
         // Decrypt
         byte[] decrypted = Cryptographer.decrypt(encrypted);
-        
+
         // Check result
         boolean equals = Arrays.equals(clearText.getBytes(), decrypted);
         assertEquals(true, equals);
-        
+
     }
-    
+
     /*
      * Basic sanity check to make sure length of keys is correct (32 bytes).
      * Also make sure that the two keys are different.
@@ -107,10 +107,10 @@ public class TestCrypto {
     @Test
     public void testGenerateRandomKeys() {
         KeyBundle keys = Cryptographer.generateKeys();
-        
-        assertEquals(keys.getEncryptionKey().length, 32); 
+
+        assertEquals(keys.getEncryptionKey().length, 32);
         assertEquals(keys.getHmacKey().length, 32);
-        
+
         boolean equal = Arrays.equals(keys.getEncryptionKey(), keys.getHmacKey());
         assertEquals(false, equal);
     }

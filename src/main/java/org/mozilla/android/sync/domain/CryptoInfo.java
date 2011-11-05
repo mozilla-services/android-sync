@@ -20,7 +20,7 @@
  *
  * Contributor(s):
  * Jason Voll
- * 
+ *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
  * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
@@ -42,12 +42,12 @@ package org.mozilla.android.sync.domain;
  * All info in these objects should be decoded (i.e. not BaseXX encoded).
  */
 public class CryptoInfo {
-	
+
 	private byte[] message;
 	private byte[] iv;
 	private byte[] hmac;
 	private KeyBundle keys;
-	
+
 	/*
 	 * Constructor typically used when encrypting
 	 */
@@ -55,7 +55,7 @@ public class CryptoInfo {
 	    this.setMessage(message);
 	    this.setKeys(keys);
 	}
-	
+
 	/*
 	 * Constructor typically used when decrypting
 	 */
@@ -97,5 +97,5 @@ public class CryptoInfo {
     public void setKeys(KeyBundle keys) {
         this.keys = keys;
     }
-	
+
 }
