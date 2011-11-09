@@ -37,10 +37,21 @@
 
 package org.mozilla.android.sync.domain;
 
+import org.mozilla.android.sync.HKDF;
+import org.mozilla.android.sync.Utils;
+
 public class KeyBundle {
 
     private byte[] encryptionKey;
     private byte[] hmacKey;
+
+    public KeyBundle(String username, String base32SyncKey) {
+      byte[] syncKey = Utils.decodeFriendlyBase32(base32SyncKey);
+      byte[] user    = username.getBytes();
+      byte[][] keys = HKDF.getCryptoKeysBundleKeys(syncKey, user);
+      this.encryptionKey = keys[0];
+      this.hmacKey       = keys[1];
+    }
 
     public KeyBundle(byte[] encryptionKey, byte[] hmacKey) {
        this.setEncryptionKey(encryptionKey);

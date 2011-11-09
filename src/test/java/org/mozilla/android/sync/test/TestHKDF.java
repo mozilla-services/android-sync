@@ -3,7 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
@@ -11,6 +11,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
 import org.mozilla.android.sync.HKDF;
 import org.mozilla.android.sync.Utils;
+import org.mozilla.android.sync.domain.KeyBundle;
 
 
 /*
@@ -33,8 +34,8 @@ public class TestHKDF {
                         "2d2d0a90cf1a5a4c5db02d56ecc4c5bf" +
                         "34007208d5b887185865";
 
-        assertEquals(true, doStep1(IKM, salt, PRK));
-        assertEquals(true, doStep2(PRK, info, L, OKM));
+        assertTrue(doStep1(IKM, salt, PRK));
+        assertTrue(doStep2(PRK, info, L, OKM));
     }
 
     @Test
@@ -65,8 +66,8 @@ public class TestHKDF {
                         "cc30c58179ec3e87c14c01d5c1f3434f" +
                         "1d87";
 
-        assertEquals(true, doStep1(IKM, salt, PRK));
-        assertEquals(true, doStep2(PRK, info, L, OKM));
+        assertTrue(doStep1(IKM, salt, PRK));
+        assertTrue(doStep2(PRK, info, L, OKM));
     }
 
     @Test
@@ -82,8 +83,8 @@ public class TestHKDF {
                         "b8a11f5c5ee1879ec3454e5f3c738d2d" +
                         "9d201395faa4b61a96c8";
 
-        assertEquals(true, doStep1(IKM, salt, PRK));
-        assertEquals(true, doStep2(PRK, info, L, OKM));
+        assertTrue(doStep1(IKM, salt, PRK));
+        assertTrue(doStep2(PRK, info, L, OKM));
     }
 
     /*
@@ -103,18 +104,19 @@ public class TestHKDF {
         byte[][] keys = HKDF.getCryptoKeysBundleKeys(
                 Utils.decodeFriendlyBase32(friendlyBase32SyncKey), username.getBytes());
 
-        boolean equal;
-        // Check Encryption Key
-        equal = Arrays.equals(keys[0], Base64.decodeBase64(base64EncryptionKey));
-        assertEquals(true, equal);
+        byte[] expectedEncryptionKey = Base64.decodeBase64(base64EncryptionKey);
+        byte[] expectedHMACKey       = Base64.decodeBase64(base64HmacKey);
+        assertTrue(Arrays.equals(keys[0], expectedEncryptionKey));
+        assertTrue(Arrays.equals(keys[1], expectedHMACKey));
 
-        // Check HMAC Key
-        equal = Arrays.equals(keys[1], Base64.decodeBase64(base64HmacKey));
-        assertEquals(true, equal);
+        // Check KeyBundle returns the same results.
+        KeyBundle bundle = new KeyBundle(username, friendlyBase32SyncKey);
+        assertTrue(Arrays.equals(bundle.getEncryptionKey(), expectedEncryptionKey));
+        assertTrue(Arrays.equals(bundle.getHmacKey(), expectedHMACKey));
     }
 
     /*
-     * Helper to do step 1 of RFC 5869
+     * Helper to do step 1 of RFC 5869.
      */
     private boolean doStep1(String IKM, String salt, String PRK) {
         byte[] prkResult = HKDF.hkdfExtract(Utils.hex2Byte(salt), Utils.hex2Byte(IKM));
@@ -123,7 +125,7 @@ public class TestHKDF {
     }
 
     /*
-     * Helper to do step 2 of RFC 5869
+     * Helper to do step 2 of RFC 5869.
      */
     private boolean doStep2(String PRK, String info, int L, String OKM) {
         byte[] okmResult = HKDF.hkdfExpand(Utils.hex2Byte(PRK), Utils.hex2Byte(info), L);
