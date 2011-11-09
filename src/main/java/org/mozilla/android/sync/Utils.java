@@ -121,7 +121,7 @@ public class Utils {
      */
     public static byte[] decodeFriendlyBase32(String base32) {
         Base32 converter = new Base32();
-        return converter.decode(base32.replace('8', 'l').replace('9', '0')
+        return converter.decode(base32.replace('8', 'l').replace('9', 'o')
                 .toUpperCase());
     }
 
