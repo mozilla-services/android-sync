@@ -101,10 +101,6 @@ public class TestCrypto {
 
     }
 
-    @Test
-    public void testKeyBundle() {
-      KeyBundle keys = new KeyBundle("", "");      // TODO
-    }
     /*
      * Basic sanity check to make sure length of keys is correct (32 bytes).
      * Also make sure that the two keys are different.
@@ -114,9 +110,9 @@ public class TestCrypto {
         KeyBundle keys = Cryptographer.generateKeys();
 
         assertEquals(keys.getEncryptionKey().length, 32);
-        assertEquals(keys.getHmacKey().length, 32);
+        assertEquals(keys.getHMACKey().length, 32);
 
-        boolean equal = Arrays.equals(keys.getEncryptionKey(), keys.getHmacKey());
+        boolean equal = Arrays.equals(keys.getEncryptionKey(), keys.getHMACKey());
         assertEquals(false, equal);
     }
 

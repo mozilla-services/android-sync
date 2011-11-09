@@ -37,6 +37,8 @@
 
 package org.mozilla.android.sync.domain;
 
+import javax.crypto.Mac;
+
 import org.mozilla.android.sync.HKDF;
 import org.mozilla.android.sync.Utils;
 
@@ -45,17 +47,41 @@ public class KeyBundle {
     private byte[] encryptionKey;
     private byte[] hmacKey;
 
+    // These are the same for every sync key bundle.
+    private static final byte[] EMPTY_BYTES      = {};
+    private static final byte[] ENCR_INPUT_BYTES = {1};
+    private static final byte[] HMAC_INPUT_BYTES = {2};
+
+    /*
+     * Mozilla's use of HKDF for getting keys from the Sync Key string.
+     *
+     * We do exactly 2 HKDF iterations and make the first iteration the
+     * encryption key and the second iteration the HMAC key.
+     *
+     */
     public KeyBundle(String username, String base32SyncKey) {
+      if (base32SyncKey == null) {
+        throw new IllegalArgumentException("No sync key provided.");
+      }
+      if (username == null || username.equals("")) {
+        throw new IllegalArgumentException("No username provided.");
+      }
       byte[] syncKey = Utils.decodeFriendlyBase32(base32SyncKey);
       byte[] user    = username.getBytes();
-      byte[][] keys = HKDF.getCryptoKeysBundleKeys(syncKey, user);
-      this.encryptionKey = keys[0];
-      this.hmacKey       = keys[1];
+
+      Mac hmacHasher = HKDF.makeHMACHasher(syncKey);
+
+      byte[] encrBytes = Utils.concatAll(EMPTY_BYTES, HKDF.HMAC_INPUT, user, ENCR_INPUT_BYTES);
+      byte[] encrKey   = HKDF.digestBytes(encrBytes, hmacHasher);
+      byte[] hmacBytes = Utils.concatAll(encrKey, HKDF.HMAC_INPUT, user, HMAC_INPUT_BYTES);
+
+      this.hmacKey       = HKDF.digestBytes(hmacBytes, hmacHasher);
+      this.encryptionKey = encrKey;
     }
 
     public KeyBundle(byte[] encryptionKey, byte[] hmacKey) {
        this.setEncryptionKey(encryptionKey);
-       this.setHmacKey(hmacKey);
+       this.setHMACKey(hmacKey);
     }
 
     public byte[] getEncryptionKey() {
@@ -66,11 +92,11 @@ public class KeyBundle {
         this.encryptionKey = encryptionKey;
     }
 
-    public byte[] getHmacKey() {
+    public byte[] getHMACKey() {
         return hmacKey;
     }
 
-    public void setHmacKey(byte[] hmacKey) {
+    public void setHMACKey(byte[] hmacKey) {
         this.hmacKey = hmacKey;
     }
 

@@ -39,12 +39,14 @@ package org.mozilla.android.sync.net;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Scanner;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.mozilla.android.sync.ExtendedJSONObject;
+import org.mozilla.android.sync.NonObjectJSONException;
 
 public class SyncStorageResponse {
   // Server responses on which we want to switch.
@@ -103,10 +105,17 @@ public class SyncStorageResponse {
 
   // TODO: Content-Type and Content-Length validation.
 
+  public String body() throws IllegalStateException, IOException {
+    InputStreamReader is = new InputStreamReader(this.response.getEntity().getContent());
+    // Oh, Java, you are so evil.
+    return new Scanner(is).useDelimiter("\\A").next();
+  }
+
   /**
    * Return the body as an Object.
    *
    * @return null if there is no body, or an Object if it successfully parses.
+   *         The return value will be an ExtendedJSONObject if it's a JSON object.
    * @throws IllegalStateException
    * @throws IOException
    * @throws ParseException
@@ -117,7 +126,15 @@ public class SyncStorageResponse {
     if (entity == null) {
       return null;
     }
-    return new JSONParser().parse(new InputStreamReader(entity.getContent()));
+    return ExtendedJSONObject.parse(entity.getContent());
+  }
+
+  public ExtendedJSONObject jsonObjectBody() throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
+    Object body = this.jsonBody();
+    if (body instanceof ExtendedJSONObject) {
+      return (ExtendedJSONObject) body;
+    }
+    throw new NonObjectJSONException(body);
   }
 
   private boolean hasHeader(String h) {

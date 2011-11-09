@@ -79,7 +79,7 @@ public class SyncCryptographer {
   private static final String ID_CRYPTO_KEYS =         "keys";
   private static final String CRYPTO_KEYS_COLLECTION = "crypto";
 
-  private byte[] syncKey;
+  public String syncKey;
   private String username;
   private KeyBundle keys;
 
@@ -97,7 +97,7 @@ public class SyncCryptographer {
   public SyncCryptographer(String username, String friendlyBase32SyncKey,
                            String base64EncryptionKey, String base64HmacKey) {
     this.setUsername(username);
-    this.setSyncKey(friendlyBase32SyncKey);
+    this.syncKey = friendlyBase32SyncKey;
     this.setKeys(base64EncryptionKey, base64HmacKey);
   }
 
@@ -221,12 +221,12 @@ public class SyncCryptographer {
     // Generate the keys and save for later use.
     KeyBundle cryptoKeys = Cryptographer.generateKeys();
     setKeys(Base64.encodeBase64String(cryptoKeys.getEncryptionKey()),
-        Base64.encodeBase64String(cryptoKeys.getHmacKey()));
+        Base64.encodeBase64String(cryptoKeys.getHMACKey()));
 
     // Generate JSON.
     JSONArray keysArray = new JSONArray();
     Utils.asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getEncryptionKey())));
-    Utils.asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getHmacKey())));
+    Utils.asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getHMACKey())));
     JSONObject json = new JSONObject();
     Utils.asMap(json).put(KEY_ID, ID_CRYPTO_KEYS);
     Utils.asMap(json).put(KEY_COLLECTION, CRYPTO_KEYS_COLLECTION);
@@ -317,38 +317,16 @@ public class SyncCryptographer {
   private String createJSONBundle(CryptoInfo info) {
     JSONObject json = new JSONObject();
     Utils.asMap(json).put(KEY_CIPHER_TEXT, new String(Base64.encodeBase64(info.getMessage())));
-    Utils.asMap(json).put(KEY_HMAC, Utils.byte2hex(info.getHmac()));
-    Utils.asMap(json).put(KEY_IV, new String(Base64.encodeBase64(info.getIv())));
+    Utils.asMap(json).put(KEY_HMAC, Utils.byte2hex(info.getHMAC()));
+    Utils.asMap(json).put(KEY_IV, new String(Base64.encodeBase64(info.getIV())));
     return json.toString();
   }
 
   /*
    * Get the keys needed to encrypt the crypto/keys bundle.
-   *
-   * Throws:  Exception if syncKey or username is not set.
    */
-  public KeyBundle getCryptoKeysBundleKeys() throws Exception {
-    // Check that we have the sync key and username
-    if (syncKey == null || username.equalsIgnoreCase("")) {
-      throw new Exception();
-    }
-
-    byte[][] keys = HKDF.getCryptoKeysBundleKeys(syncKey, username.getBytes());
-    return new KeyBundle(keys[0], keys[1]);
-  }
-
-  /*
-   * Accessors/Mutators.
-   */
-  public byte[] getSyncKey() {
-    return syncKey;
-  }
-
-  /*
-   * Input: FriendlyBase32 encoded sync key.
-   */
-  public void setSyncKey(String friendlyBase32SyncKey) {
-    this.syncKey = Utils.decodeFriendlyBase32(friendlyBase32SyncKey);
+  public KeyBundle getCryptoKeysBundleKeys() {
+    return new KeyBundle(username, syncKey);
   }
 
   public KeyBundle getKeys() {

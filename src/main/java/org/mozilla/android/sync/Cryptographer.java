@@ -20,6 +20,7 @@
  *
  * Contributor(s):
  * Jason Voll
+ * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -56,7 +57,7 @@ import org.mozilla.android.sync.domain.CryptoInfo;
 import org.mozilla.android.sync.domain.KeyBundle;
 
 /*
- * Implements the basic cryptography options required
+ * Implements the basic required cryptography options.
  */
 public class Cryptographer {
 
@@ -68,22 +69,23 @@ public class Cryptographer {
 
     Cipher cipher = getCipher();
     try {
-      cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(info.getKeys()
-          .getEncryptionKey(), KEY_ALGORITHM_SPEC));
-    } catch (InvalidKeyException e) {
-      e.printStackTrace();
-      return null;
+      byte[] encryptionKey = info.getKeys().getEncryptionKey();
+      SecretKeySpec spec = new SecretKeySpec(encryptionKey, KEY_ALGORITHM_SPEC);
+      cipher.init(Cipher.ENCRYPT_MODE, spec);
+    } catch (InvalidKeyException ex) {
+      ex.printStackTrace();
+      throw new CryptoException(ex);
     }
 
-    // Encrypt
+    // Encrypt.
     byte[] encryptedBytes = commonCrypto(cipher, info.getMessage());
     info.setMessage(encryptedBytes);
 
-    // Save IV
-    info.setIv(cipher.getIV());
+    // Save IV.
+    info.setIV(cipher.getIV());
 
-    // Generate HMAC
-    info.setHmac(generateHmac(info));
+    // Generate HMAC.
+    info.setHMAC(generateHMAC(info));
 
     return info;
 
@@ -101,15 +103,15 @@ public class Cryptographer {
   public static byte[] decrypt(CryptoInfo info) throws CryptoException {
 
     // Check HMAC.
-    if (!verifyHmac(info)) {
+    if (!verifyHMAC(info)) {
       throw new HMACVerificationException();
     }
 
     Cipher cipher = getCipher();
     try {
-      cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(info.getKeys()
-          .getEncryptionKey(), KEY_ALGORITHM_SPEC),
-          new IvParameterSpec(info.getIv()));
+      byte[] encryptionKey = info.getKeys().getEncryptionKey();
+      SecretKeySpec spec = new SecretKeySpec(encryptionKey, KEY_ALGORITHM_SPEC);
+      cipher.init(Cipher.DECRYPT_MODE, spec, new IvParameterSpec(info.getIV()));
     } catch (GeneralSecurityException ex) {
       ex.printStackTrace();
       throw new CryptoException(ex);
@@ -118,7 +120,7 @@ public class Cryptographer {
   }
 
   /*
-   * Make 2 random 256 bit keys (encryption and hmac)
+   * Make 2 random 256 bit keys (encryption and HMAC).
    */
   public static KeyBundle generateKeys() throws CryptoException {
     KeyGenerator keygen;
@@ -137,13 +139,13 @@ public class Cryptographer {
 
   /*
    * Performs functionality common to both the encryption and decryption
-   * operations
+   * operations.
    *
    * Input: Cipher object, non-BaseXX-encoded byte[] input Output:
    * encrypted/decrypted byte[]
    */
   private static byte[] commonCrypto(Cipher cipher, byte[] inputMessage)
-                                                                        throws CryptoException {
+                        throws CryptoException {
     byte[] outputMessage = null;
     try {
       outputMessage = cipher.doFinal(inputMessage);
@@ -158,16 +160,20 @@ public class Cryptographer {
   }
 
   /*
-   * Helper to get a Cipher object Input: None Output: Cipher object
+   * Helper to get a Cipher object.
+   * Input: None.
+   * Output: Cipher object.
    */
-  private static Cipher getCipher() {
+  private static Cipher getCipher() throws CryptoException {
     Cipher cipher = null;
     try {
       cipher = Cipher.getInstance(TRANSFORMATION);
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
+      throw new CryptoException(e);
     } catch (NoSuchPaddingException e) {
       e.printStackTrace();
+      throw new CryptoException(e);
     }
     return cipher;
   }
@@ -175,9 +181,9 @@ public class Cryptographer {
   /*
    * Helper to verify HMAC Input: CryptoInfo Output: true if HMAC is correct
    */
-  private static boolean verifyHmac(CryptoInfo bundle) {
-    byte[] generatedHMAC = generateHmac(bundle);
-    byte[] expectedHMAC  = bundle.getHmac();
+  private static boolean verifyHMAC(CryptoInfo bundle) {
+    byte[] generatedHMAC = generateHMAC(bundle);
+    byte[] expectedHMAC  = bundle.getHMAC();
     boolean eq = Arrays.equals(generatedHMAC, expectedHMAC);
     if (!eq) {
       System.err.println("Failed HMAC verification.");
@@ -191,9 +197,8 @@ public class Cryptographer {
    * Helper to generate HMAC Input: CryptoInfo Output: a generated HMAC for
    * given cipher text
    */
-  private static byte[] generateHmac(CryptoInfo bundle) {
-    Mac hmacHasher = HKDF.makeHmacHasher(HKDF.makeHmacKey(bundle.getKeys()
-        .getHmacKey()));
+  private static byte[] generateHMAC(CryptoInfo bundle) {
+    Mac hmacHasher = HKDF.makeHMACHasher(bundle.getKeys().getHMACKey());
     return hmacHasher.doFinal(Base64.encodeBase64(bundle.getMessage()));
   }
 

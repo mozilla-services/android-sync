@@ -61,8 +61,8 @@ public class CryptoInfo {
 	 */
 	public CryptoInfo(byte[] message, byte[] iv, byte[] hmac, KeyBundle keys) {
 	    this.setMessage(message);
-	    this.setIv(iv);
-	    this.setHmac(hmac);
+	    this.setIV(iv);
+	    this.setHMAC(hmac);
 	    this.setKeys(keys);
 	}
 
@@ -74,19 +74,19 @@ public class CryptoInfo {
         this.message = message;
     }
 
-    public byte[] getIv() {
+    public byte[] getIV() {
         return iv;
     }
 
-    public void setIv(byte[] iv) {
+    public void setIV(byte[] iv) {
         this.iv = iv;
     }
 
-    public byte[] getHmac() {
+    public byte[] getHMAC() {
         return hmac;
     }
 
-    public void setHmac(byte[] hmac) {
+    public void setHMAC(byte[] hmac) {
         this.hmac = hmac;
     }
 

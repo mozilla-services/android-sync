@@ -101,18 +101,12 @@ public class TestHKDF {
         String base64EncryptionKey =    "069EnS3EtDK4y1tZ1AyKX+U7WEsWRp9bRIKLdW/7aoE=";
         String base64HmacKey =          "LF2YCS1QCgSNCf0BCQvQ06SGH8jqJDi9dKj0O+b0fwI=";
 
-        byte[][] keys = HKDF.getCryptoKeysBundleKeys(
-                Utils.decodeFriendlyBase32(friendlyBase32SyncKey), username.getBytes());
+        KeyBundle bundle = new KeyBundle(username, friendlyBase32SyncKey);
 
         byte[] expectedEncryptionKey = Base64.decodeBase64(base64EncryptionKey);
         byte[] expectedHMACKey       = Base64.decodeBase64(base64HmacKey);
-        assertTrue(Arrays.equals(keys[0], expectedEncryptionKey));
-        assertTrue(Arrays.equals(keys[1], expectedHMACKey));
-
-        // Check KeyBundle returns the same results.
-        KeyBundle bundle = new KeyBundle(username, friendlyBase32SyncKey);
         assertTrue(Arrays.equals(bundle.getEncryptionKey(), expectedEncryptionKey));
-        assertTrue(Arrays.equals(bundle.getHmacKey(), expectedHMACKey));
+        assertTrue(Arrays.equals(bundle.getHMACKey(), expectedHMACKey));
     }
 
     /*

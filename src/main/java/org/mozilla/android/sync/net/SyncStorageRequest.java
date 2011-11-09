@@ -72,10 +72,20 @@ import org.json.simple.JSONObject;
  * * Content-Type and Content-Length validation.
  */
 public class SyncStorageRequest implements Resource {
+  public static String USER_AGENT = "Firefox AndroidSync 0.1";
+
+  // The delegate that receives callbacks from `resource`…
   private SyncResourceDelegate resourceDelegate;
-  protected BaseResource resource;
+
+  // … and the delegate we in turn notify.
   public SyncStorageRequestDelegate delegate;
 
+  // The resource that's actually performing the request.
+  protected BaseResource resource;
+
+  /**
+   * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
+   */
   public class SyncResourceDelegate implements ResourceDelegate {
 
     protected String contentType = "text/plain";
@@ -113,7 +123,7 @@ public class SyncStorageRequest implements Resource {
 
     @Override
     public int connectionTimeout() {
-      return 30 * 1000;        // Wait 30s for a connection to open.
+      return 30 * 1000;             // Wait 30s for a connection to open.
     }
     @Override
     public int socketTimeout() {
@@ -122,7 +132,7 @@ public class SyncStorageRequest implements Resource {
 
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
-      client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "Firefox AndroidSync 0.1");
+      client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
 
       // Clients can use their delegate interface to specify X-Weave-If-Unmodified-Since.
       String ifUnmodifiedSince = this.request.delegate.ifUnmodifiedSince();
@@ -149,22 +159,18 @@ public class SyncStorageRequest implements Resource {
     this.resource.delegate = this.resourceDelegate;
   }
 
-  @Override
   public void get() {
     this.resource.get();
   }
 
-  @Override
   public void delete() {
     this.resource.delete();
   }
 
-  @Override
   public void post(HttpEntity body) {
     this.resource.post(body);
   }
 
-  @Override
   public void put(HttpEntity body) {
     this.resource.put(body);
   }

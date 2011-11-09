@@ -127,7 +127,7 @@ public class TestSyncCryptographer {
         assertEquals(true, equal);
 
         // Check HMAC Key
-        equal = Arrays.equals(keys.getHmacKey(), Base64.decodeBase64(base64HmacKey));
+        equal = Arrays.equals(keys.getHMACKey(), Base64.decodeBase64(base64HmacKey));
         assertEquals(true, equal);
 
     }
@@ -171,7 +171,7 @@ public class TestSyncCryptographer {
         // Check that the correct keys were set and are not base64 encoded
         boolean equal = Arrays.equals(Base64.decodeBase64(expectedBase64EncryptionKey), cryptographer.getKeys().getEncryptionKey());
         assertEquals(true, equal);
-        equal = Arrays.equals(Base64.decodeBase64(expectedBase64HmacKey), cryptographer.getKeys().getHmacKey());
+        equal = Arrays.equals(Base64.decodeBase64(expectedBase64HmacKey), cryptographer.getKeys().getHMACKey());
         assertEquals(true, equal);
 
         // Check the decrypted text
@@ -204,7 +204,7 @@ public class TestSyncCryptographer {
         // Compare decrypted keys to the keys that were set upon creation
         boolean equal = Arrays.equals(createdKeys.getEncryptionKey(), decryptedKeys.getEncryptionKey());
         assertEquals(true, equal);
-        equal = Arrays.equals(createdKeys.getHmacKey(), decryptedKeys.getHmacKey());
+        equal = Arrays.equals(createdKeys.getHMACKey(), decryptedKeys.getHMACKey());
         assertEquals(true, equal);
     }
 
