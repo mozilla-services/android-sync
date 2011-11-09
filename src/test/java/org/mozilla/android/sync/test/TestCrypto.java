@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
+import org.mozilla.android.sync.CryptoException;
 import org.mozilla.android.sync.Cryptographer;
 import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.domain.CryptoInfo;
@@ -17,7 +18,7 @@ import org.mozilla.android.sync.domain.KeyBundle;
 public class TestCrypto {
 
     @Test
-    public void testDecrypt() {
+    public void testDecrypt() throws CryptoException {
 
         String base64CipherText =       "NMsdnRulLwQsVcwxKW9XwaUe7ouJk5Wn" +
                                         "80QhbD80l0HEcZGCynh45qIbeYBik0lg" +
@@ -72,7 +73,7 @@ public class TestCrypto {
     }
 
     @Test
-    public void testEncryptDecrypt() {
+    public void testEncryptDecrypt() throws CryptoException {
         String clearText =              "This is some cleartext written on" +
                                         " Halloween 2011!";
         String base64EncryptionKey =    "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYH" +
@@ -100,12 +101,16 @@ public class TestCrypto {
 
     }
 
+    @Test
+    public void testKeyBundle() {
+      KeyBundle keys = new KeyBundle("", "");      // TODO
+    }
     /*
      * Basic sanity check to make sure length of keys is correct (32 bytes).
      * Also make sure that the two keys are different.
      */
     @Test
-    public void testGenerateRandomKeys() {
+    public void testGenerateRandomKeys() throws CryptoException {
         KeyBundle keys = Cryptographer.generateKeys();
 
         assertEquals(keys.getEncryptionKey().length, 32);

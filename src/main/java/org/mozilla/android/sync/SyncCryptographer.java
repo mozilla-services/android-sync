@@ -106,7 +106,7 @@ public class SyncCryptographer {
    * Output:  CryptoStatusBundle with a JSON payload containing
    *          crypto information (ciphertext, IV, HMAC).
    */
-  public CryptoStatusBundle encryptWBO(String jsonString) {
+  public CryptoStatusBundle encryptWBO(String jsonString) throws CryptoException {
     // Verify that encryption keys are set.
     if (keys == null) {
       return new CryptoStatusBundle(CryptoStatus.MISSING_KEYS, jsonString);
@@ -118,7 +118,7 @@ public class SyncCryptographer {
    * Input: A string representation of the WBO (JSON).
    * Output: the decrypted payload and status.
    */
-  public CryptoStatusBundle decryptWBO(String jsonString) {
+  public CryptoStatusBundle decryptWBO(String jsonString) throws CryptoException {
     // Get JSON from string.
     JSONObject json = null;
     JSONObject payload = null;
@@ -159,7 +159,7 @@ public class SyncCryptographer {
    * Input: JSONObject payload containing crypto/keys JSON.
    * Output: Decrypted crypto/keys String.
    */
-  private CryptoStatusBundle decryptKeysWBO(JSONObject payload) {
+  private CryptoStatusBundle decryptKeysWBO(JSONObject payload) throws CryptoException {
     // Get the keys to decrypt the crypto keys bundle.
     KeyBundle cryptoKeysBundleKeys;
     try {
@@ -214,8 +214,9 @@ public class SyncCryptographer {
    *
    * @return The crypto/keys payload encrypted for sending to
    * the server.
+   * @throws CryptoException
    */
-  public CryptoStatusBundle generateCryptoKeysWBOPayload() {
+  public CryptoStatusBundle generateCryptoKeysWBOPayload() throws CryptoException {
 
     // Generate the keys and save for later use.
     KeyBundle cryptoKeys = Cryptographer.generateKeys();
@@ -252,7 +253,7 @@ public class SyncCryptographer {
    * Output:  CryptoStatusBundle with a JSON payload containing
    *          crypto information (ciphertext, iv, hmac).
    */
-  private CryptoStatusBundle encrypt(String message, KeyBundle keys) {
+  private CryptoStatusBundle encrypt(String message, KeyBundle keys) throws CryptoException {
     CryptoInfo encrypted = Cryptographer.encrypt(new CryptoInfo(message.getBytes(), keys));
     String payload = createJSONBundle(encrypted);
     return new CryptoStatusBundle(CryptoStatus.OK, payload);
@@ -264,8 +265,9 @@ public class SyncCryptographer {
    * Input:   JSONObject containing a valid payload (cipherText, IV, HMAC),
    *          KeyBundle with keys for decryption.
    * Output:  byte[] clearText
+   * @throws CryptoException
    */
-  private byte[] decryptPayload(JSONObject payload, KeyBundle keybundle) {
+  private byte[] decryptPayload(JSONObject payload, KeyBundle keybundle) throws CryptoException {
     byte[] clearText = Cryptographer.decrypt(
       new CryptoInfo (
         Base64.decodeBase64( (String) payload.get(KEY_CIPHER_TEXT) ),

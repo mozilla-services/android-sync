@@ -14,13 +14,14 @@ import org.junit.Test;
 import org.mozilla.android.sync.domain.CryptoStatusBundle;
 import org.mozilla.android.sync.domain.KeyBundle;
 import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
+import org.mozilla.android.sync.CryptoException;
 import org.mozilla.android.sync.SyncCryptographer;
 import org.mozilla.android.sync.Utils;
 
 public class TestSyncCryptographer {
 
     @Test
-    public void testDecrypt() {
+    public void testDecrypt() throws CryptoException {
         String jsonInput =              "{\"sortindex\": 90, \"payload\":" +
                                         "\"{\\\"ciphertext\\\":\\\"F4ukf0" +
                                         "LM+vhffiKyjaANXeUhfmOPPmQYX1XBoG" +
@@ -64,7 +65,7 @@ public class TestSyncCryptographer {
     }
 
     @Test
-    public void testEncryptDecrypt() {
+    public void testEncryptDecrypt() throws CryptoException {
         String originalText =           "{\"id\":\"hkZYpC-BH4Xi\",\"histU" +
                                         "ri\":\"http://hathology.com/2008" +
                                         "/06/how-to-edit-your-path-enviro" +
@@ -132,7 +133,7 @@ public class TestSyncCryptographer {
     }
 
     @Test
-    public void testDecryptKeysBundle() {
+    public void testDecryptKeysBundle() throws CryptoException {
         String jsonInput =                      "{\"payload\": \"{\\\"ciphertext\\" +
                                                 "\":\\\"L1yRyZBkVYKXC1cTpeUqqfmKg" +
                                                 "CinYV9YntGiG0PfYZSTLQ2s86WPI0VBb" +
@@ -178,7 +179,7 @@ public class TestSyncCryptographer {
     }
 
     @Test
-    public void testCreateKeysBundle() {
+    public void testCreateKeysBundle() throws CryptoException {
         String username =                       "b6evr62dptbxz7fvebek7btljyu322wp";
         String friendlyBase32SyncKey =          "basuxv2426eqj7frhvpcwkavdi";
 
