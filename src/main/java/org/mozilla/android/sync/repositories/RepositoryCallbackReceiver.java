@@ -9,9 +9,13 @@ public interface RepositoryCallbackReceiver {
 
   public void guidsSinceCallback(RepoStatusCode status, String[] guids);
 
+  public void storeCallback(RepoStatusCode status, long rowId);
+
   public void fetchSinceCallback(RepoStatusCode status, Record[] records);
 
   public void fetchCallback(RepoStatusCode status, Record[] records);
+
+  public void fetchAllCallback(RepoStatusCode status, Record[] records);
 
   public void wipeCallback(RepoStatusCode status);
 

@@ -16,7 +16,11 @@ public abstract class RepositorySession {
   public abstract void guidsSince(long timestamp, RepositoryCallbackReceiver receiver);
   public abstract void fetchSince(long timestamp, RepositoryCallbackReceiver receiver);
   public abstract void fetch(String[] guids, RepositoryCallbackReceiver receiver);
-  public abstract long store(Record record);
+
+  // Test function only
+  public abstract void fetchAll(RepositoryCallbackReceiver receiver);
+
+  public abstract void store(Record record, RepositoryCallbackReceiver receiver);
   public abstract void wipe(RepositoryCallbackReceiver receiver);
   public abstract void begin(RepositoryCallbackReceiver receiver);
   public abstract void finish(RepositoryCallbackReceiver receiver);

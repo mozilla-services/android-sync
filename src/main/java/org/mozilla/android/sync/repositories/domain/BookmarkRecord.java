@@ -6,7 +6,7 @@ public class BookmarkRecord implements Record {
   // TODO Consider using Google's gson for parsing json into
   // these domain objects
 
-  private String id;
+  private long id;
   private String guid;
   private String androidId;
   private String title;
@@ -135,10 +135,10 @@ public class BookmarkRecord implements Record {
   public void setChildren(String children) {
     this.children = children;
   }
-  public String getId() {
+  public long getId() {
     return id;
   }
-  public void setId(String id) {
+  public void setId(long id) {
     this.id = id;
   }
   public String getParentId() {

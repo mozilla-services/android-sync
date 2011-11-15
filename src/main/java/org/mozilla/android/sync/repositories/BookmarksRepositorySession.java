@@ -46,7 +46,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       int index = cur.getColumnIndex(BookmarksDatabaseHelper.COL_GUID);
 
       ArrayList<String> guids = new ArrayList<String>();
-      boolean empty = cur.moveToFirst();
+      cur.moveToFirst();
       while (cur.isAfterLast() == false) {
         guids.add(cur.getString(index));
         cur.moveToNext();
@@ -84,12 +84,16 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       Cursor cur = dbHelper.fetchSince(timestamp);
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
+      cur.moveToFirst();
       while (cur.isAfterLast() == false) {
         records.add(getRecord(cur));
         cur.moveToNext();
       }
 
-      callbackReceiver.fetchSinceCallback(RepoStatusCode.DONE, (BookmarkRecord[]) records.toArray());
+      Record[] recordArray = new Record[records.size()];
+      records.toArray(recordArray);
+
+      callbackReceiver.fetchSinceCallback(RepoStatusCode.DONE, recordArray);
 
     }
   }
@@ -116,23 +120,77 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       Cursor cur = dbHelper.fetch(guids);
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
+      cur.moveToFirst();
       while (cur.isAfterLast() == false) {
         records.add(getRecord(cur));
         cur.moveToNext();
       }
 
-      callbackReceiver.fetchSinceCallback(RepoStatusCode.DONE, (BookmarkRecord[]) records.toArray());
+      Record[] recordArray = new Record[records.size()];
+      records.toArray(recordArray);
+
+      callbackReceiver.fetchSinceCallback(RepoStatusCode.DONE, recordArray);
     }
   }
 
-  // Not doing store async, starting a thread is more overhead
-  // than just doing the operation here (and old code doesn't
-  // use async here)
-  // return the id of the inserted value
   @Override
-  public long store(Record record) {
-    long id = dbHelper.insertBookmark((BookmarkRecord) record);
-    return id;
+  // Fetch all method and thread
+  // NOTE: This is only used for testing
+  public void fetchAll(RepositoryCallbackReceiver receiver) {
+    FetchAllThread thread = new FetchAllThread(receiver);
+    thread.start();
+  }
+
+  class FetchAllThread extends Thread {
+    RepositoryCallbackReceiver callbackReceiver;
+
+    public FetchAllThread(RepositoryCallbackReceiver callbackReceiver) {
+      this.callbackReceiver = callbackReceiver;
+    }
+
+    public void run() {
+      //Display info about this particular thread
+      System.out.println("Fetch all thread: " + Thread.currentThread().getName());
+
+      Cursor cur = dbHelper.getAllBookmarks();
+      ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
+      cur.moveToFirst();
+      while (cur.isAfterLast() == false) {
+        records.add(getRecord(cur));
+        cur.moveToNext();
+      }
+
+      Record[] recordArray = new Record[records.size()];
+      records.toArray(recordArray);
+
+      callbackReceiver.fetchAllCallback(RepoStatusCode.DONE, recordArray);
+    }
+  }
+
+  // Store method and thread
+  @Override
+  public void store(Record record, RepositoryCallbackReceiver receiver) {
+    StoreThread thread = new StoreThread(record, receiver);
+    thread.start();
+  }
+
+  class StoreThread extends Thread {
+    Record record;
+    RepositoryCallbackReceiver callbackReceiver;
+
+    public StoreThread(Record record, RepositoryCallbackReceiver callbackReceiver) {
+      this.record = record;
+      this.callbackReceiver = callbackReceiver;
+    }
+
+    public void run() {
+      System.out.println(Thread.currentThread().getName());
+
+      long rowId = dbHelper.insertBookmark((BookmarkRecord) record);
+
+      callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
+
+    }
   }
 
   // Wipe method and thread
@@ -177,7 +235,7 @@ public class BookmarksRepositorySession extends RepositorySession {
   public static BookmarkRecord getRecord(Cursor cur) {
 
     BookmarkRecord rec = new BookmarkRecord();
-    rec.setId(getStringValue(cur, BookmarksDatabaseHelper.COL_ID));
+    rec.setId(getLongValue(cur, BookmarksDatabaseHelper.COL_ID));
     rec.setGuid(getStringValue(cur, BookmarksDatabaseHelper.COL_GUID));
     rec.setAndroidId(getStringValue(cur, BookmarksDatabaseHelper.COL_ANDROID_ID));
     rec.setTitle(getStringValue(cur, BookmarksDatabaseHelper.COL_TITLE));
@@ -202,6 +260,9 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   private static String getStringValue(Cursor cur, String columnName) {
     return cur.getString(cur.getColumnIndex(columnName));
+  }
+  private static long getLongValue(Cursor cur, String columnName) {
+    return cur.getLong(cur.getColumnIndex(columnName));
   }
 
 }
