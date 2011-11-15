@@ -6,7 +6,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.util.Log;
 
 public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
@@ -101,7 +103,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     onCreate(db);
   }
 
-  public void wipe() {
+  public void wipe() throws SQLiteException {
     SQLiteDatabase db = this.getWritableDatabase();
     onUpgrade(db, SCHEMA_VERSION, SCHEMA_VERSION);
   }
@@ -127,7 +129,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   // get all guids modified since timestamp
   public Cursor getGUIDSSince(long timestamp) {
     SQLiteDatabase db = this.getReadableDatabase();
-    Cursor c = db.query(TBL_BOOKMARKS, new String[] {COL_GUID}, COL_LAST_MOD + ">=" +
+    Cursor c = db.query(TBL_BOOKMARKS, new String[] {COL_GUID}, COL_LAST_MOD + " >= " +
         Long.toString(timestamp), null, null, null, null);
     return c;
   }
@@ -135,7 +137,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   // get records modified since timestamp
   public Cursor fetchSince(long timestamp) {
     SQLiteDatabase db = this.getReadableDatabase();
-    Cursor c = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, COL_LAST_MOD + ">=" +
+    Cursor c = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, COL_LAST_MOD + " >= " +
         Long.toString(timestamp), null, null, null, null);
     return c;
   }
@@ -143,15 +145,20 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   // get all records requested
   public Cursor fetch(String guids[]) {
     SQLiteDatabase db = this.getReadableDatabase();
-    Cursor c = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, COL_GUID + "=?", guids, null, null, null);
-    return c;
+    String where = COL_GUID + " in (";
+    for (String guid : guids) {
+      where = where + "'" + guid + "', ";
+    }
+    where = (where.substring(0, where.length() -2) + ")");
+    String queryString = SQLiteQueryBuilder.buildQueryString(false, TBL_BOOKMARKS, BOOKMARKS_COLUMNS, where, null, null, null, null);
+    return db.rawQuery(queryString, null);
   }
 
   // update and return number of rows affected
   public int updateBookmark(BookmarkRecord bookmark) {
     SQLiteDatabase db = this.getWritableDatabase();
     ContentValues cv = getContentValues(bookmark);
-    int rows = db.update(TBL_BOOKMARKS, cv, COL_ID + "=?", new String[]
+    int rows = db.update(TBL_BOOKMARKS, cv, COL_ID + " =? ", new String[]
         {String.valueOf(bookmark.getId())});
 
     Log.i("DBLocal", "Updated " + rows + " bookmarks rows");

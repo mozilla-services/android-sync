@@ -4,6 +4,6 @@ package org.mozilla.android.sync.repositories;
 // mechanism to repository instances.
 public interface SyncCallbackReceiver {
 
-  public void sessionCallback(RepoStatusCode error, RepositorySession session);
-  public void storeCallback(RepoStatusCode error);
+  public void sessionCallback(RepoStatusCode status, RepositorySession session);
+  public void storeCallback(RepoStatusCode status);
 }

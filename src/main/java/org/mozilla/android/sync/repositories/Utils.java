@@ -9,7 +9,7 @@ public class Utils {
   public static String generateGuid() {
     Base64 base64 = new Base64(true);
     byte[] encodedBytes = base64.encode(generateRandomBytes(9));
-    return new String(encodedBytes);
+    return new String(encodedBytes).replace("\r", "").replace("\n", "");
   }
 
   private static byte[] generateRandomBytes(int length) {

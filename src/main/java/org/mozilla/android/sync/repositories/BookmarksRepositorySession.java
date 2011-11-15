@@ -7,6 +7,7 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
 
 public class BookmarksRepositorySession extends RepositorySession {
 
@@ -101,6 +102,10 @@ public class BookmarksRepositorySession extends RepositorySession {
   @Override
   // Fetch method and thread
   public void fetch(String[] guids, RepositoryCallbackReceiver receiver) {
+    if (guids == null || guids.length < 1) {
+      receiver.fetchCallback(RepoStatusCode.INVALID_REQUEST, new Record[0]);
+      return;
+    }
     FetchThread thread = new FetchThread(guids, receiver);
     thread.start();
   }
@@ -129,7 +134,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       Record[] recordArray = new Record[records.size()];
       records.toArray(recordArray);
 
-      callbackReceiver.fetchSinceCallback(RepoStatusCode.DONE, recordArray);
+      callbackReceiver.fetchCallback(RepoStatusCode.DONE, recordArray);
     }
   }
 
