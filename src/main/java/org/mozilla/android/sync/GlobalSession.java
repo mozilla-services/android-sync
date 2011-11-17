@@ -45,14 +45,18 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
+
 
 public class GlobalSession {
+  public static final String API_VERSION = "1.1";
+  public Stage currentState = Stage.uninitialized;
+  
   private String clusterURL;
   private String username;
   private String password;
   private KeyBundle syncKeyBundle;
-
-  public static final String API_VERSION = "1.1";
+  private GlobalSessionCallback callback;
 
   public class JSONFetchDelegate implements SyncStorageRequestDelegate {
     private JSONObjectCallback callback;
@@ -92,11 +96,12 @@ public class GlobalSession {
     public void handleError(Exception e);
   }
 
-  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle) {
+  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle, GlobalSessionCallback callback) {
     this.clusterURL    = clusterURL;
     this.username      = username;
     this.password      = password;
     this.syncKeyBundle = syncKeyBundle;
+    this.callback      = callback;
   }
 
   protected void fetchJSON(String url, JSONObjectCallback callback) throws URISyntaxException {
@@ -108,5 +113,15 @@ public class GlobalSession {
   protected void fetchMetaGlobal(JSONObjectCallback callback) throws URISyntaxException {
     String metaURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
     this.fetchJSON(metaURL, callback);
+  }
+
+  /**
+   * Move to the next stage in the syncing process.
+   * @param next
+   *        The next stage.
+   */
+  public static void advance(Stage next) {
+    // TODO Auto-generated method stub
+    
   }
 }

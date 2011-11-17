@@ -110,4 +110,6 @@ public class TestMetaGlobal {
     assertNull(global.getStorageVersion());
     global.fetch(new ExistingMetaGlobalFetchDelegate(global));
   }
+  
+  // TODO: upload test.
 }
