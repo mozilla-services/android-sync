@@ -227,11 +227,11 @@ public class SyncCryptographer {
     JSONArray keysArray = new JSONArray();
     Utils.asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getEncryptionKey())));
     Utils.asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getHMACKey())));
-    JSONObject json = new JSONObject();
-    Utils.asMap(json).put(KEY_ID, ID_CRYPTO_KEYS);
-    Utils.asMap(json).put(KEY_COLLECTION, CRYPTO_KEYS_COLLECTION);
-    Utils.asMap(json).put(KEY_COLLECTIONS, "{}");
-    Utils.asMap(json).put(KEY_DEFAULT_COLLECTION, keysArray);
+    ExtendedJSONObject json = new ExtendedJSONObject();
+    json.put(KEY_ID, ID_CRYPTO_KEYS);
+    json.put(KEY_COLLECTION, CRYPTO_KEYS_COLLECTION);
+    json.put(KEY_COLLECTIONS, "{}");
+    json.put(KEY_DEFAULT_COLLECTION, keysArray);
 
     // Get the keys to encrypt the crypto/keys bundle.
     KeyBundle cryptoKeysBundleKeys;
@@ -315,10 +315,10 @@ public class SyncCryptographer {
    * Helper to create JSON bundle for encrypted objects.
    */
   private String createJSONBundle(CryptoInfo info) {
-    JSONObject json = new JSONObject();
-    Utils.asMap(json).put(KEY_CIPHER_TEXT, new String(Base64.encodeBase64(info.getMessage())));
-    Utils.asMap(json).put(KEY_HMAC, Utils.byte2hex(info.getHMAC()));
-    Utils.asMap(json).put(KEY_IV, new String(Base64.encodeBase64(info.getIV())));
+    ExtendedJSONObject json = new ExtendedJSONObject();
+    json.put(KEY_CIPHER_TEXT, new String(Base64.encodeBase64(info.getMessage())));
+    json.put(KEY_IV,          new String(Base64.encodeBase64(info.getIV())));
+    json.put(KEY_HMAC,        Utils.byte2hex(info.getHMAC()));
     return json.toString();
   }
 

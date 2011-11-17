@@ -9,14 +9,13 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
-import org.json.simple.JSONObject;
 import org.junit.Test;
-import org.mozilla.android.sync.domain.CryptoStatusBundle;
-import org.mozilla.android.sync.domain.KeyBundle;
-import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
 import org.mozilla.android.sync.CryptoException;
+import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.SyncCryptographer;
-import org.mozilla.android.sync.Utils;
+import org.mozilla.android.sync.domain.CryptoStatusBundle;
+import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
+import org.mozilla.android.sync.domain.KeyBundle;
 
 public class TestSyncCryptographer {
 
@@ -89,11 +88,11 @@ public class TestSyncCryptographer {
         assertEquals(CryptoStatus.OK, result.getStatus());
 
         // Decrypt
-        JSONObject in = new JSONObject();
-        Utils.asMap(in).put("payload", result.getJson());
-        Utils.asMap(in).put("id", "garbage_key");
+        ExtendedJSONObject in = new ExtendedJSONObject();
+        in.put("payload", result.getJson());
+        in.put("id", "garbage_key");
 
-        String jsonString = in.toString();
+        String jsonString = in.toJSONString();
         result = cryptographer.decryptWBO(jsonString);
 
         // Check that decrypted text matches original
@@ -192,10 +191,10 @@ public class TestSyncCryptographer {
         KeyBundle createdKeys = cryptographer.getKeys();
 
         // Decrypt what we created to see the keys as they were stored in the json
-        JSONObject in = new JSONObject();
-        Utils.asMap(in).put("payload", result.getJson());
-        Utils.asMap(in).put("id", "keys");
-        result = cryptographer.decryptWBO(in.toString());
+        ExtendedJSONObject in = new ExtendedJSONObject();
+        in.put("payload", result.getJson());
+        in.put("id", "keys");
+        result = cryptographer.decryptWBO(in.toJSONString());
 
         // Check result and get decrypted keys
         KeyBundle decryptedKeys = cryptographer.getKeys();

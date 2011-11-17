@@ -102,12 +102,7 @@ public class ExtendedJSONObject {
     this.object = o;
   }
 
-  public void put(String key, Object value) {
-    @SuppressWarnings("unchecked")
-    Map<Object, Object> map = this.object;
-    map.put(key, value);
-  }
-
+  // Passthrough methods.
   public Object get(String key) {
     return this.object.get(key);
   }
@@ -118,6 +113,25 @@ public class ExtendedJSONObject {
 
   public String toJSONString() {
     return this.object.toJSONString();
+  }
+
+  public String toString() {
+    return this.object.toString();
+  }
+
+  public void put(String key, Object value) {
+    @SuppressWarnings("unchecked")
+    Map<Object, Object> map = this.object;
+    map.put(key, value);
+  }
+
+  public ExtendedJSONObject getObject(String key) throws NonObjectJSONException {
+    Object o = this.object.get(key);
+    if (o instanceof JSONObject) {
+      return new ExtendedJSONObject((JSONObject) o);
+    } else {
+      throw new NonObjectJSONException(o);
+    }
   }
 
   public ExtendedJSONObject clone() {

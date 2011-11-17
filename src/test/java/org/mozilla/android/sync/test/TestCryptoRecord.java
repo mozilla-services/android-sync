@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.android.sync.BaseCryptoRecord;
@@ -55,7 +54,7 @@ public class TestCryptoRecord {
         Base64.decodeBase64(base64HmacKey));
     record.decrypt();
     System.out.println(record.cleartext);
-    String id = (String) Utils.asMap((JSONObject) record.cleartext.get("payload")).get("id");
+    String id = (String) record.cleartext.getObject("payload").get("id");
     assertTrue(id.equals("5qRsgXWRJZXr"));
   }
 
