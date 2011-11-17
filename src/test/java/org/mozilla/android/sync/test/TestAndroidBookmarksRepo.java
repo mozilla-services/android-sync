@@ -27,7 +27,8 @@ public class TestAndroidBookmarksRepo {
   private BookmarksRepositorySession session;
   private BookmarksSessionTestWrapper testWrapper;
   private static String parentId;
-  private static String parentName = "Menu";
+  private static final String parentName = "Menu";
+  private static final long lastSyncTimestamp = Utils.currentEpoch() - 36000;
 
   @BeforeClass
   public static void oneTimeSetUp() {
@@ -43,7 +44,7 @@ public class TestAndroidBookmarksRepo {
     // Create the session used by tests
     BookmarksRepository repo = (BookmarksRepository) Repository.makeRepository(CollectionType.Bookmarks);
     Context context = new MainActivity().getApplicationContext();
-    CallbackResult result = testWrapper.doCreateSessionSync(repo, context);
+    CallbackResult result = testWrapper.doCreateSessionSync(repo, context, lastSyncTimestamp);
 
     // Check that we got a valid session back
     assertEquals(result.getStatusCode(), RepoStatusCode.DONE);
@@ -61,7 +62,7 @@ public class TestAndroidBookmarksRepo {
   @Test
   public void testCreateSessionNullContext() {
     BookmarksRepository repo = (BookmarksRepository) Repository.makeRepository(CollectionType.Bookmarks);
-    CallbackResult result = testWrapper.doCreateSessionSync(repo, null);
+    CallbackResult result = testWrapper.doCreateSessionSync(repo, null, Utils.currentEpoch() - lastSyncTimestamp);
     assertEquals(RepoStatusCode.NULL_CONTEXT, result.getStatusCode());
   }
 
@@ -106,34 +107,24 @@ public class TestAndroidBookmarksRepo {
     verifyStoreResult(result);
   }
 
-  // Test storing a record for which the guid already exists
-  // should update it instead
-  // TODO left off here. Need to actually implement this functionality
-
-
-  // TODO not sure whether it is worth leaving this in, probably never actually need
-  // this call for anything. I wrote it for testing and existing clients don't use it.
+  // TODO we don't need this call, but it has been useful for testing, leave it for now
   @Test
   public void testFetchAll() {
 
     // Create a record and store it
     CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Create a second record and store it
     result = testWrapper.doStoreSync(session, createBookmark2());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Get records
     result = testWrapper.doFetchAllSync(session);
 
-    System.out.println("Number of records returned: " + result.getRecords().length);
-
     assertEquals(CallType.FETCH_ALL, result.getCallType());
     assertEquals(RepoStatusCode.DONE, result.getStatusCode());
-
-    // TODO: Do something to check that we got some records here. Need to perform a setup
-    // function first to make sure there are records in there to be got.
+    assertEquals(2, result.getRecords().length);
   }
 
   /*
@@ -144,7 +135,7 @@ public class TestAndroidBookmarksRepo {
 
     // Create a record and store it
     CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Wait 2 seconds and then store 2 more records
     perform2SecondWait();
@@ -153,10 +144,10 @@ public class TestAndroidBookmarksRepo {
     //  Store 2 more records
     BookmarkRecord record2 = createLivemark();
     result = testWrapper.doStoreSync(session, record2);
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
     BookmarkRecord record3 = createMicrosummary();
     result = testWrapper.doStoreSync(session, record3);
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Get records
     result = testWrapper.doGuidsSinceSync(session, timestamp);
@@ -174,9 +165,9 @@ public class TestAndroidBookmarksRepo {
 
     // Create a record and store it
     CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
-    // Wait 2 seconds and then store another record
+    // Wait 2 seconds
     perform2SecondWait();
     long timestamp = System.currentTimeMillis()/1000;
 
@@ -196,14 +187,14 @@ public class TestAndroidBookmarksRepo {
   public void testFetchSinceOneRecord() {
     // Create one record and store it
     CallbackResult result = testWrapper.doStoreSync(session, createFolder());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Wait 2 seconds and then store another record
     perform2SecondWait();
     long timestamp = System.currentTimeMillis()/1000;
     BookmarkRecord record2 = createBookmark2();
     result = testWrapper.doStoreSync(session, record2);
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Fetch since using timestamp and ensure we only get back one record
     result = testWrapper.doFetchSinceSync(session, timestamp);
@@ -220,9 +211,9 @@ public class TestAndroidBookmarksRepo {
 
     // Create a record and store it
     CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
-    // Wait 2 seconds and then store another record
+    // Wait 2 seconds
     perform2SecondWait();
     long timestamp = System.currentTimeMillis()/1000;
 
@@ -244,9 +235,9 @@ public class TestAndroidBookmarksRepo {
     BookmarkRecord record = createBookmark1();
     String guid = record.getGuid();
     CallbackResult result = testWrapper.doStoreSync(session, record);
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
     result = testWrapper.doStoreSync(session, createBookmark2());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Fetch record with guid from above and ensure we only get back one record
     result = testWrapper.doFetchSync(session, new String[] { guid });
@@ -269,13 +260,12 @@ public class TestAndroidBookmarksRepo {
     BookmarkRecord record = createBookmark1();
     BookmarkRecord record2 = createQuery();
     BookmarkRecord record3 = createSeparator();
-    System.out.println("guids stored: " + record.getGuid() + " " + record2.getGuid() + " " + record3.getGuid());
     CallbackResult result = testWrapper.doStoreSync(session, record);
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
     result = testWrapper.doStoreSync(session, record2);
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
     result = testWrapper.doStoreSync(session, record3);
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Fetch records with 2 guids from above
     result = testWrapper.doFetchSync(session, new String[] { record.getGuid(), record3.getGuid() });
@@ -301,7 +291,7 @@ public class TestAndroidBookmarksRepo {
   public void testFetchNoRecordByGuid() {
     // Create a record and store it
     CallbackResult result = testWrapper.doStoreSync(session, createMicrosummary());
-    System.out.println("Stored record with id: " + result.getRowId());
+    verifyStoreResult(result);
 
     // Fetch a record that doesn't exist
     result = testWrapper.doFetchSync(session, new String[] { Utils.generateGuid() });

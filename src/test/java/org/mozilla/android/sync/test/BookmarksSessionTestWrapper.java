@@ -21,9 +21,9 @@ public class BookmarksSessionTestWrapper {
   private CallbackResult testResult;
   private static final int WAIT_TIMEOUT = 500;
 
-  public CallbackResult doCreateSessionSync(BookmarksRepository repository, Context context) {
+  public CallbackResult doCreateSessionSync(BookmarksRepository repository, Context context, long lastSyncTimestamp) {
 
-    repository.createSession(context, new CallbackReceiver());
+    repository.createSession(context, new CallbackReceiver(), lastSyncTimestamp);
     performWait();
     return testResult;
   }

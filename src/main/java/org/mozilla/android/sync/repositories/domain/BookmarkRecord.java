@@ -1,13 +1,12 @@
 package org.mozilla.android.sync.repositories.domain;
 
 
-public class BookmarkRecord implements Record {
+public class BookmarkRecord extends Record {
   // Covers the fields used by all bookmark related objects
   // TODO Consider using Google's gson for parsing json into
   // these domain objects
 
   private long id;
-  private String guid;
   private String androidId;
   private String title;
   private String bmkUri;
@@ -27,12 +26,6 @@ public class BookmarkRecord implements Record {
   private String pos;
   private String children;
 
-  public String getGuid() {
-    return guid;
-  }
-  public void setGuid(String guid) {
-    this.guid = guid;
-  }
   public String getAndroidId() {
     return androidId;
   }

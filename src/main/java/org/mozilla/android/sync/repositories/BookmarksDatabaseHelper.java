@@ -165,12 +165,11 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     return rows;
   }
 
-  // delete rows
-  // This actually deletes the bookmark from the DB
+  // delete bookmark from database looking up by guid
   public void deleteBookmark(BookmarkRecord bookmark) {
     SQLiteDatabase db = this.getWritableDatabase();
-    db.delete(TBL_BOOKMARKS, COL_ID+"=?", new String[]
-        {String.valueOf(bookmark.getId())});
+    db.delete(TBL_BOOKMARKS, COL_GUID+"=?", new String[]
+        {String.valueOf(bookmark.getGuid())});
   }
 
   private ContentValues getContentValues(BookmarkRecord record) {

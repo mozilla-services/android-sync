@@ -7,15 +7,14 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteException;
 
 public class BookmarksRepositorySession extends RepositorySession {
 
   BookmarksDatabaseHelper dbHelper;
 
   public BookmarksRepositorySession(Repository repository,
-      SyncCallbackReceiver callbackReciever, Context context) {
-    super(repository, callbackReciever);
+      SyncCallbackReceiver callbackReciever, Context context, long lastSyncTimestamp) {
+    super(repository, callbackReciever, lastSyncTimestamp);
     dbHelper = new BookmarksDatabaseHelper(context);
   }
 
@@ -28,20 +27,17 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   class GuidsSinceThread extends Thread {
 
-    long timestamp;
-    RepositoryCallbackReceiver callbackReceiver;
-    BookmarksDatabaseHelper dbHelper;
+    private long timestamp;
+    private RepositoryCallbackReceiver callbackReceiver;
+    private BookmarksDatabaseHelper dbHelper;
 
     public GuidsSinceThread(long timestamp, RepositoryCallbackReceiver callbackReceiver, BookmarksDatabaseHelper dbHelper) {
       this.timestamp = timestamp;
       this.callbackReceiver = callbackReceiver;
       this.dbHelper = dbHelper;
-      // start(); ???? do we need this if we call start externally?
     }
 
     public void run() {
-      //Display info about this particular thread
-      System.out.println(Thread.currentThread().getName());
 
       Cursor cur = dbHelper.getGUIDSSince(timestamp);
       int index = cur.getColumnIndex(BookmarksDatabaseHelper.COL_GUID);
@@ -70,19 +66,15 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   class FetchSinceThread extends Thread {
 
-    long timestamp;
-    RepositoryCallbackReceiver callbackReceiver;
+    private long timestamp;
+    private RepositoryCallbackReceiver callbackReceiver;
 
     public FetchSinceThread(long timestamp, RepositoryCallbackReceiver callbackReceiver ) {
       this.timestamp = timestamp;
       this.callbackReceiver = callbackReceiver;
-      // start(); ???? do we need this if we call start externally?
     }
 
     public void run() {
-      //Display info about this particular thread
-      System.out.println(Thread.currentThread().getName());
-
       Cursor cur = dbHelper.fetchSince(timestamp);
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
@@ -111,8 +103,8 @@ public class BookmarksRepositorySession extends RepositorySession {
   }
 
   class FetchThread extends Thread {
-    String[] guids;
-    RepositoryCallbackReceiver callbackReceiver;
+    private String[] guids;
+    private RepositoryCallbackReceiver callbackReceiver;
 
     public FetchThread(String[] guids, RepositoryCallbackReceiver callbackReceiver) {
       this.guids = guids;
@@ -120,22 +112,23 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
-      //Display info about this particular thread
-      System.out.println(Thread.currentThread().getName());
-
-      Cursor cur = dbHelper.fetch(guids);
-      ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
-      cur.moveToFirst();
-      while (cur.isAfterLast() == false) {
-        records.add(getRecord(cur));
-        cur.moveToNext();
-      }
-
-      Record[] recordArray = new Record[records.size()];
-      records.toArray(recordArray);
-
-      callbackReceiver.fetchCallback(RepoStatusCode.DONE, recordArray);
+      callbackReceiver.fetchCallback(RepoStatusCode.DONE, fetchRecordsForGuids(guids));
     }
+  }
+
+  private Record[] fetchRecordsForGuids(String[] guids) {
+    Cursor cur = dbHelper.fetch(guids);
+    ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
+    cur.moveToFirst();
+    while (cur.isAfterLast() == false) {
+      records.add(getRecord(cur));
+      cur.moveToNext();
+    }
+
+    Record[] recordArray = new Record[records.size()];
+    records.toArray(recordArray);
+
+    return recordArray;
   }
 
   @Override
@@ -147,16 +140,13 @@ public class BookmarksRepositorySession extends RepositorySession {
   }
 
   class FetchAllThread extends Thread {
-    RepositoryCallbackReceiver callbackReceiver;
+    private RepositoryCallbackReceiver callbackReceiver;
 
     public FetchAllThread(RepositoryCallbackReceiver callbackReceiver) {
       this.callbackReceiver = callbackReceiver;
     }
 
     public void run() {
-      //Display info about this particular thread
-      System.out.println("Fetch all thread: " + Thread.currentThread().getName());
-
       Cursor cur = dbHelper.getAllBookmarks();
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
@@ -180,22 +170,59 @@ public class BookmarksRepositorySession extends RepositorySession {
   }
 
   class StoreThread extends Thread {
-    Record record;
-    RepositoryCallbackReceiver callbackReceiver;
+    private BookmarkRecord record;
+    private RepositoryCallbackReceiver callbackReceiver;
 
     public StoreThread(Record record, RepositoryCallbackReceiver callbackReceiver) {
-      this.record = record;
+      this.record = (BookmarkRecord) record;
       this.callbackReceiver = callbackReceiver;
     }
 
     public void run() {
-      System.out.println(Thread.currentThread().getName());
 
-      long rowId = dbHelper.insertBookmark((BookmarkRecord) record);
+      BookmarkRecord existingRecord = findExistingRecord();
+      // If the record is new, just store it
+      if (existingRecord == null) {
+        long rowId = dbHelper.insertBookmark((BookmarkRecord) record);
+        callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
+        return;
+      }
 
-      callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
+      if (existingRecord.getLastModTime() > lastSyncTimestamp) {
+        // Remote and local record have both been modified since
+        // last sync
+
+      } else {
+        // Only remote record modified, so take that one
+        // (except for androidId which we obviously want to keep)
+        record.setAndroidId(existingRecord.getAndroidId());
+
+        // To keep things simple, we don't update, we delete then re-insert
+        dbHelper.deleteBookmark(existingRecord);
+        dbHelper.insertBookmark(record);
+        // TODO LEFT OFF HERE
+
+      }
+
+
+      //long rowId = dbHelper.insertBookmark((BookmarkRecord) record);
+      //callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
 
     }
+
+    // Check if record already exists locally
+    private BookmarkRecord findExistingRecord() {
+      Record[] records = fetchRecordsForGuids(new String[] { record.getGuid() });
+      if (records.length == 1) {
+        return (BookmarkRecord) record;
+      }
+      else if (records.length > 1) {
+        // TODO handle this error...which should be impossible
+        System.err.println("UHHHH...That's bad. Multiple records with same guid returned");
+      }
+      return null;
+    }
+
   }
 
   // Wipe method and thread
@@ -210,15 +237,13 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   class WipeThread extends Thread {
 
-    RepositoryCallbackReceiver callbackReceiver;
+    private RepositoryCallbackReceiver callbackReceiver;
 
     public WipeThread(RepositoryCallbackReceiver callbackReciever) {
       this.callbackReceiver = callbackReciever;
     }
 
     public void run() {
-      //Display info about this particular thread
-      System.out.println(Thread.currentThread().getName());
       dbHelper.wipe();
       callbackReceiver.wipeCallback(RepoStatusCode.DONE);
     }

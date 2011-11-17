@@ -11,12 +11,12 @@ public class BookmarksRepository extends Repository {
   // else I can get this from rather than passing it around?
 
   // TODO this needs to happen in a thread :S
-  public void createSession(Context context, SyncCallbackReceiver callbackMechanism) {
+  public void createSession(Context context, SyncCallbackReceiver callbackMechanism,long lastSyncTimestamp) {
     if (context == null) {
       callbackMechanism.sessionCallback(RepoStatusCode.NULL_CONTEXT, null);
       return;
     }
-    BookmarksRepositorySession session = new BookmarksRepositorySession(this, callbackMechanism, context);
+    BookmarksRepositorySession session = new BookmarksRepositorySession(this, callbackMechanism, context, lastSyncTimestamp);
     callbackMechanism.sessionCallback(RepoStatusCode.DONE, session);
   }
 
