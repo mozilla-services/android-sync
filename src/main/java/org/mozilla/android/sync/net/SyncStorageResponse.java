@@ -38,6 +38,7 @@
 package org.mozilla.android.sync.net;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Scanner;
 
@@ -72,8 +73,12 @@ public class SyncStorageResponse {
     return this.response;
   }
 
+  public int getStatusCode() {
+    return this.response.getStatusLine().getStatusCode();
+  }
+
   public boolean wasSuccessful() {
-    return this.response.getStatusLine().getStatusCode() == 200;
+    return this.getStatusCode() == 200;
   }
 
   /**
@@ -126,7 +131,8 @@ public class SyncStorageResponse {
     if (entity == null) {
       return null;
     }
-    return ExtendedJSONObject.parse(entity.getContent());
+    InputStream content = entity.getContent();
+    return ExtendedJSONObject.parse(content);
   }
 
   public ExtendedJSONObject jsonObjectBody() throws IllegalStateException, IOException, ParseException, NonObjectJSONException {

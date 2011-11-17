@@ -43,7 +43,7 @@ public interface SyncStorageRequestDelegate {
 
   String credentials();
   String ifUnmodifiedSince();
-  void handleSuccess(SyncStorageResponse res);
+  void handleSuccess(SyncStorageResponse response);
   void handleFailure(SyncStorageResponse response);
   void handleError(IOException e);
 

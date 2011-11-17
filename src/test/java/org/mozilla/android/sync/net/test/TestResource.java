@@ -14,7 +14,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.junit.Test;
 import org.mozilla.android.sync.net.BaseResource;
-import org.mozilla.android.sync.net.test.TestResourceData.TestServer;
 
 public class TestResource {
 
