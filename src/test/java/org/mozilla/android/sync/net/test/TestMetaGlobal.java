@@ -12,7 +12,7 @@ import org.simpleframework.http.Response;
 public class TestMetaGlobal {
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   public static final String META_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  private TestResourceData data        = new TestResourceData();
+  private HTTPServerTestHelper data    = new HTTPServerTestHelper();
 
   @Test
   public void testMetaGlobalModified() {
@@ -110,4 +110,6 @@ public class TestMetaGlobal {
     assertNull(global.getStorageVersion());
     global.fetch(new ExistingMetaGlobalFetchDelegate(global));
   }
+
+  // TODO: upload test.
 }

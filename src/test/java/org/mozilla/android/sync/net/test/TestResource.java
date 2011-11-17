@@ -14,13 +14,12 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import org.junit.Test;
 import org.mozilla.android.sync.net.BaseResource;
-import org.mozilla.android.sync.net.test.HTTPServerTestHelper.TestServer;
 
 public class TestResource {
 
   static String            USER_PASS    = "john:password";
   static String            EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
-  private HTTPServerTestHelper data         = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
 
   class BaseTestResourceDelegate extends BaseResourceDelegate {
     @Override
