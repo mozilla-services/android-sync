@@ -68,7 +68,8 @@ public class ExtendedJSONObject {
   }
 
   public static Object parse(InputStream stream) throws IOException, ParseException {
-    return ExtendedJSONObject.parse(new InputStreamReader(stream));
+    InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
+    return ExtendedJSONObject.parse(reader);
   }
 
   /**
