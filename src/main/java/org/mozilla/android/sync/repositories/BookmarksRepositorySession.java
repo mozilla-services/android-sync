@@ -181,32 +181,31 @@ public class BookmarksRepositorySession extends RepositorySession {
     public void run() {
 
       BookmarkRecord existingRecord = findExistingRecord();
+      long rowId = -1;
       // If the record is new, just store it
       if (existingRecord == null) {
-        long rowId = dbHelper.insertBookmark((BookmarkRecord) record);
-        callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
-        return;
-      }
-
-      if (existingRecord.getLastModTime() > lastSyncTimestamp) {
-        // Remote and local record have both been modified since
-        // last sync
-
+        rowId = dbHelper.insertBookmark((BookmarkRecord) record);
       } else {
-        // Only remote record modified, so take that one
-        // (except for androidId which we obviously want to keep)
-        record.setAndroidId(existingRecord.getAndroidId());
+        // Record exists already, need to figure out what to store
 
-        // To keep things simple, we don't update, we delete then re-insert
-        dbHelper.deleteBookmark(existingRecord);
-        dbHelper.insertBookmark(record);
-        // TODO LEFT OFF HERE
+        if (existingRecord.getLastModTime() > lastSyncTimestamp) {
+          // Remote and local record have both been modified since since last sync
+          BookmarkRecord store = reconcileBookmarks(existingRecord, record);
+          dbHelper.deleteBookmark(existingRecord);
+          rowId = dbHelper.insertBookmark(store);
+        } else {
+          // Only remote record modified, so take that one
+          // (except for androidId which we obviously want to keep)
+          record.setAndroidId(existingRecord.getAndroidId());
 
+          // To keep things simple, we don't update, we delete then re-insert
+          dbHelper.deleteBookmark(existingRecord);
+          rowId = dbHelper.insertBookmark(record);
+        }
       }
 
-
-      //long rowId = dbHelper.insertBookmark((BookmarkRecord) record);
-      //callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
+      // call callback with result
+      callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
 
     }
 
@@ -259,6 +258,46 @@ public class BookmarksRepositorySession extends RepositorySession {
   public void finish(RepositoryCallbackReceiver receiver) {
     // TODO Auto-generated method stub
 
+  }
+
+  private BookmarkRecord reconcileBookmarks(BookmarkRecord local, BookmarkRecord remote) {
+    // Do modifications on local since we always want to keep guid and androidId from local
+
+    // Determine which record is newer since this is the one we will take in case of conflict
+    BookmarkRecord newer;
+    if (local.getLastModTime() > remote.getLastModTime()) {
+      newer = local;
+    } else {
+      newer = remote;
+    }
+
+    // Do dumb resolution for now and just return the newer one with the android id added if it wasn't the local one
+    // Need to track changes (not implemented yet) in order to merge two changed bookmarks nicely
+    newer.setAndroidId(local.getAndroidId());
+
+    /*
+    // Title
+    if (!local.getTitle().equals(remote.getTitle())) {
+      local.setTitle(newer.getTitle());
+    }
+
+    // Uri
+    if (!local.getBmkUri().equals(remote.getBmkUri())) {
+      local.setBmkUri(newer.getBmkUri());
+    }
+
+    // Description
+    if (!local.getDescription().equals(remote.getDescription())) {
+      local.setDescription(newer.getDescription());
+    }
+
+    // Load in sidebar
+    if (local.getLoadInSidebar() != remote.getLoadInSidebar()) {
+      local.
+    }
+    */
+
+    return newer;
   }
 
   // Create a BookmarkRecord object from a cursor on a row with a Bookmark in it

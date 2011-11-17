@@ -3,7 +3,6 @@ package org.mozilla.android.sync.test;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mozilla.android.sync.MainActivity;
@@ -26,14 +25,7 @@ public class TestAndroidBookmarksRepo {
 
   private BookmarksRepositorySession session;
   private BookmarksSessionTestWrapper testWrapper;
-  private static String parentId;
-  private static final String parentName = "Menu";
   private static final long lastSyncTimestamp = Utils.currentEpoch() - 36000;
-
-  @BeforeClass
-  public static void oneTimeSetUp() {
-    parentId = Utils.generateGuid();
-  }
 
   @Before
   public void setUp() {
@@ -73,38 +65,38 @@ public class TestAndroidBookmarksRepo {
    */
   @Test
   public void testStoreBookmark() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, createBookmark1());
-    verifyStoreResult(result);
+    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createBookmark1());
+    TestUtils.verifyStoreResult(result);
   }
 
   @Test
   public void testStoreMicrosummary() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, createMicrosummary());
-    verifyStoreResult(result);
+    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createMicrosummary());
+    TestUtils.verifyStoreResult(result);
   }
 
   @Test
   public void testStoreQuery() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, createQuery());
-    verifyStoreResult(result);
+    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createQuery());
+    TestUtils.verifyStoreResult(result);
   }
 
   @Test
   public void testStoreFolder() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, createFolder());
-    verifyStoreResult(result);
+    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createFolder());
+    TestUtils.verifyStoreResult(result);
   }
 
   @Test
   public void testStoreLivemark() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, createLivemark());
-    verifyStoreResult(result);
+    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createLivemark());
+    TestUtils.verifyStoreResult(result);
   }
 
   @Test
   public void testStoreSeparator() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, createSeparator());
-    verifyStoreResult(result);
+    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createSeparator());
+    TestUtils.verifyStoreResult(result);
   }
 
   // TODO we don't need this call, but it has been useful for testing, leave it for now
@@ -112,12 +104,12 @@ public class TestAndroidBookmarksRepo {
   public void testFetchAll() {
 
     // Create a record and store it
-    CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    verifyStoreResult(result);
+    CallbackResult result = testWrapper.doStoreSync(session, TestUtils.createBookmark1());
+    TestUtils.verifyStoreResult(result);
 
     // Create a second record and store it
-    result = testWrapper.doStoreSync(session, createBookmark2());
-    verifyStoreResult(result);
+    result = testWrapper.doStoreSync(session, TestUtils.createBookmark2());
+    TestUtils.verifyStoreResult(result);
 
     // Get records
     result = testWrapper.doFetchAllSync(session);
@@ -134,20 +126,20 @@ public class TestAndroidBookmarksRepo {
   public void testGuidsSinceReturnMultipleRecords() {
 
     // Create a record and store it
-    CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    verifyStoreResult(result);
+    CallbackResult result = testWrapper.doStoreSync(session, TestUtils.createBookmark1());
+    TestUtils.verifyStoreResult(result);
 
     // Wait 2 seconds and then store 2 more records
     perform2SecondWait();
     long timestamp = System.currentTimeMillis()/1000;
 
     //  Store 2 more records
-    BookmarkRecord record2 = createLivemark();
+    BookmarkRecord record2 = TestUtils.createLivemark();
     result = testWrapper.doStoreSync(session, record2);
-    verifyStoreResult(result);
-    BookmarkRecord record3 = createMicrosummary();
+    TestUtils.verifyStoreResult(result);
+    BookmarkRecord record3 = TestUtils.createMicrosummary();
     result = testWrapper.doStoreSync(session, record3);
-    verifyStoreResult(result);
+    TestUtils.verifyStoreResult(result);
 
     // Get records
     result = testWrapper.doGuidsSinceSync(session, timestamp);
@@ -164,8 +156,8 @@ public class TestAndroidBookmarksRepo {
   public void testGuidsSinceReturnNoRecords() {
 
     // Create a record and store it
-    CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    verifyStoreResult(result);
+    CallbackResult result = testWrapper.doStoreSync(session, TestUtils.createBookmark1());
+    TestUtils.verifyStoreResult(result);
 
     // Wait 2 seconds
     perform2SecondWait();
@@ -186,15 +178,15 @@ public class TestAndroidBookmarksRepo {
   @Test
   public void testFetchSinceOneRecord() {
     // Create one record and store it
-    CallbackResult result = testWrapper.doStoreSync(session, createFolder());
-    verifyStoreResult(result);
+    CallbackResult result = testWrapper.doStoreSync(session, TestUtils.createFolder());
+    TestUtils.verifyStoreResult(result);
 
     // Wait 2 seconds and then store another record
     perform2SecondWait();
     long timestamp = System.currentTimeMillis()/1000;
-    BookmarkRecord record2 = createBookmark2();
+    BookmarkRecord record2 = TestUtils.createBookmark2();
     result = testWrapper.doStoreSync(session, record2);
-    verifyStoreResult(result);
+    TestUtils.verifyStoreResult(result);
 
     // Fetch since using timestamp and ensure we only get back one record
     result = testWrapper.doFetchSinceSync(session, timestamp);
@@ -210,8 +202,8 @@ public class TestAndroidBookmarksRepo {
   public void testFetchSinceReturnNoRecords() {
 
     // Create a record and store it
-    CallbackResult result = testWrapper.doStoreSync(session, createBookmark1());
-    verifyStoreResult(result);
+    CallbackResult result = testWrapper.doStoreSync(session, TestUtils.createBookmark1());
+    TestUtils.verifyStoreResult(result);
 
     // Wait 2 seconds
     perform2SecondWait();
@@ -232,12 +224,12 @@ public class TestAndroidBookmarksRepo {
   @Test
   public void testFetchOneRecordByGuid() {
     // Create two records and store them
-    BookmarkRecord record = createBookmark1();
+    BookmarkRecord record = TestUtils.createBookmark1();
     String guid = record.getGuid();
     CallbackResult result = testWrapper.doStoreSync(session, record);
-    verifyStoreResult(result);
-    result = testWrapper.doStoreSync(session, createBookmark2());
-    verifyStoreResult(result);
+    TestUtils.verifyStoreResult(result);
+    result = testWrapper.doStoreSync(session, TestUtils.createBookmark2());
+    TestUtils.verifyStoreResult(result);
 
     // Fetch record with guid from above and ensure we only get back one record
     result = testWrapper.doFetchSync(session, new String[] { guid });
@@ -257,15 +249,15 @@ public class TestAndroidBookmarksRepo {
   @Test
   public void testFetchMultipleRecordsByGuid() {
     // Create three records and store them
-    BookmarkRecord record = createBookmark1();
-    BookmarkRecord record2 = createQuery();
-    BookmarkRecord record3 = createSeparator();
+    BookmarkRecord record = TestUtils.createBookmark1();
+    BookmarkRecord record2 = TestUtils.createQuery();
+    BookmarkRecord record3 = TestUtils.createSeparator();
     CallbackResult result = testWrapper.doStoreSync(session, record);
-    verifyStoreResult(result);
+    TestUtils.verifyStoreResult(result);
     result = testWrapper.doStoreSync(session, record2);
-    verifyStoreResult(result);
+    TestUtils.verifyStoreResult(result);
     result = testWrapper.doStoreSync(session, record3);
-    verifyStoreResult(result);
+    TestUtils.verifyStoreResult(result);
 
     // Fetch records with 2 guids from above
     result = testWrapper.doFetchSync(session, new String[] { record.getGuid(), record3.getGuid() });
@@ -290,8 +282,8 @@ public class TestAndroidBookmarksRepo {
   @Test
   public void testFetchNoRecordByGuid() {
     // Create a record and store it
-    CallbackResult result = testWrapper.doStoreSync(session, createMicrosummary());
-    verifyStoreResult(result);
+    CallbackResult result = testWrapper.doStoreSync(session, TestUtils.createMicrosummary());
+    TestUtils.verifyStoreResult(result);
 
     // Fetch a record that doesn't exist
     result = testWrapper.doFetchSync(session, new String[] { Utils.generateGuid() });
@@ -327,122 +319,8 @@ public class TestAndroidBookmarksRepo {
   }
 
   /*
-   * Helpers for creating bookmark records of different types
-   */
-  private static BookmarkRecord createBookmark1() {
-    BookmarkRecord record = new BookmarkRecord();
-    record.setGuid(Utils.generateGuid());
-    record.setTitle("Foo!!!");
-    record.setBmkUri("http://foo.bar.com");
-    record.setDescription("This is a description for foo.bar.com");
-    record.setLoadInSidebar(true);
-    record.setTags("[\"tag1\", \"tag2\", \"tag3\"]");
-    record.setKeyword("fooooozzzzz");
-    record.setParentId(parentId);
-    record.setParentName(parentName);
-    record.setType("bookmark");
-    return record;
-  }
-
-  private static BookmarkRecord createBookmark2() {
-    BookmarkRecord record = new BookmarkRecord();
-    record.setGuid(Utils.generateGuid());
-    record.setTitle("Bar???");
-    record.setBmkUri("http://bar.foo.com");
-    record.setDescription("This is a description for Bar???");
-    record.setLoadInSidebar(false);
-    record.setTags("[\"tag1\", \"tag2\"]");
-    record.setKeyword("keywordzzz");
-    record.setParentId(parentId);
-    record.setParentName(parentName);
-    record.setType("bookmark");
-    return record;
-  }
-
-  private static BookmarkRecord createMicrosummary() {
-    BookmarkRecord record = new BookmarkRecord();
-    record.setGuid(Utils.generateGuid());
-    record.setGeneratorUri("http://generatoruri.com");
-    record.setStaticTitle("Static Microsummary Title");
-    record.setTitle("Microsummary 1");
-    record.setBmkUri("www.bmkuri.com");
-    record.setDescription("microsummary description");
-    record.setLoadInSidebar(false);
-    record.setTags("[\"tag1\", \"tag2\"]");
-    record.setKeyword("keywordzzz");
-    record.setParentId(parentId);
-    record.setParentName(parentName);
-    record.setType("microsummary");
-    return record;
-  }
-
-  private static BookmarkRecord createQuery() {
-    BookmarkRecord record = new BookmarkRecord();
-    record.setGuid(Utils.generateGuid());
-    record.setFolderName("Query Folder Name");
-    record.setQueryId("OptionalQueryId");
-    record.setTitle("Query 1");
-    record.setBmkUri("http://www.query.com");
-    record.setDescription("Query 1 description");
-    record.setLoadInSidebar(true);
-    record.setTags("[]");
-    record.setKeyword("queryKeyword");
-    record.setParentId(parentId);
-    record.setParentName(parentName);
-    record.setType("query");
-    return record;
-  }
-
-  private static BookmarkRecord createFolder() {
-    // Make this the Menu folder since each DB will
-    // have at least this folder
-    BookmarkRecord record = new BookmarkRecord();
-    record.setGuid(parentId);
-    record.setTitle(parentName);
-    // No parent since this is the menu folder
-    record.setParentId("");
-    record.setParentName("");
-    // TODO verify how we want to store these string arrays
-    // pretty sure I verified that this is actually how other clients do it, but double check
-    record.setChildren("[\"" + Utils.generateGuid() + "\", \"" + Utils.generateGuid() + "\"]");
-    record.setType("folder");
-    return record;
-  }
-
-  private static BookmarkRecord createLivemark() {
-    BookmarkRecord record = new BookmarkRecord();
-    record.setGuid(Utils.generateGuid());
-    record.setSiteUri("http://site.uri.com");
-    record.setFeedUri("http://rss.site.uri.com");
-    record.setTitle("Livemark title");
-    record.setParentId(parentId);
-    record.setParentName(parentName);
-    // TODO verify how we want to store these string arrays
-    // pretty sure I verified that this is actually how other clients do it, but double check
-    record.setChildren("[\"" + Utils.generateGuid() + "\", \"" + Utils.generateGuid() + "\"]");
-    record.setType("livemark");
-    return record;
-  }
-
-  private static BookmarkRecord createSeparator() {
-    BookmarkRecord record = new BookmarkRecord();
-    record.setGuid(Utils.generateGuid());
-    record.setPos("3");
-    record.setParentId(parentId);
-    record.setParentName(parentName);
-    record.setType("separator");
-    return record;
-  }
-
-  /*
    * Other helpers
    */
-  private void verifyStoreResult(CallbackResult result) {
-    assert(result.getRowId() != CallbackResult.DEFAULT_ROW_ID);
-    assertEquals(CallType.STORE, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
-  }
-
   private void perform2SecondWait() {
     try {
       synchronized(this) {

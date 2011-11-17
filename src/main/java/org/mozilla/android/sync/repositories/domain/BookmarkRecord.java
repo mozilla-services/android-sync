@@ -6,7 +6,7 @@ public class BookmarkRecord extends Record {
   // TODO Consider using Google's gson for parsing json into
   // these domain objects
 
-  private long id;
+  private long id;    // TODO I don't think there is a benefit to storing this nor do we ever use it. Leave it for now.
   private String androidId;
   private String title;
   private String bmkUri;
