@@ -39,8 +39,7 @@ public class TestAndroidBookmarksRepo {
     CallbackResult result = testWrapper.doCreateSessionSync(repo, context, lastSyncTimestamp);
 
     // Check that we got a valid session back
-    assertEquals(result.getStatusCode(), RepoStatusCode.DONE);
-    assertEquals(result.getCallType(), CallType.CREATE_SESSION);
+    TestUtils.verifyCreateSession(result);
     assert(result.getSession() != null);
 
     // Set the session
@@ -56,47 +55,6 @@ public class TestAndroidBookmarksRepo {
     BookmarksRepository repo = (BookmarksRepository) Repository.makeRepository(CollectionType.Bookmarks);
     CallbackResult result = testWrapper.doCreateSessionSync(repo, null, Utils.currentEpoch() - lastSyncTimestamp);
     assertEquals(RepoStatusCode.NULL_CONTEXT, result.getStatusCode());
-  }
-
-  /*
-   * Tests for store
-   *
-   * Test storing a record for each different type of Bookmark record
-   */
-  @Test
-  public void testStoreBookmark() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createBookmark1());
-    TestUtils.verifyStoreResult(result);
-  }
-
-  @Test
-  public void testStoreMicrosummary() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createMicrosummary());
-    TestUtils.verifyStoreResult(result);
-  }
-
-  @Test
-  public void testStoreQuery() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createQuery());
-    TestUtils.verifyStoreResult(result);
-  }
-
-  @Test
-  public void testStoreFolder() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createFolder());
-    TestUtils.verifyStoreResult(result);
-  }
-
-  @Test
-  public void testStoreLivemark() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createLivemark());
-    TestUtils.verifyStoreResult(result);
-  }
-
-  @Test
-  public void testStoreSeparator() {
-    CallbackResult result = getTestWrapper().doStoreSync(session, TestUtils.createSeparator());
-    TestUtils.verifyStoreResult(result);
   }
 
   // TODO we don't need this call, but it has been useful for testing, leave it for now
@@ -148,8 +106,7 @@ public class TestAndroidBookmarksRepo {
     assertEquals(2, result.getGuids().length);
     assertEquals(record2.getGuid(), result.getGuids()[0]);
     assertEquals(record3.getGuid(), result.getGuids()[1]);
-    assertEquals(CallType.GUIDS_SINCE, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+    TestUtils.verifyGuidsSince(result);
   }
 
   @Test
@@ -168,8 +125,7 @@ public class TestAndroidBookmarksRepo {
 
     // Verify that no guids come back
     assertEquals(0, result.getGuids().length);
-    assertEquals(CallType.GUIDS_SINCE, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+    TestUtils.verifyGuidsSince(result);
   }
 
   /*
@@ -194,8 +150,7 @@ public class TestAndroidBookmarksRepo {
     // Check that only one record was returned and that it is the right one
     assertEquals(1, result.getRecords().length);
     assertEquals(record2.getGuid(), ((BookmarkRecord) result.getRecords()[0]).getGuid());
-    assertEquals(CallType.FETCH_SINCE, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+    TestUtils.verifyFetchSince(result);
   }
 
   @Test
@@ -214,8 +169,7 @@ public class TestAndroidBookmarksRepo {
 
     // Verify that no guids come back
     assertEquals(0, result.getRecords().length);
-    assertEquals(CallType.FETCH_SINCE, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+    TestUtils.verifyFetchSince(result);
   }
 
   /*
@@ -239,11 +193,8 @@ public class TestAndroidBookmarksRepo {
     assertEquals(1, returnedRecords.length);
     BookmarkRecord fetched = (BookmarkRecord) returnedRecords[0];
     assertEquals(guid, fetched.getGuid());
-    assertEquals(record.getBmkUri(), fetched.getBmkUri());
-    assertEquals(record.getDescription(), fetched.getDescription());
-    assertEquals(record.getTitle(), fetched.getTitle());
-    assertEquals(CallType.FETCH, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+    TestUtils.verifyExpectedRecordReturned(record, fetched);
+    TestUtils.verifyFetch(result);
   }
 
   @Test
@@ -267,16 +218,9 @@ public class TestAndroidBookmarksRepo {
     assertEquals(2, returnedRecords.length);
     BookmarkRecord fetched = (BookmarkRecord) returnedRecords[0];
     BookmarkRecord fetched2 = (BookmarkRecord) returnedRecords[1];
-    assertEquals(record.getGuid(), fetched.getGuid());
-    assertEquals(record.getBmkUri(), fetched.getBmkUri());
-    assertEquals(record.getDescription(), fetched.getDescription());
-    assertEquals(record.getTitle(), fetched.getTitle());
-    assertEquals(record3.getGuid(), fetched2.getGuid());
-    assertEquals(record3.getBmkUri(), fetched2.getBmkUri());
-    assertEquals(record3.getDescription(), fetched2.getDescription());
-    assertEquals(record3.getTitle(), fetched2.getTitle());
-    assertEquals(CallType.FETCH, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+    TestUtils.verifyExpectedRecordReturned(record, fetched);
+    TestUtils.verifyExpectedRecordReturned(record3, fetched2);
+    TestUtils.verifyFetch(result);
   }
 
   @Test
@@ -290,8 +234,7 @@ public class TestAndroidBookmarksRepo {
 
     // Ensure no recrods are returned
     assertEquals(0, result.getRecords().length);
-    assertEquals(CallType.FETCH, result.getCallType());
-    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+    TestUtils.verifyFetch(result);
   }
 
   @Test

@@ -94,10 +94,6 @@ public class BookmarksRepositorySession extends RepositorySession {
   @Override
   // Fetch method and thread
   public void fetch(String[] guids, RepositoryCallbackReceiver receiver) {
-    if (guids == null || guids.length < 1) {
-      receiver.fetchCallback(RepoStatusCode.INVALID_REQUEST, new Record[0]);
-      return;
-    }
     FetchThread thread = new FetchThread(guids, receiver);
     thread.start();
   }
@@ -112,7 +108,11 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
-      callbackReceiver.fetchCallback(RepoStatusCode.DONE, fetchRecordsForGuids(guids));
+      if (guids == null || guids.length < 1) {
+        callbackReceiver.fetchCallback(RepoStatusCode.INVALID_REQUEST, new Record[0]);
+      } else {
+        callbackReceiver.fetchCallback(RepoStatusCode.DONE, fetchRecordsForGuids(guids));
+      }
     }
   }
 
@@ -185,6 +185,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       // If the record is new, just store it
       if (existingRecord == null) {
         rowId = dbHelper.insertBookmark((BookmarkRecord) record);
+        callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
       } else {
         // Record exists already, need to figure out what to store
 
@@ -202,10 +203,10 @@ public class BookmarksRepositorySession extends RepositorySession {
           dbHelper.deleteBookmark(existingRecord);
           rowId = dbHelper.insertBookmark(record);
         }
+        callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
       }
 
       // call callback with result
-      callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
 
     }
 
@@ -213,7 +214,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     private BookmarkRecord findExistingRecord() {
       Record[] records = fetchRecordsForGuids(new String[] { record.getGuid() });
       if (records.length == 1) {
-        return (BookmarkRecord) record;
+        return (BookmarkRecord) records[0];
       }
       else if (records.length > 1) {
         // TODO handle this error...which should be impossible
@@ -306,7 +307,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     BookmarkRecord rec = new BookmarkRecord();
     rec.setId(getLongValue(cur, BookmarksDatabaseHelper.COL_ID));
     rec.setGuid(getStringValue(cur, BookmarksDatabaseHelper.COL_GUID));
-    rec.setAndroidId(getStringValue(cur, BookmarksDatabaseHelper.COL_ANDROID_ID));
+    rec.setAndroidId(getLongValue(cur, BookmarksDatabaseHelper.COL_ANDROID_ID));
     rec.setTitle(getStringValue(cur, BookmarksDatabaseHelper.COL_TITLE));
     rec.setBmkUri(getStringValue(cur, BookmarksDatabaseHelper.COL_BMK_URI));
     rec.setDescription(getStringValue(cur, BookmarksDatabaseHelper.COL_DESCRIP));
@@ -324,6 +325,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     rec.setFeedUri(getStringValue(cur, BookmarksDatabaseHelper.COL_FEED_URI));
     rec.setPos(getStringValue(cur, BookmarksDatabaseHelper.COL_POS));
     rec.setChildren(getStringValue(cur, BookmarksDatabaseHelper.COL_CHILDREN));
+    rec.setLastModTime(getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD));
     return rec;
   }
 

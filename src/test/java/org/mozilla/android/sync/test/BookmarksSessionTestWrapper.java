@@ -19,7 +19,6 @@ public class BookmarksSessionTestWrapper {
    */
 
   private CallbackResult testResult;
-  private static final int WAIT_TIMEOUT = 500;
 
   public CallbackResult doCreateSessionSync(BookmarksRepository repository, Context context, long lastSyncTimestamp) {
 
@@ -58,46 +57,32 @@ public class BookmarksSessionTestWrapper {
     return testResult;
   }
 
-  // Helper to perform the wait
-  private void performWait() {
-    synchronized(this) {
-      try {
-        // TODO: This isn't working properly. For some reason
-        // it always goes right up until the timeout, the notify
-        // isn't waking up this thread, which would make the tests
-        // run quicker if it did!
-        this.wait(WAIT_TIMEOUT);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-  }
 
   class CallbackReceiver implements RepositoryCallbackReceiver, SyncCallbackReceiver {
 
     public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
       testResult = new CallbackResult(status, CallType.GUIDS_SINCE, guids);
-      notifyWaitingThreads();
+      performNotify();
     }
 
     public void fetchSinceCallback(RepoStatusCode status, Record[] records) {
       testResult = new CallbackResult(status, CallType.FETCH_SINCE, records);
-      notifyWaitingThreads();
+      performNotify();
     }
 
     public void fetchCallback(RepoStatusCode status, Record[] records) {
       testResult = new CallbackResult(status, CallType.FETCH, records);
-      notifyWaitingThreads();
+      performNotify();
     }
 
     public void fetchAllCallback(RepoStatusCode status, Record[] records) {
       testResult = new CallbackResult(status, CallType.FETCH_ALL, records);
-      notifyWaitingThreads();
+      performNotify();
     }
 
     public void storeCallback(RepoStatusCode status, long rowId) {
       testResult = new CallbackResult(status, CallType.STORE, rowId);
-      notifyWaitingThreads();
+      performNotify();
     }
 
     public void wipeCallback(RepoStatusCode status) {
@@ -117,18 +102,27 @@ public class BookmarksSessionTestWrapper {
 
     public void sessionCallback(RepoStatusCode status, RepositorySession session) {
       testResult = new CallbackResult(status, CallType.CREATE_SESSION, session);
-      notifyWaitingThreads();
+      performNotify();
     }
 
     public void storeCallback(RepoStatusCode status) {
       // TODO Auto-generated method stub
 
     }
-
-    private void notifyWaitingThreads() {
-      synchronized (BookmarksSessionTestWrapper.this) {
-        BookmarksSessionTestWrapper.this.notifyAll();
-      }
-    }
   }
+
+  // Helper to perform the wait
+  private synchronized void performWait() {
+      try {
+        BookmarksSessionTestWrapper.this.wait();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+  }
+
+  // Helper to perform notify
+  private synchronized void performNotify() {
+    BookmarksSessionTestWrapper.this.notify();
+  }
+
 }

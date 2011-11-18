@@ -154,17 +154,6 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     return db.rawQuery(queryString, null);
   }
 
-  // update and return number of rows affected
-  public int updateBookmark(BookmarkRecord bookmark) {
-    SQLiteDatabase db = this.getWritableDatabase();
-    ContentValues cv = getContentValues(bookmark);
-    int rows = db.update(TBL_BOOKMARKS, cv, COL_ID + " =? ", new String[]
-        {String.valueOf(bookmark.getId())});
-
-    Log.i("DBLocal", "Updated " + rows + " bookmarks rows");
-    return rows;
-  }
-
   // delete bookmark from database looking up by guid
   public void deleteBookmark(BookmarkRecord bookmark) {
     SQLiteDatabase db = this.getWritableDatabase();
@@ -193,7 +182,16 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     cv.put(COL_FEED_URI, record.getFeedUri());
     cv.put(COL_POS, record.getPos());
     cv.put(COL_CHILDREN, record.getChildren());
-    cv.put(COL_LAST_MOD, System.currentTimeMillis()/1000);
+
+    // This is a slight hack to allow for testing to
+    // simulate order of bookmark storage by setting it
+    // to future times
+    // TODO add a flag such that this only happens in test mode
+    long now = Utils.currentEpoch();
+    if (record.getLastModTime() < now) {
+      record.setLastModTime(now);
+    }
+    cv.put(COL_LAST_MOD, record.getLastModTime());
 
     return cv;
   }

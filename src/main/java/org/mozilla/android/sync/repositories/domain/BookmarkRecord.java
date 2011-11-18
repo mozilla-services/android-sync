@@ -7,7 +7,7 @@ public class BookmarkRecord extends Record {
   // these domain objects
 
   private long id;    // TODO I don't think there is a benefit to storing this nor do we ever use it. Leave it for now.
-  private String androidId;
+  private long androidId;
   private String title;
   private String bmkUri;
   private String description;
@@ -26,10 +26,10 @@ public class BookmarkRecord extends Record {
   private String pos;
   private String children;
 
-  public String getAndroidId() {
+  public long getAndroidId() {
     return androidId;
   }
-  public void setAndroidId(String androidId) {
+  public void setAndroidId(long androidId) {
     this.androidId = androidId;
   }
   public String getTitle() {

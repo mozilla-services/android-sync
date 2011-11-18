@@ -121,12 +121,39 @@ public class TestUtils {
   }
 
   /*
-   * Other helpers
+   * Helpers for verification of test results
    */
+  public static void verifyCreateSession(CallbackResult result) {
+    assertEquals(result.getStatusCode(), RepoStatusCode.DONE);
+    assertEquals(result.getCallType(), CallType.CREATE_SESSION);
+  }
+
+  public static void verifyGuidsSince(CallbackResult result) {
+    assertEquals(CallType.GUIDS_SINCE, result.getCallType());
+    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+  }
+
+  public static void verifyFetchSince(CallbackResult result) {
+    assertEquals(CallType.FETCH_SINCE, result.getCallType());
+    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+  }
+
+  public static void verifyFetch(CallbackResult result) {
+    assertEquals(CallType.FETCH, result.getCallType());
+    assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+  }
+
   public static void verifyStoreResult(CallbackResult result) {
     assert(result.getRowId() != CallbackResult.DEFAULT_ROW_ID);
     assertEquals(CallType.STORE, result.getCallType());
     assertEquals(RepoStatusCode.DONE, result.getStatusCode());
+  }
+
+  public static void verifyExpectedRecordReturned(BookmarkRecord expected, BookmarkRecord actual) {
+    assertEquals(expected.getGuid(), actual.getGuid());
+    assertEquals(expected.getTitle(), actual.getTitle());
+    assertEquals(expected.getBmkUri(), actual.getBmkUri());
+    assertEquals(expected.getDescription(), actual.getDescription());
   }
 
 }

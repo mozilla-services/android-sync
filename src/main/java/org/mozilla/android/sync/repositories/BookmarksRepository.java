@@ -12,12 +12,31 @@ public class BookmarksRepository extends Repository {
 
   // TODO this needs to happen in a thread :S
   public void createSession(Context context, SyncCallbackReceiver callbackMechanism,long lastSyncTimestamp) {
-    if (context == null) {
-      callbackMechanism.sessionCallback(RepoStatusCode.NULL_CONTEXT, null);
-      return;
+    CreateSessionThread thread = new CreateSessionThread(context, callbackMechanism, lastSyncTimestamp);
+    thread.start();
+  }
+
+  class CreateSessionThread extends Thread {
+
+    private Context context;
+    private SyncCallbackReceiver callbackMechanism;
+    private long lastSyncTimestamp;
+
+    public CreateSessionThread(Context context, SyncCallbackReceiver callbackMechanism,
+        long lastSyncTimestamp) {
+      this.context = context;
+      this.callbackMechanism = callbackMechanism;
+      this.lastSyncTimestamp = lastSyncTimestamp;
     }
-    BookmarksRepositorySession session = new BookmarksRepositorySession(this, callbackMechanism, context, lastSyncTimestamp);
-    callbackMechanism.sessionCallback(RepoStatusCode.DONE, session);
+
+    public void run() {
+      if (context == null) {
+        callbackMechanism.sessionCallback(RepoStatusCode.NULL_CONTEXT, null);
+        return;
+      }
+      BookmarksRepositorySession session = new BookmarksRepositorySession(BookmarksRepository.this, callbackMechanism, context, lastSyncTimestamp);
+      callbackMechanism.sessionCallback(RepoStatusCode.DONE, session);
+    }
   }
 
 }
