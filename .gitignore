@@ -7,7 +7,7 @@
 target
 .project
 .classpath
-*.properties
+local.properties
 bin
 gen
 .settings
