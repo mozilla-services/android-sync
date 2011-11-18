@@ -4,10 +4,11 @@ import org.mozilla.android.sync.GlobalSession;
 
 public interface GlobalSyncStage {
   public static enum Stage {
-    uninitialized,
-    checkPreconditions,
-    ensureClusterURL,
-    fetchInfoCollections,
+    idle,                       // Start state.
+    checkPreconditions,         // Preparation of the basics. TODO: clear status
+    ensureClusterURL,           // Setting up where we talk to.
+/*
+    fetchInfoCollections,       // Take a look at timestamps.
     ensureSpecialRecords,
     updateEngineTimestamps,
     syncClientsEngine,
@@ -15,6 +16,7 @@ public interface GlobalSyncStage {
     processClientCommands,
     updateEnabledEngines,
     syncEngines,
+    */
     completed
   }
   public void execute(GlobalSession session) throws NoSuchStageException;

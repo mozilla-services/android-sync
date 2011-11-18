@@ -6,8 +6,8 @@ public class CompletedStage implements GlobalSyncStage {
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
-    // TODO Auto-generated method stub
-
+    // TODO: Update tracking timestamps, close connections, etc.
+    session.completeSync();
   }
 
 }
