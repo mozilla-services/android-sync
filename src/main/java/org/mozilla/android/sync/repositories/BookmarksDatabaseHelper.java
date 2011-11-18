@@ -156,10 +156,10 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     return rowId;
   }
 
-  // returns all bookmarks records
-  public Cursor getAllBookmarks() {
+  // returns all bookmark records
+  public Cursor fetchAllBookmarksOrderByAndroidId() {
     SQLiteDatabase db = this.getReadableDatabase();
-    Cursor cur = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, null, null, null, null, null);
+    Cursor cur = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, null, null, null, null, COL_ANDROID_ID);
     return cur;
   }
 

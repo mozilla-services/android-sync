@@ -184,7 +184,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
-      Cursor cur = dbHelper.getAllBookmarks();
+      Cursor cur = dbHelper.fetchAllBookmarksOrderByAndroidId();
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
       while (cur.isAfterLast() == false) {
