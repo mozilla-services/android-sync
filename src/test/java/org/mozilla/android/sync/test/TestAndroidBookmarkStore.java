@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mozilla.android.sync.MainActivity;
 import org.mozilla.android.sync.repositories.BookmarksRepository;
 import org.mozilla.android.sync.repositories.BookmarksRepositorySession;
@@ -20,9 +19,6 @@ import org.mozilla.android.sync.test.CallbackResult.CallType;
 
 import android.content.Context;
 
-import com.xtremelabs.robolectric.RobolectricTestRunner;
-
-@RunWith(RobolectricTestRunner.class)
 public class TestAndroidBookmarkStore {
   /*
    * This test class is dedicated to testing the
