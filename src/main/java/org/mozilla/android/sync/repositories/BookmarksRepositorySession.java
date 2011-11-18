@@ -50,7 +50,7 @@ public class BookmarksRepositorySession extends RepositorySession {
   BookmarksDatabaseHelper dbHelper;
 
   public BookmarksRepositorySession(Repository repository,
-      SyncCallbackReceiver callbackReciever, Context context, long lastSyncTimestamp) {
+      RepositorySessionDelegate callbackReciever, Context context, long lastSyncTimestamp) {
     super(repository, callbackReciever, lastSyncTimestamp);
     dbHelper = new BookmarksDatabaseHelper(context);
   }

@@ -42,13 +42,13 @@ import org.mozilla.android.sync.repositories.domain.Record;
 public abstract class RepositorySession {
 
   protected Repository repository;
-  protected SyncCallbackReceiver callbackReceiver;
+  protected RepositorySessionDelegate callbackReceiver;
   // The time that the last sync on this collection completed
   protected long lastSyncTimestamp;
   protected long syncBeginTimestamp;
   // TODO logger and logger level here
 
-  public RepositorySession(Repository repository, SyncCallbackReceiver callbackReceiver, long lastSyncTimestamp) {
+  public RepositorySession(Repository repository, RepositorySessionDelegate callbackReceiver, long lastSyncTimestamp) {
     this.repository = repository;
     this.callbackReceiver = callbackReceiver;
     this.lastSyncTimestamp = lastSyncTimestamp;

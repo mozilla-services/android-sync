@@ -39,7 +39,7 @@ package org.mozilla.android.sync.repositories;
 
 import android.content.Context;
 
-public class BookmarksRepository extends Repository {
+public class BookmarksRepository implements Repository {
 
   // protected constructor to force use of Repository static factory method makeRepository
   protected BookmarksRepository() { }
@@ -48,7 +48,7 @@ public class BookmarksRepository extends Repository {
   // else I can get this from rather than passing it around?
 
   // TODO this needs to happen in a thread :S
-  public void createSession(Context context, SyncCallbackReceiver callbackMechanism,long lastSyncTimestamp) {
+  public void createSession(Context context, RepositorySessionDelegate callbackMechanism,long lastSyncTimestamp) {
     CreateSessionThread thread = new CreateSessionThread(context, callbackMechanism, lastSyncTimestamp);
     thread.start();
   }
@@ -56,10 +56,10 @@ public class BookmarksRepository extends Repository {
   class CreateSessionThread extends Thread {
 
     private Context context;
-    private SyncCallbackReceiver callbackMechanism;
+    private RepositorySessionDelegate callbackMechanism;
     private long lastSyncTimestamp;
 
-    public CreateSessionThread(Context context, SyncCallbackReceiver callbackMechanism,
+    public CreateSessionThread(Context context, RepositorySessionDelegate callbackMechanism,
         long lastSyncTimestamp) {
       this.context = context;
       this.callbackMechanism = callbackMechanism;

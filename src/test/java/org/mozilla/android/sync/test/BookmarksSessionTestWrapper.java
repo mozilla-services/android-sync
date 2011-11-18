@@ -42,7 +42,7 @@ import org.mozilla.android.sync.repositories.BookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.RepositoryCallbackReceiver;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.SyncCallbackReceiver;
+import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.CallbackResult.CallType;
@@ -95,7 +95,7 @@ public class BookmarksSessionTestWrapper {
   }
 
 
-  class CallbackReceiver implements RepositoryCallbackReceiver, SyncCallbackReceiver {
+  class CallbackReceiver implements RepositoryCallbackReceiver, RepositorySessionDelegate {
 
     public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
       testResult = new CallbackResult(status, CallType.GUIDS_SINCE, guids);
