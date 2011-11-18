@@ -7,8 +7,13 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.domain.CryptoInfo;
-import org.mozilla.android.sync.domain.KeyBundle;
+import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.android.sync.crypto.CryptoInfo;
+import org.mozilla.android.sync.crypto.Cryptographer;
+import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.crypto.MissingCryptoInputException;
+import org.mozilla.android.sync.crypto.NoKeyBundleException;
+import org.mozilla.android.sync.crypto.Utils;
 
 public class BaseCryptoRecord implements CryptoRecord {
 

@@ -11,7 +11,7 @@ import java.net.URISyntaxException;
 import org.junit.Test;
 import org.mozilla.android.sync.BaseCryptoRecord;
 import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.domain.KeyBundle;
+import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;

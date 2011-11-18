@@ -44,15 +44,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
 
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.mozilla.android.sync.domain.CryptoInfo;
+import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.android.sync.crypto.CryptoInfo;
+import org.mozilla.android.sync.crypto.Cryptographer;
+import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.crypto.Utils;
 import org.mozilla.android.sync.domain.CryptoStatusBundle;
 import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
-import org.mozilla.android.sync.domain.KeyBundle;
 
 /*
  * This class acts as a wrapper for the Cryptographer class.
@@ -99,6 +103,14 @@ public class SyncCryptographer {
     this.setUsername(username);
     this.syncKey = friendlyBase32SyncKey;
     this.setKeys(base64EncryptionKey, base64HmacKey);
+  }
+
+  /*
+   * Same as above...but for JSONArray
+   */
+  @SuppressWarnings("unchecked")
+  private static final ArrayList<Object> asAList(JSONArray j) {
+      return j;
   }
 
   /*
@@ -225,8 +237,8 @@ public class SyncCryptographer {
 
     // Generate JSON.
     JSONArray keysArray = new JSONArray();
-    Utils.asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getEncryptionKey())));
-    Utils.asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getHMACKey())));
+    asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getEncryptionKey())));
+    asAList(keysArray).add(new String(Base64.encodeBase64(cryptoKeys.getHMACKey())));
     ExtendedJSONObject json = new ExtendedJSONObject();
     json.put(KEY_ID, ID_CRYPTO_KEYS);
     json.put(KEY_COLLECTION, CRYPTO_KEYS_COLLECTION);

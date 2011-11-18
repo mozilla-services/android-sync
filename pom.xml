@@ -8,6 +8,11 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>org.mozilla.android.sync.crypto</groupId>
+      <artifactId>sync-crypto</artifactId>
+      <version>1</version>
+    </dependency>
+    <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
       <version>1.5</version>

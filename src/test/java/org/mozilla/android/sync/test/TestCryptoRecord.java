@@ -9,11 +9,11 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.android.sync.BaseCryptoRecord;
-import org.mozilla.android.sync.CryptoException;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.NonObjectJSONException;
-import org.mozilla.android.sync.Utils;
-import org.mozilla.android.sync.domain.KeyBundle;
+import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.crypto.Utils;
 
 public class TestCryptoRecord {
 
