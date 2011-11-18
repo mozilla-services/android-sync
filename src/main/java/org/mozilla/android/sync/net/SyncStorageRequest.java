@@ -74,10 +74,10 @@ import org.json.simple.JSONObject;
 public class SyncStorageRequest implements Resource {
   public static String USER_AGENT = "Firefox AndroidSync 0.1";
 
-  // The delegate that receives callbacks from `resource`…
+  // The delegate that receives callbacks from `resource`.
   private SyncResourceDelegate resourceDelegate;
 
-  // … and the delegate we in turn notify.
+  // The delegate we in turn notify.
   public SyncStorageRequestDelegate delegate;
 
   // The resource that's actually performing the request.
