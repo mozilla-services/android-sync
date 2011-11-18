@@ -2,9 +2,12 @@ package org.mozilla.android.sync.stage;
 
 import org.mozilla.android.sync.GlobalSession;
 
-public class CheckPreconditionsStage implements GlobalSyncStage {
+public class CompletedStage implements GlobalSyncStage {
+
+  @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
-    session.advance(GlobalSyncStage.Stage.ensureClusterURL);
+    // TODO Auto-generated method stub
+
   }
 
 }

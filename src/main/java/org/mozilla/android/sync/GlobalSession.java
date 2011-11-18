@@ -40,11 +40,15 @@ package org.mozilla.android.sync;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.stage.CheckPreconditionsStage;
+import org.mozilla.android.sync.stage.GlobalSyncStage;
+import org.mozilla.android.sync.stage.NoSuchStageException;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 
 
@@ -102,6 +106,20 @@ public class GlobalSession {
     this.password      = password;
     this.syncKeyBundle = syncKeyBundle;
     this.callback      = callback;
+    prepareStages();  
+  }
+
+  private Map<Stage, GlobalSyncStage> stages;
+  private void prepareStages() {
+    stages.put(Stage.checkPreconditions, new CheckPreconditionsStage());
+  }
+
+  private GlobalSyncStage getStageByName(Stage next) throws NoSuchStageException {
+    GlobalSyncStage stage = stages.get(next);
+    if (stage == null) {
+      throw new NoSuchStageException(next);
+    }
+    return stage;
   }
 
   protected void fetchJSON(String url, JSONObjectCallback callback) throws URISyntaxException {
@@ -119,9 +137,12 @@ public class GlobalSession {
    * Move to the next stage in the syncing process.
    * @param next
    *        The next stage.
+   * @throws NoSuchStageException if the stage does not exist.
    */
-  public static void advance(Stage next) {
-    // TODO Auto-generated method stub
-    
+  public void advance(Stage next) throws NoSuchStageException {
+    GlobalSyncStage nextStage = this.getStageByName(next);
+    this.currentState = next;
+    nextStage.execute(this);
   }
+
 }

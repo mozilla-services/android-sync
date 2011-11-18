@@ -17,5 +17,5 @@ public interface GlobalSyncStage {
     syncEngines,
     completed
   }
-  public void execute(GlobalSession session);
+  public void execute(GlobalSession session) throws NoSuchStageException;
 }
