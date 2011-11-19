@@ -37,39 +37,12 @@
 
 package org.mozilla.android.sync.repositories;
 
-import android.content.Context;
-
-public class BookmarksRepository implements Repository {
-
-  // TODO it is annoying to have to pass the context around to get access to the DB...is there anywhere
-  // else I can get this from rather than passing it around?
-
-  // TODO this needs to happen in a thread :S
-  public void createSession(Context context, RepositorySessionDelegate callbackMechanism,long lastSyncTimestamp) {
-    CreateSessionThread thread = new CreateSessionThread(context, callbackMechanism, lastSyncTimestamp);
-    thread.start();
-  }
-
-  class CreateSessionThread extends Thread {
-
-    private Context context;
-    private RepositorySessionDelegate callbackMechanism;
-    private long lastSyncTimestamp;
-
-    public CreateSessionThread(Context context, RepositorySessionDelegate callbackMechanism,
-        long lastSyncTimestamp) {
-      if (context == null) {
-        throw new IllegalArgumentException("context is null.");
-      }
-      this.context = context;
-      this.callbackMechanism = callbackMechanism;
-      this.lastSyncTimestamp = lastSyncTimestamp;
-    }
-
-    public void run() {
-      BookmarksRepositorySession session = new BookmarksRepositorySession(BookmarksRepository.this, callbackMechanism, context, lastSyncTimestamp);
-      callbackMechanism.onSessionCreated(session);
-    }
-  }
-
+// Used to provide the sessionCallback and storeCallback
+// mechanism to repository instances.
+public interface RepositorySessionDelegate {
+  public void onSessionCreateFailed(Exception ex);
+  public void onSessionCreated(RepositorySession session);
+  
+  public void onStoreFailed(Exception ex);
+  public void onStoreSucceeded();                   // TODO: some value.
 }

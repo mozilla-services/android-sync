@@ -48,9 +48,9 @@ public abstract class RepositorySession {
   protected long syncBeginTimestamp;
   // TODO logger and logger level here
 
-  public RepositorySession(Repository repository, RepositorySessionDelegate callbackReceiver, long lastSyncTimestamp) {
+  public RepositorySession(Repository repository, RepositorySessionDelegate delegate, long lastSyncTimestamp) {
     this.repository = repository;
-    this.callbackReceiver = callbackReceiver;
+    this.callbackReceiver = delegate;
     this.lastSyncTimestamp = lastSyncTimestamp;
   }
 
