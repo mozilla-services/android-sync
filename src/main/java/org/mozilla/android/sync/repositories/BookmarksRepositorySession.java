@@ -50,14 +50,14 @@ public class BookmarksRepositorySession extends RepositorySession {
   BookmarksDatabaseHelper dbHelper;
 
   public BookmarksRepositorySession(Repository repository,
-      RepositorySessionDelegate callbackReciever, Context context, long lastSyncTimestamp) {
+      RepositorySessionCreationDelegate callbackReciever, Context context, long lastSyncTimestamp) {
     super(repository, callbackReciever, lastSyncTimestamp);
     dbHelper = new BookmarksDatabaseHelper(context);
   }
 
   // guids since method and thread
   @Override
-  public void guidsSince(long timestamp, RepositoryCallbackReceiver receiver) {
+  public void guidsSince(long timestamp, RepositorySessionDelegate receiver) {
     GuidsSinceThread thread = new GuidsSinceThread(timestamp, receiver, dbHelper);
     thread.start();
   }
@@ -65,10 +65,10 @@ public class BookmarksRepositorySession extends RepositorySession {
   class GuidsSinceThread extends Thread {
 
     private long timestamp;
-    private RepositoryCallbackReceiver callbackReceiver;
+    private RepositorySessionDelegate callbackReceiver;
     private BookmarksDatabaseHelper dbHelper;
 
-    public GuidsSinceThread(long timestamp, RepositoryCallbackReceiver callbackReceiver, BookmarksDatabaseHelper dbHelper) {
+    public GuidsSinceThread(long timestamp, RepositorySessionDelegate callbackReceiver, BookmarksDatabaseHelper dbHelper) {
       this.timestamp = timestamp;
       this.callbackReceiver = callbackReceiver;
       this.dbHelper = dbHelper;
@@ -96,7 +96,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   @Override
   // Fetch since method and thread
-  public void fetchSince(long timestamp, RepositoryCallbackReceiver receiver) {
+  public void fetchSince(long timestamp, RepositorySessionDelegate receiver) {
     FetchSinceThread thread = new FetchSinceThread(timestamp, receiver);
     thread.start();
   }
@@ -104,9 +104,9 @@ public class BookmarksRepositorySession extends RepositorySession {
   class FetchSinceThread extends Thread {
 
     private long timestamp;
-    private RepositoryCallbackReceiver callbackReceiver;
+    private RepositorySessionDelegate callbackReceiver;
 
-    public FetchSinceThread(long timestamp, RepositoryCallbackReceiver callbackReceiver ) {
+    public FetchSinceThread(long timestamp, RepositorySessionDelegate callbackReceiver ) {
       this.timestamp = timestamp;
       this.callbackReceiver = callbackReceiver;
     }
@@ -130,16 +130,16 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   @Override
   // Fetch method and thread
-  public void fetch(String[] guids, RepositoryCallbackReceiver receiver) {
+  public void fetch(String[] guids, RepositorySessionDelegate receiver) {
     FetchThread thread = new FetchThread(guids, receiver);
     thread.start();
   }
 
   class FetchThread extends Thread {
     private String[] guids;
-    private RepositoryCallbackReceiver callbackReceiver;
+    private RepositorySessionDelegate callbackReceiver;
 
-    public FetchThread(String[] guids, RepositoryCallbackReceiver callbackReceiver) {
+    public FetchThread(String[] guids, RepositorySessionDelegate callbackReceiver) {
       this.guids = guids;
       this.callbackReceiver = callbackReceiver;
     }
@@ -171,15 +171,15 @@ public class BookmarksRepositorySession extends RepositorySession {
   @Override
   // Fetch all method and thread
   // NOTE: This is only used for testing
-  public void fetchAll(RepositoryCallbackReceiver receiver) {
+  public void fetchAll(RepositorySessionDelegate receiver) {
     FetchAllThread thread = new FetchAllThread(receiver);
     thread.start();
   }
 
   class FetchAllThread extends Thread {
-    private RepositoryCallbackReceiver callbackReceiver;
+    private RepositorySessionDelegate callbackReceiver;
 
-    public FetchAllThread(RepositoryCallbackReceiver callbackReceiver) {
+    public FetchAllThread(RepositorySessionDelegate callbackReceiver) {
       this.callbackReceiver = callbackReceiver;
     }
 
@@ -201,16 +201,16 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   // Store method and thread
   @Override
-  public void store(Record record, RepositoryCallbackReceiver receiver) {
+  public void store(Record record, RepositorySessionDelegate receiver) {
     StoreThread thread = new StoreThread(record, receiver);
     thread.start();
   }
 
   class StoreThread extends Thread {
     private BookmarkRecord record;
-    private RepositoryCallbackReceiver callbackReceiver;
+    private RepositorySessionDelegate callbackReceiver;
 
-    public StoreThread(Record record, RepositoryCallbackReceiver callbackReceiver) {
+    public StoreThread(Record record, RepositorySessionDelegate callbackReceiver) {
       this.record = (BookmarkRecord) record;
       this.callbackReceiver = callbackReceiver;
     }
@@ -267,16 +267,16 @@ public class BookmarksRepositorySession extends RepositorySession {
   // but I imagine it might be worth it once the implmentation
   // of this is complete (plus I'm sticking with past conventions)
   @Override
-  public void wipe(RepositoryCallbackReceiver receiver) {
+  public void wipe(RepositorySessionDelegate receiver) {
     WipeThread thread = new WipeThread(receiver);
     thread.start();
   }
 
   class WipeThread extends Thread {
 
-    private RepositoryCallbackReceiver callbackReceiver;
+    private RepositorySessionDelegate callbackReceiver;
 
-    public WipeThread(RepositoryCallbackReceiver callbackReciever) {
+    public WipeThread(RepositorySessionDelegate callbackReciever) {
       this.callbackReceiver = callbackReciever;
     }
 
@@ -287,13 +287,13 @@ public class BookmarksRepositorySession extends RepositorySession {
   }
 
   @Override
-  public void begin(RepositoryCallbackReceiver receiver) {
+  public void begin(RepositorySessionDelegate receiver) {
     // TODO Auto-generated method stub
 
   }
 
   @Override
-  public void finish(RepositoryCallbackReceiver receiver) {
+  public void finish(RepositorySessionDelegate receiver) {
     // TODO Auto-generated method stub
 
   }

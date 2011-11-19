@@ -15,9 +15,10 @@ import org.mozilla.android.sync.MainActivity;
 import org.mozilla.android.sync.repositories.BookmarksRepository;
 import org.mozilla.android.sync.repositories.BookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.RepoStatusCode;
-import org.mozilla.android.sync.repositories.RepositoryCallbackReceiver;
 import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
+import org.mozilla.android.sync.repositories.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.Utils;
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -32,7 +33,7 @@ public class TestAndroidBookmarksRepo {
   private BookmarksSessionTestWrapper testWrapper;
   private static final long lastSyncTimestamp = Utils.currentEpoch() - 36000;
 
-  public class DefaultRepositorySessionDelegate implements RepositoryCallbackReceiver {
+  public class DefaultRepositorySessionDelegate implements RepositorySessionDelegate {
     public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
       fail("Should not be called.");
     }
@@ -59,7 +60,27 @@ public class TestAndroidBookmarksRepo {
     }
   }
 
-  private class DefaultDelegate implements RepositorySessionDelegate {
+  private class DefaultStoreDelegate implements RepositorySessionStoreDelegate {
+    public void onStoreFailed(Exception ex) {
+      fail("No store.");
+    }
+
+    public void onStoreSucceeded() {
+      fail("No store.");
+    }
+  }
+
+  private class DefaultDelegate implements RepositorySessionCreationDelegate {
+    private RepositorySessionStoreDelegate storeDelegate;
+
+    public DefaultDelegate(RepositorySessionStoreDelegate storeDelegate) {
+      this.storeDelegate = storeDelegate;
+    }
+
+    public DefaultDelegate() {
+      this(new DefaultStoreDelegate());
+    }
+
     public void onSessionCreateFailed(Exception ex) {
       fail("Should not fail.");
     }
@@ -68,13 +89,10 @@ public class TestAndroidBookmarksRepo {
       fail("Should not have been created.");
     }
 
-    public void onStoreFailed(Exception ex) {
-      fail("No store.");
+    public RepositorySessionStoreDelegate getStoreDelegate() {
+      return this.storeDelegate;
     }
 
-    public void onStoreSucceeded() {
-      fail("No store.");
-    }
   }
 
   private class SetupDelegate extends DefaultDelegate {
@@ -144,9 +162,9 @@ public class TestAndroidBookmarksRepo {
   public void testFetchAll() {
     FetchDelegateHelper delegate = new FetchDelegateHelper();
     delegate.expectingStore = true;
-    session.store(TestUtils.createBookmark1(), delegate);
+    session.store(BookmarkHelpers.createBookmark1(), delegate);
     testWrapper.performWait();
-    session.store(TestUtils.createBookmark2(), delegate);
+    session.store(BookmarkHelpers.createBookmark2(), delegate);
     testWrapper.performWait();
     delegate.expectingStore = false;
     delegate.expectingFetch = true;

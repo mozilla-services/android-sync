@@ -14,13 +14,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.junit.Test;
 import org.mozilla.android.sync.net.BaseResource;
-import org.mozilla.android.sync.net.test.TestResourceData.TestServer;
+import org.mozilla.android.sync.net.test.HTTPServerTestHelper.TestServer;
 
 public class TestResource {
 
   static String            USER_PASS    = "john:password";
   static String            EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
-  private TestResourceData data         = new TestResourceData();
+  private HTTPServerTestHelper data         = new HTTPServerTestHelper();
 
   class BaseTestResourceDelegate extends BaseResourceDelegate {
     @Override

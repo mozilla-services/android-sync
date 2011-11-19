@@ -42,32 +42,32 @@ import org.mozilla.android.sync.repositories.domain.Record;
 public abstract class RepositorySession {
 
   protected Repository repository;
-  protected RepositorySessionDelegate callbackReceiver;
+  protected RepositorySessionCreationDelegate callbackReceiver;
   // The time that the last sync on this collection completed
   protected long lastSyncTimestamp;
   protected long syncBeginTimestamp;
   // TODO logger and logger level here
 
-  public RepositorySession(Repository repository, RepositorySessionDelegate delegate, long lastSyncTimestamp) {
+  public RepositorySession(Repository repository, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp) {
     this.repository = repository;
     this.callbackReceiver = delegate;
     this.lastSyncTimestamp = lastSyncTimestamp;
   }
 
-  public abstract void guidsSince(long timestamp, RepositoryCallbackReceiver receiver);
-  public abstract void fetchSince(long timestamp, RepositoryCallbackReceiver receiver);
-  public abstract void fetch(String[] guids, RepositoryCallbackReceiver receiver);
+  public abstract void guidsSince(long timestamp, RepositorySessionDelegate receiver);
+  public abstract void fetchSince(long timestamp, RepositorySessionDelegate receiver);
+  public abstract void fetch(String[] guids, RepositorySessionDelegate receiver);
 
   // Test function only
-  public abstract void fetchAll(RepositoryCallbackReceiver receiver);
+  public abstract void fetchAll(RepositorySessionDelegate receiver);
 
-  public abstract void store(Record record, RepositoryCallbackReceiver receiver);
-  public abstract void wipe(RepositoryCallbackReceiver receiver);
+  public abstract void store(Record record, RepositorySessionDelegate receiver);
+  public abstract void wipe(RepositorySessionDelegate receiver);
 
-  public void begin(RepositoryCallbackReceiver receiver) {
+  public void begin(RepositorySessionDelegate receiver) {
     this.syncBeginTimestamp = Utils.currentEpoch();
   }
 
-  public abstract void finish(RepositoryCallbackReceiver receiver);
+  public abstract void finish(RepositorySessionDelegate receiver);
 
 }

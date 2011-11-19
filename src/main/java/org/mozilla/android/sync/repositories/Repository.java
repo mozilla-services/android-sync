@@ -42,5 +42,5 @@ import android.content.Context;
 // TODO: For now we are only concerned with android repos...eventually I'll need
 // to implement this for both a server repo and an android repo
 public interface Repository {
-  public void createSession(Context context, RepositorySessionDelegate delegate, long lastSyncTimestamp);
+  public void createSession(Context context, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp);
 }

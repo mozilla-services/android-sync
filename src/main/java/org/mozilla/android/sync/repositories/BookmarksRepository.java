@@ -45,7 +45,7 @@ public class BookmarksRepository implements Repository {
   // else I can get this from rather than passing it around?
 
   // TODO this needs to happen in a thread :S
-  public void createSession(Context context, RepositorySessionDelegate callbackMechanism,long lastSyncTimestamp) {
+  public void createSession(Context context, RepositorySessionCreationDelegate callbackMechanism,long lastSyncTimestamp) {
     CreateSessionThread thread = new CreateSessionThread(context, callbackMechanism, lastSyncTimestamp);
     thread.start();
   }
@@ -53,10 +53,10 @@ public class BookmarksRepository implements Repository {
   class CreateSessionThread extends Thread {
 
     private Context context;
-    private RepositorySessionDelegate callbackMechanism;
+    private RepositorySessionCreationDelegate callbackMechanism;
     private long lastSyncTimestamp;
 
-    public CreateSessionThread(Context context, RepositorySessionDelegate callbackMechanism,
+    public CreateSessionThread(Context context, RepositorySessionCreationDelegate callbackMechanism,
         long lastSyncTimestamp) {
       if (context == null) {
         throw new IllegalArgumentException("context is null.");
