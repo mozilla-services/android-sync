@@ -45,9 +45,8 @@ import org.apache.commons.codec.binary.Base64;
 public class Utils {
 
   public static String generateGuid() {
-    Base64 base64 = new Base64(true);
-    byte[] encodedBytes = base64.encode(generateRandomBytes(9));
-    return new String(encodedBytes).replace("\r", "").replace("\n", "");
+    byte[] encodedBytes = Base64.encodeBase64(generateRandomBytes(9), false);
+    return new String(encodedBytes).replace("+", "-").replace("/", "_");
   }
 
   private static byte[] generateRandomBytes(int length) {

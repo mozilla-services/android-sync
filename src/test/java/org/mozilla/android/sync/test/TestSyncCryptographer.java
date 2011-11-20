@@ -6,6 +6,7 @@ package org.mozilla.android.sync.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
@@ -20,7 +21,7 @@ import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
 public class TestSyncCryptographer {
 
     @Test
-    public void testDecrypt() throws CryptoException {
+    public void testDecrypt() throws CryptoException, UnsupportedEncodingException {
         String jsonInput =              "{\"sortindex\": 90, \"payload\":" +
                                         "\"{\\\"ciphertext\\\":\\\"F4ukf0" +
                                         "LM+vhffiKyjaANXeUhfmOPPmQYX1XBoG" +
@@ -64,7 +65,7 @@ public class TestSyncCryptographer {
     }
 
     @Test
-    public void testEncryptDecrypt() throws CryptoException {
+    public void testEncryptDecrypt() throws CryptoException, UnsupportedEncodingException {
         String originalText =           "{\"id\":\"hkZYpC-BH4Xi\",\"histU" +
                                         "ri\":\"http://hathology.com/2008" +
                                         "/06/how-to-edit-your-path-enviro" +
@@ -103,7 +104,7 @@ public class TestSyncCryptographer {
     }
 
     @Test
-    public void testConstructKeyBundleKeys() {
+    public void testConstructKeyBundleKeys() throws UnsupportedEncodingException {
 
         String username =               "smqvooxj664hmrkrv6bw4r4vkegjhkns";
         String friendlyBase32SyncKey =  "gbh7teqqcgyzd65svjgibd7tqy";
@@ -122,17 +123,17 @@ public class TestSyncCryptographer {
         }
 
         // Check Encryption Key
-        boolean equal = Arrays.equals(keys.getEncryptionKey(), Base64.decodeBase64(base64EncryptionKey));
+        boolean equal = Arrays.equals(keys.getEncryptionKey(), Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8")));
         assertEquals(true, equal);
 
         // Check HMAC Key
-        equal = Arrays.equals(keys.getHMACKey(), Base64.decodeBase64(base64HmacKey));
+        equal = Arrays.equals(keys.getHMACKey(), Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")));
         assertEquals(true, equal);
 
     }
 
     @Test
-    public void testDecryptKeysBundle() throws CryptoException {
+    public void testDecryptKeysBundle() throws CryptoException, UnsupportedEncodingException {
         String jsonInput =                      "{\"payload\": \"{\\\"ciphertext\\" +
                                                 "\":\\\"L1yRyZBkVYKXC1cTpeUqqfmKg" +
                                                 "CinYV9YntGiG0PfYZSTLQ2s86WPI0VBb" +
@@ -168,9 +169,9 @@ public class TestSyncCryptographer {
         assertEquals(CryptoStatus.OK, result.getStatus());
 
         // Check that the correct keys were set and are not base64 encoded
-        boolean equal = Arrays.equals(Base64.decodeBase64(expectedBase64EncryptionKey), cryptographer.getKeys().getEncryptionKey());
+        boolean equal = Arrays.equals(Base64.decodeBase64(expectedBase64EncryptionKey.getBytes("UTF-8")), cryptographer.getKeys().getEncryptionKey());
         assertEquals(true, equal);
-        equal = Arrays.equals(Base64.decodeBase64(expectedBase64HmacKey), cryptographer.getKeys().getHMACKey());
+        equal = Arrays.equals(Base64.decodeBase64(expectedBase64HmacKey.getBytes("UTF-8")), cryptographer.getKeys().getHMACKey());
         assertEquals(true, equal);
 
         // Check the decrypted text
@@ -178,7 +179,7 @@ public class TestSyncCryptographer {
     }
 
     @Test
-    public void testCreateKeysBundle() throws CryptoException {
+    public void testCreateKeysBundle() throws CryptoException, UnsupportedEncodingException {
         String username =                       "b6evr62dptbxz7fvebek7btljyu322wp";
         String friendlyBase32SyncKey =          "basuxv2426eqj7frhvpcwkavdi";
 
