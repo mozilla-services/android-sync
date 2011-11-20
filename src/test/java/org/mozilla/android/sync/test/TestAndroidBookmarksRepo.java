@@ -121,25 +121,22 @@ public class TestAndroidBookmarksRepo {
     testWaiter.performWait();
   }
 
-//  @Test
-//  public void testGuidsSinceReturnNoRecords() {
-//
-//    // Create a record and store it
-//    CallbackResult result = testWrapper.doStoreSync(session, BookmarkHelpers.createBookmark1());
-//    BookmarkHelpers.verifyStoreResult(result);
-//
-//    // Wait 2 seconds
-//    perform2SecondWait();
-//    long timestamp = System.currentTimeMillis()/1000;
-//
-//    // Get records
-//    result = testWrapper.doGuidsSinceSync(session, timestamp);
-//
-//    // Verify that no guids come back
-//    assertEquals(0, result.getGuids().length);
-//    BookmarkHelpers.verifyGuidsSince(result);
-//  }
-//
+  @Test
+  public void testGuidsSinceReturnNoRecords() {
+    prepEmptySession();
+    long timestamp = System.currentTimeMillis();
+
+    //  Store 1 record in the past.
+    BookmarkRecord record0 = BookmarkHelpers.createLivemark();
+    
+    record0.setLastModified(timestamp - 1000);
+    session.store(record0, new ExpectStoredDelegate(record0.getGUID()));
+    testWaiter.performWait();
+
+    String[] expected = new String[0];
+    session.guidsSince(timestamp, new ExpectFetchGUIDsDelegate(expected));
+  }
+
 //  /*
 //   * Tests for fetchSince
 //   */

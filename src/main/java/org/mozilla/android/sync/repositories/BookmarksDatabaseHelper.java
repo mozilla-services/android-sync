@@ -219,16 +219,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     cv.put(COL_FEED_URI, record.getFeedUri());
     cv.put(COL_POS, record.getPos());
     cv.put(COL_CHILDREN, record.getChildren());
-
-    // This is a slight hack to allow for testing to
-    // simulate order of bookmark storage by setting it
-    // to future times
-    // TODO add a flag such that this only happens in test mode
-    long now = System.currentTimeMillis();
-    if (record.getLastModTime() < now) {
-      record.setLastModified(now);
-    }
-    cv.put(COL_LAST_MOD, record.getLastModTime());
+    cv.put(COL_LAST_MOD, record.getLastModified());
 
     return cv;
   }

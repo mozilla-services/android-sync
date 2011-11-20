@@ -218,19 +218,19 @@ public class BookmarksRepositorySession extends RepositorySession {
     public void run() {
 
       BookmarkRecord existingRecord = findExistingRecord();
-      long rowId = -1;
+      long rowID;
       // If the record is new, just store it
       if (existingRecord == null) {
-        rowId = dbHelper.insertBookmark((BookmarkRecord) record);
+        rowID = dbHelper.insertBookmark((BookmarkRecord) record);
 
       } else {
         // Record exists already, need to figure out what to store
 
-        if (existingRecord.getLastModTime() > lastSyncTimestamp) {
+        if (existingRecord.getLastModified() > lastSyncTimestamp) {
           // Remote and local record have both been modified since since last sync
           BookmarkRecord store = reconcileBookmarks(existingRecord, record);
           dbHelper.deleteBookmark(existingRecord);
-          rowId = dbHelper.insertBookmark(store);
+          rowID = dbHelper.insertBookmark(store);
         } else {
           // Only remote record modified, so take that one
           // (except for androidId which we obviously want to keep)
@@ -238,7 +238,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
           // To keep things simple, we don't update, we delete then re-insert
           dbHelper.deleteBookmark(existingRecord);
-          rowId = dbHelper.insertBookmark(record);
+          rowID = dbHelper.insertBookmark(record);
         }
       }
 
@@ -303,7 +303,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     // Determine which record is newer since this is the one we will take in case of conflict
     BookmarkRecord newer;
-    if (local.getLastModTime() > remote.getLastModTime()) {
+    if (local.getLastModified() > remote.getLastModified()) {
       newer = local;
     } else {
       newer = remote;
