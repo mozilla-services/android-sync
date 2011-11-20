@@ -10,28 +10,35 @@ public class DefaultRepositorySessionDelegate implements RepositorySessionDelega
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
+  private void sharedFail() {
+    try {
+      fail("Should not be called.");
+    } catch (AssertionError e) {
+      testWaiter().performNotify(e);
+    }
+  }
   public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
-    fail("Should not be called.");
+    sharedFail();
   }
   public void storeCallback(RepoStatusCode status, long rowId) {
-    fail("Should not be called.");
+    sharedFail();
   }
   public void fetchSinceCallback(RepoStatusCode status, Record[] records) {
-    fail("Should not be called.");
+    sharedFail();
   }
   public void fetchCallback(RepoStatusCode status, Record[] records) {
-    fail("Should not be called.");
+    sharedFail();
   }
   public void fetchAllCallback(RepoStatusCode status, Record[] records) {
-    fail("Should not be called.");
+    sharedFail();
   }
   public void wipeCallback(RepoStatusCode status) {
-    fail("Should not be called.");
+    sharedFail();
   }
   public void beginCallback(RepoStatusCode status) {
-    fail("Should not be called.");
+    sharedFail();
   }
   public void finishCallback(RepoStatusCode status) {
-    fail("Should not be called.");
+    sharedFail();
   }
 }

@@ -18,11 +18,17 @@ public class ExpectFetchGUIDsDelegate extends DefaultRepositorySessionDelegate
   }
 
   public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
-    assertEquals(status, RepoStatusCode.DONE);
-    assertEquals(guids.length, this.expected.length);
-    for (String string : guids) {
-      assertFalse(-1 == Arrays.binarySearch(this.expected, string));
+    AssertionError err = null;
+    try {
+      assertEquals(status, RepoStatusCode.DONE);
+      assertEquals(guids.length, this.expected.length);
+
+      for (String string : guids) {
+        assertFalse(-1 == Arrays.binarySearch(this.expected, string));
+      }
+    } catch (AssertionError e) {
+      err = e;
     }
-    testWaiter().performNotify();
+    testWaiter().performNotify(err);
   }
 }

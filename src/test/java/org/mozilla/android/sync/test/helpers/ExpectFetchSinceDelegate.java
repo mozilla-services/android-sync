@@ -2,35 +2,34 @@ package org.mozilla.android.sync.test.helpers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
 import org.mozilla.android.sync.repositories.RepoStatusCode;
+import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
-public class ExpectFetchAllDelegate extends DefaultRepositorySessionDelegate {
-  public Record[]       records = null;
-  public RepoStatusCode code    = null;
-  private String[]      expected;
+public class ExpectFetchSinceDelegate extends DefaultRepositorySessionDelegate
+    implements RepositorySessionDelegate {
+  private String[] expected;
+  private long earliest;
 
-  public ExpectFetchAllDelegate(String[] guids) {
+  public ExpectFetchSinceDelegate(long timestamp, String[] guids) {
     expected = guids;
+    earliest = timestamp;
     Arrays.sort(expected);
   }
 
-  public void fetchAllCallback(RepoStatusCode status, Record[] records) {
+  public void fetchSinceCallback(RepoStatusCode status, Record[] records) {
     AssertionError err = null;
     try {
-      // We're assuming that we get called in one batch. That won't always be
-      // the case.
-      assertEquals(status, RepoStatusCode.DONE);
+      assertEquals(status, RepoStatusCode.DONE);       // For now.
       assertEquals(records.length, this.expected.length);
 
-      // Track these for test richness.
-      this.records = records;
-      this.code = status;
       for (Record record : records) {
         assertFalse(-1 == Arrays.binarySearch(this.expected, record.getGUID()));
+        assertTrue(record.getLastModified() >= this.earliest);
       }
     } catch (AssertionError e) {
       err = e;

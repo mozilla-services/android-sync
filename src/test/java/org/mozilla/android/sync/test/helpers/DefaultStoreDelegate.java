@@ -9,12 +9,18 @@ public class DefaultStoreDelegate implements RepositorySessionStoreDelegate {
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
-
+  private void sharedFail() {
+    try {
+      fail("No store.");
+    } catch (AssertionError e) {
+      testWaiter().performNotify(e);
+    }
+  }
   public void onStoreFailed(Exception ex) {
-    fail("No store.");
+    sharedFail();
   }
 
   public void onStoreSucceeded(Record record) {
-    fail("No store.");
+    sharedFail();
   }   
 }

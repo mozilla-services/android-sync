@@ -43,16 +43,29 @@ package org.mozilla.android.sync.test.helpers;
  *
  */
 public class WaitHelper {
-  public synchronized void performWait() {
+  AssertionError lastAssertion = null;
+
+  public synchronized void performWait() throws AssertionError {
     try {
       WaitHelper.this.wait();
+      // Rethrow any assertion with which we were notified.
+      if (this.lastAssertion != null) {
+        AssertionError e = this.lastAssertion;
+        this.lastAssertion = null;
+        throw e;
+      }
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
   }
 
-  public synchronized void performNotify() {
+  public synchronized void performNotify(AssertionError e) {
+    this.lastAssertion = e;
     WaitHelper.this.notify();
+  }
+
+  public void performNotify() {
+    this.performNotify(null);
   }
 
   private static WaitHelper singleWaiter;

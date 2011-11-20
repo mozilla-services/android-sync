@@ -7,8 +7,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mozilla.android.sync.MainActivity;
@@ -16,13 +14,13 @@ import org.mozilla.android.sync.repositories.BookmarksRepository;
 import org.mozilla.android.sync.repositories.BookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.Utils;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchGUIDsDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
@@ -40,9 +38,14 @@ public class TestAndroidBookmarksRepo {
   
   private class SetupDelegate extends DefaultSessionCreationDelegate {
     public void onSessionCreated(RepositorySession sess) {
-      assertNotNull(sess);
-      session = (BookmarksRepositorySession) sess;
-      testWaiter.performNotify();
+      AssertionError err = null;
+      try {
+        assertNotNull(sess);
+        session = (BookmarksRepositorySession) sess;
+      } catch (AssertionError e) {
+        err = e;
+      }
+      testWaiter.performNotify(err);
     }
   }
   
@@ -105,18 +108,21 @@ public class TestAndroidBookmarksRepo {
     prepEmptySession();
     long timestamp = System.currentTimeMillis();
 
-    //  Store 2 records.
+    //  Store 2 records in the future.
     BookmarkRecord record0 = BookmarkHelpers.createLivemark();
-    record0.setLastModified(timestamp + 1000);
     BookmarkRecord record1 = BookmarkHelpers.createMicrosummary();
-    record1.setLastModified(timestamp + 1500);
+
     String[] expected = new String[2];
     expected[0] = record0.getGUID();
     expected[1] = record1.getGUID();
+    record0.setLastModified(timestamp + 1000);
+    record1.setLastModified(timestamp + 1500);
+
     session.store(record0, new ExpectStoredDelegate(expected[0]));
     testWaiter.performWait();
     session.store(record1, new ExpectStoredDelegate(expected[1]));
     testWaiter.performWait();
+
     session.guidsSince(timestamp, new ExpectFetchGUIDsDelegate(expected));
     testWaiter.performWait();
   }
@@ -128,39 +134,49 @@ public class TestAndroidBookmarksRepo {
 
     //  Store 1 record in the past.
     BookmarkRecord record0 = BookmarkHelpers.createLivemark();
-    
     record0.setLastModified(timestamp - 1000);
     session.store(record0, new ExpectStoredDelegate(record0.getGUID()));
     testWaiter.performWait();
 
-    String[] expected = new String[0];
+    String[] expected = {};
     session.guidsSince(timestamp, new ExpectFetchGUIDsDelegate(expected));
+    testWaiter.performWait();
   }
 
-//  /*
-//   * Tests for fetchSince
-//   */
-//  @Test
-//  public void testFetchSinceOneRecord() {
-//    // Create one record and store it
-//    CallbackResult result = testWrapper.doStoreSync(session, BookmarkHelpers.createFolder());
-//    BookmarkHelpers.verifyStoreResult(result);
-//
-//    // Wait 2 seconds and then store another record
-//    perform2SecondWait();
-//    long timestamp = System.currentTimeMillis()/1000;
-//    BookmarkRecord record2 = BookmarkHelpers.createBookmark2();
-//    result = testWrapper.doStoreSync(session, record2);
-//    BookmarkHelpers.verifyStoreResult(result);
-//
-//    // Fetch since using timestamp and ensure we only get back one record
-//    result = testWrapper.doFetchSinceSync(session, timestamp);
-//
-//    // Check that only one record was returned and that it is the right one
-//    assertEquals(1, result.getRecords().length);
-//    assertEquals(record2.getGuid(), ((BookmarkRecord) result.getRecords()[0]).getGuid());
-//    BookmarkHelpers.verifyFetchSince(result);
-//  }
+  /*
+   * Tests for fetchSince
+   */
+  @Test
+  public void testFetchSinceOneRecord() {
+    prepEmptySession();
+    long timestamp = System.currentTimeMillis();
+
+    // Store a folder.
+    BookmarkRecord folder = BookmarkHelpers.createFolder();
+    folder.setLastModified(timestamp);       // Verify inclusive retrieval.
+    session.store(folder, new ExpectStoredDelegate(folder.getGUID()));
+    testWaiter.performWait();
+    
+    // Store a bookmark.
+    BookmarkRecord bookmark = BookmarkHelpers.createBookmark2();
+    bookmark.setLastModified(timestamp + 3000);
+    session.store(bookmark, new ExpectStoredDelegate(bookmark.getGUID()));
+    testWaiter.performWait();
+    
+    // Fetch just the bookmark.
+    String[] expectedOne = new String[1];
+    expectedOne[0] = bookmark.getGUID();
+    session.fetchSince(timestamp + 1, new ExpectFetchSinceDelegate(timestamp, expectedOne));
+    testWaiter.performWait();
+    
+    // Fetch both, relying on inclusiveness.
+    String[] expectedBoth = new String[2];
+    expectedBoth[0] = folder.getGUID();
+    expectedBoth[1] = bookmark.getGUID();
+    session.fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, expectedBoth));
+    testWaiter.performWait();
+  }
+
 //
 //  @Test
 //  public void testFetchSinceReturnNoRecords() {

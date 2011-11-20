@@ -9,12 +9,18 @@ public class DefaultSessionCreationDelegate implements RepositorySessionCreation
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
-
+  private void sharedFail(String message) {
+    try {
+      fail(message);
+    } catch (AssertionError e) {
+      testWaiter().performNotify(e);
+    }
+  }
   public void onSessionCreateFailed(Exception ex) {
-    fail("Should not fail.");
+    sharedFail("Should not fail.");
   }
 
   public void onSessionCreated(RepositorySession session) {
-    fail("Should not have been created.");
+    sharedFail("Should not have been created.");
   }
 }

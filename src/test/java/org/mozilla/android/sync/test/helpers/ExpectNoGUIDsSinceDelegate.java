@@ -7,8 +7,13 @@ import org.mozilla.android.sync.test.TestAndroidBookmarksRepo;
 
 public class ExpectNoGUIDsSinceDelegate extends DefaultRepositorySessionDelegate {
   public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
-    assertEquals(0, guids.length);
-    assertEquals(status, RepoStatusCode.DONE);
-    TestAndroidBookmarksRepo.testWaiter.performNotify();
+    AssertionError err = null;
+    try {
+      assertEquals(0, guids.length);
+      assertEquals(status, RepoStatusCode.DONE);
+    } catch (AssertionError e) {
+      err = e;
+    }
+    TestAndroidBookmarksRepo.testWaiter.performNotify(err);
   }
 }

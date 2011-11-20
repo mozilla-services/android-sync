@@ -10,13 +10,18 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   public ExpectStoredDelegate(String guid) {
     this.expectedGUID = guid;
   }
+
   public ExpectStoredDelegate() {
   }
 
   public void onStoreSucceeded(Record record) {
-    if (this.expectedGUID != null) {
-      assertEquals(this.expectedGUID, record.getGUID());
+    try {
+      if (this.expectedGUID != null) {
+        assertEquals(this.expectedGUID, record.getGUID());
+      }
+      testWaiter().performNotify();
+    } catch (AssertionError e) {
+      testWaiter().performNotify(e);
     }
-    testWaiter().performNotify();
   }
 }
