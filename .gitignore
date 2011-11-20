@@ -1,0 +1,13 @@
+.metadata
+*~
+.*.sw?
+.sw?
+*.jar
+*.class
+target
+.project
+.classpath
+local.properties
+bin
+gen
+.settings
