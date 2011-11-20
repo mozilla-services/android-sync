@@ -35,27 +35,31 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.domain.Record;
+/**
+ * Implements waiting for asynchronous test events.
+ * @author rnewman
+ *
+ */
+public class WaitHelper {
+  public synchronized void performWait() {
+    try {
+      WaitHelper.this.wait();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
 
-public interface RepositorySessionDelegate {
-  // This interface must be implemented by any class that needs
-  // to receive callbacks from a Repository (for example a
-  // callback containing error codes or fetched records)
+  public synchronized void performNotify() {
+    WaitHelper.this.notify();
+  }
 
-  public void guidsSinceCallback(RepoStatusCode status, String[] guids);
-
-  public void fetchSinceCallback(RepoStatusCode status, Record[] records);
-
-  public void fetchCallback(RepoStatusCode status, Record[] records);
-
-  public void fetchAllCallback(RepoStatusCode status, Record[] records);
-
-  public void wipeCallback(RepoStatusCode status);
-
-  public void beginCallback(RepoStatusCode status);
-
-  public void finishCallback(RepoStatusCode status);
-
+  private static WaitHelper singleWaiter;
+  public static WaitHelper getTestWaiter() {
+    if (singleWaiter == null) {
+      singleWaiter = new WaitHelper();
+    }
+    return singleWaiter;
+  }
 }

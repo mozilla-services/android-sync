@@ -43,7 +43,8 @@ public abstract class RepositorySession {
 
   protected Repository repository;
   protected RepositorySessionCreationDelegate callbackReceiver;
-  // The time that the last sync on this collection completed
+
+  // The time that the last sync on this collection completed, in milliseconds.
   protected long lastSyncTimestamp;
   protected long syncBeginTimestamp;
   // TODO logger and logger level here
@@ -61,11 +62,11 @@ public abstract class RepositorySession {
   // Test function only
   public abstract void fetchAll(RepositorySessionDelegate receiver);
 
-  public abstract void store(Record record, RepositorySessionDelegate receiver);
+  public abstract void store(Record record, RepositorySessionStoreDelegate receiver);
   public abstract void wipe(RepositorySessionDelegate receiver);
 
   public void begin(RepositorySessionDelegate receiver) {
-    this.syncBeginTimestamp = Utils.currentEpoch();
+    this.syncBeginTimestamp = System.currentTimeMillis();
   }
 
   public abstract void finish(RepositorySessionDelegate receiver);

@@ -5,7 +5,7 @@ public abstract class Record {
   private String guid;
   private long lastModTime;
 
-  public String getGuid() {
+  public String getGUID() {
     return guid;
   }
   public void setGuid(String guid) {
@@ -14,7 +14,7 @@ public abstract class Record {
   public long getLastModTime() {
     return lastModTime;
   }
-  public void setLastModTime(long lastModTime) {
+  public void setLastModified(long lastModTime) {
     this.lastModTime = lastModTime;
   }
 

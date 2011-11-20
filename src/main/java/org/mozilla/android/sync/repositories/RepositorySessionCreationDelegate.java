@@ -35,18 +35,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.test;
+package org.mozilla.android.sync.repositories;
 
-public class BookmarksSessionTestWrapper {
-  synchronized void performWait() {
-      try {
-        BookmarksSessionTestWrapper.this.wait();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-  }
-
-  synchronized void performNotify() {
-    BookmarksSessionTestWrapper.this.notify();
-  }
+// Used to provide the sessionCallback and storeCallback
+// mechanism to repository instances.
+public interface RepositorySessionCreationDelegate {
+  public void onSessionCreateFailed(Exception ex);
+  public void onSessionCreated(RepositorySession session);
 }

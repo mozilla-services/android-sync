@@ -4,9 +4,9 @@
 package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+
 
 import org.junit.Before;
 import org.junit.Test;
@@ -16,11 +16,16 @@ import org.mozilla.android.sync.repositories.BookmarksRepository;
 import org.mozilla.android.sync.repositories.BookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
-import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
-import org.mozilla.android.sync.repositories.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.Utils;
+import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
+import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFetchGUIDsDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 
 import android.content.Context;
 
@@ -29,91 +34,33 @@ import com.xtremelabs.robolectric.RobolectricTestRunner;
 @RunWith(RobolectricTestRunner.class)
 public class TestAndroidBookmarksRepo {
 
-  private BookmarksRepositorySession session;
-  private BookmarksSessionTestWrapper testWrapper;
-  private static final long lastSyncTimestamp = Utils.currentEpoch() - 36000;
-
-  public class DefaultRepositorySessionDelegate implements RepositorySessionDelegate {
-    public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
-      fail("Should not be called.");
-    }
-    public void storeCallback(RepoStatusCode status, long rowId) {
-      fail("Should not be called.");
-    }
-    public void fetchSinceCallback(RepoStatusCode status, Record[] records) {
-      fail("Should not be called.");
-    }
-    public void fetchCallback(RepoStatusCode status, Record[] records) {
-      fail("Should not be called.");
-    }
-    public void fetchAllCallback(RepoStatusCode status, Record[] records) {
-      fail("Should not be called.");
-    }
-    public void wipeCallback(RepoStatusCode status) {
-      fail("Should not be called.");
-    }
-    public void beginCallback(RepoStatusCode status) {
-      fail("Should not be called.");
-    }
-    public void finishCallback(RepoStatusCode status) {
-      fail("Should not be called.");
-    }
-  }
-
-  private class DefaultStoreDelegate implements RepositorySessionStoreDelegate {
-    public void onStoreFailed(Exception ex) {
-      fail("No store.");
-    }
-
-    public void onStoreSucceeded() {
-      fail("No store.");
-    }
-  }
-
-  private class DefaultDelegate implements RepositorySessionCreationDelegate {
-    private RepositorySessionStoreDelegate storeDelegate;
-
-    public DefaultDelegate(RepositorySessionStoreDelegate storeDelegate) {
-      this.storeDelegate = storeDelegate;
-    }
-
-    public DefaultDelegate() {
-      this(new DefaultStoreDelegate());
-    }
-
-    public void onSessionCreateFailed(Exception ex) {
-      fail("Should not fail.");
-    }
-
-    public void onSessionCreated(RepositorySession session) {
-      fail("Should not have been created.");
-    }
-
-    public RepositorySessionStoreDelegate getStoreDelegate() {
-      return this.storeDelegate;
-    }
-
-  }
-
-  private class SetupDelegate extends DefaultDelegate {
+  // Store these globally for convenience.
+  public static WaitHelper testWaiter = WaitHelper.getTestWaiter();
+  public static BookmarksRepositorySession session;
+  
+  private class SetupDelegate extends DefaultSessionCreationDelegate {
     public void onSessionCreated(RepositorySession sess) {
       assertNotNull(sess);
       session = (BookmarksRepositorySession) sess;
-      testWrapper.performNotify();
+      testWaiter.performNotify();
     }
   }
-
-  @Before
-  public void setUp() {
-    // Create a testWrapper instance.
-    testWrapper = new BookmarksSessionTestWrapper();
-
-    // Create the session used by tests.
-    BookmarksRepository repo = new BookmarksRepository();
-
+  
+  public BookmarksRepository prepareRepositorySession(DefaultSessionCreationDelegate delegate, long lastSyncTimestamp) {
+    BookmarksRepository repository = new BookmarksRepository();
+    
     Context context = new MainActivity().getApplicationContext();
-    repo.createSession(context, new SetupDelegate(), lastSyncTimestamp);
-    testWrapper.performWait();
+    repository.createSession(context, delegate, lastSyncTimestamp);
+    testWaiter.performWait();
+    return repository;
+  }
+
+  protected void prepEmptySession() {
+    this.prepareRepositorySession(new SetupDelegate(), 0);
+    
+    // Ensure there are no records.
+    session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
+    testWaiter.performWait();    
   }
 
   /*
@@ -123,55 +70,223 @@ public class TestAndroidBookmarksRepo {
   public void testCreateSessionNullContext() {
     BookmarksRepository repo = new BookmarksRepository();
     try {
-      repo.createSession(null, new DefaultDelegate(), lastSyncTimestamp);
+      repo.createSession(null, new DefaultSessionCreationDelegate(), 0);
       fail("Should throw.");
     } catch (Exception ex) {
       assertNotNull(ex);
     }
   }
 
-
-
-  public class FetchDelegateHelper extends DefaultRepositorySessionDelegate {
-    public boolean expectingStore = false;
-    public boolean expectingFetch = false;
-    public Record[] records = null;
-    public RepoStatusCode code = null;
-
-    public void storeCallback(RepoStatusCode status, long rowId) {
-      if (!expectingStore) {
-        fail("Not expecting store.");
-      }
-      assertFalse(rowId == -1);
-      testWrapper.performNotify();
-    }
-
-    public void fetchAllCallback(RepoStatusCode status, Record[] records) {
-      if (!expectingFetch) {
-        fail("Not expecting fetch.");
-      }
-      assertEquals(records.length, 2);
-      this.records = records;
-      this.code = status;
-      testWrapper.performNotify();
-    }
-  }
-
-
   @Test
   public void testFetchAll() {
-    FetchDelegateHelper delegate = new FetchDelegateHelper();
-    delegate.expectingStore = true;
-    session.store(BookmarkHelpers.createBookmark1(), delegate);
-    testWrapper.performWait();
-    session.store(BookmarkHelpers.createBookmark2(), delegate);
-    testWrapper.performWait();
-    delegate.expectingStore = false;
-    delegate.expectingFetch = true;
+    this.prepareRepositorySession(new SetupDelegate(), 0);
+    Record[] expected = new Record[2];
+    String[] expectedGUIDs = new String[2];
+    expected[0] = BookmarkHelpers.createBookmark1();
+    expected[1] = BookmarkHelpers.createBookmark2();
+    expectedGUIDs[0] = expected[0].getGUID();
+    expectedGUIDs[1] = expected[1].getGUID();
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expectedGUIDs);
+    session.store(expected[0], new ExpectStoredDelegate());
+    testWaiter.performWait();
+    session.store(expected[1], new ExpectStoredDelegate());
+    testWaiter.performWait();
     session.fetchAll(delegate);
-    testWrapper.performWait();
+    testWaiter.performWait();
     assertEquals(delegate.records.length, 2);
     assertEquals(delegate.code, RepoStatusCode.DONE);
   }
+
+  /*
+   * Tests for fetching GUIDs since a timestamp.
+   */
+  @Test
+  public void testGuidsSinceReturnMultipleRecords() {
+    prepEmptySession();
+    long timestamp = System.currentTimeMillis();
+
+    //  Store 2 records.
+    BookmarkRecord record0 = BookmarkHelpers.createLivemark();
+    record0.setLastModified(timestamp + 1000);
+    BookmarkRecord record1 = BookmarkHelpers.createMicrosummary();
+    record1.setLastModified(timestamp + 1500);
+    String[] expected = new String[2];
+    expected[0] = record0.getGUID();
+    expected[1] = record1.getGUID();
+    session.store(record0, new ExpectStoredDelegate(expected[0]));
+    testWaiter.performWait();
+    session.store(record1, new ExpectStoredDelegate(expected[1]));
+    testWaiter.performWait();
+    session.guidsSince(timestamp, new ExpectFetchGUIDsDelegate(expected));
+    testWaiter.performWait();
+  }
+
+//  @Test
+//  public void testGuidsSinceReturnNoRecords() {
+//
+//    // Create a record and store it
+//    CallbackResult result = testWrapper.doStoreSync(session, BookmarkHelpers.createBookmark1());
+//    BookmarkHelpers.verifyStoreResult(result);
+//
+//    // Wait 2 seconds
+//    perform2SecondWait();
+//    long timestamp = System.currentTimeMillis()/1000;
+//
+//    // Get records
+//    result = testWrapper.doGuidsSinceSync(session, timestamp);
+//
+//    // Verify that no guids come back
+//    assertEquals(0, result.getGuids().length);
+//    BookmarkHelpers.verifyGuidsSince(result);
+//  }
+//
+//  /*
+//   * Tests for fetchSince
+//   */
+//  @Test
+//  public void testFetchSinceOneRecord() {
+//    // Create one record and store it
+//    CallbackResult result = testWrapper.doStoreSync(session, BookmarkHelpers.createFolder());
+//    BookmarkHelpers.verifyStoreResult(result);
+//
+//    // Wait 2 seconds and then store another record
+//    perform2SecondWait();
+//    long timestamp = System.currentTimeMillis()/1000;
+//    BookmarkRecord record2 = BookmarkHelpers.createBookmark2();
+//    result = testWrapper.doStoreSync(session, record2);
+//    BookmarkHelpers.verifyStoreResult(result);
+//
+//    // Fetch since using timestamp and ensure we only get back one record
+//    result = testWrapper.doFetchSinceSync(session, timestamp);
+//
+//    // Check that only one record was returned and that it is the right one
+//    assertEquals(1, result.getRecords().length);
+//    assertEquals(record2.getGuid(), ((BookmarkRecord) result.getRecords()[0]).getGuid());
+//    BookmarkHelpers.verifyFetchSince(result);
+//  }
+//
+//  @Test
+//  public void testFetchSinceReturnNoRecords() {
+//
+//    // Create a record and store it
+//    CallbackResult result = testWrapper.doStoreSync(session, BookmarkHelpers.createBookmark1());
+//    BookmarkHelpers.verifyStoreResult(result);
+//
+//    // Wait 2 seconds
+//    perform2SecondWait();
+//    long timestamp = System.currentTimeMillis()/1000;
+//
+//    // Get records
+//    result = testWrapper.doFetchSinceSync(session, timestamp);
+//
+//    // Verify that no guids come back
+//    assertEquals(0, result.getRecords().length);
+//    BookmarkHelpers.verifyFetchSince(result);
+//  }
+//
+//  /*
+//   * Tests for fetch(guid)
+//   */
+//  @Test
+//  public void testFetchOneRecordByGuid() {
+//    // Create two records and store them
+//    BookmarkRecord record = BookmarkHelpers.createBookmark1();
+//    String guid = record.getGuid();
+//    CallbackResult result = testWrapper.doStoreSync(session, record);
+//    BookmarkHelpers.verifyStoreResult(result);
+//    result = testWrapper.doStoreSync(session, BookmarkHelpers.createBookmark2());
+//    BookmarkHelpers.verifyStoreResult(result);
+//
+//    // Fetch record with guid from above and ensure we only get back one record
+//    result = testWrapper.doFetchSync(session, new String[] { guid });
+//
+//    // Check that only one record was returned and that it is the correct one
+//    Record[] returnedRecords = result.getRecords();
+//    assertEquals(1, returnedRecords.length);
+//    BookmarkRecord fetched = (BookmarkRecord) returnedRecords[0];
+//    assertEquals(guid, fetched.getGuid());
+//    BookmarkHelpers.verifyExpectedRecordReturned(record, fetched);
+//    BookmarkHelpers.verifyFetch(result);
+//  }
+//
+//  @Test
+//  public void testFetchMultipleRecordsByGuid() {
+//    // Create three records and store them
+//    BookmarkRecord record = BookmarkHelpers.createBookmark1();
+//    BookmarkRecord record2 = BookmarkHelpers.createQuery();
+//    BookmarkRecord record3 = BookmarkHelpers.createSeparator();
+//    CallbackResult result = testWrapper.doStoreSync(session, record);
+//    BookmarkHelpers.verifyStoreResult(result);
+//    result = testWrapper.doStoreSync(session, record2);
+//    BookmarkHelpers.verifyStoreResult(result);
+//    result = testWrapper.doStoreSync(session, record3);
+//    BookmarkHelpers.verifyStoreResult(result);
+//
+//    // Fetch records with 2 guids from above
+//    result = testWrapper.doFetchSync(session, new String[] { record.getGuid(), record3.getGuid() });
+//
+//    // Check that only one record was returned and that it is the correct one
+//    Record[] returnedRecords = result.getRecords();
+//    assertEquals(2, returnedRecords.length);
+//    BookmarkRecord fetched = (BookmarkRecord) returnedRecords[0];
+//    BookmarkRecord fetched2 = (BookmarkRecord) returnedRecords[1];
+//    BookmarkHelpers.verifyExpectedRecordReturned(record, fetched);
+//    BookmarkHelpers.verifyExpectedRecordReturned(record3, fetched2);
+//    BookmarkHelpers.verifyFetch(result);
+//  }
+//
+//  @Test
+//  public void testFetchNoRecordByGuid() {
+//    // Create a record and store it
+//    CallbackResult result = testWrapper.doStoreSync(session, BookmarkHelpers.createMicrosummary());
+//    BookmarkHelpers.verifyStoreResult(result);
+//
+//    // Fetch a record that doesn't exist
+//    result = testWrapper.doFetchSync(session, new String[] { Utils.generateGuid() });
+//
+//    // Ensure no recrods are returned
+//    assertEquals(0, result.getRecords().length);
+//    BookmarkHelpers.verifyFetch(result);
+//  }
+//
+//  @Test
+//  public void testFetchNoGuids() {
+//
+//    // Fetch with empty guids list
+//    CallbackResult result = testWrapper.doFetchSync(session, new String[] { });
+//
+//    // Ensure no records are returned
+//    assertEquals(RepoStatusCode.INVALID_REQUEST, result.getStatusCode());
+//    assertEquals(0, result.getRecords().length);
+//    assertEquals(CallType.FETCH, result.getCallType());
+//  }
+//
+//  @Test
+//  public void testFetchNullGuids() {
+//
+//    // Fetch with empty guids list
+//    CallbackResult result = testWrapper.doFetchSync(session, null);
+//
+//    // Ensure no records are returned
+//    assertEquals(RepoStatusCode.INVALID_REQUEST, result.getStatusCode());
+//    assertEquals(0, result.getRecords().length);
+//    assertEquals(CallType.FETCH, result.getCallType());
+//  }
+//
+//  /*
+//   * Other helpers
+//   */
+//  private void perform2SecondWait() {
+//    try {
+//      synchronized(this) {
+//        this.wait(2000);
+//      }
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
+//  }
+//
+//
+//  }
 
 }

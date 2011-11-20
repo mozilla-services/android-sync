@@ -195,12 +195,12 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   public void deleteBookmark(BookmarkRecord bookmark) {
     SQLiteDatabase db = this.getWritableDatabase();
     db.delete(TBL_BOOKMARKS, COL_GUID+"=?", new String[]
-        {String.valueOf(bookmark.getGuid())});
+        {String.valueOf(bookmark.getGUID())});
   }
 
   private ContentValues getContentValues(BookmarkRecord record) {
     ContentValues cv = new ContentValues();
-    cv.put(COL_GUID, record.getGuid());
+    cv.put(COL_GUID, record.getGUID());
     cv.put(COL_ANDROID_ID, record.getAndroidId());
     cv.put(COL_TITLE, record.getTitle());
     cv.put(COL_BMK_URI, record.getBmkUri());
@@ -224,9 +224,9 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     // simulate order of bookmark storage by setting it
     // to future times
     // TODO add a flag such that this only happens in test mode
-    long now = Utils.currentEpoch();
+    long now = System.currentTimeMillis();
     if (record.getLastModTime() < now) {
-      record.setLastModTime(now);
+      record.setLastModified(now);
     }
     cv.put(COL_LAST_MOD, record.getLastModTime());
 

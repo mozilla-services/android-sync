@@ -201,16 +201,16 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   // Store method and thread
   @Override
-  public void store(Record record, RepositorySessionDelegate receiver) {
+  public void store(Record record, RepositorySessionStoreDelegate receiver) {
     StoreThread thread = new StoreThread(record, receiver);
     thread.start();
   }
 
   class StoreThread extends Thread {
     private BookmarkRecord record;
-    private RepositorySessionDelegate callbackReceiver;
+    private RepositorySessionStoreDelegate callbackReceiver;
 
-    public StoreThread(Record record, RepositorySessionDelegate callbackReceiver) {
+    public StoreThread(Record record, RepositorySessionStoreDelegate callbackReceiver) {
       this.record = (BookmarkRecord) record;
       this.callbackReceiver = callbackReceiver;
     }
@@ -243,13 +243,13 @@ public class BookmarksRepositorySession extends RepositorySession {
       }
 
       // call callback with result
-      callbackReceiver.storeCallback(RepoStatusCode.DONE, rowId);
+      callbackReceiver.onStoreSucceeded(record);
 
     }
 
     // Check if record already exists locally
     private BookmarkRecord findExistingRecord() {
-      Record[] records = fetchRecordsForGuids(new String[] { record.getGuid() });
+      Record[] records = fetchRecordsForGuids(new String[] { record.getGUID() });
       if (records.length == 1) {
         return (BookmarkRecord) records[0];
       }
@@ -362,7 +362,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     rec.setFeedUri(getStringValue(cur, BookmarksDatabaseHelper.COL_FEED_URI));
     rec.setPos(getStringValue(cur, BookmarksDatabaseHelper.COL_POS));
     rec.setChildren(getStringValue(cur, BookmarksDatabaseHelper.COL_CHILDREN));
-    rec.setLastModTime(getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD));
+    rec.setLastModified(getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD));
     return rec;
   }
 
