@@ -30,7 +30,7 @@ public class ExpectFetchAllDelegate extends DefaultRepositorySessionDelegate {
       this.records = records;
       this.code = status;
       for (Record record : records) {
-        assertFalse(-1 == Arrays.binarySearch(this.expected, record.getGUID()));
+        assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
       }
     } catch (AssertionError e) {
       err = e;

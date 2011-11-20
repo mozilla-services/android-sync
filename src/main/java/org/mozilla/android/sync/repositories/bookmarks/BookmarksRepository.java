@@ -35,7 +35,10 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.bookmarks;
+
+import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
 
 import android.content.Context;
 

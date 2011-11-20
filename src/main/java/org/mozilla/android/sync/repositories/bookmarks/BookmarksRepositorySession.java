@@ -35,10 +35,16 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.bookmarks;
 
 import java.util.ArrayList;
 
+import org.mozilla.android.sync.repositories.RepoStatusCode;
+import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
+import org.mozilla.android.sync.repositories.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -226,7 +232,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       } else {
         // Record exists already, need to figure out what to store
 
-        if (existingRecord.getLastModified() > lastSyncTimestamp) {
+        if (existingRecord.lastModified > lastSyncTimestamp) {
           // Remote and local record have both been modified since since last sync
           BookmarkRecord store = reconcileBookmarks(existingRecord, record);
           dbHelper.deleteBookmark(existingRecord);
@@ -234,7 +240,7 @@ public class BookmarksRepositorySession extends RepositorySession {
         } else {
           // Only remote record modified, so take that one
           // (except for androidId which we obviously want to keep)
-          record.setAndroidId(existingRecord.getAndroidId());
+          record.androidID = existingRecord.androidID;
 
           // To keep things simple, we don't update, we delete then re-insert
           dbHelper.deleteBookmark(existingRecord);
@@ -249,7 +255,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     // Check if record already exists locally
     private BookmarkRecord findExistingRecord() {
-      Record[] records = fetchRecordsForGuids(new String[] { record.getGUID() });
+      Record[] records = fetchRecordsForGuids(new String[] { record.guid });
       if (records.length == 1) {
         return (BookmarkRecord) records[0];
       }
@@ -262,10 +268,10 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   }
 
-  // Wipe method and thread
+  // Wipe method and thread.
   // Right now doing this async probably seems silly,
-  // but I imagine it might be worth it once the implmentation
-  // of this is complete (plus I'm sticking with past conventions)
+  // but I imagine it might be worth it once the implementation
+  // of this is complete (plus I'm sticking with past conventions).
   @Override
   public void wipe(RepositorySessionDelegate receiver) {
     WipeThread thread = new WipeThread(receiver);
@@ -303,7 +309,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     // Determine which record is newer since this is the one we will take in case of conflict
     BookmarkRecord newer;
-    if (local.getLastModified() > remote.getLastModified()) {
+    if (local.lastModified > remote.lastModified) {
       newer = local;
     } else {
       newer = remote;
@@ -311,27 +317,26 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     // Do dumb resolution for now and just return the newer one with the android id added if it wasn't the local one
     // Need to track changes (not implemented yet) in order to merge two changed bookmarks nicely
-    newer.setAndroidId(local.getAndroidId());
+    newer.androidID = local.androidID;
 
     /*
     // Title
-    if (!local.getTitle().equals(remote.getTitle())) {
-      local.setTitle(newer.getTitle());
+    if (!local.title.equals(remote.title)) {
+      local.title = newer.title;
     }
 
-    // Uri
-    if (!local.getBmkUri().equals(remote.getBmkUri())) {
-      local.setBmkUri(newer.getBmkUri());
+    // URI
+    if (!local.bookmarkURI.equals(remote.bookmarkURI)) {
+      local.bookmarkURI = newer.bookmarkURI;
     }
 
     // Description
-    if (!local.getDescription().equals(remote.getDescription())) {
-      local.setDescription(newer.getDescription());
+    if (!local.description.equals(remote.description)) {
+      local.description = newer.description;
     }
 
-    // Load in sidebar
-    if (local.getLoadInSidebar() != remote.getLoadInSidebar()) {
-      local.
+    // Load in sidebar.
+    if (local.loadInSidebar != remote.loadInSidebar) {
     }
     */
 
@@ -342,28 +347,29 @@ public class BookmarksRepositorySession extends RepositorySession {
   public static BookmarkRecord getRecord(Cursor cur) {
 
     BookmarkRecord rec = new BookmarkRecord();
-    rec.setId(getLongValue(cur, BookmarksDatabaseHelper.COL_ID));
-    rec.setGuid(getStringValue(cur, BookmarksDatabaseHelper.COL_GUID));
-    rec.setAndroidId(getLongValue(cur, BookmarksDatabaseHelper.COL_ANDROID_ID));
-    rec.setTitle(getStringValue(cur, BookmarksDatabaseHelper.COL_TITLE));
-    rec.setBmkUri(getStringValue(cur, BookmarksDatabaseHelper.COL_BMK_URI));
-    rec.setDescription(getStringValue(cur, BookmarksDatabaseHelper.COL_DESCRIP));
-    rec.setLoadInSidebar(cur.getInt(cur.getColumnIndex(BookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false );
-    rec.setTags(getStringValue(cur, BookmarksDatabaseHelper.COL_TAGS));
-    rec.setKeyword(getStringValue(cur, BookmarksDatabaseHelper.COL_KEYWORD));
-    rec.setParentId(getStringValue(cur, BookmarksDatabaseHelper.COL_PARENT_ID));
-    rec.setParentName(getStringValue(cur, BookmarksDatabaseHelper.COL_PARENT_NAME));
-    rec.setType(getStringValue(cur, BookmarksDatabaseHelper.COL_TYPE));
-    rec.setGeneratorUri(getStringValue(cur, BookmarksDatabaseHelper.COL_GENERATOR_URI));
-    rec.setStaticTitle(getStringValue(cur, BookmarksDatabaseHelper.COL_STATIC_TITLE));
-    rec.setFolderName(getStringValue(cur, BookmarksDatabaseHelper.COL_FOLDER_NAME));
-    rec.setQueryId(getStringValue(cur, BookmarksDatabaseHelper.COL_QUERY_ID));
-    rec.setSiteUri(getStringValue(cur, BookmarksDatabaseHelper.COL_SITE_URI));
-    rec.setFeedUri(getStringValue(cur, BookmarksDatabaseHelper.COL_FEED_URI));
-    rec.setPos(getStringValue(cur, BookmarksDatabaseHelper.COL_POS));
-    rec.setChildren(getStringValue(cur, BookmarksDatabaseHelper.COL_CHILDREN));
-    rec.setLastModified(getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD));
+    rec.id = getLongValue(cur, BookmarksDatabaseHelper.COL_ID);
+    rec.guid = getStringValue(cur, BookmarksDatabaseHelper.COL_GUID);
+    rec.androidID = getLongValue(cur, BookmarksDatabaseHelper.COL_ANDROID_ID);
+    rec.title = getStringValue(cur, BookmarksDatabaseHelper.COL_TITLE);
+    rec.bookmarkURI = getStringValue(cur, BookmarksDatabaseHelper.COL_BMK_URI);
+    rec.description = getStringValue(cur, BookmarksDatabaseHelper.COL_DESCRIP);
+    rec.loadInSidebar = cur.getInt(cur.getColumnIndex(BookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false ;
+    rec.tags = getStringValue(cur, BookmarksDatabaseHelper.COL_TAGS);
+    rec.keyword = getStringValue(cur, BookmarksDatabaseHelper.COL_KEYWORD);
+    rec.parentID = getStringValue(cur, BookmarksDatabaseHelper.COL_PARENT_ID);
+    rec.parentName = getStringValue(cur, BookmarksDatabaseHelper.COL_PARENT_NAME);
+    rec.type = getStringValue(cur, BookmarksDatabaseHelper.COL_TYPE);
+    rec.generatorURI = getStringValue(cur, BookmarksDatabaseHelper.COL_GENERATOR_URI);
+    rec.staticTitle = getStringValue(cur, BookmarksDatabaseHelper.COL_STATIC_TITLE);
+    rec.folderName = getStringValue(cur, BookmarksDatabaseHelper.COL_FOLDER_NAME);
+    rec.queryID = getStringValue(cur, BookmarksDatabaseHelper.COL_QUERY_ID);
+    rec.siteURI = getStringValue(cur, BookmarksDatabaseHelper.COL_SITE_URI);
+    rec.feedURI = getStringValue(cur, BookmarksDatabaseHelper.COL_FEED_URI);
+    rec.pos = getStringValue(cur, BookmarksDatabaseHelper.COL_POS);
+    rec.children = getStringValue(cur, BookmarksDatabaseHelper.COL_CHILDREN);
+    rec.lastModified = getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD);
     return rec;
+
   }
 
   private static String getStringValue(Cursor cur, String columnName) {

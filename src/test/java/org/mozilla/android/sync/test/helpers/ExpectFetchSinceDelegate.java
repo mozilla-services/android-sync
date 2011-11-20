@@ -28,8 +28,8 @@ public class ExpectFetchSinceDelegate extends DefaultRepositorySessionDelegate
       assertEquals(records.length, this.expected.length);
 
       for (Record record : records) {
-        assertFalse(-1 == Arrays.binarySearch(this.expected, record.getGUID()));
-        assertTrue(record.getLastModified() >= this.earliest);
+        assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
+        assertTrue(record.lastModified >= this.earliest);
       }
     } catch (AssertionError e) {
       err = e;

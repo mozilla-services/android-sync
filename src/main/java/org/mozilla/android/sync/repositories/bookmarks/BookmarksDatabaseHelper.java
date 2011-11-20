@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.bookmarks;
 
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 
@@ -194,33 +194,32 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   // delete bookmark from database looking up by guid
   public void deleteBookmark(BookmarkRecord bookmark) {
     SQLiteDatabase db = this.getWritableDatabase();
-    db.delete(TBL_BOOKMARKS, COL_GUID+"=?", new String[]
-        {String.valueOf(bookmark.getGUID())});
+    String[] where = new String[] { String.valueOf(bookmark.guid) };
+    db.delete(TBL_BOOKMARKS, COL_GUID+"=?", where);
   }
 
   private ContentValues getContentValues(BookmarkRecord record) {
     ContentValues cv = new ContentValues();
-    cv.put(COL_GUID, record.getGUID());
-    cv.put(COL_ANDROID_ID, record.getAndroidId());
-    cv.put(COL_TITLE, record.getTitle());
-    cv.put(COL_BMK_URI, record.getBmkUri());
-    cv.put(COL_DESCRIP, record.getDescription());
-    cv.put(COL_LOAD_IN_SIDEBAR, record.getLoadInSidebar() ? 1 : 0);
-    cv.put(COL_TAGS, record.getTags());
-    cv.put(COL_KEYWORD, record.getKeyword());
-    cv.put(COL_PARENT_ID, record.getParentId());
-    cv.put(COL_PARENT_NAME, record.getParentName());
-    cv.put(COL_TYPE, record.getType());
-    cv.put(COL_GENERATOR_URI, record.getGeneratorUri());
-    cv.put(COL_STATIC_TITLE, record.getStaticTitle());
-    cv.put(COL_FOLDER_NAME, record.getFolderName());
-    cv.put(COL_QUERY_ID, record.getQueryId());
-    cv.put(COL_SITE_URI, record.getSiteUri());
-    cv.put(COL_FEED_URI, record.getFeedUri());
-    cv.put(COL_POS, record.getPos());
-    cv.put(COL_CHILDREN, record.getChildren());
-    cv.put(COL_LAST_MOD, record.getLastModified());
-
+    cv.put(COL_GUID,            record.guid);
+    cv.put(COL_ANDROID_ID,      record.androidID);
+    cv.put(COL_TITLE,           record.title);
+    cv.put(COL_BMK_URI,         record.bookmarkURI);
+    cv.put(COL_DESCRIP,         record.description);
+    cv.put(COL_LOAD_IN_SIDEBAR, record.loadInSidebar ? 1 : 0);
+    cv.put(COL_TAGS,            record.tags);
+    cv.put(COL_KEYWORD,         record.keyword);
+    cv.put(COL_PARENT_ID,       record.parentID);
+    cv.put(COL_PARENT_NAME,     record.parentName);
+    cv.put(COL_TYPE,            record.type);
+    cv.put(COL_GENERATOR_URI,   record.generatorURI);
+    cv.put(COL_STATIC_TITLE,    record.staticTitle);
+    cv.put(COL_FOLDER_NAME,     record.folderName);
+    cv.put(COL_QUERY_ID,        record.queryID);
+    cv.put(COL_SITE_URI,        record.siteURI);
+    cv.put(COL_FEED_URI,        record.feedURI);
+    cv.put(COL_POS,             record.pos);
+    cv.put(COL_CHILDREN,        record.children);
+    cv.put(COL_LAST_MOD,        record.lastModified);
     return cv;
   }
 
