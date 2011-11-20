@@ -206,5 +206,4 @@ public class TestSyncCryptographer {
         equal = Arrays.equals(createdKeys.getHMACKey(), decryptedKeys.getHMACKey());
         assertEquals(true, equal);
     }
-
 }

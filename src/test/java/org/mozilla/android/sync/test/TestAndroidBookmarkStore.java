@@ -27,7 +27,7 @@
 //
 //  private BookmarksSessionTestWrapper testWrapper;
 //  private BookmarksRepositorySession session;
-//  private static final long lastSyncTimestamp = Utils.currentEpoch() + 2000;
+//  private static final long lastSyncTimestamp = System.currentTimeMillis() + 2000;
 //
 //  @Before
 //  public void setUp() {

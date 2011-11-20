@@ -222,5 +222,4 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     cv.put(COL_LAST_MOD,        record.lastModified);
     return cv;
   }
-
 }
