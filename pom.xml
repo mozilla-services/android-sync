@@ -12,10 +12,40 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <type>jar</type>
+      <scope>test</scope>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Make httpclientandroidlib work. -->
+    <dependency>
+      <groupId>android.util</groupId>
+      <artifactId>log-unstub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>android.util</groupId>
+      <artifactId>base64-unstub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.emergent.android.weave.client</groupId>
+      <artifactId>base32</artifactId>
+      <version>1</version>
+    </dependency>
+    <dependency>
       <groupId>ch.boye.httpclientandroidlib</groupId>
       <artifactId>httpclientandroidlib</artifactId>
       <version>1.0.1</version>
     </dependency>
+
     <dependency>
       <groupId>org.mozilla.android.sync.crypto</groupId>
       <artifactId>sync-crypto</artifactId>
