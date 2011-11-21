@@ -41,9 +41,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Scanner;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+import ch.boye.httpclientandroidlib.Header;
+import ch.boye.httpclientandroidlib.HttpEntity;
+import ch.boye.httpclientandroidlib.HttpResponse;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.NonObjectJSONException;

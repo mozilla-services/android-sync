@@ -3,8 +3,8 @@
 
 package org.mozilla.android.sync.net.test;
 
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
+import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import org.mozilla.android.sync.net.ResourceDelegate;
 
 /**

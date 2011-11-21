@@ -10,8 +10,8 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import org.junit.Test;
 import org.mozilla.android.sync.net.BaseResource;
 import org.mozilla.android.sync.net.test.HTTPServerTestHelper.TestServer;

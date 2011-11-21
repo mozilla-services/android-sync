@@ -37,7 +37,7 @@
 
 package org.mozilla.android.sync.net;
 
-import org.apache.http.HttpEntity;
+import ch.boye.httpclientandroidlib.HttpEntity;
 
 public interface Resource {
   public abstract void get();
