@@ -50,6 +50,7 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 
 public class BookmarksRepositorySession extends RepositorySession {
 
@@ -248,9 +249,8 @@ public class BookmarksRepositorySession extends RepositorySession {
         }
       }
 
-      // call callback with result
+      // Invoke callback with result.
       callbackReceiver.onStoreSucceeded(record);
-
     }
 
     // Check if record already exists locally
@@ -261,7 +261,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       }
       else if (records.length > 1) {
         // TODO handle this error...which should be impossible
-        System.err.println("UHHHH...That's bad. Multiple records with same guid returned");
+        Log.e("BookmarksRepositorySession", "Multiple records returned with same GUID. Unpossible!");
       }
       return null;
     }
@@ -279,7 +279,6 @@ public class BookmarksRepositorySession extends RepositorySession {
   }
 
   class WipeThread extends Thread {
-
     private RepositorySessionDelegate callbackReceiver;
 
     public WipeThread(RepositorySessionDelegate callbackReciever) {
@@ -369,7 +368,6 @@ public class BookmarksRepositorySession extends RepositorySession {
     rec.children = getStringValue(cur, BookmarksDatabaseHelper.COL_CHILDREN);
     rec.lastModified = getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD);
     return rec;
-
   }
 
   private static String getStringValue(Cursor cur, String columnName) {
@@ -378,5 +376,4 @@ public class BookmarksRepositorySession extends RepositorySession {
   private static long getLongValue(Cursor cur, String columnName) {
     return cur.getLong(cur.getColumnIndex(columnName));
   }
-
 }

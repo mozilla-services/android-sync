@@ -51,7 +51,7 @@ import android.util.Log;
 
 public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
 
-  private static final String DB_NAME       = "bookmarksPOC";
+  private static final String DB_NAME     = "bookmarksPOC";
   private static final int SCHEMA_VERSION = 1;
 
   // Bookmarks table

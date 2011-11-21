@@ -39,6 +39,7 @@ package org.mozilla.android.sync;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 
 /*
  * Activity is just here to keep the android build
@@ -52,8 +53,9 @@ public class MainActivity extends Activity {
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
+      Log.i("rnewman", "In MainActivity onCreate.");
       super.onCreate(savedInstanceState);
       setContentView(R.layout.main);
-      getApplicationContext();
+      Log.i("rnewman", "Done with onCreate.");
   }
 }
