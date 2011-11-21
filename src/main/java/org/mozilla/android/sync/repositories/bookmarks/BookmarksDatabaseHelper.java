@@ -131,6 +131,40 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
 
   }
 
+  // Cache these so we don't have to track them across cursors. Call `close` when you're done.
+  private static SQLiteDatabase readableDatabase;
+  private static SQLiteDatabase writableDatabase;
+
+  private SQLiteDatabase getCachedReadableDatabase() {
+    if (BookmarksDatabaseHelper.readableDatabase == null) {
+      if (BookmarksDatabaseHelper.writableDatabase == null) {
+        BookmarksDatabaseHelper.readableDatabase = this.getReadableDatabase();
+        return BookmarksDatabaseHelper.readableDatabase;
+      } else {
+        return BookmarksDatabaseHelper.writableDatabase;
+      }
+    } else {
+      return BookmarksDatabaseHelper.readableDatabase;
+    }
+  }
+  private SQLiteDatabase getCachedWritableDatabase() {
+    if (BookmarksDatabaseHelper.writableDatabase == null) {
+      BookmarksDatabaseHelper.writableDatabase = this.getWritableDatabase();
+    }
+    return BookmarksDatabaseHelper.writableDatabase;
+  }
+  public void close() {
+    if (BookmarksDatabaseHelper.readableDatabase != null) {
+      BookmarksDatabaseHelper.readableDatabase.close();
+      BookmarksDatabaseHelper.readableDatabase = null;
+    }
+    if (BookmarksDatabaseHelper.writableDatabase != null) {
+      BookmarksDatabaseHelper.writableDatabase.close();
+      BookmarksDatabaseHelper.writableDatabase = null;
+    }
+    super.close();
+  }
+
   /*
    * TODO: These next two methods scare me a bit...
    */
@@ -142,13 +176,13 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   }
 
   public void wipe() throws SQLiteException {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.getCachedWritableDatabase();
     onUpgrade(db, SCHEMA_VERSION, SCHEMA_VERSION);
   }
 
   // inserts and return the row id for the bookmark
   public long insertBookmark(BookmarkRecord bookmark) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.getCachedWritableDatabase();
     ContentValues cv = getContentValues(bookmark);
     long rowId = db.insert(TBL_BOOKMARKS, null, cv);
 
@@ -159,14 +193,14 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
 
   // returns all bookmark records
   public Cursor fetchAllBookmarksOrderByAndroidId() {
-    SQLiteDatabase db = this.getReadableDatabase();
+    SQLiteDatabase db = this.getCachedReadableDatabase();
     Cursor cur = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, null, null, null, null, COL_ANDROID_ID);
     return cur;
   }
 
   // get all guids modified since timestamp
   public Cursor getGUIDSSince(long timestamp) {
-    SQLiteDatabase db = this.getReadableDatabase();
+    SQLiteDatabase db = this.getCachedReadableDatabase();
     Cursor c = db.query(TBL_BOOKMARKS, new String[] {COL_GUID}, COL_LAST_MOD + " >= " +
         Long.toString(timestamp), null, null, null, null);
     return c;
@@ -174,7 +208,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
 
   // get records modified since timestamp
   public Cursor fetchSince(long timestamp) {
-    SQLiteDatabase db = this.getReadableDatabase();
+    SQLiteDatabase db = this.getCachedReadableDatabase();
     Cursor c = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, COL_LAST_MOD + " >= " +
         Long.toString(timestamp), null, null, null, null);
     return c;
@@ -182,7 +216,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
 
   // get all records requested
   public Cursor fetch(String guids[]) {
-    SQLiteDatabase db = this.getReadableDatabase();
+    SQLiteDatabase db = this.getCachedReadableDatabase();
     String where = COL_GUID + " in (";
     for (String guid : guids) {
       where = where + "'" + guid + "', ";
@@ -194,7 +228,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
 
   // delete bookmark from database looking up by guid
   public void deleteBookmark(BookmarkRecord bookmark) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.getCachedWritableDatabase();
     String[] where = new String[] { String.valueOf(bookmark.guid) };
     db.delete(TBL_BOOKMARKS, COL_GUID+"=?", where);
   }

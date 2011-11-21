@@ -88,14 +88,14 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       ArrayList<String> guids = new ArrayList<String>();
       cur.moveToFirst();
-      while (cur.isAfterLast() == false) {
+      while (!cur.isAfterLast()) {
         guids.add(cur.getString(index));
         cur.moveToNext();
       }
+      cur.close();
 
       String guidsArray[] = new String[guids.size()];
       guids.toArray(guidsArray);
-
       callbackReceiver.guidsSinceCallback(RepoStatusCode.DONE, guidsArray);
 
     }
@@ -122,16 +122,15 @@ public class BookmarksRepositorySession extends RepositorySession {
       Cursor cur = dbHelper.fetchSince(timestamp);
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
-      while (cur.isAfterLast() == false) {
+      while (!cur.isAfterLast()) {
         records.add(getRecord(cur));
         cur.moveToNext();
       }
+      cur.close();
 
       Record[] recordArray = new Record[records.size()];
       records.toArray(recordArray);
-
       callbackReceiver.fetchSinceCallback(RepoStatusCode.DONE, recordArray);
-
     }
   }
 
@@ -164,14 +163,14 @@ public class BookmarksRepositorySession extends RepositorySession {
     Cursor cur = dbHelper.fetch(guids);
     ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
     cur.moveToFirst();
-    while (cur.isAfterLast() == false) {
+    while (!cur.isAfterLast()) {
       records.add(getRecord(cur));
       cur.moveToNext();
     }
+    cur.close();
 
     Record[] recordArray = new Record[records.size()];
     records.toArray(recordArray);
-
     return recordArray;
   }
 
@@ -194,14 +193,14 @@ public class BookmarksRepositorySession extends RepositorySession {
       Cursor cur = dbHelper.fetchAllBookmarksOrderByAndroidId();
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
-      while (cur.isAfterLast() == false) {
+      while (!cur.isAfterLast()) {
         records.add(getRecord(cur));
         cur.moveToNext();
       }
+      cur.close();
 
       Record[] recordArray = new Record[records.size()];
       records.toArray(recordArray);
-
       callbackReceiver.fetchAllCallback(RepoStatusCode.DONE, recordArray);
     }
   }
