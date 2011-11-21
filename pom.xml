@@ -12,6 +12,11 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>ch.boye.httpclientandroidlib</groupId>
+      <artifactId>httpclientandroidlib</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+    <dependency>
       <groupId>org.mozilla.android.sync.crypto</groupId>
       <artifactId>sync-crypto</artifactId>
       <version>1</version>
