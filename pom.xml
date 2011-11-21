@@ -36,11 +36,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.emergent.android.weave.client</groupId>
-      <artifactId>base32</artifactId>
-      <version>1</version>
-    </dependency>
-    <dependency>
       <groupId>ch.boye.httpclientandroidlib</groupId>
       <artifactId>httpclientandroidlib</artifactId>
       <version>1.0.1</version>
@@ -49,7 +44,7 @@
     <dependency>
       <groupId>org.mozilla.android.sync.crypto</groupId>
       <artifactId>sync-crypto</artifactId>
-      <version>1</version>
+      <version>1.1-libs</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
