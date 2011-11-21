@@ -11,32 +11,36 @@ import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 
+import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
 
 public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<MainActivity> {
   public AndroidBookmarkStoreTest() {
-    this(MainActivity.class);
+    super(MainActivity.class);
   }
-  public AndroidBookmarkStoreTest(Class<MainActivity> activityClass) {
-    super(activityClass);
+
+  public Context getApplicationContext() {
+    return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
 
   private void performWait() {
     AndroidBookmarksTestHelper.testWaiter.performWait();
   }
+
   private BookmarksRepositorySession getSession() {
     return AndroidBookmarksTestHelper.session;
   }
+
   private void prepSession() {
-    AndroidBookmarksTestHelper.prepareRepositorySession(getActivity(), new SetupDelegate(), 0);
+    AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0);
     // Clear old data.
-    new BookmarksDatabaseHelper(getActivity().getApplicationContext()).wipe();
+    new BookmarksDatabaseHelper(getApplicationContext()).wipe();
   }
-  
+
   public void tearDown() {
-    new BookmarksDatabaseHelper(getActivity().getApplicationContext()).close();
+    new BookmarksDatabaseHelper(getApplicationContext()).close();
   }
-  
+
   /*
    * This test class is dedicated to testing the store(record) method of
    * RepositorySession.
@@ -95,7 +99,7 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
 
   /*
    * The most basic test.
-   * 
+   *
    * Record being stored has newer timestamp than existing local record, local
    * record has not been modified since last sync.
    */
@@ -159,7 +163,7 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
     getSession().fetchAll(delegate);
     performWait();
-    
+
     // Check that one record comes back, it is the local one
     assertEquals(1, delegate.recordCount());
     BookmarkRecord record = (BookmarkRecord) (delegate.records[0]);

@@ -11,6 +11,8 @@ import java.util.Arrays;
 import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.domain.Record;
 
+import android.util.Log;
+
 public class ExpectFetchAllDelegate extends DefaultRepositorySessionDelegate {
   public Record[]       records = new Record[0];
   public RepoStatusCode code    = null;
@@ -22,21 +24,27 @@ public class ExpectFetchAllDelegate extends DefaultRepositorySessionDelegate {
   }
 
   private void onDone() {
-    AssertionError err = null;
-
+    Log.i("rnewman", "onDone. Test Waiter is " + testWaiter());
     try {
       assertEquals(this.expected.length, records.length);
-
       for (Record record : records) {
         assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
       }
+      Log.i("rnewman", "Notifying success.");
+      testWaiter().performNotify();
     } catch (AssertionError e) {
-      err = e;
+      Log.i("rnewman", "Notifying assertion failure.");
+      testWaiter().performNotify(e);
+    } catch (Exception e) {
+      Log.i("rnewman", "Fucking no.");
+      testWaiter().performNotify();
     }
-    testWaiter().performNotify(err);
   }
 
   public void fetchAllCallback(RepoStatusCode status, Record[] records) {
+    Log.i("rnewman", "fetchAllCallback: " + ((status == RepoStatusCode.DONE) ? "DONE" : "NOT DONE"));
+    Log.i("rnewman", "fetchAllCallback: " + ((records == null) ? "null" : "" + records.length) + " records.");
+
     // Accumulate records.   
     int oldLength = this.records.length;
     this.records = Arrays.copyOf(this.records, oldLength + records.length);
