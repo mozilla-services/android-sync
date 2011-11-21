@@ -71,51 +71,53 @@ public class LocalBookmarkSynchronizer {
     Cursor curMoz = dbHelper.fetchAllBookmarksOrderByAndroidId();
     curMoz.moveToFirst();
 
-    // Get a cursor for the bookmarks in the stock android storage
-    Cursor curDroid = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, null, null, Browser.BookmarkColumns._ID);
-    curDroid.moveToFirst();
 
     while (curMoz.isAfterLast() == false) {
-
-      // TODO left off here
-    }
-
-
-    /*
-    Uri mBookmarksUri = Browser.BOOKMARKS_URI;
-
-    //TextView view = (TextView) findViewById(R.id.tvHello);
-    Cursor cur = managedQuery(mBookmarksUri, null, null, null, null);
-
-
-    cur.moveToFirst();
-    int index = cur.getColumnIndex(Browser.BookmarkColumns.BOOKMARK);
-    String[] columns = cur.getColumnNames();
-    String test = "";
-    for (int i = 0; i < columns.length; i++) {
-      test = test + "\t" + columns[i];
-    }
-
-    test = test + "\n";
-
-    while (cur.isAfterLast() == false) {
-      if (cur.getString(index).equalsIgnoreCase("0")) {
-        cur.moveToNext();
-        continue;
+      
+      // Find bookmark in android store
+      int androidId = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_ANDROID_ID));
+      String where = Browser.BookmarkColumns._ID + "=" + androidId;
+      Cursor curDroid = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, where, null, null);
+      curDroid.moveToFirst();
+      
+      String guid = curMoz.getString(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_GUID));
+      
+      // Check if bookmark has been deleted
+      if (curDroid.isAfterLast()) {
+        dbHelper.markDeleted(guid);
+      }
+      
+      // Check if bookmark has been modified in android db
+      if (!bookmarksSame(curMoz, curDroid)) {
+        dbHelper.updateTitleUri(guid, 
+            getStringFromColumn(curDroid, Browser.BookmarkColumns.TITLE),
+            getStringFromColumn(curDroid, Browser.BookmarkColumns.URL));
       }
 
-      for (int i = 0; i < columns.length; i++) {
-        try {
-          test = test + "\t" + cur.getString(i);
-        } catch (Exception e) {
-          test = test + "\tEXCEPTION";
-        }
-      }
-      test = test + "\n";
-      cur.moveToNext();
     }
-    */
-
+    
+    // close some cursors!
   }
+  
+  // Check if two bookmarks are the same
+  private boolean bookmarksSame(Cursor curMoz, Cursor curDroid) {
+    
+    String mozTitle = getStringFromColumn(curMoz, BookmarksDatabaseHelper.COL_TITLE);
+    String droidTitle = getStringFromColumn(curDroid, Browser.BookmarkColumns.TITLE);
+    if (!mozTitle.equals(droidTitle)) return false;
+    
+    String mozUri = getStringFromColumn(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
+    String droidUri = getStringFromColumn(curDroid, Browser.BookmarkColumns.URL);
+    if (!mozUri.equals(droidUri)) return false;
+    
+    return true;
+  }
+  
+  private String getStringFromColumn(Cursor cur, String colId) {
+    return cur.getString(cur.getColumnIndex(colId));
+  }
+
+
+  
 
 }

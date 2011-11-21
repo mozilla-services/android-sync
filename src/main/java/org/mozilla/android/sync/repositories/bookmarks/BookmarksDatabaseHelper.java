@@ -225,12 +225,38 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     String queryString = SQLiteQueryBuilder.buildQueryString(false, TBL_BOOKMARKS, BOOKMARKS_COLUMNS, where, null, null, null, null);
     return db.rawQuery(queryString, null);
   }
+  
+  // update bookmark title + uri for given guid
+  public void updateTitleUri(String guid, String title, String uri) {
+    updateByGuid(guid, getTitleUriCV(title, uri));
+  }
+  
+  // mark a record deleted
+  public void markDeleted(String guid) {
+    ContentValues cv = new ContentValues();
+    cv.put(COL_DELETED, 1);
+    updateByGuid(guid, cv);
+  }
 
   // delete bookmark from database looking up by guid
   public void deleteBookmark(BookmarkRecord bookmark) {
     SQLiteDatabase db = this.getCachedWritableDatabase();
     String[] where = new String[] { String.valueOf(bookmark.guid) };
     db.delete(TBL_BOOKMARKS, COL_GUID+"=?", where);
+  }
+  
+  private void updateByGuid(String guid, ContentValues cv) {
+    SQLiteDatabase db = this.getWritableDatabase();
+    String[] where = new String[] { String.valueOf(guid) };
+    db.update(TBL_BOOKMARKS, cv, COL_GUID + "=?", where);
+  }
+    
+  // Return a ContentValues object containing title + uri
+  private ContentValues getTitleUriCV(String title, String uri) {
+    ContentValues cv = new ContentValues();
+    cv.put(COL_TITLE, title);
+    cv.put(COL_BMK_URI, uri);
+    return cv;    
   }
 
   private ContentValues getContentValues(BookmarkRecord record) {
