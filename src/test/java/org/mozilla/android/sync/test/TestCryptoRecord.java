@@ -1,8 +1,12 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
@@ -50,8 +54,10 @@ public class TestCryptoRecord {
     payload.put("hmac", base16Hmac);
     body.put("payload", payload.toJSONString());
     BaseCryptoRecord record = new BaseCryptoRecord(body);
-    record.keyBundle = new KeyBundle(Base64.decodeBase64(base64EncryptionKey),
-        Base64.decodeBase64(base64HmacKey));
+    byte[] decodedKey  = Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8"));
+    byte[] decodedHMAC = Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")); 
+    record.keyBundle = new KeyBundle(decodedKey, decodedHMAC);
+
     record.decrypt();
     System.out.println(record.cleartext);
     String id = (String) record.cleartext.getObject("payload").get("id");
@@ -59,23 +65,23 @@ public class TestCryptoRecord {
   }
 
   @Test
-  public void testBaseCryptoRecordSyncKeyBundle() {
+  public void testBaseCryptoRecordSyncKeyBundle() throws UnsupportedEncodingException {
     // These values pulled straight out of Firefox.
     String key  = "6m8mv8ex2brqnrmsb9fjuvfg7y";
     String user = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
     
     // Check our friendly base32 decoding.
-    System.out.println("Decodes to " + Base64.encodeBase64String(Utils.decodeFriendlyBase32(key)));
+    System.out.println("Decodes to " + new String(Base64.encodeBase64(Utils.decodeFriendlyBase32(key))));
     System.out.println("Expecting  " + "8xbKrJfQYwbFkguKmlSm/g==");
-    assertTrue(Arrays.equals(Utils.decodeFriendlyBase32(key), Base64.decodeBase64("8xbKrJfQYwbFkguKmlSm/g==")));
+    assertTrue(Arrays.equals(Utils.decodeFriendlyBase32(key), Base64.decodeBase64("8xbKrJfQYwbFkguKmlSm/g==".getBytes("UTF-8"))));
     KeyBundle bundle = new KeyBundle(user, key);
     String expectedEncryptKeyBase64 = "/8RzbFT396htpZu5rwgIg2WKfyARgm7dLzsF5pwrVz8=";
     String expectedHMACKeyBase64    = "NChGjrqoXYyw8vIYP2334cvmMtsjAMUZNqFwV2LGNkM=";
     byte[] computedEncryptKey       = bundle.getEncryptionKey();
     byte[] computedHMACKey          = bundle.getHMACKey();
-    System.out.println("Got encryption key:      " + Base64.encodeBase64String(computedEncryptKey));
+    System.out.println("Got encryption key:      " + new String(Base64.encodeBase64(computedEncryptKey)));
     System.out.println("Expected encryption key: " + expectedEncryptKeyBase64);
-    assertTrue(Arrays.equals(computedEncryptKey, Base64.decodeBase64(expectedEncryptKeyBase64)));
-    assertTrue(Arrays.equals(computedHMACKey,    Base64.decodeBase64(expectedHMACKeyBase64)));
+    assertTrue(Arrays.equals(computedEncryptKey, Base64.decodeBase64(expectedEncryptKeyBase64.getBytes("UTF-8"))));
+    assertTrue(Arrays.equals(computedHMACKey,    Base64.decodeBase64(expectedHMACKeyBase64.getBytes("UTF-8"))));
   }
 }

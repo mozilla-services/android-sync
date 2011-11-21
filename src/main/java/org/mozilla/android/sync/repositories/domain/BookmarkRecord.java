@@ -19,6 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -35,17 +36,35 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.repositories.domain;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+public class BookmarkRecord extends Record {
+  // Covers the fields used by all bookmark objects.
+  // TODO Consider using Google's gson for parsing JSON into
+  // these domain objects.
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+  // Note: redundant accessors are evil. We're all grownups; let's just use
+  // public fields.
 
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+  // TODO I don't think there is a benefit to storing this, nor do we ever use
+  // it. Leave it for now.
+  public long    id;
+  public long    androidID;
+  public boolean loadInSidebar;
+  public String  title;
+  public String  bookmarkURI;
+  public String  description;
+  public String  tags;
+  public String  keyword;
+  public String  parentID;
+  public String  parentName;
+  public String  type;
+  public String  generatorURI;
+  public String  staticTitle;
+  public String  folderName;
+  public String  queryID;
+  public String  siteURI;
+  public String  feedURI;
+  public String  pos;
+  public String  children;
 }

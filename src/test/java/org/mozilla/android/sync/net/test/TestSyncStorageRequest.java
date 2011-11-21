@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
@@ -24,7 +27,7 @@ public class TestSyncStorageRequest {
   static String            USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   static String            SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
   static String            EXPECT_BASIC = "Basic YzZvN2R2bXIyYzR1ZDJmeXY2d296MnU0emkyMmJjeWQ6cGFzc3dvcmQ=";
-  private TestResourceData data         = new TestResourceData();
+  private HTTPServerTestHelper data         = new HTTPServerTestHelper();
 
   public class BaseTestStorageRequestDelegate implements
       SyncStorageRequestDelegate {

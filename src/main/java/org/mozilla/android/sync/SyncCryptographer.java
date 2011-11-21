@@ -1,4 +1,3 @@
-// vim: ts=2:sw=2:expandtab:
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -44,6 +43,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 import org.apache.commons.codec.binary.Base64;
@@ -90,16 +90,16 @@ public class SyncCryptographer {
   /*
    * Constructors.
    */
-  public SyncCryptographer(String username) {
+  public SyncCryptographer(String username) throws UnsupportedEncodingException {
     this(username, "", "", "");
   }
 
-  public SyncCryptographer(String username, String friendlyBase32SyncKey) {
+  public SyncCryptographer(String username, String friendlyBase32SyncKey) throws UnsupportedEncodingException {
     this(username, friendlyBase32SyncKey, "", "");
   }
 
   public SyncCryptographer(String username, String friendlyBase32SyncKey,
-                           String base64EncryptionKey, String base64HmacKey) {
+                           String base64EncryptionKey, String base64HmacKey) throws UnsupportedEncodingException {
     this.setUsername(username);
     this.syncKey = friendlyBase32SyncKey;
     this.setKeys(base64EncryptionKey, base64HmacKey);
@@ -130,7 +130,7 @@ public class SyncCryptographer {
    * Input: A string representation of the WBO (JSON).
    * Output: the decrypted payload and status.
    */
-  public CryptoStatusBundle decryptWBO(String jsonString) throws CryptoException {
+  public CryptoStatusBundle decryptWBO(String jsonString) throws CryptoException, UnsupportedEncodingException {
     // Get JSON from string.
     JSONObject json = null;
     JSONObject payload = null;
@@ -171,7 +171,7 @@ public class SyncCryptographer {
    * Input: JSONObject payload containing crypto/keys JSON.
    * Output: Decrypted crypto/keys String.
    */
-  private CryptoStatusBundle decryptKeysWBO(JSONObject payload) throws CryptoException {
+  private CryptoStatusBundle decryptKeysWBO(JSONObject payload) throws CryptoException, UnsupportedEncodingException {
     // Get the keys to decrypt the crypto keys bundle.
     KeyBundle cryptoKeysBundleKeys;
     try {
@@ -227,13 +227,14 @@ public class SyncCryptographer {
    * @return The crypto/keys payload encrypted for sending to
    * the server.
    * @throws CryptoException
+   * @throws UnsupportedEncodingException 
    */
-  public CryptoStatusBundle generateCryptoKeysWBOPayload() throws CryptoException {
+  public CryptoStatusBundle generateCryptoKeysWBOPayload() throws CryptoException, UnsupportedEncodingException {
 
     // Generate the keys and save for later use.
     KeyBundle cryptoKeys = Cryptographer.generateKeys();
-    setKeys(Base64.encodeBase64String(cryptoKeys.getEncryptionKey()),
-        Base64.encodeBase64String(cryptoKeys.getHMACKey()));
+    setKeys(new String(Base64.encodeBase64(cryptoKeys.getEncryptionKey())),
+            new String(Base64.encodeBase64(cryptoKeys.getHMACKey())));
 
     // Generate JSON.
     JSONArray keysArray = new JSONArray();
@@ -278,12 +279,13 @@ public class SyncCryptographer {
    *          KeyBundle with keys for decryption.
    * Output:  byte[] clearText
    * @throws CryptoException
+   * @throws UnsupportedEncodingException 
    */
-  private byte[] decryptPayload(JSONObject payload, KeyBundle keybundle) throws CryptoException {
+  private byte[] decryptPayload(JSONObject payload, KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
     byte[] clearText = Cryptographer.decrypt(
       new CryptoInfo (
-        Base64.decodeBase64( (String) payload.get(KEY_CIPHER_TEXT) ),
-        Base64.decodeBase64( (String) payload.get(KEY_IV) ),
+        Base64.decodeBase64(((String) payload.get(KEY_CIPHER_TEXT)).getBytes("UTF-8")),
+        Base64.decodeBase64(((String) payload.get(KEY_IV)).getBytes("UTF-8")),
         Utils.hex2Byte( (String) payload.get(KEY_HMAC) ),
         keybundle
         )
@@ -348,9 +350,9 @@ public class SyncCryptographer {
   /*
    * Input: Base64 encoded encryption and HMAC keys.
    */
-  public void setKeys(String base64EncryptionKey, String base64HmacKey) {
-    this.keys = new KeyBundle(Base64.decodeBase64(base64EncryptionKey),
-                              Base64.decodeBase64(base64HmacKey));
+  public void setKeys(String base64EncryptionKey, String base64HmacKey) throws UnsupportedEncodingException {
+    this.keys = new KeyBundle(Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8")),
+                              Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")));
   }
 
   public String getUsername() {

@@ -35,17 +35,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.repositories;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import org.mozilla.android.sync.repositories.domain.Record;
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
-
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+public interface RepositorySessionStoreDelegate {
+  public void onStoreFailed(Exception ex);
+  public void onStoreSucceeded(Record record);
 }

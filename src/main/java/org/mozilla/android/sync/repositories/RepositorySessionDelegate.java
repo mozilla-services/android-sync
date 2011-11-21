@@ -19,6 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -35,17 +36,27 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.repositories;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import org.mozilla.android.sync.repositories.domain.Record;
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+public interface RepositorySessionDelegate {
+  // This interface must be implemented by any class that needs
+  // to receive callbacks from a Repository (for example a
+  // callback containing error codes or fetched records)
 
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+  public void guidsSinceCallback(RepoStatusCode status, String[] guids);
+
+  public void fetchSinceCallback(RepoStatusCode status, Record[] records);
+
+  public void fetchCallback(RepoStatusCode status, Record[] records);
+
+  public void fetchAllCallback(RepoStatusCode status, Record[] records);
+
+  public void wipeCallback(RepoStatusCode status);
+
+  public void beginCallback(RepoStatusCode status);
+
+  public void finishCallback(RepoStatusCode status);
+
 }

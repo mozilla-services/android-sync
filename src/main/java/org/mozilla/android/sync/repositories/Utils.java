@@ -19,6 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -35,17 +36,23 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.repositories;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.util.Random;
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.apache.commons.codec.binary.Base64;
 
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+public class Utils {
+
+  public static String generateGuid() {
+    byte[] encodedBytes = Base64.encodeBase64(generateRandomBytes(9), false);
+    return new String(encodedBytes).replace("+", "-").replace("/", "_");
+  }
+
+  private static byte[] generateRandomBytes(int length) {
+    byte[] bytes = new byte[length];
+    Random random = new Random(System.nanoTime());
+    random.nextBytes(bytes);
+    return bytes;
+  }
 }

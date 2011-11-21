@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ * Jason Voll <jvoll@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -37,15 +37,23 @@
 
 package org.mozilla.android.sync;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import android.app.Activity;
+import android.os.Bundle;
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+/*
+ * Activity is just here to keep the android build
+ * happy until we have an actual service or proper
+ * app to build all this code into.
+ *
+ * TODO delete me later
+ */
+public class MainActivity extends Activity {
 
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+  /** Called when the activity is first created. */
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+      setContentView(R.layout.main);
+      getApplicationContext();
+  }
 }

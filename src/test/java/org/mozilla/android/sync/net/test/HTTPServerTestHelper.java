@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
@@ -14,7 +17,7 @@ import org.simpleframework.http.core.Container;
 import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
 
-public class TestResourceData {
+public class HTTPServerTestHelper {
   public Connection connection;
   public TestServer server;
 
@@ -71,6 +74,6 @@ public class TestResourceData {
     }
   }
 
-  public TestResourceData() {
+  public HTTPServerTestHelper() {
   }
 }

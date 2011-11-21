@@ -19,6 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -35,17 +36,40 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.repositories;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import org.mozilla.android.sync.repositories.domain.Record;
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+public abstract class RepositorySession {
 
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+  protected Repository repository;
+  protected RepositorySessionCreationDelegate callbackReceiver;
+
+  // The time that the last sync on this collection completed, in milliseconds.
+  protected long lastSyncTimestamp;
+  protected long syncBeginTimestamp;
+  // TODO logger and logger level here
+
+  public RepositorySession(Repository repository, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp) {
+    this.repository = repository;
+    this.callbackReceiver = delegate;
+    this.lastSyncTimestamp = lastSyncTimestamp;
+  }
+
+  public abstract void guidsSince(long timestamp, RepositorySessionDelegate receiver);
+  public abstract void fetchSince(long timestamp, RepositorySessionDelegate receiver);
+  public abstract void fetch(String[] guids, RepositorySessionDelegate receiver);
+
+  // Test function only
+  public abstract void fetchAll(RepositorySessionDelegate receiver);
+
+  public abstract void store(Record record, RepositorySessionStoreDelegate receiver);
+  public abstract void wipe(RepositorySessionDelegate receiver);
+
+  public void begin(RepositorySessionDelegate receiver) {
+    this.syncBeginTimestamp = System.currentTimeMillis();
+  }
+
+  public abstract void finish(RepositorySessionDelegate receiver);
+
 }

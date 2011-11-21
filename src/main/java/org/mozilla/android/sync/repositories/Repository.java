@@ -19,6 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -35,17 +36,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.repositories;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import android.content.Context;
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
-
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+// TODO: For now we are only concerned with android repos...eventually I'll need
+// to implement this for both a server repo and an android repo
+public interface Repository {
+  public void createSession(Context context, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp);
 }
