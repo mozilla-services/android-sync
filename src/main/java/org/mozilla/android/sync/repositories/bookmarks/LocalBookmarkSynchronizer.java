@@ -236,51 +236,5 @@ public class LocalBookmarkSynchronizer {
     // Making assumption that android's db has defaults for the other fields
     return cv;
  }
-  
-  // Check if two bookmarks are the same
-  private boolean bookmarksSame(Cursor curMoz, Cursor curDroid) {
-    
-    String mozTitle = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
-    String droidTitle = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
-    if (!mozTitle.equals(droidTitle)) return false;
-    
-    String mozUri = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
-    String droidUri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
-    if (!mozUri.equals(droidUri)) return false;
-    
-    return true;
-  }
-  
-  // Create new moz bookmark from droid cursor
-  // containing title, url, id
-  private BookmarkRecord createBookmark(Cursor curDroid) {
-    String title = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
-    String uri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
-    long droidId = DBUtils.getLongFromCursor(curDroid, Browser.BookmarkColumns._ID);
-    
-    BookmarkRecord rec = new BookmarkRecord();
-    rec.androidID = droidId;
-    rec.loadInSidebar = false;
-    rec.title = title;
-    rec.bookmarkURI = uri;
-    rec.description = "";
-    rec.tags = "";
-    rec.keyword = "";
-    rec.parentID = MOBILE_PARENT_ID;
-    rec.parentName = MOBILE_PARENT_NAME;
-    rec.type = BOOKMARK_TYPE;
-    rec.generatorURI = "";
-    rec.staticTitle = "";
-    rec.folderName = "";
-    rec.queryID = "";
-    rec.siteURI = "";
-    rec.feedURI = "";
-    rec.pos = "";
-    rec.children = "";
-    return rec;    
-  }
-
-
-  
 
 }
