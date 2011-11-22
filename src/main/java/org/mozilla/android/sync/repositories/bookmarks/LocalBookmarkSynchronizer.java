@@ -239,5 +239,5 @@ public class LocalBookmarkSynchronizer {
     cv.put(Browser.BookmarkColumns.URL, uri);
     // Making assumption that android's db has defaults for the other fields
     return cv;
- }
+  }
 }
