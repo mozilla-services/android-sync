@@ -240,3 +240,4 @@ public class LocalBookmarkSynchronizer {
     // Making assumption that android's db has defaults for the other fields
     return cv;
  }
+}
