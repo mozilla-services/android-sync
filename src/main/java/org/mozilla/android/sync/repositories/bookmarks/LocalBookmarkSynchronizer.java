@@ -42,8 +42,10 @@ import java.util.Iterator;
 
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.provider.Browser;
 
 public class LocalBookmarkSynchronizer {
@@ -133,6 +135,55 @@ public class LocalBookmarkSynchronizer {
     
   }
   
+  // Apply changes from local snapshot to stock bookmarks db
+  // Must provide a list of guids modified in the last sync
+  public void syncMozToStock(String[] guids) {
+    
+    // Fetch records for guids
+    Cursor curMoz = dbHelper.fetch(guids);
+    curMoz.moveToFirst();
+    
+    while (!curMoz.isAfterLast()) {
+      
+      long androidId = DBUtils.getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_ANDROID_ID);
+      
+      // Handle deletions
+      boolean deleted = DBUtils.getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_DELETED) == 1 ? true:false;
+      if (deleted) {
+        context.getContentResolver().delete(Browser.BOOKMARKS_URI, Browser.BookmarkColumns._ID + "=" + androidId, null);
+      } else {
+      
+        // Check if a record with the given android Id already exists
+        Cursor curDroid = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, Browser.BookmarkColumns._ID + "=" + androidId, null, null);
+        curDroid.moveToFirst();
+        
+        String title = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
+        String uri = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
+        ContentValues cv = getContentValuesStock(title, uri);
+        
+        if (curDroid.isAfterLast()) {
+          // Handle insertions
+          
+          Uri newRecord = context.getContentResolver().insert(Browser.BOOKMARKS_URI , cv);
+          // TODO figure out how to get id from Uri and write it out to the moz snapshotted record
+          
+        } else {
+          // Handle updates
+          
+          int rows = context.getContentResolver().update(
+              Browser.BOOKMARKS_URI, cv, Browser.BookmarkColumns._ID + "=" + androidId, null);
+          // TODO check that number of rows modified is 1, if not, scream bloody murder!
+        }
+        
+        curDroid.close();
+      }
+      
+      curMoz.moveToNext();
+    }
+    
+    curMoz.close();
+  }
+  
   // Check if two bookmarks are the same
   private boolean bookmarksSame(Cursor curMoz, Cursor curDroid) {
     
@@ -174,6 +225,16 @@ public class LocalBookmarkSynchronizer {
     rec.pos = "";
     rec.children = "";
     return rec;    
+  }
+  
+  // Create content values object for insertion into android db
+  private ContentValues getContentValuesStock(String title, String uri) {
+    ContentValues cv = new ContentValues();
+    cv.put(Browser.BookmarkColumns.BOOKMARK, 1);
+    cv.put(Browser.BookmarkColumns.TITLE, title);
+    cv.put(Browser.BookmarkColumns.URL, uri);
+    // Making assumption that android's db has defaults for the other fields
+    return cv;
   }
 
 }
