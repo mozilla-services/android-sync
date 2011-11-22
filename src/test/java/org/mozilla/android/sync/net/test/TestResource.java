@@ -58,7 +58,7 @@ public class TestResource {
 
   @Test
   public void testTrivialFetch() throws URISyntaxException {
-    TestServer server = data.startHTTPServer();
+    MockServer server = data.startHTTPServer();
     server.expectedBasicAuthHeader = EXPECT_BASIC;
     BaseResource r = new BaseResource("http://localhost:8080/foo/bar");
     // Truism!

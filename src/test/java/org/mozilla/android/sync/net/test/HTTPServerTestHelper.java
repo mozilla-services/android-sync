@@ -14,9 +14,9 @@ import org.simpleframework.transport.connect.SocketConnection;
 
 public class HTTPServerTestHelper {
   public Connection connection;
-  public TestServer server;
+  public MockServer server;
 
-  public TestServer startHTTPServer(TestServer server) {
+  public MockServer startHTTPServer(MockServer server) {
     try {
       System.out.println("Starting HTTP server...");
       this.server = server;
@@ -32,8 +32,8 @@ public class HTTPServerTestHelper {
     return server;
   }
 
-  public TestServer startHTTPServer() {
-    return this.startHTTPServer(new TestServer());
+  public MockServer startHTTPServer() {
+    return this.startHTTPServer(new MockServer());
   }
 
   public void stopHTTPServer() {

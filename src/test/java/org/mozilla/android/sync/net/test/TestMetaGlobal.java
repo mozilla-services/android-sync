@@ -78,12 +78,12 @@ public class TestMetaGlobal {
     }
   }
 
-  public class MissingMetaGlobalServer extends TestServer {
+  public class MissingMetaGlobalServer extends MockServer {
     public void handle(Request request, Response response) {
       this.handle(request, response, 404, "{}");
     }
   }
-  public class ExistingMetaGlobalServer extends TestServer {
+  public class ExistingMetaGlobalServer extends MockServer {
     public void handle(Request request, Response response) {
       String body = "{\"syncID\": \"1234567\", \"engines\": {}, \"storageVersion\": 5}";
       this.handle(request, response, 200, body);

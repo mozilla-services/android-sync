@@ -9,7 +9,7 @@ import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 import org.simpleframework.http.core.Container;
 
-public class TestServer implements Container {
+public class MockServer implements Container {
   public String expectedBasicAuthHeader;
   protected void handle(Request request, Response response, int code, String body) {
     try {
