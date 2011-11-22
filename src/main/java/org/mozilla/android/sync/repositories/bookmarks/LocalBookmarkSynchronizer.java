@@ -86,7 +86,7 @@ public class LocalBookmarkSynchronizer {
     while (curMoz.isAfterLast() == false) {
       
       // Find bookmark in android store
-      int androidId = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_ANDROID_ID));
+      long androidId = DBUtils.getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_ANDROID_ID);
       String where = Browser.BookmarkColumns._ID + "=" + androidId;
       Cursor curDroid = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, where, null, null);
       curDroid.moveToFirst();
