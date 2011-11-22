@@ -37,6 +37,11 @@
 
 package org.mozilla.android.sync.repositories.bookmarks;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.Browser;
@@ -51,8 +56,13 @@ public class LocalBookmarkSynchronizer {
   // TODO eventually make this a thread or integrate it
   // into some sort of service.
 
+  public static final String MOBILE_PARENT_ID = "mobile";
+  public static final String MOBILE_PARENT_NAME = "mobile";
+  public static final String BOOKMARK_TYPE = "bookmark";      
+  
   private Context context;
   private BookmarksDatabaseHelper dbHelper;
+  private ArrayList<Long> visitedDroidIds = new ArrayList<Long>();
 
   public LocalBookmarkSynchronizer(Context context) {
     this.context = context;
@@ -71,53 +81,101 @@ public class LocalBookmarkSynchronizer {
     Cursor curMoz = dbHelper.fetchAllBookmarksOrderByAndroidId();
     curMoz.moveToFirst();
 
-
     while (curMoz.isAfterLast() == false) {
       
       // Find bookmark in android store
-      int androidId = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_ANDROID_ID));
+      long androidId = curMoz.getLong(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_ANDROID_ID));
       String where = Browser.BookmarkColumns._ID + "=" + androidId;
       Cursor curDroid = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, where, null, null);
       curDroid.moveToFirst();
       
-      String guid = curMoz.getString(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_GUID));
+      String guid = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_GUID); 
       
-      // Check if bookmark has been deleted
+      // Check if bookmark has been deleted or modified
       if (curDroid.isAfterLast()) {
         dbHelper.markDeleted(guid);
+      } else if (!bookmarksSame(curMoz, curDroid)) {
+        dbHelper.updateTitleUri(guid, 
+            DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE),
+            DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL));
       }
       
-      // Check if bookmark has been modified in android db
-      if (!bookmarksSame(curMoz, curDroid)) {
-        dbHelper.updateTitleUri(guid, 
-            getStringFromColumn(curDroid, Browser.BookmarkColumns.TITLE),
-            getStringFromColumn(curDroid, Browser.BookmarkColumns.URL));
-      }
-
+      visitedDroidIds.add(androidId);
+      curDroid.close();
     }
     
-    // close some cursors!
+    curMoz.close();
+    
+    // Find any bookmarks in the local store that we didn't visit
+    // and add them to our local snapshot
+    String[] columns = new String[] {
+        Browser.BookmarkColumns._ID,
+        Browser.BookmarkColumns.URL,
+        Browser.BookmarkColumns.TITLE
+    };
+    
+    Iterator<Long> it = visitedDroidIds.listIterator();
+    String where = Browser.BookmarkColumns._ID + " NOT IN (";
+    while (it.hasNext()) {
+      long id = it.next();
+      where = where + id + ", ";      
+    }
+    where = where.substring(0, where.length() -2) + ")";
+    Cursor curNew = context.getContentResolver().query(Browser.BOOKMARKS_URI, columns, where, null, null);
+    curNew.moveToFirst();
+    
+    while (!curNew.isAfterLast()) {
+      dbHelper.insertBookmark(
+          createBookmark(curNew));     
+    }
+    
+    curNew.close();
+    
   }
   
   // Check if two bookmarks are the same
   private boolean bookmarksSame(Cursor curMoz, Cursor curDroid) {
     
-    String mozTitle = getStringFromColumn(curMoz, BookmarksDatabaseHelper.COL_TITLE);
-    String droidTitle = getStringFromColumn(curDroid, Browser.BookmarkColumns.TITLE);
+    String mozTitle = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
+    String droidTitle = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
     if (!mozTitle.equals(droidTitle)) return false;
     
-    String mozUri = getStringFromColumn(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
-    String droidUri = getStringFromColumn(curDroid, Browser.BookmarkColumns.URL);
+    String mozUri = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
+    String droidUri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
     if (!mozUri.equals(droidUri)) return false;
     
     return true;
   }
   
-  private String getStringFromColumn(Cursor cur, String colId) {
-    return cur.getString(cur.getColumnIndex(colId));
-  }
-
 
   
+  // Create new moz bookmark from droid cursor
+  // containing title, url, id
+  private BookmarkRecord createBookmark(Cursor curDroid) {
+    String title = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
+    String uri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
+    long droidId = DBUtils.getLongFromCursor(curDroid, Browser.BookmarkColumns._ID);
+    
+    BookmarkRecord rec = new BookmarkRecord();
+    rec.androidID = droidId;
+    rec.loadInSidebar = false;
+    rec.title = title;
+    rec.bookmarkURI = uri;
+    rec.description = "";
+    rec.tags = "";
+    rec.keyword = "";
+    rec.parentID = MOBILE_PARENT_ID;
+    rec.parentName = MOBILE_PARENT_NAME;
+    rec.type = BOOKMARK_TYPE;
+    rec.generatorURI = "";
+    rec.staticTitle = "";
+    rec.folderName = "";
+    rec.queryID = "";
+    rec.siteURI = "";
+    rec.feedURI = "";
+    rec.pos = "";
+    rec.children = "";
+    return rec;    
+  }
 
 }
