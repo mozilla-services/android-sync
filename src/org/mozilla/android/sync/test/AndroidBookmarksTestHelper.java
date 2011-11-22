@@ -6,8 +6,8 @@ import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 
-import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 
 public class AndroidBookmarksTestHelper {
 
@@ -26,20 +26,24 @@ public class AndroidBookmarksTestHelper {
     super();
   }
 
-  public static BookmarksRepository prepareRepositorySession(Activity activity, DefaultSessionCreationDelegate delegate, long lastSyncTimestamp) {
+  public static BookmarksRepository prepareRepositorySession(Context context, DefaultSessionCreationDelegate delegate, long lastSyncTimestamp) {
     BookmarksRepository repository = new BookmarksRepository();
-  
-    Context context = activity.getApplicationContext();
-    repository.createSession(context, delegate, lastSyncTimestamp);
-    WaitHelper.getTestWaiter().performWait();
+    try {
+      repository.createSession(context, delegate, lastSyncTimestamp);
+      Log.i("rnewman", "Calling wait.");
+      testWaiter.performWait();
+    } catch (IllegalArgumentException ex) {
+      Log.w("prepareRepositorySession", "Caught IllegalArgumentException.");
+    }
+
     return repository;
   }
 
-  public static void prepEmptySession(Activity activity) {
-    prepareRepositorySession(activity, new SetupDelegate(), 0);
+  public static void prepEmptySession(Context context) {
+    prepareRepositorySession(context, new SetupDelegate(), 0);
   
     // Ensure there are no records.
     session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
-    WaitHelper.getTestWaiter().performWait();
+    testWaiter.performWait();
   }
 }

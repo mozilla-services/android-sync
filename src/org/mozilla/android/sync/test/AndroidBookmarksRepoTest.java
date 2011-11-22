@@ -17,35 +17,43 @@ import org.mozilla.android.sync.test.helpers.ExpectFetchGUIDsDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 
+import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
-
+import android.util.Log;
 
 public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<MainActivity> {
   public AndroidBookmarksRepoTest() {
-    this(MainActivity.class);
+    super(MainActivity.class);
   }
-  public AndroidBookmarksRepoTest(Class<MainActivity> activityClass) {
-    super(activityClass);
+
+  public Context getApplicationContext() {
+    return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
+
   private void performWait() {
     AndroidBookmarksTestHelper.testWaiter.performWait();
   }
   private BookmarksRepositorySession getSession() {
     return AndroidBookmarksTestHelper.session;
   }
+
   private void prepEmptySession() {
-    wipe();
-    AndroidBookmarksTestHelper.prepEmptySession(getActivity());
+   // wipe();
+    AndroidBookmarksTestHelper.prepEmptySession(getApplicationContext());
   }
   private static BookmarksDatabaseHelper helper;
 
   private void wipe() {
     if (helper == null) {
-      helper = new BookmarksDatabaseHelper(getActivity().getApplicationContext());
+      helper = new BookmarksDatabaseHelper(getApplicationContext());
     }
     helper.wipe();
   }
 
+  public void setUp() {
+    Log.i("rnewman", "Wiping.");
+    wipe();
+  }
   public void tearDown() {
     if (helper != null) {
       helper.close();
@@ -56,7 +64,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
    * Tests for createSession.
    */
   public void testCreateSessionNullContext() {
-    wipe();
+    Log.i("rnewman", "In testCreateSessionNullContext.");
     BookmarksRepository repo = new BookmarksRepository();
     try {
       repo.createSession(null, new DefaultSessionCreationDelegate(), 0);
@@ -68,7 +76,9 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
 
   public void testFetchAll() {
 //    wipe();
-    AndroidBookmarksTestHelper.prepareRepositorySession(getActivity(), new SetupDelegate(), 0);
+    Log.i("rnewman", "Starting testFetchAll.");
+    AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0);
+    Log.i("rnewman", "Prepared.");
     Record[] expected = new Record[2];
     String[] expectedGUIDs = new String[2];
     expected[0] = BookmarkHelpers.createBookmark1();
