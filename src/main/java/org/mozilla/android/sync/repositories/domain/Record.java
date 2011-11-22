@@ -40,5 +40,12 @@ package org.mozilla.android.sync.repositories.domain;
 
 public abstract class Record {
   public String guid;
+  public String collection;
   public long lastModified;
+
+  public Record(String guid, String collection, long lastModified) {
+    this.guid         = guid;
+    this.collection   = collection;
+    this.lastModified = lastModified;
+  }
 }

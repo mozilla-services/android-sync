@@ -39,20 +39,32 @@
 package org.mozilla.android.sync;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.stage.CheckPreconditionsStage;
+import org.mozilla.android.sync.stage.CompletedStage;
+import org.mozilla.android.sync.stage.EnsureClusterURLStage;
+import org.mozilla.android.sync.stage.GlobalSyncStage;
+import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
+import org.mozilla.android.sync.stage.NoSuchStageException;
+
 
 public class GlobalSession {
-  private String clusterURL;
+  public static final String API_VERSION = "1.1";
+  public Stage currentState = Stage.idle;
+
+  private URI clusterURL;
   private String username;
   private String password;
   private KeyBundle syncKeyBundle;
-
-  public static final String API_VERSION = "1.1";
+  private GlobalSessionCallback callback;
 
   public class JSONFetchDelegate implements SyncStorageRequestDelegate {
     private JSONObjectCallback callback;
@@ -92,11 +104,68 @@ public class GlobalSession {
     public void handleError(Exception e);
   }
 
-  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle) {
-    this.clusterURL    = clusterURL;
+  private boolean isInvalidString(String s) {
+    return s == null ||
+           s.trim().length() == 0;
+  }
+
+  private boolean anyInvalidStrings(String s, String...strings) {
+    if (isInvalidString(s)) {
+      return true;
+    }
+    for (String str : strings) {
+      if (isInvalidString(str)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle, GlobalSessionCallback callback) throws SyncConfigurationException, IllegalArgumentException {
+    if (callback == null) {
+      throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
+    }
+
+    if (anyInvalidStrings(username, password)) {
+      throw new SyncConfigurationException();
+    }
+
+    URI clusterURI;
+    try {
+      clusterURI = (clusterURL == null) ? null : new URI(clusterURL);
+    } catch (URISyntaxException e) {
+      throw new SyncConfigurationException();
+    }
+
+    if (syncKeyBundle == null ||
+        syncKeyBundle.getEncryptionKey() == null ||
+        syncKeyBundle.getHMACKey() == null) {
+      throw new SyncConfigurationException();
+    }
+
+    this.setClusterURL(clusterURI);
+
     this.username      = username;
     this.password      = password;
     this.syncKeyBundle = syncKeyBundle;
+    this.callback      = callback;
+    prepareStages();
+  }
+
+  private Map<Stage, GlobalSyncStage> stages;
+  private void prepareStages() {
+    stages = new HashMap<Stage, GlobalSyncStage>();
+    stages.put(Stage.checkPreconditions, new CheckPreconditionsStage());
+    stages.put(Stage.ensureClusterURL,   new EnsureClusterURLStage());
+    stages.put(Stage.completed,          new CompletedStage());
+  }
+
+  private GlobalSyncStage getStageByName(Stage next) throws NoSuchStageException {
+    GlobalSyncStage stage = stages.get(next);
+    if (stage == null) {
+      throw new NoSuchStageException(next);
+    }
+    return stage;
   }
 
   protected void fetchJSON(String url, JSONObjectCallback callback) throws URISyntaxException {
@@ -109,4 +178,70 @@ public class GlobalSession {
     String metaURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
     this.fetchJSON(metaURL, callback);
   }
+
+  /**
+   * Advance and loop around the stages of a sync.
+   * @param current
+   * @return
+   */
+  public static Stage nextStage(Stage current) {
+    int index = current.ordinal() + 1;
+    int max   = Stage.completed.ordinal() + 1;
+    return Stage.values()[index % max];
+  }
+
+  /**
+   * Move to the next stage in the syncing process.
+   * @param next
+   *        The next stage.
+   * @throws NoSuchStageException if the stage does not exist.
+   */
+  public void advance() throws NoSuchStageException {
+    this.callback.handleStageCompleted(this.currentState, this);
+    Stage next = nextStage(this.currentState);
+    GlobalSyncStage nextStage = this.getStageByName(next);
+    this.currentState = next;
+    nextStage.execute(this);
+  }
+
+  /**
+   * Begin a sync.
+   *
+   * The caller is responsible for:
+   *
+   * * Verifying that any backoffs/minimum next sync are respected
+   * * Ensuring that the device is online
+   * * Ensuring that dependencies are ready
+   *
+   * @throws AlreadySyncingException
+   *
+   */
+  public void start() throws AlreadySyncingException {
+    if (this.currentState != GlobalSyncStage.Stage.idle) {
+      throw new AlreadySyncingException(this.currentState);
+    }
+    try {
+      this.advance();
+    } catch (NoSuchStageException ex) {
+      // This should not occur.
+      // TODO: log.
+      this.callback.handleError(this, ex);
+    }
+  }
+
+  public void completeSync() {
+    this.currentState = GlobalSyncStage.Stage.idle;
+    this.callback.handleSuccess(this);
+  }
+
+  public URI getClusterURL() {
+    return clusterURL;
+  }
+  public void setClusterURL(URI u) {
+    this.clusterURL = u;
+  }
+  public void setClusterURL(String u) throws URISyntaxException {
+    this.setClusterURL((u == null) ? null : new URI(u));
+  }
+
 }

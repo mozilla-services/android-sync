@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Richard Newman <rnewman@mozilla.com>
+ * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,16 +35,17 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync.repositories.domain;
 
-import java.io.IOException;
+import org.mozilla.android.sync.CryptoRecord;
 
-public interface SyncStorageRequestDelegate {
-
-  String credentials();
-  String ifUnmodifiedSince();
-  void handleSuccess(SyncStorageResponse response);
-  void handleFailure(SyncStorageResponse response);
-  void handleError(IOException e);
-
+/**
+ * A record which has an encrypted payload.
+ *
+ * @author rnewman
+ *
+ */
+public interface SyncRecord {
+  public void initFromPayload(CryptoRecord payload);
+  public CryptoRecord getPayload();
 }

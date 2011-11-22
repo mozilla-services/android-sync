@@ -38,17 +38,31 @@
 
 package org.mozilla.android.sync.repositories.domain;
 
-public class BookmarkRecord extends Record {
-  // Covers the fields used by all bookmark objects.
-  // TODO Consider using Google's gson for parsing JSON into
-  // these domain objects.
+import org.mozilla.android.sync.CryptoRecord;
+import org.mozilla.android.sync.repositories.Utils;
+
+/**
+ * Covers the fields used by all bookmark objects.
+ * @author rnewman
+ *
+ */
+public class BookmarkRecord extends Record
+                            implements SyncRecord {
+  public BookmarkRecord(String guid, String collection, long lastModified) {
+    super(guid, collection, lastModified);
+  }
+  public BookmarkRecord(String guid, String collection) {
+    super(guid, collection, 0);
+  }
+  public BookmarkRecord(String guid) {
+    super(guid, "bookmarks", 0);
+  }
+  public BookmarkRecord() {
+    super(Utils.generateGuid(), "bookmarks", 0);
+  }
 
   // Note: redundant accessors are evil. We're all grownups; let's just use
   // public fields.
-
-  // TODO I don't think there is a benefit to storing this, nor do we ever use
-  // it. Leave it for now.
-  public long    id;
   public long    androidID;
   public boolean loadInSidebar;
   public String  title;
@@ -67,4 +81,17 @@ public class BookmarkRecord extends Record {
   public String  feedURI;
   public String  pos;
   public String  children;
+
+  @Override
+  public void initFromPayload(CryptoRecord payload) {
+    // TODO Auto-generated method stub
+    // TODO Consider using Google's gson for parsing JSON into
+    // these domain objects.    
+  }
+
+  @Override
+  public CryptoRecord getPayload() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }
