@@ -344,9 +344,12 @@ public class BookmarksRepositorySession extends RepositorySession {
   // Create a BookmarkRecord object from a cursor on a row with a Bookmark in it
   public static BookmarkRecord getRecord(Cursor cur) {
 
-    BookmarkRecord rec = new BookmarkRecord();
-    rec.id = getLongValue(cur, BookmarksDatabaseHelper.COL_ID);
-    rec.guid = getStringValue(cur, BookmarksDatabaseHelper.COL_GUID);
+    String guid = getStringValue(cur, BookmarksDatabaseHelper.COL_GUID);
+    String collection = "bookmarks";
+    long lastModified = getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD);
+
+    BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified);
+
     rec.androidID = getLongValue(cur, BookmarksDatabaseHelper.COL_ANDROID_ID);
     rec.title = getStringValue(cur, BookmarksDatabaseHelper.COL_TITLE);
     rec.bookmarkURI = getStringValue(cur, BookmarksDatabaseHelper.COL_BMK_URI);
@@ -365,7 +368,6 @@ public class BookmarksRepositorySession extends RepositorySession {
     rec.feedURI = getStringValue(cur, BookmarksDatabaseHelper.COL_FEED_URI);
     rec.pos = getStringValue(cur, BookmarksDatabaseHelper.COL_POS);
     rec.children = getStringValue(cur, BookmarksDatabaseHelper.COL_CHILDREN);
-    rec.lastModified = getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD);
     return rec;
   }
 

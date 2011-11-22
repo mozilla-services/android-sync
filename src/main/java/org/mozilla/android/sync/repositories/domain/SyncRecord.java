@@ -19,7 +19,6 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -39,59 +38,14 @@
 package org.mozilla.android.sync.repositories.domain;
 
 import org.mozilla.android.sync.CryptoRecord;
-import org.mozilla.android.sync.repositories.Utils;
 
 /**
- * Covers the fields used by all bookmark objects.
+ * A record which has an encrypted payload.
+ *
  * @author rnewman
  *
  */
-public class BookmarkRecord extends Record
-                            implements SyncRecord {
-  public BookmarkRecord(String guid, String collection, long lastModified) {
-    super(guid, collection, lastModified);
-  }
-  public BookmarkRecord(String guid, String collection) {
-    super(guid, collection, 0);
-  }
-  public BookmarkRecord(String guid) {
-    super(guid, "bookmarks", 0);
-  }
-  public BookmarkRecord() {
-    super(Utils.generateGuid(), "bookmarks", 0);
-  }
-
-  // Note: redundant accessors are evil. We're all grownups; let's just use
-  // public fields.
-  public long    androidID;
-  public boolean loadInSidebar;
-  public String  title;
-  public String  bookmarkURI;
-  public String  description;
-  public String  tags;
-  public String  keyword;
-  public String  parentID;
-  public String  parentName;
-  public String  type;
-  public String  generatorURI;
-  public String  staticTitle;
-  public String  folderName;
-  public String  queryID;
-  public String  siteURI;
-  public String  feedURI;
-  public String  pos;
-  public String  children;
-
-  @Override
-  public void initFromPayload(CryptoRecord payload) {
-    // TODO Auto-generated method stub
-    // TODO Consider using Google's gson for parsing JSON into
-    // these domain objects.    
-  }
-
-  @Override
-  public CryptoRecord getPayload() {
-    // TODO Auto-generated method stub
-    return null;
-  }
+public interface SyncRecord {
+  public void initFromPayload(CryptoRecord payload);
+  public CryptoRecord getPayload();
 }
