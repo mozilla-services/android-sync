@@ -236,5 +236,26 @@ public class LocalBookmarkSynchronizer {
     // Making assumption that android's db has defaults for the other fields
     return cv;
   }
+  
+  // Check if two bookmarks are the same
+  private boolean bookmarksSame(Cursor curMoz, Cursor curDroid) {
+    
+    String mozTitle = getStringFromColumn(curMoz, BookmarksDatabaseHelper.COL_TITLE);
+    String droidTitle = getStringFromColumn(curDroid, Browser.BookmarkColumns.TITLE);
+    if (!mozTitle.equals(droidTitle)) return false;
+    
+    String mozUri = getStringFromColumn(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
+    String droidUri = getStringFromColumn(curDroid, Browser.BookmarkColumns.URL);
+    if (!mozUri.equals(droidUri)) return false;
+    
+    return true;
+  }
+  
+  private String getStringFromColumn(Cursor cur, String colId) {
+    return cur.getString(cur.getColumnIndex(colId));
+  }
+
+
+  
 
 }
