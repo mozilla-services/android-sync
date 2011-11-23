@@ -40,8 +40,6 @@ package org.mozilla.android.sync.repositories.bookmarks;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -58,10 +56,6 @@ public class LocalBookmarkSynchronizer {
   // TODO eventually make this a thread or integrate it
   // into some sort of service.
 
-  public static final String MOBILE_PARENT_ID = "mobile";
-  public static final String MOBILE_PARENT_NAME = "mobile";
-  public static final String BOOKMARK_TYPE = "bookmark";      
-  
   private Context context;
   private BookmarksDatabaseHelper dbHelper;
   private ArrayList<Long> visitedDroidIds = new ArrayList<Long>();
@@ -132,7 +126,7 @@ public class LocalBookmarkSynchronizer {
     
     while (!curNew.isAfterLast()) {
       dbHelper.insertBookmark(
-          createBookmark(curNew));     
+          DBUtils.bookmarkFromAndroidCursor(curNew));     
       curNew.moveToNext();
     }
     
@@ -200,35 +194,6 @@ public class LocalBookmarkSynchronizer {
     if (!mozUri.equals(droidUri)) return false;
     
     return true;
-  }
-  
-  // Create new moz bookmark from droid cursor
-  // containing title, url, id
-  private BookmarkRecord createBookmark(Cursor curDroid) {
-    String title = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
-    String uri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
-    long droidId = DBUtils.getLongFromCursor(curDroid, Browser.BookmarkColumns._ID);
-    
-    BookmarkRecord rec = new BookmarkRecord();
-    rec.androidID = droidId;
-    rec.loadInSidebar = false;
-    rec.title = title;
-    rec.bookmarkURI = uri;
-    rec.description = "";
-    rec.tags = "";
-    rec.keyword = "";
-    rec.parentID = MOBILE_PARENT_ID;
-    rec.parentName = MOBILE_PARENT_NAME;
-    rec.type = BOOKMARK_TYPE;
-    rec.generatorURI = "";
-    rec.staticTitle = "";
-    rec.folderName = "";
-    rec.queryID = "";
-    rec.siteURI = "";
-    rec.feedURI = "";
-    rec.pos = "";
-    rec.children = "";
-    return rec;    
   }
   
   // Create content values object for insertion into android db

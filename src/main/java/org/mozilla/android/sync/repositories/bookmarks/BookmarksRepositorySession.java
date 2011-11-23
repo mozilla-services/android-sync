@@ -123,7 +123,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
-        records.add(getRecord(cur));
+        records.add(DBUtils.bookmarkFromMozCursor(cur));
         cur.moveToNext();
       }
       cur.close();
@@ -164,7 +164,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
     cur.moveToFirst();
     while (!cur.isAfterLast()) {
-      records.add(getRecord(cur));
+      records.add(DBUtils.bookmarkFromMozCursor(cur));
       cur.moveToNext();
     }
     cur.close();
@@ -194,7 +194,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
-        records.add(getRecord(cur));
+        records.add(DBUtils.bookmarkFromMozCursor(cur));
         cur.moveToNext();
       }
       cur.close();
@@ -224,10 +224,9 @@ public class BookmarksRepositorySession extends RepositorySession {
     public void run() {
 
       BookmarkRecord existingRecord = findExistingRecord();
-      long rowID;
       // If the record is new, just store it
       if (existingRecord == null) {
-        rowID = dbHelper.insertBookmark((BookmarkRecord) record);
+        dbHelper.insertBookmark((BookmarkRecord) record);
 
       } else {
         // Record exists already, need to figure out what to store
@@ -236,7 +235,7 @@ public class BookmarksRepositorySession extends RepositorySession {
           // Remote and local record have both been modified since since last sync
           BookmarkRecord store = reconcileBookmarks(existingRecord, record);
           dbHelper.deleteBookmark(existingRecord);
-          rowID = dbHelper.insertBookmark(store);
+          dbHelper.insertBookmark(store);
         } else {
           // Only remote record modified, so take that one
           // (except for androidId which we obviously want to keep)
@@ -244,7 +243,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
           // To keep things simple, we don't update, we delete then re-insert
           dbHelper.deleteBookmark(existingRecord);
-          rowID = dbHelper.insertBookmark(record);
+          dbHelper.insertBookmark(record);
         }
       }
 
@@ -341,40 +340,5 @@ public class BookmarksRepositorySession extends RepositorySession {
     return newer;
   }
 
-  // Create a BookmarkRecord object from a cursor on a row with a Bookmark in it
-  public static BookmarkRecord getRecord(Cursor cur) {
-
-    String guid = getStringValue(cur, BookmarksDatabaseHelper.COL_GUID);
-    String collection = "bookmarks";
-    long lastModified = getLongValue(cur, BookmarksDatabaseHelper.COL_LAST_MOD);
-
-    BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified);
-
-    rec.androidID = getLongValue(cur, BookmarksDatabaseHelper.COL_ANDROID_ID);
-    rec.title = getStringValue(cur, BookmarksDatabaseHelper.COL_TITLE);
-    rec.bookmarkURI = getStringValue(cur, BookmarksDatabaseHelper.COL_BMK_URI);
-    rec.description = getStringValue(cur, BookmarksDatabaseHelper.COL_DESCRIP);
-    rec.loadInSidebar = cur.getInt(cur.getColumnIndex(BookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false ;
-    rec.tags = getStringValue(cur, BookmarksDatabaseHelper.COL_TAGS);
-    rec.keyword = getStringValue(cur, BookmarksDatabaseHelper.COL_KEYWORD);
-    rec.parentID = getStringValue(cur, BookmarksDatabaseHelper.COL_PARENT_ID);
-    rec.parentName = getStringValue(cur, BookmarksDatabaseHelper.COL_PARENT_NAME);
-    rec.type = getStringValue(cur, BookmarksDatabaseHelper.COL_TYPE);
-    rec.generatorURI = getStringValue(cur, BookmarksDatabaseHelper.COL_GENERATOR_URI);
-    rec.staticTitle = getStringValue(cur, BookmarksDatabaseHelper.COL_STATIC_TITLE);
-    rec.folderName = getStringValue(cur, BookmarksDatabaseHelper.COL_FOLDER_NAME);
-    rec.queryID = getStringValue(cur, BookmarksDatabaseHelper.COL_QUERY_ID);
-    rec.siteURI = getStringValue(cur, BookmarksDatabaseHelper.COL_SITE_URI);
-    rec.feedURI = getStringValue(cur, BookmarksDatabaseHelper.COL_FEED_URI);
-    rec.pos = getStringValue(cur, BookmarksDatabaseHelper.COL_POS);
-    rec.children = getStringValue(cur, BookmarksDatabaseHelper.COL_CHILDREN);
-    return rec;
-  }
-
-  private static String getStringValue(Cursor cur, String columnName) {
-    return cur.getString(cur.getColumnIndex(columnName));
-  }
-  private static long getLongValue(Cursor cur, String columnName) {
-    return cur.getLong(cur.getColumnIndex(columnName));
-  }
+  
 }
