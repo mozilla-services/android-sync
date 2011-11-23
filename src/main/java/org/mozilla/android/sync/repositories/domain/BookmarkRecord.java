@@ -48,17 +48,20 @@ import org.mozilla.android.sync.repositories.Utils;
  */
 public class BookmarkRecord extends Record
                             implements SyncRecord {
+  public BookmarkRecord(String guid, String collection, long lastModified, boolean deleted) {
+    super(guid, collection, lastModified, deleted);
+  }
   public BookmarkRecord(String guid, String collection, long lastModified) {
-    super(guid, collection, lastModified);
+    super(guid, collection, lastModified, false);
   }
   public BookmarkRecord(String guid, String collection) {
-    super(guid, collection, 0);
+    super(guid, collection, 0, false);
   }
   public BookmarkRecord(String guid) {
-    super(guid, "bookmarks", 0);
+    super(guid, "bookmarks", 0, false);
   }
   public BookmarkRecord() {
-    super(Utils.generateGuid(), "bookmarks", 0);
+    super(Utils.generateGuid(), "bookmarks", 0, false);
   }
 
   // Note: redundant accessors are evil. We're all grownups; let's just use

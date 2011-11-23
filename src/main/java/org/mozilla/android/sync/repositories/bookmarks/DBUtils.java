@@ -41,7 +41,7 @@ public class DBUtils {
     rec.title = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
     rec.bookmarkURI = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
     rec.description = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_DESCRIP);
-    rec.loadInSidebar = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false ;
+    rec.loadInSidebar = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false;
     rec.tags = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TAGS);
     rec.keyword = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_KEYWORD);
     rec.parentID = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_PARENT_ID);
@@ -55,6 +55,7 @@ public class DBUtils {
     rec.feedURI = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_FEED_URI);
     rec.pos = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_POS);
     rec.children = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_CHILDREN);
+    rec.deleted = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_DELETED)) == 1 ? true: false;
     return rec;
   }
  
@@ -83,6 +84,7 @@ public class DBUtils {
     rec.feedURI = "";
     rec.pos = "";
     rec.children = "";
+    rec.deleted = false;
     return rec;    
  }
 

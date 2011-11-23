@@ -288,6 +288,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     cv.put(COL_POS,             record.pos);
     cv.put(COL_CHILDREN,        record.children);
     cv.put(COL_LAST_MOD,        record.lastModified);
+    cv.put(COL_DELETED,         record.deleted);
     return cv;
   }
 }

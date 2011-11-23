@@ -42,10 +42,12 @@ public abstract class Record {
   public String guid;
   public String collection;
   public long lastModified;
+  public boolean deleted;
 
-  public Record(String guid, String collection, long lastModified) {
+  public Record(String guid, String collection, long lastModified, boolean deleted) {
     this.guid         = guid;
     this.collection   = collection;
     this.lastModified = lastModified;
+    this.deleted = deleted;
   }
 }

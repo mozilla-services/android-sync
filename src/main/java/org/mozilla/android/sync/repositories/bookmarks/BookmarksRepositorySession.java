@@ -224,11 +224,11 @@ public class BookmarksRepositorySession extends RepositorySession {
     public void run() {
 
       BookmarkRecord existingRecord = findExistingRecord();
-      // If the record is new, just store it
-      if (existingRecord == null) {
+      
+      // If the record is new and not deleted, store it
+      if (existingRecord == null && !record.deleted) {
         dbHelper.insertBookmark((BookmarkRecord) record);
-
-      } else {
+      } else if (existingRecord != null) {
         // Record exists already, need to figure out what to store
 
         if (existingRecord.lastModified > lastSyncTimestamp) {
