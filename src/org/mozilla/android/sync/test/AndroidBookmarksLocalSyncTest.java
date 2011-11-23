@@ -72,9 +72,7 @@ public class AndroidBookmarksLocalSyncTest extends
     context.getContentResolver().insert(Browser.BOOKMARKS_URI , expected[0]);
     context.getContentResolver().insert(Browser.BOOKMARKS_URI , expected[1]);
     
-    // Perform a sync to local db
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncStockToMoz();
+    localSyncStockToMoz();
     
     // Get records from local db, verify both are there
     Cursor cur = helper.fetchAllBookmarksOrderByAndroidId();
@@ -86,9 +84,9 @@ public class AndroidBookmarksLocalSyncTest extends
       String url = DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_BMK_URI);
       
       // Check to see if this bookmark matches one of ours
-      for (int i = 0; i < expected.length; i++) {
-        if (title.equals(expected[i].getAsString(Browser.BookmarkColumns.TITLE)) &&
-            url.equals(expected[i].getAsString(Browser.BookmarkColumns.URL))) {
+      for (ContentValues cv : expected) {
+        if (title.equals(cv.getAsString(Browser.BookmarkColumns.TITLE)) &&
+            url.equals(cv.getAsString(Browser.BookmarkColumns.URL))) {
           count++;
         }
       }
@@ -121,9 +119,7 @@ public class AndroidBookmarksLocalSyncTest extends
     helper.insertBookmark(records[0]);
     helper.insertBookmark(records[1]);
     
-    // Perform a sync to local db
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncStockToMoz();
+    localSyncStockToMoz();
     
     // Verify that one record is marked as deleted and other not in moz db
     Cursor cur = helper.fetch(new String[] { records[0].guid, records[1].guid } );
@@ -156,9 +152,7 @@ public class AndroidBookmarksLocalSyncTest extends
     storeToStock(records[0]);
     storeToStock(records[1]);
     
-    // Perform a sync to local db
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncStockToMoz();
+    localSyncStockToMoz();
     
     // Verification step
     Cursor cur = helper.fetchAllBookmarksOrderByAndroidId();
@@ -191,12 +185,10 @@ public class AndroidBookmarksLocalSyncTest extends
     storeToStock(records[1]);
     helper.markDeleted(records[0].guid);
     
-    // Perform a sync to  db
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncMozToStock(new String[] { records[0].guid, records[1].guid } );
+    localSyncMozToStock(new String[] { records[0].guid, records[1].guid });
     
     // Verify one record is deleted from stock db and it is the correct one
-    Cursor cur = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, null, null, null);
+    Cursor cur = fetchAllFromStock();
     cur.moveToFirst();
     int count = 0;
     while (!cur.isAfterLast()) {
@@ -222,12 +214,10 @@ public class AndroidBookmarksLocalSyncTest extends
     helper.insertBookmark(records[1]);
     helper.markDeleted(records[0].guid);
     
-    // Perform a sync to  db
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncMozToStock(new String[] { records[0].guid, records[1].guid } );
+    localSyncMozToStock(new String[] { records[0].guid, records[1].guid }); 
     
     // Verify only one record is added to stock db and it is the correct one
-    Cursor cur = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, null, null, null);
+    Cursor cur = fetchAllFromStock();
     cur.moveToFirst();
     int count = 0;
     while (!cur.isAfterLast()) {
@@ -246,12 +236,10 @@ public class AndroidBookmarksLocalSyncTest extends
     BookmarkRecord record = BookmarkHelpers.createBookmark1();
     helper.insertBookmark(record);
     
-    // Perform a sync to  db
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncMozToStock(new String[] { record.guid } );
+    localSyncMozToStock(new String[] { record.guid }); 
     
     // Verify record is added to stock db
-    Cursor cur = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, null, null, null);
+    Cursor cur = fetchAllFromStock();
     cur.moveToFirst();
     int count = 0;
     while (!cur.isAfterLast()) {
@@ -291,12 +279,10 @@ public class AndroidBookmarksLocalSyncTest extends
     helper.updateTitleUri(records[0].guid, records[0].title, records[0].bookmarkURI);
     helper.updateTitleUri(records[1].guid, records[1].title, records[1].bookmarkURI);
     
-    // Perform a sync to  db
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncMozToStock(new String[] { records[0].guid, records[1].guid } );
+    localSyncMozToStock(new String[] { records[0].guid, records[1].guid }); 
     
     // Verification step
-    Cursor cur = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, null, null, null); 
+    Cursor cur = fetchAllFromStock();
     cur.moveToFirst();
     verifyNewMozBookmarkFromStock(records[0], DBUtils.bookmarkFromAndroidCursor(cur));
     cur.moveToNext();
@@ -305,15 +291,59 @@ public class AndroidBookmarksLocalSyncTest extends
     cur.close();
   }
   
-  // TESTS TO ADD/MAKE SURE ARE COVERED
-  // TODO test with other non-bookmark bookmarks to make sure they
-  // aren't involved in local sync at all
+  /*
+   * Tests to make sure non-bookmark type bookmarks (e.x. folders) don't
+   * interact with local sync.
+   * 
+   * Just test insert since as long as they fail to be inserted, they will
+   * never get an androidId and therefore will never affect the stock db.
+   */
+  public void testInsertNonBookmarks() {
+    BookmarkRecord[] records = new BookmarkRecord[] {
+        BookmarkHelpers.createFolder(),
+        BookmarkHelpers.createLivemark(),
+        BookmarkHelpers.createMicrosummary(),
+        BookmarkHelpers.createQuery(),
+        BookmarkHelpers.createSeparator()
+    };
+    
+    // Store to local snapshot
+    String[] guids = new String[records.length];
+    for (int i = 0; i < records.length; i++) {
+      helper.insertBookmark(records[i]);
+      guids[i] = records[i].guid;
+    }
+    
+    localSyncMozToStock(guids);
+    
+    // Verify that none of these were stored in stock
+    Cursor cur = fetchAllFromStock();
+    cur.moveToFirst();
+    assert(cur.isAfterLast());
+  }
+  
+  /*
+   * Helpers
+   */
+  private void localSyncMozToStock(String[] guids) {
+    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
+    sync.syncMozToStock(guids);
+  }
+  
+  private void localSyncStockToMoz() {
+    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
+    sync.syncStockToMoz();
+  }
   
   private void storeToStock(BookmarkRecord record) {
     ContentValues cv = getContentValuesStock(record.title, record.bookmarkURI);
     Uri resourceUri = context.getContentResolver().insert(Browser.BOOKMARKS_URI, cv);
     long androidId = DBUtils.getAndroidIdFromUri(resourceUri);
     helper.updateAndroidId(record.guid, androidId);
+  }
+  
+  private Cursor fetchAllFromStock() {
+    return context.getContentResolver().query(Browser.BOOKMARKS_URI, null, null, null, null);
   }
   
   private ContentValues getContentValuesStock(String title, String uri) {
@@ -329,7 +359,7 @@ public class AndroidBookmarksLocalSyncTest extends
     assertEquals(expected.bookmarkURI, actual.bookmarkURI);
   }
   
-  // Check for a newly created moz bookmark that was created from a stock bookmark
+  // Verification for a newly created moz bookmark that was created from a stock bookmark
   private void verifyNewMozBookmarkFromStock(BookmarkRecord expected, BookmarkRecord actual) {
     verifyTitleUri(expected, actual);
     assertEquals(DBUtils.BOOKMARK_TYPE, actual.type);
