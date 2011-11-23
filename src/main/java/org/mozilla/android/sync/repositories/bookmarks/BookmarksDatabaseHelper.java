@@ -231,6 +231,13 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
     updateByGuid(guid, getTitleUriCV(title, uri));
   }
   
+  // update android id
+  public void updateAndroidId(String guid, long androidId) {
+    ContentValues cv = new ContentValues();
+    cv.put(COL_ANDROID_ID, androidId);
+    updateByGuid(guid, cv);
+  }
+  
   // mark a record deleted
   public void markDeleted(String guid) {
     ContentValues cv = new ContentValues();

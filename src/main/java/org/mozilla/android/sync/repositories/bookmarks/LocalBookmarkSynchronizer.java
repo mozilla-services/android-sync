@@ -104,6 +104,7 @@ public class LocalBookmarkSynchronizer {
       
       visitedDroidIds.add(androidId);
       curDroid.close();
+      curMoz.moveToNext();
     }
     
     curMoz.close();
@@ -116,19 +117,23 @@ public class LocalBookmarkSynchronizer {
         Browser.BookmarkColumns.TITLE
     };
     
-    Iterator<Long> it = visitedDroidIds.listIterator();
-    String where = Browser.BookmarkColumns._ID + " NOT IN (";
-    while (it.hasNext()) {
-      long id = it.next();
-      where = where + id + ", ";      
+    String where = Browser.BookmarkColumns.BOOKMARK + "= 1";
+    if (visitedDroidIds.size() > 0) {
+      Iterator<Long> it = visitedDroidIds.listIterator();
+      where = where + " AND " + Browser.BookmarkColumns._ID + " NOT IN (";
+      while (it.hasNext()) {
+        long id = it.next();
+        where = where + id + ", ";      
+      }
+      where = where.substring(0, where.length() -2) + ")";
     }
-    where = where.substring(0, where.length() -2) + ")";
     Cursor curNew = context.getContentResolver().query(Browser.BOOKMARKS_URI, columns, where, null, null);
     curNew.moveToFirst();
     
     while (!curNew.isAfterLast()) {
       dbHelper.insertBookmark(
           createBookmark(curNew));     
+      curNew.moveToNext();
     }
     
     curNew.close();
@@ -163,13 +168,12 @@ public class LocalBookmarkSynchronizer {
         
         if (curDroid.isAfterLast()) {
           // Handle insertions
-          
-          Uri newRecord = context.getContentResolver().insert(Browser.BOOKMARKS_URI , cv);
-          // TODO figure out how to get id from Uri and write it out to the moz snapshotted record
-          
+          Uri recordUri = context.getContentResolver().insert(Browser.BOOKMARKS_URI , cv);
+          long insertedDroidId = DBUtils.getAndroidIdFromUri(recordUri);
+          String guid = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_GUID);
+          dbHelper.updateAndroidId(guid, insertedDroidId);
         } else {
           // Handle updates
-          
           int rows = context.getContentResolver().update(
               Browser.BOOKMARKS_URI, cv, Browser.BookmarkColumns._ID + "=" + androidId, null);
           // TODO check that number of rows modified is 1, if not, scream bloody murder!
@@ -236,5 +240,3 @@ public class LocalBookmarkSynchronizer {
     // Making assumption that android's db has defaults for the other fields
     return cv;
  }
-
-}
