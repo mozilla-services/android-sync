@@ -156,18 +156,16 @@ public class LocalBookmarkSynchronizer {
         Cursor curDroid = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, Browser.BookmarkColumns._ID + "=" + androidId, null, null);
         curDroid.moveToFirst();
         
-        String title = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
-        String uri = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
-        ContentValues cv = getContentValuesStock(title, uri);
-        
         if (curDroid.isAfterLast()) {
           // Handle insertions
+          ContentValues cv = getContentValuesStock(curMoz);
           Uri recordUri = context.getContentResolver().insert(Browser.BOOKMARKS_URI , cv);
           long insertedDroidId = DBUtils.getAndroidIdFromUri(recordUri);
           String guid = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_GUID);
           dbHelper.updateAndroidId(guid, insertedDroidId);
-        } else {
+        } else if (!bookmarksSame(curMoz, curDroid)) {
           // Handle updates
+          ContentValues cv = getContentValuesStock(curMoz);
           int rows = context.getContentResolver().update(
               Browser.BOOKMARKS_URI, cv, Browser.BookmarkColumns._ID + "=" + androidId, null);
           // TODO check that number of rows modified is 1, if not, scream bloody murder!
@@ -196,8 +194,10 @@ public class LocalBookmarkSynchronizer {
     return true;
   }
   
-  // Create content values object for insertion into android db
-  private ContentValues getContentValuesStock(String title, String uri) {
+  // Create content values object for insertion into android db from moz cursor
+  private ContentValues getContentValuesStock(Cursor curMoz) {
+    String title = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
+    String uri = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
     ContentValues cv = new ContentValues();
     cv.put(Browser.BookmarkColumns.BOOKMARK, 1);
     cv.put(Browser.BookmarkColumns.TITLE, title);
