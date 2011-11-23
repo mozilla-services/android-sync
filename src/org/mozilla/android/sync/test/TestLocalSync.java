@@ -22,8 +22,9 @@ public class TestLocalSync extends
     super(MainActivity.class);
   }
 
-  // Think this is necessary so that the context is consistent
   private static Context context; 
+  private static BookmarksDatabaseHelper helper;
+  
   public Context getApplicationContext() {
     if (context == null) {
       context = this.getInstrumentation().getTargetContext().getApplicationContext();
@@ -31,7 +32,6 @@ public class TestLocalSync extends
     return context;
   }
 
-  private static BookmarksDatabaseHelper helper;
 
   private void wipe() {
     if (helper == null) {
@@ -43,7 +43,7 @@ public class TestLocalSync extends
     Log.i("jvoll", "Wiping stock bookmarks db");
     getApplicationContext().getContentResolver().delete(Browser.BOOKMARKS_URI, null, null);
   }
-
+  
   public void setUp() {
     Log.i("rnewman", "Wiping.");
     wipe();
@@ -135,11 +135,49 @@ public class TestLocalSync extends
     
   }
   
+  // Test modification of a bookmark in the stock db
+  public void testModifiedBookmarkInStock() {
+    BookmarkRecord[] records = new BookmarkRecord[] {
+        BookmarkHelpers.createBookmark1(),
+        BookmarkHelpers.createBookmark2()
+    };
+    
+    // Add both to moz snapshot
+    helper.insertBookmark(records[0]);
+    helper.insertBookmark(records[1]);
+    
+    // Modify the title of one of the bookmarks and
+    // the url of the other and insert into stock db
+    records[0].title = "New title";
+    records[1].bookmarkURI = "http://uri.new.com";
+    storeToStock(records[0]);
+    storeToStock(records[1]);
+    
+    // Perform a sync to local db
+    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
+    sync.syncStockToMoz();
+    
+    // Verification step
+    Cursor cur = helper.fetchAllBookmarksOrderByAndroidId();
+    cur.moveToFirst();
+    BookmarkHelpers.verifyExpectedRecordReturned(records[0], DBUtils.getRecord(cur));
+    cur.moveToNext();
+    BookmarkHelpers.verifyExpectedRecordReturned(records[1], DBUtils.getRecord(cur));
+    
+  }
+  
   
   // TODO test with other non-bookmark bookmarks to make sure they
   // aren't involved in local sync at all
   
   // TODO check that we are saving android id's out when we insert new records into local storage
+  
+  private void storeToStock(BookmarkRecord record) {
+    ContentValues cv = getContentValuesStock(record.title, record.bookmarkURI);
+    Uri resourceUri = context.getContentResolver().insert(Browser.BOOKMARKS_URI, cv);
+    long androidId = DBUtils.getAndroidIdFromUri(resourceUri);
+    helper.updateAndroidId(record.guid, androidId);
+  }
   
   private ContentValues getContentValuesStock(String title, String uri) {
     ContentValues cv = new ContentValues();
