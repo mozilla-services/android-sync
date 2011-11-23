@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.mozilla.android.sync.BaseCryptoRecord;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.SyncStorageRequest;
+import org.mozilla.android.sync.net.SyncStorageRecordRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 
@@ -107,7 +107,7 @@ public class TestSyncStorageRequest {
   @Test
   public void testSyncStorageRequest() throws URISyntaxException, IOException {
     data.startHTTPServer();
-    SyncStorageRequest r = new SyncStorageRequest(new URI(STORAGE_URL));
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(STORAGE_URL));
     TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
@@ -119,7 +119,7 @@ public class TestSyncStorageRequest {
   public void testRealLiveMetaGlobal() throws URISyntaxException {
     URI u = new URI(
         "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global");
-    SyncStorageRequest r = new SyncStorageRequest(u);
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
     LiveDelegate delegate = new LiveDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
@@ -131,7 +131,7 @@ public class TestSyncStorageRequest {
   public void testRealLiveCryptoKeys() throws URISyntaxException {
     URI u = new URI(
         "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/crypto/keys");
-    SyncStorageRequest r = new SyncStorageRequest(u);
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
     LiveDelegate delegate = new LiveDelegate();
     delegate.shouldDecrypt = true;
     delegate._credentials = USER_PASS;

@@ -46,7 +46,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   private void doFetch() {
     try {
       this.isUploading = false;
-      SyncStorageRequest r = new SyncStorageRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
       r.delegate = this;
       r.get();
     } catch (URISyntaxException e) {
@@ -61,7 +61,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   public void upload(MetaGlobalDelegate callback) {
     try {
       this.isUploading = true;
-      SyncStorageRequest r = new SyncStorageRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
       r.delegate = this;
       r.get();
     } catch (URISyntaxException e) {

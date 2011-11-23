@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.SyncStorageRequest;
+import org.mozilla.android.sync.net.SyncStorageRecordRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.mozilla.android.sync.stage.CheckPreconditionsStage;
@@ -169,7 +169,7 @@ public class GlobalSession {
   }
 
   protected void fetchJSON(String url, JSONObjectCallback callback) throws URISyntaxException {
-    SyncStorageRequest r = new SyncStorageRequest(url);
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(url);
     r.delegate = new JSONFetchDelegate(callback);
     r.get();
   }

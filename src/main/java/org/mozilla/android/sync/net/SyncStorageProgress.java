@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Richard Newman <rnewman@mozilla.com>
+ * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -37,12 +37,22 @@
 
 package org.mozilla.android.sync.net;
 
-import java.io.IOException;
+import org.mozilla.android.sync.ExtendedJSONObject;
 
-public interface SyncStorageRequestDelegate {
-  String credentials();
-  String ifUnmodifiedSince();
-  void handleSuccess(SyncStorageResponse response);
-  void handleFailure(SyncStorageResponse response);
-  void handleError(IOException e);
+/**
+ * Encapsulates one of the lines retrieved from an application/newlines endpoint.
+ *
+ * @author rnewman
+ *
+ */
+public class SyncStorageProgress {
+  public String line;
+  public long   count;
+  public SyncStorageProgress(String line, long count) {
+    this.line  = line;
+    this.count = count;
+  }
+  public ExtendedJSONObject asObject() {
+    return null;
+  }
 }
