@@ -1,7 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="app_name">Firefox Sync</string>
+  <string name="title_connect">Connect to Sync</string>
 
-    <string name="hello">Hello World!</string>
-    <string name="app_name">Android-sync</string>
+  <!-- JPAKE Key Screen -->
+  <string name="pair_subtitle">From a Firefox Sync-connected computer, go to Sync options and select "Add a device"</string>
+  <string name="link_show"><a href="https://support.mozilla.com/en-US/kb/add-a-device-to-firefox-sync">Show me how</a></string>
+  <string name="link_nodevice"><a href="#">I\'m not near my computer…</a></string>
 
+  <!-- Account Login Screen -->
+  <string name="subtitle_account">Enter your Firefox Sync account information</string>
+  <string name="input_username">Account Name</string>
+  <string name="input_password">Password</string>
+  <string name="input_key">Recovery Key</string>
+  <string name="checkbox_server">Use custom server</string>
+  <string name="input_server">Server URL</string>
+  
+  <!-- Setup Fail -->
+  <string name="title_fail">Cannot Set Up Sync</string>
+  <string name="subtitle_fail">Fennec could not connect to Sync. Would you like to try again?</string>
+  <string name="button_tryagain">Try again</string>
+  <string name="button_manual">Manual Setup</string>
+  
+  <!-- Setup Success -->
+  <string name="title_success">Setup Complete</string>
+  <string name="subtitle_success">Your data is now being encrypted and uploaded into the background. You can return to using Firefox while your data syncs.</string>
+  <string name="settings">Settings</string>
+  
+  <!-- Common text -->
+  <string name="button_cancel">Cancel</string>
+  <string name="button_connect">Connect</string>
+  
+  <!-- Account strings -->
+  <string name="account_label">Firefox Sync</string>
 </resources>
