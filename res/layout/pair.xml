@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  style="@style/TextFrame" >
+
+  <TextView
+    style="@style/TextTitle"
+    android:text="@string/title_connect" />
+
+  <View
+    android:layout_width="wrap_content"
+    android:layout_height="2dp"
+    android:background="#FFFFFF" />
+
+  <TextView
+    style="@style/TextItem"
+    android:text="@string/pair_subtitle" />
+
+  <TextView
+    style="@style/TextItem"
+    android:autoLink="web"
+    android:clickable="true"
+    android:text="@string/link_show" />
+
+  <LinearLayout
+    android:id="@+android:id/jpake_block"
+    style="@style/TextItem"
+    android:orientation="vertical" >
+
+    <TextView
+      style="@style/TextItem"
+      android:text="Row1\nRow2\nRow3"
+      android:textSize="40dp" />
+
+  </LinearLayout>
+
+  <TextView
+    style="@style/TextItem"
+    android:clickable="true"
+    android:onClick="manualClickHandler"
+    android:text="@string/link_nodevice" />
+
+  <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="horizontal" >
+
+    <Button
+      style="@style/ButtonCommon"
+      android:onClick="cancelClickHandler"
+      android:text="@string/button_cancel" />
+
+  </LinearLayout>
+
+</TableLayout>

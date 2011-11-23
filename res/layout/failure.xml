@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/TextFrame" >
+    <TextView
+      style="@style/TextTitle"
+      android:text="@string/title_fail" />
+    <View 
+      android:layout_width="fill_parent"
+      android:layout_height="2dp"
+      android:background="#FFFFFF"/>
+    <TextView
+      style="@style/TextItem"
+      android:text="@string/subtitle_fail" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <Button
+                style="@style/ButtonCommon"
+                android:text="@string/button_tryagain"
+                android:onClick="tryAgainClickHandler" />
+
+            <Button
+                style="@style/ButtonCommon"
+                android:onClick="manualClickHandler"
+                android:text="@string/button_manual" />
+        </LinearLayout>
+
+        <Button
+            style="@style/ButtonCommon"
+            android:onClick="cancelClickHandler"
+            android:text="@string/button_cancel" />
+    </LinearLayout>
+
+</TableLayout>
