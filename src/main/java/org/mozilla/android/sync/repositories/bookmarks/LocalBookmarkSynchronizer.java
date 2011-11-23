@@ -53,9 +53,6 @@ public class LocalBookmarkSynchronizer {
    * Android's stock bookmark database.
    */
 
-  // TODO eventually make this a thread or integrate it
-  // into some sort of service.
-
   private Context context;
   private BookmarksDatabaseHelper dbHelper;
   private ArrayList<Long> visitedDroidIds = new ArrayList<Long>();
@@ -136,6 +133,7 @@ public class LocalBookmarkSynchronizer {
   
   // Apply changes from local snapshot to stock bookmarks db
   // Must provide a list of guids modified in the last sync
+  // This should be run at the end of a sync
   public void syncMozToStock(String[] guids) {
     
     // Fetch records for guids
@@ -166,9 +164,8 @@ public class LocalBookmarkSynchronizer {
         } else if (!bookmarksSame(curMoz, curDroid)) {
           // Handle updates
           ContentValues cv = getContentValuesStock(curMoz);
-          int rows = context.getContentResolver().update(
+          context.getContentResolver().update(
               Browser.BOOKMARKS_URI, cv, Browser.BookmarkColumns._ID + "=" + androidId, null);
-          // TODO check that number of rows modified is 1, if not, scream bloody murder!
         }
         
         curDroid.close();
@@ -178,6 +175,7 @@ public class LocalBookmarkSynchronizer {
     }
     
     curMoz.close();
+    visitedDroidIds.clear();
   }
   
   // Check if two bookmarks are the same
@@ -202,7 +200,6 @@ public class LocalBookmarkSynchronizer {
     cv.put(Browser.BookmarkColumns.BOOKMARK, 1);
     cv.put(Browser.BookmarkColumns.TITLE, title);
     cv.put(Browser.BookmarkColumns.URL, uri);
-    // Making assumption that android's db has defaults for the other fields
     return cv;
   }
 }
