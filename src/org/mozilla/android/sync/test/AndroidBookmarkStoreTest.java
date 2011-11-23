@@ -170,4 +170,103 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     BookmarkHelpers.verifyExpectedRecordReturned(local, record);
     assertEquals(local.androidID, record.androidID);
   }
+  
+  /*
+   * Insert a record that is marked as deleted, remote has newer timestamp
+   */
+  
+  public void testDeleteRemoteNewer() {
+    prepSession();
+    
+    // Record existing and hasn't changed since before lastSync.
+    // Automatically will be assigned lastModified = current time.
+    BookmarkRecord local = BookmarkHelpers.createBookmark1();
+    local.androidID = 54321;
+    getSession().store(local, new ExpectStoredDelegate(local.guid));
+    performWait();
+
+    // Pass the same record to store, but mark it deleted and modified
+    // more recently
+    local.lastModified = local.lastModified + 1000;
+    local.deleted = true;
+    local.androidID = 0;
+    getSession().store(local, new ExpectStoredDelegate(local.guid));
+    performWait();
+
+    String[] expected = new String[] { local.guid };
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    getSession().fetchAll(delegate);
+    performWait();
+
+    // Check that one record comes back, marked deleted and with
+    // and androidId
+    assertEquals(1, delegate.records.length);
+    BookmarkRecord record = (BookmarkRecord) delegate.records[0];
+    local.androidID = 54321;
+    BookmarkHelpers.verifyExpectedRecordReturned(local, record);
+    assertEquals(local.androidID, record.androidID);
+    assertEquals(true, record.deleted);
+    
+  }
+  
+  /*
+   * Insert a record that is marked as deleted, local has newer timestamp
+   * and was not marked deleted (so keep it)
+   */
+  public void testDeleteLocalNewer() {
+    prepSession();
+
+    // Local record newer.
+    long timestamp = 1000000000;
+    BookmarkRecord local = BookmarkHelpers.createBookmark1();
+    local.androidID = 54321;
+    local.lastModified = timestamp;
+    getSession().store(local, new ExpectStoredDelegate(local.guid));
+    performWait();
+
+    // Create an older version of a record with the same GUID.
+    BookmarkRecord remote = BookmarkHelpers.createBookmark1();
+    remote.guid = local.guid;
+    remote.lastModified = timestamp - 100;
+    remote.deleted = true;
+    getSession().store(remote, new ExpectStoredDelegate(remote.guid));
+    performWait();
+
+    // Do a fetch and make sure that we get back the first (local) record.
+    String[] expected = new String[] { local.guid };
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    getSession().fetchAll(delegate);
+    performWait();
+
+    // Check that one record comes back, it is the local one, and not deleted
+    assertEquals(1, delegate.recordCount());
+    BookmarkRecord record = (BookmarkRecord) (delegate.records[0]);
+    BookmarkHelpers.verifyExpectedRecordReturned(local, record);
+    assertEquals(local.androidID, record.androidID);
+    assertEquals(false, record.deleted);
+  }
+  
+  /*
+   * Insert a record that is marked as deleted, record never existed locally
+   */
+  public void testDeleteRemoteLocalNonexistent() {
+    prepSession();
+    
+    long timestamp = 1000000000;
+    
+    // Pass a record marked deleted to store, doesn't exist locally
+    BookmarkRecord remote = BookmarkHelpers.createBookmark1(); 
+    remote.lastModified = timestamp;
+    remote.deleted = true;
+    getSession().store(remote, new ExpectStoredDelegate(remote.guid));
+    performWait();
+
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(new String[]{});
+    getSession().fetchAll(delegate);
+    performWait();
+
+    // Check that no records are returned
+    assertEquals(0, delegate.records.length);
+    
+  }
 }
