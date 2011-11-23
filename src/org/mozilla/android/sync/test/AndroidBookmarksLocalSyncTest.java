@@ -129,18 +129,11 @@ public class AndroidBookmarksLocalSyncTest extends
     Cursor cur = helper.fetch(new String[] { records[0].guid, records[1].guid } );
     cur.moveToFirst();
     
-    for (int i = 0; i < 2; i++) {
-      assertEquals(records[i].guid, DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_GUID));
-      assertEquals(records[i].title, DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_TITLE));
-      long deleted = DBUtils.getLongFromCursor(cur, BookmarksDatabaseHelper.COL_DELETED);
-      
-      if (i == 0) {
-        assertEquals(0, deleted);
-      } else {
-        assertEquals(1, deleted);
-      }
-      cur.moveToNext();
-    }
+    verifyTitleUri(records[0], DBUtils.bookmarkFromMozCursor(cur));
+    assertEquals(0, DBUtils.getLongFromCursor(cur, BookmarksDatabaseHelper.COL_DELETED));
+    cur.moveToNext();
+    verifyTitleUri(records[1], DBUtils.bookmarkFromMozCursor(cur));
+    assertEquals(1, DBUtils.getLongFromCursor(cur, BookmarksDatabaseHelper.COL_DELETED));
     
     cur.close();
   }
@@ -205,12 +198,14 @@ public class AndroidBookmarksLocalSyncTest extends
     // Verify one record is deleted from stock db and it is the correct one
     Cursor cur = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, null, null, null);
     cur.moveToFirst();
+    int count = 0;
     while (!cur.isAfterLast()) {
-      assertEquals(records[1].title, DBUtils.getStringFromCursor(cur, Browser.BookmarkColumns.TITLE));
-      assertEquals(records[1].bookmarkURI, DBUtils.getStringFromCursor(cur, Browser.BookmarkColumns.URL));
+      verifyTitleUri(records[1], DBUtils.bookmarkFromAndroidCursor(cur));
       cur.moveToNext();
+      count ++;
     }
     
+    assertEquals(1, count);    
     cur.close();
   }
   
@@ -260,8 +255,7 @@ public class AndroidBookmarksLocalSyncTest extends
     cur.moveToFirst();
     int count = 0;
     while (!cur.isAfterLast()) {
-      assertEquals(record.title, DBUtils.getStringFromCursor(cur, Browser.BookmarkColumns.TITLE));
-      assertEquals(record.bookmarkURI, DBUtils.getStringFromCursor(cur, Browser.BookmarkColumns.URL));
+      verifyTitleUri(record, DBUtils.bookmarkFromAndroidCursor(cur));
       count ++;
       cur.moveToNext();
     }
@@ -314,8 +308,6 @@ public class AndroidBookmarksLocalSyncTest extends
   // TESTS TO ADD/MAKE SURE ARE COVERED
   // TODO test with other non-bookmark bookmarks to make sure they
   // aren't involved in local sync at all
-  // TODO test that bookmarks only touched in stock if modified in moz (if not already done above)
-  // TODO verify parentId and parentName correct
   
   private void storeToStock(BookmarkRecord record) {
     ContentValues cv = getContentValuesStock(record.title, record.bookmarkURI);
@@ -329,14 +321,17 @@ public class AndroidBookmarksLocalSyncTest extends
     cv.put(Browser.BookmarkColumns.BOOKMARK, 1);
     cv.put(Browser.BookmarkColumns.TITLE, title);
     cv.put(Browser.BookmarkColumns.URL, uri);
-    // Making assumption that android's db has defaults for the other fields
     return cv;
+  }
+  
+  private void verifyTitleUri(BookmarkRecord expected, BookmarkRecord actual) {
+    assertEquals(expected.title, actual.title);
+    assertEquals(expected.bookmarkURI, actual.bookmarkURI);
   }
   
   // Check for a newly created moz bookmark that was created from a stock bookmark
   private void verifyNewMozBookmarkFromStock(BookmarkRecord expected, BookmarkRecord actual) {
-    assertEquals(expected.title, actual.title);
-    assertEquals(expected.bookmarkURI, actual.bookmarkURI);
+    verifyTitleUri(expected, actual);
     assertEquals(DBUtils.BOOKMARK_TYPE, actual.type);
     assertEquals(DBUtils.MOBILE_PARENT_ID, actual.parentID);
     assertEquals(DBUtils.MOBILE_PARENT_NAME, actual.parentName);
