@@ -18,13 +18,13 @@
   
   <!-- Setup Fail -->
   <string name="title_fail">Cannot Set Up Sync</string>
-  <string name="subtitle_fail">Fennec could not connect to Sync. Would you like to try again?</string>
+  <string name="subtitle_fail">Firefox Sync could not connect to the server. Would you like to try again?</string>
   <string name="button_tryagain">Try again</string>
   <string name="button_manual">Manual Setup</string>
   
   <!-- Setup Success -->
   <string name="title_success">Setup Complete</string>
-  <string name="subtitle_success">Your data is now being encrypted and uploaded into the background. You can return to using Firefox while your data syncs.</string>
+  <string name="subtitle_success">Your data is now being encrypted and synchronized in the background.</string>
   <string name="settings">Settings</string>
   
   <!-- Common text -->
