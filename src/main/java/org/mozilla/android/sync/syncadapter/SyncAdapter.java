@@ -37,36 +37,123 @@
 
 package org.mozilla.android.sync.syncadapter;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.setup.Constants;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.accounts.AuthenticatorException;
+import android.accounts.OperationCanceledException;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.SyncResult;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 
-/**
- * SyncAdapter implementation for syncing sample SyncAdapter contacts to the
- * platform ContactOperations provider.  This sample shows a basic 2-way
- * sync between the client and a sample server.  It also contains an
- * example of how to update the contacts' status messages, which
- * would be useful for a messaging or social networking client.
- */
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
-    private static final String TAG = "SyncAdapter";
-    private final AccountManager mAccountManager;
-    private final Context mContext;
+  private static final String  TAG = "SyncAdapter";
+  private final AccountManager mAccountManager;
+  private final Context        mContext;
 
-    public SyncAdapter(Context context, boolean autoInitialize) {
-        super(context, autoInitialize);
-        mContext = context;
-        mAccountManager = AccountManager.get(context);
+  public SyncAdapter(Context context, boolean autoInitialize) {
+    super(context, autoInitialize);
+    mContext = context;
+    mAccountManager = AccountManager.get(context);
+  }
+
+  private void handleException(Exception e, SyncResult syncResult) {
+    if (e instanceof OperationCanceledException) {
+      Log.e("rnewman", "Operation canceled. Aborting sync.");
+      e.printStackTrace();
+      return;
     }
+    if (e instanceof AuthenticatorException) {
+      syncResult.stats.numParseExceptions++;
+      Log.e("rnewman", "AuthenticatorException. Aborting sync.");
+      e.printStackTrace();
+      return;
+    }
+    if (e instanceof IOException) {
+      syncResult.stats.numIoExceptions++;
+      Log.e("rnewman", "IOException. Aborting sync.");
+      e.printStackTrace();
+      return;
+    }
+    syncResult.stats.numIoExceptions++;
+    Log.e("rnewman", "Unknown exception. Aborting sync.");
+    e.printStackTrace();
+  }
 
-    @Override
-    public void onPerformSync(Account account, Bundle extras, String authority,
-        ContentProviderClient provider, SyncResult syncResult) {
+  private String getAuthToken(String tokenName, Account account,
+                              SyncResult syncResult) {
+    try {
+      return mAccountManager.blockingGetAuthToken(account, tokenName, true);
+    } catch (Exception ex) {
+      this.handleException(ex, syncResult);
+    }
+    return null;
+  }
+
+  @Override
+  public void onPerformSync(final Account account,
+                            final Bundle extras,
+                            final String authority,
+                            final ContentProviderClient provider,
+                            final SyncResult syncResult) {
+
+    Log.i("rnewman", "Got onPerformSync:");
+    Log.i("rnewman", "Account name: " + account.name);
+    final SyncAdapter self = this;
+    AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+      @Override
+      public void run(AccountManagerFuture<Bundle> future) {
+        // TODO: N.B.: Future must not be used on the main thread.
+        try {
+          Bundle bundle   = future.getResult(60L, TimeUnit.SECONDS);
+          String syncKey  = bundle.getString(Constants.OPTION_KEY);
+          String password = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+          KeyBundle keyBundle = new KeyBundle(account.name, syncKey);
+          self.performSync(account, extras, authority, provider, syncResult, keyBundle, password);
+        } catch (Exception e) {
+          self.handleException(e, syncResult);
+          return;
+        }
+      }
+    };
+    Handler handler = null;
+    mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, handler);
+    String profile = mAccountManager.getUserData(account, "profile");
+    String password = this.getAuthToken("password", account, syncResult);
+    if (password == null) {
+      Log.e("rnewman", "No password: aborting sync.");
+      return;
+    }
+    String syncKey = this.getAuthToken("syncKey", account, syncResult);
+    if (syncKey == null) {
+      Log.e("rnewman", "No Sync Key: aborting sync.");
+      return;
+    }
+    Log.i("rnewman", password + ", " + syncKey);
+  }
+
+  /**
+   * Now that we have a sync key and password, go ahead and do the work.
+   */
+  protected void performSync(Account account, Bundle extras, String authority,
+                             ContentProviderClient provider,
+                             SyncResult syncResult, KeyBundle keyBundle,
+                             String password) {
+    // TODO
+  }
+}
 
 //        try {
 //            // see if we already have a sync-state attached to this account. By handing
@@ -145,5 +232,3 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 //            Log.e(TAG, "JSONException", e);
 //            syncResult.stats.numParseExceptions++;
 //        }
-    }
-}
