@@ -73,26 +73,17 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     }
   }
 
+  public SyncStorageRecordRequest(URI uri) {
+    super(uri);
+  }
+
+  public SyncStorageRecordRequest(String url) throws URISyntaxException {
+    this(new URI(url));
+  }
+
   @Override
   protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
     return new SyncStorageRecordResourceDelegate(request);
-  }
-
-  /**
-   * @param uri
-   * @throws URISyntaxException
-   */
-  public SyncStorageRecordRequest(String uri) throws URISyntaxException {
-    this(new URI(uri));
-  }
-
-  /**
-   * @param uri
-   */
-  public SyncStorageRecordRequest(URI uri) {
-    this.resource = new BaseResource(uri);
-    this.resourceDelegate = this.makeResourceDelegate(this);
-    this.resource.delegate = this.resourceDelegate;
   }
 
   /**

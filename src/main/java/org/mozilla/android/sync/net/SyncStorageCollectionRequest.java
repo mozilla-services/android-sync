@@ -37,12 +37,93 @@
 
 package org.mozilla.android.sync.net;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+
+import ch.boye.httpclientandroidlib.Header;
+import ch.boye.httpclientandroidlib.HttpEntity;
+import ch.boye.httpclientandroidlib.HttpResponse;
+
 /**
- * A request class that handles line-by-line responses.
+ * A request class that handles line-by-line responses. Eventually this will
+ * handle real stream processing; for now, just parse the returned body
+ * line-by-line.
  *
  * @author rnewman
  *
  */
 public class SyncStorageCollectionRequest extends SyncStorageRequest {
-  public SyncStorageCollectionRequestDelegate delegate;
+  public SyncStorageCollectionRequest(URI uri) {
+    super(uri);
+  }
+
+  @Override
+  protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
+    return new SyncCollectionResourceDelegate((SyncStorageCollectionRequest) request);
+  }
+
+  // TODO: this is awful.
+  public class SyncCollectionResourceDelegate extends
+      SyncStorageRequest.SyncResourceDelegate {
+
+    SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
+      super(request);
+    }
+
+    @Override
+    public void handleResponse(HttpResponse response) {
+      if (response.getStatusLine().getStatusCode() != 200) {
+        super.handleResponse(response);
+        return;
+      }
+
+      HttpEntity entity = response.getEntity();
+      Header contentType = entity.getContentType();
+      System.out.println("content type is " + contentType.getValue());
+      if (!contentType.getValue().startsWith("application/newlines")) {
+        // Not incremental!
+        super.handleResponse(response);
+        return;
+      }
+
+      // Line-by-line processing, then invoke success.
+      SyncStorageCollectionRequestDelegate delegate = (SyncStorageCollectionRequestDelegate) this.request.delegate;
+      InputStream content = null;
+      BufferedReader br = null;
+      try {
+        content = entity.getContent();
+        int bufSize = 1024 * 1024;         // 1MB. TODO: lift and consider.
+        br = new BufferedReader(new InputStreamReader(content), bufSize);
+        String line;
+
+        // This relies on connection timeouts at the HTTP layer.
+        while (null != (line = br.readLine())) {
+          try {
+            delegate.handleProgress(line);
+          } catch (Exception ex) {
+            delegate.handleError(new HandleProgressException(ex));
+            return;
+          }
+        }
+      } catch (IOException ex) {
+        delegate.handleError(ex);
+        return;
+      } finally {
+        // Attempt to close the stream and reader.
+        if (br != null) {
+          try {
+            br.close();
+          } catch (IOException e) {
+            // We don't care if this fails.
+          }
+        }
+      }
+      // We're done processing the entity. Don't let fetching the body succeed!
+      response.setEntity(new CompletedEntity(entity));
+      delegate.handleSuccess(new SyncStorageResponse(response));
+    }
+  }
 }

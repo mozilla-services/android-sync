@@ -38,6 +38,8 @@
 package org.mozilla.android.sync.net;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -49,12 +51,29 @@ import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
 public class SyncStorageRequest implements Resource {
 
   /**
+   * @param uri
+   * @throws URISyntaxException
+   */
+  public SyncStorageRequest(String uri) throws URISyntaxException {
+    this(new URI(uri));
+  }
+
+  /**
+   * @param uri
+   */
+  public SyncStorageRequest(URI uri) {
+    this.resource = new BaseResource(uri);
+    this.resourceDelegate = this.makeResourceDelegate(this);
+    this.resource.delegate = this.resourceDelegate;
+  }
+
+  /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
   public class SyncResourceDelegate implements ResourceDelegate {
 
     protected String contentType = "text/plain";
-    private SyncStorageRequest request;
+    protected SyncStorageRequest request;
 
     SyncResourceDelegate(SyncStorageRequest request) {
       this.request = request;

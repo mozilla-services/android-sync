@@ -14,18 +14,23 @@ import org.simpleframework.http.core.Container;
 
 public class MockServer implements Container {
   public String expectedBasicAuthHeader;
+  protected PrintStream handleBasicHeaders(Request request, Response response, int code, String contentType) throws IOException {
+    PrintStream bodyStream = response.getPrintStream();
+    long time = System.currentTimeMillis();
+    response.setCode(code);
+    response.set("Content-Type", contentType);
+    response.set("Server", "HelloWorld/1.0 (Simple 4.0)");
+    response.setDate("Date", time);
+    response.setDate("Last-Modified", time);
+    response.set("X-Weave-Timestamp", Long.toString(time));
+    System.out.println("Auth header: " + request.getValue("Authorization"));
+    return bodyStream;
+  }
+
   protected void handle(Request request, Response response, int code, String body) {
     try {
       System.out.println("Handling request...");
-      PrintStream bodyStream = response.getPrintStream();
-      long time = System.currentTimeMillis();
-      response.setCode(code);
-      response.set("Content-Type", "application/json");
-      response.set("Server", "HelloWorld/1.0 (Simple 4.0)");
-      response.setDate("Date", time);
-      response.setDate("Last-Modified", time);
-      response.set("X-Weave-Timestamp", Long.toString(time));
-      System.out.println("Auth header: " + request.getValue("Authorization"));
+      PrintStream bodyStream = this.handleBasicHeaders(request, response, code, "application/json");
 
       if (expectedBasicAuthHeader != null) {
         System.out.println("Expecting auth header " + expectedBasicAuthHeader);
