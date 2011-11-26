@@ -107,7 +107,10 @@ public class BaseResource implements Resource {
 
     // TODO: Eventually we should use Apache HttpAsyncClient. It's not out of alpha yet.
     // Until then, we synchronously make the request, then invoke our delegate's callback.
-    BaseResource.applyCredentials(delegate.getCredentials(), client, request, context);
+    String credentials = delegate.getCredentials();
+    if (credentials != null) {
+      BaseResource.applyCredentials(credentials, client, request, context);
+    }
 
     HttpParams params = client.getParams();
     HttpConnectionParams.setConnectionTimeout(params, delegate.connectionTimeout());
