@@ -37,22 +37,12 @@
 
 package org.mozilla.android.sync.net;
 
-import org.mozilla.android.sync.ExtendedJSONObject;
+import org.mozilla.android.sync.SyncException;
 
-/**
- * Encapsulates one of the lines retrieved from an application/newlines endpoint.
- *
- * @author rnewman
- *
- */
-public class SyncStorageProgress {
-  public String line;
-  public long   count;
-  public SyncStorageProgress(String line, long count) {
-    this.line  = line;
-    this.count = count;
-  }
-  public ExtendedJSONObject asObject() {
-    return null;
+public class HandleProgressException extends SyncException {
+  private static final long serialVersionUID = -4444933937013161059L;
+
+  public HandleProgressException(Exception ex) {
+    super(ex);
   }
 }

@@ -38,5 +38,5 @@
 package org.mozilla.android.sync.net;
 
 public interface SyncStorageRequestIncrementalDelegate {
-  void handleProgress(SyncStorageProgress progress);  // For line-by-line. 
+  void handleProgress(String progress);  // For line-by-line.
 }
