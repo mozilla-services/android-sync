@@ -93,7 +93,7 @@ public class GlobalSession {
       // TODO
     }
 
-    public void handleError(IOException e) {
+    public void handleError(Exception e) {
       // TODO
     }
   }

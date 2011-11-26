@@ -37,12 +37,10 @@
 
 package org.mozilla.android.sync.net;
 
-import java.io.IOException;
-
 public interface SyncStorageRequestDelegate {
   String credentials();
   String ifUnmodifiedSince();
   void handleSuccess(SyncStorageResponse response);
   void handleFailure(SyncStorageResponse response);
-  void handleError(IOException e);
+  void handleError(Exception ex);
 }

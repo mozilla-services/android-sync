@@ -204,7 +204,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback = null;
   }
 
-  public void handleError(IOException e) {
+  public void handleError(Exception e) {
     this.callback.handleError(e);
     this.callback = null;
   }

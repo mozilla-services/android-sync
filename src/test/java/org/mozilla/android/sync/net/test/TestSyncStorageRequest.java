@@ -56,7 +56,7 @@ public class TestSyncStorageRequest {
     }
 
     @Override
-    public void handleError(IOException e) {
+    public void handleError(Exception e) {
       fail("Should not be called.");
     }
   }
