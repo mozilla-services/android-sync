@@ -125,6 +125,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
     Log.i("rnewman", "Got onPerformSync:");
     Log.i("rnewman", "Account name: " + account.name);
+    Log.i("rnewman", "XXX CLEARING AUTH TOKEN XXX");
+    invalidateAuthToken(account);
+
     final SyncAdapter self = this;
     AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
       @Override
