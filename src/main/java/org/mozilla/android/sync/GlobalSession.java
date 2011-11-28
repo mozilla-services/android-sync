@@ -38,7 +38,6 @@
 
 package org.mozilla.android.sync;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -55,15 +54,39 @@ import org.mozilla.android.sync.stage.GlobalSyncStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
 
+import android.util.Log;
+
 
 public class GlobalSession {
   public static final String API_VERSION = "1.1";
   public Stage currentState = Stage.idle;
 
-  private URI clusterURL;
-  private String username;
+  // These public fields and methods are for the use of Stage handlers.
+  public URI clusterURL;
+  public String username;
+  public KeyBundle syncKeyBundle;
+
+  public String credentials() {
+    return username + ":" + password;
+  }
+
+  public URI collectionURI(String collection, boolean full) throws URISyntaxException {
+    // Do it this way to make it easier to add more params later.
+    // It's pretty ugly, I'll grant.
+    boolean anyParams = full;
+    String  uriParams = "";
+    if (anyParams) {
+      StringBuilder params = new StringBuilder("?");
+      if (full) {
+        params.append("full=1");
+      }
+      uriParams = params.toString();
+    }
+    String uri = this.clusterURL + "1.1/" + this.username + "/storage/" + collection + uriParams;
+    return new URI(uri);
+  }
+
   private String password;
-  private KeyBundle syncKeyBundle;
   private GlobalSessionCallback callback;
 
   public class JSONFetchDelegate implements SyncStorageRequestDelegate {
@@ -152,15 +175,16 @@ public class GlobalSession {
     prepareStages();
   }
 
-  private Map<Stage, GlobalSyncStage> stages;
-  private void prepareStages() {
+  protected Map<Stage, GlobalSyncStage> stages;
+  protected void prepareStages() {
     stages = new HashMap<Stage, GlobalSyncStage>();
     stages.put(Stage.checkPreconditions, new CheckPreconditionsStage());
     stages.put(Stage.ensureClusterURL,   new EnsureClusterURLStage());
+    stages.put(Stage.temporaryFetchBookmarks, new TemporaryFetchBookmarksStage());
     stages.put(Stage.completed,          new CompletedStage());
   }
 
-  private GlobalSyncStage getStageByName(Stage next) throws NoSuchStageException {
+  protected GlobalSyncStage getStageByName(Stage next) throws NoSuchStageException {
     GlobalSyncStage stage = stages.get(next);
     if (stage == null) {
       throw new NoSuchStageException(next);
@@ -201,6 +225,7 @@ public class GlobalSession {
     Stage next = nextStage(this.currentState);
     GlobalSyncStage nextStage = this.getStageByName(next);
     this.currentState = next;
+    Log.i("rnewman", "Running next stage " + next);
     nextStage.execute(this);
   }
 
@@ -243,5 +268,4 @@ public class GlobalSession {
   public void setClusterURL(String u) throws URISyntaxException {
     this.setClusterURL((u == null) ? null : new URI(u));
   }
-
 }
