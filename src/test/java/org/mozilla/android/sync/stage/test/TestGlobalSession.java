@@ -51,7 +51,7 @@ public class TestGlobalSession {
     HappyCallback callback = new HappyCallback();
     GlobalSession session;
     try {
-      session = new GlobalSession(clusterURL, username, password, syncKeyBundle, callback);
+      session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback);
       session.start();
       assertTrue(callback.calledSuccess);
     } catch (Exception e) {

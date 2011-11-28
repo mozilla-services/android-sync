@@ -7,6 +7,7 @@ public interface GlobalSyncStage {
     idle,                       // Start state.
     checkPreconditions,         // Preparation of the basics. TODO: clear status
     ensureClusterURL,           // Setting up where we talk to.
+    temporaryFetchBookmarks,    // TODO: XXX: TEMP: woohoo!
 /*
     fetchInfoCollections,       // Take a look at timestamps.
     ensureSpecialRecords,
