@@ -55,7 +55,9 @@ public abstract class WBOCollectionRequestDelegate extends
   @Override
   public void handleProgress(String progress) {
     try {
-      this.handleWBO(new BaseCryptoRecord(progress));
+      BaseCryptoRecord record = new BaseCryptoRecord(progress);
+      record.keyBundle = this.keyBundle();
+      this.handleWBO(record);
     } catch (Exception e) {
       this.handleError(e);
       // TODO: abort?! Allow exception to propagate to fail?
