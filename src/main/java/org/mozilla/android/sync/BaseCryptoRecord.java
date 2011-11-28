@@ -110,7 +110,7 @@ public class BaseCryptoRecord implements CryptoRecord {
   }
 
   @Override
-  public void decrypt() throws CryptoException, IOException, ParseException,
+  public CryptoRecord decrypt() throws CryptoException, IOException, ParseException,
                        NonObjectJSONException {
     if (this.keyBundle == null) {
       throw new NoKeyBundleException();
@@ -132,10 +132,11 @@ public class BaseCryptoRecord implements CryptoRecord {
     this.cleartext = (ExtendedJSONObject) this.body.clone();
     this.cleartext.put(KEY_PAYLOAD, parsedCleartext);
     this.body = null;
+    return this;
   }
 
   @Override
-  public void encrypt() throws CryptoException, UnsupportedEncodingException {
+  public CryptoRecord encrypt() throws CryptoException, UnsupportedEncodingException {
     if (this.keyBundle == null) {
       throw new NoKeyBundleException();
     }
@@ -151,5 +152,6 @@ public class BaseCryptoRecord implements CryptoRecord {
     body.put(KEY_HMAC, hmac);
     body.put(KEY_IV, iv);
     this.cleartext = null;
+    return this;
   }
 }

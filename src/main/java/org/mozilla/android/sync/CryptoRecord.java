@@ -46,6 +46,6 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 
 public interface CryptoRecord {
   void setKeyBundle(KeyBundle bundle);
-  void decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  void encrypt() throws CryptoException, UnsupportedEncodingException;
+  CryptoRecord decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
+  CryptoRecord encrypt() throws CryptoException, UnsupportedEncodingException;
 }
