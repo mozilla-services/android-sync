@@ -52,7 +52,7 @@ import android.util.Log;
 
 public class SyncAuthenticatorService extends Service {
   private static final String TAG = "SyncAuthenticatorService";
-  private AccountAuthenticatorImpl sAccountAuthenticator = null;
+  private SyncAccountAuthenticator sAccountAuthenticator = null;
   
   @Override
   public void onCreate() {
@@ -69,17 +69,17 @@ public class SyncAuthenticatorService extends Service {
     return ret;
   }
 
-  private AccountAuthenticatorImpl getAuthenticator() {
+  private SyncAccountAuthenticator getAuthenticator() {
     if (sAccountAuthenticator == null) {
-      sAccountAuthenticator = new AccountAuthenticatorImpl(this);
+      sAccountAuthenticator = new SyncAccountAuthenticator(this);
     }
     return sAccountAuthenticator;
   }
 
-  private static class AccountAuthenticatorImpl extends
+  private static class SyncAccountAuthenticator extends
       AbstractAccountAuthenticator {
     private Context mContext;
-    public AccountAuthenticatorImpl(Context context) {
+    public SyncAccountAuthenticator(Context context) {
       super(context);
       mContext = context;
     }
