@@ -21,12 +21,15 @@ import org.mozilla.android.sync.net.SyncStorageResponse;
 
 public class TestSyncStorageRequest {
 
-  static String            STORAGE_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
+  static final String REMOTE_META_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
+  static final String REMOTE_KEYS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/crypto/keys";
+  static final String LOCAL_META_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
+  
   // Corresponds to rnewman+testandroid@mozilla.com.
-  static String            USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
-  static String            USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
-  static String            SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
-  static String            EXPECT_BASIC = "Basic YzZvN2R2bXIyYzR1ZDJmeXY2d296MnU0emkyMmJjeWQ6cGFzc3dvcmQ=";
+  static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
+  static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
+  static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
+  static final String EXPECT_BASIC = "Basic YzZvN2R2bXIyYzR1ZDJmeXY2d296MnU0emkyMmJjeWQ6cGFzc3dvcmQ=";
   private HTTPServerTestHelper data         = new HTTPServerTestHelper();
 
   public class BaseTestStorageRequestDelegate implements
@@ -91,7 +94,6 @@ public class TestSyncStorageRequest {
         try {
           System.out.println("Attempting decrypt.");
           BaseCryptoRecord rec;
-          //System.out.println("Body: " + res.body());
           ExtendedJSONObject body = (ExtendedJSONObject) res.jsonBody();
           rec = new BaseCryptoRecord(body);
           rec.keyBundle = new KeyBundle(USERNAME, SYNC_KEY);
@@ -107,7 +109,7 @@ public class TestSyncStorageRequest {
   @Test
   public void testSyncStorageRequest() throws URISyntaxException, IOException {
     data.startHTTPServer();
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(STORAGE_URL));
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL));
     TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
@@ -118,7 +120,7 @@ public class TestSyncStorageRequest {
   @Test
   public void testRealLiveMetaGlobal() throws URISyntaxException {
     URI u = new URI(
-        "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global");
+        REMOTE_META_URL);
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
     LiveDelegate delegate = new LiveDelegate();
     delegate._credentials = USER_PASS;
@@ -129,8 +131,7 @@ public class TestSyncStorageRequest {
 
   @Test
   public void testRealLiveCryptoKeys() throws URISyntaxException {
-    URI u = new URI(
-        "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/crypto/keys");
+    URI u = new URI(REMOTE_KEYS_URL);
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
     LiveDelegate delegate = new LiveDelegate();
     delegate.shouldDecrypt = true;

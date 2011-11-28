@@ -1,0 +1,94 @@
+package org.mozilla.android.sync.net.test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+
+import org.apache.commons.codec.binary.Base64;
+import org.junit.Test;
+import org.mozilla.android.sync.BaseCryptoRecord;
+import org.mozilla.android.sync.CryptoRecord;
+import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
+import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.net.WBOCollectionRequestDelegate;
+
+public class TestWBOCollectionRequestDelegate {
+
+  static final String REMOTE_BOOKMARKS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
+  static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
+  static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
+  static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
+
+  public class LiveDelegate extends WBOCollectionRequestDelegate {
+
+    public KeyBundle bookmarksBundle = null;
+    public ArrayList<CryptoRecord> wbos = new ArrayList<CryptoRecord>();
+
+    @Override
+    public String credentials() {
+      return USER_PASS;
+    }
+
+    @Override
+    public String ifUnmodifiedSince() {
+      return null;
+    }    
+
+    @Override
+    public void handleSuccess(SyncStorageResponse response) {
+      System.out.println("WBOs: " + this.wbos.size());
+      assertEquals(wbos.size(), 13);
+      for (CryptoRecord record : this.wbos) {
+        try {
+          // TODO: make this an actual test. Return data locally.
+          System.out.println(((BaseCryptoRecord)(record.decrypt())).cleartext.toJSONString());
+        } catch (Exception e) {
+          e.printStackTrace();
+          fail("Decryption failed.");
+        }
+      }
+    }
+
+    @Override
+    public void handleFailure(SyncStorageResponse response) {
+      fail("Should not fail.");
+    }
+
+    @Override
+    public void handleError(Exception ex) {
+      fail("Should not error.");
+    }
+
+    @Override
+    public void handleWBO(CryptoRecord record) {
+      this.wbos.add(record);
+    }
+
+    @Override
+    public KeyBundle keyBundle() {
+      return this.bookmarksBundle;
+    }
+  }
+
+  @Test
+  public void testRealLiveBookmarks() throws URISyntaxException, UnsupportedEncodingException {
+    URI u = new URI(REMOTE_BOOKMARKS_URL);
+    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(u);
+    LiveDelegate delegate = new LiveDelegate();
+    r.delegate = delegate;
+
+    // Here are our keys.
+    String encrKey   = "0A7mU5SZ/tu7ZqwXW1og4qHVHN+zgEi4Xwfwjw+vEJw=";
+    String hmacKey   = "11GN34O9QWXkjR06g8t0gWE1sGgQeWL0qxxWwl8Dmxs=";
+    byte[] encrBytes = Base64.decodeBase64(encrKey.getBytes("UTF-8"));
+    byte[] hmacBytes = Base64.decodeBase64(hmacKey.getBytes("UTF-8"));
+    delegate.bookmarksBundle = new KeyBundle(encrBytes, hmacBytes);
+
+    r.get(); 
+  }
+}
