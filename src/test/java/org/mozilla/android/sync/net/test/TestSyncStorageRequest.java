@@ -94,13 +94,13 @@ public class TestSyncStorageRequest {
         try {
           System.out.println("Attempting decrypt.");
           CryptoRecord rec;
-          ExtendedJSONObject body = (ExtendedJSONObject) res.jsonBody();
-          rec = new CryptoRecord(body);
+          rec = CryptoRecord.fromJSONRecord(res.jsonObjectBody());
           rec.keyBundle = new KeyBundle(USERNAME, SYNC_KEY);
           rec.decrypt();
           System.out.println(rec.payload.toJSONString());
         } catch (Exception e) {
           e.printStackTrace();
+          fail("Should receive no exception when decrypting.");
         }
       }
     }
