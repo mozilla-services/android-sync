@@ -12,7 +12,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.junit.Test;
-import org.mozilla.android.sync.BaseCryptoRecord;
+import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageRecordRequest;
@@ -93,12 +93,12 @@ public class TestSyncStorageRequest {
       if (shouldDecrypt) {
         try {
           System.out.println("Attempting decrypt.");
-          BaseCryptoRecord rec;
+          CryptoRecord rec;
           ExtendedJSONObject body = (ExtendedJSONObject) res.jsonBody();
-          rec = new BaseCryptoRecord(body);
+          rec = new CryptoRecord(body);
           rec.keyBundle = new KeyBundle(USERNAME, SYNC_KEY);
           rec.decrypt();
-          System.out.println(rec.cleartext.toJSONString());
+          System.out.println(rec.payload.toJSONString());
         } catch (Exception e) {
           e.printStackTrace();
         }

@@ -40,12 +40,163 @@ package org.mozilla.android.sync;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import org.apache.commons.codec.binary.Base64;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.android.sync.crypto.CryptoInfo;
+import org.mozilla.android.sync.crypto.Cryptographer;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.crypto.MissingCryptoInputException;
+import org.mozilla.android.sync.crypto.NoKeyBundleException;
+import org.mozilla.android.sync.crypto.Utils;
 
-public interface CryptoRecord {
-  void setKeyBundle(KeyBundle bundle);
-  CryptoRecord decrypt() throws CryptoException, IOException, ParseException, NonObjectJSONException;
-  CryptoRecord encrypt() throws CryptoException, UnsupportedEncodingException;
+/**
+ * A Sync crypto record has:
+ *
+ * * a collection of fields which are not encrypted (id and collection)
+ * * a set of metadata fields (index, modified, ttl)
+ * * a payload, which is encrypted and decrypted on request.
+ *
+ * The payload flips between being a blob of JSON with hmac/IV/ciphertext
+ * attributes and the cleartext itself.
+ *
+ * Until there's some benefit to the abstraction, we're simply going to
+ * call this CryptoRecord.
+ *
+ * @author rnewman
+ *
+ */
+public class CryptoRecord {
+  public String id;
+  public String collection;
+
+  // JSON related constants.
+  private static final String KEY_ID         = "id";
+  private static final String KEY_COLLECTION = "collection";
+  private static final String KEY_PAYLOAD    = "payload";
+  private static final String KEY_CIPHERTEXT = "ciphertext";
+  private static final String KEY_HMAC       = "hmac";
+  private static final String KEY_IV         = "IV";
+
+  /**
+   * Helper method for doing actual decryption.
+   *
+   * Input: JSONObject containing a valid payload (cipherText, IV, HMAC),
+   * KeyBundle with keys for decryption. Output: byte[] clearText
+   * @throws CryptoException
+   * @throws UnsupportedEncodingException
+   */
+  private static byte[] decryptPayload(ExtendedJSONObject payload, KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
+    byte[] ciphertext = Base64.decodeBase64(((String) payload.get(KEY_CIPHERTEXT)).getBytes("UTF-8"));
+    byte[] iv         = Base64.decodeBase64(((String) payload.get(KEY_IV)).getBytes("UTF-8"));
+    byte[] hmac       = Utils.hex2Byte((String) payload.get(KEY_HMAC));
+    return Cryptographer.decrypt(new CryptoInfo(ciphertext, iv, hmac, keybundle));
+  }
+
+  // The encrypted JSON body object.
+  // The decrypted JSON body object. Fields are copied from `body`.
+
+  public ExtendedJSONObject payload;
+  public KeyBundle   keyBundle;
+
+  /**
+   * Don't forget to set cleartext or body!
+   */
+  public CryptoRecord() {
+  }
+
+  public CryptoRecord(ExtendedJSONObject payload) {
+    if (payload == null) {
+      throw new IllegalArgumentException(
+          "No payload provided to BaseCryptoRecord constructor.");
+    }
+    this.payload = payload;
+  }
+
+  public CryptoRecord(String jsonString) throws IOException, ParseException, NonObjectJSONException {
+    this(ExtendedJSONObject.parseJSONObject(jsonString));
+  }
+
+  /**
+   * Take a whole record as JSON -- i.e., something like
+   *
+   *   {"payload": "{...}", "id":"foobarbaz"}
+   *
+   * and turn it into a CryptoRecord object.
+   *
+   * @param jsonRecord
+   * @return
+   * @throws NonObjectJSONException
+   * @throws ParseException
+   * @throws IOException
+   */
+  public static CryptoRecord fromJSONRecord(String jsonRecord) throws ParseException, NonObjectJSONException, IOException {
+    return CryptoRecord.fromJSONRecord(CryptoRecord.parseUTF8AsJSONObject(jsonRecord.getBytes("UTF-8")));
+  }
+
+  // TODO: defensive programming.
+  public static CryptoRecord fromJSONRecord(ExtendedJSONObject jsonRecord) throws IOException, ParseException, NonObjectJSONException {
+    String id = (String) jsonRecord.get(KEY_ID);
+    String collection = (String) jsonRecord.get(KEY_COLLECTION);
+    ExtendedJSONObject payload = jsonRecord.getJSONObject(KEY_PAYLOAD);
+    CryptoRecord record = new CryptoRecord(payload);
+    record.id = id;
+    record.collection = collection;
+    return record;
+  }
+
+  public void setKeyBundle(KeyBundle bundle) {
+    this.keyBundle = bundle;
+  }
+
+  private static ExtendedJSONObject parseUTF8AsJSONObject(byte[] in)
+      throws UnsupportedEncodingException, ParseException, NonObjectJSONException {
+    Object obj = new JSONParser().parse(new String(in, "UTF-8"));
+    if (obj instanceof JSONObject) {
+      return new ExtendedJSONObject((JSONObject) obj);
+    } else {
+      throw new NonObjectJSONException(obj);
+    }
+  }
+
+  public CryptoRecord decrypt() throws CryptoException, IOException, ParseException,
+                       NonObjectJSONException {
+    if (keyBundle == null) {
+      throw new NoKeyBundleException();
+    }
+
+    // Check that payload contains all pieces for crypto.
+    if (!payload.containsKey(KEY_CIPHERTEXT) ||
+        !payload.containsKey(KEY_IV) ||
+        !payload.containsKey(KEY_HMAC)) {
+      throw new MissingCryptoInputException();
+    }
+
+    // There's no difference between handling the crypto/keys object and
+    // anything else; we just get this.keyBundle from a different source.
+    byte[] cleartext = decryptPayload(payload, keyBundle);
+    payload = CryptoRecord.parseUTF8AsJSONObject(cleartext);
+    return this;
+  }
+
+  public CryptoRecord encrypt() throws CryptoException, UnsupportedEncodingException {
+    if (this.keyBundle == null) {
+      throw new NoKeyBundleException();
+    }
+    String cleartext = payload.toJSONString();
+    byte[] cleartextBytes = cleartext.getBytes("UTF-8");
+    CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle);
+    Cryptographer.encrypt(info);
+    String message = new String(Base64.encodeBase64(info.getMessage()));
+    String iv      = new String(Base64.encodeBase64(info.getIV()));
+    String hmac    = Utils.byte2hex(info.getHMAC());
+    ExtendedJSONObject ciphertext = new ExtendedJSONObject();
+    ciphertext.put(KEY_CIPHERTEXT, message);
+    ciphertext.put(KEY_HMAC, hmac);
+    ciphertext.put(KEY_IV, iv);
+    this.payload = ciphertext;
+    return this;
+  }
 }

@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ import java.util.Arrays;
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
-import org.mozilla.android.sync.BaseCryptoRecord;
+import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.NonObjectJSONException;
 import org.mozilla.android.sync.crypto.CryptoException;
@@ -20,6 +21,23 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.Utils;
 
 public class TestCryptoRecord {
+  String base64EncryptionKey = "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=";
+  String base64HmacKey = "MMntEfutgLTc8FlTLQFms8/xMPmCldqPlq/QQXEjx70=";
+
+  @Test
+  public void testBaseCryptoRecordEncrypt() throws IOException, ParseException, NonObjectJSONException, CryptoException {
+    ExtendedJSONObject clearPayload = ExtendedJSONObject.parseJSONObject("{\"id\":\"5qRsgXWRJZXr\",\"title\":\"Index of file:///Users/jason/Library/Application Support/Firefox/Profiles/ksgd7wpk.LocalSyncServer/weave/logs/\",\"histUri\":\"file:///Users/jason/Library/Application%20Support/Firefox/Profiles/ksgd7wpk.LocalSyncServer/weave/logs/\",\"visits\":[{\"type\":1,\"date\":1319149012372425}]}");
+
+    CryptoRecord record = new CryptoRecord();
+    record.payload = clearPayload;
+    record.id = "5qRsgXWRJZXr";
+    record.keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
+    record.encrypt();
+    assertTrue(record.payload.get("title") == null);
+    assertTrue(record.payload.get("ciphertext") != null);
+    record.decrypt();
+   // assertEquals(record.payload, clearPayload);
+  }
 
   @Test
   public void testBaseCryptoRecordDecrypt() throws CryptoException,
@@ -44,8 +62,6 @@ public class TestCryptoRecord {
     String base16Hmac = 
           "b1e6c18ac30deb70236bc0d65a46f7a4"
         + "dce3b8b0e02cf92182b914e3afa5eebc";
-    String base64EncryptionKey = "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=";
-    String base64HmacKey = "MMntEfutgLTc8FlTLQFms8/xMPmCldqPlq/QQXEjx70=";
 
     ExtendedJSONObject body    = new ExtendedJSONObject();
     ExtendedJSONObject payload = new ExtendedJSONObject();
@@ -53,14 +69,14 @@ public class TestCryptoRecord {
     payload.put("IV", base64IV);
     payload.put("hmac", base16Hmac);
     body.put("payload", payload.toJSONString());
-    BaseCryptoRecord record = new BaseCryptoRecord(body);
+    CryptoRecord record = CryptoRecord.fromJSONRecord(body);
     byte[] decodedKey  = Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8"));
     byte[] decodedHMAC = Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")); 
     record.keyBundle = new KeyBundle(decodedKey, decodedHMAC);
 
     record.decrypt();
-    System.out.println(record.cleartext);
-    String id = (String) record.cleartext.getObject("payload").get("id");
+    System.out.println(record.payload);
+    String id = (String) record.payload.get("id");
     assertTrue(id.equals("5qRsgXWRJZXr"));
   }
 

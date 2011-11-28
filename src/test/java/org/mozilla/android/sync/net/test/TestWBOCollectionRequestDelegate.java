@@ -13,7 +13,6 @@ import java.util.ArrayList;
 
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
-import org.mozilla.android.sync.BaseCryptoRecord;
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
@@ -49,7 +48,8 @@ public class TestWBOCollectionRequestDelegate {
       for (CryptoRecord record : this.wbos) {
         try {
           // TODO: make this an actual test. Return data locally.
-          System.out.println(((BaseCryptoRecord)(record.decrypt())).cleartext.toJSONString());
+          CryptoRecord decrypted = (CryptoRecord)(record.decrypt());
+          System.out.println(decrypted.payload.toJSONString());
         } catch (Exception e) {
           e.printStackTrace();
           fail("Decryption failed.");

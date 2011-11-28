@@ -37,7 +37,6 @@
 
 package org.mozilla.android.sync.net;
 
-import org.mozilla.android.sync.BaseCryptoRecord;
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.crypto.KeyBundle;
 
@@ -55,7 +54,7 @@ public abstract class WBOCollectionRequestDelegate extends
   @Override
   public void handleProgress(String progress) {
     try {
-      BaseCryptoRecord record = new BaseCryptoRecord(progress);
+      CryptoRecord record = CryptoRecord.fromJSONRecord(progress);
       record.keyBundle = this.keyBundle();
       this.handleWBO(record);
     } catch (Exception e) {
