@@ -38,10 +38,17 @@
 package org.mozilla.android.sync.syncadapter;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
+import org.mozilla.android.sync.AlreadySyncingException;
+import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.GlobalSessionCallback;
+import org.mozilla.android.sync.SyncConfigurationException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.setup.Constants;
+import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -57,7 +64,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 
-public class SyncAdapter extends AbstractThreadedSyncAdapter {
+public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback {
 
   private static final String  TAG = "SyncAdapter";
   private final AccountManager mAccountManager;
@@ -92,16 +99,23 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     e.printStackTrace();
   }
 
-  private String getAuthToken(String tokenName, Account account,
-                              SyncResult syncResult) {
-    try {
-      return mAccountManager.blockingGetAuthToken(account, tokenName, true);
-    } catch (Exception ex) {
-      this.handleException(ex, syncResult);
-    }
-    return null;
+  private AccountManagerFuture<Bundle> getAuthToken(final Account account,
+                            AccountManagerCallback<Bundle> callback,
+                            Handler handler) {
+    return mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, handler);
   }
 
+  private void invalidateAuthToken(Account account) {
+    AccountManagerFuture<Bundle> future = getAuthToken(account, null, null);
+    String token;
+    try {
+      token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
+      mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
+    } catch (Exception e) {
+      Log.e("rnewman", "Couldn't invalidate auth token: " + e);
+    }
+
+  }
   @Override
   public void onPerformSync(final Account account,
                             final Bundle extras,
@@ -117,11 +131,21 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
       public void run(AccountManagerFuture<Bundle> future) {
         // TODO: N.B.: Future must not be used on the main thread.
         try {
-          Bundle bundle   = future.getResult(60L, TimeUnit.SECONDS);
-          String syncKey  = bundle.getString(Constants.OPTION_KEY);
-          String password = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-          KeyBundle keyBundle = new KeyBundle(account.name, syncKey);
-          self.performSync(account, extras, authority, provider, syncResult, keyBundle, password);
+          Bundle bundle      = future.getResult(60L, TimeUnit.SECONDS);
+          String username    = bundle.getString(Constants.OPTION_USERNAME);
+          String syncKey     = bundle.getString(Constants.OPTION_SYNCKEY);
+          String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+          if (password == null) {
+            Log.e("rnewman", "No password: aborting sync.");
+            return;
+          }
+          if (syncKey == null) {
+            Log.e("rnewman", "No Sync Key: aborting sync.");
+            return;
+          }
+          KeyBundle keyBundle = new KeyBundle(username, syncKey);
+          self.performSync(account, extras, authority, provider,
+                           syncResult, username, password, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
           return;
@@ -129,29 +153,44 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
       }
     };
     Handler handler = null;
-    mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, handler);
-    String profile = mAccountManager.getUserData(account, "profile");
-    String password = this.getAuthToken("password", account, syncResult);
-    if (password == null) {
-      Log.e("rnewman", "No password: aborting sync.");
-      return;
-    }
-    String syncKey = this.getAuthToken("syncKey", account, syncResult);
-    if (syncKey == null) {
-      Log.e("rnewman", "No Sync Key: aborting sync.");
-      return;
-    }
-    Log.i("rnewman", password + ", " + syncKey);
-  }
+    getAuthToken(account, callback, handler);
+ }
+
 
   /**
    * Now that we have a sync key and password, go ahead and do the work.
+   * @throws UnsupportedEncodingException
+   * @throws NoSuchAlgorithmException
+   * @throws IllegalArgumentException
+   * @throws SyncConfigurationException
+   * @throws AlreadySyncingException
    */
   protected void performSync(Account account, Bundle extras, String authority,
                              ContentProviderClient provider,
-                             SyncResult syncResult, KeyBundle keyBundle,
-                             String password) {
-    // TODO
+                             SyncResult syncResult,
+                             String username, String password,
+                             KeyBundle keyBundle) throws NoSuchAlgorithmException, UnsupportedEncodingException, SyncConfigurationException, IllegalArgumentException, AlreadySyncingException {
+    Log.i("rnewman", "Performing sync.");
+    String clusterURL = "https://phx-sync545.services.mozilla.com/";
+    GlobalSession globalSession = new GlobalSession(clusterURL, username, password, keyBundle, this);
+    globalSession.start();
+  }
+
+  // Implementing GlobalSession callbacks.
+  @Override
+  public void handleError(GlobalSession globalSession, Exception ex) {
+    Log.i("rnewman", "GlobalSession indicated error.");
+  }
+
+  @Override
+  public void handleSuccess(GlobalSession globalSession) {
+    Log.i("rnewman", "GlobalSession indicated success.");
+  }
+
+  @Override
+  public void handleStageCompleted(Stage currentState,
+                                   GlobalSession globalSession) {
+    Log.i("rnewman", "Stage completed: " + currentState);
   }
 }
 

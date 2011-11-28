@@ -37,6 +37,10 @@
 
 package org.mozilla.android.sync.setup.main;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+
+import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.setup.Constants;
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -132,11 +136,30 @@ public class SyncAuthenticatorService extends Service {
       final String password = am.getPassword(account);
       if (password != null) {
         final Bundle result = new Bundle();
+
+        // This is a Sync account.
+        result.putString(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+
+        // Full username, before hashing.
         result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-        result.putString(AccountManager.KEY_ACCOUNT_TYPE,
-            Constants.ACCOUNTTYPE_SYNC);
-        final String synckey = am.getUserData(account, Constants.OPTION_KEY);
-        result.putString(Constants.OPTION_KEY, synckey);
+
+        // Username after hashing.
+        try {
+          String username = KeyBundle.usernameFromAccount(account.name);
+          Log.i("rnewman", "Account " + account.name + " hashes to " + username);
+          result.putString(Constants.OPTION_USERNAME, username);
+        } catch (NoSuchAlgorithmException e) {
+          // Do nothing. Calling code must check for missing value.
+        } catch (UnsupportedEncodingException e) {
+          // Do nothing. Calling code must check for missing value.
+        }
+
+        // Sync key.
+        final String syncKey = am.getUserData(account, Constants.OPTION_SYNCKEY);
+        Log.i("rnewman", "Setting Sync Key to " + syncKey);
+        result.putString(Constants.OPTION_SYNCKEY, syncKey);
+
+        // Password.
         result.putString(AccountManager.KEY_AUTHTOKEN, password);
         return result;
       }

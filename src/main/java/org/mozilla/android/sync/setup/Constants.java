@@ -40,6 +40,7 @@ package org.mozilla.android.sync.setup;
 public class Constants {
   // Constants for distinguishing Firefox Sync
   public final static String ACCOUNTTYPE_SYNC  = "account.type.sync";
-  public final static String OPTION_KEY = "option.synckey";
+  public final static String OPTION_SYNCKEY    = "option.synckey";
+  public static final String OPTION_USERNAME   = "option.username";
   public final static String AUTHTOKEN_TYPE_PLAIN = "auth.plain";
 }

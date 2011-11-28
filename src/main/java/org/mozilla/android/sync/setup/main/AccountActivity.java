@@ -37,9 +37,8 @@
 
 package org.mozilla.android.sync.setup.main;
 
-import org.mozilla.android.sync.setup.Constants;
-
 import org.mozilla.android.sync.R;
+import org.mozilla.android.sync.setup.Constants;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
@@ -105,7 +104,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
     final Bundle userbundle = new Bundle();
     // Add sync key
-    userbundle.putString(Constants.OPTION_KEY, key);
+    userbundle.putString(Constants.OPTION_SYNCKEY, key);
     mAccountManager.addAccountExplicitly(account, password, userbundle);
     Log.d(TAG, "account: " + account.toString());
     // Set components to sync (default: all)
