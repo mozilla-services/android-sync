@@ -72,7 +72,6 @@ public class SyncStorageRequest implements Resource {
    */
   public class SyncResourceDelegate implements ResourceDelegate {
 
-    protected String contentType = "text/plain";
     protected SyncStorageRequest request;
 
     SyncResourceDelegate(SyncStorageRequest request) {
