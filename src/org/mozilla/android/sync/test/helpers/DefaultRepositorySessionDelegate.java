@@ -3,11 +3,17 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.fail;
+
+import java.util.Arrays;
 
 import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
+
+import android.util.Log;
 
 public class DefaultRepositorySessionDelegate implements RepositorySessionDelegate {
   protected WaitHelper testWaiter() {
@@ -43,5 +49,22 @@ public class DefaultRepositorySessionDelegate implements RepositorySessionDelega
   }
   public void finishCallback(RepoStatusCode status) {
     sharedFail();
+  }
+  protected void onDone(Record[] records, String[] expected) {
+    Log.i("rnewman", "onDone. Test Waiter is " + testWaiter());
+    try {
+      assertEquals(expected.length, records.length);
+      for (Record record : records) {
+        assertFalse(-1 == Arrays.binarySearch(expected, record.guid));
+      }
+      Log.i("rnewman", "Notifying success.");
+      testWaiter().performNotify();
+    } catch (AssertionError e) {
+      Log.i("rnewman", "Notifying assertion failure.");
+      testWaiter().performNotify(e);
+    } catch (Exception e) {
+      Log.i("rnewman", "Fucking no.");
+      testWaiter().performNotify();
+    }
   }
 }

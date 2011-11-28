@@ -11,11 +11,11 @@ import java.util.Arrays;
 import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
 
-public class ExpectFetchGUIDsDelegate extends DefaultRepositorySessionDelegate
+public class ExpectFetchGUIDsSinceDelegate extends DefaultRepositorySessionDelegate
     implements RepositorySessionDelegate {
   private String[] expected;
 
-  public ExpectFetchGUIDsDelegate(String[] guids) {
+  public ExpectFetchGUIDsSinceDelegate(String[] guids) {
     expected = guids;
     Arrays.sort(expected);
   }
