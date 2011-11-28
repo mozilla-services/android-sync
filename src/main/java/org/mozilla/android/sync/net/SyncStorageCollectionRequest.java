@@ -46,6 +46,8 @@ import java.net.URI;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
+import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 
 /**
  * A request class that handles line-by-line responses. Eventually this will
@@ -71,6 +73,13 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
 
     SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
       super(request);
+    }
+
+    @Override
+    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+      super.addHeaders(request, client);
+      request.setHeader("Accept", "application/newlines");
+      // Caller is responsible for setting full=1.
     }
 
     @Override
