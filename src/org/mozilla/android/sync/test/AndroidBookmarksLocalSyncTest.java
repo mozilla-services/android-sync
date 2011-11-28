@@ -90,13 +90,17 @@ public class AndroidBookmarksLocalSyncTest extends
           count++;
         }
       }
+      
+      // Check that bookmark is in the mobile folder
+      String parentID = DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_PARENT_ID);
+      String parentName = DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_PARENT_NAME);
+      assertEquals(DBUtils.MOBILE_PARENT_ID, parentID);
+      assertEquals(DBUtils.MOBILE_PARENT_NAME, parentName);
+      
       cur.moveToNext();
     }
     
-    // There are other bookmarks already in there by default from android.
-    // Make sure ours are found for sure though.
     assertEquals(2, count);
-    
     cur.close();
   }
   
