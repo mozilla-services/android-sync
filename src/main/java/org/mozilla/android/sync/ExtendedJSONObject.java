@@ -43,6 +43,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -154,5 +155,10 @@ public class ExtendedJSONObject {
                                                      NonObjectJSONException {
     String val = (String) this.object.get(key);
     return ExtendedJSONObject.parseJSONObject(val);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Iterable<Entry<String, Object>> entryIterable() {
+    return this.object.entrySet();
   }
 }
