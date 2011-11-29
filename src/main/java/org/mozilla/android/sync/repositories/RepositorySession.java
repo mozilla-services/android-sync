@@ -40,9 +40,7 @@ package org.mozilla.android.sync.repositories;
 
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchAllDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchSinceDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -65,9 +63,9 @@ public abstract class RepositorySession {
   }
 
   public abstract void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate);
-  public abstract void fetchSince(long timestamp, RepositorySessionFetchSinceDelegate delegate);
-  public abstract void fetch(String[] guids, RepositorySessionFetchDelegate delegate);
-  public abstract void fetchAll(RepositorySessionFetchAllDelegate delegate);
+  public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
+  public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate);
+  public abstract void fetchAll(RepositorySessionFetchRecordsDelegate delegate);
   public abstract void store(Record record, RepositorySessionStoreDelegate delegate);
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
   

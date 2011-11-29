@@ -20,6 +20,7 @@
  *
  * Contributor(s):
  * Jason Voll <jvoll@mozilla.com>
+ * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -39,7 +40,7 @@ package org.mozilla.android.sync.repositories.delegates;
 
 import org.mozilla.android.sync.repositories.domain.Record;
 
-public interface RepositorySessionFetchDelegate {
+public interface RepositorySessionFetchRecordsDelegate {
   public void onFetchFailed(Exception ex);
   public void onFetchSucceeded(Record[] records);
 }

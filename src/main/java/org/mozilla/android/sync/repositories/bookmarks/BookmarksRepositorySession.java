@@ -43,9 +43,7 @@ import org.mozilla.android.sync.repositories.InvalidRequestException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchAllDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchSinceDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
@@ -107,7 +105,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   @Override
   // Fetch since method and thread
-  public void fetchSince(long timestamp, RepositorySessionFetchSinceDelegate delegate) {
+  public void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate) {
     FetchSinceThread thread = new FetchSinceThread(timestamp, delegate);
     thread.start();
   }
@@ -115,9 +113,9 @@ public class BookmarksRepositorySession extends RepositorySession {
   class FetchSinceThread extends Thread {
 
     private long timestamp;
-    private RepositorySessionFetchSinceDelegate delegate;
+    private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchSinceThread(long timestamp, RepositorySessionFetchSinceDelegate delegate) {
+    public FetchSinceThread(long timestamp, RepositorySessionFetchRecordsDelegate delegate) {
       this.timestamp = timestamp;
       this.delegate = delegate;
     }
@@ -134,22 +132,22 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       Record[] recordArray = new Record[records.size()];
       records.toArray(recordArray);
-      delegate.onFetchSinceSucceeded(recordArray);
+      delegate.onFetchSucceeded(recordArray);
     }
   }
 
   @Override
   // Fetch method and thread
-  public void fetch(String[] guids, RepositorySessionFetchDelegate delegate) {
+  public void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate) {
     FetchThread thread = new FetchThread(guids, delegate);
     thread.start();
   }
 
   class FetchThread extends Thread {
     private String[] guids;
-    private RepositorySessionFetchDelegate delegate;
+    private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchThread(String[] guids, RepositorySessionFetchDelegate delegate) {
+    public FetchThread(String[] guids, RepositorySessionFetchRecordsDelegate delegate) {
       this.guids = guids;
       this.delegate = delegate;
     }
@@ -181,15 +179,15 @@ public class BookmarksRepositorySession extends RepositorySession {
   @Override
   // Fetch all method and thread
   // NOTE: This is only used for testing
-  public void fetchAll(RepositorySessionFetchAllDelegate delegate) {
+  public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
     FetchAllThread thread = new FetchAllThread(delegate);
     thread.start();
   }
 
   class FetchAllThread extends Thread {
-    private RepositorySessionFetchAllDelegate delegate;
+    private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchAllThread(RepositorySessionFetchAllDelegate delegate) {
+    public FetchAllThread(RepositorySessionFetchRecordsDelegate delegate) {
       this.delegate = delegate;
     }
 
@@ -205,7 +203,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       Record[] recordArray = new Record[records.size()];
       records.toArray(recordArray);
-      delegate.onFetchAllSucceeded(recordArray);
+      delegate.onFetchSucceeded(recordArray);
     }
   }
 
