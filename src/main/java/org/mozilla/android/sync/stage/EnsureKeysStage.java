@@ -67,10 +67,10 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
     try {
       SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI("crypto", "keys"));
       request.delegate = this;
+      request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
     }
-    session.advance();
   }
 
   @Override
@@ -113,6 +113,11 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
 
     Log.i("rnewman", "Setting keys. Yay!");
     session.setCollectionKeys(k);
+    try {
+      session.advance();
+    } catch (NoSuchStageException e) {
+      session.abort(e, "No stage.");
+    }
   }
 
   @Override

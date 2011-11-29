@@ -6,12 +6,14 @@ package org.mozilla.android.sync.stage.test;
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.GlobalSessionCallback;
 import org.mozilla.android.sync.SyncConfigurationException;
-import org.mozilla.android.sync.TemporaryFetchBookmarksStage;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.stage.EnsureKeysStage;
+import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.android.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
-import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
+import org.mozilla.android.sync.stage.TemporaryFetchBookmarksStage;
+
 import android.content.Context;
 
 // Mock this out so our tests continue to pass as we hack.
@@ -44,6 +46,13 @@ public class MockGlobalSession extends GlobalSession {
     }
   }
 
+  public class MockEnsureKeysStage extends EnsureKeysStage {
+    @Override
+    public void execute(GlobalSession session) throws NoSuchStageException {
+      session.advance();
+    }
+  }
+
   @Override
   protected void prepareStages() {
     super.prepareStages();
@@ -51,6 +60,7 @@ public class MockGlobalSession extends GlobalSession {
     stages.put(Stage.temporaryFetchBookmarks, new MockTemporaryFetchBookmarksStage());
     stages.put(Stage.fetchInfoCollections,    new MockFetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new MockFetchMetaGlobalStage());
+    stages.put(Stage.ensureKeysStage,         new MockFetchInfoCollectionsStage());
 
   }
 

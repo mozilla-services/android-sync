@@ -218,7 +218,12 @@ public class GlobalSession {
     GlobalSyncStage nextStage = this.getStageByName(next);
     this.currentState = next;
     Log.i("rnewman", "Running next stage " + next);
-    nextStage.execute(this);
+    try {
+      nextStage.execute(this);
+    } catch (Exception ex) {
+      Log.w("rnewman", "Caught exception " + ex + " running stage " + next);
+      this.abort(ex, "Uncaught exception in stage.");
+    }
   }
 
   /**
