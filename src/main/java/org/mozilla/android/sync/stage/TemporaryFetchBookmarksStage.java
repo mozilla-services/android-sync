@@ -99,7 +99,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
       bookmarksRepo.createSession(session.getContext(), this, lastSyncTimestamp);
 
     } catch (URISyntaxException e) {
-      // TODO: fail?!
+      session.abort(e, "Invalid URI.");
     } catch (NoCollectionKeysSetException e) {
       session.abort(e, "No CollectionKeys.");
     }
@@ -154,7 +154,6 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
 
   @Override
   public KeyBundle keyBundle() {
-    // TODO Auto-generated method stub
     return session.syncKeyBundle;
   }
 
