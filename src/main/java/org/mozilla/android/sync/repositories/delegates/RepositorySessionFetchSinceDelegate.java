@@ -37,7 +37,9 @@
 
 package org.mozilla.android.sync.repositories.delegates;
 
+import org.mozilla.android.sync.repositories.domain.Record;
+
 public interface RepositorySessionFetchSinceDelegate {
   public void onFetchSinceFailed(Exception ex);
-  public void onFetchFetchSucceeded(String[] guids);
+  public void onFetchSinceSucceeded(Record[] records);
 }
