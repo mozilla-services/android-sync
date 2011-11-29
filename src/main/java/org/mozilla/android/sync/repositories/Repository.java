@@ -38,6 +38,8 @@
 
 package org.mozilla.android.sync.repositories;
 
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+
 import android.content.Context;
 
 // TODO: For now we are only concerned with android repos...eventually I'll need

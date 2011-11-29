@@ -42,9 +42,9 @@ import java.util.ArrayList;
 import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
-import org.mozilla.android.sync.repositories.RepositorySessionStoreDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 

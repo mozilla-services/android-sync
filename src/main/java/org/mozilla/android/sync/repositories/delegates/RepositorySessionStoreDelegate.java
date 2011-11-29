@@ -19,7 +19,6 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -36,44 +35,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.bookmarks;
+package org.mozilla.android.sync.repositories.delegates;
 
-import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.domain.Record;
 
-import android.content.Context;
-
-public class BookmarksRepository implements Repository {
-
-  // TODO it is annoying to have to pass the context around to get access to the DB...is there anywhere
-  // else I can get this from rather than passing it around?
-
-  // TODO this needs to happen in a thread :S
-  public void createSession(Context context, RepositorySessionCreationDelegate callbackMechanism,long lastSyncTimestamp) {
-    CreateSessionThread thread = new CreateSessionThread(context, callbackMechanism, lastSyncTimestamp);
-    thread.start();
-  }
-
-  class CreateSessionThread extends Thread {
-
-    private Context context;
-    private RepositorySessionCreationDelegate callbackMechanism;
-    private long lastSyncTimestamp;
-
-    public CreateSessionThread(Context context, RepositorySessionCreationDelegate callbackMechanism,
-        long lastSyncTimestamp) {
-      if (context == null) {
-        throw new IllegalArgumentException("context is null.");
-      }
-      this.context = context;
-      this.callbackMechanism = callbackMechanism;
-      this.lastSyncTimestamp = lastSyncTimestamp;
-    }
-
-    public void run() {
-      BookmarksRepositorySession session = new BookmarksRepositorySession(BookmarksRepository.this, callbackMechanism, context, lastSyncTimestamp);
-      callbackMechanism.onSessionCreated(session);
-    }
-  }
-
+public interface RepositorySessionStoreDelegate {
+  public void onStoreFailed(Exception ex);
+  public void onStoreSucceeded(Record record);
 }

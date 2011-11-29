@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ * Jason Vol <jvoll@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,11 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.delegates;
 
-import org.mozilla.android.sync.repositories.domain.Record;
-
-public interface RepositorySessionStoreDelegate {
-  public void onStoreFailed(Exception ex);
-  public void onStoreSucceeded(Record record);
+public interface RepositorySessionFinishDelegate {
+  public void onFinishFailed(Exception ex);
+  public void onFinishSucceeded();
 }
