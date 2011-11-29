@@ -106,7 +106,7 @@ public class CollectionKeys {
     ExtendedJSONObject cleartext = keys.payload;
     KeyBundle defaultKey = arrayToKeyBundle((JSONArray) cleartext.get("default"));
 
-    ExtendedJSONObject collections = cleartext.getJSONObject("collections");
+    ExtendedJSONObject collections = cleartext.getObject("collections");
     HashMap<String, KeyBundle> collectionKeys = new HashMap<String, KeyBundle>();
     for (Entry<String, Object> pair : collections.entryIterable()) {
       KeyBundle bundle = arrayToKeyBundle((JSONArray) pair.getValue());

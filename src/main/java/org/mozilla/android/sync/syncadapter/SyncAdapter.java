@@ -175,7 +175,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              KeyBundle keyBundle) throws NoSuchAlgorithmException, UnsupportedEncodingException, SyncConfigurationException, IllegalArgumentException, AlreadySyncingException {
     Log.i("rnewman", "Performing sync.");
     String clusterURL = "https://phx-sync545.services.mozilla.com/";
-    GlobalSession globalSession = new GlobalSession(clusterURL, username, password, keyBundle, this);
+    GlobalSession globalSession = new GlobalSession(clusterURL, username, password, keyBundle, this, this.mContext);
     globalSession.start();
   }
 

@@ -6,5 +6,4 @@ public class CheckPreconditionsStage implements GlobalSyncStage {
   public void execute(GlobalSession session) throws NoSuchStageException {
     session.advance();
   }
-
 }

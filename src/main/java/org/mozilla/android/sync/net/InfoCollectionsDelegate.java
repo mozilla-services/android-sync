@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Richard Newman <rnewman@mozilla.com>
+ * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,29 +35,12 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.stage;
+package org.mozilla.android.sync.net;
 
-import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.net.SyncStorageResponse;
 
-public interface GlobalSyncStage {
-  public static enum Stage {
-    idle,                       // Start state.
-    checkPreconditions,         // Preparation of the basics. TODO: clear status
-    ensureClusterURL,           // Setting up where we talk to.
-    fetchInfoCollections,       // Take a look at timestamps.
-    fetchMetaGlobal,
-    ensureKeysStage,
-    temporaryFetchBookmarks,    // TODO: XXX: TEMP: woohoo!
-    /*
-    ensureSpecialRecords,
-    updateEngineTimestamps,
-    syncClientsEngine,
-    processFirstSyncPref,
-    processClientCommands,
-    updateEnabledEngines,
-    syncEngines,
-    */
-    completed
-  }
-  public void execute(GlobalSession session) throws NoSuchStageException;
+public interface InfoCollectionsDelegate {
+  public void handleSuccess(InfoCollections global);
+  public void handleFailure(SyncStorageResponse response);
+  public void handleError(Exception e);
 }

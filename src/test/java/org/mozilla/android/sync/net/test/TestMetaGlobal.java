@@ -6,6 +6,7 @@ package org.mozilla.android.sync.net.test;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.net.MetaGlobal;
 import org.mozilla.android.sync.net.MetaGlobalDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
@@ -62,8 +63,8 @@ public class TestMetaGlobal {
     public void handleSuccess(MetaGlobal global) {
       assertEquals(global.getResponse().getStatusCode(), 200);
       assertFalse(global.isModified);
-      assertEquals(global.getSyncID(), "1234567");
-      assertEquals(global.getEngines().toJSONString(), "{}");
+      assertEquals(global.getSyncID(), "zPSQTm7WBVWB");
+      assertTrue(global.getEngines() instanceof ExtendedJSONObject);
       assertEquals(global.getStorageVersion(), new Long(5));
       data.stopHTTPServer();
     }
@@ -88,7 +89,7 @@ public class TestMetaGlobal {
   }
   public class ExistingMetaGlobalServer extends MockServer {
     public void handle(Request request, Response response) {
-      String body = "{\"syncID\": \"1234567\", \"engines\": {}, \"storageVersion\": 5}";
+      String body = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
       this.handle(request, response, 200, body);
     }
   }

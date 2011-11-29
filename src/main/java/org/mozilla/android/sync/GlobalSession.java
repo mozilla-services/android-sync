@@ -44,16 +44,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.SyncStorageRecordRequest;
-import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.android.sync.net.InfoCollections;
+import org.mozilla.android.sync.net.InfoCollectionsDelegate;
+import org.mozilla.android.sync.net.MetaGlobal;
+import org.mozilla.android.sync.net.MetaGlobalDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.mozilla.android.sync.stage.CheckPreconditionsStage;
 import org.mozilla.android.sync.stage.CompletedStage;
 import org.mozilla.android.sync.stage.EnsureClusterURLStage;
+import org.mozilla.android.sync.stage.EnsureKeysStage;
+import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
+import org.mozilla.android.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
+import org.mozilla.android.sync.stage.TemporaryFetchBookmarksStage;
 
+import android.content.Context;
 import android.util.Log;
 
 
@@ -65,6 +72,10 @@ public class GlobalSession {
   public URI clusterURL;
   public String username;
   public KeyBundle syncKeyBundle;
+  private CollectionKeys collectionKeys;
+
+  public InfoCollections infoCollections;      // TODO: persist historical timestamps.
+  public MetaGlobal metaGlobal;
 
   public String credentials() {
     return username + ":" + password;
@@ -86,46 +97,12 @@ public class GlobalSession {
     return new URI(uri);
   }
 
+  public URI wboURI(String collection, String id) throws URISyntaxException {
+    return new URI(this.clusterURL + "1.1/" + this.username + "/storage/" + collection + "/" + id);
+  }
+
   private String password;
   private GlobalSessionCallback callback;
-
-  public class JSONFetchDelegate implements SyncStorageRequestDelegate {
-    private JSONObjectCallback callback;
-
-    JSONFetchDelegate(JSONObjectCallback callback) {
-      this.callback = callback;
-    }
-
-    public String credentials() {
-      return username + ":" + password;
-    }
-
-    public String ifUnmodifiedSince() {
-      return null;
-    }
-
-    public void handleSuccess(SyncStorageResponse res) {
-      try {
-        callback.handleSuccess(res.jsonObjectBody());
-      } catch (Exception e) {
-        callback.handleError(e);
-      }
-    }
-
-    public void handleFailure(SyncStorageResponse response) {
-      // TODO
-    }
-
-    public void handleError(Exception e) {
-      // TODO
-    }
-  }
-
-  public interface JSONObjectCallback {
-    public void handleSuccess(ExtendedJSONObject result);
-    public void handleFailure(Object reason);
-    public void handleError(Exception e);
-  }
 
   private boolean isInvalidString(String s) {
     return s == null ||
@@ -144,7 +121,12 @@ public class GlobalSession {
     return false;
   }
 
-  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle, GlobalSessionCallback callback) throws SyncConfigurationException, IllegalArgumentException {
+  private Context context;
+  public Context getContext() {
+    return this.context;
+  }
+
+  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context) throws SyncConfigurationException, IllegalArgumentException {
     if (callback == null) {
       throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
     }
@@ -172,16 +154,20 @@ public class GlobalSession {
     this.password      = password;
     this.syncKeyBundle = syncKeyBundle;
     this.callback      = callback;
+    this.context       = context;
     prepareStages();
   }
 
   protected Map<Stage, GlobalSyncStage> stages;
   protected void prepareStages() {
     stages = new HashMap<Stage, GlobalSyncStage>();
-    stages.put(Stage.checkPreconditions, new CheckPreconditionsStage());
-    stages.put(Stage.ensureClusterURL,   new EnsureClusterURLStage());
+    stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
+    stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
+    stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
+    stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
+    stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
     stages.put(Stage.temporaryFetchBookmarks, new TemporaryFetchBookmarksStage());
-    stages.put(Stage.completed,          new CompletedStage());
+    stages.put(Stage.completed,               new CompletedStage());
   }
 
   protected GlobalSyncStage getStageByName(Stage next) throws NoSuchStageException {
@@ -192,16 +178,22 @@ public class GlobalSession {
     return stage;
   }
 
-  protected void fetchJSON(String url, JSONObjectCallback callback) throws URISyntaxException {
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(url);
-    r.delegate = new JSONFetchDelegate(callback);
-    r.get();
+  public void fetchMetaGlobal(MetaGlobalDelegate callback) throws URISyntaxException {
+    if (this.metaGlobal == null) {
+      String metaURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
+      this.metaGlobal = new MetaGlobal(metaURL, credentials());
+    }
+    this.metaGlobal.fetch(callback);
   }
 
-  protected void fetchMetaGlobal(JSONObjectCallback callback) throws URISyntaxException {
-    String metaURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
-    this.fetchJSON(metaURL, callback);
+  public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
+    if (this.infoCollections == null) {
+      String infoURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/info/collections";
+      this.infoCollections = new InfoCollections(infoURL, credentials());
+    }
+    this.infoCollections.fetch(callback);
   }
+
 
   /**
    * Advance and loop around the stages of a sync.
@@ -226,7 +218,12 @@ public class GlobalSession {
     GlobalSyncStage nextStage = this.getStageByName(next);
     this.currentState = next;
     Log.i("rnewman", "Running next stage " + next);
-    nextStage.execute(this);
+    try {
+      nextStage.execute(this);
+    } catch (Exception ex) {
+      Log.w("rnewman", "Caught exception " + ex + " running stage " + next);
+      this.abort(ex, "Uncaught exception in stage.");
+    }
   }
 
   /**
@@ -267,5 +264,25 @@ public class GlobalSession {
   }
   public void setClusterURL(String u) throws URISyntaxException {
     this.setClusterURL((u == null) ? null : new URI(u));
+  }
+
+  public void setCollectionKeys(CollectionKeys k) {
+    collectionKeys = k;
+  }
+  public CollectionKeys getCollectionKeys() {
+    return collectionKeys;
+  }
+
+  public void abort(Exception e, String reason) {
+    Log.w("rnewman", "Aborting sync: " + reason);
+    e.printStackTrace();
+    this.callback.handleError(this, e);
+  }
+
+  public void handleHTTPError(SyncStorageResponse response, String reason) {
+    // TODO: handling of 50x (backoff), 401 (node reassignment or auth error).
+    // Fall back to aborting.
+    Log.w("rnewman", "Aborting sync due to HTTP " + response.getStatusCode());
+    this.abort(new HTTPFailureException(response), reason);
   }
 }

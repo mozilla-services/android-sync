@@ -37,27 +37,55 @@
 
 package org.mozilla.android.sync.stage;
 
-import org.mozilla.android.sync.GlobalSession;
+import java.net.URISyntaxException;
 
-public interface GlobalSyncStage {
-  public static enum Stage {
-    idle,                       // Start state.
-    checkPreconditions,         // Preparation of the basics. TODO: clear status
-    ensureClusterURL,           // Setting up where we talk to.
-    fetchInfoCollections,       // Take a look at timestamps.
-    fetchMetaGlobal,
-    ensureKeysStage,
-    temporaryFetchBookmarks,    // TODO: XXX: TEMP: woohoo!
-    /*
-    ensureSpecialRecords,
-    updateEngineTimestamps,
-    syncClientsEngine,
-    processFirstSyncPref,
-    processClientCommands,
-    updateEnabledEngines,
-    syncEngines,
-    */
-    completed
+import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.net.InfoCollections;
+import org.mozilla.android.sync.net.InfoCollectionsDelegate;
+import org.mozilla.android.sync.net.SyncStorageResponse;
+
+import android.util.Log;
+
+public class FetchInfoCollectionsStage implements GlobalSyncStage {
+
+  public class StageInfoCollectionsDelegate implements InfoCollectionsDelegate {
+
+    private GlobalSession session;
+    public StageInfoCollectionsDelegate(GlobalSession session) {
+      this.session = session;
+    }
+
+    @Override
+    public void handleSuccess(InfoCollections global) {
+      try {
+        Log.i("rnewman", "Got timestamps: ");
+
+        // TODO: decide whether more work needs to be done?
+        session.advance();
+      } catch (NoSuchStageException e) {
+        session.abort(e, "No such stage.");
+      }
+    }
+
+    @Override
+    public void handleFailure(SyncStorageResponse response) {
+      session.handleHTTPError(response, "Failure fetching info/collections.");
+    }
+
+    @Override
+    public void handleError(Exception e) {
+      session.abort(e, "Failure fetching info/collections.");
+    }
+
   }
-  public void execute(GlobalSession session) throws NoSuchStageException;
+
+  @Override
+  public void execute(GlobalSession session) throws NoSuchStageException {
+    try {
+      session.fetchInfoCollections(new StageInfoCollectionsDelegate(session));
+    } catch (URISyntaxException e) {
+      session.abort(e, "Invalid URI.");
+    }
+  }
+
 }

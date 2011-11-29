@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ *  Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,84 +35,99 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.stage;
 
-import java.net.URI;
+import java.io.IOException;
 import java.net.URISyntaxException;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
+import org.json.simple.parser.ParseException;
+import org.mozilla.android.sync.CollectionKeys;
+import org.mozilla.android.sync.CryptoRecord;
+import org.mozilla.android.sync.ExtendedJSONObject;
+import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.NonObjectJSONException;
+import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.android.sync.net.SyncStorageRecordRequest;
+import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
-import org.mozilla.android.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.android.sync.stage.GlobalSyncStage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
 
 import android.util.Log;
 
-public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
-    implements GlobalSyncStage {
+public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDelegate {
 
   private GlobalSession session;
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
     this.session = session;
-    URI bookmarksURI;
+
+    // TODO: decide whether we need to do this work.
     try {
-      // This will eventually be packaged up into a Server11Repository class,
-      // rather than manually fetching.
-      boolean full = true;
-      bookmarksURI = session.collectionURI("bookmarks", full);
-      Log.i("rnewman", "Bookmarks URI is " + bookmarksURI.toASCIIString());
-      SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(
-          bookmarksURI);
-      r.delegate = this;
-      r.get();
+      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI("crypto", "keys"));
+      request.delegate = this;
+      request.get();
     } catch (URISyntaxException e) {
-      // TODO: fail?!
+      session.abort(e, "Invalid URI.");
     }
   }
 
   @Override
   public String credentials() {
+    // TODO Auto-generated method stub
     return session.credentials();
   }
 
   @Override
   public String ifUnmodifiedSince() {
+    // TODO: last key time!
     return null;
   }
 
   @Override
   public void handleSuccess(SyncStorageResponse response) {
-    Log.i("rnewman", "Bookmarks stage got handleSuccess!");
+    CollectionKeys k = new CollectionKeys();
+    try {
+      ExtendedJSONObject body = response.jsonObjectBody();
+      Log.i("rnewman", "Fetched keys: " + body.toJSONString());
+      k.setKeyPairsFromWBO(CryptoRecord.fromJSONRecord(body), session.syncKeyBundle);
+
+    } catch (IllegalStateException e) {
+      session.abort(e, "Invalid keys WBO.");
+      return;
+    } catch (ParseException e) {
+      session.abort(e, "Invalid keys WBO.");
+      return;
+    } catch (NonObjectJSONException e) {
+      session.abort(e, "Invalid keys WBO.");
+      return;
+    } catch (IOException e) {
+      // Some kind of lower-level error.
+      session.abort(e, "IOException fetching keys.");
+      return;
+    } catch (CryptoException e) {
+      session.abort(e, "CryptoException handling keys WBO.");
+      return;
+    }
+
+    Log.i("rnewman", "Setting keys. Yay!");
+    session.setCollectionKeys(k);
     try {
       session.advance();
     } catch (NoSuchStageException e) {
-      // TODO: log, somehow report failure.
+      session.abort(e, "No stage.");
     }
   }
 
   @Override
   public void handleFailure(SyncStorageResponse response) {
-    Log.i("rnewman", "Bookmarks stage got handleFailure!");
-    Log.i("rnewman", "Response: " + response.httpResponse().getStatusLine());
+    session.handleHTTPError(response, "Failure fetching keys.");
   }
 
   @Override
   public void handleError(Exception ex) {
-    Log.i("rnewman", "Bookmarks stage got handleError!");
-  }
-
-  @Override
-  public void handleWBO(CryptoRecord record) {
-    Log.i("rnewman", "Woo! Got a bookmark!");
-  }
-
-  @Override
-  public KeyBundle keyBundle() {
-    // TODO Auto-generated method stub
-    return session.syncKeyBundle;
+    session.abort(ex, "Failure fetching keys.");
   }
 
 }

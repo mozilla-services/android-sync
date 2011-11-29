@@ -37,27 +37,56 @@
 
 package org.mozilla.android.sync.stage;
 
-import org.mozilla.android.sync.GlobalSession;
+import java.net.URISyntaxException;
 
-public interface GlobalSyncStage {
-  public static enum Stage {
-    idle,                       // Start state.
-    checkPreconditions,         // Preparation of the basics. TODO: clear status
-    ensureClusterURL,           // Setting up where we talk to.
-    fetchInfoCollections,       // Take a look at timestamps.
-    fetchMetaGlobal,
-    ensureKeysStage,
-    temporaryFetchBookmarks,    // TODO: XXX: TEMP: woohoo!
-    /*
-    ensureSpecialRecords,
-    updateEngineTimestamps,
-    syncClientsEngine,
-    processFirstSyncPref,
-    processClientCommands,
-    updateEnabledEngines,
-    syncEngines,
-    */
-    completed
+import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.net.MetaGlobal;
+import org.mozilla.android.sync.net.MetaGlobalDelegate;
+import org.mozilla.android.sync.net.SyncStorageResponse;
+
+public class FetchMetaGlobalStage implements GlobalSyncStage {
+
+  public class StageMetaGlobalDelegate implements MetaGlobalDelegate {
+
+    private GlobalSession session;
+    public StageMetaGlobalDelegate(GlobalSession session) {
+      this.session = session;
+    }
+
+    @Override
+    public void handleSuccess(MetaGlobal global) {
+      try {
+        // TODO: decide whether more work needs to be done?
+        session.advance();
+      } catch (NoSuchStageException e) {
+        session.abort(e, "No such stage.");
+      }
+    }
+
+    @Override
+    public void handleFailure(SyncStorageResponse response) {
+      session.handleHTTPError(response, "Failure fetching meta/global.");
+    }
+
+    @Override
+    public void handleError(Exception e) {
+      session.abort(e, "Failure fetching meta/global.");
+    }
+
+    @Override
+    public void handleMissing(MetaGlobal global) {
+      // TODO: fail/create new.
+    }
+
   }
-  public void execute(GlobalSession session) throws NoSuchStageException;
+
+  @Override
+  public void execute(GlobalSession session) throws NoSuchStageException {
+    try {
+      session.fetchMetaGlobal(new StageMetaGlobalDelegate(session));
+    } catch (URISyntaxException e) {
+      session.abort(e, "Invalid URI.");
+    }
+  }
+
 }
