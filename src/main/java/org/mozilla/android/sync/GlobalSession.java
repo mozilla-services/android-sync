@@ -55,7 +55,9 @@ import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
+import org.mozilla.android.sync.stage.TemporaryFetchBookmarksStage;
 
+import android.content.Context;
 import android.util.Log;
 
 
@@ -111,7 +113,12 @@ public class GlobalSession {
     return false;
   }
 
-  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle, GlobalSessionCallback callback) throws SyncConfigurationException, IllegalArgumentException {
+  private Context context;
+  public Context getContext() {
+    return this.context;
+  }
+
+  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context) throws SyncConfigurationException, IllegalArgumentException {
     if (callback == null) {
       throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
     }
@@ -139,6 +146,7 @@ public class GlobalSession {
     this.password      = password;
     this.syncKeyBundle = syncKeyBundle;
     this.callback      = callback;
+    this.context       = context;
     prepareStages();
   }
 

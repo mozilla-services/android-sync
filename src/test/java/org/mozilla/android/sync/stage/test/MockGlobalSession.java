@@ -11,14 +11,15 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
+import android.content.Context;
 
 // Mock this out so our tests continue to pass as we hack.
 public class MockGlobalSession extends GlobalSession {
 
   public MockGlobalSession(String clusterURL, String username, String password,
-      KeyBundle syncKeyBundle, GlobalSessionCallback callback)
+      KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context)
       throws SyncConfigurationException, IllegalArgumentException {
-    super(clusterURL, username, password, syncKeyBundle, callback);
+    super(clusterURL, username, password, syncKeyBundle, callback, context);
   }
 
   public class MockTemporaryFetchBookmarksStage extends TemporaryFetchBookmarksStage {
