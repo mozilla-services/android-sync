@@ -6,7 +6,7 @@ package org.mozilla.android.sync.test.helpers;
 import static junit.framework.Assert.fail;
 
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 public class DefaultSessionCreationDelegate implements RepositorySessionCreationDelegate {
   protected WaitHelper testWaiter() {

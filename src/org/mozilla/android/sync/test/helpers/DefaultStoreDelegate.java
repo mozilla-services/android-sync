@@ -5,7 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.fail;
 
-import org.mozilla.android.sync.repositories.RepositorySessionStoreDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
 public class DefaultStoreDelegate implements RepositorySessionStoreDelegate {
