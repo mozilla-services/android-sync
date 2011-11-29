@@ -3,27 +3,16 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import static junit.framework.Assert.fail;
-
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
-public class DefaultStoreDelegate implements RepositorySessionStoreDelegate {
-  protected WaitHelper testWaiter() {
-    return WaitHelper.getTestWaiter();
-  }
-  private void sharedFail() {
-    try {
-      fail("No store.");
-    } catch (AssertionError e) {
-      testWaiter().performNotify(e);
-    }
-  }
+public class DefaultStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
+  
   public void onStoreFailed(Exception ex) {
-    sharedFail();
+    sharedFail("Store failed");
   }
 
   public void onStoreSucceeded(Record record) {
-    sharedFail();
+    sharedFail("DefaultStoreDelegate used");
   }   
 }

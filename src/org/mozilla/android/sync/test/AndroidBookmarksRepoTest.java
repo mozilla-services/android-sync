@@ -4,7 +4,6 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
-import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.Utils;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksDatabaseHelper;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
@@ -15,8 +14,8 @@ import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectFetchGUIDsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 
@@ -41,7 +40,6 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   }
 
   private void prepEmptySession() {
-   // wipe();
     AndroidBookmarksTestHelper.prepEmptySession(getApplicationContext());
   }
   private static BookmarksDatabaseHelper helper;
@@ -89,9 +87,9 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     expectedGUIDs[1] = expected[1].guid;
 
     BookmarksRepositorySession session = getSession();
-    session.store(expected[0], new ExpectStoredDelegate());
+    session.store(expected[0], new ExpectStoredDelegate(expected[0].guid));
     performWait();
-    session.store(expected[1], new ExpectStoredDelegate());
+    session.store(expected[1], new ExpectStoredDelegate(expected[1].guid));
     performWait();   
     
     ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expectedGUIDs);
@@ -99,7 +97,6 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     performWait();
 
     assertEquals(delegate.recordCount(), 2);
-    assertEquals(delegate.code, RepoStatusCode.DONE);
   }
 
   /*
@@ -124,7 +121,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     getSession().store(record1, new ExpectStoredDelegate(expected[1]));
     performWait();
     
-    getSession().guidsSince(timestamp, new ExpectFetchGUIDsSinceDelegate(expected));
+    getSession().guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
     performWait();
   }
   
@@ -139,7 +136,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     performWait();
 
     String[] expected = {};
-    getSession().guidsSince(timestamp, new ExpectFetchGUIDsSinceDelegate(expected));
+    getSession().guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
     performWait();
   }
 
