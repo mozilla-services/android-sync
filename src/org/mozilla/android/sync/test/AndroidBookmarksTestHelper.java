@@ -36,7 +36,6 @@ public class AndroidBookmarksTestHelper {
     } catch (IllegalArgumentException ex) {
       Log.w("prepareRepositorySession", "Caught IllegalArgumentException.");
     }
-    session.begin(new DefaultRepositorySessionDelegate());
 
     return repository;
   }
@@ -45,6 +44,7 @@ public class AndroidBookmarksTestHelper {
     prepareRepositorySession(context, new SetupDelegate(), 0);
   
     // Ensure there are no records.
+    session.begin(new DefaultRepositorySessionDelegate());
     session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
     testWaiter.performWait();
   }
