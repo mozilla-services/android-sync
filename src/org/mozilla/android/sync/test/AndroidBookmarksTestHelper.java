@@ -1,9 +1,12 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
-import org.mozilla.android.sync.test.helpers.DefaultRepositorySessionDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 
@@ -44,7 +47,7 @@ public class AndroidBookmarksTestHelper {
     prepareRepositorySession(context, new SetupDelegate(), 0);
   
     // Ensure there are no records.
-    session.begin(new DefaultRepositorySessionDelegate());
+    session.begin(new ExpectBeginDelegate());
     session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
     testWaiter.performWait();
   }

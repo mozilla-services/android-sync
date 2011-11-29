@@ -9,12 +9,9 @@ import static junit.framework.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.mozilla.android.sync.repositories.RepoStatusCode;
-import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
-public class ExpectFetchSinceDelegate extends DefaultRepositorySessionDelegate
-    implements RepositorySessionDelegate {
+public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   private String[] expected;
   private long earliest;
 
@@ -24,10 +21,10 @@ public class ExpectFetchSinceDelegate extends DefaultRepositorySessionDelegate
     Arrays.sort(expected);
   }
 
-  public void fetchSinceCallback(RepoStatusCode status, Record[] records) {
+  @Override
+  public void onFetchSucceeded(Record[] records) {
     AssertionError err = null;
     try {
-      assertEquals(status, RepoStatusCode.DONE);       // For now.
       assertEquals(records.length, this.expected.length);
 
       for (Record record : records) {

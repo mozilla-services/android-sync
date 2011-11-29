@@ -8,22 +8,17 @@ import static junit.framework.Assert.assertFalse;
 
 import java.util.Arrays;
 
-import org.mozilla.android.sync.repositories.RepoStatusCode;
-import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
-
-public class ExpectFetchGUIDsSinceDelegate extends DefaultRepositorySessionDelegate
-    implements RepositorySessionDelegate {
+public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
   private String[] expected;
 
-  public ExpectFetchGUIDsSinceDelegate(String[] guids) {
+  public ExpectGuidsSinceDelegate(String[] guids) {
     expected = guids;
     Arrays.sort(expected);
   }
 
-  public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
+  public void onGuidsSinceSucceeded(String[] guids) {
     AssertionError err = null;
     try {
-      assertEquals(status, RepoStatusCode.DONE);
       assertEquals(guids.length, this.expected.length);
 
       for (String string : guids) {
