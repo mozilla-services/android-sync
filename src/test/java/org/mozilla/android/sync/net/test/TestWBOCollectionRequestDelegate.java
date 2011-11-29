@@ -11,7 +11,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
-import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.crypto.KeyBundle;
