@@ -44,12 +44,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.SyncStorageRecordRequest;
-import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.net.InfoCollections;
+import org.mozilla.android.sync.net.InfoCollectionsDelegate;
+import org.mozilla.android.sync.net.MetaGlobal;
+import org.mozilla.android.sync.net.MetaGlobalDelegate;
 import org.mozilla.android.sync.stage.CheckPreconditionsStage;
 import org.mozilla.android.sync.stage.CompletedStage;
 import org.mozilla.android.sync.stage.EnsureClusterURLStage;
+import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
@@ -65,6 +67,9 @@ public class GlobalSession {
   public URI clusterURL;
   public String username;
   public KeyBundle syncKeyBundle;
+
+  public InfoCollections infoCollections;      // TODO: persist historical timestamps.
+  public MetaGlobal metaGlobal;
 
   public String credentials() {
     return username + ":" + password;
@@ -88,44 +93,6 @@ public class GlobalSession {
 
   private String password;
   private GlobalSessionCallback callback;
-
-  public class JSONFetchDelegate implements SyncStorageRequestDelegate {
-    private JSONObjectCallback callback;
-
-    JSONFetchDelegate(JSONObjectCallback callback) {
-      this.callback = callback;
-    }
-
-    public String credentials() {
-      return username + ":" + password;
-    }
-
-    public String ifUnmodifiedSince() {
-      return null;
-    }
-
-    public void handleSuccess(SyncStorageResponse res) {
-      try {
-        callback.handleSuccess(res.jsonObjectBody());
-      } catch (Exception e) {
-        callback.handleError(e);
-      }
-    }
-
-    public void handleFailure(SyncStorageResponse response) {
-      // TODO
-    }
-
-    public void handleError(Exception e) {
-      // TODO
-    }
-  }
-
-  public interface JSONObjectCallback {
-    public void handleSuccess(ExtendedJSONObject result);
-    public void handleFailure(Object reason);
-    public void handleError(Exception e);
-  }
 
   private boolean isInvalidString(String s) {
     return s == null ||
@@ -180,6 +147,7 @@ public class GlobalSession {
     stages = new HashMap<Stage, GlobalSyncStage>();
     stages.put(Stage.checkPreconditions, new CheckPreconditionsStage());
     stages.put(Stage.ensureClusterURL,   new EnsureClusterURLStage());
+    stages.put(Stage.fetchInfoCollections, new FetchInfoCollectionsStage());
     stages.put(Stage.temporaryFetchBookmarks, new TemporaryFetchBookmarksStage());
     stages.put(Stage.completed,          new CompletedStage());
   }
@@ -192,16 +160,22 @@ public class GlobalSession {
     return stage;
   }
 
-  protected void fetchJSON(String url, JSONObjectCallback callback) throws URISyntaxException {
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(url);
-    r.delegate = new JSONFetchDelegate(callback);
-    r.get();
+  public void fetchMetaGlobal(MetaGlobalDelegate callback) throws URISyntaxException {
+    if (this.metaGlobal == null) {
+      String metaURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
+      this.metaGlobal = new MetaGlobal(metaURL, credentials());
+    }
+    this.metaGlobal.fetch(callback);
   }
 
-  protected void fetchMetaGlobal(JSONObjectCallback callback) throws URISyntaxException {
-    String metaURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
-    this.fetchJSON(metaURL, callback);
+  public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
+    if (this.infoCollections == null) {
+      String infoURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/info/collections";
+      this.infoCollections = new InfoCollections(infoURL, credentials());
+    }
+    this.infoCollections.fetch(callback);
   }
+
 
   /**
    * Advance and loop around the stages of a sync.

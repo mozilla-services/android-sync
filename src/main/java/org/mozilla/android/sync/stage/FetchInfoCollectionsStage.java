@@ -37,25 +37,52 @@
 
 package org.mozilla.android.sync.stage;
 
-import org.mozilla.android.sync.GlobalSession;
+import java.net.URISyntaxException;
 
-public interface GlobalSyncStage {
-  public static enum Stage {
-    idle,                       // Start state.
-    checkPreconditions,         // Preparation of the basics. TODO: clear status
-    ensureClusterURL,           // Setting up where we talk to.
-    fetchInfoCollections,       // Take a look at timestamps.
-    temporaryFetchBookmarks,    // TODO: XXX: TEMP: woohoo!
-    /*
-    ensureSpecialRecords,
-    updateEngineTimestamps,
-    syncClientsEngine,
-    processFirstSyncPref,
-    processClientCommands,
-    updateEnabledEngines,
-    syncEngines,
-    */
-    completed
+import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.net.InfoCollections;
+import org.mozilla.android.sync.net.InfoCollectionsDelegate;
+import org.mozilla.android.sync.net.SyncStorageResponse;
+
+public class FetchInfoCollectionsStage implements GlobalSyncStage {
+
+  public class StageInfoCollectionsDelegate implements InfoCollectionsDelegate {
+
+    private GlobalSession session;
+    public StageInfoCollectionsDelegate(GlobalSession session) {
+      this.session = session;
+    }
+
+    @Override
+    public void handleSuccess(InfoCollections global) {
+      try {
+        // TODO: decide whether more work needs to be done?
+        session.advance();
+      } catch (NoSuchStageException e) {
+        // TODO: log.
+        e.printStackTrace();
+      }
+    }
+
+    @Override
+    public void handleFailure(SyncStorageResponse response) {
+      // TODO: fail.
+    }
+
+    @Override
+    public void handleError(Exception e) {
+      // TODO: fail.
+    }
+
   }
-  public void execute(GlobalSession session) throws NoSuchStageException;
+
+  @Override
+  public void execute(GlobalSession session) throws NoSuchStageException {
+    try {
+      session.fetchInfoCollections(new StageInfoCollectionsDelegate(session));
+    } catch (URISyntaxException e) {
+      // TODO: fail.
+    }
+  }
+
 }
