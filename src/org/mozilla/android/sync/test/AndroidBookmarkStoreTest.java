@@ -123,6 +123,16 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
       assertNotNull(ex);
     }
   }
+  
+  public void testStoreNullRecord() {
+    prepSession();
+    try {
+      getSession().store(null, new DefaultStoreDelegate());
+      fail("Should throw.");
+    } catch (Exception ex) {
+      assertNotNull(ex);
+    }
+  }
 
   /*
    * Tests for resolving conflicts where a record with the given GUID already
