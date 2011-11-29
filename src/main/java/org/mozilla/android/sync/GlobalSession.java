@@ -158,6 +158,7 @@ public class GlobalSession {
     stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
+    stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
     stages.put(Stage.temporaryFetchBookmarks, new TemporaryFetchBookmarksStage());
     stages.put(Stage.completed,               new CompletedStage());
   }
