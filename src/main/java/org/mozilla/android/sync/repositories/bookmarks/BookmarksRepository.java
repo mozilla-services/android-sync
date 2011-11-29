@@ -45,10 +45,6 @@ import android.content.Context;
 
 public class BookmarksRepository implements Repository {
 
-  // TODO it is annoying to have to pass the context around to get access to the DB...is there anywhere
-  // else I can get this from rather than passing it around?
-
-  // TODO this needs to happen in a thread :S
   public void createSession(Context context, RepositorySessionCreationDelegate callbackMechanism,long lastSyncTimestamp) {
     CreateSessionThread thread = new CreateSessionThread(context, callbackMechanism, lastSyncTimestamp);
     thread.start();
@@ -75,5 +71,4 @@ public class BookmarksRepository implements Repository {
       callbackMechanism.onSessionCreated(session);
     }
   }
-
 }

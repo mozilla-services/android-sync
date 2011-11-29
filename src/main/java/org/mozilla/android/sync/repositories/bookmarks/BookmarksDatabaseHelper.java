@@ -86,8 +86,6 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
 
   private static String[] BOOKMARKS_COLUMNS;
 
-  // TODO History table
-
   public BookmarksDatabaseHelper(Context context) {
     super(context, DB_NAME, null, SCHEMA_VERSION);
     BOOKMARKS_COLUMNS = new String[] {

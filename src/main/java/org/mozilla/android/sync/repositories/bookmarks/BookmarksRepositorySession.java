@@ -40,6 +40,7 @@ package org.mozilla.android.sync.repositories.bookmarks;
 import java.util.ArrayList;
 
 import org.mozilla.android.sync.repositories.InvalidRequestException;
+import org.mozilla.android.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -59,6 +60,7 @@ import android.util.Log;
 public class BookmarksRepositorySession extends RepositorySession {
 
   BookmarksDatabaseHelper dbHelper;
+  private static String tag = "BookmarksRepositorySession";
 
   public BookmarksRepositorySession(Repository repository,
       RepositorySessionCreationDelegate callbackReciever, Context context, long lastSyncTimestamp) {
@@ -96,7 +98,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
-
+      
       Cursor cur = dbHelper.getGUIDSSince(timestamp);
       int index = cur.getColumnIndex(BookmarksDatabaseHelper.COL_GUID);
 
@@ -166,6 +168,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     public void run() {
       if (guids == null || guids.length < 1) {
+        Log.e(tag, "No guids sent to fetch");
         delegate.onFetchFailed(new InvalidRequestException(null));
       } else {
         delegate.onFetchSucceeded(fetchRecordsForGuids(guids));
@@ -231,13 +234,24 @@ public class BookmarksRepositorySession extends RepositorySession {
     private RepositorySessionStoreDelegate callbackReceiver;
 
     public StoreThread(Record record, RepositorySessionStoreDelegate callbackReceiver) {
+      if (record == null) {
+        Log.e(tag, "Record sent to store was null");
+        throw new IllegalArgumentException("record is null.");
+      }
       this.record = (BookmarkRecord) record;
       this.callbackReceiver = callbackReceiver;
     }
 
     public void run() {
 
-      BookmarkRecord existingRecord = findExistingRecord();
+      BookmarkRecord existingRecord;
+      try {
+        existingRecord = findExistingRecord();
+      } catch (MultipleRecordsForGuidException e) {
+        Log.e(tag, "Multiple records returned for given guid: " + record.guid);
+        callbackReceiver.onStoreFailed(e);
+        return;
+      }
       
       // If the record is new and not deleted, store it
       if (existingRecord == null && !record.deleted) {
@@ -266,14 +280,13 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     // Check if record already exists locally
-    private BookmarkRecord findExistingRecord() {
+    private BookmarkRecord findExistingRecord() throws MultipleRecordsForGuidException {
       Record[] records = fetchRecordsForGuids(new String[] { record.guid });
       if (records.length == 1) {
         return (BookmarkRecord) records[0];
       }
       else if (records.length > 1) {
-        // TODO handle this error...which should be impossible
-        Log.e("BookmarksRepositorySession", "Multiple records returned with same GUID. Unpossible!");
+        throw (new MultipleRecordsForGuidException(null));
       }
       return null;
     }
