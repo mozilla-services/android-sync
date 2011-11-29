@@ -20,7 +20,6 @@
  *
  * Contributor(s):
  * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,11 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.delegates;
 
-// Used to provide the sessionCallback and storeCallback
-// mechanism to repository instances.
-public interface RepositorySessionCreationDelegate {
-  public void onSessionCreateFailed(Exception ex);
-  public void onSessionCreated(RepositorySession session);
+public interface RepositorySessionBeginDelegate {
+  public void onBeginFailed(Exception ex);
+  public void onBeginSucceeded();
 }

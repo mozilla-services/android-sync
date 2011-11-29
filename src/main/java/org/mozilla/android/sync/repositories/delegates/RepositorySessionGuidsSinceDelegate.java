@@ -35,9 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.delegates;
 
-public enum RepoStatusCode {
-  DONE,
-  INVALID_REQUEST,
+public interface RepositorySessionGuidsSinceDelegate {
+  public void onGuidsSinceFailed(Exception ex);
+  public void onGuidsSinceSucceeded(String[] guids);
 }

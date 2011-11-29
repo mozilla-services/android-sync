@@ -20,7 +20,6 @@
  *
  * Contributor(s):
  * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,27 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.delegates;
 
-import org.mozilla.android.sync.repositories.domain.Record;
-
-public interface RepositorySessionDelegate {
-  // This interface must be implemented by any class that needs
-  // to receive callbacks from a Repository (for example a
-  // callback containing error codes or fetched records)
-
-  public void guidsSinceCallback(RepoStatusCode status, String[] guids);
-
-  public void fetchSinceCallback(RepoStatusCode status, Record[] records);
-
-  public void fetchCallback(RepoStatusCode status, Record[] records);
-
-  public void fetchAllCallback(RepoStatusCode status, Record[] records);
-
-  public void wipeCallback(RepoStatusCode status);
-
-  public void beginCallback(RepoStatusCode status);
-
-  public void finishCallback(RepoStatusCode status);
-
+public interface RepositorySessionWipeDelegate {
+  public void onWipeFailed(Exception ex);
+  public void onWipeSucceeded();
 }

@@ -39,12 +39,16 @@ package org.mozilla.android.sync.repositories.bookmarks;
 
 import java.util.ArrayList;
 
-import org.mozilla.android.sync.repositories.RepoStatusCode;
+import org.mozilla.android.sync.repositories.InvalidRequestException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
-import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
-import org.mozilla.android.sync.repositories.RepositorySessionStoreDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -62,22 +66,32 @@ public class BookmarksRepositorySession extends RepositorySession {
     dbHelper = new BookmarksDatabaseHelper(context);
   }
 
+  @Override
+  public void begin(RepositorySessionBeginDelegate receiver) {
+    receiver.onBeginSucceeded();
+  }
+
+  @Override
+  public void finish(RepositorySessionFinishDelegate receiver) {
+    receiver.onFinishSucceeded();
+  }
+
   // guids since method and thread
   @Override
-  public void guidsSince(long timestamp, RepositorySessionDelegate receiver) {
-    GuidsSinceThread thread = new GuidsSinceThread(timestamp, receiver, dbHelper);
+  public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
+    GuidsSinceThread thread = new GuidsSinceThread(timestamp, delegate, dbHelper);
     thread.start();
   }
 
   class GuidsSinceThread extends Thread {
 
     private long timestamp;
-    private RepositorySessionDelegate callbackReceiver;
+    private RepositorySessionGuidsSinceDelegate delegate;
     private BookmarksDatabaseHelper dbHelper;
 
-    public GuidsSinceThread(long timestamp, RepositorySessionDelegate callbackReceiver, BookmarksDatabaseHelper dbHelper) {
+    public GuidsSinceThread(long timestamp, RepositorySessionGuidsSinceDelegate delegate, BookmarksDatabaseHelper dbHelper) {
       this.timestamp = timestamp;
-      this.callbackReceiver = callbackReceiver;
+      this.delegate = delegate;
       this.dbHelper = dbHelper;
     }
 
@@ -96,26 +110,26 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       String guidsArray[] = new String[guids.size()];
       guids.toArray(guidsArray);
-      callbackReceiver.guidsSinceCallback(RepoStatusCode.DONE, guidsArray);
+      delegate.onGuidsSinceSucceeded(guidsArray);
 
     }
   }
 
   @Override
   // Fetch since method and thread
-  public void fetchSince(long timestamp, RepositorySessionDelegate receiver) {
-    FetchSinceThread thread = new FetchSinceThread(timestamp, receiver);
+  public void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate) {
+    FetchSinceThread thread = new FetchSinceThread(timestamp, delegate);
     thread.start();
   }
 
   class FetchSinceThread extends Thread {
 
     private long timestamp;
-    private RepositorySessionDelegate callbackReceiver;
+    private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchSinceThread(long timestamp, RepositorySessionDelegate callbackReceiver ) {
+    public FetchSinceThread(long timestamp, RepositorySessionFetchRecordsDelegate delegate) {
       this.timestamp = timestamp;
-      this.callbackReceiver = callbackReceiver;
+      this.delegate = delegate;
     }
 
     public void run() {
@@ -130,31 +144,31 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       Record[] recordArray = new Record[records.size()];
       records.toArray(recordArray);
-      callbackReceiver.fetchSinceCallback(RepoStatusCode.DONE, recordArray);
+      delegate.onFetchSucceeded(recordArray);
     }
   }
 
   @Override
   // Fetch method and thread
-  public void fetch(String[] guids, RepositorySessionDelegate receiver) {
-    FetchThread thread = new FetchThread(guids, receiver);
+  public void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate) {
+    FetchThread thread = new FetchThread(guids, delegate);
     thread.start();
   }
 
   class FetchThread extends Thread {
     private String[] guids;
-    private RepositorySessionDelegate callbackReceiver;
+    private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchThread(String[] guids, RepositorySessionDelegate callbackReceiver) {
+    public FetchThread(String[] guids, RepositorySessionFetchRecordsDelegate delegate) {
       this.guids = guids;
-      this.callbackReceiver = callbackReceiver;
+      this.delegate = delegate;
     }
 
     public void run() {
       if (guids == null || guids.length < 1) {
-        callbackReceiver.fetchCallback(RepoStatusCode.INVALID_REQUEST, new Record[0]);
+        delegate.onFetchFailed(new InvalidRequestException(null));
       } else {
-        callbackReceiver.fetchCallback(RepoStatusCode.DONE, fetchRecordsForGuids(guids));
+        delegate.onFetchSucceeded(fetchRecordsForGuids(guids));
       }
     }
   }
@@ -177,16 +191,16 @@ public class BookmarksRepositorySession extends RepositorySession {
   @Override
   // Fetch all method and thread
   // NOTE: This is only used for testing
-  public void fetchAll(RepositorySessionDelegate receiver) {
-    FetchAllThread thread = new FetchAllThread(receiver);
+  public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
+    FetchAllThread thread = new FetchAllThread(delegate);
     thread.start();
   }
 
   class FetchAllThread extends Thread {
-    private RepositorySessionDelegate callbackReceiver;
+    private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchAllThread(RepositorySessionDelegate callbackReceiver) {
-      this.callbackReceiver = callbackReceiver;
+    public FetchAllThread(RepositorySessionFetchRecordsDelegate delegate) {
+      this.delegate = delegate;
     }
 
     public void run() {
@@ -201,7 +215,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
       Record[] recordArray = new Record[records.size()];
       records.toArray(recordArray);
-      callbackReceiver.fetchAllCallback(RepoStatusCode.DONE, recordArray);
+      delegate.onFetchSucceeded(recordArray);
     }
   }
 
@@ -267,36 +281,23 @@ public class BookmarksRepositorySession extends RepositorySession {
   }
 
   // Wipe method and thread.
-  // Right now doing this async probably seems silly,
-  // but I imagine it might be worth it once the implementation
-  // of this is complete (plus I'm sticking with past conventions).
   @Override
-  public void wipe(RepositorySessionDelegate receiver) {
-    WipeThread thread = new WipeThread(receiver);
+  public void wipe(RepositorySessionWipeDelegate delegate) {
+    WipeThread thread = new WipeThread(delegate);
     thread.start();
   }
 
   class WipeThread extends Thread {
-    private RepositorySessionDelegate callbackReceiver;
+    private RepositorySessionWipeDelegate delegate;
 
-    public WipeThread(RepositorySessionDelegate callbackReciever) {
-      this.callbackReceiver = callbackReciever;
+    public WipeThread(RepositorySessionWipeDelegate delegate) {
+      this.delegate = delegate;
     }
 
     public void run() {
       dbHelper.wipe();
-      callbackReceiver.wipeCallback(RepoStatusCode.DONE);
+      delegate.onWipeSucceeded();
     }
-  }
-
-  @Override
-  public void begin(RepositorySessionDelegate receiver) {
-    receiver.beginCallback(RepoStatusCode.DONE);
-  }
-
-  @Override
-  public void finish(RepositorySessionDelegate receiver) {
-    receiver.finishCallback(RepoStatusCode.DONE);
   }
 
   private BookmarkRecord reconcileBookmarks(BookmarkRecord local, BookmarkRecord remote) {
@@ -337,6 +338,4 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     return newer;
   }
-
-  
 }

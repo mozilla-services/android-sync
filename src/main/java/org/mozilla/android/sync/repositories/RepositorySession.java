@@ -38,6 +38,13 @@
 
 package org.mozilla.android.sync.repositories;
 
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
 public abstract class RepositorySession {
@@ -48,7 +55,6 @@ public abstract class RepositorySession {
   // The time that the last sync on this collection completed, in milliseconds.
   protected long lastSyncTimestamp;
   protected long syncBeginTimestamp;
-  // TODO logger and logger level here
 
   public RepositorySession(Repository repository, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp) {
     this.repository = repository;
@@ -56,20 +62,19 @@ public abstract class RepositorySession {
     this.lastSyncTimestamp = lastSyncTimestamp;
   }
 
-  public abstract void guidsSince(long timestamp, RepositorySessionDelegate receiver);
-  public abstract void fetchSince(long timestamp, RepositorySessionDelegate receiver);
-  public abstract void fetch(String[] guids, RepositorySessionDelegate receiver);
-
-  // Test function only
-  public abstract void fetchAll(RepositorySessionDelegate receiver);
-
-  public abstract void store(Record record, RepositorySessionStoreDelegate receiver);
-  public abstract void wipe(RepositorySessionDelegate receiver);
-
-  public void begin(RepositorySessionDelegate receiver) {
+  public abstract void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate);
+  public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
+  public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate);
+  public abstract void fetchAll(RepositorySessionFetchRecordsDelegate delegate);
+  public abstract void store(Record record, RepositorySessionStoreDelegate delegate);
+  public abstract void wipe(RepositorySessionWipeDelegate delegate);
+  
+  public void begin(RepositorySessionBeginDelegate delegate) {
     this.syncBeginTimestamp = System.currentTimeMillis();
   }
 
-  public abstract void finish(RepositorySessionDelegate receiver);
+  public void finish(RepositorySessionFinishDelegate delegate) {
+    //no-op for now, but this will change once newest repositores code hits this branch
+  }
 
 }

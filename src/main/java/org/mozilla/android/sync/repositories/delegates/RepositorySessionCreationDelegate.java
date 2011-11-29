@@ -19,6 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -35,11 +36,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.delegates;
 
-import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.android.sync.repositories.RepositorySession;
 
-public interface RepositorySessionStoreDelegate {
-  public void onStoreFailed(Exception ex);
-  public void onStoreSucceeded(Record record);
+// Used to provide the sessionCallback and storeCallback
+// mechanism to repository instances.
+public interface RepositorySessionCreationDelegate {
+  public void onSessionCreateFailed(Exception ex);
+  public void onSessionCreated(RepositorySession session);
 }
