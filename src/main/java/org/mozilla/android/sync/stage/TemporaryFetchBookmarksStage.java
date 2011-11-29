@@ -48,13 +48,13 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.mozilla.android.sync.net.WBOCollectionRequestDelegate;
-import org.mozilla.android.sync.repositories.RepoStatusCode;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.RepositorySessionCreationDelegate;
-import org.mozilla.android.sync.repositories.RepositorySessionDelegate;
-import org.mozilla.android.sync.repositories.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -62,10 +62,11 @@ import android.util.Log;
 
 public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
     implements
-    GlobalSyncStage, 
+    GlobalSyncStage,
     RepositorySessionCreationDelegate,
-    RepositorySessionStoreDelegate,
-    RepositorySessionDelegate {
+    RepositorySessionBeginDelegate,
+    RepositorySessionFinishDelegate,
+    RepositorySessionStoreDelegate {
 
   private GlobalSession session;
   private KeyBundle bookmarksKeyBundle;
@@ -172,50 +173,6 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   }
 
   @Override
-  public void guidsSinceCallback(RepoStatusCode status, String[] guids) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void fetchSinceCallback(RepoStatusCode status, Record[] records) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void fetchCallback(RepoStatusCode status, Record[] records) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void fetchAllCallback(RepoStatusCode status, Record[] records) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void wipeCallback(RepoStatusCode status) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public void beginCallback(RepoStatusCode status) {
-    this.request.get();
-  }
-
-  @Override
-  public void finishCallback(RepoStatusCode status) {
-    try {
-      this.session.advance();
-    } catch (NoSuchStageException e) {
-      this.session.abort(e, "No stage.");
-    }
-  }
-
-  @Override
   public void onStoreFailed(Exception ex) {
     // TODO: more nuanced handling.
     session.abort(ex, "Storing record failed.");
@@ -225,6 +182,30 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   public void onStoreSucceeded(Record record) {
     // Great!
     Log.i("rnewman", "Storing " + record.guid + " succeeded.");
+  }
+
+  @Override
+  public void onFinishFailed(Exception ex) {
+    this.session.abort(ex, "Finish of BookmarksRepositorySession failed.");
+  }
+
+  @Override
+  public void onFinishSucceeded() {
+    try {
+      this.session.advance();
+    } catch (NoSuchStageException e) {
+      this.session.abort(e, "No stage.");
+    }
+  }
+
+  @Override
+  public void onBeginFailed(Exception ex) {
+    this.session.abort(ex, "Begin of BookmarksRepositorySession failed.");
+  }
+
+  @Override
+  public void onBeginSucceeded() {
+    this.request.get();
   }
 
 }
