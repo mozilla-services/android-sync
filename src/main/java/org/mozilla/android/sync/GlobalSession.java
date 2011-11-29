@@ -52,6 +52,7 @@ import org.mozilla.android.sync.stage.CheckPreconditionsStage;
 import org.mozilla.android.sync.stage.CompletedStage;
 import org.mozilla.android.sync.stage.EnsureClusterURLStage;
 import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
+import org.mozilla.android.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
@@ -153,11 +154,12 @@ public class GlobalSession {
   protected Map<Stage, GlobalSyncStage> stages;
   protected void prepareStages() {
     stages = new HashMap<Stage, GlobalSyncStage>();
-    stages.put(Stage.checkPreconditions, new CheckPreconditionsStage());
-    stages.put(Stage.ensureClusterURL,   new EnsureClusterURLStage());
-    stages.put(Stage.fetchInfoCollections, new FetchInfoCollectionsStage());
+    stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
+    stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
+    stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
+    stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
     stages.put(Stage.temporaryFetchBookmarks, new TemporaryFetchBookmarksStage());
-    stages.put(Stage.completed,          new CompletedStage());
+    stages.put(Stage.completed,               new CompletedStage());
   }
 
   protected GlobalSyncStage getStageByName(Stage next) throws NoSuchStageException {

@@ -8,6 +8,7 @@ import org.mozilla.android.sync.GlobalSessionCallback;
 import org.mozilla.android.sync.SyncConfigurationException;
 import org.mozilla.android.sync.TemporaryFetchBookmarksStage;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
@@ -36,12 +37,21 @@ public class MockGlobalSession extends GlobalSession {
     }
   }
 
+  public class MockFetchMetaGlobalStage extends FetchMetaGlobalStage {
+    @Override
+    public void execute(GlobalSession session) throws NoSuchStageException {
+      session.advance();
+    }
+  }
+
   @Override
   protected void prepareStages() {
     super.prepareStages();
     // Fake whatever stages we don't want to run.
     stages.put(Stage.temporaryFetchBookmarks, new MockTemporaryFetchBookmarksStage());
     stages.put(Stage.fetchInfoCollections,    new MockFetchInfoCollectionsStage());
+    stages.put(Stage.fetchMetaGlobal,         new MockFetchMetaGlobalStage());
+
   }
 
 }
