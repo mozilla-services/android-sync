@@ -2,6 +2,7 @@ package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.test.helpers.DefaultRepositorySessionDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
@@ -35,6 +36,7 @@ public class AndroidBookmarksTestHelper {
     } catch (IllegalArgumentException ex) {
       Log.w("prepareRepositorySession", "Caught IllegalArgumentException.");
     }
+    session.begin(new DefaultRepositorySessionDelegate());
 
     return repository;
   }
