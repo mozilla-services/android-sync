@@ -48,9 +48,11 @@ import org.mozilla.android.sync.net.InfoCollections;
 import org.mozilla.android.sync.net.InfoCollectionsDelegate;
 import org.mozilla.android.sync.net.MetaGlobal;
 import org.mozilla.android.sync.net.MetaGlobalDelegate;
+import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.mozilla.android.sync.stage.CheckPreconditionsStage;
 import org.mozilla.android.sync.stage.CompletedStage;
 import org.mozilla.android.sync.stage.EnsureClusterURLStage;
+import org.mozilla.android.sync.stage.EnsureKeysStage;
 import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.android.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage;
@@ -70,6 +72,7 @@ public class GlobalSession {
   public URI clusterURL;
   public String username;
   public KeyBundle syncKeyBundle;
+  private CollectionKeys collectionKeys;
 
   public InfoCollections infoCollections;      // TODO: persist historical timestamps.
   public MetaGlobal metaGlobal;
@@ -92,6 +95,10 @@ public class GlobalSession {
     }
     String uri = this.clusterURL + "1.1/" + this.username + "/storage/" + collection + uriParams;
     return new URI(uri);
+  }
+
+  public URI wboURI(String collection, String id) throws URISyntaxException {
+    return new URI(this.clusterURL + "1.1/" + this.username + "/storage/" + collection + "/" + id);
   }
 
   private String password;
@@ -252,5 +259,25 @@ public class GlobalSession {
   }
   public void setClusterURL(String u) throws URISyntaxException {
     this.setClusterURL((u == null) ? null : new URI(u));
+  }
+
+  public void setCollectionKeys(CollectionKeys k) {
+    collectionKeys = k;
+  }
+  public CollectionKeys getCollectionKeys() {
+    return collectionKeys;
+  }
+
+  public void abort(Exception e, String reason) {
+    Log.w("rnewman", "Aborting sync: " + reason);
+    e.printStackTrace();
+    this.callback.handleError(this, e);
+  }
+
+  public void handleHTTPError(SyncStorageResponse response, String reason) {
+    // TODO: handling of 50x (backoff), 401 (node reassignment or auth error).
+    // Fall back to aborting.
+    Log.w("rnewman", "Aborting sync due to HTTP " + response.getStatusCode());
+    this.abort(new HTTPFailureException(response), reason);
   }
 }

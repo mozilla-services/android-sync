@@ -44,6 +44,8 @@ import org.mozilla.android.sync.net.InfoCollections;
 import org.mozilla.android.sync.net.InfoCollectionsDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 
+import android.util.Log;
+
 public class FetchInfoCollectionsStage implements GlobalSyncStage {
 
   public class StageInfoCollectionsDelegate implements InfoCollectionsDelegate {
@@ -56,22 +58,23 @@ public class FetchInfoCollectionsStage implements GlobalSyncStage {
     @Override
     public void handleSuccess(InfoCollections global) {
       try {
+        Log.i("rnewman", "Got timestamps: ");
+
         // TODO: decide whether more work needs to be done?
         session.advance();
       } catch (NoSuchStageException e) {
-        // TODO: log.
-        e.printStackTrace();
+        session.abort(e, "No such stage.");
       }
     }
 
     @Override
     public void handleFailure(SyncStorageResponse response) {
-      // TODO: fail.
+      session.handleHTTPError(response, "Failure fetching info/collections.");
     }
 
     @Override
     public void handleError(Exception e) {
-      // TODO: fail.
+      session.abort(e, "Failure fetching info/collections.");
     }
 
   }
@@ -81,7 +84,7 @@ public class FetchInfoCollectionsStage implements GlobalSyncStage {
     try {
       session.fetchInfoCollections(new StageInfoCollectionsDelegate(session));
     } catch (URISyntaxException e) {
-      // TODO: fail.
+      session.abort(e, "Invalid URI.");
     }
   }
 

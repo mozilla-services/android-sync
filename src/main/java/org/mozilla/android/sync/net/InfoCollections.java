@@ -45,6 +45,8 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.NonObjectJSONException;
 
+import android.util.Log;
+
 public class InfoCollections implements SyncStorageRequestDelegate {
   protected String infoURL;
   protected String credentials;
@@ -54,8 +56,25 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   private ExtendedJSONObject    record;
 
   // Fields.
-  protected HashMap<String, Long> timestamps;
-  protected Long                  fetched;
+  private HashMap<String, Double> timestamps;
+
+  public HashMap<String, Double> getTimestamps() {
+    if (!this.wasSuccessful()) {
+      throw new IllegalStateException("No record fetched.");
+    }
+    return this.timestamps;
+  }
+
+  // TODO
+//  public Iterable<String> changedCollections(HashMap<String, Long> formerTimestamps) {
+    // for (Entry<String, Long> oldEntry : formerTimestamps.entrySet()) {   
+    //}
+//  }
+
+  public boolean wasSuccessful() {
+    return this.response.wasSuccessful() &&
+           this.timestamps != null;
+  }
 
   // Temporary location to store our callback.
   private InfoCollectionsDelegate callback;
@@ -99,10 +118,14 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     this.record = record;
   }
 
+  @SuppressWarnings("unchecked")
   private void unpack(SyncStorageResponse response) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
     this.response = response;
     this.setRecord(response.jsonObjectBody());
-    // TODO: unpack.
+    Log.i("rnewman", "Record is " + this.record.toJSONString());
+    HashMap<String, Double> map = new HashMap<String, Double>();
+    map.putAll((HashMap<String, Double>) this.record.object);
+    this.timestamps = map;
   }
 
   // SyncStorageRequestDelegate methods for fetching.

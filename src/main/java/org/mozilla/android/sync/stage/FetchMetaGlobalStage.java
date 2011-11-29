@@ -59,19 +59,18 @@ public class FetchMetaGlobalStage implements GlobalSyncStage {
         // TODO: decide whether more work needs to be done?
         session.advance();
       } catch (NoSuchStageException e) {
-        // TODO: log.
-        e.printStackTrace();
+        session.abort(e, "No such stage.");
       }
     }
 
     @Override
     public void handleFailure(SyncStorageResponse response) {
-      // TODO: fail.
+      session.handleHTTPError(response, "Failure fetching meta/global.");
     }
 
     @Override
     public void handleError(Exception e) {
-      // TODO: fail.
+      session.abort(e, "Failure fetching meta/global.");
     }
 
     @Override
@@ -86,7 +85,7 @@ public class FetchMetaGlobalStage implements GlobalSyncStage {
     try {
       session.fetchMetaGlobal(new StageMetaGlobalDelegate(session));
     } catch (URISyntaxException e) {
-      // TODO: fail.
+      session.abort(e, "Invalid URI.");
     }
   }
 

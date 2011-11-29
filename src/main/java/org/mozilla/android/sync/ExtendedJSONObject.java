@@ -57,7 +57,7 @@ import org.json.simple.parser.ParseException;
  */
 public class ExtendedJSONObject {
 
-  protected JSONObject object;
+  public JSONObject object;
 
   public static Object parse(InputStreamReader reader) throws IOException, ParseException {
     Object parseOutput = new JSONParser().parse(reader);
