@@ -87,9 +87,8 @@ public class BookmarkRecord extends Record
 
   @Override
   public void initFromPayload(CryptoRecord payload) {
-    // TODO Auto-generated method stub
-    // TODO Consider using Google's gson for parsing JSON into
-    // these domain objects.    
+    this.bookmarkURI = (String) payload.payload.get("bmkUri");
+    this.title       = (String) payload.payload.get("title");
   }
 
   @Override

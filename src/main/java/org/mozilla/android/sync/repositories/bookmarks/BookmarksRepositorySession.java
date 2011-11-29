@@ -291,14 +291,12 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   @Override
   public void begin(RepositorySessionDelegate receiver) {
-    // TODO Auto-generated method stub
-
+    receiver.beginCallback(RepoStatusCode.DONE);
   }
 
   @Override
   public void finish(RepositorySessionDelegate receiver) {
-    // TODO Auto-generated method stub
-
+    receiver.finishCallback(RepoStatusCode.DONE);
   }
 
   private BookmarkRecord reconcileBookmarks(BookmarkRecord local, BookmarkRecord remote) {
