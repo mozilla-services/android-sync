@@ -23,8 +23,8 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
 
-  private void performWait() {
-    AndroidBookmarksTestHelper.testWaiter.performWait();
+  private void performWait(Runnable runnable) throws AssertionError {
+    AndroidBookmarksTestHelper.testWaiter.performWait(runnable);
   }
 
   private BookmarksRepositorySession getSession() {
@@ -41,6 +41,23 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     new BookmarksDatabaseHelper(getApplicationContext()).close();
   }
 
+  Runnable getStoreRunnable(final BookmarkRecord bookmark, final ExpectStoredDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        getSession().store(bookmark, delegate);
+      }
+    };
+  }
+  Runnable getFetchAllRunnable(final ExpectFetchAllDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        getSession().fetchAll(delegate);
+      }
+    };
+  }
+
   /*
    * This test class is dedicated to testing the store(record) method of
    * RepositorySession.
@@ -53,43 +70,44 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
   public void testStoreBookmark() {
     prepSession();
     BookmarkRecord bookmark = BookmarkHelpers.createBookmark1();
-    getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait();
+    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
+    performWait(runnable);
   }
 
   public void testStoreMicrosummary() {
     prepSession();
     BookmarkRecord bookmark = BookmarkHelpers.createMicrosummary();
-    getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait();
+    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
+    performWait(runnable);
   }
+
 
   public void testStoreQuery() {
     prepSession();
     BookmarkRecord bookmark = BookmarkHelpers.createQuery();
-    getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait();
+    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
+    performWait(runnable);
   }
 
   public void testStoreFolder() {
     prepSession();
     BookmarkRecord bookmark = BookmarkHelpers.createFolder();
-    getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait();
+    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
+    performWait(runnable);
   }
 
   public void testStoreLivemark() {
     prepSession();
     BookmarkRecord bookmark = BookmarkHelpers.createLivemark();
-    getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait();
+    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
+    performWait(runnable);
   }
 
   public void testStoreSeparator() {
     prepSession();
     BookmarkRecord bookmark = BookmarkHelpers.createSeparator();
-    getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait();
+    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
+    performWait(runnable);
   }
 
   /*
@@ -111,21 +129,20 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     // Automatically will be assigned lastModified = current time.
     BookmarkRecord local = BookmarkHelpers.createBookmark1();
     local.androidID = 54321;
-    getSession().store(local, new ExpectStoredDelegate(local.guid));
-    performWait();
+    Runnable localRunnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(localRunnable);
 
     // Create second bookmark to be passed to store. Give it a later
     // last modified timestamp and set it as same GUID.
     BookmarkRecord remote = BookmarkHelpers.createBookmark2();
     remote.guid = local.guid;
     remote.lastModified = local.lastModified + 1000;
-    getSession().store(remote, new ExpectStoredDelegate(remote.guid));
-    performWait();
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
 
     String[] expected = new String[] { local.guid };
     ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
-    getSession().fetchAll(delegate);
-    performWait();
+    performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, it is the remote one, and has android
     // ID same as first.
@@ -148,21 +165,20 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     BookmarkRecord local = BookmarkHelpers.createBookmark1();
     local.androidID = 54321;
     local.lastModified = timestamp;
-    getSession().store(local, new ExpectStoredDelegate(local.guid));
-    performWait();
+    Runnable localRunnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(localRunnable);
 
     // Create an older version of a record with the same GUID.
     BookmarkRecord remote = BookmarkHelpers.createBookmark2();
     remote.guid = local.guid;
     remote.lastModified = timestamp - 100;
-    getSession().store(remote, new ExpectStoredDelegate(remote.guid));
-    performWait();
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
 
     // Do a fetch and make sure that we get back the first (local) record.
     String[] expected = new String[] { local.guid };
     ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
-    getSession().fetchAll(delegate);
-    performWait();
+    performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, it is the local one
     assertEquals(1, delegate.recordCount());
@@ -182,21 +198,20 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     // Automatically will be assigned lastModified = current time.
     BookmarkRecord local = BookmarkHelpers.createBookmark1();
     local.androidID = 54321;
-    getSession().store(local, new ExpectStoredDelegate(local.guid));
-    performWait();
+    Runnable local1Runnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(local1Runnable);
 
     // Pass the same record to store, but mark it deleted and modified
     // more recently
     local.lastModified = local.lastModified + 1000;
     local.deleted = true;
     local.androidID = 0;
-    getSession().store(local, new ExpectStoredDelegate(local.guid));
-    performWait();
+    Runnable local2Runnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(local2Runnable);
 
     String[] expected = new String[] { local.guid };
     ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
-    getSession().fetchAll(delegate);
-    performWait();
+    performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, marked deleted and with
     // and androidId
@@ -221,22 +236,21 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     BookmarkRecord local = BookmarkHelpers.createBookmark1();
     local.androidID = 54321;
     local.lastModified = timestamp;
-    getSession().store(local, new ExpectStoredDelegate(local.guid));
-    performWait();
+    Runnable localRunnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(localRunnable);
 
     // Create an older version of a record with the same GUID.
     BookmarkRecord remote = BookmarkHelpers.createBookmark1();
     remote.guid = local.guid;
     remote.lastModified = timestamp - 100;
     remote.deleted = true;
-    getSession().store(remote, new ExpectStoredDelegate(remote.guid));
-    performWait();
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
 
     // Do a fetch and make sure that we get back the first (local) record.
     String[] expected = new String[] { local.guid };
     ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
-    getSession().fetchAll(delegate);
-    performWait();
+    performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, it is the local one, and not deleted
     assertEquals(1, delegate.recordCount());
@@ -258,15 +272,13 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     BookmarkRecord remote = BookmarkHelpers.createBookmark1(); 
     remote.lastModified = timestamp;
     remote.deleted = true;
-    getSession().store(remote, new ExpectStoredDelegate(remote.guid));
-    performWait();
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
 
     ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(new String[]{});
-    getSession().fetchAll(delegate);
-    performWait();
+    performWait(getFetchAllRunnable(delegate));
 
     // Check that no records are returned
     assertEquals(0, delegate.records.length);
-    
   }
 }
