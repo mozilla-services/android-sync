@@ -6,8 +6,12 @@ package org.mozilla.android.sync.test;
 import org.mozilla.android.sync.MainActivity;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksDatabaseHelper;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
+import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
+import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 
@@ -90,6 +94,16 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     BookmarkRecord bookmark = BookmarkHelpers.createSeparator();
     getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
     performWait();
+  }
+  
+  public void testStoreNullRecord() {
+    prepSession();
+    try {
+      getSession().store(null, new DefaultStoreDelegate());
+      fail("Should throw.");
+    } catch (Exception ex) {
+      assertNotNull(ex);
+    }
   }
 
   /*
