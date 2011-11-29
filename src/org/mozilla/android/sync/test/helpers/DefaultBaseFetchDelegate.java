@@ -13,7 +13,7 @@ import org.mozilla.android.sync.repositories.domain.Record;
 import android.util.Log;
 
 public class DefaultBaseFetchDelegate extends DefaultDelegate {
-  public Record[]       records = new Record[0];
+  public Record[] records = new Record[0];
 
   protected void onDone(Record[] records, String[] expected) {
     Log.i("rnewman", "onDone. Test Waiter is " + testWaiter());

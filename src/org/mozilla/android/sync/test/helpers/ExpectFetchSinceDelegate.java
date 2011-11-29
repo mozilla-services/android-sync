@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 import org.mozilla.android.sync.repositories.domain.Record;
 
-public class ExpectFetchSinceDelegate extends DefaultFetchSinceDelegate {
+public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   private String[] expected;
   private long earliest;
 
@@ -21,7 +21,8 @@ public class ExpectFetchSinceDelegate extends DefaultFetchSinceDelegate {
     Arrays.sort(expected);
   }
 
-  public void onFetchSinceSucceeded(Record[] records) {
+  @Override
+  public void onFetchSucceeded(Record[] records) {
     AssertionError err = null;
     try {
       assertEquals(records.length, this.expected.length);

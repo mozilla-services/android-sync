@@ -17,6 +17,7 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
     Arrays.sort(expected);
   }
 
+  @Override
   public void onFetchSucceeded(Record[] records) {
     Log.i("rnewman", "fetchCallback: " + ((records == null) ? "null" : "" + records.length) + " records.");
 

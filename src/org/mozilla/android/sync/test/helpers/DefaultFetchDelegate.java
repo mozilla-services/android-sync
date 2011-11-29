@@ -3,15 +3,17 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
-public class DefaultFetchDelegate extends DefaultBaseFetchDelegate implements RepositorySessionFetchDelegate {
+public class DefaultFetchDelegate extends DefaultBaseFetchDelegate implements RepositorySessionFetchRecordsDelegate {
 
+  @Override
   public void onFetchFailed(Exception ex) {
     sharedFail("Shouldn't fail");
   }
 
+  @Override
   public void onFetchSucceeded(Record[] records) {
     sharedFail("Hit default delegate");
   }

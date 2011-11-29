@@ -9,15 +9,16 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.util.Log;
 
-public class ExpectFetchAllDelegate extends DefaultFetchAllDelegate {
+public class ExpectFetchAllDelegate extends DefaultFetchDelegate {
   private String[]      expected;
 
   public ExpectFetchAllDelegate(String[] guids) {
     expected = guids;
     Arrays.sort(expected);
   }
-  
-  public void onFetchAllSucceeded(Record[] records) {
+
+  @Override
+  public void onFetchSucceeded(Record[] records) {
     Log.i("rnewman", "fetchAllCallback: " + ((records == null) ? "null" : "" + records.length) + " records.");
 
     // Accumulate records.   
