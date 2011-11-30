@@ -30,12 +30,20 @@ public class AndroidBookmarksTestHelper {
     super();
   }
 
-  public static BookmarksRepository prepareRepositorySession(Context context, DefaultSessionCreationDelegate delegate, long lastSyncTimestamp, boolean begin) {
-    BookmarksRepository repository = new BookmarksRepository();
+  public static BookmarksRepository prepareRepositorySession(final Context context,
+                                                             final DefaultSessionCreationDelegate delegate,
+                                                             final long lastSyncTimestamp,
+                                                             boolean begin) {
+    final BookmarksRepository repository = new BookmarksRepository();
     try {
-      repository.createSession(context, delegate, lastSyncTimestamp);
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          repository.createSession(context, delegate, lastSyncTimestamp);
+        }
+      };
       Log.i("rnewman", "Calling wait.");
-      testWaiter.performWait();
+      testWaiter.performWait(runnable);
     } catch (IllegalArgumentException ex) {
       Log.w("prepareRepositorySession", "Caught IllegalArgumentException.");
     }
@@ -49,8 +57,13 @@ public class AndroidBookmarksTestHelper {
 
   public static void prepEmptySession(Context context) {
     prepareRepositorySession(context, new SetupDelegate(), 0, true);
-    session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
-    testWaiter.performWait();
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
+      }
+    };
+    testWaiter.performWait(runnable);
   }
   
   public static void prepEmptySessionWithoutBegin(Context context) {
