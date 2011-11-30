@@ -43,6 +43,9 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   private void performWait() {
     AndroidBookmarksTestHelper.testWaiter.performWait();
   }
+  private void performNotfiy() {
+    AndroidBookmarksTestHelper.testWaiter.performNotify();
+  }
   private BookmarksRepositorySession getSession() {
     return AndroidBookmarksTestHelper.session;
   }
@@ -296,11 +299,14 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     getSession().fetch(new String[] { Utils.generateGuid() }, new RepositorySessionFetchRecordsDelegate() {
       public void onFetchSucceeded(Record[] records) {
         fail("Session inactive, should fail");
+        performNotfiy();
       }
       public void onFetchFailed(Exception ex) {
         verifyInactiveException(ex);
+        performNotfiy();
       }
     });
+    performWait();
   }
   
   public void testGuidsSinceOnUnstartedSession() {
@@ -308,11 +314,14 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     getSession().guidsSince(System.currentTimeMillis(), new RepositorySessionGuidsSinceDelegate() {
       public void onGuidsSinceSucceeded(String[] guids) {
         fail("Session inactive, should fail");
+        performNotfiy();
       }
       public void onGuidsSinceFailed(Exception ex) {
         verifyInactiveException(ex);
+        performNotfiy();
       }
     });
+    performWait();
   }
   
   private void verifyInactiveException(Exception ex) {
@@ -343,12 +352,14 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     // Wipe
     getSession().wipe(new RepositorySessionWipeDelegate() {
       public void onWipeSucceeded() {
-        //no-op: Passes
+        performNotfiy();
       }
       public void onWipeFailed(Exception ex) {
         fail("wipe should have succeeded");
+        performNotfiy();
       }
     });
+    performWait();
   }
 
 }
