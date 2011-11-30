@@ -39,6 +39,7 @@ package org.mozilla.android.sync.repositories.bookmarks;
 
 import java.util.ArrayList;
 
+import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.InvalidRequestException;
 import org.mozilla.android.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.android.sync.repositories.Repository;
@@ -99,7 +100,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     public void run() {
       if (!confirmSessionActive()) {
-        callbackReceiver.handleException(new InactiveSessionException(null));
+        delegate.onGuidsSinceFailed(new InactiveSessionException(null));
         return;
       }
 
@@ -140,7 +141,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     public void run() {
       if (!confirmSessionActive()) {
-        callbackReceiver.handleException(new InactiveSessionException(null));
+        delegate.onFetchFailed(new InactiveSessionException(null));
         return;
       }
 
@@ -177,7 +178,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     public void run() {
       if (!confirmSessionActive()) {
-        callbackReceiver.handleException(new InactiveSessionException(null));
+        delegate.onFetchFailed(new InactiveSessionException(null));
         return;
       }
 
@@ -221,7 +222,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     public void run() {
       if (!confirmSessionActive()) {
-        callbackReceiver.handleException(new InactiveSessionException(null));
+        delegate.onFetchFailed(new InactiveSessionException(null));
         return;
       }
 
@@ -242,27 +243,27 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   // Store method and thread
   @Override
-  public void store(Record record, RepositorySessionStoreDelegate receiver) {
-    StoreThread thread = new StoreThread(record, receiver);
+  public void store(Record record, RepositorySessionStoreDelegate delegate) {
+    StoreThread thread = new StoreThread(record, delegate);
     thread.start();
   }
 
   class StoreThread extends Thread {
     private BookmarkRecord record;
-    private RepositorySessionStoreDelegate callbackReceiver;
+    private RepositorySessionStoreDelegate delegate;
 
-    public StoreThread(Record record, RepositorySessionStoreDelegate callbackReceiver) {
+    public StoreThread(Record record, RepositorySessionStoreDelegate delegate) {
       if (record == null) {
         Log.e(tag, "Record sent to store was null");
         throw new IllegalArgumentException("record is null.");
       }
       this.record = (BookmarkRecord) record;
-      this.callbackReceiver = callbackReceiver;
+      this.delegate = delegate;
     }
 
     public void run() {
       if (!confirmSessionActive()) {
-        callbackReceiver.onStoreFailed(new InactiveSessionException(null));
+        delegate.onStoreFailed(new InactiveSessionException(null));
         return;
       }
 
@@ -271,7 +272,7 @@ public class BookmarksRepositorySession extends RepositorySession {
         existingRecord = findExistingRecord();
       } catch (MultipleRecordsForGuidException e) {
         Log.e(tag, "Multiple records returned for given guid: " + record.guid);
-        callbackReceiver.onStoreFailed(e);
+        delegate.onStoreFailed(e);
         return;
       }
       
@@ -298,7 +299,7 @@ public class BookmarksRepositorySession extends RepositorySession {
       }
 
       // Invoke callback with result.
-      callbackReceiver.onStoreSucceeded(record);
+      delegate.onStoreSucceeded(record);
     }
 
     // Check if record already exists locally
@@ -331,7 +332,7 @@ public class BookmarksRepositorySession extends RepositorySession {
 
     public void run() {
       if (!confirmSessionActive()) {
-        callbackReceiver.handleException(new InactiveSessionException(null));
+        delegate.onWipeFailed(new InactiveSessionException(null));
         return;
       }
       dbHelper.wipe();

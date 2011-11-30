@@ -47,14 +47,17 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDel
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
-public abstract class RepositorySession {
+import android.util.Log;
 
+public abstract class RepositorySession {
+  
   public enum SessionStatus {
     UNSTARTED,
     ACTIVE,
     DONE
   }
 
+  private static final String tag = "RepositorySession";
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
   protected RepositorySessionCreationDelegate callbackReceiver;
@@ -80,23 +83,24 @@ public abstract class RepositorySession {
      if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;
       this.syncBeginTimestamp = System.currentTimeMillis();
-      delegate.beginCallback(RepoStatusCode.DONE);
+      delegate.onBeginSucceeded();
     } else {
-      delegate.beginCallback(RepoStatusCode.INVALID_SESSION_STATE_TRANSITION);
+      Log.e(tag, "Tried to begin() an already active or finished session");
+      delegate.onBeginFailed(new InvalidSessionTransitionException(null));
     }
   }
 
   public void finish(RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
-      delegate.finishCallback(RepoStatusCode.DONE);
+      delegate.onFinishSucceeded();
     } else {
-      delegate.finishCallback(RepoStatusCode.INVALID_SESSION_STATE_TRANSITION);
+      Log.e(tag, "Tried to finish() an unstarted or already finished session");
+      delegate.onFinishFailed(new InvalidSessionTransitionException(null));
     }
   }
-
+ 
   protected boolean confirmSessionActive() {
     return status == SessionStatus.ACTIVE ? true : false;
   }
-
 }

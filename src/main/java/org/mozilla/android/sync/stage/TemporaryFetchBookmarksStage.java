@@ -48,6 +48,7 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.mozilla.android.sync.net.WBOCollectionRequestDelegate;
+import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
