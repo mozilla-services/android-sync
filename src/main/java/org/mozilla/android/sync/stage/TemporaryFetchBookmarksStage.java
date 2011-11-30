@@ -95,8 +95,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
         return;
       }
       this.bookmarksKeyBundle = collectionKeys.keyBundleForCollection("bookmarks");
-      request = new SyncStorageCollectionRequest(
-          bookmarksURI);
+      request = new SyncStorageCollectionRequest(bookmarksURI);
       request.delegate = this;
       
       bookmarksRepo = new BookmarksRepository();
