@@ -42,7 +42,6 @@ import java.util.ArrayList;
 
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDatabaseHelper;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
@@ -64,16 +63,14 @@ public abstract class RepositorySession {
   private static final String tag = "RepositorySession";
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
-  protected RepositorySessionCreationDelegate callbackReceiver;
   protected AndroidBrowserRepositoryDatabaseHelper dbHelper;
 
   // The time that the last sync on this collection completed, in milliseconds.
   protected long lastSyncTimestamp;
   protected long syncBeginTimestamp;
 
-  public RepositorySession(Repository repository, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp) {
+  public RepositorySession(Repository repository, long lastSyncTimestamp) {
     this.repository = repository;
-    this.callbackReceiver = delegate;
     this.lastSyncTimestamp = lastSyncTimestamp;
   }
 

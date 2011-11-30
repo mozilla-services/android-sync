@@ -41,7 +41,6 @@ import java.util.ArrayList;
 
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -51,8 +50,8 @@ import android.database.Cursor;
 public class AndroidBrowserBookmarksRepositorySession extends RepositorySession {
 
   public AndroidBrowserBookmarksRepositorySession(Repository repository,
-      RepositorySessionCreationDelegate callbackReciever, Context context, long lastSyncTimestamp) {
-    super(repository, callbackReciever, lastSyncTimestamp);
+      Context context, long lastSyncTimestamp) {
+    super(repository, lastSyncTimestamp);
     dbHelper = new AndroidBrowserBookmarksDatabaseHelper(context);
   }
   
