@@ -6,11 +6,8 @@ package org.mozilla.android.sync.test;
 import org.mozilla.android.sync.MainActivity;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksDatabaseHelper;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
-import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
-import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
@@ -47,7 +44,6 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
 
   Runnable getStoreRunnable(final BookmarkRecord bookmark, final ExpectStoredDelegate delegate) {
     return new Runnable() {
-      @Override
       public void run() {
         getSession().store(bookmark, delegate);
       }
@@ -55,7 +51,6 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
   }
   Runnable getFetchAllRunnable(final ExpectFetchAllDelegate delegate) {
     return new Runnable() {
-      @Override
       public void run() {
         getSession().fetchAll(delegate);
       }
@@ -112,16 +107,6 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     BookmarkRecord bookmark = BookmarkHelpers.createSeparator();
     Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
     performWait(runnable);
-  }
-  
-  public void testStoreNullRecord() {
-    prepSession();
-    try {
-      getSession().store(null, new DefaultStoreDelegate());
-      fail("Should throw.");
-    } catch (Exception ex) {
-      assertNotNull(ex);
-    }
   }
   
   public void testStoreNullRecord() {

@@ -3,10 +3,12 @@
 
 package org.mozilla.android.sync.test;
 
+import static junit.framework.Assert.fail;
+
+import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 
@@ -39,6 +41,12 @@ public class AndroidBookmarksTestHelper {
     } catch (IllegalArgumentException ex) {
       Log.w("prepareRepositorySession", "Caught IllegalArgumentException.");
     }
+    
+    try {
+      session.begin();
+    } catch (InvalidSessionTransitionException ex) {
+      fail("Begin failed");
+    }
 
     return repository;
   }
@@ -47,7 +55,6 @@ public class AndroidBookmarksTestHelper {
     prepareRepositorySession(context, new SetupDelegate(), 0);
   
     // Ensure there are no records.
-    session.begin(new ExpectBeginDelegate());
     session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
     testWaiter.performWait();
   }
