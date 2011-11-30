@@ -44,7 +44,6 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
 
   Runnable getStoreRunnable(final BookmarkRecord bookmark, final ExpectStoredDelegate delegate) {
     return new Runnable() {
-      @Override
       public void run() {
         getSession().store(bookmark, delegate);
       }
@@ -52,7 +51,6 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
   }
   Runnable getFetchAllRunnable(final ExpectFetchAllDelegate delegate) {
     return new Runnable() {
-      @Override
       public void run() {
         getSession().fetchAll(delegate);
       }
