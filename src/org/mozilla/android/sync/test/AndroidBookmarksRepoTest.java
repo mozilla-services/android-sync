@@ -4,17 +4,24 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
+import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.Utils;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksDatabaseHelper;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectBeginFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
@@ -42,6 +49,11 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   private void prepEmptySession() {
     AndroidBookmarksTestHelper.prepEmptySession(getApplicationContext());
   }
+  
+  private void prepEmptySessionWithoutBegin() {
+    AndroidBookmarksTestHelper.prepEmptySessionWithoutBegin(getApplicationContext());
+  }
+  
   private static BookmarksDatabaseHelper helper;
 
   private void wipe() {
@@ -77,7 +89,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
 
   public void testFetchAll() {
     Log.i("rnewman", "Starting testFetchAll.");
-    AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0);
+    AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0, true);
     Log.i("rnewman", "Prepared.");
     Record[] expected = new Record[2];
     String[] expectedGUIDs = new String[2];
@@ -245,6 +257,67 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     prepEmptySession();
     getSession().fetch(null, new ExpectInvalidRequestFetchDelegate());
     performWait();
+  }
+  
+  /*
+   * Test begin/finish
+   */
+  public void testBeginOnNewSession() {
+    prepEmptySessionWithoutBegin();
+    getSession().begin(new ExpectBeginDelegate());
+  }
+  
+  public void testBeginOnRunningSession() {
+    prepEmptySession();
+    getSession().begin(new ExpectBeginFailDelegate());
+  }
+  
+  public void testBeginOnFinishedSession() {
+    prepEmptySession();
+    getSession().finish(new ExpectFinishDelegate());
+    getSession().begin(new ExpectBeginFailDelegate());
+  }
+  
+  public void testFinishOnFinishedSession() {
+    prepEmptySession();
+    getSession().finish(new ExpectFinishDelegate());
+    getSession().finish(new ExpectFinishFailDelegate());
+  }
+  
+  public void testFetchOnInactiveSession() {
+    prepEmptySessionWithoutBegin();
+    getSession().finish(new ExpectFinishFailDelegate());
+  }
+  
+  public void testFetchOnFinishedSession() {
+    prepEmptySession();
+    getSession().finish(new ExpectFinishDelegate());
+    getSession().fetch(new String[] { Utils.generateGuid() }, new RepositorySessionFetchRecordsDelegate() {
+      public void onFetchSucceeded(Record[] records) {
+        fail("Session inactive, should fail");
+      }
+      public void onFetchFailed(Exception ex) {
+        verifyInactiveException(ex);
+      }
+    });
+  }
+  
+  public void testGuidsSinceOnUnstartedSession() {
+    prepEmptySessionWithoutBegin();
+    getSession().guidsSince(System.currentTimeMillis(), new RepositorySessionGuidsSinceDelegate() {
+      public void onGuidsSinceSucceeded(String[] guids) {
+        fail("Session inactive, should fail");
+      }
+      public void onGuidsSinceFailed(Exception ex) {
+        verifyInactiveException(ex);
+      }
+    });
+  }
+  
+  private void verifyInactiveException(Exception ex) {
+    if (ex.getClass() != InactiveSessionException.class) {
+      fail("Wrong exception type");
+    }
   }
 
 }

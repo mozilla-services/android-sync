@@ -33,7 +33,7 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
   }
 
   private void prepSession() {
-    AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0);
+    AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0, true);
     // Clear old data.
     new BookmarksDatabaseHelper(getApplicationContext()).wipe();
   }
