@@ -86,7 +86,7 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
   }
 
   @Override
-  public void handleSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncStorageResponse response) {
     CollectionKeys k = new CollectionKeys();
     try {
       ExtendedJSONObject body = response.jsonObjectBody();
@@ -121,12 +121,12 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
   }
 
   @Override
-  public void handleFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncStorageResponse response) {
     session.handleHTTPError(response, "Failure fetching keys.");
   }
 
   @Override
-  public void handleError(Exception ex) {
+  public void handleRequestError(Exception ex) {
     session.abort(ex, "Failure fetching keys.");
   }
 

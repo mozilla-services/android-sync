@@ -116,19 +116,19 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   }
 
   @Override
-  public void handleSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncStorageResponse response) {
     Log.i("rnewman", "Bookmarks stage got handleSuccess!");  
     bookmarksSession.finish(this);
   }
 
   @Override
-  public void handleFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncStorageResponse response) {
     Log.i("rnewman", "Bookmarks stage got handleFailure!");
     Log.i("rnewman", "Response: " + response.httpResponse().getStatusLine());
   }
 
   @Override
-  public void handleError(Exception ex) {
+  public void handleRequestError(Exception ex) {
     Log.i("rnewman", "Bookmarks stage got handleError!");
   }
 

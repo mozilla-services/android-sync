@@ -52,13 +52,13 @@ public abstract class WBOCollectionRequestDelegate extends
   public abstract KeyBundle keyBundle();
   
   @Override
-  public void handleProgress(String progress) {
+  public void handleRequestProgress(String progress) {
     try {
       CryptoRecord record = CryptoRecord.fromJSONRecord(progress);
       record.keyBundle = this.keyBundle();
       this.handleWBO(record);
     } catch (Exception e) {
-      this.handleError(e);
+      this.handleRequestError(e);
       // TODO: abort?! Allow exception to propagate to fail?
     }
   }

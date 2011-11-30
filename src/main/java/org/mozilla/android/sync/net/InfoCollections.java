@@ -137,7 +137,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     return null;
   }
 
-  public void handleSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncStorageResponse response) {
     if (response.wasSuccessful()) {
       try {
         this.unpack(response);
@@ -153,12 +153,12 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     this.callback = null;
   }
 
-  public void handleFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncStorageResponse response) {
     this.callback.handleFailure(response);
     this.callback = null;
   }
 
-  public void handleError(Exception e) {
+  public void handleRequestError(Exception e) {
     this.callback.handleError(e);
     this.callback = null;
   }

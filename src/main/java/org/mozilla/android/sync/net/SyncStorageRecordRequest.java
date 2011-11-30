@@ -103,7 +103,7 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     try {
       this.resource.post(jsonEntity(body));
     } catch (UnsupportedEncodingException e) {
-      this.delegate.handleError(e);
+      this.delegate.handleRequestError(e);
     }
   }
 
@@ -112,7 +112,7 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     try {
       this.resource.put(jsonEntity(body));
     } catch (UnsupportedEncodingException e) {
-      this.delegate.handleError(e);
+      this.delegate.handleRequestError(e);
     }
   }
 }

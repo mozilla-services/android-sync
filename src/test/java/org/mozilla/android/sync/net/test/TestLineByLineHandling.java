@@ -46,7 +46,7 @@ public class TestLineByLineHandling {
       SyncStorageCollectionRequestDelegate {
 
     @Override
-    public void handleProgress(String progress) {
+    public void handleRequestProgress(String progress) {
       lines.add(progress);
     }
 
@@ -61,7 +61,7 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public void handleSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertEquals(res.reason(), SyncStorageResponse.Reason.SUCCESS);
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
@@ -75,12 +75,12 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public void handleFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncStorageResponse response) {
       fail("Should not be called.");
     }
 
     @Override
-    public void handleError(Exception ex) {
+    public void handleRequestError(Exception ex) {
       fail("Should not be called.");
     }
   }

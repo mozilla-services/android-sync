@@ -50,9 +50,9 @@ public interface ResourceDelegate {
   void addHeaders(HttpRequestBase request, DefaultHttpClient client);
 
   // Response handling.
-  void handleResponse(HttpResponse response);
-  void handleProtocolException(ClientProtocolException e);
-  void handleIOException(IOException e);
+  void handleHttpResponse(HttpResponse response);
+  void handleHttpProtocolException(ClientProtocolException e);
+  void handleHttpIOException(IOException e);
 
   // Connection parameters.
   int connectionTimeout();

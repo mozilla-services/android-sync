@@ -83,9 +83,9 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
     }
 
     @Override
-    public void handleResponse(HttpResponse response) {
+    public void handleHttpResponse(HttpResponse response) {
       if (response.getStatusLine().getStatusCode() != 200) {
-        super.handleResponse(response);
+        super.handleHttpResponse(response);
         return;
       }
 
@@ -94,7 +94,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
       System.out.println("content type is " + contentType.getValue());
       if (!contentType.getValue().startsWith("application/newlines")) {
         // Not incremental!
-        super.handleResponse(response);
+        super.handleHttpResponse(response);
         return;
       }
 
@@ -111,14 +111,14 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
         // This relies on connection timeouts at the HTTP layer.
         while (null != (line = br.readLine())) {
           try {
-            delegate.handleProgress(line);
+            delegate.handleRequestProgress(line);
           } catch (Exception ex) {
-            delegate.handleError(new HandleProgressException(ex));
+            delegate.handleRequestError(new HandleProgressException(ex));
             return;
           }
         }
       } catch (IOException ex) {
-        delegate.handleError(ex);
+        delegate.handleRequestError(ex);
         return;
       } finally {
         // Attempt to close the stream and reader.
@@ -132,7 +132,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
       }
       // We're done processing the entity. Don't let fetching the body succeed!
       response.setEntity(new CompletedEntity(entity));
-      delegate.handleSuccess(new SyncStorageResponse(response));
+      delegate.handleRequestSuccess(new SyncStorageResponse(response));
     }
   }
 }

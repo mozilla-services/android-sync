@@ -168,7 +168,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     return null;
   }
 
-  public void handleSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncStorageResponse response) {
     if (this.isUploading) {
       this.handleUploadSuccess(response);
     } else {
@@ -198,7 +198,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback = null;
   }
 
-  public void handleFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncStorageResponse response) {
     if (response.getStatusCode() == 404) {
       this.response = response;
       this.callback.handleMissing(this);
@@ -209,7 +209,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback = null;
   }
 
-  public void handleError(Exception e) {
+  public void handleRequestError(Exception e) {
     this.callback.handleError(e);
     this.callback = null;
   }

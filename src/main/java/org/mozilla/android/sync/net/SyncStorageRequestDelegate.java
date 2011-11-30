@@ -40,7 +40,7 @@ package org.mozilla.android.sync.net;
 public interface SyncStorageRequestDelegate {
   String credentials();
   String ifUnmodifiedSince();
-  void handleSuccess(SyncStorageResponse response);
-  void handleFailure(SyncStorageResponse response);
-  void handleError(Exception ex);
+  void handleRequestSuccess(SyncStorageResponse response);
+  void handleRequestFailure(SyncStorageResponse response);
+  void handleRequestError(Exception ex);
 }

@@ -28,17 +28,17 @@ public class TestResource {
     }
 
     @Override
-    public void handleResponse(HttpResponse response) {
+    public void handleHttpResponse(HttpResponse response) {
       fail("Should not occur.");
     }
 
     @Override
-    public void handleProtocolException(ClientProtocolException e) {
+    public void handleHttpProtocolException(ClientProtocolException e) {
       fail("Should not occur.");
     }
 
     @Override
-    public void handleIOException(IOException e) {
+    public void handleHttpIOException(IOException e) {
       fail("Should not occur.");
     }
   }
@@ -50,7 +50,7 @@ public class TestResource {
     }
 
     @Override
-    public void handleResponse(HttpResponse response) {
+    public void handleHttpResponse(HttpResponse response) {
       assertEquals(response.getStatusLine().getStatusCode(), 200);
       data.stopHTTPServer();
     }

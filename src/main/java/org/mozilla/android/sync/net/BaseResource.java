@@ -126,11 +126,11 @@ public class BaseResource implements Resource {
   private void execute() {
     try {
       HttpResponse response = client.execute(request, context);
-      delegate.handleResponse(response);
+      delegate.handleHttpResponse(response);
     } catch (ClientProtocolException e) {
-      delegate.handleProtocolException(e);
+      delegate.handleHttpProtocolException(e);
     } catch (IOException e) {
-      delegate.handleIOException(e);
+      delegate.handleHttpIOException(e);
     }
   }
 

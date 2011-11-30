@@ -84,24 +84,24 @@ public class SyncStorageRequest implements Resource {
     }
 
     @Override
-    public void handleResponse(HttpResponse response) {
+    public void handleHttpResponse(HttpResponse response) {
       SyncStorageRequestDelegate d = this.request.delegate;
       SyncStorageResponse res = new SyncStorageResponse(response);
       if (res.wasSuccessful()) {
-        d.handleSuccess(res);
+        d.handleRequestSuccess(res);
       } else {
-        d.handleFailure(res);
+        d.handleRequestFailure(res);
       }
     }
 
     @Override
-    public void handleProtocolException(ClientProtocolException e) {
-      this.request.delegate.handleError(e);
+    public void handleHttpProtocolException(ClientProtocolException e) {
+      this.request.delegate.handleRequestError(e);
     }
 
     @Override
-    public void handleIOException(IOException e) {
-      this.request.delegate.handleError(e);
+    public void handleHttpIOException(IOException e) {
+      this.request.delegate.handleRequestError(e);
     }
 
     @Override

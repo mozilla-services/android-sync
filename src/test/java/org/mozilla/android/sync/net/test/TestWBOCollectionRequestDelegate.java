@@ -41,7 +41,7 @@ public class TestWBOCollectionRequestDelegate {
     }    
 
     @Override
-    public void handleSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncStorageResponse response) {
       System.out.println("WBOs: " + this.wbos.size());
       assertEquals(wbos.size(), 13);
       for (CryptoRecord record : this.wbos) {
@@ -57,12 +57,12 @@ public class TestWBOCollectionRequestDelegate {
     }
 
     @Override
-    public void handleFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncStorageResponse response) {
       fail("Should not fail.");
     }
 
     @Override
-    public void handleError(Exception ex) {
+    public void handleRequestError(Exception ex) {
       fail("Should not error.");
     }
 

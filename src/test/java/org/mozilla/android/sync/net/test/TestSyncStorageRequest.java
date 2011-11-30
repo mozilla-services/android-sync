@@ -46,19 +46,19 @@ public class TestSyncStorageRequest {
     }
 
     @Override
-    public void handleSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncStorageResponse res) {
       fail("Should not be called.");
     }
 
     @Override
-    public void handleFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncStorageResponse response) {
       System.out.println("Response: "
           + response.httpResponse().getStatusLine().getStatusCode());
       fail("Should not be called.");
     }
 
     @Override
-    public void handleError(Exception e) {
+    public void handleRequestError(Exception e) {
       fail("Should not be called.");
     }
   }
@@ -66,7 +66,7 @@ public class TestSyncStorageRequest {
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
     @Override
-    public void handleSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertEquals(res.reason(), SyncStorageResponse.Reason.SUCCESS);
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
@@ -78,7 +78,7 @@ public class TestSyncStorageRequest {
     public boolean shouldDecrypt = false;
 
     @Override
-    public void handleSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertEquals(res.reason(), SyncStorageResponse.Reason.SUCCESS);
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
