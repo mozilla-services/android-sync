@@ -42,6 +42,33 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreation
 
 import android.content.Context;
 
-public interface Repository {
-  public void createSession(Context context, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp);
+public abstract class Repository {
+  
+  protected RepositorySessionCreationDelegate delegate;
+  
+  public void createSession(Context context, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp) {
+    this.delegate = delegate;
+    CreateSessionThread thread = new CreateSessionThread(context, lastSyncTimestamp);
+    thread.start();
+  }
+  
+  protected abstract void sessionCreator(Context context, long lastSyncTimestamp); 
+  
+  class CreateSessionThread extends Thread {
+
+    private Context context;
+    private long lastSyncTimestamp;
+
+    public CreateSessionThread(Context context, long lastSyncTimestamp) {
+      if (context == null) {
+        throw new IllegalArgumentException("context is null.");
+      }
+      this.context = context;
+      this.lastSyncTimestamp = lastSyncTimestamp;
+    }
+
+    public void run() {
+      sessionCreator(context, lastSyncTimestamp);
+    }
+  }
 }

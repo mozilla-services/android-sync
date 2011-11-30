@@ -39,36 +39,13 @@
 package org.mozilla.android.sync.repositories.bookmarks;
 
 import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;
 
-public class BookmarksRepository implements Repository {
+public class BookmarksRepository extends Repository {
 
-  public void createSession(Context context, RepositorySessionCreationDelegate callbackMechanism,long lastSyncTimestamp) {
-    CreateSessionThread thread = new CreateSessionThread(context, callbackMechanism, lastSyncTimestamp);
-    thread.start();
-  }
-
-  class CreateSessionThread extends Thread {
-
-    private Context context;
-    private RepositorySessionCreationDelegate callbackMechanism;
-    private long lastSyncTimestamp;
-
-    public CreateSessionThread(Context context, RepositorySessionCreationDelegate callbackMechanism,
-        long lastSyncTimestamp) {
-      if (context == null) {
-        throw new IllegalArgumentException("context is null.");
-      }
-      this.context = context;
-      this.callbackMechanism = callbackMechanism;
-      this.lastSyncTimestamp = lastSyncTimestamp;
-    }
-
-    public void run() {
-      BookmarksRepositorySession session = new BookmarksRepositorySession(BookmarksRepository.this, callbackMechanism, context, lastSyncTimestamp);
-      callbackMechanism.onSessionCreated(session);
-    }
+  protected void sessionCreator(Context context, long lastSyncTimestamp) {
+    BookmarksRepositorySession session = new BookmarksRepositorySession(BookmarksRepository.this, delegate, context, lastSyncTimestamp);
+    delegate.onSessionCreated(session);
   }
 }
