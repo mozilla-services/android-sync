@@ -69,12 +69,14 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
     RepositorySessionFinishDelegate,
     RepositorySessionStoreDelegate {
 
+
   private GlobalSession session;
   private KeyBundle bookmarksKeyBundle;
   private BookmarksRepository bookmarksRepo;
   private BookmarksRepositorySession bookmarksSession;
   private SyncStorageCollectionRequest request;
 
+  private SyncStorageResponse httpError;
   private DelayedWorkTracker workTracker = new DelayedWorkTracker();
 
   @Override
@@ -135,6 +137,9 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   public void handleRequestFailure(SyncStorageResponse response) {
     Log.i("rnewman", "Bookmarks stage got handleFailure!");
     Log.i("rnewman", "Response: " + response.httpResponse().getStatusLine());
+    // HTTP error => no records in progress. Just finish.
+    this.httpError = response;
+    bookmarksSession.finish(this);
   }
 
   @Override
@@ -203,11 +208,21 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
 
   @Override
   public void onFinishFailed(Exception ex) {
+    if (this.httpError != null) {
+      Log.i("rnewman", "onFinishFailed with exception " + ex + " after HTTP fetch failed. Aborting session.");
+      this.session.handleHTTPError(this.httpError, "HTTP error in fetch. Failed session finish.");
+      return;
+    }
     this.session.abort(ex, "Finish of BookmarksRepositorySession failed.");
   }
 
   @Override
   public void onFinishSucceeded() {
+    if (this.httpError != null) {
+      Log.i("rnewman", "Aborting session due to earlier HTTP error.");
+      this.session.handleHTTPError(this.httpError, "HTTP error in fetch. Successful session finish.");
+      return;
+    }
     try {
       this.session.advance();
     } catch (NoSuchStageException e) {
