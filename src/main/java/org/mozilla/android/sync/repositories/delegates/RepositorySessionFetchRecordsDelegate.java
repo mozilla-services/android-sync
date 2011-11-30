@@ -38,7 +38,6 @@
 
 package org.mozilla.android.sync.repositories.delegates;
 
-import org.mozilla.android.sync.SyncException;
 import org.mozilla.android.sync.repositories.domain.Record;
 
 public interface RepositorySessionFetchRecordsDelegate {
