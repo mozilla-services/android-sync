@@ -49,6 +49,13 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 public abstract class RepositorySession {
 
+  public enum SessionStatus {
+    UNSTARTED,
+    ACTIVE,
+    DONE
+  }
+
+  protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
   protected RepositorySessionCreationDelegate callbackReceiver;
 
@@ -70,11 +77,26 @@ public abstract class RepositorySession {
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
   
   public void begin(RepositorySessionBeginDelegate delegate) {
-    this.syncBeginTimestamp = System.currentTimeMillis();
+     if (this.status == SessionStatus.UNSTARTED) {
+      this.status = SessionStatus.ACTIVE;
+      this.syncBeginTimestamp = System.currentTimeMillis();
+      delegate.beginCallback(RepoStatusCode.DONE);
+    } else {
+      delegate.beginCallback(RepoStatusCode.INVALID_SESSION_STATE_TRANSITION);
+    }
   }
 
   public void finish(RepositorySessionFinishDelegate delegate) {
-    //no-op for now, but this will change once newest repositores code hits this branch
+    if (this.status == SessionStatus.ACTIVE) {
+      this.status = SessionStatus.DONE;
+      delegate.finishCallback(RepoStatusCode.DONE);
+    } else {
+      delegate.finishCallback(RepoStatusCode.INVALID_SESSION_STATE_TRANSITION);
+    }
+  }
+
+  protected boolean confirmSessionActive() {
+    return status == SessionStatus.ACTIVE ? true : false;
   }
 
 }

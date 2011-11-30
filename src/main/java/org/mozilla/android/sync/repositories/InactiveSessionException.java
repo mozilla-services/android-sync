@@ -19,7 +19,6 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -38,10 +37,14 @@
 
 package org.mozilla.android.sync.repositories;
 
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.SyncException;
 
-import android.content.Context;
+public class InactiveSessionException extends SyncException {
+  
+  private static final long serialVersionUID = 537241160815940991L;
 
-public interface Repository {
-  public void createSession(Context context, RepositorySessionCreationDelegate delegate, long lastSyncTimestamp);
+  public InactiveSessionException(Exception ex) {
+    super(ex);
+  }
+
 }

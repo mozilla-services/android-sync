@@ -98,7 +98,11 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
-      
+      if (!confirmSessionActive()) {
+        callbackReceiver.handleException(new InactiveSessionException(null));
+        return;
+      }
+
       Cursor cur = dbHelper.getGUIDSSince(timestamp);
       int index = cur.getColumnIndex(BookmarksDatabaseHelper.COL_GUID);
 
@@ -135,6 +139,11 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
+      if (!confirmSessionActive()) {
+        callbackReceiver.handleException(new InactiveSessionException(null));
+        return;
+      }
+
       Cursor cur = dbHelper.fetchSince(timestamp);
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
@@ -167,6 +176,11 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
+      if (!confirmSessionActive()) {
+        callbackReceiver.handleException(new InactiveSessionException(null));
+        return;
+      }
+
       if (guids == null || guids.length < 1) {
         Log.e(tag, "No guids sent to fetch");
         delegate.onFetchFailed(new InvalidRequestException(null));
@@ -193,7 +207,6 @@ public class BookmarksRepositorySession extends RepositorySession {
 
   @Override
   // Fetch all method and thread
-  // NOTE: This is only used for testing
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
     FetchAllThread thread = new FetchAllThread(delegate);
     thread.start();
@@ -207,6 +220,11 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
+      if (!confirmSessionActive()) {
+        callbackReceiver.handleException(new InactiveSessionException(null));
+        return;
+      }
+
       Cursor cur = dbHelper.fetchAllBookmarksOrderByAndroidId();
       ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
       cur.moveToFirst();
@@ -243,6 +261,10 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
+      if (!confirmSessionActive()) {
+        callbackReceiver.onStoreFailed(new InactiveSessionException(null));
+        return;
+      }
 
       BookmarkRecord existingRecord;
       try {
@@ -308,6 +330,10 @@ public class BookmarksRepositorySession extends RepositorySession {
     }
 
     public void run() {
+      if (!confirmSessionActive()) {
+        callbackReceiver.handleException(new InactiveSessionException(null));
+        return;
+      }
       dbHelper.wipe();
       delegate.onWipeSucceeded();
     }
