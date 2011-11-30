@@ -40,7 +40,6 @@ package org.mozilla.android.sync.repositories.android;
 import java.util.ArrayList;
 
 import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 

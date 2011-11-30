@@ -8,7 +8,7 @@ public class AndroidBrowserHistoryRepository extends AndroidBrowserRepository im
 
   @Override
   protected void sessionCreator(Context context, long lastSyncTimestamp) {
-    AndroidBrowserHistoryRepositorySession session = new AndroidBrowserHistoryRepositorySession(AndroidBrowserHistoryRepository.this, delegate, context, lastSyncTimestamp);
+    AndroidBrowserHistoryRepositorySession session = new AndroidBrowserHistoryRepositorySession(AndroidBrowserHistoryRepository.this, context, lastSyncTimestamp);
     delegate.onSessionCreated(session);
   }
 

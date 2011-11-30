@@ -7,7 +7,6 @@ import org.mozilla.android.sync.repositories.InvalidRequestException;
 import org.mozilla.android.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -22,9 +21,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected AndroidBrowserRepositoryDatabaseHelper dbHelper;
   private static final String tag = "AndroidBrowserRepositorySession";
   
-  public AndroidBrowserRepositorySession(Repository repository,
-      RepositorySessionCreationDelegate delegate, long lastSyncTimestamp) {
-    super(repository, delegate, lastSyncTimestamp);
+  public AndroidBrowserRepositorySession(Repository repository, long lastSyncTimestamp) {
+    super(repository, lastSyncTimestamp);
   }
 
   // guids since method and thread
