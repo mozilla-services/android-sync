@@ -46,49 +46,15 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.util.Log;
 
-public class BookmarksDatabaseHelper extends SQLiteOpenHelper implements RepositoryDatabaseHelper {
-
-  private static final String DB_NAME     = "bookmarksPOC";
-  private static final int SCHEMA_VERSION = 1;
-
-  // Bookmarks table
-  // Wondering how much of this is actually set on mobile?
-  // For example do we have separators, livemarks, etc?
-  // tags and children are technically supposed to be an
-  // array of strings...this might work for now since I'm
-  // not sure we will ever actually access them on the mobile end
-  public static final String TBL_BOOKMARKS = "Bookmarks";
-  public static final String COL_ID = "id";
-  public static final String COL_ANDROID_ID = "androidID";
-  public static final String COL_TITLE     = "title";
-  public static final String COL_BMK_URI   = "bmkURI";
-  public static final String COL_DESCRIP   = "description";
-  public static final String COL_LOAD_IN_SIDEBAR = "loadInSidebar";
-  public static final String COL_TAGS = "tags";
-  public static final String COL_KEYWORD = "keyword";
-  public static final String COL_PARENT_ID = "parentID";
-  public static final String COL_PARENT_NAME = "parentName";
-  public static final String COL_TYPE = "type";
-  public static final String COL_GENERATOR_URI = "generatorUri";
-  public static final String COL_STATIC_TITLE = "staticTitle";
-  public static final String COL_FOLDER_NAME = "folderName";
-  public static final String COL_QUERY_ID = "queryId";
-  public static final String COL_SITE_URI = "siteUri";
-  public static final String COL_FEED_URI = "feedUri";
-  public static final String COL_POS = "pos";
-  public static final String COL_CHILDREN = "children";
-  public static final String COL_LAST_MOD = "modified";
-  public static final String COL_DELETED = "deleted";
+public class BookmarksDatabaseHelper extends RepositoryDatabaseHelper {
 
   private static String[] BOOKMARKS_COLUMNS;
 
   public BookmarksDatabaseHelper(Context context) {
-    super(context, DB_NAME, null, SCHEMA_VERSION);
+    super(context);
     BOOKMARKS_COLUMNS = new String[] {
         COL_ID, COL_GUID, COL_ANDROID_ID, COL_TITLE,
         COL_BMK_URI, COL_DESCRIP, COL_LOAD_IN_SIDEBAR,
@@ -97,86 +63,6 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper implements Reposit
         COL_FOLDER_NAME, COL_QUERY_ID, COL_SITE_URI,
         COL_FEED_URI, COL_POS, COL_CHILDREN, COL_LAST_MOD,
         COL_DELETED};
-  }
-
-  @Override
-  public void onCreate(SQLiteDatabase db) {
-    String createBookmarksSql =
-        "CREATE TABLE " + TBL_BOOKMARKS + " (" +
-        COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-        COL_GUID + " TEXT, " +
-        COL_ANDROID_ID + " INTEGER, " +
-        COL_TITLE + " TEXT, " +
-        COL_BMK_URI + " TEXT, " +
-        COL_DESCRIP + " TEXT, " +
-        COL_LOAD_IN_SIDEBAR + " INTEGER, " +
-        COL_TAGS + " TEXT, " +
-        COL_KEYWORD + " TEXT, " +
-        COL_PARENT_ID + " TEXT, " +
-        COL_PARENT_NAME + " TEXT, " +
-        COL_TYPE + " TEXT, " +
-        COL_GENERATOR_URI + " TEXT, " +
-        COL_STATIC_TITLE + " TEXT, " +
-        COL_FOLDER_NAME + " TEXT, " +
-        COL_QUERY_ID+ " TEXT, " +
-        COL_SITE_URI + " TEXT, " +
-        COL_FEED_URI + " TEXT, " +
-        COL_POS + " TEXT, " +
-        COL_CHILDREN + " TEXT, " +
-        COL_LAST_MOD + " INTEGER, " +
-        COL_DELETED + " INTEGER DEFAULT 0)";
-
-    db.execSQL(createBookmarksSql);
-
-  }
-
-  // Cache these so we don't have to track them across cursors. Call `close` when you're done.
-  private static SQLiteDatabase readableDatabase;
-  private static SQLiteDatabase writableDatabase;
-
-  private SQLiteDatabase getCachedReadableDatabase() {
-    if (BookmarksDatabaseHelper.readableDatabase == null) {
-      if (BookmarksDatabaseHelper.writableDatabase == null) {
-        BookmarksDatabaseHelper.readableDatabase = this.getReadableDatabase();
-        return BookmarksDatabaseHelper.readableDatabase;
-      } else {
-        return BookmarksDatabaseHelper.writableDatabase;
-      }
-    } else {
-      return BookmarksDatabaseHelper.readableDatabase;
-    }
-  }
-  private SQLiteDatabase getCachedWritableDatabase() {
-    if (BookmarksDatabaseHelper.writableDatabase == null) {
-      BookmarksDatabaseHelper.writableDatabase = this.getWritableDatabase();
-    }
-    return BookmarksDatabaseHelper.writableDatabase;
-  }
-  public void close() {
-    if (BookmarksDatabaseHelper.readableDatabase != null) {
-      BookmarksDatabaseHelper.readableDatabase.close();
-      BookmarksDatabaseHelper.readableDatabase = null;
-    }
-    if (BookmarksDatabaseHelper.writableDatabase != null) {
-      BookmarksDatabaseHelper.writableDatabase.close();
-      BookmarksDatabaseHelper.writableDatabase = null;
-    }
-    super.close();
-  }
-
-  /*
-   * TODO: These next two methods scare me a bit...
-   */
-  @Override
-  public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    // For now we'll just drop and recreate the tables
-    db.execSQL("DROP TABLE IF EXISTS " + TBL_BOOKMARKS);
-    onCreate(db);
-  }
-
-  public void wipe() throws SQLiteException {
-    SQLiteDatabase db = this.getCachedWritableDatabase();
-    onUpgrade(db, SCHEMA_VERSION, SCHEMA_VERSION);
   }
 
   // inserts and return the row id for the bookmark
@@ -212,7 +98,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper implements Reposit
         Long.toString(timestamp), null, null, null, null);
     return c;
   }
-
+  
   // get all records requested
   public Cursor fetch(String guids[]) {
     SQLiteDatabase db = this.getCachedReadableDatabase();
@@ -236,13 +122,6 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper implements Reposit
     cv.put(COL_ANDROID_ID, androidId);
     updateByGuid(guid, cv);
   }
-  
-  // mark a record deleted
-  public void markDeleted(String guid) {
-    ContentValues cv = new ContentValues();
-    cv.put(COL_DELETED, 1);
-    updateByGuid(guid, cv);
-  }
 
   // delete bookmark from database looking up by guid
   public void delete(Record record) {
@@ -251,7 +130,8 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper implements Reposit
     db.delete(TBL_BOOKMARKS, COL_GUID+"=?", where);
   }
   
-  private void updateByGuid(String guid, ContentValues cv) {
+  @Override
+  public void updateByGuid(String guid, ContentValues cv) {
     SQLiteDatabase db = this.getWritableDatabase();
     String[] where = new String[] { String.valueOf(guid) };
     db.update(TBL_BOOKMARKS, cv, COL_GUID + "=?", where);
