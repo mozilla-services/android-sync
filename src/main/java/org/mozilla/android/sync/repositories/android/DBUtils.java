@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.bookmarks;
+package org.mozilla.android.sync.repositories.android;
 
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 
@@ -66,38 +66,38 @@ public class DBUtils {
   }
   
   //Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it
-  public static BookmarkRecord bookmarkFromMozCursor(Cursor curMoz) {
+  public static BookmarkRecord bookmarkFromMirrorCursor(Cursor curMoz) {
 
-    String guid = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_GUID);
+    String guid = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_GUID);
     String collection = "bookmarks";
-    long lastModified = getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_LAST_MOD);
+    long lastModified = getLongFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_LAST_MOD);
 
     BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified);
 
-    rec.androidID = getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_ANDROID_ID);
-    rec.title = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
-    rec.bookmarkURI = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
-    rec.description = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_DESCRIP);
-    rec.loadInSidebar = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false;
-    rec.tags = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TAGS);
-    rec.keyword = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_KEYWORD);
-    rec.parentID = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_PARENT_ID);
-    rec.parentName = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_PARENT_NAME);
-    rec.type = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TYPE);
-    rec.generatorURI = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_GENERATOR_URI);
-    rec.staticTitle = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_STATIC_TITLE);
-    rec.folderName = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_FOLDER_NAME);
-    rec.queryID = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_QUERY_ID);
-    rec.siteURI = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_SITE_URI);
-    rec.feedURI = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_FEED_URI);
-    rec.pos = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_POS);
-    rec.children = getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_CHILDREN);
-    rec.deleted = curMoz.getInt(curMoz.getColumnIndex(BookmarksDatabaseHelper.COL_DELETED)) == 1 ? true: false;
+    rec.androidID = getLongFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_ANDROID_ID);
+    rec.title = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TITLE);
+    rec.bookmarkURI = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_BMK_URI);
+    rec.description = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_DESCRIP);
+    rec.loadInSidebar = curMoz.getInt(curMoz.getColumnIndex(AndroidBrowserBookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false;
+    rec.tags = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TAGS);
+    rec.keyword = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_KEYWORD);
+    rec.parentID = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_ID);
+    rec.parentName = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_NAME);
+    rec.type = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TYPE);
+    rec.generatorURI = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_GENERATOR_URI);
+    rec.staticTitle = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_STATIC_TITLE);
+    rec.folderName = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_FOLDER_NAME);
+    rec.queryID = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_QUERY_ID);
+    rec.siteURI = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_SITE_URI);
+    rec.feedURI = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_FEED_URI);
+    rec.pos = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_POS);
+    rec.children = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_CHILDREN);
+    rec.deleted = curMoz.getInt(curMoz.getColumnIndex(AndroidBrowserBookmarksDatabaseHelper.COL_DELETED)) == 1 ? true: false;
     return rec;
   }
  
   // Create a BookmarkRecord object from a cursor on a row with a Android stock Bookmark in it
-  public static BookmarkRecord bookmarkFromAndroidCursor(Cursor curDroid) {
+  public static BookmarkRecord bookmarkFromAndroidBrowserCursor(Cursor curDroid) {
     String title = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
     String uri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
     long droidId = DBUtils.getLongFromCursor(curDroid, Browser.BookmarkColumns._ID);
