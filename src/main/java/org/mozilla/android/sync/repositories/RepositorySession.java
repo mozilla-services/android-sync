@@ -40,6 +40,7 @@ package org.mozilla.android.sync.repositories;
 
 import java.util.ArrayList;
 
+import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDatabaseHelper;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -64,7 +65,7 @@ public abstract class RepositorySession {
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
   protected RepositorySessionCreationDelegate callbackReceiver;
-  protected RepositoryDatabaseHelper dbHelper;
+  protected AndroidBrowserRepositoryDatabaseHelper dbHelper;
 
   // The time that the last sync on this collection completed, in milliseconds.
   protected long lastSyncTimestamp;
@@ -88,11 +89,11 @@ public abstract class RepositorySession {
 
     private long                                timestamp;
     private RepositorySessionGuidsSinceDelegate delegate;
-    private RepositoryDatabaseHelper            dbHelper;
+    private AndroidBrowserRepositoryDatabaseHelper            dbHelper;
 
     public GuidsSinceThread(long timestamp,
         RepositorySessionGuidsSinceDelegate delegate,
-        RepositoryDatabaseHelper dbHelper) {
+        AndroidBrowserRepositoryDatabaseHelper dbHelper) {
       this.timestamp = timestamp;
       this.delegate = delegate;
       this.dbHelper = dbHelper;
@@ -105,7 +106,7 @@ public abstract class RepositorySession {
       }
 
       Cursor cur = dbHelper.getGUIDSSince(timestamp);
-      int index = cur.getColumnIndex(RepositoryDatabaseHelper.COL_GUID);
+      int index = cur.getColumnIndex(AndroidBrowserRepositoryDatabaseHelper.COL_GUID);
 
       ArrayList<String> guids = new ArrayList<String>();
       cur.moveToFirst();

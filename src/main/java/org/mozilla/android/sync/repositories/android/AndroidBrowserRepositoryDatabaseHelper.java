@@ -1,4 +1,4 @@
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.android;
 
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public abstract class RepositoryDatabaseHelper extends SQLiteOpenHelper {
+public abstract class AndroidBrowserRepositoryDatabaseHelper extends SQLiteOpenHelper {
 
   // Database Specifications
   protected static final String DB_NAME             = "bookmarks_database";
@@ -42,7 +42,7 @@ public abstract class RepositoryDatabaseHelper extends SQLiteOpenHelper {
   public static final String    COL_POS             = "pos";
   public static final String    COL_CHILDREN        = "children";
 
-  protected RepositoryDatabaseHelper(Context context) {
+  protected AndroidBrowserRepositoryDatabaseHelper(Context context) {
     super(context, DB_NAME, null, SCHEMA_VERSION);
   }
 
@@ -68,33 +68,33 @@ public abstract class RepositoryDatabaseHelper extends SQLiteOpenHelper {
   private static SQLiteDatabase writableDatabase;
 
   protected SQLiteDatabase getCachedReadableDatabase() {
-    if (RepositoryDatabaseHelper.readableDatabase == null) {
-      if (RepositoryDatabaseHelper.writableDatabase == null) {
-        RepositoryDatabaseHelper.readableDatabase = this.getReadableDatabase();
-        return RepositoryDatabaseHelper.readableDatabase;
+    if (AndroidBrowserRepositoryDatabaseHelper.readableDatabase == null) {
+      if (AndroidBrowserRepositoryDatabaseHelper.writableDatabase == null) {
+        AndroidBrowserRepositoryDatabaseHelper.readableDatabase = this.getReadableDatabase();
+        return AndroidBrowserRepositoryDatabaseHelper.readableDatabase;
       } else {
-        return RepositoryDatabaseHelper.writableDatabase;
+        return AndroidBrowserRepositoryDatabaseHelper.writableDatabase;
       }
     } else {
-      return RepositoryDatabaseHelper.readableDatabase;
+      return AndroidBrowserRepositoryDatabaseHelper.readableDatabase;
     }
   }
 
   protected SQLiteDatabase getCachedWritableDatabase() {
-    if (RepositoryDatabaseHelper.writableDatabase == null) {
-      RepositoryDatabaseHelper.writableDatabase = this.getWritableDatabase();
+    if (AndroidBrowserRepositoryDatabaseHelper.writableDatabase == null) {
+      AndroidBrowserRepositoryDatabaseHelper.writableDatabase = this.getWritableDatabase();
     }
-    return RepositoryDatabaseHelper.writableDatabase;
+    return AndroidBrowserRepositoryDatabaseHelper.writableDatabase;
   }
 
   public void close() {
-    if (RepositoryDatabaseHelper.readableDatabase != null) {
-      RepositoryDatabaseHelper.readableDatabase.close();
-      RepositoryDatabaseHelper.readableDatabase = null;
+    if (AndroidBrowserRepositoryDatabaseHelper.readableDatabase != null) {
+      AndroidBrowserRepositoryDatabaseHelper.readableDatabase.close();
+      AndroidBrowserRepositoryDatabaseHelper.readableDatabase = null;
     }
-    if (RepositoryDatabaseHelper.writableDatabase != null) {
-      RepositoryDatabaseHelper.writableDatabase.close();
-      RepositoryDatabaseHelper.writableDatabase = null;
+    if (AndroidBrowserRepositoryDatabaseHelper.writableDatabase != null) {
+      AndroidBrowserRepositoryDatabaseHelper.writableDatabase.close();
+      AndroidBrowserRepositoryDatabaseHelper.writableDatabase = null;
     }
     super.close();
   }
