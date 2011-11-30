@@ -295,6 +295,12 @@ public class AndroidBookmarksLocalSyncTest extends
     cur.close();
   }
   
+  // Test local sync without giving any guids (just make to sure we don't crash)
+  public void testSyncMozToStockNoGuids() {
+    localSyncMozToStock(null);
+    localSyncMozToStock(new String[] {});
+  }
+  
   /*
    * Tests to make sure non-bookmark type bookmarks (e.x. folders) don't
    * interact with local sync.
