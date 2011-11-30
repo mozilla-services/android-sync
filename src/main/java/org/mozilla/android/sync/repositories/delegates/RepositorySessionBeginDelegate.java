@@ -37,6 +37,14 @@
 
 package org.mozilla.android.sync.repositories.delegates;
 
+/**
+ * One of these two methods is guaranteed to be called after session.begin() is
+ * invoked (possibly during the invocation). The callback will be invoked prior
+ * to any other RepositorySession callbacks.
+ *
+ * @author rnewman
+ *
+ */
 public interface RepositorySessionBeginDelegate {
   public void onBeginFailed(Exception ex);
   public void onBeginSucceeded();
