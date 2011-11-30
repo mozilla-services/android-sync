@@ -75,7 +75,7 @@ public class AndroidBookmarksLocalSyncTest extends
     localSyncStockToMoz();
     
     // Get records from local db, verify both are there
-    Cursor cur = helper.fetchAllBookmarksOrderByAndroidId();
+    Cursor cur = helper.fetchAllOrderByAndroidId();
     cur.moveToFirst();
     int count = 0;
     
@@ -120,8 +120,8 @@ public class AndroidBookmarksLocalSyncTest extends
     records[1].androidID = androidId + 1;
     
     // Add both bookmarks to moz db
-    helper.insertBookmark(records[0]);
-    helper.insertBookmark(records[1]);
+    helper.insert(records[0]);
+    helper.insert(records[1]);
     
     localSyncStockToMoz();
     
@@ -146,8 +146,8 @@ public class AndroidBookmarksLocalSyncTest extends
     };
     
     // Add both to moz snapshot
-    helper.insertBookmark(records[0]);
-    helper.insertBookmark(records[1]);
+    helper.insert(records[0]);
+    helper.insert(records[1]);
     
     // Modify the title of one of the bookmarks and
     // the url of the other and insert into stock db
@@ -159,7 +159,7 @@ public class AndroidBookmarksLocalSyncTest extends
     localSyncStockToMoz();
     
     // Verification step
-    Cursor cur = helper.fetchAllBookmarksOrderByAndroidId();
+    Cursor cur = helper.fetchAllOrderByAndroidId();
     cur.moveToFirst();
     BookmarkHelpers.verifyExpectedRecordReturned(records[0], DBUtils.bookmarkFromMozCursor(cur));
     cur.moveToNext();
@@ -183,8 +183,8 @@ public class AndroidBookmarksLocalSyncTest extends
     
     // Add both bookmarks to both db's and mark one
     // deleted in local moz db
-    helper.insertBookmark(records[0]);
-    helper.insertBookmark(records[1]);
+    helper.insert(records[0]);
+    helper.insert(records[1]);
     storeToStock(records[0]);
     storeToStock(records[1]);
     helper.markDeleted(records[0].guid);
@@ -214,8 +214,8 @@ public class AndroidBookmarksLocalSyncTest extends
     };
     
     // Add both bookmarks to local moz db and mark one deleted
-    helper.insertBookmark(records[0]);
-    helper.insertBookmark(records[1]);
+    helper.insert(records[0]);
+    helper.insert(records[1]);
     helper.markDeleted(records[0].guid);
     
     localSyncMozToStock(new String[] { records[0].guid, records[1].guid }); 
@@ -238,7 +238,7 @@ public class AndroidBookmarksLocalSyncTest extends
   // Test adding a record to moz db, not yet in stock db
   public void testInsertFromMoz() {
     BookmarkRecord record = BookmarkHelpers.createBookmark1();
-    helper.insertBookmark(record);
+    helper.insert(record);
     
     localSyncMozToStock(new String[] { record.guid }); 
     
@@ -271,8 +271,8 @@ public class AndroidBookmarksLocalSyncTest extends
     };
     
     // Add both to moz snapshot and stock
-    helper.insertBookmark(records[0]);
-    helper.insertBookmark(records[1]);
+    helper.insert(records[0]);
+    helper.insert(records[1]);
     storeToStock(records[0]);
     storeToStock(records[1]);
     
@@ -320,7 +320,7 @@ public class AndroidBookmarksLocalSyncTest extends
     // Store to local snapshot
     String[] guids = new String[records.length];
     for (int i = 0; i < records.length; i++) {
-      helper.insertBookmark(records[i]);
+      helper.insert(records[i]);
       guids[i] = records[i].guid;
     }
     
