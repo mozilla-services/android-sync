@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 
 import org.mozilla.android.sync.CollectionKeys;
 import org.mozilla.android.sync.CryptoRecord;
+import org.mozilla.android.sync.DelayedWorkTracker;
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.NoCollectionKeysSetException;
 import org.mozilla.android.sync.crypto.KeyBundle;
@@ -73,6 +74,8 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   private BookmarksRepository bookmarksRepo;
   private BookmarksRepositorySession bookmarksSession;
   private SyncStorageCollectionRequest request;
+
+  private DelayedWorkTracker workTracker = new DelayedWorkTracker();
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
@@ -117,8 +120,15 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
 
   @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
-    Log.i("rnewman", "Bookmarks stage got handleSuccess!");  
-    bookmarksSession.finish(this);
+    Log.i("rnewman", "Bookmarks stage got handleSuccess! Session will finish as soon as store operations are complete.");
+    // When we're done processing other events, finish the session.
+    final RepositorySessionFinishDelegate delegate = this;
+    workTracker.delayWorkItem(new Runnable() {
+      @Override
+      public void run() {
+        bookmarksSession.finish(delegate);
+      }
+    });
   }
 
   @Override
@@ -139,17 +149,24 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
     try {
       record.decrypt();
       Log.i("rnewman", "Decrypted.");
-      // TODO: lastModified.
-      BookmarkRecord b = new BookmarkRecord(record.id, record.collection);
-
-      Log.i("rnewman", "Initing record.");
-      b.initFromPayload(record);
-      Log.i("rnewman", "Storing...");
-      bookmarksSession.store(b, this);
-      Log.i("rnewman", "Store returned.");
     } catch (Exception e) {
-      Log.w("rnewman", "Exception decrypting record bookmarks/" + record.id);
+      Log.w("rnewman", "Exception decrypting record bookmarks/" + record.id, e);
     }
+
+    // TODO: lastModified.
+    BookmarkRecord b = new BookmarkRecord(record.id, record.collection);
+
+    Log.i("rnewman", "Initing record.");
+    b.initFromPayload(record);
+    workTracker.incrementOutstanding();
+    Log.i("rnewman", "Storing...");
+    try {
+      bookmarksSession.store(b, this);
+    } catch (Exception ex) {
+      Log.e("rnewman", "Exception in store", ex);
+      throw new RuntimeException(ex);
+    }
+    Log.i("rnewman", "Store returned.");
   }
 
   @Override
@@ -165,15 +182,15 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
 
   @Override
   public void onSessionCreated(RepositorySession session) {
-    Log.i("rnewman", "Session created: " + session);
-    bookmarksSession = (BookmarksRepositorySession) session;
     Log.i("rnewman", "Beginning session.");
+    bookmarksSession = (BookmarksRepositorySession) session;
     bookmarksSession.begin(this);
   }
 
   @Override
   public void onStoreFailed(Exception ex) {
     // TODO: more nuanced handling.
+    workTracker.decrementOutstanding();
     session.abort(ex, "Storing record failed.");
   }
 
@@ -181,6 +198,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   public void onStoreSucceeded(Record record) {
     // Great!
     Log.i("rnewman", "Storing " + record.guid + " succeeded.");
+    workTracker.decrementOutstanding();
   }
 
   @Override
