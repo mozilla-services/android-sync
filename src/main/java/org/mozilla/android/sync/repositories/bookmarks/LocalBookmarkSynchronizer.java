@@ -45,6 +45,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Browser;
+import android.util.Log;
 
 public class LocalBookmarkSynchronizer {
   /*
@@ -53,6 +54,7 @@ public class LocalBookmarkSynchronizer {
    * Android's stock bookmark database.
    */
 
+  private static final String tag = "LocalBookmarkSynchronizer";
   private Context context;
   private BookmarksDatabaseHelper dbHelper;
   private ArrayList<Long> visitedDroidIds = new ArrayList<Long>();
@@ -135,6 +137,12 @@ public class LocalBookmarkSynchronizer {
   // Must provide a list of guids modified in the last sync
   // This should be run at the end of a sync
   public void syncMozToStock(String[] guids) {
+    
+    // Check that there have been guids changed
+    if (guids == null || guids.length < 1) {
+      Log.w(tag, "No guids to sync for syncMozToStock");
+      return;
+    }
     
     // Fetch records for guids
     Cursor curMoz = dbHelper.fetch(guids);
