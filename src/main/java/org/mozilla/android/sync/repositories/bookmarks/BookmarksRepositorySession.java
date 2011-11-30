@@ -44,8 +44,6 @@ import org.mozilla.android.sync.repositories.InvalidRequestException;
 import org.mozilla.android.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
@@ -67,16 +65,6 @@ public class BookmarksRepositorySession extends RepositorySession {
       RepositorySessionCreationDelegate callbackReciever, Context context, long lastSyncTimestamp) {
     super(repository, callbackReciever, lastSyncTimestamp);
     dbHelper = new BookmarksDatabaseHelper(context);
-  }
-
-  @Override
-  public void begin(RepositorySessionBeginDelegate receiver) {
-    receiver.onBeginSucceeded();
-  }
-
-  @Override
-  public void finish(RepositorySessionFinishDelegate receiver) {
-    receiver.onFinishSucceeded();
   }
 
   // guids since method and thread
