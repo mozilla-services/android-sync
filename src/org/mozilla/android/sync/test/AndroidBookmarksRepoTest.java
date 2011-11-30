@@ -11,6 +11,7 @@ import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
 import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
@@ -318,6 +319,36 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     if (ex.getClass() != InactiveSessionException.class) {
       fail("Wrong exception type");
     }
+  }
+  
+  /*
+   * Test wipe
+   */
+  public void testWipe() {
+    prepEmptySession();
+    
+    BookmarkRecord record0 = BookmarkHelpers.createFolder();
+    BookmarkRecord record1 = BookmarkHelpers.createBookmark2();
+    
+    // Store 2 records
+    getSession().store(record0, new ExpectStoredDelegate(record0.guid));
+    performWait();
+    getSession().store(record1, new ExpectStoredDelegate(record1.guid));
+    performWait();
+    getSession().fetchAll(new ExpectFetchAllDelegate(new String[] {
+        record0.guid, record1.guid
+    }));
+    performWait();
+    
+    // Wipe
+    getSession().wipe(new RepositorySessionWipeDelegate() {
+      public void onWipeSucceeded() {
+        //no-op: Passes
+      }
+      public void onWipeFailed(Exception ex) {
+        fail("wipe should have succeeded");
+      }
+    });
   }
 
 }
