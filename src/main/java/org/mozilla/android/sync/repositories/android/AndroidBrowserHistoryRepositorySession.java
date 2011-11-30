@@ -1,14 +1,13 @@
 package org.mozilla.android.sync.repositories.android;
 
 import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
 
-public class AndroidBrowserHistoryRepositorySession extends RepositorySession {
+public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserRepositorySession {
 
   public AndroidBrowserHistoryRepositorySession(Repository repository,
       RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {
