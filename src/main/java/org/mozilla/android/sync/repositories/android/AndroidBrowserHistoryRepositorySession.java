@@ -1,4 +1,4 @@
-package org.mozilla.android.sync.repositories.history;
+package org.mozilla.android.sync.repositories.android;
 
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
@@ -8,12 +8,12 @@ import org.mozilla.android.sync.repositories.domain.Record;
 import android.content.Context;
 import android.database.Cursor;
 
-public class HistoryRepositorySession extends RepositorySession {
+public class AndroidBrowserHistoryRepositorySession extends RepositorySession {
 
-  public HistoryRepositorySession(Repository repository,
+  public AndroidBrowserHistoryRepositorySession(Repository repository,
       RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {
     super(repository, delegate, lastSyncTimestamp);
-    dbHelper = new HistoryDatabaseHelper(context);
+    dbHelper = new AndroidBrowserHistoryDatabaseHelper(context);
   }
 
   @Override
