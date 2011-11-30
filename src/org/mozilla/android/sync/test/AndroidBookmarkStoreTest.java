@@ -4,8 +4,8 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksDatabaseHelper;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
@@ -28,18 +28,18 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     AndroidBookmarksTestHelper.testWaiter.performWait(runnable);
   }
 
-  private BookmarksRepositorySession getSession() {
+  private AndroidBrowserBookmarksRepositorySession getSession() {
     return AndroidBookmarksTestHelper.session;
   }
 
   private void prepSession() {
     AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0, true);
     // Clear old data.
-    new BookmarksDatabaseHelper(getApplicationContext()).wipe();
+    new AndroidBrowserBookmarksDatabaseHelper(getApplicationContext()).wipe();
   }
 
   public void tearDown() {
-    new BookmarksDatabaseHelper(getApplicationContext()).close();
+    new AndroidBrowserBookmarksDatabaseHelper(getApplicationContext()).close();
   }
 
   Runnable getStoreRunnable(final BookmarkRecord bookmark, final ExpectStoredDelegate delegate) {

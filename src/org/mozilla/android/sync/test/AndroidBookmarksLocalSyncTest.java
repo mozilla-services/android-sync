@@ -4,9 +4,9 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksDatabaseHelper;
-import org.mozilla.android.sync.repositories.bookmarks.DBUtils;
-import org.mozilla.android.sync.repositories.bookmarks.LocalBookmarkSynchronizer;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.DBUtils;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserMirrorBookmarkSynchronizer;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 
@@ -26,7 +26,7 @@ public class AndroidBookmarksLocalSyncTest extends
   }
 
   private static Context context; 
-  private static BookmarksDatabaseHelper helper;
+  private static AndroidBrowserBookmarksDatabaseHelper helper;
   
   public Context getApplicationContext() {
     if (context == null) {
@@ -38,7 +38,7 @@ public class AndroidBookmarksLocalSyncTest extends
 
   private void wipe() {
     if (helper == null) {
-      helper = new BookmarksDatabaseHelper(getApplicationContext());
+      helper = new AndroidBrowserBookmarksDatabaseHelper(getApplicationContext());
     }
     helper.wipe();
     
@@ -80,8 +80,8 @@ public class AndroidBookmarksLocalSyncTest extends
     int count = 0;
     
     while (!cur.isAfterLast()) {
-      String title = DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_TITLE);
-      String url = DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_BMK_URI);
+      String title = DBUtils.getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_TITLE);
+      String url = DBUtils.getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_BMK_URI);
       
       // Check to see if this bookmark matches one of ours
       for (ContentValues cv : expected) {
@@ -92,8 +92,8 @@ public class AndroidBookmarksLocalSyncTest extends
       }
       
       // Check that bookmark is in the mobile folder
-      String parentID = DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_PARENT_ID);
-      String parentName = DBUtils.getStringFromCursor(cur, BookmarksDatabaseHelper.COL_PARENT_NAME);
+      String parentID = DBUtils.getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_ID);
+      String parentName = DBUtils.getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_NAME);
       assertEquals(DBUtils.MOBILE_PARENT_ID, parentID);
       assertEquals(DBUtils.MOBILE_PARENT_NAME, parentName);
       
@@ -129,11 +129,11 @@ public class AndroidBookmarksLocalSyncTest extends
     Cursor cur = helper.fetch(new String[] { records[0].guid, records[1].guid } );
     cur.moveToFirst();
     
-    verifyTitleUri(records[0], DBUtils.bookmarkFromMozCursor(cur));
-    assertEquals(0, DBUtils.getLongFromCursor(cur, BookmarksDatabaseHelper.COL_DELETED));
+    verifyTitleUri(records[0], DBUtils.bookmarkFromMirrorCursor(cur));
+    assertEquals(0, DBUtils.getLongFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_DELETED));
     cur.moveToNext();
-    verifyTitleUri(records[1], DBUtils.bookmarkFromMozCursor(cur));
-    assertEquals(1, DBUtils.getLongFromCursor(cur, BookmarksDatabaseHelper.COL_DELETED));
+    verifyTitleUri(records[1], DBUtils.bookmarkFromMirrorCursor(cur));
+    assertEquals(1, DBUtils.getLongFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_DELETED));
     
     cur.close();
   }
@@ -161,9 +161,9 @@ public class AndroidBookmarksLocalSyncTest extends
     // Verification step
     Cursor cur = helper.fetchAllOrderByAndroidId();
     cur.moveToFirst();
-    BookmarkHelpers.verifyExpectedRecordReturned(records[0], DBUtils.bookmarkFromMozCursor(cur));
+    BookmarkHelpers.verifyExpectedRecordReturned(records[0], DBUtils.bookmarkFromMirrorCursor(cur));
     cur.moveToNext();
-    BookmarkHelpers.verifyExpectedRecordReturned(records[1], DBUtils.bookmarkFromMozCursor(cur));
+    BookmarkHelpers.verifyExpectedRecordReturned(records[1], DBUtils.bookmarkFromMirrorCursor(cur));
     
     cur.close();
   }
@@ -196,7 +196,7 @@ public class AndroidBookmarksLocalSyncTest extends
     cur.moveToFirst();
     int count = 0;
     while (!cur.isAfterLast()) {
-      verifyTitleUri(records[1], DBUtils.bookmarkFromAndroidCursor(cur));
+      verifyTitleUri(records[1], DBUtils.bookmarkFromAndroidBrowserCursor(cur));
       cur.moveToNext();
       count ++;
     }
@@ -247,7 +247,7 @@ public class AndroidBookmarksLocalSyncTest extends
     cur.moveToFirst();
     int count = 0;
     while (!cur.isAfterLast()) {
-      verifyTitleUri(record, DBUtils.bookmarkFromAndroidCursor(cur));
+      verifyTitleUri(record, DBUtils.bookmarkFromAndroidBrowserCursor(cur));
       count ++;
       cur.moveToNext();
     }
@@ -257,7 +257,7 @@ public class AndroidBookmarksLocalSyncTest extends
     // Verify that an android id has been set in the moz db
     cur = helper.fetch(new String[] { record.guid });
     cur.moveToFirst();
-    long androidId = DBUtils.getLongFromCursor(cur, BookmarksDatabaseHelper.COL_ANDROID_ID);
+    long androidId = DBUtils.getLongFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_ANDROID_ID);
     assertEquals(1, androidId);
     
     cur.close();
@@ -288,9 +288,9 @@ public class AndroidBookmarksLocalSyncTest extends
     // Verification step
     Cursor cur = fetchAllFromStock();
     cur.moveToFirst();
-    verifyNewMozBookmarkFromStock(records[0], DBUtils.bookmarkFromAndroidCursor(cur));
+    verifyNewMozBookmarkFromStock(records[0], DBUtils.bookmarkFromAndroidBrowserCursor(cur));
     cur.moveToNext();
-    verifyNewMozBookmarkFromStock(records[1], DBUtils.bookmarkFromAndroidCursor(cur));
+    verifyNewMozBookmarkFromStock(records[1], DBUtils.bookmarkFromAndroidBrowserCursor(cur));
     
     cur.close();
   }
@@ -336,13 +336,13 @@ public class AndroidBookmarksLocalSyncTest extends
    * Helpers
    */
   private void localSyncMozToStock(String[] guids) {
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncMozToStock(guids);
+    AndroidBrowserMirrorBookmarkSynchronizer sync = new AndroidBrowserMirrorBookmarkSynchronizer(context);
+    sync.syncMirrorToAndroidBrowser(guids);
   }
   
   private void localSyncStockToMoz() {
-    LocalBookmarkSynchronizer sync = new LocalBookmarkSynchronizer(context);
-    sync.syncStockToMoz();
+    AndroidBrowserMirrorBookmarkSynchronizer sync = new AndroidBrowserMirrorBookmarkSynchronizer(context);
+    sync.syncAndroidBrowserToMirror();
   }
   
   private void storeToStock(BookmarkRecord record) {

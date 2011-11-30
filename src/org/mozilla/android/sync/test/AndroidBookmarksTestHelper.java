@@ -3,8 +3,8 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
@@ -16,7 +16,7 @@ import android.util.Log;
 public class AndroidBookmarksTestHelper {
 
   public static WaitHelper testWaiter = WaitHelper.getTestWaiter();
-  public static BookmarksRepositorySession session;
+  public static AndroidBrowserBookmarksRepositorySession session;
   private static AndroidBookmarksTestHelper helper;
   
   public static AndroidBookmarksTestHelper getHelper() {
@@ -30,11 +30,11 @@ public class AndroidBookmarksTestHelper {
     super();
   }
 
-  public static BookmarksRepository prepareRepositorySession(final Context context,
+  public static AndroidBrowserBookmarksRepository prepareRepositorySession(final Context context,
                                                              final DefaultSessionCreationDelegate delegate,
                                                              final long lastSyncTimestamp,
                                                              boolean begin) {
-    final BookmarksRepository repository = new BookmarksRepository();
+    final AndroidBrowserBookmarksRepository repository = new AndroidBrowserBookmarksRepository();
     try {
       Runnable runnable = new Runnable() {
         @Override

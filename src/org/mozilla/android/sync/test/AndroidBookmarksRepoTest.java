@@ -6,9 +6,9 @@ package org.mozilla.android.sync.test;
 import org.mozilla.android.sync.MainActivity;
 import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.Utils;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksDatabaseHelper;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
@@ -46,7 +46,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   private void performNotfiy() {
     AndroidBookmarksTestHelper.testWaiter.performNotify();
   }
-  private BookmarksRepositorySession getSession() {
+  private AndroidBrowserBookmarksRepositorySession getSession() {
     return AndroidBookmarksTestHelper.session;
   }
 
@@ -58,11 +58,11 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     AndroidBookmarksTestHelper.prepEmptySessionWithoutBegin(getApplicationContext());
   }
   
-  private static BookmarksDatabaseHelper helper;
+  private static AndroidBrowserBookmarksDatabaseHelper helper;
 
   private void wipe() {
     if (helper == null) {
-      helper = new BookmarksDatabaseHelper(getApplicationContext());
+      helper = new AndroidBrowserBookmarksDatabaseHelper(getApplicationContext());
     }
     helper.wipe();
   }
@@ -82,7 +82,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
    */
   public void testCreateSessionNullContext() {
     Log.i("rnewman", "In testCreateSessionNullContext.");
-    BookmarksRepository repo = new BookmarksRepository();
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
     try {
       repo.createSession(null, new DefaultSessionCreationDelegate(), 0);
       fail("Should throw.");
@@ -102,7 +102,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     expectedGUIDs[0] = expected[0].guid;
     expectedGUIDs[1] = expected[1].guid;
 
-    BookmarksRepositorySession session = getSession();
+    AndroidBrowserBookmarksRepositorySession session = getSession();
     session.store(expected[0], new ExpectStoredDelegate(expected[0].guid));
     performWait();
     session.store(expected[1], new ExpectStoredDelegate(expected[1].guid));

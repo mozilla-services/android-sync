@@ -6,7 +6,7 @@ package org.mozilla.android.sync.test;
 import static junit.framework.Assert.assertNotNull;
 
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 
 /**
@@ -19,7 +19,7 @@ public class SetupDelegate extends DefaultSessionCreationDelegate {
   public void onSessionCreated(RepositorySession sess) {
     try {
       assertNotNull(sess);
-      AndroidBookmarksTestHelper.session = (BookmarksRepositorySession) sess;
+      AndroidBookmarksTestHelper.session = (AndroidBrowserBookmarksRepositorySession) sess;
       AndroidBookmarksTestHelper.testWaiter.performNotify();
     } catch (AssertionError e) {  
       AndroidBookmarksTestHelper.testWaiter.performNotify(e);
