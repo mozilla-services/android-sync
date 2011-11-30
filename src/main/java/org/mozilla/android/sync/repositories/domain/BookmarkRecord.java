@@ -89,6 +89,7 @@ public class BookmarkRecord extends Record
   public void initFromPayload(CryptoRecord payload) {
     this.bookmarkURI = (String) payload.payload.get("bmkUri");
     this.title       = (String) payload.payload.get("title");
+    // TODO stuff is missing here
   }
 
   @Override

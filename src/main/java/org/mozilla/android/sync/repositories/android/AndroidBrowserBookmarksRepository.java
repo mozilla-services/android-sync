@@ -39,11 +39,10 @@
 package org.mozilla.android.sync.repositories.android;
 
 import org.mozilla.android.sync.repositories.BookmarksRepository;
-import org.mozilla.android.sync.repositories.Repository;
 
 import android.content.Context;
 
-public class AndroidBrowserBookmarksRepository extends Repository implements BookmarksRepository {
+public class AndroidBrowserBookmarksRepository extends AndroidBrowserRepository implements BookmarksRepository {
 
   protected void sessionCreator(Context context, long lastSyncTimestamp) {
     AndroidBrowserBookmarksRepositorySession session = new AndroidBrowserBookmarksRepositorySession(AndroidBrowserBookmarksRepository.this, context, lastSyncTimestamp);
