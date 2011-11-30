@@ -38,7 +38,9 @@
 
 package org.mozilla.android.sync.repositories.bookmarks;
 
+import org.mozilla.android.sync.repositories.RepositoryDatabaseHelper;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -49,7 +51,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.util.Log;
 
-public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
+public class BookmarksDatabaseHelper extends SQLiteOpenHelper implements RepositoryDatabaseHelper {
 
   private static final String DB_NAME     = "bookmarksPOC";
   private static final int SCHEMA_VERSION = 1;
@@ -62,7 +64,6 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   // not sure we will ever actually access them on the mobile end
   public static final String TBL_BOOKMARKS = "Bookmarks";
   public static final String COL_ID = "id";
-  public static final String COL_GUID = "guid";
   public static final String COL_ANDROID_ID = "androidID";
   public static final String COL_TITLE     = "title";
   public static final String COL_BMK_URI   = "bmkURI";
@@ -179,9 +180,9 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   }
 
   // inserts and return the row id for the bookmark
-  public long insertBookmark(BookmarkRecord bookmark) {
+  public long insert(Record record) {
     SQLiteDatabase db = this.getCachedWritableDatabase();
-    ContentValues cv = getContentValues(bookmark);
+    ContentValues cv = getContentValues((BookmarkRecord) record);
     long rowId = db.insert(TBL_BOOKMARKS, null, cv);
 
     Log.i("DBLocal", "Inserted bookmark into row: " + rowId);
@@ -190,7 +191,7 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   }
 
   // returns all bookmark records
-  public Cursor fetchAllBookmarksOrderByAndroidId() {
+  public Cursor fetchAllOrderByAndroidId() {
     SQLiteDatabase db = this.getCachedReadableDatabase();
     Cursor cur = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, null, null, null, null, COL_ANDROID_ID);
     return cur;
@@ -244,9 +245,9 @@ public class BookmarksDatabaseHelper extends SQLiteOpenHelper {
   }
 
   // delete bookmark from database looking up by guid
-  public void deleteBookmark(BookmarkRecord bookmark) {
+  public void delete(Record record) {
     SQLiteDatabase db = this.getCachedWritableDatabase();
-    String[] where = new String[] { String.valueOf(bookmark.guid) };
+    String[] where = new String[] { String.valueOf(record.guid) };
     db.delete(TBL_BOOKMARKS, COL_GUID+"=?", where);
   }
   

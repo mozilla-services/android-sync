@@ -73,7 +73,7 @@ public class LocalBookmarkSynchronizer {
 
     // Get all bookmarks from Moz table (which will reflect last
     // known state of stock bookmarks - i.e. a snapshot)
-    Cursor curMoz = dbHelper.fetchAllBookmarksOrderByAndroidId();
+    Cursor curMoz = dbHelper.fetchAllOrderByAndroidId();
     curMoz.moveToFirst();
 
     while (curMoz.isAfterLast() == false) {
@@ -124,8 +124,7 @@ public class LocalBookmarkSynchronizer {
     curNew.moveToFirst();
     
     while (!curNew.isAfterLast()) {
-      dbHelper.insertBookmark(
-          DBUtils.bookmarkFromAndroidCursor(curNew));     
+      dbHelper.insert(DBUtils.bookmarkFromAndroidCursor(curNew));     
       curNew.moveToNext();
     }
     
