@@ -1,6 +1,5 @@
-package org.mozilla.android.sync.repositories.history;
+package org.mozilla.android.sync.repositories.android;
 
-import org.mozilla.android.sync.repositories.RepositoryDatabaseHelper;
 import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.ContentValues;
@@ -8,9 +7,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 
-public class HistoryDatabaseHelper extends RepositoryDatabaseHelper {
+public class AndroidBrowserHistoryDatabaseHelper extends AndroidBrowserRepositoryDatabaseHelper {
 
-  public HistoryDatabaseHelper(Context context) {
+  public AndroidBrowserHistoryDatabaseHelper(Context context) {
     super(context);
   }
 
