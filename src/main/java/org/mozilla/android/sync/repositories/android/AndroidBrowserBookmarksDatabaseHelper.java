@@ -43,10 +43,6 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
-import android.util.Log;
 
 public class AndroidBrowserBookmarksDatabaseHelper extends AndroidBrowserRepositoryDatabaseHelper {
 
@@ -64,50 +60,14 @@ public class AndroidBrowserBookmarksDatabaseHelper extends AndroidBrowserReposit
         COL_DELETED};
   }
 
-  // inserts and return the row id for the bookmark
-  public long insert(Record record) {
-    SQLiteDatabase db = this.getCachedWritableDatabase();
-    ContentValues cv = getContentValues((BookmarkRecord) record);
-    long rowId = db.insert(TBL_BOOKMARKS, null, cv);
-
-    Log.i("DBLocal", "Inserted bookmark into row: " + rowId);
-
-    return rowId;
-  }
-
-  // returns all bookmark records
-  public Cursor fetchAllOrderByAndroidId() {
-    SQLiteDatabase db = this.getCachedReadableDatabase();
-    Cursor cur = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, null, null, null, null, COL_ANDROID_ID);
-    return cur;
-  }
-
-  // get all guids modified since timestamp
-  public Cursor getGUIDSSince(long timestamp) {
-    SQLiteDatabase db = this.getCachedReadableDatabase();
-    Cursor c = db.query(TBL_BOOKMARKS, new String[] {COL_GUID}, COL_LAST_MOD + " >= " +
-        Long.toString(timestamp), null, null, null, null);
-    return c;
-  }
-
-  // get records modified since timestamp
-  public Cursor fetchSince(long timestamp) {
-    SQLiteDatabase db = this.getCachedReadableDatabase();
-    Cursor c = db.query(TBL_BOOKMARKS, BOOKMARKS_COLUMNS, COL_LAST_MOD + " >= " +
-        Long.toString(timestamp), null, null, null, null);
-    return c;
+  @Override
+  public String getTable() {
+    return TBL_BOOKMARKS;
   }
   
-  // get all records requested
-  public Cursor fetch(String guids[]) {
-    SQLiteDatabase db = this.getCachedReadableDatabase();
-    String where = COL_GUID + " in (";
-    for (String guid : guids) {
-      where = where + "'" + guid + "', ";
-    }
-    where = (where.substring(0, where.length() -2) + ")");
-    String queryString = SQLiteQueryBuilder.buildQueryString(false, TBL_BOOKMARKS, BOOKMARKS_COLUMNS, where, null, null, null, null);
-    return db.rawQuery(queryString, null);
+  @Override
+  public String[] getAllColumns() {
+    return BOOKMARKS_COLUMNS;
   }
   
   // update bookmark title + uri for given guid
@@ -121,20 +81,6 @@ public class AndroidBrowserBookmarksDatabaseHelper extends AndroidBrowserReposit
     cv.put(COL_ANDROID_ID, androidId);
     updateByGuid(guid, cv);
   }
-
-  // delete bookmark from database looking up by guid
-  public void delete(Record record) {
-    SQLiteDatabase db = this.getCachedWritableDatabase();
-    String[] where = new String[] { String.valueOf(record.guid) };
-    db.delete(TBL_BOOKMARKS, COL_GUID+"=?", where);
-  }
-  
-  @Override
-  public void updateByGuid(String guid, ContentValues cv) {
-    SQLiteDatabase db = this.getWritableDatabase();
-    String[] where = new String[] { String.valueOf(guid) };
-    db.update(TBL_BOOKMARKS, cv, COL_GUID + "=?", where);
-  }
     
   // Return a ContentValues object containing title + uri
   private ContentValues getTitleUriCV(String title, String uri) {
@@ -144,29 +90,31 @@ public class AndroidBrowserBookmarksDatabaseHelper extends AndroidBrowserReposit
     return cv;    
   }
 
-  private ContentValues getContentValues(BookmarkRecord record) {
+  @Override
+  protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
-    cv.put(COL_GUID,            record.guid);
-    cv.put(COL_ANDROID_ID,      record.androidID);
-    cv.put(COL_TITLE,           record.title);
-    cv.put(COL_BMK_URI,         record.bookmarkURI);
-    cv.put(COL_DESCRIP,         record.description);
-    cv.put(COL_LOAD_IN_SIDEBAR, record.loadInSidebar ? 1 : 0);
-    cv.put(COL_TAGS,            record.tags);
-    cv.put(COL_KEYWORD,         record.keyword);
-    cv.put(COL_PARENT_ID,       record.parentID);
-    cv.put(COL_PARENT_NAME,     record.parentName);
-    cv.put(COL_TYPE,            record.type);
-    cv.put(COL_GENERATOR_URI,   record.generatorURI);
-    cv.put(COL_STATIC_TITLE,    record.staticTitle);
-    cv.put(COL_FOLDER_NAME,     record.folderName);
-    cv.put(COL_QUERY_ID,        record.queryID);
-    cv.put(COL_SITE_URI,        record.siteURI);
-    cv.put(COL_FEED_URI,        record.feedURI);
-    cv.put(COL_POS,             record.pos);
-    cv.put(COL_CHILDREN,        record.children);
-    cv.put(COL_LAST_MOD,        record.lastModified);
-    cv.put(COL_DELETED,         record.deleted);
+    BookmarkRecord rec = (BookmarkRecord) record;
+    cv.put(COL_GUID,            rec.guid);
+    cv.put(COL_ANDROID_ID,      rec.androidID);
+    cv.put(COL_TITLE,           rec.title);
+    cv.put(COL_BMK_URI,         rec.bookmarkURI);
+    cv.put(COL_DESCRIP,         rec.description);
+    cv.put(COL_LOAD_IN_SIDEBAR, rec.loadInSidebar ? 1 : 0);
+    cv.put(COL_TAGS,            rec.tags);
+    cv.put(COL_KEYWORD,         rec.keyword);
+    cv.put(COL_PARENT_ID,       rec.parentID);
+    cv.put(COL_PARENT_NAME,     rec.parentName);
+    cv.put(COL_TYPE,            rec.type);
+    cv.put(COL_GENERATOR_URI,   rec.generatorURI);
+    cv.put(COL_STATIC_TITLE,    rec.staticTitle);
+    cv.put(COL_FOLDER_NAME,     rec.folderName);
+    cv.put(COL_QUERY_ID,        rec.queryID);
+    cv.put(COL_SITE_URI,        rec.siteURI);
+    cv.put(COL_FEED_URI,        rec.feedURI);
+    cv.put(COL_POS,             rec.pos);
+    cv.put(COL_CHILDREN,        rec.children);
+    cv.put(COL_LAST_MOD,        rec.lastModified);
+    cv.put(COL_DELETED,         rec.deleted);
     return cv;
   }
 }
