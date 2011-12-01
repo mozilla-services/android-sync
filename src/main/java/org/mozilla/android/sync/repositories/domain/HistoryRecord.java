@@ -64,7 +64,7 @@ public class HistoryRecord extends Record implements SyncRecord {
   public String   histURI;
   // TODO Change this once we start doing local sync and figuring out how to track visits 
   public String   visits; 
-  public int      transitionType;
+  public long     transitionType;
   public long     dateVisited;
   
   @Override

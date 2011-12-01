@@ -38,6 +38,7 @@
 package org.mozilla.android.sync.repositories.android;
 
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.android.sync.repositories.domain.HistoryRecord;
 
 import android.database.Cursor;
 import android.net.Uri;
@@ -124,5 +125,24 @@ public class DBUtils {
     rec.deleted = false;
     return rec;    
  }
+  //Create a HistoryRecord object from a cursor on a row with a Moz History record in it
+  public static HistoryRecord historyFromMirrorCursor(Cursor curMoz) {
+
+    String guid = getStringFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_GUID);
+    String collection = "history";
+    long lastModified = getLongFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_LAST_MOD);
+
+    HistoryRecord rec = new HistoryRecord(guid, collection, lastModified);
+    rec.deleted = curMoz.getInt(curMoz.getColumnIndex(AndroidBrowserBookmarksDatabaseHelper.COL_DELETED)) == 1 ? true: false;
+
+    rec.androidID = getLongFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_ANDROID_ID);
+    rec.title = getStringFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_TITLE);
+    rec.histURI = getStringFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_HIST_URI);
+    rec.visits = getStringFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_VISITS);
+    rec.transitionType = getLongFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_TRANS_TYPE);
+    rec.dateVisited = getLongFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_DATE_VISITED);
+    
+    return rec;
+  }
 
 }
