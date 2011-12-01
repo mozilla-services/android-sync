@@ -36,9 +36,8 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.bookmarks;
+package org.mozilla.android.sync.repositories.android;
 
-import org.mozilla.android.sync.repositories.RepositoryDatabaseHelper;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -49,11 +48,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.util.Log;
 
-public class BookmarksDatabaseHelper extends RepositoryDatabaseHelper {
+public class AndroidBrowserBookmarksDatabaseHelper extends AndroidBrowserRepositoryDatabaseHelper {
 
   private static String[] BOOKMARKS_COLUMNS;
 
-  public BookmarksDatabaseHelper(Context context) {
+  public AndroidBrowserBookmarksDatabaseHelper(Context context) {
     super(context);
     BOOKMARKS_COLUMNS = new String[] {
         COL_ID, COL_GUID, COL_ANDROID_ID, COL_TITLE,

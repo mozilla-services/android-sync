@@ -36,12 +36,17 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.android;
 
+import org.mozilla.android.sync.repositories.BookmarksRepository;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;
 
-public abstract class Repository {
-  public abstract void createSession(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp);
+public class AndroidBrowserBookmarksRepository extends AndroidBrowserRepository implements BookmarksRepository {
+
+  protected void sessionCreator(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {
+    AndroidBrowserBookmarksRepositorySession session = new AndroidBrowserBookmarksRepositorySession(AndroidBrowserBookmarksRepository.this, context, lastSyncTimestamp);
+    delegate.onSessionCreated(session);
+  }
 }

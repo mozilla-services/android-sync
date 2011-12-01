@@ -50,8 +50,8 @@ import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.mozilla.android.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepository;
-import org.mozilla.android.sync.repositories.bookmarks.BookmarksRepositorySession;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -72,8 +72,8 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
 
   private GlobalSession session;
   private KeyBundle bookmarksKeyBundle;
-  private BookmarksRepository bookmarksRepo;
-  private BookmarksRepositorySession bookmarksSession;
+  private AndroidBrowserBookmarksRepository bookmarksRepo;
+  private AndroidBrowserBookmarksRepositorySession bookmarksSession;
   private SyncStorageCollectionRequest request;
 
   private SyncStorageResponse httpError;
@@ -98,9 +98,9 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
       request = new SyncStorageCollectionRequest(bookmarksURI);
       request.delegate = this;
       
-      bookmarksRepo = new BookmarksRepository();
+      bookmarksRepo = new AndroidBrowserBookmarksRepository();
       long lastSyncTimestamp = 0;
-      bookmarksRepo.createSession(session.getContext(), this, lastSyncTimestamp);
+      bookmarksRepo.createSession(this, session.getContext(), lastSyncTimestamp);
 
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
@@ -187,7 +187,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   @Override
   public void onSessionCreated(RepositorySession session) {
     Log.i("rnewman", "Beginning session.");
-    bookmarksSession = (BookmarksRepositorySession) session;
+    bookmarksSession = (AndroidBrowserBookmarksRepositorySession) session;
     bookmarksSession.begin(this);
   }
 

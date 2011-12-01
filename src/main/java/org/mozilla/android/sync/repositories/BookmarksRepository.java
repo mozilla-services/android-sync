@@ -19,8 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
+ *  Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,16 +35,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.bookmarks;
+package org.mozilla.android.sync.repositories;
 
-import org.mozilla.android.sync.repositories.Repository;
+/**
+ * Shared interface for repositories that consume and produce
+ * bookmark records.
+ *
+ * @author rnewman
+ *
+ */
+public interface BookmarksRepository {
 
-import android.content.Context;
-
-public class BookmarksRepository extends Repository {
-
-  protected void sessionCreator(Context context, long lastSyncTimestamp) {
-    BookmarksRepositorySession session = new BookmarksRepositorySession(BookmarksRepository.this, delegate, context, lastSyncTimestamp);
-    delegate.onSessionCreated(session);
-  }
 }

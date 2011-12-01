@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.bookmarks;
+package org.mozilla.android.sync.repositories.android;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -47,21 +47,21 @@ import android.net.Uri;
 import android.provider.Browser;
 import android.util.Log;
 
-public class LocalBookmarkSynchronizer {
-  /*
-   * This class carries out a local sync which is used to
-   * keep Mozilla's Bookmark sync database in sync with
-   * Android's stock bookmark database.
-   */
-
-  private static final String tag = "LocalBookmarkSynchronizer";
+/**
+ * Synchronize the Android Browser database to our local mirror.
+ *
+ * Avoid the term "local" because that's typically used for Fennec's
+ * per-profile databases (in contrast to "global").
+ */
+public class AndroidBrowserMirrorBookmarkSynchronizer {
+  private static final String tag = "AndroidBrowserMirrorBookmarkSynchronizer";
   private Context context;
-  private BookmarksDatabaseHelper dbHelper;
+  private AndroidBrowserBookmarksDatabaseHelper dbHelper;
   private ArrayList<Long> visitedDroidIds = new ArrayList<Long>();
 
-  public LocalBookmarkSynchronizer(Context context) {
+  public AndroidBrowserMirrorBookmarkSynchronizer(Context context) {
     this.context = context;
-    this.dbHelper = new BookmarksDatabaseHelper(context);
+    this.dbHelper = new AndroidBrowserBookmarksDatabaseHelper(context);
   }
 
   /*
@@ -69,7 +69,7 @@ public class LocalBookmarkSynchronizer {
    * to sync server. This pulls all changes from the stock bookmarks
    * db to the local Moz bookmark db.
    */
-  public void syncStockToMoz() {
+  public void syncAndroidBrowserToMirror() {
 
     // Get all bookmarks from Moz table (which will reflect last
     // known state of stock bookmarks - i.e. a snapshot)
@@ -79,12 +79,12 @@ public class LocalBookmarkSynchronizer {
     while (curMoz.isAfterLast() == false) {
       
       // Find bookmark in android store
-      long androidId = DBUtils.getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_ANDROID_ID);
+      long androidId = DBUtils.getLongFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_ANDROID_ID);
       String where = Browser.BookmarkColumns._ID + "=" + androidId;
       Cursor curDroid = context.getContentResolver().query(Browser.BOOKMARKS_URI, null, where, null, null);
       curDroid.moveToFirst();
       
-      String guid = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_GUID); 
+      String guid = DBUtils.getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_GUID); 
       
       // Check if bookmark has been deleted or modified
       if (curDroid.isAfterLast()) {
@@ -124,7 +124,7 @@ public class LocalBookmarkSynchronizer {
     curNew.moveToFirst();
     
     while (!curNew.isAfterLast()) {
-      dbHelper.insert(DBUtils.bookmarkFromAndroidCursor(curNew));     
+      dbHelper.insert(DBUtils.bookmarkFromAndroidBrowserCursor(curNew));     
       curNew.moveToNext();
     }
     
@@ -135,7 +135,7 @@ public class LocalBookmarkSynchronizer {
   // Apply changes from local snapshot to stock bookmarks db
   // Must provide a list of guids modified in the last sync
   // This should be run at the end of a sync
-  public void syncMozToStock(String[] guids) {
+  public void syncMirrorToAndroidBrowser(String[] guids) {
     
     // Check that there have been guids changed
     if (guids == null || guids.length < 1) {
@@ -149,10 +149,10 @@ public class LocalBookmarkSynchronizer {
     
     while (!curMoz.isAfterLast()) {
       
-      long androidId = DBUtils.getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_ANDROID_ID);
+      long androidId = DBUtils.getLongFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_ANDROID_ID);
       
       // Handle deletions
-      boolean deleted = DBUtils.getLongFromCursor(curMoz, BookmarksDatabaseHelper.COL_DELETED) == 1 ? true:false;
+      boolean deleted = DBUtils.getLongFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_DELETED) == 1 ? true:false;
       if (deleted) {
         context.getContentResolver().delete(Browser.BOOKMARKS_URI, Browser.BookmarkColumns._ID + "=" + androidId, null);
       } else {
@@ -166,7 +166,7 @@ public class LocalBookmarkSynchronizer {
           ContentValues cv = getContentValuesStock(curMoz);
           Uri recordUri = context.getContentResolver().insert(Browser.BOOKMARKS_URI , cv);
           long insertedDroidId = DBUtils.getAndroidIdFromUri(recordUri);
-          String guid = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_GUID);
+          String guid = DBUtils.getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_GUID);
           dbHelper.updateAndroidId(guid, insertedDroidId);
         } else if (!bookmarksSame(curMoz, curDroid)) {
           // Handle updates
@@ -188,11 +188,11 @@ public class LocalBookmarkSynchronizer {
   // Check if two bookmarks are the same
   private boolean bookmarksSame(Cursor curMoz, Cursor curDroid) {
     
-    String mozTitle = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
+    String mozTitle = DBUtils.getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TITLE);
     String droidTitle = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
     if (!mozTitle.equals(droidTitle)) return false;
     
-    String mozUri = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
+    String mozUri = DBUtils.getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_BMK_URI);
     String droidUri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
     if (!mozUri.equals(droidUri)) return false;
     
@@ -201,8 +201,8 @@ public class LocalBookmarkSynchronizer {
   
   // Create content values object for insertion into android db from moz cursor
   private ContentValues getContentValuesStock(Cursor curMoz) {
-    String title = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_TITLE);
-    String uri = DBUtils.getStringFromCursor(curMoz, BookmarksDatabaseHelper.COL_BMK_URI);
+    String title = DBUtils.getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TITLE);
+    String uri = DBUtils.getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_BMK_URI);
     ContentValues cv = new ContentValues();
     cv.put(Browser.BookmarkColumns.BOOKMARK, 1);
     cv.put(Browser.BookmarkColumns.TITLE, title);

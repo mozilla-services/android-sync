@@ -35,25 +35,23 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.bookmarks;
+package org.mozilla.android.sync.repositories.android;
 
 import java.util.ArrayList;
 
 import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
 
-public class BookmarksRepositorySession extends RepositorySession {
+public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
 
-  public BookmarksRepositorySession(Repository repository,
-      RepositorySessionCreationDelegate callbackReciever, Context context, long lastSyncTimestamp) {
-    super(repository, callbackReciever, lastSyncTimestamp);
-    dbHelper = new BookmarksDatabaseHelper(context);
+  public AndroidBrowserBookmarksRepositorySession(Repository repository,
+      Context context, long lastSyncTimestamp) {
+    super(repository, lastSyncTimestamp);
+    dbHelper = new AndroidBrowserBookmarksDatabaseHelper(context);
   }
   
   @Override
@@ -61,7 +59,7 @@ public class BookmarksRepositorySession extends RepositorySession {
     ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
     cur.moveToFirst();
     while (!cur.isAfterLast()) {
-      records.add(DBUtils.bookmarkFromMozCursor(cur));
+      records.add(DBUtils.bookmarkFromMirrorCursor(cur));
       cur.moveToNext();
     }
     cur.close();
