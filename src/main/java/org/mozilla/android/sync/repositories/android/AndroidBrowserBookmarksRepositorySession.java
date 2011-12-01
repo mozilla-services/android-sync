@@ -37,8 +37,6 @@
 
 package org.mozilla.android.sync.repositories.android;
 
-import java.util.ArrayList;
-
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
@@ -55,18 +53,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
   
   @Override
-  protected Record[] compileIntoRecordsArray(Cursor cur) {
-    ArrayList<BookmarkRecord> records = new ArrayList<BookmarkRecord>();
-    cur.moveToFirst();
-    while (!cur.isAfterLast()) {
-      records.add(DBUtils.bookmarkFromMirrorCursor(cur));
-      cur.moveToNext();
-    }
-    cur.close();
-  
-    Record[] recordArray = new Record[records.size()];
-    records.toArray(recordArray);
-    return recordArray;
+  protected Record recordFromMirrorCursor(Cursor cur) {
+    return DBUtils.bookmarkFromMirrorCursor(cur);
   }
   
   @Override
@@ -84,30 +72,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       newer = remoteBookmark;
     }
 
+    // TODO Do this smarter (will differ between types of records which is why this isn't pulled up to super class)
     // Do dumb resolution for now and just return the newer one with the android id added if it wasn't the local one
     // Need to track changes (not implemented yet) in order to merge two changed bookmarks nicely
     newer.androidID = localBookmark.androidID;
-
-    /*
-    // Title
-    if (!local.title.equals(remote.title)) {
-      local.title = newer.title;
-    }
-
-    // URI
-    if (!local.bookmarkURI.equals(remote.bookmarkURI)) {
-      local.bookmarkURI = newer.bookmarkURI;
-    }
-
-    // Description
-    if (!local.description.equals(remote.description)) {
-      local.description = newer.description;
-    }
-
-    // Load in sidebar.
-    if (local.loadInSidebar != remote.loadInSidebar) {
-    }
-    */
 
     return newer;
   }

@@ -44,6 +44,7 @@ import android.content.Context;
 
 public class AndroidBrowserBookmarksRepository extends AndroidBrowserRepository implements BookmarksRepository {
 
+  @Override
   protected void sessionCreator(Context context, long lastSyncTimestamp) {
     AndroidBrowserBookmarksRepositorySession session = new AndroidBrowserBookmarksRepositorySession(AndroidBrowserBookmarksRepository.this, context, lastSyncTimestamp);
     delegate.onSessionCreated(session);
