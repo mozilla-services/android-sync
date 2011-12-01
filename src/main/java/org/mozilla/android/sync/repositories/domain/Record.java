@@ -38,6 +38,8 @@
 
 package org.mozilla.android.sync.repositories.domain;
 
+import org.mozilla.android.sync.CryptoRecord;
+
 public abstract class Record {
   public String guid;
   public String collection;
@@ -50,4 +52,7 @@ public abstract class Record {
     this.lastModified = lastModified;
     this.deleted = deleted;
   }
+
+  public abstract void initFromPayload(CryptoRecord payload);
+  public abstract CryptoRecord getPayload();
 }

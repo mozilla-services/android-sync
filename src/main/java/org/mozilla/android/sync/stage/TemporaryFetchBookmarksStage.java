@@ -149,11 +149,11 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
       record.decrypt();
       Log.i("rnewman", "Decrypted.");
     } catch (Exception e) {
-      Log.w("rnewman", "Exception decrypting record bookmarks/" + record.id, e);
+      Log.w("rnewman", "Exception decrypting record bookmarks/" + record.guid, e);
     }
 
     // TODO: lastModified.
-    BookmarkRecord b = new BookmarkRecord(record.id, record.collection);
+    BookmarkRecord b = new BookmarkRecord(record.guid, record.collection);
 
     Log.i("rnewman", "Initing record.");
     b.initFromPayload(record);

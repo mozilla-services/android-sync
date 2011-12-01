@@ -39,6 +39,7 @@
 package org.mozilla.android.sync.repositories.domain;
 
 import org.mozilla.android.sync.CryptoRecord;
+import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.repositories.Utils;
 
 /**
@@ -46,8 +47,7 @@ import org.mozilla.android.sync.repositories.Utils;
  * @author rnewman
  *
  */
-public class BookmarkRecord extends Record
-                            implements SyncRecord {
+public class BookmarkRecord extends Record {
   public BookmarkRecord(String guid, String collection, long lastModified, boolean deleted) {
     super(guid, collection, lastModified, deleted);
   }
@@ -94,7 +94,11 @@ public class BookmarkRecord extends Record
 
   @Override
   public CryptoRecord getPayload() {
-    // TODO Auto-generated method stub
-    return null;
+    CryptoRecord rec = new CryptoRecord(this);
+    rec.payload = new ExtendedJSONObject();
+    rec.payload.put("bmkUri", bookmarkURI);
+    rec.payload.put("title",  title);
+    // TODO: finish
+    return rec;
   }
 }

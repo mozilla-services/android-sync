@@ -40,7 +40,7 @@ package org.mozilla.android.sync.repositories.domain;
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.repositories.Utils;
 
-public class HistoryRecord extends Record implements SyncRecord {
+public class HistoryRecord extends Record {
 
   public HistoryRecord(String guid, String collection, long lastModified,
       boolean deleted) {

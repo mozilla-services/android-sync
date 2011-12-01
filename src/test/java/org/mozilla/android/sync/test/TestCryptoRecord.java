@@ -29,7 +29,7 @@ public class TestCryptoRecord {
 
     CryptoRecord record = new CryptoRecord();
     record.payload = clearPayload;
-    record.id = "5qRsgXWRJZXr";
+    record.guid = "5qRsgXWRJZXr";
     record.keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
     record.encrypt();
     assertTrue(record.payload.get("title") == null);
