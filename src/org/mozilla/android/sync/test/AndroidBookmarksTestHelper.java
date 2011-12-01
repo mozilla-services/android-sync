@@ -39,7 +39,7 @@ public class AndroidBookmarksTestHelper {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          repository.createSession(context, delegate, lastSyncTimestamp);
+          repository.createSession(delegate, context, lastSyncTimestamp);
         }
       };
       Log.i("rnewman", "Calling wait.");

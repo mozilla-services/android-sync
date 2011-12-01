@@ -84,7 +84,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     Log.i("rnewman", "In testCreateSessionNullContext.");
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
     try {
-      repo.createSession(null, new DefaultSessionCreationDelegate(), 0);
+      repo.createSession(new DefaultSessionCreationDelegate(), null, 0);
       fail("Should throw.");
     } catch (Exception ex) {
       assertNotNull(ex);
