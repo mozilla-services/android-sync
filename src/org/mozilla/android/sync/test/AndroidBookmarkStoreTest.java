@@ -3,59 +3,13 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.MainActivity;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDatabaseHelper;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 
-import android.content.Context;
-import android.test.ActivityInstrumentationTestCase2;
-
-public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<MainActivity> {
-  public AndroidBookmarkStoreTest() {
-    super(MainActivity.class);
-  }
-
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
-
-  private void performWait(Runnable runnable) throws AssertionError {
-    AndroidBookmarksTestHelper.testWaiter.performWait(runnable);
-  }
-
-  private AndroidBrowserBookmarksRepositorySession getSession() {
-    return AndroidBookmarksTestHelper.session;
-  }
-
-  private void prepSession() {
-    AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0, true);
-    // Clear old data.
-    new AndroidBrowserBookmarksDatabaseHelper(getApplicationContext()).wipe();
-  }
-
-  public void tearDown() {
-    new AndroidBrowserBookmarksDatabaseHelper(getApplicationContext()).close();
-  }
-
-  Runnable getStoreRunnable(final BookmarkRecord bookmark, final ExpectStoredDelegate delegate) {
-    return new Runnable() {
-      public void run() {
-        getSession().store(bookmark, delegate);
-      }
-    };
-  }
-  Runnable getFetchAllRunnable(final ExpectFetchAllDelegate delegate) {
-    return new Runnable() {
-      public void run() {
-        getSession().fetchAll(delegate);
-      }
-    };
-  }
+public class AndroidBookmarkStoreTest extends AndroidBookmarksTestBase {
 
   /*
    * This test class is dedicated to testing the store(record) method of
@@ -67,46 +21,28 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
    */
 
   public void testStoreBookmark() {
-    prepSession();
-    BookmarkRecord bookmark = BookmarkHelpers.createBookmark1();
-    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait(runnable);
+    basicStoreTest(BookmarkHelpers.createBookmark1());
   }
 
   public void testStoreMicrosummary() {
-    prepSession();
-    BookmarkRecord bookmark = BookmarkHelpers.createMicrosummary();
-    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait(runnable);
+    basicStoreTest(BookmarkHelpers.createMicrosummary());
   }
 
 
   public void testStoreQuery() {
-    prepSession();
-    BookmarkRecord bookmark = BookmarkHelpers.createQuery();
-    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait(runnable);
+    basicStoreTest(BookmarkHelpers.createQuery());
   }
 
   public void testStoreFolder() {
-    prepSession();
-    BookmarkRecord bookmark = BookmarkHelpers.createFolder();
-    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait(runnable);
+    basicStoreTest(BookmarkHelpers.createFolder());
   }
 
   public void testStoreLivemark() {
-    prepSession();
-    BookmarkRecord bookmark = BookmarkHelpers.createLivemark();
-    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait(runnable);
+    basicStoreTest(BookmarkHelpers.createLivemark());
   }
 
   public void testStoreSeparator() {
-    prepSession();
-    BookmarkRecord bookmark = BookmarkHelpers.createSeparator();
-    Runnable runnable = getStoreRunnable(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait(runnable);
+    basicStoreTest(BookmarkHelpers.createSeparator());
   }
   
   public void testStoreNullRecord() {
