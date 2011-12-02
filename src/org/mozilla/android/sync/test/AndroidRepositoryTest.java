@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
@@ -80,7 +83,6 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
     wipe();
   }
   
-  // TODO consider getting rid of AndroidRepositoryTestHelper and moving it into here???
   protected void prepEmptySession() {
     AndroidRepositoryTestHelper.prepEmptySession(getApplicationContext(), getRepository());
   }
@@ -109,11 +111,26 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
   protected abstract AndroidBrowserRepositoryDatabaseHelper getDatabaseHelper();
   protected abstract void verifyExpectedRecordReturned(Record expected, Record actual);
   
+  // Tests to implement
+  public abstract void testFetchAll();
+  public abstract void testGuidsSinceReturnMultipleRecords();
+  public abstract void testGuidsSinceReturnNoRecords();
+  public abstract void testFetchSinceOneRecord();
+  public abstract void testFetchSinceReturnNoRecords();
+  public abstract void testFetchOneRecordByGuid();
+  public abstract void testFetchMultipleRecordsByGuids();
+  public abstract void testFetchNoRecordByGuid();
+  public abstract void testWipe();
+  public abstract void testStore();
+  public abstract void testRemoteNewerTimeStamp();
+  public abstract void testLocalNewerTimeStamp();
+  public abstract void testDeleteRemoteNewer();
+  public abstract void testDeleteLocalNewere();
+  public abstract void testDeleteRemoteLocalNonexistent();
+  
   /*
-   * Test abstractions...may require organizing into multiple files later
+   * Test abstractions
    */
-  // TODO if we restructure where these live, we might be able to force subclasses
-  // to implement these tests via abstract methods (can't do this right now due to layout)
   protected void basicStoreTest(Record record) {
     prepSession();
     Runnable runnable = getStoreRunnable(record, new ExpectStoredDelegate(record.guid));
@@ -290,7 +307,8 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
   }
   
   /*
-   * Store conflict resolution tests
+   * Test for store conflict resolution
+   * NOTE: Must set an android ID for local record for these tests to work
    */
 
   /*

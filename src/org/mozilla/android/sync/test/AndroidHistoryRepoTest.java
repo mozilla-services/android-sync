@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.repositories.android.AndroidBrowserHistoryDatabaseHelper;
@@ -20,6 +23,7 @@ public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
     return new AndroidBrowserHistoryDatabaseHelper(getApplicationContext());
   }
 
+  @Override
   public void testFetchAll() {
     Record[] expected = new Record[2];
     expected[0] = HistoryHelpers.createHistory3();
@@ -27,39 +31,36 @@ public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
     basicFetchAllTest(expected);
   }
 
-  /*
-   * Tests for fetching GUIDs since a timestamp.
-   */
+  @Override
   public void testGuidsSinceReturnMultipleRecords() {
     HistoryRecord record0 = HistoryHelpers.createHistory1();
     HistoryRecord record1 = HistoryHelpers.createHistory2();
     guidsSinceReturnMultipleRecords(record0, record1);
   }
   
+  @Override
   public void testGuidsSinceReturnNoRecords() {
     guidsSinceReturnNoRecords(HistoryHelpers.createHistory3());
   }
 
-  /*
-   * Tests for fetchSince
-   */  
+  @Override
   public void testFetchSinceOneRecord() {
     fetchSinceOneRecord(HistoryHelpers.createHistory1(),
         HistoryHelpers.createHistory2());
   }
   
+  @Override
   public void testFetchSinceReturnNoRecords() {
     fetchSinceReturnNoRecords(HistoryHelpers.createHistory3());
   }
   
-  /*
-   * Tests for fetch(guids)
-   */
+  @Override
   public void testFetchOneRecordByGuid() {
     fetchOneRecordByGuid(HistoryHelpers.createHistory1(),
         HistoryHelpers.createHistory2());
   }
   
+  @Override
   public void testFetchMultipleRecordsByGuids() {
     HistoryRecord record0 = HistoryHelpers.createHistory1();
     HistoryRecord record1 = HistoryHelpers.createHistory2();
@@ -67,28 +68,22 @@ public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
     fetchMultipleRecordsByGuids(record0, record1, record2);
   }
   
+  @Override
   public void testFetchNoRecordByGuid() {
     fetchNoRecordByGuid(HistoryHelpers.createHistory1());
   }
   
-  /*
-   * Test wipe
-   */
+  @Override
   public void testWipe() {
     doWipe(HistoryHelpers.createHistory2(), HistoryHelpers.createHistory3());
   }
   
-  /*
-   * Test store
-   */
-  public void testStoreHistory() {
+  @Override
+  public void testStore() {
     basicStoreTest(HistoryHelpers.createHistory1());
   }
   
-  /*
-   * Test for store conflict resolution
-   * NOTE: Must set an android ID for local record for these tests to work
-   */
+  @Override
   public void testRemoteNewerTimeStamp() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
@@ -96,6 +91,7 @@ public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
     remoteNewerTimeStamp(local, remote);
   }
 
+  @Override
   public void testLocalNewerTimeStamp() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
@@ -103,6 +99,7 @@ public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
     localNewerTimeStamp(local, remote);
   }
   
+  @Override
   public void testDeleteRemoteNewer() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
@@ -110,6 +107,7 @@ public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
     deleteRemoteNewer(local, remote);
   }
   
+  @Override
   public void testDeleteLocalNewere() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
@@ -117,6 +115,7 @@ public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
     deleteLocalNewer(local, remote);
   }
   
+  @Override
   public void testDeleteRemoteLocalNonexistent() {
     HistoryRecord remote = HistoryHelpers.createHistory2();
     deleteRemoteLocalNonexistent(remote);
