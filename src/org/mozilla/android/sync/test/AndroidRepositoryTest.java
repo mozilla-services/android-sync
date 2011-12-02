@@ -1,15 +1,24 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
+import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.Utils;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDatabaseHelper;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositorySession;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
+import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectBeginFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
@@ -98,6 +107,7 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
   
   protected abstract AndroidBrowserRepository getRepository();
   protected abstract AndroidBrowserRepositoryDatabaseHelper getDatabaseHelper();
+  protected abstract void verifyExpectedRecordReturned(Record expected, Record actual);
   
   /*
    * Test abstractions...may require organizing into multiple files later
@@ -250,18 +260,6 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
     performWait();
   }
   
-  public void testFetchNoGuids() {
-    prepEmptySession();
-    getSession().fetch(new String[] {}, new ExpectInvalidRequestFetchDelegate());
-    performWait();
-  }
-  
-  public void testFetchNullGuids() {
-    prepEmptySession();
-    getSession().fetch(null, new ExpectInvalidRequestFetchDelegate());
-    performWait();
-  }
-  
   /*
    * Test wipe
    */
@@ -290,5 +288,255 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
     });
     performWait();
   }
+  
+  /*
+   * Store conflict resolution tests
+   */
+
+  /*
+   * Record being stored has newer timestamp than existing local record, local
+   * record has not been modified since last sync.
+   */
+  protected void remoteNewerTimeStamp(Record local, Record remote) {
+    prepSession();
+
+    // Record existing and hasn't changed since before lastSync.
+    // Automatically will be assigned lastModified = current time.
+    Runnable localRunnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(localRunnable);
+
+    // Create second bookmark to be passed to store. Give it a later
+    // last modified timestamp and set it as same GUID.
+    remote.guid = local.guid;
+    remote.lastModified = local.lastModified + 1000;
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
+
+    String[] expected = new String[] { local.guid };
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    performWait(getFetchAllRunnable(delegate));
+
+    // Check that one record comes back, it is the remote one, and has android
+    // ID same as first.
+    assertEquals(1, delegate.records.length);
+    verifyExpectedRecordReturned(remote, delegate.records[0]);
+  }
+
+  /*
+   * Local record has a newer timestamp than the record being stored. For now,
+   * we just take newer (local) record)
+   */
+  protected void localNewerTimeStamp(Record local, Record remote) {
+    prepSession();
+
+    // Local record newer.
+    long timestamp = 1000000000;
+    local.lastModified = timestamp;
+    Runnable localRunnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(localRunnable);
+
+    // Create an older version of a record with the same GUID.
+    remote.guid = local.guid;
+    remote.lastModified = timestamp - 100;
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
+
+    // Do a fetch and make sure that we get back the first (local) record.
+    String[] expected = new String[] { local.guid };
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    performWait(getFetchAllRunnable(delegate));
+
+    // Check that one record comes back, it is the local one
+    assertEquals(1, delegate.recordCount());
+    verifyExpectedRecordReturned(local, delegate.records[0]);
+  }
+  
+  /*
+   * Insert a record that is marked as deleted, remote has newer timestamp
+   */
+  
+  protected void deleteRemoteNewer(Record local, Record remote) {
+    prepSession();
+    
+    // Record existing and hasn't changed since before lastSync.
+    // Automatically will be assigned lastModified = current time.
+    Runnable local1Runnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(local1Runnable);
+
+    // Pass the same record to store, but mark it deleted and modified
+    // more recently
+    local.lastModified = local.lastModified + 1000;
+    local.deleted = true;
+    Runnable local2Runnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(local2Runnable);
+
+    String[] expected = new String[] { local.guid };
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    performWait(getFetchAllRunnable(delegate));
+
+    // Check that one record comes back, marked deleted and with
+    // and androidId
+    assertEquals(1, delegate.records.length);
+    Record record = delegate.records[0];
+    verifyExpectedRecordReturned(local, record);
+    assertEquals(true, record.deleted);
+    
+  }
+  
+  /*
+   * Insert a record that is marked as deleted, local has newer timestamp
+   * and was not marked deleted (so keep it)
+   */
+  protected void deleteLocalNewer(Record local, Record remote) {
+    prepSession();
+
+    // Local record newer.
+    long timestamp = 1000000000;
+    local.lastModified = timestamp;
+    Runnable localRunnable = getStoreRunnable(local, new ExpectStoredDelegate(local.guid));
+    performWait(localRunnable);
+
+    // Create an older version of a record with the same GUID.
+    remote.guid = local.guid;
+    remote.lastModified = timestamp - 100;
+    remote.deleted = true;
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
+
+    // Do a fetch and make sure that we get back the first (local) record.
+    String[] expected = new String[] { local.guid };
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    performWait(getFetchAllRunnable(delegate));
+
+    // Check that one record comes back, it is the local one, and not deleted
+    assertEquals(1, delegate.recordCount());
+    Record record = delegate.records[0];
+    verifyExpectedRecordReturned(local, record);
+    assertEquals(false, record.deleted);
+  }
+  
+  /*
+   * Insert a record that is marked as deleted, record never existed locally
+   */
+  protected void deleteRemoteLocalNonexistent(Record remote) {
+    prepSession();
+    
+    long timestamp = 1000000000;
+    
+    // Pass a record marked deleted to store, doesn't exist locally
+    remote.lastModified = timestamp;
+    remote.deleted = true;
+    Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
+    performWait(remoteRunnable);
+
+    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(new String[]{});
+    performWait(getFetchAllRunnable(delegate));
+
+    // Check that no records are returned
+    assertEquals(0, delegate.records.length);
+  }
+  
+  /*
+   * Tests that don't require specific records based on type of repository.
+   * These tests don't need to be overriden in subclasses, they will just work.
+   */
+  public void testCreateSessionNullContext() {
+    Log.i("rnewman", "In testCreateSessionNullContext.");
+    AndroidBrowserRepository repo = getRepository();
+    try {
+      repo.createSession(new DefaultSessionCreationDelegate(), null, 0);
+      fail("Should throw.");
+    } catch (Exception ex) {
+      assertNotNull(ex);
+    }
+  }
+  
+  public void testStoreNullRecord() {
+    prepSession();
+    try {
+      getSession().store(null, new DefaultStoreDelegate());
+      fail("Should throw.");
+    } catch (Exception ex) {
+      assertNotNull(ex);
+    }
+  }
+  
+  public void testFetchNoGuids() {
+    prepEmptySession();
+    getSession().fetch(new String[] {}, new ExpectInvalidRequestFetchDelegate());
+    performWait();
+  }
+  
+  public void testFetchNullGuids() {
+    prepEmptySession();
+    getSession().fetch(null, new ExpectInvalidRequestFetchDelegate());
+    performWait();
+  }
+  
+  public void testBeginOnNewSession() {
+    prepEmptySessionWithoutBegin();
+    getSession().begin(new ExpectBeginDelegate());
+  }
+  
+  public void testBeginOnRunningSession() {
+    prepEmptySession();
+    getSession().begin(new ExpectBeginFailDelegate());
+  }
+  
+  public void testBeginOnFinishedSession() {
+    prepEmptySession();
+    getSession().finish(new ExpectFinishDelegate());
+    getSession().begin(new ExpectBeginFailDelegate());
+  }
+  
+  public void testFinishOnFinishedSession() {
+    prepEmptySession();
+    getSession().finish(new ExpectFinishDelegate());
+    getSession().finish(new ExpectFinishFailDelegate());
+  }
+  
+  public void testFetchOnInactiveSession() {
+    prepEmptySessionWithoutBegin();
+    getSession().finish(new ExpectFinishFailDelegate());
+  }
+  
+  public void testFetchOnFinishedSession() {
+    prepEmptySession();
+    getSession().finish(new ExpectFinishDelegate());
+    getSession().fetch(new String[] { Utils.generateGuid() }, new RepositorySessionFetchRecordsDelegate() {
+      public void onFetchSucceeded(Record[] records) {
+        fail("Session inactive, should fail");
+        performNotfiy();
+      }
+      public void onFetchFailed(Exception ex) {
+        verifyInactiveException(ex);
+        performNotfiy();
+      }
+    });
+    performWait();
+  }
+  
+  public void testGuidsSinceOnUnstartedSession() {
+    prepEmptySessionWithoutBegin();
+    getSession().guidsSince(System.currentTimeMillis(), new RepositorySessionGuidsSinceDelegate() {
+      public void onGuidsSinceSucceeded(String[] guids) {
+        fail("Session inactive, should fail");
+        performNotfiy();
+      }
+      public void onGuidsSinceFailed(Exception ex) {
+        verifyInactiveException(ex);
+        performNotfiy();
+      }
+    });
+    performWait();
+  }
+  
+  private void verifyInactiveException(Exception ex) {
+    if (ex.getClass() != InactiveSessionException.class) {
+      fail("Wrong exception type");
+    }
+  }
+  
+ 
   
 }
