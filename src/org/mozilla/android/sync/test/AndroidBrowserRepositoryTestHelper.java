@@ -13,7 +13,7 @@ import org.mozilla.android.sync.test.helpers.WaitHelper;
 import android.content.Context;
 import android.util.Log;
 
-public class AndroidRepositoryTestHelper {
+public class AndroidBrowserRepositoryTestHelper {
   
   public static WaitHelper testWaiter = WaitHelper.getTestWaiter();
   public static AndroidBrowserRepositorySession session;

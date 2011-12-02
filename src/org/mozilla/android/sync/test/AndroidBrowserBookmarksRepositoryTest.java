@@ -11,7 +11,7 @@ import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 
-public class AndroidBookmarksRepoTest extends AndroidRepositoryTest {
+public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
   
   @Override
   protected AndroidBrowserRepository getRepository() {

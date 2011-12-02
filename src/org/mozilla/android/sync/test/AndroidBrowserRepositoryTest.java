@@ -30,11 +30,11 @@ import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentationTestCase2<MainActivity> {
   
   protected AndroidBrowserRepositoryDatabaseHelper helper;
   
-  public AndroidRepositoryTest() {
+  public AndroidBrowserRepositoryTest() {
     super(MainActivity.class);
   }
 
@@ -43,19 +43,19 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
   }
 
   protected void performWait(Runnable runnable) throws AssertionError {
-    AndroidRepositoryTestHelper.testWaiter.performWait(runnable);
+    AndroidBrowserRepositoryTestHelper.testWaiter.performWait(runnable);
   }
   
   // TODO move away from these and use only runnables
   protected void performWait() {
-    AndroidRepositoryTestHelper.testWaiter.performWait();
+    AndroidBrowserRepositoryTestHelper.testWaiter.performWait();
   }
   protected void performNotfiy() {
-    AndroidRepositoryTestHelper.testWaiter.performNotify();
+    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
   }
 
   protected AndroidBrowserRepositorySession getSession() {
-    return AndroidRepositoryTestHelper.session;
+    return AndroidBrowserRepositoryTestHelper.session;
   }
   
   public void tearDown() {
@@ -77,18 +77,18 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
   }
   
   protected void prepSession() {
-    AndroidRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
+    AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
         new SetupDelegate(), 0, true, getRepository());
     // Clear old data.
     wipe();
   }
   
   protected void prepEmptySession() {
-    AndroidRepositoryTestHelper.prepEmptySession(getApplicationContext(), getRepository());
+    AndroidBrowserRepositoryTestHelper.prepEmptySession(getApplicationContext(), getRepository());
   }
   
   protected void prepEmptySessionWithoutBegin() {
-    AndroidRepositoryTestHelper.prepEmptySessionWithoutBegin(getApplicationContext(), getRepository());
+    AndroidBrowserRepositoryTestHelper.prepEmptySessionWithoutBegin(getApplicationContext(), getRepository());
   }
   
   protected Runnable getStoreRunnable(final Record record, final ExpectStoredDelegate delegate) {
@@ -139,7 +139,7 @@ public abstract class AndroidRepositoryTest extends ActivityInstrumentationTestC
   
   protected void basicFetchAllTest(Record[] expected) {
     Log.i("rnewman", "Starting testFetchAll.");
-    AndroidRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
+    AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
         new SetupDelegate(), 0, true, getRepository());
     Log.i("rnewman", "Prepared.");
     String[] expectedGUIDs = new String[expected.length];

@@ -11,7 +11,7 @@ import org.mozilla.android.sync.repositories.domain.HistoryRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 
-public class AndroidHistoryRepoTest extends AndroidRepositoryTest {
+public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
   
   @Override
   protected AndroidBrowserRepository getRepository() {

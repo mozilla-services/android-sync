@@ -19,10 +19,10 @@ public class SetupDelegate extends DefaultSessionCreationDelegate {
   public void onSessionCreated(RepositorySession sess) {
     try {
       assertNotNull(sess);
-      AndroidRepositoryTestHelper.session = (AndroidBrowserRepositorySession) sess;
-      AndroidRepositoryTestHelper.testWaiter.performNotify();
+      AndroidBrowserRepositoryTestHelper.session = (AndroidBrowserRepositorySession) sess;
+      AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
     } catch (AssertionError e) {  
-      AndroidRepositoryTestHelper.testWaiter.performNotify(e);
+      AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
     }
   }
 }
