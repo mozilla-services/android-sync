@@ -87,7 +87,7 @@ public abstract class AndroidBrowserRepositoryDatabaseHelper extends SQLiteOpenH
 
   // History Table
   public static final String    TBL_HISTORY         = "History";
-  public static final String    COL_HIST_URI        = "bmkURI";
+  public static final String    COL_HIST_URI        = "histURI";
   public static final String    COL_VISITS          = "visits";
   public static final String    COL_TRANS_TYPE      = "transitionType";
   public static final String    COL_DATE_VISITED    = "dateVisited";
@@ -182,7 +182,7 @@ public abstract class AndroidBrowserRepositoryDatabaseHelper extends SQLiteOpenH
     SQLiteDatabase db = this.getCachedReadableDatabase();
     ContentValues cv = getContentValues(record);
     long rowId = db.insert(getTable(), null, cv);
-    Log.i(TAG, "Inserted bookmark into row: " + rowId);
+    Log.i(TAG, "Inserted record into row: " + rowId);
     return rowId;
   }
   
