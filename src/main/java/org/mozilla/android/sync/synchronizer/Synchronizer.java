@@ -19,8 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,23 +35,25 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.domain;
+package org.mozilla.android.sync.synchronizer;
 
-import org.mozilla.android.sync.CryptoRecord;
+import org.mozilla.android.sync.repositories.Repository;
 
-public abstract class Record {
-  public String guid;
-  public String collection;
-  public long lastModified;
-  public boolean deleted;
+/**
+ * This, sunshine, is where the magic happens.
+ *
+ * I hope for all our sakes that it's bug-free.
+ * 
+ * @author rnewman
+ *
+ */
+public class Synchronizer {
+  public Repository repositoryA;
+  public Repository repositoryB;
 
-  public Record(String guid, String collection, long lastModified, boolean deleted) {
-    this.guid         = guid;
-    this.collection   = collection;
-    this.lastModified = lastModified;
-    this.deleted = deleted;
+  // TODO: bundle storage.
+
+  public void synchronize(SynchronizerDelegate delegate) {
+    
   }
-
-  public abstract void initFromPayload(CryptoRecord payload);
-  public abstract CryptoRecord getPayload();
 }

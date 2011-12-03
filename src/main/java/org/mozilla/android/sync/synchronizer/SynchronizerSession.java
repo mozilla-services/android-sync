@@ -19,8 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,23 +35,30 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.domain;
+package org.mozilla.android.sync.synchronizer;
 
-import org.mozilla.android.sync.CryptoRecord;
+import org.mozilla.android.sync.repositories.RepositorySession;
 
-public abstract class Record {
-  public String guid;
-  public String collection;
-  public long lastModified;
-  public boolean deleted;
+public class SynchronizerSession {
+  private RepositorySession sessionA;
+  private RepositorySession sessionB;
+  private Synchronizer synchronizer;
+  private SynchronizerSessionDelegate delegate;
 
-  public Record(String guid, String collection, long lastModified, boolean deleted) {
-    this.guid         = guid;
-    this.collection   = collection;
-    this.lastModified = lastModified;
-    this.deleted = deleted;
+  // TODO: bundle in and out.
+
+  public SynchronizerSession(Synchronizer synchronizer, SynchronizerSessionDelegate delegate) {
+    this.synchronizer = synchronizer;
+    this.delegate     = delegate;
+  }
+  public void init() {
+    // TODO: create sessionA and sessionB.
+    this.delegate.onInitialized(this);
   }
 
-  public abstract void initFromPayload(CryptoRecord payload);
-  public abstract CryptoRecord getPayload();
+  public void synchronize() {
+    // TODO: synchronize the two sessions in each direction.
+    this.delegate.onSynchronized(this);
+  }
+  
 }

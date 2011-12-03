@@ -42,7 +42,7 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreation
 
 import android.content.Context;
 
-public class AndroidBrowserHistoryRepository extends AndroidBrowserRepository implements HistoryRepository{
+public class AndroidBrowserHistoryRepository extends AndroidBrowserRepository implements HistoryRepository {
 
   @Override
   protected void sessionCreator(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {

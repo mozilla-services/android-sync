@@ -51,6 +51,7 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.MissingCryptoInputException;
 import org.mozilla.android.sync.crypto.NoKeyBundleException;
 import org.mozilla.android.sync.crypto.Utils;
+import org.mozilla.android.sync.repositories.domain.Record;
 
 /**
  * A Sync crypto record has:
@@ -68,9 +69,7 @@ import org.mozilla.android.sync.crypto.Utils;
  * @author rnewman
  *
  */
-public class CryptoRecord {
-  public String id;
-  public String collection;
+public class CryptoRecord extends Record {
 
   // JSON related constants.
   private static final String KEY_ID         = "id";
@@ -105,18 +104,29 @@ public class CryptoRecord {
    * Don't forget to set cleartext or body!
    */
   public CryptoRecord() {
+    super(null, null, 0, false);
   }
 
   public CryptoRecord(ExtendedJSONObject payload) {
+    super(null, null, 0, false);
     if (payload == null) {
       throw new IllegalArgumentException(
-          "No payload provided to BaseCryptoRecord constructor.");
+          "No payload provided to CryptoRecord constructor.");
     }
     this.payload = payload;
   }
 
   public CryptoRecord(String jsonString) throws IOException, ParseException, NonObjectJSONException {
     this(ExtendedJSONObject.parseJSONObject(jsonString));
+  }
+
+  /**
+   * Create a new CryptoRecord with the same metadata as an existing record.
+   *
+   * @param source
+   */
+  public CryptoRecord(Record source) {
+    super(source.guid, source.collection, source.lastModified, source.deleted);
   }
 
   /**
@@ -142,8 +152,11 @@ public class CryptoRecord {
     String collection = (String) jsonRecord.get(KEY_COLLECTION);
     ExtendedJSONObject payload = jsonRecord.getJSONObject(KEY_PAYLOAD);
     CryptoRecord record = new CryptoRecord(payload);
-    record.id = id;
+    record.guid = id;
     record.collection = collection;
+
+    // TODO: lastModified?
+    // TODO: deleted?
     return record;
   }
 
@@ -198,5 +211,15 @@ public class CryptoRecord {
     ciphertext.put(KEY_IV, iv);
     this.payload = ciphertext;
     return this;
+  }
+
+  @Override
+  public void initFromPayload(CryptoRecord payload) {
+    throw new IllegalStateException("Can't do this with a CryptoRecord.");
+  }
+
+  @Override
+  public CryptoRecord getPayload() {
+    throw new IllegalStateException("Can't do this with a CryptoRecord.");
   }
 }

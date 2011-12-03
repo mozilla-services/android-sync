@@ -19,8 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,23 +35,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.domain;
+package org.mozilla.android.sync.synchronizer;
 
-import org.mozilla.android.sync.CryptoRecord;
+public interface SynchronizerSessionDelegate {
+  public void onInitialized(SynchronizerSession session);
+  public void onSynchronized(SynchronizerSession session);
 
-public abstract class Record {
-  public String guid;
-  public String collection;
-  public long lastModified;
-  public boolean deleted;
-
-  public Record(String guid, String collection, long lastModified, boolean deleted) {
-    this.guid         = guid;
-    this.collection   = collection;
-    this.lastModified = lastModified;
-    this.deleted = deleted;
-  }
-
-  public abstract void initFromPayload(CryptoRecord payload);
-  public abstract CryptoRecord getPayload();
+  // TODO: add methods for reporting of individual failures.
 }

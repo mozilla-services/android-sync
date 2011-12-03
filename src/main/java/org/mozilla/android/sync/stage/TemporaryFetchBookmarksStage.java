@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -40,7 +40,6 @@ package org.mozilla.android.sync.stage;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.mozilla.android.sync.CollectionKeys;
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.DelayedWorkTracker;
 import org.mozilla.android.sync.GlobalSession;
@@ -81,6 +80,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
+    // TODO: refactor to use Server11Repository.
     this.session = session;
     URI bookmarksURI;
     try {
@@ -89,12 +89,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
       boolean full = true;
       bookmarksURI = session.collectionURI("bookmarks", full);
       Log.i("rnewman", "Bookmarks URI is " + bookmarksURI.toASCIIString());
-      CollectionKeys collectionKeys = session.getCollectionKeys();
-      if (collectionKeys == null) {
-        session.abort(new Exception("No CollectionKeys!"), "No CollectionKeys!");
-        return;
-      }
-      this.bookmarksKeyBundle = collectionKeys.keyBundleForCollection("bookmarks");
+      this.bookmarksKeyBundle = session.keyForCollection("bookmarks");
       request = new SyncStorageCollectionRequest(bookmarksURI);
       request.delegate = this;
       
@@ -154,11 +149,11 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
       record.decrypt();
       Log.i("rnewman", "Decrypted.");
     } catch (Exception e) {
-      Log.w("rnewman", "Exception decrypting record bookmarks/" + record.id, e);
+      Log.w("rnewman", "Exception decrypting record bookmarks/" + record.guid, e);
     }
 
     // TODO: lastModified.
-    BookmarkRecord b = new BookmarkRecord(record.id, record.collection);
+    BookmarkRecord b = new BookmarkRecord(record.guid, record.collection);
 
     Log.i("rnewman", "Initing record.");
     b.initFromPayload(record);
@@ -173,6 +168,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
     Log.i("rnewman", "Store returned.");
   }
 
+  // TODO: err, shouldn't this go away?
   @Override
   public KeyBundle keyBundle() {
     return session.syncKeyBundle;

@@ -41,6 +41,11 @@ package org.mozilla.android.sync.repositories.delegates;
 import org.mozilla.android.sync.repositories.domain.Record;
 
 public interface RepositorySessionFetchRecordsDelegate {
-  public void onFetchFailed(Exception ex);
+  public void onFetchFailed(Exception ex, Record record);
+  public void onFetchedRecord(Record record);
+  public void onFetchCompleted();
+
+  // Shorthand for calling onFetchedRecord for each record in turn, then
+  // calling onFetchCompleted.
   public void onFetchSucceeded(Record[] records);
 }
