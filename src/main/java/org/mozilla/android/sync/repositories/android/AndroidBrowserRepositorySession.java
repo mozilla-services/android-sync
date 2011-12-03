@@ -145,7 +145,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
     public void run() {
       if (!confirmSessionActive()) {
-        delegate.onFetchFailed(new InactiveSessionException(null));
+        delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
 
@@ -173,13 +173,13 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
     public void run() {
       if (!confirmSessionActive()) {
-        delegate.onFetchFailed(new InactiveSessionException(null));
+        delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
 
       if (guids == null || guids.length < 1) {
         Log.e(tag, "No guids sent to fetch");
-        delegate.onFetchFailed(new InvalidRequestException(null));
+        delegate.onFetchFailed(new InvalidRequestException(null), null);
       } else {
         delegate.onFetchSucceeded(doFetch(guids));
       }
@@ -206,7 +206,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
     public void run() {
       if (!confirmSessionActive()) {
-        delegate.onFetchFailed(new InactiveSessionException(null));
+        delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
 

@@ -37,13 +37,9 @@
 
 package org.mozilla.android.sync.repositories;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 
-import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.CryptoRecord;
-import org.mozilla.android.sync.NonObjectJSONException;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -112,39 +108,52 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
     }
 
     @Override
-    public void onFetchFailed(Exception ex) {
-      next.onFetchFailed(ex);
+    public void onFetchFailed(Exception ex, Record record) {
+      next.onFetchFailed(ex, record);
+    }
+
+    @Override
+    public void onFetchedRecord(Record record) {
+      CryptoRecord r;
+      try {
+        r = (CryptoRecord) record;
+      } catch (ClassCastException e) {
+        next.onFetchFailed(e, record);
+        return;
+      }
+      r.keyBundle = keyBundle;
+      try {
+        r.decrypt();
+      } catch (Exception e) {
+        next.onFetchFailed(e, r);
+        return;
+      }
+      Record transformed;
+      try {
+        transformed = recordFactory.createRecord(r);
+      } catch (Exception e) {
+        next.onFetchFailed(e, r);
+        return;
+      }
+      next.onFetchedRecord(transformed);
     }
 
     @Override
     public void onFetchSucceeded(Record[] records) {
-      CryptoRecord[] cryptoRecords = (CryptoRecord[]) records;
-
-      // Partition the input so that we can handle decryption errors.
-      ArrayList<CryptoRecord> failed = new ArrayList<CryptoRecord>();
-      ArrayList<Record> succeeded = new ArrayList<Record>();
-      for (CryptoRecord record : cryptoRecords) {
-        record.keyBundle = keyBundle;
+      for (Record record : records) {
         try {
-          record.decrypt();
+          this.onFetchedRecord(record);
         } catch (Exception e) {
-          failed.add(record);
-          break;
+          this.onFetchFailed(e, record);
         }
-        Record transformed;
-        try {
-          transformed = recordFactory.createRecord(record);
-        } catch (Exception e) {
-          failed.add(record);
-          break;
-        }
-        succeeded.add(transformed);
       }
-      if (failed.size() > 0) {
-        next.onFetchFailed(failed.toArray(null));
-      }
+      this.onFetchCompleted();
     }
 
+    @Override
+    public void onFetchCompleted() {
+      next.onFetchCompleted();
+    }
   }
 
 
