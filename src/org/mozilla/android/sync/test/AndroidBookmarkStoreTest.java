@@ -9,7 +9,7 @@ import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepo
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 
 import android.content.Context;
@@ -49,7 +49,7 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
       }
     };
   }
-  Runnable getFetchAllRunnable(final ExpectFetchAllDelegate delegate) {
+  Runnable getFetchAllRunnable(final ExpectFetchDelegate delegate) {
     return new Runnable() {
       public void run() {
         getSession().fetchAll(delegate);
@@ -150,13 +150,13 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     performWait(remoteRunnable);
 
     String[] expected = new String[] { local.guid };
-    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, it is the remote one, and has android
     // ID same as first.
-    assertEquals(1, delegate.records.length);
-    BookmarkRecord record = (BookmarkRecord) delegate.records[0];
+    assertEquals(1, delegate.recordCount());
+    BookmarkRecord record = (BookmarkRecord) delegate.recordAt(0);
     BookmarkHelpers.verifyExpectedRecordReturned(remote, record);
     assertEquals(local.androidID, record.androidID);
   }
@@ -186,12 +186,12 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
 
     // Do a fetch and make sure that we get back the first (local) record.
     String[] expected = new String[] { local.guid };
-    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, it is the local one
     assertEquals(1, delegate.recordCount());
-    BookmarkRecord record = (BookmarkRecord) (delegate.records[0]);
+    BookmarkRecord record = (BookmarkRecord) (delegate.recordAt(0));
     BookmarkHelpers.verifyExpectedRecordReturned(local, record);
     assertEquals(local.androidID, record.androidID);
   }
@@ -219,13 +219,13 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     performWait(local2Runnable);
 
     String[] expected = new String[] { local.guid };
-    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, marked deleted and with
     // and androidId
-    assertEquals(1, delegate.records.length);
-    BookmarkRecord record = (BookmarkRecord) delegate.records[0];
+    assertEquals(1, delegate.recordCount());
+    BookmarkRecord record = (BookmarkRecord) delegate.recordAt(0);
     local.androidID = 54321;
     BookmarkHelpers.verifyExpectedRecordReturned(local, record);
     assertEquals(local.androidID, record.androidID);
@@ -258,12 +258,12 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
 
     // Do a fetch and make sure that we get back the first (local) record.
     String[] expected = new String[] { local.guid };
-    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expected);
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(getFetchAllRunnable(delegate));
 
     // Check that one record comes back, it is the local one, and not deleted
     assertEquals(1, delegate.recordCount());
-    BookmarkRecord record = (BookmarkRecord) (delegate.records[0]);
+    BookmarkRecord record = (BookmarkRecord) (delegate.recordAt(0));
     BookmarkHelpers.verifyExpectedRecordReturned(local, record);
     assertEquals(local.androidID, record.androidID);
     assertEquals(false, record.deleted);
@@ -284,10 +284,10 @@ public class AndroidBookmarkStoreTest extends ActivityInstrumentationTestCase2<M
     Runnable remoteRunnable = getStoreRunnable(remote, new ExpectStoredDelegate(remote.guid));
     performWait(remoteRunnable);
 
-    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(new String[]{});
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(new String[]{});
     performWait(getFetchAllRunnable(delegate));
 
     // Check that no records are returned
-    assertEquals(0, delegate.records.length);
+    assertEquals(0, delegate.recordCount());
   }
 }

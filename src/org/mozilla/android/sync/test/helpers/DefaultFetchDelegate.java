@@ -6,6 +6,7 @@ package org.mozilla.android.sync.test.helpers;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -15,9 +16,9 @@ import android.util.Log;
 
 public class DefaultFetchDelegate extends DefaultDelegate implements RepositorySessionFetchRecordsDelegate {
 
-  public Record[] records = new Record[0];
+  public ArrayList<Record> records = new ArrayList<Record>();
   
-  public void onFetchFailed(Exception ex) {
+  public void onFetchFailed(Exception ex, Record record) {
     sharedFail("Shouldn't fail");
   }
 
@@ -25,10 +26,10 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
     sharedFail("Hit default delegate");
   }
 
-  protected void onDone(Record[] records, String[] expected) {
+  protected void onDone(ArrayList<Record> records, String[] expected) {
     Log.i("rnewman", "onDone. Test Waiter is " + testWaiter());
     try {
-      assertEquals(expected.length, records.length);
+      assertEquals(expected.length, records.size());
       for (Record record : records) {
         assertFalse(-1 == Arrays.binarySearch(expected, record.guid));
       }
@@ -44,7 +45,17 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
   
   public int recordCount() {
-    return (this.records == null) ? 0 : this.records.length;
+    return (this.records == null) ? 0 : this.records.size();
+  }
+
+  @Override
+  public void onFetchedRecord(Record record) {
+    sharedFail("Hit default delegate.");
+  }
+
+  @Override
+  public void onFetchCompleted() {
+    sharedFail("Hit default delegate");
   }
   
 }

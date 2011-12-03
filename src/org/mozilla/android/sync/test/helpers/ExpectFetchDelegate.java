@@ -10,7 +10,7 @@ import org.mozilla.android.sync.repositories.domain.Record;
 import android.util.Log;
 
 public class ExpectFetchDelegate extends DefaultFetchDelegate {
-  private String[]      expected;
+  private String[] expected;
 
   public ExpectFetchDelegate(String[] guids) {
     expected = guids;
@@ -20,11 +20,21 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
   @Override
   public void onFetchSucceeded(Record[] records) {
     Log.i("rnewman", "fetchCallback: " + ((records == null) ? "null" : "" + records.length) + " records.");
+    this.records.addAll(Arrays.asList(records));
+    this.onFetchCompleted();
+  }
 
-    // Accumulate records.   
-    int oldLength = this.records.length;
-    this.records = Arrays.copyOf(this.records, oldLength + records.length);
-    System.arraycopy(records, 0, this.records, oldLength, records.length);
-    onDone(this.records, this.expected);
+  @Override
+  public void onFetchedRecord(Record record) {
+    this.records.add(record);
+  }
+
+  @Override
+  public void onFetchCompleted() {
+    super.onDone(this.records, this.expected);
+  }
+
+  public Record recordAt(int i) {
+    return this.records.get(i);
   }
 }

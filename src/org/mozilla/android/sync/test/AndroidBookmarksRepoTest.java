@@ -18,7 +18,6 @@ import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginFailDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectFetchAllDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
@@ -43,7 +42,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   private void performWait() {
     AndroidBookmarksTestHelper.testWaiter.performWait();
   }
-  private void performNotfiy() {
+  private void performNotify() {
     AndroidBookmarksTestHelper.testWaiter.performNotify();
   }
   private AndroidBrowserBookmarksRepositorySession getSession() {
@@ -108,7 +107,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     session.store(expected[1], new ExpectStoredDelegate(expected[1].guid));
     performWait();   
     
-    ExpectFetchAllDelegate delegate = new ExpectFetchAllDelegate(expectedGUIDs);
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expectedGUIDs);
     session.fetchAll(delegate);
     performWait();
 
@@ -297,13 +296,25 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     prepEmptySession();
     getSession().finish(new ExpectFinishDelegate());
     getSession().fetch(new String[] { Utils.generateGuid() }, new RepositorySessionFetchRecordsDelegate() {
+      @Override
       public void onFetchSucceeded(Record[] records) {
         fail("Session inactive, should fail");
-        performNotfiy();
+        performNotify();
       }
-      public void onFetchFailed(Exception ex) {
+      @Override
+      public void onFetchFailed(Exception ex, Record record) {
         verifyInactiveException(ex);
-        performNotfiy();
+        performNotify();
+      }
+      @Override
+      public void onFetchedRecord(Record record) {
+        fail("Session inactive, should fail");
+        performNotify();
+      }
+      @Override
+      public void onFetchCompleted() {
+        fail("Session inactive, should fail");
+        performNotify();
       }
     });
     performWait();
@@ -314,11 +325,11 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     getSession().guidsSince(System.currentTimeMillis(), new RepositorySessionGuidsSinceDelegate() {
       public void onGuidsSinceSucceeded(String[] guids) {
         fail("Session inactive, should fail");
-        performNotfiy();
+        performNotify();
       }
       public void onGuidsSinceFailed(Exception ex) {
         verifyInactiveException(ex);
-        performNotfiy();
+        performNotify();
       }
     });
     performWait();
@@ -344,7 +355,7 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     performWait();
     getSession().store(record1, new ExpectStoredDelegate(record1.guid));
     performWait();
-    getSession().fetchAll(new ExpectFetchAllDelegate(new String[] {
+    getSession().fetchAll(new ExpectFetchDelegate(new String[] {
         record0.guid, record1.guid
     }));
     performWait();
@@ -352,11 +363,11 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     // Wipe
     getSession().wipe(new RepositorySessionWipeDelegate() {
       public void onWipeSucceeded() {
-        performNotfiy();
+        performNotify();
       }
       public void onWipeFailed(Exception ex) {
         fail("wipe should have succeeded");
-        performNotfiy();
+        performNotify();
       }
     });
     performWait();
