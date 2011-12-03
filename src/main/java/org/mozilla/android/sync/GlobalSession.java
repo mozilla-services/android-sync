@@ -64,7 +64,7 @@ import android.content.Context;
 import android.util.Log;
 
 
-public class GlobalSession {
+public class GlobalSession implements CredentialsSource {
   public static final String API_VERSION = "1.1";
   public Stage currentState = Stage.idle;
 
@@ -77,6 +77,19 @@ public class GlobalSession {
   public InfoCollections infoCollections;      // TODO: persist historical timestamps.
   public MetaGlobal metaGlobal;
 
+  public void setCollectionKeys(CollectionKeys k) {
+    collectionKeys = k;
+  }
+  @Override
+  public CollectionKeys getCollectionKeys() {
+    return collectionKeys;
+  }
+  @Override
+  public KeyBundle keyForCollection(String collection) throws NoCollectionKeysSetException {
+    return this.getCollectionKeys().keyBundleForCollection("bookmarks");
+  }
+
+  @Override
   public String credentials() {
     return username + ":" + password;
   }
@@ -264,13 +277,6 @@ public class GlobalSession {
   }
   public void setClusterURL(String u) throws URISyntaxException {
     this.setClusterURL((u == null) ? null : new URI(u));
-  }
-
-  public void setCollectionKeys(CollectionKeys k) {
-    collectionKeys = k;
-  }
-  public CollectionKeys getCollectionKeys() {
-    return collectionKeys;
   }
 
   public void abort(Exception e, String reason) {
