@@ -101,10 +101,12 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   public class DecryptingTransformingFetchDelegate implements RepositorySessionFetchRecordsDelegate {
     private RepositorySessionFetchRecordsDelegate next;
     private KeyBundle keyBundle;
+    private RecordFactory recordFactory;
 
-    DecryptingTransformingFetchDelegate(RepositorySessionFetchRecordsDelegate next, KeyBundle bundle) {
+    DecryptingTransformingFetchDelegate(RepositorySessionFetchRecordsDelegate next, KeyBundle bundle, RecordFactory recordFactory) {
       this.next = next;
       this.keyBundle = bundle;
+      this.recordFactory = recordFactory;
     }
 
     @Override
@@ -130,7 +132,7 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
       }
       Record transformed;
       try {
-        transformed = recordFactory.createRecord(r);
+        transformed = this.recordFactory.createRecord(r);
       } catch (Exception e) {
         next.onFetchFailed(e, r);
         return;
@@ -156,6 +158,9 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
     }
   }
 
+  private DecryptingTransformingFetchDelegate makeUnwrappingDelegate(RepositorySessionFetchRecordsDelegate inner) {
+    return new DecryptingTransformingFetchDelegate(inner, this.keyBundle, this.recordFactory);
+  }
 
   @Override
   public void guidsSince(long timestamp,
@@ -167,21 +172,18 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   @Override
   public void fetchSince(long timestamp,
                          RepositorySessionFetchRecordsDelegate delegate) {
-    // TODO: unwrap.
-    inner.fetchSince(timestamp, delegate);
+    inner.fetchSince(timestamp, makeUnwrappingDelegate(delegate));
   }
 
   @Override
   public void fetch(String[] guids,
                     RepositorySessionFetchRecordsDelegate delegate) {
-    // TODO: unwrap.
-    inner.fetch(guids, delegate);
+    inner.fetch(guids, makeUnwrappingDelegate(delegate));
   }
 
   @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
-    // TODO: unwrap.
-    inner.fetchAll(delegate);
+    inner.fetchAll(makeUnwrappingDelegate(delegate));
   }
 
   @Override
