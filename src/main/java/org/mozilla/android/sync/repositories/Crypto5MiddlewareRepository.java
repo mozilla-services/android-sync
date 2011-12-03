@@ -51,6 +51,8 @@ import android.content.Context;
  */
 public class Crypto5MiddlewareRepository extends Repository {
 
+  public RecordFactory recordFactory = new IdentityRecordFactory();
+
   public class Crypto5MiddlewareRepositorySessionCreationDelegate implements RepositorySessionCreationDelegate {
     private Crypto5MiddlewareRepository repository;
     private RepositorySessionCreationDelegate outerDelegate;
@@ -71,7 +73,7 @@ public class Crypto5MiddlewareRepository extends Repository {
       Crypto5MiddlewareRepositorySession cryptoSession;
       try {
         // Synchronous, baby.
-        cryptoSession = new Crypto5MiddlewareRepositorySession(session, this.repository, lastSyncTimestamp);
+        cryptoSession = new Crypto5MiddlewareRepositorySession(session, this.repository, lastSyncTimestamp, recordFactory);
       } catch (Exception ex) {
         this.outerDelegate.onSessionCreateFailed(ex);
         return;
