@@ -11,5 +11,4 @@ public class ExpectFinishFailDelegate extends DefaultFinishDelegate {
       fail("Wrong exception received");
     }
   }
-
 }

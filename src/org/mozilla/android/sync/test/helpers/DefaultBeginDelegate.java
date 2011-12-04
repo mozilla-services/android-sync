@@ -7,10 +7,12 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDel
 
 public class DefaultBeginDelegate extends DefaultDelegate implements RepositorySessionBeginDelegate {
 
+  @Override
   public void onBeginFailed(Exception ex) {
     sharedFail("shouldn't fail");
   }
 
+  @Override
   public void onBeginSucceeded() {
     sharedFail("default begin delegate hit");
   }

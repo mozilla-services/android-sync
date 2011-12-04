@@ -5,6 +5,7 @@ package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
 import org.mozilla.android.sync.repositories.InactiveSessionException;
+import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.Utils;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDatabaseHelper;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
@@ -39,8 +40,8 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
 
-  private void performWait() {
-    AndroidBookmarksTestHelper.testWaiter.performWait();
+  private void performWait(Runnable run) {
+    AndroidBookmarksTestHelper.testWaiter.performWait(run);
   }
   private void performNotify() {
     AndroidBookmarksTestHelper.testWaiter.performNotify();
@@ -90,6 +91,55 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     }
   }
 
+  public static Runnable storeRunnable(final RepositorySession session, final Record record) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.store(record, new ExpectStoredDelegate(record.guid));
+      }
+    };
+  }
+
+  public static Runnable fetchAllRunnable(final RepositorySession session, final ExpectFetchDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.fetchAll(delegate);        
+      }
+    };
+  }
+  public static Runnable fetchAllRunnable(final RepositorySession session, final String[] expectedGUIDs) {
+    return fetchAllRunnable(session, new ExpectFetchDelegate(expectedGUIDs));
+  }
+  
+  public static Runnable guidsSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
+      }
+    };
+  }  
+  public static Runnable fetchSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, expected));
+      }
+    };
+  }
+  public static Runnable fetchRunnable(final RepositorySession session, final String[] guids) {
+    return fetchRunnable(session, guids, guids);
+  }
+  public static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final String[] expected) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.fetch(guids, new ExpectFetchDelegate(expected));
+      }
+    };
+  }
+
   public void testFetchAll() {
     Log.i("rnewman", "Starting testFetchAll.");
     AndroidBookmarksTestHelper.prepareRepositorySession(getApplicationContext(), new SetupDelegate(), 0, true);
@@ -102,15 +152,10 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     expectedGUIDs[1] = expected[1].guid;
 
     AndroidBrowserBookmarksRepositorySession session = getSession();
-    session.store(expected[0], new ExpectStoredDelegate(expected[0].guid));
-    performWait();
-    session.store(expected[1], new ExpectStoredDelegate(expected[1].guid));
-    performWait();   
-    
+    performWait(storeRunnable(session, expected[0]));
+    performWait(storeRunnable(session, expected[1]));
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(expectedGUIDs);
-    session.fetchAll(delegate);
-    performWait();
-
+    performWait(fetchAllRunnable(session, delegate));
     assertEquals(delegate.recordCount(), 2);
   }
 
@@ -131,13 +176,10 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     record0.lastModified = timestamp + 1000;
     record1.lastModified = timestamp + 1500;
 
-    getSession().store(record0, new ExpectStoredDelegate(expected[0]));
-    performWait();
-    getSession().store(record1, new ExpectStoredDelegate(expected[1]));
-    performWait();
-    
-    getSession().guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
-    performWait();
+    AndroidBrowserBookmarksRepositorySession session = getSession();
+    performWait(storeRunnable(session, record0));
+    performWait(storeRunnable(session, record1));
+    performWait(guidsSinceRunnable(session, timestamp, expected));
   }
   
   public void testGuidsSinceReturnNoRecords() {
@@ -147,12 +189,11 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     //  Store 1 record in the past.
     BookmarkRecord record0 = BookmarkHelpers.createLivemark();
     record0.lastModified = timestamp - 1000;
-    getSession().store(record0, new ExpectStoredDelegate(record0.guid));
-    performWait();
-
     String[] expected = {};
-    getSession().guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
-    performWait();
+
+    AndroidBrowserBookmarksRepositorySession session = getSession();
+    performWait(storeRunnable(session, record0));
+    performWait(guidsSinceRunnable(session, timestamp, expected));
   }
 
   /*
@@ -161,44 +202,40 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   public void testFetchSinceOneRecord() {
     prepEmptySession();
     long timestamp = System.currentTimeMillis();
+    AndroidBrowserBookmarksRepositorySession session = getSession();
 
     // Store a folder.
     BookmarkRecord folder = BookmarkHelpers.createFolder();
     folder.lastModified = timestamp;       // Verify inclusive retrieval.
-    getSession().store(folder, new ExpectStoredDelegate(folder.guid));
-    performWait();
+    performWait(storeRunnable(session, folder));
 
     // Store a bookmark.
     BookmarkRecord bookmark = BookmarkHelpers.createBookmark2();
     bookmark.lastModified = timestamp + 3000;
-    getSession().store(bookmark, new ExpectStoredDelegate(bookmark.guid));
-    performWait();
+    performWait(storeRunnable(session, bookmark));
 
     // Fetch just the bookmark.
     String[] expectedOne = new String[1];
     expectedOne[0] = bookmark.guid;
-    getSession().fetchSince(timestamp + 1, new ExpectFetchSinceDelegate(timestamp, expectedOne));
-    performWait();
+    performWait(fetchSinceRunnable(session, timestamp + 1, expectedOne));
 
     // Fetch both, relying on inclusiveness.
     String[] expectedBoth = new String[2];
     expectedBoth[0] = folder.guid;
     expectedBoth[1] = bookmark.guid;
-    getSession().fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, expectedBoth));
-    performWait();
+    performWait(fetchSinceRunnable(session, timestamp, expectedBoth));
   }
 
   public void testFetchSinceReturnNoRecords() {
     prepEmptySession();
     BookmarkRecord record0 = BookmarkHelpers.createBookmark1();
+    AndroidBrowserBookmarksRepositorySession session = getSession();
     
-    getSession().store(record0, new ExpectStoredDelegate(record0.guid));
-    performWait();
+    performWait(storeRunnable(session, record0));
 
-    long timestamp = System.currentTimeMillis()/1000;
+    long timestamp = System.currentTimeMillis() / 1000;
 
-    getSession().fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, new String[] { }));
-    performWait();
+    performWait(fetchSinceRunnable(session, timestamp, new String[] {}));
   }
 
   /*
@@ -207,59 +244,63 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   
   public void testFetchOneRecordByGuid() {
     prepEmptySession();
+    AndroidBrowserBookmarksRepositorySession session = getSession();
     BookmarkRecord record0 = BookmarkHelpers.createBookmark1();
     BookmarkRecord record1 = BookmarkHelpers.createBookmark2();
     
-    getSession().store(record0, new ExpectStoredDelegate(record0.guid));
-    performWait();
-    getSession().store(record1, new ExpectStoredDelegate(record1.guid));
-    performWait();
+    performWait(storeRunnable(session, record0));
+    performWait(storeRunnable(session, record1));
     
     String[] expected = new String[] { record0.guid };
-    getSession().fetch(expected, new ExpectFetchDelegate(expected));
-    performWait();
+    performWait(fetchRunnable(session, expected));
   }
   
   public void testFetchMultipleRecordsByGuids() {
     prepEmptySession();
+    AndroidBrowserBookmarksRepositorySession session = getSession();
     BookmarkRecord record0 = BookmarkHelpers.createBookmark1();
     BookmarkRecord record1 = BookmarkHelpers.createBookmark2();
     BookmarkRecord record2 = BookmarkHelpers.createQuery();
 
-    getSession().store(record0, new ExpectStoredDelegate(record0.guid));
-    performWait();
-    getSession().store(record1, new ExpectStoredDelegate(record1.guid));
-    performWait();
-    getSession().store(record2, new ExpectStoredDelegate(record2.guid));
-    performWait();
+    performWait(storeRunnable(session, record0));
+    performWait(storeRunnable(session, record1));
+    performWait(storeRunnable(session, record2));
     
     String[] expected = new String[] { record0.guid, record2.guid };
-    getSession().fetch(expected, new ExpectFetchDelegate(expected));
-    performWait();
+    performWait(fetchRunnable(session, expected));
   }
   
   public void testFetchNoRecordByGuid() {
     prepEmptySession();
+    AndroidBrowserBookmarksRepositorySession session = getSession();
     
     BookmarkRecord record0 = BookmarkHelpers.createSeparator();
-    getSession().store(record0, new ExpectStoredDelegate(record0.guid));
-    performWait();
-    
-    getSession().fetch(new String[] { Utils.generateGuid() }, 
-        new ExpectFetchDelegate(new String[]{}));
-    performWait();
+    performWait(storeRunnable(session, record0));
+    String[] expected = new String[] {};
+    String[] guids = new String[] { Utils.generateGuid() };
+    performWait(fetchRunnable(session, guids, expected));
   }
   
   public void testFetchNoGuids() {
     prepEmptySession();
-    getSession().fetch(new String[] {}, new ExpectInvalidRequestFetchDelegate());
-    performWait();
+    final AndroidBrowserBookmarksRepositorySession session = getSession();
+    performWait(new Runnable() {
+      @Override
+      public void run() {
+        session.fetch(new String[] {}, new ExpectInvalidRequestFetchDelegate());
+      }
+    });
   }
   
   public void testFetchNullGuids() {
     prepEmptySession();
-    getSession().fetch(null, new ExpectInvalidRequestFetchDelegate());
-    performWait();
+    final AndroidBrowserBookmarksRepositorySession session = getSession();
+    performWait(new Runnable() {
+      @Override
+      public void run() {
+        session.fetch(null, new ExpectInvalidRequestFetchDelegate());
+      }
+    });
   }
   
   /*
@@ -294,45 +335,61 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
   
   public void testFetchOnFinishedSession() {
     prepEmptySession();
-    getSession().finish(new ExpectFinishDelegate());
-    getSession().fetch(new String[] { Utils.generateGuid() }, new RepositorySessionFetchRecordsDelegate() {
+    Runnable run = new Runnable() {
       @Override
-      public void onFetchSucceeded(Record[] records) {
-        fail("Session inactive, should fail");
-        performNotify();
+      public void run() {
+        getSession().finish(new ExpectFinishDelegate());
+        getSession().fetch(new String[] { Utils.generateGuid() },
+            new RepositorySessionFetchRecordsDelegate() {
+              @Override
+              public void onFetchSucceeded(Record[] records) {
+                fail("Session inactive, should fail");
+                performNotify();
+              }
+
+              @Override
+              public void onFetchFailed(Exception ex, Record record) {
+                verifyInactiveException(ex);
+                performNotify();
+              }
+
+              @Override
+              public void onFetchedRecord(Record record) {
+                fail("Session inactive, should fail");
+                performNotify();
+              }
+
+              @Override
+              public void onFetchCompleted() {
+                fail("Session inactive, should fail");
+                performNotify();
+              }
+            });
       }
-      @Override
-      public void onFetchFailed(Exception ex, Record record) {
-        verifyInactiveException(ex);
-        performNotify();
-      }
-      @Override
-      public void onFetchedRecord(Record record) {
-        fail("Session inactive, should fail");
-        performNotify();
-      }
-      @Override
-      public void onFetchCompleted() {
-        fail("Session inactive, should fail");
-        performNotify();
-      }
-    });
-    performWait();
+    };
+    performWait(run);
   }
   
   public void testGuidsSinceOnUnstartedSession() {
     prepEmptySessionWithoutBegin();
-    getSession().guidsSince(System.currentTimeMillis(), new RepositorySessionGuidsSinceDelegate() {
-      public void onGuidsSinceSucceeded(String[] guids) {
-        fail("Session inactive, should fail");
-        performNotify();
+    Runnable run = new Runnable() {
+      @Override
+      public void run() {
+        getSession().guidsSince(System.currentTimeMillis(),
+            new RepositorySessionGuidsSinceDelegate() {
+              public void onGuidsSinceSucceeded(String[] guids) {
+                fail("Session inactive, should fail");
+                performNotify();
+              }
+
+              public void onGuidsSinceFailed(Exception ex) {
+                verifyInactiveException(ex);
+                performNotify();
+              }
+            });
       }
-      public void onGuidsSinceFailed(Exception ex) {
-        verifyInactiveException(ex);
-        performNotify();
-      }
-    });
-    performWait();
+    };
+    performWait(run);
   }
   
   private void verifyInactiveException(Exception ex) {
@@ -351,26 +408,29 @@ public class AndroidBookmarksRepoTest extends ActivityInstrumentationTestCase2<M
     BookmarkRecord record1 = BookmarkHelpers.createBookmark2();
     
     // Store 2 records
-    getSession().store(record0, new ExpectStoredDelegate(record0.guid));
-    performWait();
-    getSession().store(record1, new ExpectStoredDelegate(record1.guid));
-    performWait();
-    getSession().fetchAll(new ExpectFetchDelegate(new String[] {
+    AndroidBrowserBookmarksRepositorySession session = getSession();
+    performWait(storeRunnable(session, record0));
+    performWait(storeRunnable(session, record1));
+    performWait(fetchAllRunnable(session, new String[] {
         record0.guid, record1.guid
     }));
-    performWait();
-    
-    // Wipe
-    getSession().wipe(new RepositorySessionWipeDelegate() {
-      public void onWipeSucceeded() {
-        performNotify();
-      }
-      public void onWipeFailed(Exception ex) {
-        fail("wipe should have succeeded");
-        performNotify();
+
+    performWait(new Runnable() {
+      @Override
+      public void run() {
+        
+        // Wipe
+        getSession().wipe(new RepositorySessionWipeDelegate() {
+          public void onWipeSucceeded() {
+            performNotify();
+          }
+          public void onWipeFailed(Exception ex) {
+            fail("wipe should have succeeded");
+            performNotify();
+          }
+        });
       }
     });
-    performWait();
   }
 
 }

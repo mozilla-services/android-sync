@@ -8,10 +8,12 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreation
 
 public class DefaultSessionCreationDelegate extends DefaultDelegate implements RepositorySessionCreationDelegate {
   
+  @Override
   public void onSessionCreateFailed(Exception ex) {
     sharedFail("Should not fail.");
   }
 
+  @Override
   public void onSessionCreated(RepositorySession session) {
     sharedFail("Should not have been created.");
   }

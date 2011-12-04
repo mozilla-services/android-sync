@@ -7,6 +7,7 @@ import static junit.framework.Assert.assertEquals;
 
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
   
+  @Override
   public void onGuidsSinceSucceeded(String[] guids) {
     AssertionError err = null;
     try {

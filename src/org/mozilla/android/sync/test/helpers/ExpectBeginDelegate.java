@@ -5,6 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 public class ExpectBeginDelegate extends DefaultBeginDelegate {
 
+  @Override
   public void onBeginSucceeded() {
     //no-op, passes test
   }

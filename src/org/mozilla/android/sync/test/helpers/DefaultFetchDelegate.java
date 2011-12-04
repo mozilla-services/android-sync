@@ -18,10 +18,12 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
 
   public ArrayList<Record> records = new ArrayList<Record>();
   
+  @Override
   public void onFetchFailed(Exception ex, Record record) {
     sharedFail("Shouldn't fail");
   }
 
+  @Override
   public void onFetchSucceeded(Record[] records) {
     sharedFail("Hit default delegate");
   }

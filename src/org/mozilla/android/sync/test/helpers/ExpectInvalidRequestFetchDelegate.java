@@ -6,11 +6,16 @@ package org.mozilla.android.sync.test.helpers;
 import static junit.framework.Assert.fail;
 
 import org.mozilla.android.sync.repositories.InvalidRequestException;
+import org.mozilla.android.sync.repositories.domain.Record;
+
+import android.util.Log;
 
 public class ExpectInvalidRequestFetchDelegate extends DefaultFetchDelegate {
   
-  public void onFetchFailed(Exception ex) {
-    if (ex.getClass() == InvalidRequestException.class) {
+  @Override
+  public void onFetchFailed(Exception ex, Record rec) {
+    Log.i("rnewman", "ExpectInvalidRequestFetchDelegate got exception " + ex);
+    if (ex instanceof InvalidRequestException) {
       onDone();
     } else {
       fail("Wrong exception");

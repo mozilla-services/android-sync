@@ -8,10 +8,12 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 public class DefaultStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   
+  @Override
   public void onStoreFailed(Exception ex) {
     sharedFail("Store failed");
   }
 
+  @Override
   public void onStoreSucceeded(Record record) {
     sharedFail("DefaultStoreDelegate used");
   }   

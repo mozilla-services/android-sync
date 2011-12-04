@@ -7,10 +7,12 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSin
 
 public class DefaultGuidsSinceDelegate extends DefaultDelegate implements RepositorySessionGuidsSinceDelegate {
 
+  @Override
   public void onGuidsSinceFailed(Exception ex) {
     sharedFail("shouldn't fail");
   }
 
+  @Override
   public void onGuidsSinceSucceeded(String[] guids) {
     sharedFail("default guids since delegate called");
   }

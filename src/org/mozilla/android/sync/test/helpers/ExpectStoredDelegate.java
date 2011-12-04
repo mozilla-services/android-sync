@@ -14,6 +14,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
     this.expectedGUID = guid;
   }
 
+  @Override
   public void onStoreSucceeded(Record record) {
     try {
       if (this.expectedGUID != null) {

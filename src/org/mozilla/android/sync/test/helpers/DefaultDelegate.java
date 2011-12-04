@@ -5,7 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.fail;
 
-public class DefaultDelegate {
+public abstract class DefaultDelegate {
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }

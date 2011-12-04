@@ -16,6 +16,7 @@ public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
     Arrays.sort(expected);
   }
 
+  @Override
   public void onGuidsSinceSucceeded(String[] guids) {
     AssertionError err = null;
     try {
