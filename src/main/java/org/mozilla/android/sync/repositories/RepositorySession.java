@@ -93,7 +93,7 @@ public abstract class RepositorySession {
      if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;
       this.syncBeginTimestamp = System.currentTimeMillis();
-      delegate.onBeginSucceeded();
+      delegate.onBeginSucceeded(this);
     } else {
       Log.e(tag, "Tried to begin() an already active or finished session");
       delegate.onBeginFailed(new InvalidSessionTransitionException(null));

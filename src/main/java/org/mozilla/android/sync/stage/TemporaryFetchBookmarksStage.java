@@ -231,7 +231,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   }
 
   @Override
-  public void onBeginSucceeded() {
+  public void onBeginSucceeded(RepositorySession session) {
     this.request.get();
   }
 

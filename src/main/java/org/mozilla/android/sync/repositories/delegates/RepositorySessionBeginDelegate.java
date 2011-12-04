@@ -37,6 +37,8 @@
 
 package org.mozilla.android.sync.repositories.delegates;
 
+import org.mozilla.android.sync.repositories.RepositorySession;
+
 /**
  * One of these two methods is guaranteed to be called after session.begin() is
  * invoked (possibly during the invocation). The callback will be invoked prior
@@ -47,5 +49,5 @@ package org.mozilla.android.sync.repositories.delegates;
  */
 public interface RepositorySessionBeginDelegate {
   public void onBeginFailed(Exception ex);
-  public void onBeginSucceeded();
+  public void onBeginSucceeded(RepositorySession session);
 }

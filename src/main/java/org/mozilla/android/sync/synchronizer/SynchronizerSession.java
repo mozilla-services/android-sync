@@ -38,27 +38,156 @@
 package org.mozilla.android.sync.synchronizer;
 
 import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
 
-public class SynchronizerSession {
+import android.content.Context;
+import android.util.Log;
+
+public class SynchronizerSession implements
+RecordsChannelDelegate,
+RepositorySessionBeginDelegate,
+RepositorySessionCreationDelegate,
+RepositorySessionFinishDelegate {
+
   private RepositorySession sessionA;
   private RepositorySession sessionB;
+
   private Synchronizer synchronizer;
   private SynchronizerSessionDelegate delegate;
 
+  /**
+   * Pulls records from `source`, applying them to `sink`.
+   * Notifies its delegate of errors and completion.
+   *
+   * @author rnewman
+   *
+   */
+  protected class RecordsChannel {
+    public RepositorySession source;
+    public RepositorySession sink;
+    public void flow(RecordsChannelDelegate delegate) {
+
+    }
+  }
+
   // TODO: bundle in and out.
 
+  /*
+   * Public API: constructor, init, synchronize.
+   */
   public SynchronizerSession(Synchronizer synchronizer, SynchronizerSessionDelegate delegate) {
     this.synchronizer = synchronizer;
     this.delegate     = delegate;
   }
+
   public void init() {
-    // TODO: create sessionA and sessionB.
-    this.delegate.onInitialized(this);
+    // Begin sessionA and sessionB, call onInitialized in callbacks.
+    // TODO TODO TODO: createSession shouldn't take a timestamp.
+    this.synchronizer.repositoryA.createSession(this, this.getContext(), 0);
   }
 
+  /**
+   * Please don't call this until you've been notified with onInitialized.
+   */
   public void synchronize() {
-    // TODO: synchronize the two sessions in each direction.
+    // TODO: synchronize the two sessions in each direction, call onSynchronized in callbacks.
     this.delegate.onSynchronized(this);
   }
-  
+
+
+  // TODO: return a real context.
+  protected Context getContext() {
+    return null;
+  }
+
+
+  @Override
+  public void onFlowCompleted() {
+    // TODO Auto-generated method stub
+
+  }
+
+
+  /*
+   * RepositorySessionBeginDelegate methods.
+   */
+  @Override
+  public void onBeginFailed(Exception ex) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void onBeginSucceeded(RepositorySession session) {
+    if (session == this.sessionA) {
+      this.sessionB.begin(this);
+      return;
+    }
+    if (session == this.sessionB) {
+      // Great!
+      // TODO
+      return;
+    }
+    this.delegate.onSessionError(new UnexpectedSessionException(session));
+  }
+
+  /*
+   * RepositorySessionCreationDelegate methods.
+   */
+  @Override
+  public void onSessionCreateFailed(Exception ex) {
+    // Attempt to finish the first session, if the second is the one that failed.
+    if (this.sessionA != null) {
+      try {
+        this.sessionA.finish(this);
+      } catch (Exception e) {
+        // Never mind; best-effort finish.
+      }
+    }
+    this.delegate.onSessionError(ex);
+  }
+
+  @Override
+  public void onSessionCreated(RepositorySession session) {
+    if (session == null ||
+        this.sessionA == session) {
+      this.delegate.onSessionError(new UnexpectedSessionException(session));
+      return;
+    }
+    if (this.sessionA == null) {
+      this.sessionA = session;
+      this.synchronizer.repositoryB.createSession(this, this.getContext(), 0);
+      return;
+    }
+    if (this.sessionB == null) {
+      this.sessionB = session;
+      this.delegate.onInitialized(this);
+      return;
+    }
+    // TODO: need a way to make sure we don't call any more delegate methods.
+    this.delegate.onSessionError(new UnexpectedSessionException(session));
+  }
+
+  /*
+   * RepositorySessionFinishDelegate methods.
+   */
+  @Override
+  public void onFinishFailed(Exception ex) {
+    if (this.sessionB == null) {
+      // Ah, it was a problem cleaning up. Never mind.
+      Log.w("rnewman", "Got exception cleaning up first after second session creation failed.", ex);
+      return;
+    }
+    // TODO
+  }
+
+  @Override
+  public void onFinishSucceeded() {
+    if (this.sessionB == null) {
+      this.sessionA = null;       // We're done.
+    }
+  }
+
 }
