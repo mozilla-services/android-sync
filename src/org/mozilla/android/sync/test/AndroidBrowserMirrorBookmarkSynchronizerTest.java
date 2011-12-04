@@ -18,10 +18,10 @@ import android.provider.Browser;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class AndroidBookmarksLocalSyncTest extends
+public class AndroidBrowserMirrorBookmarkSynchronizerTest extends
     ActivityInstrumentationTestCase2<MainActivity> {
   
-  public AndroidBookmarksLocalSyncTest() {
+  public AndroidBrowserMirrorBookmarkSynchronizerTest() {
     super(MainActivity.class);
   }
 
