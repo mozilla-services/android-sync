@@ -80,8 +80,8 @@ public class Server11Repository extends Repository {
 
   @Override
   public void createSession(RepositorySessionCreationDelegate delegate,
-                            Context context, long lastSyncTimestamp) {
-    delegate.onSessionCreated(new Server11RepositorySession(this, lastSyncTimestamp));
+                            Context context) {
+    delegate.onSessionCreated(new Server11RepositorySession(this));
   }
 
   public URI collectionURI(boolean full, long newer, String ids) throws URISyntaxException {

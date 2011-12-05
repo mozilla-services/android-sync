@@ -49,6 +49,7 @@ import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.mozilla.android.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.android.sync.repositories.RepositorySessionBundle;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -94,8 +95,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
       request.delegate = this;
       
       bookmarksRepo = new AndroidBrowserBookmarksRepository();
-      long lastSyncTimestamp = 0;
-      bookmarksRepo.createSession(this, session.getContext(), lastSyncTimestamp);
+      bookmarksRepo.createSession(this, session.getContext());
 
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
@@ -212,7 +212,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   }
 
   @Override
-  public void onFinishSucceeded() {
+  public void onFinishSucceeded(RepositorySessionBundle bundle) {
     if (this.httpError != null) {
       Log.i("rnewman", "Aborting session due to earlier HTTP error.");
       this.session.handleHTTPError(this.httpError, "HTTP error in fetch. Successful session finish.");
@@ -231,7 +231,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   }
 
   @Override
-  public void onBeginSucceeded() {
+  public void onBeginSucceeded(RepositorySession session) {
     this.request.get();
   }
 

@@ -128,8 +128,8 @@ public class Server11RepositorySession extends RepositorySession {
   }
 
   Server11Repository serverRepository;
-  public Server11RepositorySession(Repository repository, long lastSyncTimestamp) {
-    super(repository, lastSyncTimestamp);
+  public Server11RepositorySession(Repository repository) {
+    super(repository);
     serverRepository = (Server11Repository) repository;
   }
 

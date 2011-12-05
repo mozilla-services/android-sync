@@ -48,6 +48,19 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.util.Log;
 
+/**
+ * A RepositorySession is created and used thusly:
+ *
+ * * Construct, with a reference to its parent Repository, by calling
+ *   Repository.createSession().
+ * * Populate with saved information by calling unbundle().
+ * * Begin a sync by calling begin().
+ * * Perform operations such as fetchSince() and store().
+ * * Finish by calling finish(), retrieving and storing the current bundle.
+ *
+ * @author rnewman
+ *
+ */
 public abstract class RepositorySession {
   
   public enum SessionStatus {
@@ -64,11 +77,10 @@ public abstract class RepositorySession {
   protected long lastSyncTimestamp;
   protected long syncBeginTimestamp;
 
-  public RepositorySession(Repository repository, long lastSyncTimestamp) {
+  public RepositorySession(Repository repository) {
     this.repository = repository;
-    this.lastSyncTimestamp = lastSyncTimestamp;
   }
-  
+
   public abstract void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate);
   public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
   public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate);
@@ -76,21 +88,49 @@ public abstract class RepositorySession {
   public abstract void store(Record record, RepositorySessionStoreDelegate delegate);
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
 
+  public void unbundle(RepositorySessionBundle bundle) {
+    this.lastSyncTimestamp = 0;
+    if (bundle.containsKey("timestamp")) {
+      try {
+        this.lastSyncTimestamp = bundle.getLong("timestamp");
+      } catch (Exception e) {
+        // Defaults to 0 above.
+      }
+    }
+  }
+
   public void begin(RepositorySessionBeginDelegate delegate) {
      if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;
       this.syncBeginTimestamp = System.currentTimeMillis();
-      delegate.onBeginSucceeded();
+      delegate.onBeginSucceeded(this);
     } else {
       Log.e(tag, "Tried to begin() an already active or finished session");
       delegate.onBeginFailed(new InvalidSessionTransitionException(null));
     }
   }
 
+  protected RepositorySessionBundle getBundle() {
+    return this.getBundle(null);
+  }
+
+  /**
+   * Override this in your subclasses to return values to save between sessions.
+   * @param optional
+   * @return
+   */
+  protected RepositorySessionBundle getBundle(RepositorySessionBundle optional) {
+    RepositorySessionBundle bundle = (optional == null) ? new RepositorySessionBundle() : optional;
+
+    // TODO: real value.
+    bundle.put("timestamp", this.lastSyncTimestamp);
+    return bundle;
+  }
+
   public void finish(RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
-      delegate.onFinishSucceeded();
+      delegate.onFinishSucceeded(this.getBundle(null));
     } else {
       Log.e(tag, "Tried to finish() an unstarted or already finished session");
       delegate.onFinishFailed(new InvalidSessionTransitionException(null));

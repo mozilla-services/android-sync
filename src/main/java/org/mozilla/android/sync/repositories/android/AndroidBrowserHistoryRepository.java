@@ -45,8 +45,8 @@ import android.content.Context;
 public class AndroidBrowserHistoryRepository extends AndroidBrowserRepository implements HistoryRepository {
 
   @Override
-  protected void sessionCreator(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {
-    AndroidBrowserHistoryRepositorySession session = new AndroidBrowserHistoryRepositorySession(AndroidBrowserHistoryRepository.this, context, lastSyncTimestamp);
+  protected void sessionCreator(RepositorySessionCreationDelegate delegate, Context context) {
+    AndroidBrowserHistoryRepositorySession session = new AndroidBrowserHistoryRepositorySession(AndroidBrowserHistoryRepository.this, context);
     delegate.onSessionCreated(session);
   }
 }

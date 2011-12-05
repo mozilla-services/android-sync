@@ -107,6 +107,9 @@ public class ExtendedJSONObject {
   public Object get(String key) {
     return this.object.get(key);
   }
+  public Long getLong(String key) {
+    return (Long) this.get(key);
+  }
 
   public boolean containsKey(String key) {
     return this.object.containsKey(key);
