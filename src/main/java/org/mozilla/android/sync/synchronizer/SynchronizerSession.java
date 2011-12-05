@@ -37,9 +37,9 @@
 
 package org.mozilla.android.sync.synchronizer;
 
+
 import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.RepositorySessionBundle;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
 
@@ -48,30 +48,18 @@ import android.util.Log;
 
 public class SynchronizerSession implements
 RecordsChannelDelegate,
-RepositorySessionBeginDelegate,
 RepositorySessionCreationDelegate,
 RepositorySessionFinishDelegate {
 
-  private RepositorySession sessionA;
-  private RepositorySession sessionB;
-
   private Synchronizer synchronizer;
   private SynchronizerSessionDelegate delegate;
+  private Context context;
 
-  /**
-   * Pulls records from `source`, applying them to `sink`.
-   * Notifies its delegate of errors and completion.
-   *
-   * @author rnewman
-   *
+  /*
+   * Computed during init.
    */
-  protected class RecordsChannel {
-    public RepositorySession source;
-    public RepositorySession sink;
-    public void flow(RecordsChannelDelegate delegate) {
-
-    }
-  }
+  private RepositorySession sessionA;
+  private RepositorySession sessionB;
 
   // TODO: bundle in and out.
 
@@ -83,56 +71,68 @@ RepositorySessionFinishDelegate {
     this.delegate     = delegate;
   }
 
-  public void init() {
+  public void init(Context context) {
+    this.context = context;
     // Begin sessionA and sessionB, call onInitialized in callbacks.
-    // TODO TODO TODO: createSession shouldn't take a timestamp.
-    this.synchronizer.repositoryA.createSession(this, this.getContext());
+    this.synchronizer.repositoryA.createSession(this, context);
   }
 
   /**
    * Please don't call this until you've been notified with onInitialized.
    */
   public void synchronize() {
-    // TODO: synchronize the two sessions in each direction, call onSynchronized in callbacks.
+    // TODO: pull timestamps from somewhere...
+    final RecordsChannel channelAToB = new RecordsChannel(this.sessionA, this.sessionB, this, 0);
+    final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this, 0);
+    final SynchronizerSession session = this;
+
+    // TODO: failed record handling.
+    channelAToB.flow(new RecordsChannelDelegate() {
+      public void onFlowCompleted(RecordsChannel recordsChannel) {
+        channelBToA.flow(session);
+      }
+
+      @Override
+      public void onFlowBeginFailed(RecordsChannel recordsChannel, Exception ex) {
+        session.delegate.onSessionError(ex);
+      }
+
+      @Override
+      public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
+        // TODO: clean up, tear down, abort.
+        session.delegate.onStoreError(ex);
+      }
+
+      @Override
+      public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
+        // Hmm. TODO
+      }
+    });
+  }
+
+  @Override
+  public void onFlowCompleted(RecordsChannel channel) {
     this.delegate.onSynchronized(this);
   }
 
-
-  // TODO: return a real context.
-  protected Context getContext() {
-    return null;
-  }
-
-
   @Override
-  public void onFlowCompleted() {
+  public void onFlowBeginFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO Auto-generated method stub
-
+    
   }
 
-
-  /*
-   * RepositorySessionBeginDelegate methods.
-   */
   @Override
-  public void onBeginFailed(Exception ex) {
+  public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO Auto-generated method stub
-
+    
   }
 
   @Override
-  public void onBeginSucceeded(RepositorySession session) {
-    if (session == this.sessionA) {
-      this.sessionB.begin(this);
-      return;
-    }
-    if (session == this.sessionB) {
-      // Great!
-      // TODO
-      return;
-    }
-    this.delegate.onSessionError(new UnexpectedSessionException(session));
+  public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
+    // TODO Auto-generated method stub
+    
   }
+
 
   /*
    * RepositorySessionCreationDelegate methods.
@@ -142,28 +142,36 @@ RepositorySessionFinishDelegate {
     // Attempt to finish the first session, if the second is the one that failed.
     if (this.sessionA != null) {
       try {
+        // We no longer need a reference to our context.
+        this.context = null;
         this.sessionA.finish(this);
       } catch (Exception e) {
         // Never mind; best-effort finish.
       }
     }
+    // We no longer need a reference to our context.
+    this.context = null;
     this.delegate.onSessionError(ex);
   }
 
+  // TODO: some of this "finish and clean up" code can be refactored out.
   @Override
   public void onSessionCreated(RepositorySession session) {
     if (session == null ||
         this.sessionA == session) {
+      // TODO: clean up sessionA.
       this.delegate.onSessionError(new UnexpectedSessionException(session));
       return;
     }
     if (this.sessionA == null) {
       this.sessionA = session;
-      this.synchronizer.repositoryB.createSession(this, this.getContext());
+      this.synchronizer.repositoryB.createSession(this, this.context);
       return;
     }
     if (this.sessionB == null) {
       this.sessionB = session;
+      // We no longer need a reference to our context.
+      this.context = null;
       this.delegate.onInitialized(this);
       return;
     }
@@ -191,5 +199,4 @@ RepositorySessionFinishDelegate {
       // TODO: persist bundle.
     }
   }
-
 }
