@@ -185,6 +185,23 @@ RepositorySessionFinishDelegate {
       this.sessionB = session;
       // We no longer need a reference to our context.
       this.context = null;
+
+      // Unbundle each session.
+      try {
+        this.sessionA.unbundle(this.getSynchronizer().bundleA);
+      } catch (Exception e) {
+        this.delegate.onSessionError(new UnbundleError(e, sessionA));
+        // TODO: abort
+        return;
+      }
+      try {
+        this.sessionB.unbundle(this.getSynchronizer().bundleB);
+      } catch (Exception e) {
+        // TODO: abort
+        this.delegate.onSessionError(new UnbundleError(e, sessionB));
+        return;
+      }
+
       this.delegate.onInitialized(this);
       return;
     }
@@ -206,10 +223,17 @@ RepositorySessionFinishDelegate {
   }
 
   @Override
-  public void onFinishSucceeded(RepositorySessionBundle bundle) {
+  public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
+    if (session == sessionA) {
+      this.synchronizer.bundleA = bundle;
+    } else if (session == sessionB) {
+      this.synchronizer.bundleB = bundle;
+    } else {
+      // TODO: hurrrrrr...
+    }
+
     if (this.sessionB == null) {
       this.sessionA = null;       // We're done.
-      // TODO: persist bundle.
     }
   }
 }
