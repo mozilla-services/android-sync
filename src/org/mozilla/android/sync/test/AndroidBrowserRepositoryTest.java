@@ -75,7 +75,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   
   protected void prepSession() {
     AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
-        new SetupDelegate(), 0, true, getRepository());
+        new SetupDelegate(), true, getRepository());
     // Clear old data.
     wipe();
   }
@@ -188,7 +188,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   protected void basicFetchAllTest(Record[] expected) {
     Log.i("rnewman", "Starting testFetchAll.");
     AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
-        new SetupDelegate(), 0, true, getRepository());
+        new SetupDelegate(), true, getRepository());
     Log.i("rnewman", "Prepared.");
     String[] expectedGUIDs = new String[expected.length];
     for (int i = 0; i < expectedGUIDs.length; i++) {
@@ -488,7 +488,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Log.i("rnewman", "In testCreateSessionNullContext.");
     AndroidBrowserRepository repo = getRepository();
     try {
-      repo.createSession(new DefaultSessionCreationDelegate(), null, 0);
+      repo.createSession(new DefaultSessionCreationDelegate(), null);
       fail("Should throw.");
     } catch (Exception ex) {
       assertNotNull(ex);

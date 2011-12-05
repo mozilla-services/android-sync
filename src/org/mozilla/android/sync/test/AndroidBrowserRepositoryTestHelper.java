@@ -21,7 +21,6 @@ public class AndroidBrowserRepositoryTestHelper {
   
   public static AndroidBrowserRepository prepareRepositorySession(final Context context,
       final DefaultSessionCreationDelegate delegate,
-      final long lastSyncTimestamp,
       boolean begin,
       final AndroidBrowserRepository repository) {
     
@@ -29,7 +28,7 @@ public class AndroidBrowserRepositoryTestHelper {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          repository.createSession(delegate, context, lastSyncTimestamp);
+          repository.createSession(delegate, context);
         }
       };
       Log.i("rnewman", "Calling wait.");
@@ -46,7 +45,7 @@ public class AndroidBrowserRepositoryTestHelper {
   }
   
   public static void prepEmptySession(Context context, AndroidBrowserRepository repository) {
-    prepareRepositorySession(context, new SetupDelegate(), 0, true, repository);
+    prepareRepositorySession(context, new SetupDelegate(), true, repository);
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -57,7 +56,7 @@ public class AndroidBrowserRepositoryTestHelper {
   }
   
   public static void prepEmptySessionWithoutBegin(Context context, AndroidBrowserRepository repository) {
-    prepareRepositorySession(context, new SetupDelegate(), 0, false, repository);
+    prepareRepositorySession(context, new SetupDelegate(), false, repository);
   }
 
 }

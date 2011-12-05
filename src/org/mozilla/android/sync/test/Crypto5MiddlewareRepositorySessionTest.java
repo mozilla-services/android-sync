@@ -68,16 +68,16 @@ public class Crypto5MiddlewareRepositorySessionTest {
 
     @Override
     public void createSession(RepositorySessionCreationDelegate delegate,
-                              Context context, long lastSyncTimestamp) {
-      delegate.onSessionCreated(new CryptoTestRepositorySession(this, lastSyncTimestamp, this.wbos));
+                              Context context) {
+      delegate.onSessionCreated(new CryptoTestRepositorySession(this, this.wbos));
     }
   }
 
   public class CryptoTestRepositorySession extends RepositorySession {
     HashMap<String, CryptoRecord> wbos = new HashMap<String, CryptoRecord>();
 
-    public CryptoTestRepositorySession(Repository repository, long lastSyncTimestamp, HashMap<String, CryptoRecord> wbos) {
-      super(repository, lastSyncTimestamp);
+    public CryptoTestRepositorySession(Repository repository, HashMap<String, CryptoRecord> wbos) {
+      super(repository);
       this.wbos = wbos;
     }
 
@@ -153,7 +153,7 @@ public class Crypto5MiddlewareRepositorySessionTest {
       public void onSessionCreateFailed(Exception ex) {
         fail("Session creation should not fail.");
       }
-    }, null, 0);
+    }, null);
   }
 
   public void testFetchSince() {
