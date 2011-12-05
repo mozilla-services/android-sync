@@ -212,7 +212,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
   }
 
   @Override
-  public void onFinishSucceeded(RepositorySessionBundle bundle) {
+  public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
     if (this.httpError != null) {
       Log.i("rnewman", "Aborting session due to earlier HTTP error.");
       this.session.handleHTTPError(this.httpError, "HTTP error in fetch. Successful session finish.");

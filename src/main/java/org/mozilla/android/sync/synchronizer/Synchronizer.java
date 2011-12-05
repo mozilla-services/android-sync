@@ -38,6 +38,7 @@
 package org.mozilla.android.sync.synchronizer;
 
 import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.RepositorySessionBundle;
 
 import android.content.Context;
 
@@ -109,8 +110,8 @@ public class Synchronizer {
 
   public Repository repositoryA;
   public Repository repositoryB;
-
-  // TODO: bundle storage.
+  public RepositorySessionBundle bundleA;
+  public RepositorySessionBundle bundleB;
 
   public void synchronize(Context context, SynchronizerDelegate delegate) {
     SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);

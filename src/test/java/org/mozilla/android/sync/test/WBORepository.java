@@ -80,7 +80,7 @@ public class WBORepository extends Repository {
     @Override
     public void finish(RepositorySessionFinishDelegate delegate) {
       ((WBORepository) repository).wbos = this.wbos;
-      delegate.onFinishSucceeded(this.getBundle());
+      delegate.onFinishSucceeded(this, this.getBundle());
     }
 
     @Override

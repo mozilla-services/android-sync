@@ -68,7 +68,7 @@ RepositorySessionFinishDelegate {
    */
   public SynchronizerSession(Synchronizer synchronizer, SynchronizerSessionDelegate delegate) {
     this.setSynchronizer(synchronizer);
-    this.delegate     = delegate;
+    this.delegate = delegate;
   }
 
   public Synchronizer getSynchronizer() {

@@ -130,7 +130,7 @@ public abstract class RepositorySession {
   public void finish(RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
-      delegate.onFinishSucceeded(this.getBundle(null));
+      delegate.onFinishSucceeded(this, this.getBundle(null));
     } else {
       Log.e(tag, "Tried to finish() an unstarted or already finished session");
       delegate.onFinishFailed(new InvalidSessionTransitionException(null));
