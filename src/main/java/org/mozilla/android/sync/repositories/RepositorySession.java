@@ -90,6 +90,9 @@ public abstract class RepositorySession {
 
   public void unbundle(RepositorySessionBundle bundle) {
     this.lastSyncTimestamp = 0;
+    if (bundle == null) {
+      return;
+    }
     if (bundle.containsKey("timestamp")) {
       try {
         this.lastSyncTimestamp = bundle.getLong("timestamp");
