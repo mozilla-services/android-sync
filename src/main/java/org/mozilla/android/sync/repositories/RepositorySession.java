@@ -89,6 +89,17 @@ public abstract class RepositorySession {
   public abstract void store(Record record, RepositorySessionStoreDelegate delegate);
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
 
+  public void unbundle(RepositorySessionBundle bundle) {
+    this.lastSyncTimestamp = 0;
+    if (bundle.containsKey("timestamp")) {
+      try {
+        this.lastSyncTimestamp = bundle.getLong("timestamp");
+      } catch (Exception e) {
+        // Defaults to 0 above.
+      }
+    }
+  }
+
   public void begin(RepositorySessionBeginDelegate delegate) {
      if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;
@@ -100,10 +111,27 @@ public abstract class RepositorySession {
     }
   }
 
+  protected RepositorySessionBundle getBundle() {
+    return this.getBundle(null);
+  }
+
+  /**
+   * Override this in your subclasses to return values to save between sessions.
+   * @param optional
+   * @return
+   */
+  protected RepositorySessionBundle getBundle(RepositorySessionBundle optional) {
+    RepositorySessionBundle bundle = (optional == null) ? new RepositorySessionBundle() : optional;
+
+    // TODO: real value.
+    bundle.put("timestamp", this.lastSyncTimestamp);
+    return bundle;
+  }
+
   public void finish(RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
-      delegate.onFinishSucceeded();
+      delegate.onFinishSucceeded(this.getBundle(null));
     } else {
       Log.e(tag, "Tried to finish() an unstarted or already finished session");
       delegate.onFinishFailed(new InvalidSessionTransitionException(null));

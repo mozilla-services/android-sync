@@ -38,6 +38,7 @@
 package org.mozilla.android.sync.synchronizer;
 
 import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.android.sync.repositories.RepositorySessionBundle;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -184,9 +185,10 @@ RepositorySessionFinishDelegate {
   }
 
   @Override
-  public void onFinishSucceeded() {
+  public void onFinishSucceeded(RepositorySessionBundle bundle) {
     if (this.sessionB == null) {
       this.sessionA = null;       // We're done.
+      // TODO: persist bundle.
     }
   }
 
