@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 
 public class DefaultBeginDelegate extends DefaultDelegate implements RepositorySessionBeginDelegate {
@@ -13,7 +14,7 @@ public class DefaultBeginDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onBeginSucceeded() {
+  public void onBeginSucceeded(RepositorySession session) {
     sharedFail("Default begin delegate hit.");
   }
 }

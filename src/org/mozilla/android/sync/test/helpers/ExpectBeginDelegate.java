@@ -3,10 +3,14 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import static junit.framework.Assert.assertNotNull;
+
+import org.mozilla.android.sync.repositories.RepositorySession;
+
 public class ExpectBeginDelegate extends DefaultBeginDelegate {
 
   @Override
-  public void onBeginSucceeded() {
-    //no-op, passes test
+  public void onBeginSucceeded(RepositorySession session) {
+    assertNotNull(session);
   }
 }
