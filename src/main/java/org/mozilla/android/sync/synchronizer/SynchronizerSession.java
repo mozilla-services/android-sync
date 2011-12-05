@@ -67,14 +67,27 @@ RepositorySessionFinishDelegate {
    * Public API: constructor, init, synchronize.
    */
   public SynchronizerSession(Synchronizer synchronizer, SynchronizerSessionDelegate delegate) {
-    this.synchronizer = synchronizer;
+    this.setSynchronizer(synchronizer);
     this.delegate     = delegate;
+  }
+
+  public Synchronizer getSynchronizer() {
+    return synchronizer;
+  }
+
+  public void setSynchronizer(Synchronizer synchronizer) {
+    this.synchronizer = synchronizer;
   }
 
   public void init(Context context) {
     this.context = context;
     // Begin sessionA and sessionB, call onInitialized in callbacks.
-    this.synchronizer.repositoryA.createSession(this, context);
+    this.getSynchronizer().repositoryA.createSession(this, context);
+  }
+
+  // TODO: implement aborting.
+  public void abort() {
+    this.delegate.onSynchronizeAborted(this);
   }
 
   /**
@@ -165,7 +178,7 @@ RepositorySessionFinishDelegate {
     }
     if (this.sessionA == null) {
       this.sessionA = session;
-      this.synchronizer.repositoryB.createSession(this, this.context);
+      this.getSynchronizer().repositoryB.createSession(this, this.context);
       return;
     }
     if (this.sessionB == null) {
