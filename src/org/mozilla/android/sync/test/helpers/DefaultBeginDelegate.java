@@ -9,11 +9,11 @@ public class DefaultBeginDelegate extends DefaultDelegate implements RepositoryS
 
   @Override
   public void onBeginFailed(Exception ex) {
-    sharedFail("shouldn't fail");
+    sharedFail("Shouldn't fail.");
   }
 
   @Override
   public void onBeginSucceeded() {
-    sharedFail("default begin delegate hit");
+    sharedFail("Default begin delegate hit.");
   }
 }
