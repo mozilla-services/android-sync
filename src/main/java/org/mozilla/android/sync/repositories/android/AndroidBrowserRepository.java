@@ -45,28 +45,26 @@ import android.content.Context;
 public abstract class AndroidBrowserRepository extends Repository {
 
   @Override
-  public void createSession(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {
-    new CreateSessionThread(delegate, context, lastSyncTimestamp).start();
+  public void createSession(RepositorySessionCreationDelegate delegate, Context context) {
+    new CreateSessionThread(delegate, context).start();
   }
   
-  protected abstract void sessionCreator(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp);
+  protected abstract void sessionCreator(RepositorySessionCreationDelegate delegate, Context context);
   
   class CreateSessionThread extends Thread {
     private RepositorySessionCreationDelegate delegate;
     private Context context;
-    private long lastSyncTimestamp;
 
-    public CreateSessionThread(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {
+    public CreateSessionThread(RepositorySessionCreationDelegate delegate, Context context) {
       if (context == null) {
         throw new IllegalArgumentException("context is null.");
       }
       this.delegate = delegate;
       this.context = context;
-      this.lastSyncTimestamp = lastSyncTimestamp;
     }
 
     public void run() {
-      sessionCreator(delegate, context, lastSyncTimestamp);
+      sessionCreator(delegate, context);
     }
   }
 

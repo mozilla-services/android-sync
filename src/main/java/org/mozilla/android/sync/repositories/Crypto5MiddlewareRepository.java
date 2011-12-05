@@ -56,12 +56,10 @@ public class Crypto5MiddlewareRepository extends Repository {
   public class Crypto5MiddlewareRepositorySessionCreationDelegate implements RepositorySessionCreationDelegate {
     private Crypto5MiddlewareRepository repository;
     private RepositorySessionCreationDelegate outerDelegate;
-    private long lastSyncTimestamp;
 
-    public Crypto5MiddlewareRepositorySessionCreationDelegate(Crypto5MiddlewareRepository repository, RepositorySessionCreationDelegate outerDelegate, long lastSyncTimestamp) {
+    public Crypto5MiddlewareRepositorySessionCreationDelegate(Crypto5MiddlewareRepository repository, RepositorySessionCreationDelegate outerDelegate) {
       this.repository = repository;
       this.outerDelegate = outerDelegate;
-      this.lastSyncTimestamp = lastSyncTimestamp;
     }
     public void onSessionCreateFailed(Exception ex) {
       this.outerDelegate.onSessionCreateFailed(ex);
@@ -73,7 +71,7 @@ public class Crypto5MiddlewareRepository extends Repository {
       Crypto5MiddlewareRepositorySession cryptoSession;
       try {
         // Synchronous, baby.
-        cryptoSession = new Crypto5MiddlewareRepositorySession(session, this.repository, lastSyncTimestamp, recordFactory);
+        cryptoSession = new Crypto5MiddlewareRepositorySession(session, this.repository, recordFactory);
       } catch (Exception ex) {
         this.outerDelegate.onSessionCreateFailed(ex);
         return;
@@ -92,8 +90,8 @@ public class Crypto5MiddlewareRepository extends Repository {
     this.keyBundle = keys;
   }
   @Override
-  public void createSession(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp) {
-    Crypto5MiddlewareRepositorySessionCreationDelegate delegateWrapper = new Crypto5MiddlewareRepositorySessionCreationDelegate(this, delegate, lastSyncTimestamp);
-    inner.createSession(delegateWrapper, context, lastSyncTimestamp);
+  public void createSession(RepositorySessionCreationDelegate delegate, Context context) {
+    Crypto5MiddlewareRepositorySessionCreationDelegate delegateWrapper = new Crypto5MiddlewareRepositorySessionCreationDelegate(this, delegate);
+    inner.createSession(delegateWrapper, context);
   }
 }

@@ -86,7 +86,7 @@ RepositorySessionFinishDelegate {
   public void init() {
     // Begin sessionA and sessionB, call onInitialized in callbacks.
     // TODO TODO TODO: createSession shouldn't take a timestamp.
-    this.synchronizer.repositoryA.createSession(this, this.getContext(), 0);
+    this.synchronizer.repositoryA.createSession(this, this.getContext());
   }
 
   /**
@@ -159,7 +159,7 @@ RepositorySessionFinishDelegate {
     }
     if (this.sessionA == null) {
       this.sessionA = session;
-      this.synchronizer.repositoryB.createSession(this, this.getContext(), 0);
+      this.synchronizer.repositoryB.createSession(this, this.getContext());
       return;
     }
     if (this.sessionB == null) {

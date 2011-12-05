@@ -77,11 +77,10 @@ public abstract class RepositorySession {
   protected long lastSyncTimestamp;
   protected long syncBeginTimestamp;
 
-  public RepositorySession(Repository repository, long lastSyncTimestamp) {
+  public RepositorySession(Repository repository) {
     this.repository = repository;
-    this.lastSyncTimestamp = lastSyncTimestamp;
   }
-  
+
   public abstract void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate);
   public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
   public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate);

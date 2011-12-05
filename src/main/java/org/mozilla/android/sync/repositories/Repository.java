@@ -43,5 +43,5 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreation
 import android.content.Context;
 
 public abstract class Repository {
-  public abstract void createSession(RepositorySessionCreationDelegate delegate, Context context, long lastSyncTimestamp);
+  public abstract void createSession(RepositorySessionCreationDelegate delegate, Context context);
 }

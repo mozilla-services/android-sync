@@ -95,8 +95,7 @@ public class TemporaryFetchBookmarksStage extends WBOCollectionRequestDelegate
       request.delegate = this;
       
       bookmarksRepo = new AndroidBrowserBookmarksRepository();
-      long lastSyncTimestamp = 0;
-      bookmarksRepo.createSession(this, session.getContext(), lastSyncTimestamp);
+      bookmarksRepo.createSession(this, session.getContext());
 
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");

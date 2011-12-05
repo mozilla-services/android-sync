@@ -58,15 +58,13 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected AndroidBrowserRepositoryDatabaseHelper dbHelper;
   private static final String tag = "AndroidBrowserRepositorySession";
   
-  public AndroidBrowserRepositorySession(Repository repository, long lastSyncTimestamp) {
-    super(repository, lastSyncTimestamp);
+  public AndroidBrowserRepositorySession(Repository repository) {
+    super(repository);
   }
 
   // guids since method and thread
-  public void guidsSince(long timestamp,
-      RepositorySessionGuidsSinceDelegate delegate) {
-    GuidsSinceThread thread = new GuidsSinceThread(timestamp, delegate,
-        dbHelper);
+  public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
+    GuidsSinceThread thread = new GuidsSinceThread(timestamp, delegate, dbHelper);
     thread.start();
   }
 

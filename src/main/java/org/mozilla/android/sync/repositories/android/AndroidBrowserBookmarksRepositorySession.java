@@ -46,9 +46,8 @@ import android.database.Cursor;
 
 public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
 
-  public AndroidBrowserBookmarksRepositorySession(Repository repository,
-      Context context, long lastSyncTimestamp) {
-    super(repository, lastSyncTimestamp);
+  public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
+    super(repository);
     dbHelper = new AndroidBrowserBookmarksDatabaseHelper(context);
   }
   

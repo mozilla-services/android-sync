@@ -46,9 +46,8 @@ import android.database.Cursor;
 
 public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserRepositorySession {
 
-  public AndroidBrowserHistoryRepositorySession(Repository repository,
-      Context context, long lastSyncTimestamp) {
-    super(repository, lastSyncTimestamp);
+  public AndroidBrowserHistoryRepositorySession(Repository repository, Context context) {
+    super(repository);
     dbHelper = new AndroidBrowserHistoryDatabaseHelper(context);
   }
   

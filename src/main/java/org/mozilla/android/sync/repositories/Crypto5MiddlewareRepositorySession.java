@@ -92,8 +92,8 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   private RepositorySession inner;
   private RecordFactory recordFactory;
 
-  public Crypto5MiddlewareRepositorySession(RepositorySession session, Crypto5MiddlewareRepository repository, long lastSyncTimestamp, RecordFactory recordFactory) {
-    super(repository, lastSyncTimestamp);
+  public Crypto5MiddlewareRepositorySession(RepositorySession session, Crypto5MiddlewareRepository repository, RecordFactory recordFactory) {
+    super(repository);
     this.keyBundle = repository.keyBundle;
     this.recordFactory = recordFactory;
   }
