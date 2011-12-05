@@ -140,4 +140,9 @@ public abstract class RepositorySession {
   protected boolean confirmSessionActive() {
     return status == SessionStatus.ACTIVE ? true : false;
   }
+
+  public void abort() {
+    // TODO: do something here.
+
+  }
 }

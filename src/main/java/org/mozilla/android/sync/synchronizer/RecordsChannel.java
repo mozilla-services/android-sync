@@ -20,6 +20,8 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   public RepositorySession sink;
   private RecordsChannelDelegate delegate;
   private long timestamp;
+  private boolean sourceBegun = false;
+  private boolean sinkBegun   = false;
 
   public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate, long timestamp) {
     this.source = source;
@@ -55,6 +57,17 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   }
 
 
+  /**
+   * Attempt to abort an outstanding fetch. Finish both sessions.
+   */
+  public void abort() {
+    if (sourceBegun) {
+      source.abort();
+    }
+    if (sinkBegun) {
+      sink.abort();
+    }
+  }
 
   public void flow(RecordsChannelDelegate delegate) {
     source.begin(this);
@@ -109,9 +122,28 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
 
   @Override
   public void onBeginSucceeded(RepositorySession session) {
-    // Start a consumer thread.
-    this.consumer = new RecordConsumer(this);
-    new Thread(this.consumer).start();
-    session.fetchSince(timestamp, this);
+    if (session == source) {
+      if (sourceBegun) {
+        // TODO: inconsistency!
+        return;
+      }
+      sourceBegun = true;
+      sink.begin(this);
+      return;
+    }
+    if (session == sink) {
+      if (sinkBegun) {
+        // TODO: inconsistency!
+        return;
+      }
+      sinkBegun = true;
+      // Start a consumer thread.
+      this.consumer = new RecordConsumer(this);
+      new Thread(this.consumer).start();
+      source.fetchSince(timestamp, this);
+      return;
+    }
+
+    // TODO: error!
   }
 }
