@@ -48,6 +48,19 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.util.Log;
 
+/**
+ * A RepositorySession is created and used thusly:
+ *
+ * * Construct, with a reference to its parent Repository, by calling
+ *   Repository.createSession().
+ * * Populate with saved information by calling unbundle().
+ * * Begin a sync by calling begin().
+ * * Perform operations such as fetchSince() and store().
+ * * Finish by calling finish(), retrieving and storing the current bundle.
+ *
+ * @author rnewman
+ *
+ */
 public abstract class RepositorySession {
   
   public enum SessionStatus {
