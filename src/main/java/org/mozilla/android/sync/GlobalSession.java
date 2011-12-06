@@ -174,6 +174,7 @@ public class GlobalSession implements CredentialsSource {
   }
 
   protected Map<Stage, GlobalSyncStage> stages;
+  private String syncID;
   protected void prepareStages() {
     stages = new HashMap<Stage, GlobalSyncStage>();
     stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
