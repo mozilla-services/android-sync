@@ -108,7 +108,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   }
   
   @Override
-  public void testDeleteLocalNewere() {
+  public void testDeleteLocalNewer() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
     local.androidID = 54321;

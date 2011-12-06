@@ -133,7 +133,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
   
   @Override
-  public void testDeleteLocalNewere() {
+  public void testDeleteLocalNewer() {
     BookmarkRecord local = BookmarkHelpers.createBookmark1();
     BookmarkRecord remote = BookmarkHelpers.createBookmark2();
     local.androidID = 54321;

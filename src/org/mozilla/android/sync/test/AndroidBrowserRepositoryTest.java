@@ -174,7 +174,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   public abstract void testRemoteNewerTimeStamp();
   public abstract void testLocalNewerTimeStamp();
   public abstract void testDeleteRemoteNewer();
-  public abstract void testDeleteLocalNewere();
+  public abstract void testDeleteLocalNewer();
   public abstract void testDeleteRemoteLocalNonexistent();
   
   /*
