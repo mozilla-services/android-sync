@@ -38,6 +38,7 @@
 
 package org.mozilla.android.sync.repositories.domain;
 
+import org.json.simple.JSONArray;
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.repositories.Utils;
@@ -87,9 +88,38 @@ public class BookmarkRecord extends Record {
 
   @Override
   public void initFromPayload(CryptoRecord payload) {
-    this.bookmarkURI = (String) payload.payload.get("bmkUri");
-    this.title       = (String) payload.payload.get("title");
-    // TODO stuff is missing here
+    ExtendedJSONObject p = payload.payload;
+
+    // All.
+    this.type          = (String) p.get("type");
+    this.title         = (String) p.get("title");
+    this.description   = (String) p.get("description");
+    this.parentID      = (String) p.get("parentid");
+    this.parentName    = (String) p.get("parentName");
+    this.loadInSidebar = ((Boolean)   p.get("loadInSidebar")).booleanValue();
+
+    // Bookmark.
+    if (this.type == "bookmark") {
+      this.bookmarkURI   = (String) p.get("bmkUri");
+      this.keyword       = (String) p.get("keyword");
+      this.tags          = ((JSONArray) p.get("tags")).toJSONString();
+    }
+    // Folder.
+    if (this.type == "folder") {
+      this.children      = ((JSONArray) p.get("children")).toJSONString();
+    }
+
+    // TODO: predecessor ID?
+    // TODO: type-specific attributes:
+    /*
+      public String generatorURI;
+      public String staticTitle;
+      public String folderName;
+      public String queryID;
+      public String siteURI;
+      public String feedURI;
+      public String pos;
+     */
   }
 
   @Override
@@ -102,3 +132,47 @@ public class BookmarkRecord extends Record {
     return rec;
   }
 }
+
+
+/*
+// Bookmark:
+{cleartext:
+  {id:            "l7p2xqOTMMXw",
+   type:          "bookmark",
+   title:         "Your Flight Status",
+   parentName:    "mobile",
+   bmkUri:        "http: //www.flightstats.com/go/Mobile/flightStatusByFlightProcess.do;jsessionid=13A6C8DCC9592AF141A43349040262CE.web3: 8009?utm_medium=cpc&utm_campaign=co-op&utm_source=airlineInformationAndStatus&id=212492593",
+   tags:          [],
+   keyword:       null,
+   description:   null,
+   loadInSidebar: false,
+   parentid:      "mobile"},
+ data: {payload: {ciphertext: null},
+ id:         "l7p2xqOTMMXw",
+ sortindex:  107},
+ collection: "bookmarks"}
+
+// Folder:
+{cleartext:
+  {id:          "mobile",
+   type:        "folder",
+   parentName:  "",
+   title:       "mobile",
+   description: null,
+   children:    ["1ROdlTuIoddD", "3Z_bMIHPSZQ8", "4mSDUuOo2iVB", "8aEdE9IIrJVr",
+                 "9DzPTmkkZRDb", "Qwwb99HtVKsD", "s8tM36aGPKbq", "JMTi61hOO3JV",
+                 "JQUDk0wSvYip", "LmVH-J1r3HLz", "NhgQlC5ykYGW", "OVanevUUaqO2",
+                 "OtQVX0PMiWQj", "_GP5cF595iie", "fkRssjXSZDL3", "k7K_NwIA1Ya0",
+                 "raox_QGzvqh1", "vXYL-xHjK06k", "QKHKUN6Dm-xv", "pmN2dYWT2MJ_",
+                 "EVeO_J1SQiwL", "7N-qkepS7bec", "NIGa3ha-HVOE", "2Phv1I25wbuH",
+                 "TTSIAH1fV0VE", "WOmZ8PfH39Da", "gDTXNg4m1AJZ", "ayI30OZslHbO",
+                 "zSEs4O3n6CzQ", "oWTDR0gO2aWf", "wWHUoFaInXi9", "F7QTuVJDpsTM",
+                 "FIboggegplk-", "G4HWrT5nfRYS", "MHA7y9bupDdv", "T_Ldzmj0Ttte",
+                 "U9eYu3SxsE_U", "bk463Kl9IO_m", "brUfrqJjFNSR", "ccpawfWsD-bY",
+                 "l7p2xqOTMMXw", "o-nSDKtXYln7"],
+   parentid: "places"},
+ data:        {payload: {ciphertext: null},
+ id:          "mobile",
+ sortindex:   1000000},
+ collection: "bookmarks"}
+*/
