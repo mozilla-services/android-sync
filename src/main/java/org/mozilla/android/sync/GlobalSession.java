@@ -112,12 +112,17 @@ public class GlobalSession implements CredentialsSource {
       }
       uriParams = params.toString();
     }
-    String uri = this.clusterURL + "1.1/" + this.username + "/storage/" + collection + uriParams;
+    String uri = this.storageURL(true) + collection + uriParams;
     return new URI(uri);
   }
 
+  public String storageURL(boolean trailingSlash) {
+    return this.clusterURL + "1.1/" + this.username +
+           (trailingSlash ? "/storage/" : "/storage");
+  }
+
   public URI wboURI(String collection, String id) throws URISyntaxException {
-    return new URI(this.clusterURL + "1.1/" + this.username + "/storage/" + collection + "/" + id);
+    return new URI(this.storageURL(true) + collection + "/" + id);
   }
 
   private String password;
@@ -200,9 +205,13 @@ public class GlobalSession implements CredentialsSource {
     return stage;
   }
 
+  private String getMetaURL() {
+    return this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
+  }
+
   public void fetchMetaGlobal(MetaGlobalDelegate callback) throws URISyntaxException {
     if (this.metaGlobal == null) {
-      String metaURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
+      String metaURL = getMetaURL();
       this.metaGlobal = new MetaGlobal(metaURL, credentials());
     }
     this.metaGlobal.fetch(callback);
