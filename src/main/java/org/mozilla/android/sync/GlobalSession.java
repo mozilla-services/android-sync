@@ -239,11 +239,11 @@ public class GlobalSession implements CredentialsSource {
     Stage next = nextStage(this.currentState);
     GlobalSyncStage nextStage = this.getStageByName(next);
     this.currentState = next;
-    Log.i("rnewman", "Running next stage " + next);
+    Log.i(LOG_TAG, "Running next stage " + next);
     try {
       nextStage.execute(this);
     } catch (Exception ex) {
-      Log.w("rnewman", "Caught exception " + ex + " running stage " + next);
+      Log.w(LOG_TAG, "Caught exception " + ex + " running stage " + next);
       this.abort(ex, "Uncaught exception in stage.");
     }
   }
@@ -289,7 +289,7 @@ public class GlobalSession implements CredentialsSource {
   }
 
   public void abort(Exception e, String reason) {
-    Log.w("rnewman", "Aborting sync: " + reason);
+    Log.w(LOG_TAG, "Aborting sync: " + reason);
     e.printStackTrace();
     this.callback.handleError(this, e);
   }
@@ -297,7 +297,7 @@ public class GlobalSession implements CredentialsSource {
   public void handleHTTPError(SyncStorageResponse response, String reason) {
     // TODO: handling of 50x (backoff), 401 (node reassignment or auth error).
     // Fall back to aborting.
-    Log.w("rnewman", "Aborting sync due to HTTP " + response.getStatusCode());
+    Log.w(LOG_TAG, "Aborting sync due to HTTP " + response.getStatusCode());
     this.abort(new HTTPFailureException(response), reason);
   }
 }
