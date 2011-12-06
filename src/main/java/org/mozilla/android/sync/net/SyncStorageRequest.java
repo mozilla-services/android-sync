@@ -144,6 +144,7 @@ public class SyncStorageRequest implements Resource {
   }
 
   public void delete() {
+    this.resource.request.addHeader("x-confirm-delete", "1");
     this.resource.delete();
   }
 
