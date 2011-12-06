@@ -124,4 +124,9 @@ public class CollectionKeys {
   public void setDefaultKeyBundle(KeyBundle keys) {
     this.defaultKeyBundle = keys;
   }
+
+  public void clear() {
+    this.defaultKeyBundle = null;
+    this.collectionKeyBundles = new HashMap<String, KeyBundle>();
+  }
 }
