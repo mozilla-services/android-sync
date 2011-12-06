@@ -42,6 +42,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.json.simple.JSONObject;
+import org.mozilla.android.sync.CryptoRecord;
 
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 
@@ -114,5 +115,13 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     } catch (UnsupportedEncodingException e) {
       this.delegate.handleRequestError(e);
     }
+  }
+
+  public void post(CryptoRecord record) {
+    this.post(record.toJSONObject());
+  }
+
+  public void put(CryptoRecord record) {
+    this.put(record.toJSONObject());
   }
 }
