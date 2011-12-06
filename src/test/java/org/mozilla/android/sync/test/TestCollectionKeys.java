@@ -10,6 +10,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.commons.codec.binary.Base64;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.android.sync.CollectionKeys;
@@ -69,17 +70,12 @@ public class TestCollectionKeys {
 
     KeyBundle syncKeyBundle = new KeyBundle("slyjcrjednxd6rf4cr63vqilmkus6zbe", "6m8mv8ex2brqnrmsb9fjuvfg7y");
     rec.keyBundle = syncKeyBundle;
-    return; // TODO
 
-    /*
     rec.encrypt();
-    // TODO: this isn't working.
-
     CollectionKeys ck = new CollectionKeys();
     ck.setKeyPairsFromWBO(rec, syncKeyBundle);
     byte[] input = "3fI6k1exImMgAKjilmMaAWxGqEIzFX/9K5EjEgH99vc=".getBytes("UTF-8");
     byte[] expected = Base64.decodeBase64(input);
     assertSame(expected, ck.defaultKeyBundle().getEncryptionKey());
-    */
   }
 }
