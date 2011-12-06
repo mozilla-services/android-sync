@@ -341,6 +341,16 @@ public class GlobalSession implements CredentialsSource {
     }
   }
 
+  /**
+   * Stop this sync and start again.
+   * @throws AlreadySyncingException
+   */
+  protected void restart() throws AlreadySyncingException {
+    this.currentState = GlobalSyncStage.Stage.idle;
+    // TODO: respect backoff.
+    this.start();
+  }
+
   public void completeSync() {
     this.currentState = GlobalSyncStage.Stage.idle;
     this.callback.handleSuccess(this);
@@ -367,5 +377,217 @@ public class GlobalSession implements CredentialsSource {
     // Fall back to aborting.
     Log.w(LOG_TAG, "Aborting sync due to HTTP " + response.getStatusCode());
     this.abort(new HTTPFailureException(response), reason);
+  }
+
+
+
+
+
+
+  public void processMetaGlobal(MetaGlobal global) {
+    Long storageVersion = global.getStorageVersion();
+    if (storageVersion < STORAGE_VERSION) {
+      // Outdated server.
+      this.freshStart();
+      return;
+    }
+    if (storageVersion > STORAGE_VERSION) {
+      // Outdated client!
+      this.requiresUpgrade();
+      return;
+    }
+    String remoteSyncID = global.getSyncID();
+    if (remoteSyncID == null) {
+      // Corrupt meta/global.
+      this.freshStart();
+    }
+    String localSyncID = this.getSyncID();
+    if (!remoteSyncID.equals(localSyncID)) {
+      // Sync ID has changed. Reset timestamps and fetch new keys.
+      // TODO TODO TODO
+    }
+    try {
+      this.advance();
+    } catch (NoSuchStageException e) {
+      // TODO: shouldn't happen.
+    }
+  }
+
+  private String getSyncID() {
+    return syncID;
+  }
+  public void processMissingMetaGlobal(MetaGlobal global) {
+    this.freshStart();
+  }
+
+  /**
+   * Do a fresh start then quietly finish the sync, starting another.
+   */
+  protected void freshStart() {
+    final GlobalSession globalSession = this;
+    this.freshStart(this, new FreshStartDelegate() {
+
+      @Override
+      public void onFreshStartFailed(Exception e) {
+        globalSession.abort(e, "Fresh start failed.");
+      }
+
+      @Override
+      public void onFreshStart() {
+        try {
+          globalSession.restart();
+        } catch (Exception e) {
+          Log.w(LOG_TAG, "Got exception when restarting sync after freshStart.", e);
+          globalSession.abort(e, "Got exception after freshStart.");
+        }
+      }
+    });
+  }
+
+  /**
+   * Clean the server, aborting the current sync.
+   */
+  protected void freshStart(final GlobalSession session, final FreshStartDelegate freshStartDelegate) {
+
+    final String newSyncID   = session.generateSyncID();
+    final String metaURL     = session.getMetaURL();
+    final String credentials = session.credentials();
+
+    this.wipeServer(session, new WipeServerDelegate() {
+
+      @Override
+      public void onWiped(long timestamp) {
+        session.resetClient();
+        session.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
+
+        metaGlobal = new MetaGlobal(metaURL, credentials);
+        metaGlobal.setSyncID(newSyncID);
+        metaGlobal.setStorageVersion(STORAGE_VERSION);
+
+        // It would be good to set the X-If-Unmodified-Since header to `timestamp`
+        // for this PUT to ensure at least some level of transactionality.
+        // Unfortunately, the servers don't support it after a wipe right now
+        // (bug 693893), so we're going to defer this until bug 692700.
+        metaGlobal.upload(new MetaGlobalDelegate() {
+
+          @Override
+          public void handleSuccess(MetaGlobal global) {
+            session.metaGlobal = global;
+            Log.i(LOG_TAG, "New meta/global uploaded with sync ID " + newSyncID);
+
+            // Generate and upload new keys.
+            try {
+              session.uploadKeys(CollectionKeys.generateCollectionKeys().asCryptoRecord(), new KeyUploadDelegate() {
+                @Override
+                public void onKeysUploaded() {
+                  // Now we can download them.
+                  freshStartDelegate.onFreshStart();
+                }
+
+                @Override
+                public void onKeyUploadFailed(Exception e) {
+                  Log.e(LOG_TAG, "Got exception uploading new keys.", e);
+                  freshStartDelegate.onFreshStartFailed(e);
+                }
+              });
+            } catch (NoCollectionKeysSetException e) {
+              Log.e(LOG_TAG, "Got exception generating new keys.", e);
+              freshStartDelegate.onFreshStartFailed(e);
+            } catch (CryptoException e) {
+              Log.e(LOG_TAG, "Got exception generating new keys.", e);
+              freshStartDelegate.onFreshStartFailed(e);
+            }
+          }
+
+          @Override
+          public void handleMissing(MetaGlobal global) {
+            // Shouldn't happen.
+            Log.w(LOG_TAG, "Got 'missing' response uploading new meta/global.");
+            freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing"));
+          }
+
+          @Override
+          public void handleFailure(SyncStorageResponse response) {
+            // TODO: respect backoffs etc.
+            Log.w(LOG_TAG, "Got failure " + response.getStatusCode() + " uploading new meta/global.");
+            freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));
+          }
+
+          @Override
+          public void handleError(Exception e) {
+            Log.w(LOG_TAG, "Got error uploading new meta/global.", e);
+            freshStartDelegate.onFreshStartFailed(e);
+          }
+        });
+      }
+
+      @Override
+      public void onWipeFailed(Exception e) {
+        Log.w(LOG_TAG, "Wipe failed.");
+        freshStartDelegate.onFreshStartFailed(e);
+      }
+    });
+
+  }
+
+  private void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
+    SyncStorageRequest request;
+    try {
+      request = new SyncStorageRequest(this.storageURL(false));
+    } catch (URISyntaxException ex) {
+      Log.w(LOG_TAG, "Invalid URI in wipeServer.");
+      wipeDelegate.onWipeFailed(ex);
+      return;
+    }
+
+    request.delegate = new SyncStorageRequestDelegate() {
+
+      @Override
+      public String ifUnmodifiedSince() {
+        return null;
+      }
+
+      @Override
+      public void handleRequestSuccess(SyncStorageResponse response) {
+        wipeDelegate.onWiped(response.weaveTimestamp());
+      }
+
+      @Override
+      public void handleRequestFailure(SyncStorageResponse response) {
+        Log.w(LOG_TAG, "Got request failure " + response.getStatusCode() + " in wipeServer.");
+        wipeDelegate.onWipeFailed(new HTTPFailureException(response));
+      }
+
+      @Override
+      public void handleRequestError(Exception ex) {
+        Log.w(LOG_TAG, "Got exception in wipeServer.", ex);
+        wipeDelegate.onWipeFailed(ex);
+      }
+
+      @Override
+      public String credentials() {
+        return credentials.credentials();
+      }
+    };
+    request.delete();
+  }
+
+  private void resetClient() {
+    // TODO Auto-generated method stub
+
+  }
+
+  private String generateSyncID() {
+    syncID = Utils.generateGuid();
+    return syncID;
+  }
+
+  /**
+   * Suggest that your Sync client needs to be upgraded to work
+   * with this server.
+   */
+  public void requiresUpgrade() {
+    Log.i(LOG_TAG, "Client outdated storage version; requires update.");
+    // TODO: notify UI.
   }
 }

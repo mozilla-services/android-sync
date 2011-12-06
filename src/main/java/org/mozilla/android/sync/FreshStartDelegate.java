@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,52 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.stage;
+package org.mozilla.android.sync;
 
-import java.net.URISyntaxException;
-
-import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.net.MetaGlobal;
-import org.mozilla.android.sync.net.MetaGlobalDelegate;
-import org.mozilla.android.sync.net.SyncStorageResponse;
-
-public class FetchMetaGlobalStage implements GlobalSyncStage {
-
-  public class StageMetaGlobalDelegate implements MetaGlobalDelegate {
-
-    private GlobalSession session;
-    public StageMetaGlobalDelegate(GlobalSession session) {
-      this.session = session;
-    }
-
-    @Override
-    public void handleSuccess(MetaGlobal global) {
-      session.processMetaGlobal(global);
-    }
-
-    @Override
-    public void handleFailure(SyncStorageResponse response) {
-      session.handleHTTPError(response, "Failure fetching meta/global.");
-    }
-
-    @Override
-    public void handleError(Exception e) {
-      session.abort(e, "Failure fetching meta/global.");
-    }
-
-    @Override
-    public void handleMissing(MetaGlobal global) {
-      session.processMissingMetaGlobal(global);
-    }
-  }
-
-  @Override
-  public void execute(GlobalSession session) throws NoSuchStageException {
-    try {
-      session.fetchMetaGlobal(new StageMetaGlobalDelegate(session));
-    } catch (URISyntaxException e) {
-      session.abort(e, "Invalid URI.");
-    }
-  }
-
+public interface FreshStartDelegate {
+  void onFreshStart();
+  void onFreshStartFailed(Exception e);
 }
