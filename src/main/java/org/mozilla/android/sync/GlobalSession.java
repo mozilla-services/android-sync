@@ -128,6 +128,10 @@ public class GlobalSession implements CredentialsSource {
     return new URI(this.storageURL(true) + collection + "/" + id);
   }
 
+  protected URI getKeysURI() throws URISyntaxException {
+    return wboURI("crypto", "keys");
+  }
+
   private String password;
   private GlobalSessionCallback callback;
 
@@ -228,6 +232,58 @@ public class GlobalSession implements CredentialsSource {
     this.infoCollections.fetch(callback);
   }
 
+
+  protected void uploadKeys(CryptoRecord keysRecord,
+                            final KeyUploadDelegate keyUploadDelegate) {
+    SyncStorageRecordRequest request;
+    final GlobalSession globalSession = this;
+    try {
+      request = new SyncStorageRecordRequest(this.getKeysURI());
+    } catch (URISyntaxException e) {
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
+    }
+
+    request.delegate = new SyncStorageRequestDelegate() {
+
+      @Override
+      public String ifUnmodifiedSince() {
+        return null;
+      }
+
+      @Override
+      public void handleRequestSuccess(SyncStorageResponse response) {
+        keyUploadDelegate.onKeysUploaded();
+      }
+
+      @Override
+      public void handleRequestFailure(SyncStorageResponse response) {
+        keyUploadDelegate.onKeyUploadFailed(new HTTPFailureException(response));
+      }
+
+      @Override
+      public void handleRequestError(Exception ex) {
+        keyUploadDelegate.onKeyUploadFailed(ex);
+      }
+
+      @Override
+      public String credentials() {
+        return globalSession.credentials();
+      }
+    };
+
+    keysRecord.setKeyBundle(syncKeyBundle);
+    try {
+      keysRecord.encrypt();
+    } catch (UnsupportedEncodingException e) {
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
+    } catch (CryptoException e) {
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
+    }
+    request.put(keysRecord);
+  }
 
   /**
    * Advance and loop around the stages of a sync.
