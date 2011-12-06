@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
+import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.android.sync.CollectionKeys;
@@ -77,5 +79,20 @@ public class TestCollectionKeys {
     byte[] input = "3fI6k1exImMgAKjilmMaAWxGqEIzFX/9K5EjEgH99vc=".getBytes("UTF-8");
     byte[] expected = Base64.decodeBase64(input);
     assertSame(expected, ck.defaultKeyBundle().getEncryptionKey());
+  }
+
+  @Test
+  public void testCryptoRecordFromCollectionKeys() throws CryptoException, NoCollectionKeysSetException, IOException, ParseException, NonObjectJSONException {
+    CollectionKeys ck1 = CollectionKeys.generateCollectionKeys();
+    assertNotNull(ck1.defaultKeyBundle());
+    assertEquals(ck1.keyBundleForCollection("foobar"), ck1.defaultKeyBundle());
+    CryptoRecord rec = ck1.asCryptoRecord();
+    assertEquals(rec.collection, "crypto");
+    assertEquals(rec.guid, "keys");
+    JSONArray defaultKey = (JSONArray) rec.payload.get("default");
+
+    assertSame(Base64.decodeBase64((String) (defaultKey.get(0))), ck1.defaultKeyBundle().getEncryptionKey());
+    CollectionKeys ck2 = CollectionKeys.fromCryptoRecord(rec, null);
+    assertSame(ck1.defaultKeyBundle().getEncryptionKey(), ck2.defaultKeyBundle().getEncryptionKey());
   }
 }
