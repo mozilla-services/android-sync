@@ -43,6 +43,7 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.repositories.Crypto5MiddlewareRepository;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.Server11Repository;
+import org.mozilla.android.sync.repositories.domain.BookmarkRecordFactory;
 import org.mozilla.android.sync.synchronizer.Synchronizer;
 import org.mozilla.android.sync.synchronizer.SynchronizerDelegate;
 
@@ -84,6 +85,7 @@ public abstract class ServerSyncStage implements
     KeyBundle collectionKey = session.keyForCollection(collection);
     Server11Repository serverRepo = new Server11Repository(session.getClusterURL().toASCIIString(), session.username, collection, session);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(serverRepo, collectionKey);
+    cryptoRepo.recordFactory = new BookmarkRecordFactory();
     return cryptoRepo;
   }
 
