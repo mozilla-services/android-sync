@@ -38,16 +38,19 @@
 
 package org.mozilla.android.sync;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.net.InfoCollections;
 import org.mozilla.android.sync.net.InfoCollectionsDelegate;
 import org.mozilla.android.sync.net.MetaGlobal;
 import org.mozilla.android.sync.net.MetaGlobalDelegate;
+import org.mozilla.android.sync.net.SyncStorageRecordRequest;
 import org.mozilla.android.sync.net.SyncStorageRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
