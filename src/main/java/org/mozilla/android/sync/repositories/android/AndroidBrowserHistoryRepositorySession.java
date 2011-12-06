@@ -48,7 +48,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
 
   public AndroidBrowserHistoryRepositorySession(Repository repository, Context context) {
     super(repository);
-    dbHelper = new AndroidBrowserHistoryDatabaseHelper(context);
+    dbHelper = new AndroidBrowserHistoryDataAccessor(context);
   }
   
   @Override

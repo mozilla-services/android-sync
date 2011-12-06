@@ -55,7 +55,7 @@ import android.util.Log;
 
 public abstract class AndroidBrowserRepositorySession extends RepositorySession {
   
-  protected AndroidBrowserRepositoryDatabaseHelper dbHelper;
+  protected AndroidBrowserRepositoryDataAccessor dbHelper;
   private static final String tag = "AndroidBrowserRepositorySession";
   
   public AndroidBrowserRepositorySession(Repository repository) {
@@ -65,7 +65,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   // guids since method and thread
   @Override
   public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
-    GuidsSinceThread thread = new GuidsSinceThread(timestamp, delegate, dbHelper);
+    GuidsSinceThread thread = new GuidsSinceThread(timestamp, delegate);
     thread.start();
   }
 
@@ -73,14 +73,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
     private long                                   timestamp;
     private RepositorySessionGuidsSinceDelegate    delegate;
-    private AndroidBrowserRepositoryDatabaseHelper dbHelper;
 
     public GuidsSinceThread(long timestamp,
-                            RepositorySessionGuidsSinceDelegate delegate,
-                            AndroidBrowserRepositoryDatabaseHelper dbHelper) {
+        RepositorySessionGuidsSinceDelegate delegate) {
       this.timestamp = timestamp;
       this.delegate = delegate;
-      this.dbHelper = dbHelper;
     }
 
     public void run() {
@@ -91,7 +88,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
       Cursor cur = dbHelper.getGUIDSSince(timestamp);
       int index = cur
-          .getColumnIndex(AndroidBrowserRepositoryDatabaseHelper.COL_GUID);
+          .getColumnIndex(BrowserContract.SyncColumns.GUID);
 
       ArrayList<String> guids = new ArrayList<String>();
       cur.moveToFirst();
@@ -220,8 +217,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
 
-      Cursor cur = dbHelper.fetchAllOrderByAndroidId();
-      delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
+      Cursor cur = dbHelper.fetchAll();
+      delegate.onFetchSucceeded(compileIntoRecordsArray(cur));
     }
   }
 

@@ -51,7 +51,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
-    dbHelper = new AndroidBrowserBookmarksDatabaseHelper(context);
+    dbHelper = new AndroidBrowserBookmarksDataAccessor(context);
   }
   
   @Override
