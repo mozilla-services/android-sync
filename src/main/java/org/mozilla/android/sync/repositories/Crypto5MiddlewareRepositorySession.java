@@ -94,6 +94,7 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
 
   public Crypto5MiddlewareRepositorySession(RepositorySession session, Crypto5MiddlewareRepository repository, RecordFactory recordFactory) {
     super(repository);
+    this.inner = session;
     this.keyBundle = repository.keyBundle;
     this.recordFactory = recordFactory;
   }
@@ -159,6 +160,9 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   }
 
   private DecryptingTransformingFetchDelegate makeUnwrappingDelegate(RepositorySessionFetchRecordsDelegate inner) {
+    if (inner == null) {
+      throw new IllegalArgumentException("Inner delegate cannot be null!");
+    }
     return new DecryptingTransformingFetchDelegate(inner, this.keyBundle, this.recordFactory);
   }
 
