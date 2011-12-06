@@ -45,11 +45,18 @@ import java.util.Map.Entry;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.android.sync.crypto.Cryptographer;
 import org.mozilla.android.sync.crypto.KeyBundle;
 
 public class CollectionKeys {
   private KeyBundle                  defaultKeyBundle     = null;
   private HashMap<String, KeyBundle> collectionKeyBundles = new HashMap<String, KeyBundle>();
+
+  public static CollectionKeys generateCollectionKeys() throws CryptoException {
+    CollectionKeys ck = new CollectionKeys();
+    ck.populate();
+    return ck;
+  }
 
   public KeyBundle defaultKeyBundle() throws NoCollectionKeysSetException {
     if (this.defaultKeyBundle == null) {
@@ -128,5 +135,14 @@ public class CollectionKeys {
   public void clear() {
     this.defaultKeyBundle = null;
     this.collectionKeyBundles = new HashMap<String, KeyBundle>();
+  }
+
+  /**
+   * Randomly generate a basic CollectionKeys object.
+   * @throws CryptoException
+   */
+  public void populate() throws CryptoException {
+    this.clear();
+    this.defaultKeyBundle = Cryptographer.generateKeys();
   }
 }
