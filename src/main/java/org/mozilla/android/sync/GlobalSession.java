@@ -49,6 +49,7 @@ import org.mozilla.android.sync.net.InfoCollectionsDelegate;
 import org.mozilla.android.sync.net.MetaGlobal;
 import org.mozilla.android.sync.net.MetaGlobalDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.android.sync.stage.CheckPreconditionsStage;
 import org.mozilla.android.sync.stage.CompletedStage;
 import org.mozilla.android.sync.stage.EnsureClusterURLStage;
@@ -58,11 +59,9 @@ import org.mozilla.android.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.android.sync.stage.NoSuchStageException;
-import org.mozilla.android.sync.stage.TemporaryFetchBookmarksStage;
 
 import android.content.Context;
 import android.util.Log;
-
 
 public class GlobalSession implements CredentialsSource {
   public static final String API_VERSION = "1.1";
@@ -179,7 +178,9 @@ public class GlobalSession implements CredentialsSource {
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
     stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
-    stages.put(Stage.temporaryFetchBookmarks, new TemporaryFetchBookmarksStage());
+
+    // Sync collections. Hard-code for now.
+    stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
     stages.put(Stage.completed,               new CompletedStage());
   }
 
