@@ -67,8 +67,12 @@ import android.content.Context;
 import android.util.Log;
 
 public class GlobalSession implements CredentialsSource {
-  public static final String API_VERSION = "1.1";
+  public static final String API_VERSION   = "1.1";
+  public static final long STORAGE_VERSION = 5;
+
   public Stage currentState = Stage.idle;
+
+  private static final String LOG_TAG = "GlobalSession";
 
   // These public fields and methods are for the use of Stage handlers.
   public URI clusterURL;
