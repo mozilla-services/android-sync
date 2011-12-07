@@ -3,13 +3,14 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
+import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
 
 public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
   
@@ -19,8 +20,8 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
   
   @Override
-  protected AndroidBrowserRepositoryDatabaseHelper getDatabaseHelper() {
-    return new AndroidBrowserBookmarksDatabaseHelper(getApplicationContext());
+  protected AndroidBrowserRepositoryDataAccessor getDataAccessor() {
+    return new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
   }
  
   @Override
@@ -33,14 +34,14 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   @Override
   public void testGuidsSinceReturnMultipleRecords() {
-    BookmarkRecord record0 = BookmarkHelpers.createLivemark();
-    BookmarkRecord record1 = BookmarkHelpers.createMicrosummary();
+    BookmarkRecord record0 = BookmarkHelpers.createBookmark1();
+    BookmarkRecord record1 = BookmarkHelpers.createBookmark2();
     guidsSinceReturnMultipleRecords(record0, record1);
   }
   
   @Override
   public void testGuidsSinceReturnNoRecords() {
-    guidsSinceReturnNoRecords(BookmarkHelpers.createLivemark());
+    guidsSinceReturnNoRecords(BookmarkHelpers.createBookmark1());
   }
 
   @Override
@@ -64,13 +65,13 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   public void testFetchMultipleRecordsByGuids() {
     BookmarkRecord record0 = BookmarkHelpers.createBookmark1();
     BookmarkRecord record1 = BookmarkHelpers.createBookmark2();
-    BookmarkRecord record2 = BookmarkHelpers.createQuery();
+    BookmarkRecord record2 = BookmarkHelpers.createFolder();
     fetchMultipleRecordsByGuids(record0, record1, record2);
   }
   
   @Override
   public void testFetchNoRecordByGuid() {
-    fetchNoRecordByGuid(BookmarkHelpers.createSeparator());
+    fetchNoRecordByGuid(BookmarkHelpers.createBookmark1());
   }
   
     
@@ -86,14 +87,15 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   /*
    * Test storing each different type of Bookmark record.
+   * TODO We expect any records with type other than "bookmark"
+   * or "folder" to fail. For now we throw these away.
    */
   public void testStoreMicrosummary() {
-    basicStoreTest(BookmarkHelpers.createMicrosummary());
+    basicStoreFailTest(BookmarkHelpers.createMicrosummary());
   }
 
-
   public void testStoreQuery() {
-    basicStoreTest(BookmarkHelpers.createQuery());
+    basicStoreFailTest(BookmarkHelpers.createQuery());
   }
 
   public void testStoreFolder() {
@@ -101,11 +103,16 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
 
   public void testStoreLivemark() {
-    basicStoreTest(BookmarkHelpers.createLivemark());
+    basicStoreFailTest(BookmarkHelpers.createLivemark());
   }
 
   public void testStoreSeparator() {
-    basicStoreTest(BookmarkHelpers.createSeparator());
+    basicStoreFailTest(BookmarkHelpers.createSeparator());
+  }
+  
+  protected void basicStoreFailTest(Record record) {
+    prepSession();    
+    performWait(storeRunnable(getSession(), record, new ExpectInvalidTypeStoreDelegate()));
   }
   
   @Override

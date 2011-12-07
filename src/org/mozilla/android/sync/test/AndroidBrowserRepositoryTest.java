@@ -8,7 +8,7 @@ import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
@@ -33,7 +33,7 @@ import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentationTestCase2<MainActivity> {
   
-  protected AndroidBrowserRepositoryDatabaseHelper helper;
+  protected AndroidBrowserRepositoryDataAccessor helper;
   
   public AndroidBrowserRepositoryTest() {
     super(MainActivity.class);
@@ -55,15 +55,9 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return AndroidBrowserRepositoryTestHelper.session;
   }
   
-  public void tearDown() {
-    if (helper != null) {
-      helper.close();
-    }
-  }
-  
   private void wipe() {
     if (helper == null) {
-      helper = getDatabaseHelper();
+      helper = getDataAccessor();
     }
     helper.wipe();
   }
@@ -104,13 +98,17 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     };
   }
   
-  public static Runnable storeRunnable(final RepositorySession session, final Record record) {
+  public static Runnable storeRunnable(final RepositorySession session, final Record record, final DefaultStoreDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
-        session.store(record, new ExpectStoredDelegate(record.guid));
+        session.store(record, delegate);
       }
     };
+  }
+  
+  public static Runnable storeRunnable(final RepositorySession session, final Record record) {
+    return storeRunnable(session, record, new ExpectStoredDelegate(record.guid));
   }
 
   public static Runnable fetchAllRunnable(final RepositorySession session, final ExpectFetchDelegate delegate) {
@@ -157,7 +155,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   }
 
   protected abstract AndroidBrowserRepository getRepository();
-  protected abstract AndroidBrowserRepositoryDatabaseHelper getDatabaseHelper();
+  protected abstract AndroidBrowserRepositoryDataAccessor getDataAccessor();
   protected abstract void verifyExpectedRecordReturned(Record expected, Record actual);
   
   // Tests to implement

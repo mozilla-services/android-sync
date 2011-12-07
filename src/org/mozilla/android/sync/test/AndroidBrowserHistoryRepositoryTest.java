@@ -3,10 +3,10 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.repositories.android.AndroidBrowserHistoryDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserHistoryRepository;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDatabaseHelper;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.android.sync.repositories.domain.HistoryRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
@@ -19,8 +19,8 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   }
 
   @Override
-  protected AndroidBrowserRepositoryDatabaseHelper getDatabaseHelper() {
-    return new AndroidBrowserHistoryDatabaseHelper(getApplicationContext());
+  protected AndroidBrowserRepositoryDataAccessor getDataAccessor() {
+    return new AndroidBrowserHistoryDataAccessor(getApplicationContext());
   }
 
   @Override
