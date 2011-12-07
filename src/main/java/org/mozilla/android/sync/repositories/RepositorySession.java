@@ -130,6 +130,17 @@ public abstract class RepositorySession {
     return bundle;
   }
 
+  /**
+   * Just like finish(), but doesn't do any work that should only be performed
+   * at the end of a successful sync, and can be called any time.
+   *
+   * @param delegate
+   */
+  public void abort(RepositorySessionFinishDelegate delegate) {
+    this.status = SessionStatus.DONE;    // TODO: ABORTED?
+    delegate.onFinishSucceeded(this, this.getBundle(null));
+  }
+
   public void finish(RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
