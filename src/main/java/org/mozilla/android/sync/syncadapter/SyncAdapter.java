@@ -119,6 +119,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   }
 
+  @Override
+  public void onSyncCanceled() {
+    super.onSyncCanceled();
+    // TODO: cancel the sync!
+    // From the docs: "This will be invoked on a separate thread than the sync
+    // thread and so you must consider the multi-threaded implications of the
+    // work that you do in this method."
+  }
+
+  public Object syncMonitor = new Object();
   private SyncResult syncResult;
 
   @Override
@@ -137,6 +147,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
       @Override
       public void run(AccountManagerFuture<Bundle> future) {
+        Log.i(LOG_TAG, "AccountManagerCallback invoked.");
         // TODO: N.B.: Future must not be used on the main thread.
         try {
           Bundle bundle      = future.getResult(60L, TimeUnit.SECONDS);
@@ -162,6 +173,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     };
     Handler handler = null;
     getAuthToken(account, callback, handler);
+    synchronized (syncMonitor) {
+      try {
+        Log.i(LOG_TAG, "Waiting on sync monitor.");
+        syncMonitor.wait();
+      } catch (InterruptedException e) {
+        Log.i(LOG_TAG, "Waiting on sync monitor interrupted.", e);
+      }
+    }
  }
 
 
@@ -184,7 +203,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API, 
                                                     clusterURL, username, password, keyBundle,
                                                     this, this.mContext);
+
     globalSession.start();
+
+  }
+
+  private void notifyMonitor() {
+    synchronized (syncMonitor) {
+      Log.i(LOG_TAG, "Notifying sync monitor.");
+      syncMonitor.notify();
+    }
   }
 
   // Implementing GlobalSession callbacks.
@@ -192,6 +220,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public void handleError(GlobalSession globalSession, Exception ex) {
     Log.i(LOG_TAG, "GlobalSession indicated error.");
     this.updateStats(globalSession, ex);
+    notifyMonitor();
   }
 
   /**
@@ -213,6 +242,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   @Override
   public void handleSuccess(GlobalSession globalSession) {
     Log.i(LOG_TAG, "GlobalSession indicated success.");
+    notifyMonitor();
   }
 
   @Override
