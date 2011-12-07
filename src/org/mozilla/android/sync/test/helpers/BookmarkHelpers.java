@@ -6,7 +6,7 @@ package org.mozilla.android.sync.test.helpers;
 import static junit.framework.Assert.assertEquals;
 
 import org.json.simple.JSONArray;
-import org.mozilla.android.sync.repositories.Utils;
+import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 
 public class BookmarkHelpers {

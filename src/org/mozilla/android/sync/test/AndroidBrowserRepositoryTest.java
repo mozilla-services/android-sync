@@ -4,9 +4,9 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.MainActivity;
+import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.Utils;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDatabaseHelper;
 import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositorySession;
