@@ -75,7 +75,7 @@ public abstract class ServerSyncStage implements
    * Return a Crypto5Middleware-wrapped Server11Repository.
    *
    * @param clusterURI
-   * @param username
+   * @param data.username
    * @param collection
    * @return
    * @throws NoCollectionKeysSetException
@@ -83,7 +83,10 @@ public abstract class ServerSyncStage implements
   protected Repository wrappedServerRepo() throws NoCollectionKeysSetException {
     String collection = this.getCollection();
     KeyBundle collectionKey = session.keyForCollection(collection);
-    Server11Repository serverRepo = new Server11Repository(session.getClusterURL().toASCIIString(), session.username, collection, session);
+    Server11Repository serverRepo = new Server11Repository(session.config.clusterURL.toASCIIString(),
+                                                           session.config.username,
+                                                           collection,
+                                                           session);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(serverRepo, collectionKey);
     cryptoRepo.recordFactory = new BookmarkRecordFactory();
     return cryptoRepo;

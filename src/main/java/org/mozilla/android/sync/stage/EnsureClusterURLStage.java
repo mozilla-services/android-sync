@@ -37,11 +37,94 @@
 
 package org.mozilla.android.sync.stage;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+
 import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.net.BaseResource;
+import org.mozilla.android.sync.net.SyncResourceDelegate;
+
+import android.util.Log;
+import ch.boye.httpclientandroidlib.HttpEntity;
+import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class EnsureClusterURLStage implements GlobalSyncStage {
+  public interface ClusterURLFetchDelegate {
+    public void handleSuccess(String url);
+    public void handleFailure(HttpResponse response);
+    public void handleError(Exception e);
+  }
+
+  protected static final String LOG_TAG = "EnsureClusterURLStage";
+
+  public static void fetchClusterURL(final String serverURL,
+                                     final GlobalSession session,
+                                     final ClusterURLFetchDelegate delegate) throws URISyntaxException {
+    String nodeWeaveURL = session.config.nodeWeaveURL();
+    BaseResource resource = new BaseResource(nodeWeaveURL);
+    resource.delegate = new SyncResourceDelegate(resource) {
+
+      @Override
+      public void handleHttpResponse(HttpResponse response) {
+        int status = response.getStatusLine().getStatusCode();
+        switch (status) {
+        case 200:
+          Log.i(LOG_TAG, "Got 200 for node/weave fetch.");
+          // Great!
+          HttpEntity entity = response.getEntity();
+          if (entity == null) {
+            delegate.handleSuccess(null);
+            return;
+          }
+          String output = null;
+          try {
+            InputStream content = entity.getContent();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
+            output = reader.readLine();
+            reader.close();
+          } catch (IllegalStateException e) {
+            delegate.handleError(e);
+          } catch (IOException e) {
+            delegate.handleError(e);
+          }
+          
+          if (output == null || output.equals("null")) {
+            delegate.handleSuccess(null);
+          }
+          delegate.handleSuccess(output);
+          break;
+        case 400:
+          Log.i(LOG_TAG, "Got 400 for cluster URL request.");
+          delegate.handleFailure(response);
+          break;
+        case 404:
+          Log.i(LOG_TAG, "Server doesn't support user API. Using serverURL as clusterURL.");
+          delegate.handleSuccess(serverURL);
+          break;
+        default:
+          Log.w(LOG_TAG, "Got " + status + " fetching node/weave. Returning failure.");
+          delegate.handleFailure(response);
+        }
+      }
+
+      @Override
+      public void handleHttpProtocolException(ClientProtocolException e) {
+        delegate.handleError(e);
+      }
+
+      @Override
+      public void handleHttpIOException(IOException e) {
+        delegate.handleError(e);
+      }
+    };
+  }
+
   public void execute(GlobalSession session) throws NoSuchStageException {
-    if (session.getClusterURL() != null) {
+    if (session.config.clusterURL != null) {
       session.advance();
       return;
     }

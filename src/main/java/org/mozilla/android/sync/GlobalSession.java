@@ -20,7 +20,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -72,75 +72,52 @@ import android.util.Log;
 public class GlobalSession implements CredentialsSource {
   public static final String API_VERSION   = "1.1";
   public static final long STORAGE_VERSION = 5;
-
-  public Stage currentState = Stage.idle;
-
   private static final String LOG_TAG = "GlobalSession";
 
-  // These public fields and methods are for the use of Stage handlers.
-  public URI clusterURL;
-  public String username;
-  public KeyBundle syncKeyBundle;
-  private CollectionKeys collectionKeys;
+  public SyncConfiguration config = null;
 
-  public InfoCollections infoCollections;      // TODO: persist historical timestamps.
-  public MetaGlobal metaGlobal;
+  protected Map<Stage, GlobalSyncStage> stages;
+  public Stage currentState = Stage.idle;
 
+  private GlobalSessionCallback callback;
+  private Context context;
+
+  /*
+   * Key accessors.
+   */
   public void setCollectionKeys(CollectionKeys k) {
-    collectionKeys = k;
+    config.setCollectionKeys(k);
   }
   @Override
   public CollectionKeys getCollectionKeys() {
-    return collectionKeys;
+    return config.collectionKeys;
   }
   @Override
   public KeyBundle keyForCollection(String collection) throws NoCollectionKeysSetException {
-    return this.getCollectionKeys().keyBundleForCollection(collection);
+    return config.keyForCollection(collection);
   }
 
+  /*
+   * Config passthrough for convenience.
+   */
   @Override
   public String credentials() {
-    return username + ":" + password;
-  }
-
-  public URI collectionURI(String collection, boolean full) throws URISyntaxException {
-    // Do it this way to make it easier to add more params later.
-    // It's pretty ugly, I'll grant.
-    boolean anyParams = full;
-    String  uriParams = "";
-    if (anyParams) {
-      StringBuilder params = new StringBuilder("?");
-      if (full) {
-        params.append("full=1");
-      }
-      uriParams = params.toString();
-    }
-    String uri = this.storageURL(true) + collection + uriParams;
-    return new URI(uri);
-  }
-
-  public String storageURL(boolean trailingSlash) {
-    return this.clusterURL + "1.1/" + this.username +
-           (trailingSlash ? "/storage/" : "/storage");
+    return config.credentials();
   }
 
   public URI wboURI(String collection, String id) throws URISyntaxException {
-    return new URI(this.storageURL(true) + collection + "/" + id);
+    return config.wboURI(collection, id);
   }
 
-  protected URI getKeysURI() throws URISyntaxException {
-    return wboURI("crypto", "keys");
-  }
-
-  private String password;
-  private GlobalSessionCallback callback;
-
-  private boolean isInvalidString(String s) {
+  /*
+   * Validators.
+   */
+  private static boolean isInvalidString(String s) {
     return s == null ||
            s.trim().length() == 0;
   }
 
-  private boolean anyInvalidStrings(String s, String...strings) {
+  private static boolean anyInvalidStrings(String s, String...strings) {
     if (isInvalidString(s)) {
       return true;
     }
@@ -152,12 +129,11 @@ public class GlobalSession implements CredentialsSource {
     return false;
   }
 
-  private Context context;
-  public Context getContext() {
-    return this.context;
-  }
-
-  public GlobalSession(String clusterURL, String username, String password, KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context) throws SyncConfigurationException, IllegalArgumentException {
+  public GlobalSession(String userAPI, String clusterURL,
+                       String username, String password,
+                       KeyBundle syncKeyBundle,
+                       GlobalSessionCallback callback,
+                       Context context) throws SyncConfigurationException, IllegalArgumentException {
     if (callback == null) {
       throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
     }
@@ -179,18 +155,18 @@ public class GlobalSession implements CredentialsSource {
       throw new SyncConfigurationException();
     }
 
-    this.setClusterURL(clusterURI);
+    config = new SyncConfiguration();
+    config.userAPI       = userAPI;
+    config.clusterURL    = clusterURI;
+    config.username      = username;
+    config.password      = password;
+    config.syncKeyBundle = syncKeyBundle;
 
-    this.username      = username;
-    this.password      = password;
-    this.syncKeyBundle = syncKeyBundle;
-    this.callback      = callback;
-    this.context       = context;
+    this.callback        = callback;
+    this.context         = context;
     prepareStages();
   }
 
-  protected Map<Stage, GlobalSyncStage> stages;
-  private String syncID;
   protected void prepareStages() {
     stages = new HashMap<Stage, GlobalSyncStage>();
     stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
@@ -210,79 +186,6 @@ public class GlobalSession implements CredentialsSource {
       throw new NoSuchStageException(next);
     }
     return stage;
-  }
-
-  private String getMetaURL() {
-    return this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/storage/meta/global";
-  }
-
-  public void fetchMetaGlobal(MetaGlobalDelegate callback) throws URISyntaxException {
-    if (this.metaGlobal == null) {
-      String metaURL = getMetaURL();
-      this.metaGlobal = new MetaGlobal(metaURL, credentials());
-    }
-    this.metaGlobal.fetch(callback);
-  }
-
-  public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
-    if (this.infoCollections == null) {
-      String infoURL = this.clusterURL + GlobalSession.API_VERSION + "/" + this.username + "/info/collections";
-      this.infoCollections = new InfoCollections(infoURL, credentials());
-    }
-    this.infoCollections.fetch(callback);
-  }
-
-
-  protected void uploadKeys(CryptoRecord keysRecord,
-                            final KeyUploadDelegate keyUploadDelegate) {
-    SyncStorageRecordRequest request;
-    final GlobalSession globalSession = this;
-    try {
-      request = new SyncStorageRecordRequest(this.getKeysURI());
-    } catch (URISyntaxException e) {
-      keyUploadDelegate.onKeyUploadFailed(e);
-      return;
-    }
-
-    request.delegate = new SyncStorageRequestDelegate() {
-
-      @Override
-      public String ifUnmodifiedSince() {
-        return null;
-      }
-
-      @Override
-      public void handleRequestSuccess(SyncStorageResponse response) {
-        keyUploadDelegate.onKeysUploaded();
-      }
-
-      @Override
-      public void handleRequestFailure(SyncStorageResponse response) {
-        keyUploadDelegate.onKeyUploadFailed(new HTTPFailureException(response));
-      }
-
-      @Override
-      public void handleRequestError(Exception ex) {
-        keyUploadDelegate.onKeyUploadFailed(ex);
-      }
-
-      @Override
-      public String credentials() {
-        return globalSession.credentials();
-      }
-    };
-
-    keysRecord.setKeyBundle(syncKeyBundle);
-    try {
-      keysRecord.encrypt();
-    } catch (UnsupportedEncodingException e) {
-      keyUploadDelegate.onKeyUploadFailed(e);
-      return;
-    } catch (CryptoException e) {
-      keyUploadDelegate.onKeyUploadFailed(e);
-      return;
-    }
-    request.put(keysRecord);
   }
 
   /**
@@ -314,6 +217,19 @@ public class GlobalSession implements CredentialsSource {
       Log.w(LOG_TAG, "Caught exception " + ex + " running stage " + next);
       this.abort(ex, "Uncaught exception in stage.");
     }
+  }
+
+  private String getSyncID() {
+    return config.syncID;
+  }
+
+  private String generateSyncID() {
+    config.syncID = Utils.generateGuid();
+    return config.syncID;
+  }
+
+  public Context getContext() {
+    return this.context;
   }
 
   /**
@@ -356,19 +272,8 @@ public class GlobalSession implements CredentialsSource {
     this.callback.handleSuccess(this);
   }
 
-  public URI getClusterURL() {
-    return clusterURL;
-  }
-  public void setClusterURL(URI u) {
-    this.clusterURL = u;
-  }
-  public void setClusterURL(String u) throws URISyntaxException {
-    this.setClusterURL((u == null) ? null : new URI(u));
-  }
-
   public void abort(Exception e, String reason) {
-    Log.w(LOG_TAG, "Aborting sync: " + reason);
-    e.printStackTrace();
+    Log.w(LOG_TAG, "Aborting sync: " + reason, e);
     this.callback.handleError(this, e);
   }
 
@@ -381,9 +286,76 @@ public class GlobalSession implements CredentialsSource {
 
 
 
+  public void fetchMetaGlobal(MetaGlobalDelegate callback) throws URISyntaxException {
+    if (this.config.metaGlobal == null) {
+      this.config.metaGlobal = new MetaGlobal(config.metaURL(), credentials());
+    }
+    this.config.metaGlobal.fetch(callback);
+  }
+
+  public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
+    if (this.config.infoCollections == null) {
+      this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
+    }
+    this.config.infoCollections.fetch(callback);
+  }
+
+  protected void uploadKeys(CryptoRecord keysRecord,
+                            final KeyUploadDelegate keyUploadDelegate) {
+    SyncStorageRecordRequest request;
+    final GlobalSession globalSession = this;
+    try {
+      request = new SyncStorageRecordRequest(this.config.keysURI());
+    } catch (URISyntaxException e) {
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
+    }
+
+    request.delegate = new SyncStorageRequestDelegate() {
+
+      @Override
+      public String ifUnmodifiedSince() {
+        return null;
+      }
+
+      @Override
+      public void handleRequestSuccess(SyncStorageResponse response) {
+        keyUploadDelegate.onKeysUploaded();
+      }
+
+      @Override
+      public void handleRequestFailure(SyncStorageResponse response) {
+        keyUploadDelegate.onKeyUploadFailed(new HTTPFailureException(response));
+      }
+
+      @Override
+      public void handleRequestError(Exception ex) {
+        keyUploadDelegate.onKeyUploadFailed(ex);
+      }
+
+      @Override
+      public String credentials() {
+        return globalSession.credentials();
+      }
+    };
+
+    keysRecord.setKeyBundle(config.syncKeyBundle);
+    try {
+      keysRecord.encrypt();
+    } catch (UnsupportedEncodingException e) {
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
+    } catch (CryptoException e) {
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
+    }
+    request.put(keysRecord);
+  }
 
 
-
+  /*
+   * meta/global callbacks.
+   */
   public void processMetaGlobal(MetaGlobal global) {
     Long storageVersion = global.getStorageVersion();
     if (storageVersion < STORAGE_VERSION) {
@@ -413,9 +385,6 @@ public class GlobalSession implements CredentialsSource {
     }
   }
 
-  private String getSyncID() {
-    return syncID;
-  }
   public void processMissingMetaGlobal(MetaGlobal global) {
     this.freshStart();
   }
@@ -450,7 +419,7 @@ public class GlobalSession implements CredentialsSource {
   protected void freshStart(final GlobalSession session, final FreshStartDelegate freshStartDelegate) {
 
     final String newSyncID   = session.generateSyncID();
-    final String metaURL     = session.getMetaURL();
+    final String metaURL     = session.config.metaURL();
     final String credentials = session.credentials();
 
     this.wipeServer(session, new WipeServerDelegate() {
@@ -458,21 +427,21 @@ public class GlobalSession implements CredentialsSource {
       @Override
       public void onWiped(long timestamp) {
         session.resetClient();
-        session.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
+        session.config.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
 
-        metaGlobal = new MetaGlobal(metaURL, credentials);
-        metaGlobal.setSyncID(newSyncID);
-        metaGlobal.setStorageVersion(STORAGE_VERSION);
+        config.metaGlobal = new MetaGlobal(metaURL, credentials);
+        config.metaGlobal.setSyncID(newSyncID);
+        config.metaGlobal.setStorageVersion(STORAGE_VERSION);
 
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
         // for this PUT to ensure at least some level of transactionality.
         // Unfortunately, the servers don't support it after a wipe right now
         // (bug 693893), so we're going to defer this until bug 692700.
-        metaGlobal.upload(new MetaGlobalDelegate() {
+        config.metaGlobal.upload(new MetaGlobalDelegate() {
 
           @Override
           public void handleSuccess(MetaGlobal global) {
-            session.metaGlobal = global;
+            session.config.metaGlobal = global;
             Log.i(LOG_TAG, "New meta/global uploaded with sync ID " + newSyncID);
 
             // Generate and upload new keys.
@@ -533,7 +502,7 @@ public class GlobalSession implements CredentialsSource {
   private void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
     SyncStorageRequest request;
     try {
-      request = new SyncStorageRequest(this.storageURL(false));
+      request = new SyncStorageRequest(config.storageURL(false));
     } catch (URISyntaxException ex) {
       Log.w(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
@@ -575,11 +544,6 @@ public class GlobalSession implements CredentialsSource {
   private void resetClient() {
     // TODO Auto-generated method stub
 
-  }
-
-  private String generateSyncID() {
-    syncID = Utils.generateGuid();
-    return syncID;
   }
 
   /**

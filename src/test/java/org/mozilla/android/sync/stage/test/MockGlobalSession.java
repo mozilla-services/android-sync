@@ -5,6 +5,7 @@ package org.mozilla.android.sync.stage.test;
 
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.GlobalSessionCallback;
+import org.mozilla.android.sync.SyncConfiguration;
 import org.mozilla.android.sync.SyncConfigurationException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.repositories.Repository;
@@ -23,7 +24,7 @@ public class MockGlobalSession extends GlobalSession {
   public MockGlobalSession(String clusterURL, String username, String password,
       KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context)
       throws SyncConfigurationException, IllegalArgumentException {
-    super(clusterURL, username, password, syncKeyBundle, callback, context);
+    super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, syncKeyBundle, callback, context);
   }
 
   public class MockServerSyncStage extends ServerSyncStage {

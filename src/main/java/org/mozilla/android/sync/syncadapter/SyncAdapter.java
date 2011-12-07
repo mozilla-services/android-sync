@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import org.mozilla.android.sync.AlreadySyncingException;
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.GlobalSessionCallback;
+import org.mozilla.android.sync.SyncConfiguration;
 import org.mozilla.android.sync.SyncConfigurationException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.setup.Constants;
@@ -175,7 +176,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              KeyBundle keyBundle) throws NoSuchAlgorithmException, UnsupportedEncodingException, SyncConfigurationException, IllegalArgumentException, AlreadySyncingException {
     Log.i("rnewman", "Performing sync.");
     String clusterURL = "https://phx-sync545.services.mozilla.com/";
-    GlobalSession globalSession = new GlobalSession(clusterURL, username, password, keyBundle, this, this.mContext);
+    GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API, 
+                                                    clusterURL, username, password, keyBundle,
+                                                    this, this.mContext);
     globalSession.start();
   }
 
