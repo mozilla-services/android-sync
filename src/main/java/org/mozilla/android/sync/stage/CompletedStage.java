@@ -44,6 +44,7 @@ public class CompletedStage implements GlobalSyncStage {
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
     // TODO: Update tracking timestamps, close connections, etc.
+    // TODO: call clean() on each Repository in the sync constellation.
     session.completeSync();
   }
 
