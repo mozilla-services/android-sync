@@ -5,7 +5,6 @@ import org.mozilla.android.sync.repositories.domain.Record;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 
 public abstract class AndroidBrowserRepositoryDataAccessor {
@@ -16,9 +15,22 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     this.context = context;
   }
   
-  public void wipe() throws SQLiteException {
+  public void wipe() {
     // TODO test to make sure this works, not confident in this
     context.getContentResolver().delete(getUri(), null, null);
+  }
+  
+  public void purgeDeleted() {
+    // TODO write tests for this
+    Cursor cur = context.getContentResolver().query(getUri(),
+        new String[] { BrowserContract.SyncColumns.GUID },
+        BrowserContract.SyncColumns.DELETED + "= 1", null, null);
+    cur.moveToFirst();
+    while (!cur.isAfterLast()) {
+      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+      context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID, new String[] { guid });
+      cur.moveToNext();
+    }
   }
 
   public Uri insert(Record record) {

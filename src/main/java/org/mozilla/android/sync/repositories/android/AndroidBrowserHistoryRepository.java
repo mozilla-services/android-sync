@@ -49,4 +49,10 @@ public class AndroidBrowserHistoryRepository extends AndroidBrowserRepository im
     AndroidBrowserHistoryRepositorySession session = new AndroidBrowserHistoryRepositorySession(AndroidBrowserHistoryRepository.this, context);
     delegate.onSessionCreated(session);
   }
+
+  @Override
+  protected AndroidBrowserRepositoryDataAccessor getDataAccessor(Context context) {
+    return new AndroidBrowserHistoryDataAccessor(context);
+  }
+  
 }

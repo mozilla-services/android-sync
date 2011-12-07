@@ -49,4 +49,9 @@ public class AndroidBrowserBookmarksRepository extends AndroidBrowserRepository 
     AndroidBrowserBookmarksRepositorySession session = new AndroidBrowserBookmarksRepositorySession(AndroidBrowserBookmarksRepository.this, context);
     delegate.onSessionCreated(session);
   }
+
+  @Override
+  protected AndroidBrowserRepositoryDataAccessor getDataAccessor(Context context) {
+    return new AndroidBrowserBookmarksDataAccessor(context);
+  }
 }

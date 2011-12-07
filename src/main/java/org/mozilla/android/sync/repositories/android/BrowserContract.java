@@ -56,13 +56,18 @@ public class BrowserContract {
     public static final String PARAM_PROFILE = "profile";
 
     public static final String PARAM_LIMIT = "limit";
-
+    
+    // TODO waiting on mobile team to use these column names and add
+    // deleted for both content providers
     interface SyncColumns {
         public static final String GUID = "guid";
 
         public static final String DATE_CREATED = "created";
 
         public static final String DATE_MODIFIED = "modified";
+        
+        // NOTE: This column doesn't exist in fennec's code yet!!!
+        public static final String DELETED = "deleted";
     }
 
     interface CommonColumns {
