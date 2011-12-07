@@ -29,7 +29,7 @@
         <activity
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:name="org.mozilla.android.sync.setup.main.SetupSyncActivity"
+            android:name="org.mozilla.android.sync.setup.activities.SetupSyncActivity"
             android:theme="@style/ThemeTransparent" >
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
@@ -40,18 +40,17 @@
         <activity
             android:clearTaskOnLaunch="true"
             android:launchMode="singleTask"
-            android:name="org.mozilla.android.sync.setup.main.AccountActivity"
+            android:name="org.mozilla.android.sync.setup.activities.AccountActivity"
             android:theme="@style/ThemeTransparent" />
         <activity
-            android:name="org.mozilla.android.sync.setup.main.SetupFailureActivity"
+            android:name="org.mozilla.android.sync.setup.activities.SetupFailureActivity"
             android:theme="@style/ThemeTransparent" />
         <activity
-            android:name=".setup.activities.SetupSuccessActivity"
+            android:name="org.mozilla.android.sync.setup.activities.SetupSuccessActivity"
             android:theme="@style/ThemeTransparent" />
-
         <service
             android:exported="true"
-            android:name=".setup.SyncAuthenticatorService" >
+            android:name="org.mozilla.android.sync.setup.SyncAuthenticatorService" >
             <intent-filter >
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
@@ -62,7 +61,7 @@
         </service>
         <service
             android:exported="true"
-            android:name=".syncadapter.SyncService" >
+            android:name="org.mozilla.android.sync.syncadapter.SyncService" >
             <intent-filter >
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
