@@ -67,7 +67,7 @@ import android.util.Log;
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback {
 
-  private static final String  TAG = "SyncAdapter";
+  private static final String  LOG_TAG = "SyncAdapter";
   private final AccountManager mAccountManager;
   private final Context        mContext;
 
@@ -79,24 +79,24 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   private void handleException(Exception e, SyncResult syncResult) {
     if (e instanceof OperationCanceledException) {
-      Log.e("rnewman", "Operation canceled. Aborting sync.");
+      Log.e(LOG_TAG, "Operation canceled. Aborting sync.");
       e.printStackTrace();
       return;
     }
     if (e instanceof AuthenticatorException) {
       syncResult.stats.numParseExceptions++;
-      Log.e("rnewman", "AuthenticatorException. Aborting sync.");
+      Log.e(LOG_TAG, "AuthenticatorException. Aborting sync.");
       e.printStackTrace();
       return;
     }
     if (e instanceof IOException) {
       syncResult.stats.numIoExceptions++;
-      Log.e("rnewman", "IOException. Aborting sync.");
+      Log.e(LOG_TAG, "IOException. Aborting sync.");
       e.printStackTrace();
       return;
     }
     syncResult.stats.numIoExceptions++;
-    Log.e("rnewman", "Unknown exception. Aborting sync.");
+    Log.e(LOG_TAG, "Unknown exception. Aborting sync.");
     e.printStackTrace();
   }
 
@@ -113,7 +113,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
       mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
     } catch (Exception e) {
-      Log.e("rnewman", "Couldn't invalidate auth token: " + e);
+      Log.e(LOG_TAG, "Couldn't invalidate auth token: " + e);
     }
 
   }
@@ -124,8 +124,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
 
-    Log.i("rnewman", "Got onPerformSync:");
-    Log.i("rnewman", "Account name: " + account.name);
+    Log.i(LOG_TAG, "Got onPerformSync:");
+    Log.i(LOG_TAG, "Account name: " + account.name);
     Log.i("rnewman", "XXX CLEARING AUTH TOKEN XXX");
     invalidateAuthToken(account);
 
@@ -140,11 +140,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           String syncKey     = bundle.getString(Constants.OPTION_SYNCKEY);
           String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
           if (password == null) {
-            Log.e("rnewman", "No password: aborting sync.");
+            Log.e(LOG_TAG, "No password: aborting sync.");
             return;
           }
           if (syncKey == null) {
-            Log.e("rnewman", "No Sync Key: aborting sync.");
+            Log.e(LOG_TAG, "No Sync Key: aborting sync.");
             return;
           }
           KeyBundle keyBundle = new KeyBundle(username, syncKey);
@@ -174,7 +174,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              SyncResult syncResult,
                              String username, String password,
                              KeyBundle keyBundle) throws NoSuchAlgorithmException, UnsupportedEncodingException, SyncConfigurationException, IllegalArgumentException, AlreadySyncingException {
-    Log.i("rnewman", "Performing sync.");
+    Log.i(LOG_TAG, "Performing sync.");
     String clusterURL = "https://phx-sync545.services.mozilla.com/";
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API, 
                                                     clusterURL, username, password, keyBundle,
@@ -185,18 +185,18 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   // Implementing GlobalSession callbacks.
   @Override
   public void handleError(GlobalSession globalSession, Exception ex) {
-    Log.i("rnewman", "GlobalSession indicated error.");
+    Log.i(LOG_TAG, "GlobalSession indicated error.");
   }
 
   @Override
   public void handleSuccess(GlobalSession globalSession) {
-    Log.i("rnewman", "GlobalSession indicated success.");
+    Log.i(LOG_TAG, "GlobalSession indicated success.");
   }
 
   @Override
   public void handleStageCompleted(Stage currentState,
                                    GlobalSession globalSession) {
-    Log.i("rnewman", "Stage completed: " + currentState);
+    Log.i(LOG_TAG, "Stage completed: " + currentState);
   }
 }
 
