@@ -70,11 +70,11 @@ public class SyncStorageRequest implements Resource {
   /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
-  public class SyncResourceDelegate implements ResourceDelegate {
-
+  public class SyncStorageResourceDelegate extends SyncResourceDelegate {
     protected SyncStorageRequest request;
 
-    SyncResourceDelegate(SyncStorageRequest request) {
+    SyncStorageResourceDelegate(SyncStorageRequest request) {
+      super(request);
       this.request = request;
     }
 
@@ -105,15 +105,6 @@ public class SyncStorageRequest implements Resource {
     }
 
     @Override
-    public int connectionTimeout() {
-      return 30 * 1000;             // Wait 30s for a connection to open.
-    }
-    @Override
-    public int socketTimeout() {
-      return 5 * 60 * 1000;         // Wait 5 minutes for data.
-    }
-
-    @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
 
@@ -136,7 +127,7 @@ public class SyncStorageRequest implements Resource {
 
   // Default implementation. Override this.
   protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
-    return new SyncResourceDelegate(request);
+    return new SyncStorageResourceDelegate(request);
   }
 
   public void get() {

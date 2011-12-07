@@ -68,7 +68,7 @@ import ch.boye.httpclientandroidlib.entity.StringEntity;
  */
 public class SyncStorageRecordRequest extends SyncStorageRequest {
 
-  public class SyncStorageRecordResourceDelegate extends SyncResourceDelegate {
+  public class SyncStorageRecordResourceDelegate extends SyncStorageResourceDelegate {
     SyncStorageRecordResourceDelegate(SyncStorageRequest request) {
       super(request);
     }
