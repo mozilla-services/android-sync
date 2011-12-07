@@ -60,6 +60,17 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
   
   @Override
+  protected boolean checkRecordType(Record record) {
+    BookmarkRecord bmk = (BookmarkRecord) record;
+    if (bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_BOOKMARK) ||
+        bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+      return true;
+    }
+    Log.i(tag, "Ignoring record with guid: " + record.guid + " and type: " + ((BookmarkRecord)record).type);
+    return false;
+  }
+  
+  @Override
   protected Record reconcileRecords(Record local, Record remote) {
     Log.i(LOG_TAG, "Reconciling " + local.guid + " against " + remote.guid);
     

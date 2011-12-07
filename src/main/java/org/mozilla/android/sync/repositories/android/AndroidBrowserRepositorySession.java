@@ -40,6 +40,7 @@ package org.mozilla.android.sync.repositories.android;
 import java.util.ArrayList;
 
 import org.mozilla.android.sync.repositories.InactiveSessionException;
+import org.mozilla.android.sync.repositories.InvalidBookmarkTypeException;
 import org.mozilla.android.sync.repositories.InvalidRequestException;
 import org.mozilla.android.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.android.sync.repositories.Repository;
@@ -56,7 +57,7 @@ import android.util.Log;
 public abstract class AndroidBrowserRepositorySession extends RepositorySession {
   
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
-  private static final String tag = "AndroidBrowserRepositorySession";
+  protected static final String tag = "AndroidBrowserRepositorySession";
   
   public AndroidBrowserRepositorySession(Repository repository) {
     super(repository);
@@ -247,6 +248,14 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         delegate.onStoreFailed(new InactiveSessionException(null));
         return;
       }
+      
+      // Check that the record is a valid type
+      // TODO Currently for bookmarks we only take care of folders
+      // and bookmarks, all other types are ignored and thrown away
+      if (!checkRecordType(record)) {
+        delegate.onStoreFailed(new InvalidBookmarkTypeException(null));
+        return;
+      }
 
       Record existingRecord;
       try {
@@ -284,6 +293,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   }
 
+  // Must be overrriden by AndroidBookmarkRepositorySession
+  protected boolean checkRecordType(Record record) {
+    return true;    
+  }
+  
   protected abstract Record reconcileRecords(Record local, Record remote);
 
   // Wipe method and thread.
