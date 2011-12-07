@@ -37,6 +37,8 @@
 
 package org.mozilla.android.sync;
 
+import android.content.SyncResult;
+
 public abstract class SyncException extends Exception {
   public Exception cause = null;
   public SyncException(Exception ex) {
@@ -46,4 +48,9 @@ public abstract class SyncException extends Exception {
   }
 
   private static final long serialVersionUID = -6928990004393234738L;
+  public void updateStats(GlobalSession globalSession, SyncResult syncResult) {
+    // Assume storage error.
+    // TODO: this logic is overly simplistic.
+    syncResult.databaseError = true;
+  }
 }

@@ -39,6 +39,8 @@ package org.mozilla.android.sync;
 
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 
+import android.content.SyncResult;
+
 public class AlreadySyncingException extends SyncException {
   Stage inState;
   public AlreadySyncingException(Stage currentState) {
@@ -46,4 +48,8 @@ public class AlreadySyncingException extends SyncException {
   }
 
   private static final long serialVersionUID = -5647548462539009893L;
+
+  @Override
+  public void updateStats(GlobalSession globalSession, SyncResult syncResult) {
+  }
 }

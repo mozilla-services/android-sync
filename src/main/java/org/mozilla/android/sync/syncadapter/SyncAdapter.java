@@ -46,6 +46,7 @@ import org.mozilla.android.sync.AlreadySyncingException;
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.SyncConfiguration;
 import org.mozilla.android.sync.SyncConfigurationException;
+import org.mozilla.android.sync.SyncException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.delegates.GlobalSessionCallback;
 import org.mozilla.android.sync.setup.Constants;
@@ -117,6 +118,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     }
 
   }
+
+  private SyncResult syncResult;
+
   @Override
   public void onPerformSync(final Account account,
                             final Bundle extras,
@@ -175,6 +179,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              String username, String password,
                              KeyBundle keyBundle) throws NoSuchAlgorithmException, UnsupportedEncodingException, SyncConfigurationException, IllegalArgumentException, AlreadySyncingException {
     Log.i(LOG_TAG, "Performing sync.");
+    this.syncResult = syncResult;
     String clusterURL = "https://phx-sync545.services.mozilla.com/";
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API, 
                                                     clusterURL, username, password, keyBundle,
@@ -186,6 +191,23 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   @Override
   public void handleError(GlobalSession globalSession, Exception ex) {
     Log.i(LOG_TAG, "GlobalSession indicated error.");
+    this.updateStats(globalSession, ex);
+  }
+
+  /**
+   * Introspect the exception, incrementing the appropriate stat counters.
+   * TODO: increment number of inserts, deletes, conflicts.
+   *
+   * @param globalSession
+   * @param ex
+   */
+  private void updateStats(GlobalSession globalSession,
+                           Exception ex) {
+    if (ex instanceof SyncException) {
+      ((SyncException) ex).updateStats(globalSession, syncResult);
+    }
+    // TODO: non-SyncExceptions.
+    // TODO: wouldn't it be nice to update stats for *every* exception we get?
   }
 
   @Override
