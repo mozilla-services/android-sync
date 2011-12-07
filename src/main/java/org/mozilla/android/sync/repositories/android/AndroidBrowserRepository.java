@@ -38,6 +38,7 @@
 package org.mozilla.android.sync.repositories.android;
 
 import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCleanDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;
@@ -47,6 +48,12 @@ public abstract class AndroidBrowserRepository extends Repository {
   @Override
   public void createSession(RepositorySessionCreationDelegate delegate, Context context) {
     new CreateSessionThread(delegate, context).start();
+  }
+
+  @Override
+  public void clean(boolean success, RepositorySessionCleanDelegate delegate, Context context) {
+    // TODO: add any necessary DB cleanup, using `success` to decide what work to do.
+    delegate.onCleaned(this);
   }
   
   protected abstract void sessionCreator(RepositorySessionCreationDelegate delegate, Context context);

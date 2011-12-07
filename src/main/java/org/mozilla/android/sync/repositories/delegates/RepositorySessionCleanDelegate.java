@@ -19,8 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,17 +35,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.repositories.delegates;
 
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCleanDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.android.sync.repositories.Repository;
 
-import android.content.Context;
-
-public abstract class Repository {
-  public abstract void createSession(RepositorySessionCreationDelegate delegate, Context context);
-
-  public void clean(boolean success, RepositorySessionCleanDelegate delegate, Context context) {
-    delegate.onCleaned(this);
-  }
+public interface RepositorySessionCleanDelegate {
+  public void onCleaned(Repository repo);
+  public void onCleanFailed(Repository repo);
 }

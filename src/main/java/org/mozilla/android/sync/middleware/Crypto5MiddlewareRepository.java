@@ -42,6 +42,7 @@ import org.mozilla.android.sync.repositories.IdentityRecordFactory;
 import org.mozilla.android.sync.repositories.RecordFactory;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionCleanDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;
@@ -97,5 +98,11 @@ public class Crypto5MiddlewareRepository extends Repository {
   public void createSession(RepositorySessionCreationDelegate delegate, Context context) {
     Crypto5MiddlewareRepositorySessionCreationDelegate delegateWrapper = new Crypto5MiddlewareRepositorySessionCreationDelegate(this, delegate);
     inner.createSession(delegateWrapper, context);
+  }
+
+  @Override
+  public void clean(boolean success, RepositorySessionCleanDelegate delegate,
+                    Context context) {
+    this.inner.clean(success, delegate, context);
   }
 }
