@@ -46,6 +46,7 @@ import org.mozilla.android.sync.repositories.domain.HistoryRecord;
 
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 public class DBUtils {
   

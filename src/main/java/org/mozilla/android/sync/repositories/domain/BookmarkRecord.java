@@ -49,6 +49,9 @@ import org.mozilla.android.sync.Utils;
  *
  */
 public class BookmarkRecord extends Record {
+  
+  public static final String COLLECTION_NAME = "bookmarks";
+  
   public BookmarkRecord(String guid, String collection, long lastModified, boolean deleted) {
     super(guid, collection, lastModified, deleted);
   }
@@ -59,10 +62,10 @@ public class BookmarkRecord extends Record {
     super(guid, collection, 0, false);
   }
   public BookmarkRecord(String guid) {
-    super(guid, "bookmarks", 0, false);
+    super(guid, COLLECTION_NAME, 0, false);
   }
   public BookmarkRecord() {
-    super(Utils.generateGuid(), "bookmarks", 0, false);
+    super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
 
   // Note: redundant accessors are evil. We're all grownups; let's just use

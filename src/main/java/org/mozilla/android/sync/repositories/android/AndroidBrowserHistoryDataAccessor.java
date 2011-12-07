@@ -35,50 +35,44 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories.domain;
+package org.mozilla.android.sync.repositories.android;
 
-import org.mozilla.android.sync.CryptoRecord;
-import org.mozilla.android.sync.Utils;
+import org.mozilla.android.sync.repositories.domain.HistoryRecord;
+import org.mozilla.android.sync.repositories.domain.Record;
 
-public class HistoryRecord extends Record {
+import android.content.ContentValues;
+import android.content.Context;
+import android.net.Uri;
 
-  public static final String COLLECTION_NAME = "history";
+public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryDataAccessor {
+
+  private static final Uri PROVIDER_URI = Uri.parse("content://org.mozilla.gecko.providers.browser/history");
   
-  public HistoryRecord(String guid, String collection, long lastModified,
-      boolean deleted) {
-    super(guid, collection, lastModified, deleted);
-  }
-  public HistoryRecord(String guid, String collection, long lastModified) {
-    super(guid, collection, lastModified, false);
-  }
-  public HistoryRecord(String guid, String collection) {
-    super(guid, collection, 0, false);
-  }
-  public HistoryRecord(String guid) {
-    super(guid, COLLECTION_NAME, 0, false);
-  }
-  public HistoryRecord() {
-    super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
+  public AndroidBrowserHistoryDataAccessor(Context context) {
+    super(context);
   }
 
-  public long     androidID;
-  public String   title;
-  public String   histURI;
-  // TODO figure out how we are translating visits between formats
-  public String   visits; 
-  public long     transitionType;
-  public long     dateVisited;
+  @Override
+  protected Uri getUri() {
+    return PROVIDER_URI;
+  }  
+
+  @Override
+  protected ContentValues getContentValues(Record record) {
+    ContentValues cv = new ContentValues();
+    HistoryRecord rec = (HistoryRecord) record;
+    cv.put(BrowserContract.SyncColumns.GUID,            rec.guid);
+    cv.put(BrowserContract.SyncColumns.DATE_MODIFIED,        rec.lastModified);
+    cv.put(BrowserContract.CommonColumns.TITLE,           rec.title);
+    cv.put(BrowserContract.CommonColumns.URL,        rec.histURI);
+    //cv.put(BrowserContract.History.VISITS,          rec.visits);
+    //cv.put(COL_TRANS_TYPE,      rec.transitionType);
+    cv.put(BrowserContract.History.DATE_LAST_VISITED,    rec.dateVisited);
+    return cv;
+  }
   
-  @Override
-  public void initFromPayload(CryptoRecord payload) {
-    this.histURI = (String) payload.payload.get("histUri");
-    this.title       = (String) payload.payload.get("title");
-    // TODO add missing fields
-  }
-  @Override
-  public CryptoRecord getPayload() {
-    // TODO Auto-generated method stub
-    return null;
-  }
+  // Missing columns
+  //visits- they seem to store a count...which is not the same as us
+  //transition type
 
 }
