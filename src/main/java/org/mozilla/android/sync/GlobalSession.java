@@ -95,7 +95,7 @@ public class GlobalSession implements CredentialsSource {
   }
   @Override
   public KeyBundle keyForCollection(String collection) throws NoCollectionKeysSetException {
-    return this.getCollectionKeys().keyBundleForCollection("bookmarks");
+    return this.getCollectionKeys().keyBundleForCollection(collection);
   }
 
   @Override
