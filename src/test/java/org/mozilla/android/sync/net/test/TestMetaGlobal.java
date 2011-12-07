@@ -7,8 +7,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.net.MetaGlobal;
-import org.mozilla.android.sync.net.MetaGlobalDelegate;
+import org.mozilla.android.sync.MetaGlobal;
+import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;

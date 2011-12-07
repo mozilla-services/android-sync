@@ -35,13 +35,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.middleware;
 
 import java.io.UnsupportedEncodingException;
 
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.repositories.RecordFactory;
+import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;

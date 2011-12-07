@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.setup.main;
+package org.mozilla.android.sync.setup.activities;
 
 import org.mozilla.android.sync.R;
 import org.mozilla.android.sync.setup.Constants;

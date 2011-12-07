@@ -35,56 +35,47 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.NonObjectJSONException;
+import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.android.sync.net.SyncStorageRecordRequest;
+import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.android.sync.net.SyncStorageResponse;
 
 import android.util.Log;
 
-public class InfoCollections implements SyncStorageRequestDelegate {
-  protected String infoURL;
+public class MetaGlobal implements SyncStorageRequestDelegate {
+  protected String metaURL;
   protected String credentials;
+
+  public boolean isModified;
+  protected boolean isNew;
 
   // Fetched objects.
   protected SyncStorageResponse response;
-  private ExtendedJSONObject    record;
+  private CryptoRecord record;
 
   // Fields.
-  private HashMap<String, Double> timestamps;
-
-  public HashMap<String, Double> getTimestamps() {
-    if (!this.wasSuccessful()) {
-      throw new IllegalStateException("No record fetched.");
-    }
-    return this.timestamps;
-  }
-
-  // TODO
-//  public Iterable<String> changedCollections(HashMap<String, Long> formerTimestamps) {
-    // for (Entry<String, Long> oldEntry : formerTimestamps.entrySet()) {   
-    //}
-//  }
-
-  public boolean wasSuccessful() {
-    return this.response.wasSuccessful() &&
-           this.timestamps != null;
-  }
+  protected ExtendedJSONObject  engines;
+  protected Long                storageVersion;
+  protected String              syncID;
 
   // Temporary location to store our callback.
-  private InfoCollectionsDelegate callback;
+  private MetaGlobalDelegate callback;
 
-  public InfoCollections(String metaURL, String credentials) {
-    this.infoURL     = metaURL;
+  // A little hack so we can use the same delegate implementation for upload and download.
+  private boolean isUploading;
+
+  public MetaGlobal(String metaURL, String credentials) {
+    this.metaURL     = metaURL;
     this.credentials = credentials;
   }
 
-  public void fetch(InfoCollectionsDelegate callback) {
+  public void fetch(MetaGlobalDelegate callback) {
     if (this.response == null) {
       this.callback = callback;
       this.doFetch();
@@ -95,7 +86,8 @@ public class InfoCollections implements SyncStorageRequestDelegate {
 
   private void doFetch() {
     try {
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL);
+      this.isUploading = false;
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
       r.delegate = this;
       r.get();
     } catch (URISyntaxException e) {
@@ -107,25 +99,65 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     return this.response;
   }
 
-  protected ExtendedJSONObject ensureRecord() {
-    if (record == null) {
-      record = new ExtendedJSONObject();
+  public void upload(MetaGlobalDelegate callback) {
+    try {
+      this.isUploading = true;
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      
+      // TODO: PUT!
+      r.delegate = this;
+      r.get();
+    } catch (URISyntaxException e) {
+      callback.handleError(e);
     }
-    return record;
   }
 
-  protected void setRecord(ExtendedJSONObject record) {
-    this.record = record;
+  private CryptoRecord ensureRecord() {
+    if (this.record == null) {
+      this.record = new CryptoRecord(new ExtendedJSONObject());
+    }
+    return this.record;
   }
 
-  @SuppressWarnings("unchecked")
+  protected void setRecord(ExtendedJSONObject obj) throws IOException, ParseException, NonObjectJSONException {
+    this.record = CryptoRecord.fromJSONRecord(obj);
+  }
+
   private void unpack(SyncStorageResponse response) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
     this.response = response;
     this.setRecord(response.jsonObjectBody());
-    Log.i("rnewman", "Record is " + this.record.toJSONString());
-    HashMap<String, Double> map = new HashMap<String, Double>();
-    map.putAll((HashMap<String, Double>) this.record.object);
-    this.timestamps = map;
+    Log.i("rnewman", "meta/global is " + record.payload.toJSONString());
+    this.isModified = false;
+    this.storageVersion = (Long) record.payload.get("storageVersion");
+    this.engines  = record.payload.getObject("engines");
+    this.syncID = (String) record.payload.get("syncID");
+  }
+
+  public Long getStorageVersion() {
+    return this.storageVersion;
+  }
+  public void setStorageVersion(Long version) {
+    this.storageVersion = version;
+    this.ensureRecord().payload.put("storageVersion", version);
+    this.isModified = true;
+  }
+
+  public ExtendedJSONObject getEngines() {
+    return engines;
+  }
+  public void setEngines(ExtendedJSONObject engines) {
+    this.engines = engines;
+    this.ensureRecord().payload.put("engines", engines);
+    this.isModified = true;
+  }
+
+  public String getSyncID() {
+    return syncID;
+  }
+  public void setSyncID(String syncID) {
+    this.syncID = syncID;
+    this.ensureRecord().payload.put("syncID", syncID);
+    this.isModified = true;
   }
 
   // SyncStorageRequestDelegate methods for fetching.
@@ -138,6 +170,20 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   }
 
   public void handleRequestSuccess(SyncStorageResponse response) {
+    if (this.isUploading) {
+      this.handleUploadSuccess(response);
+    } else {
+      this.handleDownloadSuccess(response);
+    }
+  }
+
+  private void handleUploadSuccess(SyncStorageResponse response) {
+    this.isModified = false;
+    this.callback.handleSuccess(this);
+    this.callback = null;
+  }
+
+  private void handleDownloadSuccess(SyncStorageResponse response) {
     if (response.wasSuccessful()) {
       try {
         this.unpack(response);
@@ -154,6 +200,12 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   }
 
   public void handleRequestFailure(SyncStorageResponse response) {
+    if (response.getStatusCode() == 404) {
+      this.response = response;
+      this.callback.handleMissing(this);
+      this.callback = null;
+      return;
+    }
     this.callback.handleFailure(response);
     this.callback = null;
   }

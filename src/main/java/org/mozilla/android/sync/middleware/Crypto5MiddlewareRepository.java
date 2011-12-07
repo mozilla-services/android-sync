@@ -35,9 +35,13 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.middleware;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.repositories.IdentityRecordFactory;
+import org.mozilla.android.sync.repositories.RecordFactory;
+import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;

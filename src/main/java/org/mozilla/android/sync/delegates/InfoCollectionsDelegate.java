@@ -35,8 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync.delegates;
 
+import org.mozilla.android.sync.InfoCollections;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 
 public interface InfoCollectionsDelegate {

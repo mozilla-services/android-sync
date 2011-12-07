@@ -41,8 +41,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.InfoCollections;
-import org.mozilla.android.sync.net.MetaGlobal;
 
 public class SyncConfiguration implements CredentialsSource {
   public static final String DEFAULT_USER_API = "https://auth.services.mozilla.com/user/1.0/";

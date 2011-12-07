@@ -35,13 +35,14 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.setup.main;
+package org.mozilla.android.sync.setup;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.setup.Constants;
+import org.mozilla.android.sync.setup.activities.SetupSyncActivity;
+
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;

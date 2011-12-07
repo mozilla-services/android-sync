@@ -19,8 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
+ *  Chenxia Liu <liuche@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -36,23 +35,28 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.setup.activities;
 
-import java.util.Random;
+import org.mozilla.android.sync.R;
 
-import org.apache.commons.codec.binary.Base64;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
 
-public class Utils {
-
-  public static String generateGuid() {
-    byte[] encodedBytes = Base64.encodeBase64(generateRandomBytes(9), false);
-    return new String(encodedBytes).replace("+", "-").replace("/", "_");
+public class SetupSuccessActivity extends Activity {
+  
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.success);
   }
 
-  private static byte[] generateRandomBytes(int length) {
-    byte[] bytes = new byte[length];
-    Random random = new Random(System.nanoTime());
-    random.nextBytes(bytes);
-    return bytes;
+  /* Click Handlers */
+  public void settingsClickHandler(View target) {
+    Intent intent = new Intent("android.settings.SYNC_SETTINGS");
+    startActivity(intent);
+    overridePendingTransition(0, 0);
+    finish();
   }
 }

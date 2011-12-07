@@ -46,12 +46,12 @@
             android:name="org.mozilla.android.sync.setup.main.SetupFailureActivity"
             android:theme="@style/ThemeTransparent" />
         <activity
-            android:name="org.mozilla.android.sync.setup.main.SetupSuccessActivity"
+            android:name=".setup.activities.SetupSuccessActivity"
             android:theme="@style/ThemeTransparent" />
 
         <service
             android:exported="true"
-            android:name="org.mozilla.android.sync.setup.main.SyncAuthenticatorService" >
+            android:name=".setup.SyncAuthenticatorService" >
             <intent-filter >
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
@@ -62,7 +62,7 @@
         </service>
         <service
             android:exported="true"
-            android:name="org.mozilla.android.sync.syncadapter.SyncService" >
+            android:name=".syncadapter.SyncService" >
             <intent-filter >
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>

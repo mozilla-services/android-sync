@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ * Jason Voll
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,13 +35,41 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync.cryptographer;
 
-import org.mozilla.android.sync.net.SyncStorageResponse;
+public class CryptoStatusBundle {
 
-public interface MetaGlobalDelegate {
-  public void handleSuccess(MetaGlobal global);
-  public void handleMissing(MetaGlobal global);
-  public void handleFailure(SyncStorageResponse response);
-  public void handleError(Exception e);
+    public enum CryptoStatus {
+        OK,
+        MISSING_KEYS,
+        HMAC_VERIFY_FAIL,
+        INVALID_JSON,
+        INVALID_KEYS_BUNDLE,
+        MISSING_SYNCKEY_OR_USER
+    }
+
+    private CryptoStatus status;
+    private String json;
+
+    public CryptoStatusBundle (CryptoStatus status, String json) {
+       this.setStatus(status);
+       this.setJson(json);
+    }
+
+    public CryptoStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CryptoStatus status) {
+        this.status = status;
+    }
+
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
+    }
+
 }

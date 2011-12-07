@@ -19,7 +19,8 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Chenxia Liu <liuche@mozilla.com>
+ * Jason Voll <jvoll@mozilla.com>
+ * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,31 +36,23 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.setup.main;
+package org.mozilla.android.sync;
 
-import org.mozilla.android.sync.R;
+import java.util.Random;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
+import org.apache.commons.codec.binary.Base64;
 
-public class SetupSyncActivity extends Activity {
-  /** Called when the activity is first created. */
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.pair);
+public class Utils {
+
+  public static String generateGuid() {
+    byte[] encodedBytes = Base64.encodeBase64(generateRandomBytes(9), false);
+    return new String(encodedBytes).replace("+", "-").replace("/", "_");
   }
 
-  /* Click Handlers */
-  public void manualClickHandler(View target) {
-    Intent accountIntent = new Intent(this, AccountActivity.class);
-    accountIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-    startActivity(accountIntent);
-    overridePendingTransition(0, 0);
-  }
-  public void cancelClickHandler(View target) {
-    finish();
+  private static byte[] generateRandomBytes(int length) {
+    byte[] bytes = new byte[length];
+    Random random = new Random(System.nanoTime());
+    random.nextBytes(bytes);
+    return bytes;
   }
 }

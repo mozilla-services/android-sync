@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll
+ *  Chenxia Liu <liuche@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,41 +35,31 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.domain;
+package org.mozilla.android.sync.setup.activities;
 
-public class CryptoStatusBundle {
+import org.mozilla.android.sync.R;
 
-    public enum CryptoStatus {
-        OK,
-        MISSING_KEYS,
-        HMAC_VERIFY_FAIL,
-        INVALID_JSON,
-        INVALID_KEYS_BUNDLE,
-        MISSING_SYNCKEY_OR_USER
-    }
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
 
-    private CryptoStatus status;
-    private String json;
+public class SetupSyncActivity extends Activity {
+  /** Called when the activity is first created. */
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.pair);
+  }
 
-    public CryptoStatusBundle (CryptoStatus status, String json) {
-       this.setStatus(status);
-       this.setJson(json);
-    }
-
-    public CryptoStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(CryptoStatus status) {
-        this.status = status;
-    }
-
-    public String getJson() {
-        return json;
-    }
-
-    public void setJson(String json) {
-        this.json = json;
-    }
-
+  /* Click Handlers */
+  public void manualClickHandler(View target) {
+    Intent accountIntent = new Intent(this, AccountActivity.class);
+    accountIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    startActivity(accountIntent);
+    overridePendingTransition(0, 0);
+  }
+  public void cancelClickHandler(View target) {
+    finish();
+  }
 }

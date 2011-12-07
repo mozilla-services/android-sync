@@ -40,8 +40,8 @@ package org.mozilla.android.sync.stage;
 import java.net.URISyntaxException;
 
 import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.net.MetaGlobal;
-import org.mozilla.android.sync.net.MetaGlobalDelegate;
+import org.mozilla.android.sync.MetaGlobal;
+import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 
 public class FetchMetaGlobalStage implements GlobalSyncStage {

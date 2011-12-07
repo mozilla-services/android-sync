@@ -40,7 +40,7 @@ package org.mozilla.android.sync.stage;
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.NoCollectionKeysSetException;
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.repositories.Crypto5MiddlewareRepository;
+import org.mozilla.android.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.Server11Repository;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecordFactory;

@@ -12,11 +12,11 @@ import java.util.Arrays;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
 import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.SyncCryptographer;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.domain.CryptoStatusBundle;
-import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
+import org.mozilla.android.sync.cryptographer.CryptoStatusBundle;
+import org.mozilla.android.sync.cryptographer.SyncCryptographer;
+import org.mozilla.android.sync.cryptographer.CryptoStatusBundle.CryptoStatus;
 
 public class TestSyncCryptographer {
 

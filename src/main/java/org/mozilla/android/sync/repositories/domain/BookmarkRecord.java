@@ -41,7 +41,7 @@ package org.mozilla.android.sync.repositories.domain;
 import org.json.simple.JSONArray;
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.repositories.Utils;
+import org.mozilla.android.sync.Utils;
 
 /**
  * Covers the fields used by all bookmark objects.

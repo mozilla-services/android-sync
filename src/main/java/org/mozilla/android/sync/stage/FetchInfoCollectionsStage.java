@@ -40,8 +40,8 @@ package org.mozilla.android.sync.stage;
 import java.net.URISyntaxException;
 
 import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.net.InfoCollections;
-import org.mozilla.android.sync.net.InfoCollectionsDelegate;
+import org.mozilla.android.sync.InfoCollections;
+import org.mozilla.android.sync.delegates.InfoCollectionsDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 
 import android.util.Log;
