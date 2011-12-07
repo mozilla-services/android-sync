@@ -35,9 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.delegates;
 
-public interface WipeServerDelegate {
-  public void onWiped(long timestamp);
-  public void onWipeFailed(Exception e);
+public interface FreshStartDelegate {
+  void onFreshStart();
+  void onFreshStartFailed(Exception e);
 }

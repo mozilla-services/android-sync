@@ -46,6 +46,10 @@ import java.util.Map;
 
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.delegates.FreshStartDelegate;
+import org.mozilla.android.sync.delegates.GlobalSessionCallback;
+import org.mozilla.android.sync.delegates.KeyUploadDelegate;
+import org.mozilla.android.sync.delegates.WipeServerDelegate;
 import org.mozilla.android.sync.net.InfoCollections;
 import org.mozilla.android.sync.net.InfoCollectionsDelegate;
 import org.mozilla.android.sync.net.MetaGlobal;

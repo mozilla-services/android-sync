@@ -44,10 +44,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.AlreadySyncingException;
 import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.GlobalSessionCallback;
 import org.mozilla.android.sync.SyncConfiguration;
 import org.mozilla.android.sync.SyncConfigurationException;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.delegates.GlobalSessionCallback;
 import org.mozilla.android.sync.setup.Constants;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 

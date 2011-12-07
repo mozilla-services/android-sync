@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.delegates;
 
 public interface KeyUploadDelegate {
   void onKeysUploaded();

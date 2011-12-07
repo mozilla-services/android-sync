@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,13 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.delegates;
 
-import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
-
-
-public interface GlobalSessionCallback {
-  void handleError(GlobalSession globalSession, Exception ex);
-  void handleSuccess(GlobalSession globalSession);
-  void handleStageCompleted(Stage currentState, GlobalSession globalSession);
+public interface WipeServerDelegate {
+  public void onWiped(long timestamp);
+  public void onWipeFailed(Exception e);
 }
