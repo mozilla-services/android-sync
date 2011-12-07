@@ -19,7 +19,8 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
+ *   Jason Voll <jvoll@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -37,18 +38,23 @@
 
 package org.mozilla.android.sync.repositories.android;
 
+import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.HistoryRecord;
 
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.Browser;
+import android.util.Log;
 
 public class DBUtils {
   
   public static final String MOBILE_PARENT_ID = "mobile";
   public static final String MOBILE_PARENT_NAME = "mobile";
-  public static final String BOOKMARK_TYPE = "bookmark";      
+  public static final String BOOKMARK_TYPE = "bookmark";
+  private static final String LOG_TAG = "DBUtils";
   
   public static String getStringFromCursor(Cursor cur, String colId) {
     return cur.getString(cur.getColumnIndex(colId));
@@ -57,16 +63,25 @@ public class DBUtils {
   public static long getLongFromCursor(Cursor cur, String colId) {
     return cur.getLong(cur.getColumnIndex(colId));
   }
+
+  private static JSONArray getJSONArrayFromCursor(Cursor cur, String colId) {
+    try {
+      return (JSONArray) new JSONParser().parse(getStringFromCursor(cur, colId));
+    } catch (ParseException e) {
+      Log.e(LOG_TAG, "JSON parsing error for " + colId, e);
+      return null;
+    }
+  }
   
-  // Returns android id from the uri that we get after inserting a
-  // bookmark into the local android store
+  // Returns android id from the URI that we get after inserting a
+  // bookmark into the local Android store.
   public static long getAndroidIdFromUri(Uri uri) {
     String path = uri.getPath();
     int lastSlash = path.lastIndexOf('/');
     return Long.parseLong(path.substring(lastSlash + 1));
   }
   
-  //Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it
+  // Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it.
   public static BookmarkRecord bookmarkFromMirrorCursor(Cursor curMoz) {
 
     String guid = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_GUID);
@@ -80,7 +95,7 @@ public class DBUtils {
     rec.bookmarkURI = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_BMK_URI);
     rec.description = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_DESCRIP);
     rec.loadInSidebar = curMoz.getInt(curMoz.getColumnIndex(AndroidBrowserBookmarksDatabaseHelper.COL_LOAD_IN_SIDEBAR)) == 1 ? true: false;
-    rec.tags = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TAGS);
+    rec.tags = getJSONArrayFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TAGS);
     rec.keyword = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_KEYWORD);
     rec.parentID = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_ID);
     rec.parentName = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_NAME);
@@ -92,12 +107,12 @@ public class DBUtils {
     rec.siteURI = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_SITE_URI);
     rec.feedURI = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_FEED_URI);
     rec.pos = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_POS);
-    rec.children = getStringFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_CHILDREN);
+    rec.children = getJSONArrayFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_CHILDREN);
     rec.deleted = curMoz.getInt(curMoz.getColumnIndex(AndroidBrowserBookmarksDatabaseHelper.COL_DELETED)) == 1 ? true: false;
     return rec;
   }
- 
-  // Create a BookmarkRecord object from a cursor on a row with a Android stock Bookmark in it
+
+  // Create a BookmarkRecord object from a cursor on a row with a Android stock Bookmark in it.
   public static BookmarkRecord bookmarkFromAndroidBrowserCursor(Cursor curDroid) {
     String title = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.TITLE);
     String uri = DBUtils.getStringFromCursor(curDroid, Browser.BookmarkColumns.URL);
@@ -109,7 +124,7 @@ public class DBUtils {
     rec.title = title;
     rec.bookmarkURI = uri;
     rec.description = "";
-    rec.tags = "";
+    rec.tags = null;
     rec.keyword = "";
     rec.parentID = MOBILE_PARENT_ID;
     rec.parentName = MOBILE_PARENT_NAME;
@@ -121,11 +136,12 @@ public class DBUtils {
     rec.siteURI = "";
     rec.feedURI = "";
     rec.pos = "";
-    rec.children = "";
+    rec.children = null;
     rec.deleted = false;
     return rec;    
  }
-  //Create a HistoryRecord object from a cursor on a row with a Moz History record in it
+
+  // Create a HistoryRecord object from a cursor on a row with a Moz History record in it.
   public static HistoryRecord historyFromMirrorCursor(Cursor curMoz) {
 
     String guid = getStringFromCursor(curMoz, AndroidBrowserHistoryDatabaseHelper.COL_GUID);

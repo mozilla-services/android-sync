@@ -72,7 +72,6 @@ public class BookmarkRecord extends Record {
   public String  title;
   public String  bookmarkURI;
   public String  description;
-  public String  tags;
   public String  keyword;
   public String  parentID;
   public String  parentName;
@@ -84,7 +83,9 @@ public class BookmarkRecord extends Record {
   public String  siteURI;
   public String  feedURI;
   public String  pos;
-  public String  children;
+
+  public JSONArray children;
+  public JSONArray tags;
 
   @Override
   public void initFromPayload(CryptoRecord payload) {
@@ -102,11 +103,11 @@ public class BookmarkRecord extends Record {
     if (this.type == "bookmark") {
       this.bookmarkURI   = (String) p.get("bmkUri");
       this.keyword       = (String) p.get("keyword");
-      this.tags          = ((JSONArray) p.get("tags")).toJSONString();
+      this.tags          = (JSONArray) p.get("tags");
     }
     // Folder.
     if (this.type == "folder") {
-      this.children      = ((JSONArray) p.get("children")).toJSONString();
+      this.children      = (JSONArray) p.get("children");
     }
 
     // TODO: predecessor ID?
@@ -126,11 +127,23 @@ public class BookmarkRecord extends Record {
   public CryptoRecord getPayload() {
     CryptoRecord rec = new CryptoRecord(this);
     rec.payload = new ExtendedJSONObject();
-    rec.payload.put("bmkUri", bookmarkURI);
-    rec.payload.put("title",  title);
-    // TODO: finish
+    rec.payload.put("type", this.type);
+    rec.payload.put("title", this.title);
+    rec.payload.put("description", this.description);
+    rec.payload.put("parentid", this.parentID);
+    rec.payload.put("parentName", this.parentName);
+    rec.payload.put("loadInSidebar", new Boolean(this.loadInSidebar));
+    if (this.type == "bookmark") {
+      rec.payload.put("bmkUri", bookmarkURI);
+      rec.payload.put("keyword", keyword);
+      rec.payload.put("tags", this.tags);
+    }
+    if (this.type == "folder") {
+      rec.payload.put("children", this.children);
+    }
     return rec;
   }
+
 }
 
 
