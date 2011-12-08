@@ -42,6 +42,11 @@ import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepo
 
 public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   @Override
+  public void execute(org.mozilla.android.sync.GlobalSession session) throws NoSuchStageException {
+    super.execute(session);
+  }
+
+  @Override
   protected String getCollection() {
     return "bookmarks";
   }

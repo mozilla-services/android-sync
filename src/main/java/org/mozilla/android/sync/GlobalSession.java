@@ -361,33 +361,38 @@ public class GlobalSession implements CredentialsSource {
     Long storageVersion = global.getStorageVersion();
     if (storageVersion < STORAGE_VERSION) {
       // Outdated server.
-      this.freshStart();
+      freshStart();
       return;
     }
     if (storageVersion > STORAGE_VERSION) {
       // Outdated client!
-      this.requiresUpgrade();
+      requiresUpgrade();
       return;
     }
     String remoteSyncID = global.getSyncID();
     if (remoteSyncID == null) {
       // Corrupt meta/global.
-      this.freshStart();
+      freshStart();
     }
     String localSyncID = this.getSyncID();
     if (!remoteSyncID.equals(localSyncID)) {
       // Sync ID has changed. Reset timestamps and fetch new keys.
+      resetClient();
+      if (config.collectionKeys != null) {
+        config.collectionKeys.clear();
+      }
+      config.syncID = remoteSyncID;
       // TODO TODO TODO
     }
     try {
-      this.advance();
+      advance();
     } catch (NoSuchStageException e) {
       // TODO: shouldn't happen.
     }
   }
 
   public void processMissingMetaGlobal(MetaGlobal global) {
-    this.freshStart();
+    freshStart();
   }
 
   /**
@@ -395,7 +400,7 @@ public class GlobalSession implements CredentialsSource {
    */
   protected void freshStart() {
     final GlobalSession globalSession = this;
-    this.freshStart(this, new FreshStartDelegate() {
+    freshStart(this, new FreshStartDelegate() {
 
       @Override
       public void onFreshStartFailed(Exception e) {
@@ -423,22 +428,22 @@ public class GlobalSession implements CredentialsSource {
     final String metaURL     = session.config.metaURL();
     final String credentials = session.credentials();
 
-    this.wipeServer(session, new WipeServerDelegate() {
+    wipeServer(session, new WipeServerDelegate() {
 
       @Override
       public void onWiped(long timestamp) {
         session.resetClient();
         session.config.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
 
-        config.metaGlobal = new MetaGlobal(metaURL, credentials);
-        config.metaGlobal.setSyncID(newSyncID);
-        config.metaGlobal.setStorageVersion(STORAGE_VERSION);
+        MetaGlobal mg = new MetaGlobal(metaURL, credentials);
+        mg.setSyncID(newSyncID);
+        mg.setStorageVersion(STORAGE_VERSION);
 
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
         // for this PUT to ensure at least some level of transactionality.
         // Unfortunately, the servers don't support it after a wipe right now
         // (bug 693893), so we're going to defer this until bug 692700.
-        config.metaGlobal.upload(new MetaGlobalDelegate() {
+        mg.upload(new MetaGlobalDelegate() {
 
           @Override
           public void handleSuccess(MetaGlobal global) {
@@ -525,6 +530,7 @@ public class GlobalSession implements CredentialsSource {
       @Override
       public void handleRequestFailure(SyncStorageResponse response) {
         Log.w(LOG_TAG, "Got request failure " + response.getStatusCode() + " in wipeServer.");
+        // TODO: process HTTP failures here to pick up backoffs etc.
         wipeDelegate.onWipeFailed(new HTTPFailureException(response));
       }
 
