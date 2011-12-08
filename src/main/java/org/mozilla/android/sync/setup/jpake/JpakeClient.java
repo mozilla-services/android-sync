@@ -576,6 +576,12 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   @Override
+  public void onRequestError(Exception e) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
   public void onRequestSuccess(HttpResponse res) {
     if (finished)
       return;
@@ -721,18 +727,19 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     @Override
     public void handleHttpProtocolException(ClientProtocolException e) {
-      // TODO Auto-generated method stub
-      Log.e(TAG, "HttpProtocolException: " + e.getMessage());
+      Log.e(TAG, "Got HTTP protocol exception.", e);
+      this.requestDelegate.onRequestError(e);
     }
 
     @Override
     public void handleTransportException(GeneralSecurityException e) {
       Log.e(TAG, "Got HTTP transport exception.", e);
+      this.requestDelegate.onRequestError(e);
     }
 
     @Override
     public void handleHttpIOException(IOException e) {
-      // TODO Auto-generated method stub
+      // TODO: pass this on!
       Log.e(TAG, "HttpIOException: " + e.getMessage());
       switch (state) {
         case GET_CHANNEL:
