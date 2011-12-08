@@ -40,6 +40,7 @@ package org.mozilla.android.sync.net;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -101,6 +102,11 @@ public class SyncStorageRequest implements Resource {
 
     @Override
     public void handleHttpIOException(IOException e) {
+      this.request.delegate.handleRequestError(e);
+    }
+
+    @Override
+    public void handleTransportException(GeneralSecurityException e) {
       this.request.delegate.handleRequestError(e);
     }
 

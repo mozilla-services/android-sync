@@ -40,9 +40,13 @@ package org.mozilla.android.sync.net;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
+import javax.net.ssl.SSLContext;
 
 import android.util.Log;
-
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -56,10 +60,13 @@ import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
 import ch.boye.httpclientandroidlib.conn.ClientConnectionManager;
+import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
+import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
+import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
 import ch.boye.httpclientandroidlib.impl.auth.BasicScheme;
 import ch.boye.httpclientandroidlib.impl.client.AbstractHttpClient;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
-import ch.boye.httpclientandroidlib.impl.conn.SingleClientConnManager;
+import ch.boye.httpclientandroidlib.impl.conn.tsccm.ThreadSafeClientConnManager;
 import ch.boye.httpclientandroidlib.params.HttpConnectionParams;
 import ch.boye.httpclientandroidlib.params.HttpParams;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
@@ -103,10 +110,13 @@ public class BaseResource implements Resource {
 
   /**
    * Invoke this after delegate and request have been set.
+   * @throws NoSuchAlgorithmException
+   * @throws KeyManagementException
    */
-  private void prepareClient() {
+  private void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
+    ClientConnectionManager connectionManager = getConnectionManager();
     context = new BasicHttpContext();
-    client = new DefaultHttpClient(this.getConnectionManager());
+    client = new DefaultHttpClient(connectionManager);
 
     // TODO: Eventually we should use Apache HttpAsyncClient. It's not out of alpha yet.
     // Until then, we synchronously make the request, then invoke our delegate's callback.
@@ -121,9 +131,41 @@ public class BaseResource implements Resource {
     delegate.addHeaders(request, client);
   }
 
-  private ClientConnectionManager getConnectionManager() {
-    // TODO: memoize; scheme registry; shutdown.
-    return new SingleClientConnManager();
+  private static Object connManagerMonitor = new Object();
+  private static ClientConnectionManager connManager;
+
+  /**
+   * This method exists for test code.
+   * @return
+   */
+  public static ClientConnectionManager enablePlainHTTPConnectionManager() {
+    synchronized (connManagerMonitor) {
+      ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager();
+      connManager = cm;
+      return cm;
+    }
+  }
+  public static ClientConnectionManager enableTLSConnectionManager() throws KeyManagementException, NoSuchAlgorithmException  {
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(null, null, new SecureRandom());
+    SSLSocketFactory sf = new TLSSocketFactory(sslContext);
+    SchemeRegistry schemeRegistry = new SchemeRegistry();
+    schemeRegistry.register(new Scheme("https", 443, sf));
+    ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager(
+        schemeRegistry);
+    connManager = cm;
+    return cm;
+  }
+
+  public static ClientConnectionManager getConnectionManager() throws KeyManagementException, NoSuchAlgorithmException
+                                                         {
+    // TODO: shutdown.
+    synchronized (connManagerMonitor) {
+      if (connManager != null) {
+        return connManager;
+      }
+      return enableTLSConnectionManager();
+    }
   }
 
   private void execute() {
@@ -143,7 +185,15 @@ public class BaseResource implements Resource {
       throw new IllegalArgumentException("No delegate provided.");
     }
     this.request = request;
-    this.prepareClient();
+    try {
+      this.prepareClient();
+    } catch (KeyManagementException e) {
+      Log.e(LOG_TAG, "Couldn't prepare client.", e);
+      delegate.handleTransportException(e);
+    } catch (NoSuchAlgorithmException e) {
+      Log.e(LOG_TAG, "Couldn't prepare client.", e);
+      delegate.handleTransportException(e);
+    }
     this.execute();
   }
 

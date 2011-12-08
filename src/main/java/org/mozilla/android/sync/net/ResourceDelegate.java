@@ -38,6 +38,7 @@
 package org.mozilla.android.sync.net;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -53,6 +54,9 @@ public interface ResourceDelegate {
   void handleHttpResponse(HttpResponse response);
   void handleHttpProtocolException(ClientProtocolException e);
   void handleHttpIOException(IOException e);
+
+  // During preparation.
+  void handleTransportException(GeneralSecurityException e);
 
   // Connection parameters.
   int connectionTimeout();
