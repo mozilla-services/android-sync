@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.net.BaseResource;
@@ -118,6 +119,11 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
 
       @Override
       public void handleHttpIOException(IOException e) {
+        delegate.handleError(e);
+      }
+
+      @Override
+      public void handleTransportException(GeneralSecurityException e) {
         delegate.handleError(e);
       }
     };

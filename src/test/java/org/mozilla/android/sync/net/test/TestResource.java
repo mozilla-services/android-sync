@@ -9,6 +9,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -39,6 +40,11 @@ public class TestResource {
 
     @Override
     public void handleHttpIOException(IOException e) {
+      fail("Should not occur.");
+    }
+
+    @Override
+    public void handleTransportException(GeneralSecurityException e) {
       fail("Should not occur.");
     }
   }

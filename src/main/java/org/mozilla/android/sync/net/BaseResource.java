@@ -40,9 +40,11 @@ package org.mozilla.android.sync.net;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+
 
 import android.util.Log;
-
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -143,7 +145,15 @@ public class BaseResource implements Resource {
       throw new IllegalArgumentException("No delegate provided.");
     }
     this.request = request;
-    this.prepareClient();
+    try {
+      this.prepareClient();
+    } catch (KeyManagementException e) {
+      Log.e(LOG_TAG, "Couldn't prepare client.", e);
+      delegate.handleTransportException(e);
+    } catch (NoSuchAlgorithmException e) {
+      Log.e(LOG_TAG, "Couldn't prepare client.", e);
+      delegate.handleTransportException(e);
+    }
     this.execute();
   }
 

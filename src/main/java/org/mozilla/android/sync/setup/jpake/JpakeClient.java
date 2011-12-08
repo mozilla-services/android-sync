@@ -42,6 +42,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -722,6 +723,11 @@ public class JpakeClient implements JpakeRequestDelegate {
     public void handleHttpProtocolException(ClientProtocolException e) {
       // TODO Auto-generated method stub
       Log.e(TAG, "HttpProtocolException: " + e.getMessage());
+    }
+
+    @Override
+    public void handleTransportException(GeneralSecurityException e) {
+      Log.e(TAG, "Got HTTP transport exception.", e);
     }
 
     @Override
