@@ -103,6 +103,7 @@ RepositorySessionFinishDelegate {
     // TODO: failed record handling.
     channelAToB.flow(new RecordsChannelDelegate() {
       public void onFlowCompleted(RecordsChannel recordsChannel) {
+        Log.i(LOG_TAG, "First RecordsChannel flow completed. Starting next.");
         channelBToA.flow(session);
       }
 
@@ -127,6 +128,7 @@ RepositorySessionFinishDelegate {
 
   @Override
   public void onFlowCompleted(RecordsChannel channel) {
+    Log.i(LOG_TAG, "Second RecordsChannel flow completed. Notifying onSynchronized.");
     this.delegate.onSynchronized(this);
   }
 

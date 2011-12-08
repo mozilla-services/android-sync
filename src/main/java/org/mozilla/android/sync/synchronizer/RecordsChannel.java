@@ -45,6 +45,8 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRec
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
+import android.util.Log;
+
 /**
  * Pulls records from `source`, applying them to `sink`.
  * Notifies its delegate of errors and completion.
@@ -53,6 +55,7 @@ import org.mozilla.android.sync.repositories.domain.Record;
  *
  */
 class RecordsChannel implements RepositorySessionFetchRecordsDelegate, RepositorySessionStoreDelegate, RecordsConsumerDelegate, RepositorySessionBeginDelegate {
+  private static final String LOG_TAG = "RecordsChannel";
   public RepositorySession source;
   public RepositorySession sink;
   private RecordsChannelDelegate delegate;
@@ -129,6 +132,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
 
   @Override
   public void onFetchCompleted() {
+    Log.i(LOG_TAG, "onFetchCompleted. Stopping consumer once stores are done.");
     this.consumer.stop(false);
   }
 

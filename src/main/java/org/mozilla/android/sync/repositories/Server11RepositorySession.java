@@ -54,7 +54,11 @@ import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDel
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.android.sync.repositories.domain.Record;
 
+import android.util.Log;
+
 public class Server11RepositorySession extends RepositorySession {
+
+  public static final String LOG_TAG = "Server11RepositorySession";
 
   /**
    * Convert HTTP request delegate callbacks into fetch callbacks within the 
@@ -83,10 +87,12 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
+      Log.i(LOG_TAG, "Fetch done.");
       // When we're done processing other events, finish.
       workTracker.delayWorkItem(new Runnable() {
         @Override
         public void run() {
+          Log.d(LOG_TAG, "Delayed onFetchCompleted running.");
           // TODO: verify number of returned records.
           delegate.onFetchCompleted();
         }
@@ -101,10 +107,12 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestError(final Exception ex) {
+      Log.i(LOG_TAG, "Got request error.", ex);
       // When we're done processing other events, finish.
       workTracker.delayWorkItem(new Runnable() {
         @Override
         public void run() {
+          Log.i(LOG_TAG, "Running onFetchFailed.");
           delegate.onFetchFailed(ex, null);
         }
       });
@@ -116,6 +124,7 @@ public class Server11RepositorySession extends RepositorySession {
       try {
         delegate.onFetchedRecord(record);
       } catch (Exception ex) {
+        Log.i(LOG_TAG, "Got exception calling onFetchedRecord with WBO.", ex);
         // TODO: handle this better.
         throw new RuntimeException(ex);
       }   

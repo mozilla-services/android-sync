@@ -97,6 +97,8 @@ public abstract class ServerSyncStage implements
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
+    Log.d(LOG_TAG, "Starting execute.");
+
     this.session = session;
     if (!this.isEnabled()) {
       Log.i(LOG_TAG, "Stage disabled; skipping.");
@@ -116,12 +118,14 @@ public abstract class ServerSyncStage implements
     synchronizer.repositoryB = this.getLocalRepository();
     synchronizer.bundleA = null; // Fresh sync, effectively. TODO
     synchronizer.bundleA = null;
+    Log.d(LOG_TAG, "Invoking synchronizer.");
     synchronizer.synchronize(session.getContext(), this);
+    Log.d(LOG_TAG, "Reached end of execute.");
   }
 
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
-    Log.i(LOG_TAG, "onSynchronized.");
+    Log.d(LOG_TAG, "onSynchronized.");
     try {
       session.advance();
     } catch (NoSuchStageException e) {

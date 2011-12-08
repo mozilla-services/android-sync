@@ -41,6 +41,7 @@ import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySessionBundle;
 
 import android.content.Context;
+import android.util.Log;
 
 /**
  * This, sunshine, is where the magic happens.
@@ -60,6 +61,7 @@ public class Synchronizer {
   public class SynchronizerDelegateSessionDelegate implements
       SynchronizerSessionDelegate {
 
+    private static final String LOG_TAG = "SynchronizerDelegateSessionDelegate";
     private SynchronizerDelegate synchronizerDelegate;
     private SynchronizerSession  session;
 
@@ -75,6 +77,7 @@ public class Synchronizer {
 
     @Override
     public void onSynchronized(SynchronizerSession session) {
+      Log.d(LOG_TAG, "Notifying SynchronizerDelegate of onSynchronized.");
       this.synchronizerDelegate.onSynchronized(session.getSynchronizer());
     }
 
