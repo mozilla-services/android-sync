@@ -37,19 +37,48 @@
 
 package org.mozilla.android.sync.setup.activities;
 
-import org.mozilla.android.sync.R;
 
+import org.json.simple.JSONObject;
+import org.mozilla.android.sync.R;
+import org.mozilla.android.sync.setup.Constants;
+import org.mozilla.android.sync.setup.jpake.JpakeClient;
+
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 public class SetupSyncActivity extends Activity {
+  private final static String TAG = "SetupSync";
+
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.pair);
+    setContentView(R.layout.setup);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+
+
+    // Check whether Sync accounts exist; if so, display Pair text
+    AccountManager mAccountManager = AccountManager.get(this);
+    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    Log.d(TAG, "number: " + accts.length);
+    if (accts.length > 0) {
+      ((TextView) findViewById(R.id.setup_title)).setText(getString(R.string.title_pair));
+      ((TextView) findViewById(R.id.setup_subtitle)).setText(getString(R.string.subtitle_pair));
+      ((TextView) findViewById(R.id.link_nodevice)).setVisibility(View.INVISIBLE);
+    }
+    // Start J-PAKE
+    JpakeClient jClient = new JpakeClient(this);
+    jClient.receiveNoPin();
   }
 
   /* Click Handlers */
@@ -61,5 +90,29 @@ public class SetupSyncActivity extends Activity {
   }
   public void cancelClickHandler(View target) {
     finish();
+  }
+
+  // Controller methods
+  public void displayPin(String pin) {
+    ((TextView) findViewById(R.id.text_pin)).setText(pin);
+  }
+
+  public void displayAbort(String error) {
+    // TODO: display abort error or something
+  }
+
+  public void onPaired() {
+    // TODO Auto-generated method stub
+
+  }
+
+  public void onComplete(JSONObject newData) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public void onPairingStart() {
+    // TODO Auto-generated method stub
+
   }
 }

@@ -35,34 +35,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.setup;
+package org.mozilla.android.sync.setup.jpake;
 
-public class Constants {
-  // Constants for Firefox Sync SyncAdapter Accounts
-  public static final String ACCOUNTTYPE_SYNC     = "account.type.sync";
-  public static final String OPTION_SYNCKEY       = "option.synckey";
-  public static final String OPTION_USERNAME      = "option.username";
-  public static final String AUTHTOKEN_TYPE_PLAIN = "auth.plain";
+import java.util.Random;
 
-  // Constants for JSON payload
-  public static final String KEY_PAYLOAD    = "payload";
-  public static final String KEY_CIPHERTEXT = "ciphertext";
-  public static final String KEY_HMAC       = "hmac";
-  public static final String KEY_IV         = "IV";
-  public static final String KEY_TYPE       = "type";
-  public static final String KEY_VERSION    = "version";
-
-  // JPAKE Errors
-  public static final String JPAKE_ERROR_CHANNEL          = "jpake.error.channel";
-  public static final String JPAKE_ERROR_NETWORK          = "jpake.error.network";
-  public static final String JPAKE_ERROR_SERVER           = "jpake.error.server";
-  public static final String JPAKE_ERROR_TIMEOUT          = "jpake.error.timeout";
-  public static final String JPAKE_ERROR_INTERNAL         = "jpake.error.internal";
-  public static final String JPAKE_ERROR_INVALID          = "jpake.error.invalid";
-  public static final String JPAKE_ERROR_NODATA           = "jpake.error.nodata";
-  public static final String JPAKE_ERROR_KEYMISMATCH      = "jpake.error.keymismatch";
-  public static final String JPAKE_ERROR_WRONGMESSAGE     = "jpake.error.wrongmessage";
-  public static final String JPAKE_ERROR_USERABORT        = "jpake.error.userabort";
-  public static final String JPAKE_ERROR_DELAYUNSUPPORTED = "jpake.error.delayunsupported";
-
+public class Utils {
+  public static byte[] generateRandomBytes(int length) {
+    byte[] bytes = new byte[length];
+    Random random = new Random(System.nanoTime());
+    random.nextBytes(bytes);
+    return bytes;
+  }
 }
