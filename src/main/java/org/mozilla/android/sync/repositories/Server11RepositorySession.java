@@ -132,6 +132,7 @@ public class Server11RepositorySession extends RepositorySession {
       }
     }
 
+    // TODO: this implies that we've screwed up our inheritance chain somehow.
     @Override
     public KeyBundle keyBundle() {
       return null;
