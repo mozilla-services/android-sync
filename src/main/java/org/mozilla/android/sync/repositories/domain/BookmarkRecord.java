@@ -87,6 +87,14 @@ public class BookmarkRecord extends Record {
   public JSONArray children;
   public JSONArray tags;
 
+  private static boolean getBooleanProperty(ExtendedJSONObject object, String property, boolean defaultValue) {
+    Object val = object.get(property);
+    if (val instanceof Boolean) {
+      return ((Boolean) val).booleanValue();
+    }
+    return defaultValue;
+  }
+
   @Override
   public void initFromPayload(CryptoRecord payload) {
     ExtendedJSONObject p = payload.payload;
@@ -97,7 +105,7 @@ public class BookmarkRecord extends Record {
     this.description   = (String) p.get("description");
     this.parentID      = (String) p.get("parentid");
     this.parentName    = (String) p.get("parentName");
-    this.loadInSidebar = ((Boolean)   p.get("loadInSidebar")).booleanValue();
+    this.loadInSidebar = getBooleanProperty(p, "loadInSidebar", false);
 
     // Bookmark.
     if (this.type == "bookmark") {
