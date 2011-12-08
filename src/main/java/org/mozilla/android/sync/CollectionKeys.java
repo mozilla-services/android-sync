@@ -50,7 +50,10 @@ import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.Cryptographer;
 import org.mozilla.android.sync.crypto.KeyBundle;
 
+import android.util.Log;
+
 public class CollectionKeys {
+  private static final String LOG_TAG = "CollectionKeys";
   private KeyBundle                  defaultKeyBundle     = null;
   private HashMap<String, KeyBundle> collectionKeyBundles = new HashMap<String, KeyBundle>();
 

@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import android.util.Log;
+
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -70,6 +72,7 @@ import ch.boye.httpclientandroidlib.protocol.HttpContext;
  * Exposes simple get/post/put/delete methods.
  */
 public class BaseResource implements Resource {
+  private static final String LOG_TAG = "BaseResource";
   protected URI uri;
   protected BasicHttpContext context;
   protected DefaultHttpClient client;
@@ -95,7 +98,7 @@ public class BaseResource implements Resource {
     Credentials creds = new UsernamePasswordCredentials(credentials);
     Header header = BasicScheme.authenticate(creds, "US-ASCII", false);
     request.addHeader(header);
-    System.out.println("Adding auth header " + header);
+    Log.d(LOG_TAG, "Adding auth header " + header);
   }
 
   /**
@@ -126,6 +129,7 @@ public class BaseResource implements Resource {
   private void execute() {
     try {
       HttpResponse response = client.execute(request, context);
+      Log.i(LOG_TAG, "Response: " + response.getStatusLine().toString());
       delegate.handleHttpResponse(response);
     } catch (ClientProtocolException e) {
       delegate.handleHttpProtocolException(e);
@@ -145,16 +149,19 @@ public class BaseResource implements Resource {
 
   @Override
   public void get() {
+    Log.i(LOG_TAG, "HTTP GET " + this.uri.toASCIIString());
     this.go(new HttpGet(this.uri));
   }
 
   @Override
   public void delete() {
+    Log.i(LOG_TAG, "HTTP DELETE " + this.uri.toASCIIString());
     this.go(new HttpDelete(this.uri));
   }
 
   @Override
   public void post(HttpEntity body) {
+    Log.i(LOG_TAG, "HTTP POST " + this.uri.toASCIIString());
     HttpPost request = new HttpPost(this.uri);
     request.setEntity(body);
     this.go(request);
@@ -162,6 +169,7 @@ public class BaseResource implements Resource {
 
   @Override
   public void put(HttpEntity body) {
+    Log.i(LOG_TAG, "HTTP PUT " + this.uri.toASCIIString());
     HttpPut request = new HttpPut(this.uri);
     request.setEntity(body);
     this.go(request);

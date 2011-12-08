@@ -47,6 +47,8 @@ import org.mozilla.android.sync.repositories.domain.BookmarkRecordFactory;
 import org.mozilla.android.sync.synchronizer.Synchronizer;
 import org.mozilla.android.sync.synchronizer.SynchronizerDelegate;
 
+import android.util.Log;
+
 /**
  * Fetch from a server collection into a local repository, encrypting
  * and decrypting along the way.
@@ -59,6 +61,7 @@ public abstract class ServerSyncStage implements
     SynchronizerDelegate {
 
   protected GlobalSession session;
+  protected String LOG_TAG = "ServerSyncStage";
 
   /**
    * Override these in your subclasses.
@@ -96,6 +99,7 @@ public abstract class ServerSyncStage implements
   public void execute(GlobalSession session) throws NoSuchStageException {
     this.session = session;
     if (!this.isEnabled()) {
+      Log.i(LOG_TAG, "Stage disabled; skipping.");
       session.advance();
       return;
     }
@@ -117,6 +121,7 @@ public abstract class ServerSyncStage implements
 
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
+    Log.i(LOG_TAG, "onSynchronized.");
     try {
       session.advance();
     } catch (NoSuchStageException e) {
@@ -127,11 +132,13 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronizeFailed(Synchronizer synchronizer,
                                   Exception lastException, String reason) {
+    Log.i(LOG_TAG, "onSynchronizeFailed: " + reason);
     session.abort(lastException, reason);
   }
 
   @Override
   public void onSynchronizeAborted(Synchronizer synchronize) {
+    Log.i(LOG_TAG, "onSynchronizeAborted.");
     session.abort(null, "Synchronization was aborted.");
   }
 }

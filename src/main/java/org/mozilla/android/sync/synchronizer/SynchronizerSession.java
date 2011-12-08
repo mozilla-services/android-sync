@@ -51,6 +51,7 @@ RecordsChannelDelegate,
 RepositorySessionCreationDelegate,
 RepositorySessionFinishDelegate {
 
+  protected static final String LOG_TAG = "SynchronizerSession";
   private Synchronizer synchronizer;
   private SynchronizerSessionDelegate delegate;
   private Context context;
@@ -119,6 +120,7 @@ RepositorySessionFinishDelegate {
       @Override
       public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
         // Hmm. TODO
+        Log.w(LOG_TAG, "onFlowFinishedFailed. Reporting store error.", ex);
       }
     });
   }
