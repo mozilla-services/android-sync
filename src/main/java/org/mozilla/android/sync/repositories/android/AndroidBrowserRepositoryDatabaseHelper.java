@@ -222,7 +222,7 @@ public abstract class AndroidBrowserRepositoryDatabaseHelper extends SQLiteOpenH
   }
   
   public void updateByGuid(String guid, ContentValues cv) {
-    SQLiteDatabase db = this.getWritableDatabase();
+    SQLiteDatabase db = this.getCachedWritableDatabase();
     String[] where = new String[] { String.valueOf(guid) };
     db.update(getTable(), cv, COL_GUID + "=?", where);
   }
