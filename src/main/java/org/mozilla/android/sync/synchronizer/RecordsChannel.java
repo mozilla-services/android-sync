@@ -91,6 +91,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
 
   @Override
   public void consumerIsDone() {
+    Log.d(LOG_TAG, "Consumer is done. Are we waiting for it? " + waitingForQueueDone);
     if (waitingForQueueDone) {
       delegate.onFlowCompleted(this);
     }
@@ -121,6 +122,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
 
   @Override
   public void onFetchFailed(Exception ex, Record record) {
+    Log.w(LOG_TAG, "onFetchFailed. Calling for immediate stop.", ex);
     this.consumer.stop(true);
   }
 
