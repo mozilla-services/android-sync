@@ -37,6 +37,7 @@ public class HTTPServerTestHelper {
   }
 
   public void stopHTTPServer() {
+    System.out.println("Stopping HTTP server.");
     try {
       connection.close();
       server = null;

@@ -11,8 +11,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.net.BaseResource;
 
@@ -60,6 +63,12 @@ public class TestResource {
       assertEquals(response.getStatusLine().getStatusCode(), 200);
       data.stopHTTPServer();
     }
+  }
+
+  @Before
+  public void setUp() {
+    Log.i("TestMetaGlobal", "Faking SSL context.");
+    BaseResource.enablePlainHTTPConnectionManager();
   }
 
   @Test

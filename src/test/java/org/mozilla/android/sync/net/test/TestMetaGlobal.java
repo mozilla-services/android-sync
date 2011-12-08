@@ -5,18 +5,28 @@ package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.*;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.MetaGlobal;
 import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.android.sync.net.BaseResource;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
+
+import android.util.Log;
 
 public class TestMetaGlobal {
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   public static final String META_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
   private HTTPServerTestHelper data    = new HTTPServerTestHelper();
+
+  @Before
+  public void setUp() {
+    Log.i("TestMetaGlobal", "Faking SSL context.");
+    BaseResource.enablePlainHTTPConnectionManager();
+  }
 
   @Test
   public void testMetaGlobalModified() {
