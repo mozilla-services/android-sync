@@ -57,6 +57,17 @@ public class CollectionKeys {
   private KeyBundle                  defaultKeyBundle     = null;
   private HashMap<String, KeyBundle> collectionKeyBundles = new HashMap<String, KeyBundle>();
 
+  public static CryptoRecord generateCollectionKeysRecord() throws CryptoException {
+    CollectionKeys ck = generateCollectionKeys();
+    try {
+      return ck.asCryptoRecord();
+    } catch (NoCollectionKeysSetException e) {
+      // Cannot occur.
+      Log.e(LOG_TAG, "generateCollectionKeys returned a value with no default key. Unpossible.", e);
+      throw new IllegalStateException("CollectionKeys should not have null default key.");
+    }
+  }
+
   public static CollectionKeys generateCollectionKeys() throws CryptoException {
     CollectionKeys ck = new CollectionKeys();
     ck.populate();
@@ -201,5 +212,7 @@ public class CollectionKeys {
   public void populate() throws CryptoException {
     this.clear();
     this.defaultKeyBundle = Cryptographer.generateKeys();
+    // TODO: eventually we would like to keep per-collection keys, just generate
+    // new ones as appropriate.
   }
 }

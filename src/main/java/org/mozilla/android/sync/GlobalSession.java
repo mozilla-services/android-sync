@@ -301,8 +301,8 @@ public class GlobalSession implements CredentialsSource {
     this.config.infoCollections.fetch(callback);
   }
 
-  protected void uploadKeys(CryptoRecord keysRecord,
-                            final KeyUploadDelegate keyUploadDelegate) {
+  public void uploadKeys(CryptoRecord keysRecord,
+                         final KeyUploadDelegate keyUploadDelegate) {
     SyncStorageRecordRequest request;
     final GlobalSession globalSession = this;
     try {
