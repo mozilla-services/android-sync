@@ -37,7 +37,7 @@
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="sync" android:host="org.mozilla.android" />
+                <data android:scheme="sync" android:host="org.mozilla.android" android:path="/setup"/>
             </intent-filter>
         </activity>
         <activity
