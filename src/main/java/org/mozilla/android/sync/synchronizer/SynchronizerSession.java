@@ -119,8 +119,8 @@ RepositorySessionFinishDelegate {
 
       @Override
       public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
-        // Hmm. TODO
         Log.w(LOG_TAG, "onFlowFinishedFailed. Reporting store error.", ex);
+        session.delegate.onStoreError(ex);
       }
     });
   }
