@@ -61,7 +61,6 @@ public class HistoryRecord extends Record {
     super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
 
-  public long     androidID;
   public String   title;
   public String   histURI;
   // TODO figure out how we are translating visits between formats

@@ -37,6 +37,11 @@
 
 package org.mozilla.android.sync.repositories.android;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
+import org.mozilla.android.sync.repositories.NoGuidForIdException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
@@ -47,16 +52,36 @@ import android.util.Log;
 
 public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
 
-  private static final String LOG_TAG = "AndroidBrowserBookmarksRepositorySession";
-
+  private HashMap<String, Long> guidToID = new HashMap<String, Long>();
+  private HashMap<Long, String> idToGuid = new HashMap<Long, String>();
+  private HashMap<String, ArrayList<String>> missingParentToChildren = new HashMap<String, ArrayList<String>>();
+  private AndroidBrowserBookmarksDataAccessor dataAccessor;
+  
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
+    DBUtils.initialize(context);
     dbHelper = new AndroidBrowserBookmarksDataAccessor(context);
+    dataAccessor = (AndroidBrowserBookmarksDataAccessor) dbHelper;
   }
   
   @Override
-  protected Record recordFromMirrorCursor(Cursor cur) {
-    return DBUtils.bookmarkFromMirrorCursor(cur);
+  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException {
+    long androidParentId = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
+    String guid = idToGuid.get(androidParentId);
+    
+    // Get parent name
+    Cursor name = dataAccessor.fetch(new String[] { guid });
+    name.moveToFirst();
+    // TODO temp error string until we throw proper exception
+    String parentName = "ERROR";
+    if (!name.isAfterLast()) {
+      parentName = DBUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
+    }
+    else {
+      // TODO throw an exception
+      Log.e(tag, "Couldn't find record with guid " + guid + " while looking for parent name");
+    }
+    return DBUtils.bookmarkFromMirrorCursor(cur, guid, parentName);
   }
   
   @Override
@@ -71,27 +96,71 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
   
   @Override
-  protected Record reconcileRecords(Record local, Record remote) {
-    Log.i(LOG_TAG, "Reconciling " + local.guid + " against " + remote.guid);
-    
-    // Do modifications on local since we always want to keep guid and androidId from local.
-    BookmarkRecord localBookmark = (BookmarkRecord) local;
-    BookmarkRecord remoteBookmark = (BookmarkRecord) remote;
-
-    // Determine which record is newer since this is the one we will take in case of conflict.
-    // Yes, clock drift. *sigh*
-    BookmarkRecord newer;
-    if (local.lastModified > remote.lastModified) {
-      newer = localBookmark;
+  public void begin(org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate delegate) {
+    if (this.status == SessionStatus.UNSTARTED) {
+      this.status = SessionStatus.ACTIVE;
+      this.syncBeginTimestamp = System.currentTimeMillis();
     } else {
-      newer = remoteBookmark;
+      Log.e(tag, "Tried to begin() an already active or finished session");
+      delegate.onBeginFailed(new InvalidSessionTransitionException(null));
     }
+    
+    // To deal with parent mapping of bookmarks we have to do some
+    // hairy stuff, here's the setup for it
+    Cursor cur = dataAccessor.getGuidsIDsForFolders();
+    cur.moveToFirst();
+    while(!cur.isAfterLast()) {
+      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+      long id = DBUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+      guidToID.put(guid, id);
+      idToGuid.put(id, guid);
+    }
+    cur.close();
+    
+    delegate.onBeginSucceeded(this);
+  }
+  
+  @Override
+  protected void insert(Record record) {
+    BookmarkRecord bmk = (BookmarkRecord) record;
+    // Check if parent exists
+    if (guidToID.containsKey(bmk.parentID)) {
+      bmk.androidParentID = guidToID.get(bmk.parentID);
+    }
+    else {
+      bmk.androidParentID = guidToID.get("unfiled");
+      ArrayList<String> children;
+      if (missingParentToChildren.containsKey(bmk.parentID)) {
+        children = missingParentToChildren.get(bmk.parentID);
+      } else {
+        children = new ArrayList<String>();
+      }
+      children.add(bmk.guid);
+      missingParentToChildren.put(bmk.parentID, children);
+    }
+    
+    long id = DBUtils.getAndroidIdFromUri(dbHelper.insert(bmk));
+    bmk.androidID = id;
+    
+    // If record is folder, update maps and re-parent children if necessary
+    if(bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+      guidToID.put(bmk.guid, id);        
+      idToGuid.put(id, bmk.guid);
+      
+      // re-parent
+      if(missingParentToChildren.containsKey(bmk.guid)) {
+        ArrayList<String> children = missingParentToChildren.get(bmk.guid);
+        for (String child : children) {
+          dataAccessor.updateParent(child, id);
+        }
+        missingParentToChildren.remove(bmk.guid);
+      }
+    }
+  }
 
-    // TODO Do this smarter (will differ between types of records which is why this isn't pulled up to super class)
-    // Do dumb resolution for now and just return the newer one with the android id added if it wasn't the local one
-    // Need to track changes (not implemented yet) in order to merge two changed bookmarks nicely
-    newer.androidID = localBookmark.androidID;
-
-    return newer;
+  @Override
+  protected String buildRecordString(Record record) {
+    BookmarkRecord bmk = (BookmarkRecord) record;
+    return bmk.title + bmk.bookmarkURI + bmk.type + bmk.parentName;
   }
 }

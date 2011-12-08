@@ -70,7 +70,6 @@ public class BookmarkRecord extends Record {
 
   // Note: redundant accessors are evil. We're all grownups; let's just use
   // public fields.
-  public long    androidID;
   public boolean loadInSidebar;
   public String  title;
   public String  bookmarkURI;
@@ -78,6 +77,7 @@ public class BookmarkRecord extends Record {
   public String  keyword;
   public String  parentID;
   public String  parentName;
+  public long    androidParentID;
   public String  type;
   public String  generatorURI;
   public String  staticTitle;

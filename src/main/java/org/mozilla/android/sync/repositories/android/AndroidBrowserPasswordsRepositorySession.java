@@ -19,10 +19,8 @@ public class AndroidBrowserPasswordsRepositorySession extends
     return null;
   }
 
-  // LEFT OFF HERE, pull this up, write passwords repo and session and tests
-  // move on to todo list items that involve others
   @Override
-  protected Record reconcileRecords(Record local, Record remote) {
+  protected String buildRecordString(Record record) {
     // TODO Auto-generated method stub
     return null;
   }

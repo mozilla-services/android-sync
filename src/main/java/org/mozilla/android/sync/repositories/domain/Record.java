@@ -45,6 +45,7 @@ public abstract class Record {
   public String collection;
   public long lastModified;
   public boolean deleted;
+  public long androidID;
 
   public Record(String guid, String collection, long lastModified, boolean deleted) {
     this.guid         = guid;

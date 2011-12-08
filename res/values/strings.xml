@@ -36,4 +36,13 @@
   
   <!-- Account strings -->
   <string name="sync_account_label">Firefox Sync</string>
+  
+  <!-- Bookmark folder strings -->
+  <string name="menu">Bookmarks Menu</string>
+  <string name="places"></string>
+  <string name="tags">Tags</string>
+  <string name="toolbar">Bookmarks Toolbar</string>
+  <string name="unfiled">Unsorted Bookmarks</string>
+  <string name="desktop">Desktop Bookmarks</string>
+  <string name="mobile">Mobile Bookmarks</string>
 </resources>

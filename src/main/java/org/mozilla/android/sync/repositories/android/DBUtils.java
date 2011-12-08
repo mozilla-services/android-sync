@@ -38,22 +38,40 @@
 
 package org.mozilla.android.sync.repositories.android;
 
+import java.util.HashMap;
+
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.mozilla.android.sync.R;
+import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.HistoryRecord;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
 public class DBUtils {
   
-  public static final String MOBILE_PARENT_ID = "mobile";
-  public static final String MOBILE_PARENT_NAME = "mobile";
-  public static final String BOOKMARK_TYPE = "bookmark";
   private static final String LOG_TAG = "DBUtils";
+  private static HashMap<String, String> SPECIAL_GUIDS;
+  
+  // TODO there has got to be a better way of solving this problem,
+  // come back to this when brain is less fried!
+  public static void initialize(Context context) {
+    if (SPECIAL_GUIDS == null) {
+      SPECIAL_GUIDS = new HashMap<String, String>();
+      SPECIAL_GUIDS.put("menu", context.getString(R.string.menu));
+      SPECIAL_GUIDS.put("places", context.getString(R.string.places));
+      SPECIAL_GUIDS.put("tags", context.getString(R.string.tags));
+      SPECIAL_GUIDS.put("toolbar", context.getString(R.string.toolbar));
+      SPECIAL_GUIDS.put("unfiled", context.getString(R.string.unfiled));
+      SPECIAL_GUIDS.put("desktop", context.getString(R.string.desktop));
+      SPECIAL_GUIDS.put("mobile", context.getString(R.string.mobile));
+    }
+  }
   
   public static String getStringFromCursor(Cursor cur, String colId) {
     return cur.getString(cur.getColumnIndex(colId));
@@ -81,7 +99,7 @@ public class DBUtils {
   }
   
   //Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it
-  public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur) {
+  public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur, String parentId, String parentName) {
 
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "bookmarks";
@@ -94,14 +112,22 @@ public class DBUtils {
     //rec.description = getStringFromCursor(cur, BrowserContract.COL_DESCRIP);
     //rec.tags = getJSONArrayFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TAGS);
     //rec.keyword = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_KEYWORD);
-    //rec.parentID = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_ID);
-    //rec.parentName = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_PARENT_NAME);
-    // TODO if we end up only doing folders and bookmarks, maybe store a boolean value is_folder to simplify
     rec.type = cur.getInt(cur.getColumnIndex(BrowserContract.Bookmarks.IS_FOLDER)) == 0 ? 
       AndroidBrowserBookmarksDataAccessor.TYPE_BOOKMARK : AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER;
-    // TODO look into if this is the same as ours and why we store it is a string and them an integer
-    // (we use it for separator)
+    
+    rec.androidID = getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+    // TODO implement crazy position resolution stuff
     //rec.pos = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_POS);
+    
+    // Need to restore the parentId since it isn't stored in content provider
+    rec.parentID = parentId;
+    // Set parent name
+    // Always set the parent name for special folders back to default so stuff doesn't go crazy
+    if (SPECIAL_GUIDS.containsKey(rec.parentID)) {
+      rec.parentName = SPECIAL_GUIDS.get(rec.parentID);
+    } else {
+      rec.parentName = parentName;
+    }
     return rec;
   }
  
@@ -116,6 +142,7 @@ public class DBUtils {
 
     rec.title = getStringFromCursor(cur, BrowserContract.CommonColumns.TITLE); 
     rec.histURI = getStringFromCursor(cur, BrowserContract.CommonColumns.URL); 
+    rec.androidID = getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
     // TODO currently not compatible with our notion of visits
     //rec.visits = getStringFromCursor(cur, AndroidBrowserHistoryDataAccessor.COL_VISITS);
     rec.dateVisited = getLongFromCursor(cur, BrowserContract.History.DATE_LAST_VISITED); 

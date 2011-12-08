@@ -38,11 +38,13 @@
 package org.mozilla.android.sync.repositories.android;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.InvalidBookmarkTypeException;
 import org.mozilla.android.sync.repositories.InvalidRequestException;
 import org.mozilla.android.sync.repositories.MultipleRecordsForGuidException;
+import org.mozilla.android.sync.repositories.NoGuidForIdException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -58,10 +60,13 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
   protected static final String tag = "AndroidBrowserRepositorySession";
+  private HashMap<String, String> recordToGuid;
   
   public AndroidBrowserRepositorySession(Repository repository) {
     super(repository);
   }
+  
+  protected abstract String buildRecordString(Record record);
 
   // guids since method and thread
   @Override
@@ -88,13 +93,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
 
       Cursor cur = dbHelper.getGUIDSSince(timestamp);
-      int index = cur
-          .getColumnIndex(BrowserContract.SyncColumns.GUID);
 
       ArrayList<String> guids = new ArrayList<String>();
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
-        guids.add(cur.getString(index));
+        guids.add(DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID));
         cur.moveToNext();
       }
       cur.close();
@@ -106,7 +109,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  protected Record[] compileIntoRecordsArray(Cursor cur) {
+  protected Record[] compileIntoRecordsArray(Cursor cur) throws NoGuidForIdException {
     ArrayList<Record> records = new ArrayList<Record>();
     cur.moveToFirst();
     while (!cur.isAfterLast()) {
@@ -120,7 +123,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     return recordArray;
   }
   
-  protected abstract Record recordFromMirrorCursor(Cursor cur);
+  protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException;
 
   // Fetch since method and thread
   @Override
@@ -151,7 +154,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
 
       Cursor cur = dbHelper.fetchSince(since);
-      delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
+      try {
+        delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
+      } catch (NoGuidForIdException e) {
+        delegate.onFetchFailed(e, null);
+      }
     }
   }
 
@@ -186,12 +193,16 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         Log.e(tag, "No guids sent to fetch");
         delegate.onFetchFailed(new InvalidRequestException(null), null);
       } else {
-        delegate.onFetchSucceeded(doFetch(guids), end);
+        try {
+          delegate.onFetchSucceeded(doFetch(guids), end);
+        } catch (NoGuidForIdException e) {
+          delegate.onFetchFailed(e, null);
+        }
       }
     }
   }
 
-  private Record[] doFetch(String[] guids) {
+  Record[] doFetch(String[] guids) throws NoGuidForIdException {
     Cursor cur = dbHelper.fetch(guids);
     return compileIntoRecordsArray(cur);
   }
@@ -219,7 +230,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
 
       Cursor cur = dbHelper.fetchAll();
-      delegate.onFetchSucceeded(compileIntoRecordsArray(cur));
+      try {
+        delegate.onFetchSucceeded(compileIntoRecordsArray(cur));
+      } catch (NoGuidForIdException e) {
+        delegate.onFetchFailed(e, null);
+      }
     }
   }
 
@@ -259,38 +274,90 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
       Record existingRecord;
       try {
-        existingRecord = findExistingRecord();
+        existingRecord = findExistingRecord(this.record);
       } catch (MultipleRecordsForGuidException e) {
         Log.e(tag, "Multiple records returned for given guid: " + record.guid);
         delegate.onStoreFailed(e);
         return;
+      } catch (NoGuidForIdException e) {
+        delegate.onStoreFailed(e);
+        return;
       }
-
+      
       // If the record is new and not deleted, store it
       if (existingRecord == null && !record.deleted) {
-        dbHelper.insert(record);
+        insert(record);
       } else if (existingRecord != null) {
-        // Record exists already, need to figure out what to store
-        Record store = reconcileRecords(existingRecord, record);
+        
         dbHelper.delete(existingRecord);
-        dbHelper.insert(store);
+        if (!record.deleted) {
+          // Record exists already, need to figure out what to store
+          Record store = reconcileRecords(existingRecord, record);
+          insert(store);
+        }
       }
 
       // Invoke callback with result.
       delegate.onStoreSucceeded(record);
     }
 
-    // Check if record already exists locally
-    private Record findExistingRecord() throws MultipleRecordsForGuidException {
-      Record[] records = doFetch(new String[] { record.guid });
-      if (records.length == 1) {
-        return records[0];
-      } else if (records.length > 1) {
-        throw (new MultipleRecordsForGuidException(null));
+  }
+  
+  protected void insert(Record record) {
+    dbHelper.insert(record);
+  }
+  
+  // Check if record already exists locally
+  protected Record findExistingRecord(Record record) throws MultipleRecordsForGuidException, NoGuidForIdException {
+    Record[] records = doFetch(new String[] { record.guid });
+    if (records.length == 1) {
+      return records[0];
+    } else if (records.length > 1) {
+      throw (new MultipleRecordsForGuidException(null));
+    } else {
+      // Check to see if record exists but with a different guid 
+      String recordString = buildRecordString(record);
+      String guid = getRecordToGuidMap().get(recordString);
+      if (guid != null) {
+        return doFetch(new String[] { guid })[0];
       }
-      return null;
+    }
+    return null;
+  }
+  
+  public HashMap<String, String> getRecordToGuidMap() throws NoGuidForIdException {
+    if (recordToGuid == null) {
+      recordToGuid = new HashMap<String, String>();
+      Cursor cur = dbHelper.fetchAll();
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        Record record = recordFromMirrorCursor(cur);
+        recordToGuid.put(buildRecordString(record), record.guid);
+        cur.moveToNext();
+      }
+      cur.close();
+    }
+    return recordToGuid;
+  }
+  
+  protected Record reconcileRecords(Record local, Record remote) {
+    Log.i(tag, "Reconciling " + local.guid + " against " + remote.guid);
+    
+    // Determine which record is newer since this is the one we will take in case of conflict.
+    // Yes, clock drift. *sigh*
+    Record newer;
+    if (local.lastModified > remote.lastModified) {
+      newer = local;
+    } else {
+      newer = remote;
     }
 
+    if (newer.guid != remote.guid) {
+      newer.guid = remote.guid;
+    }
+    newer.androidID = local.androidID;
+
+    return newer;
   }
 
   // Must be overrriden by AndroidBookmarkRepositorySession
@@ -298,8 +365,6 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     return true;    
   }
   
-  protected abstract Record reconcileRecords(Record local, Record remote);
-
   // Wipe method and thread.
   @Override
   public void wipe(RepositorySessionWipeDelegate delegate) {

@@ -55,28 +55,11 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
   protected Record recordFromMirrorCursor(Cursor cur) {
     return DBUtils.historyFromMirrorCursor(cur);
   }
-  
+
   @Override
-  protected Record reconcileRecords(Record local, Record remote) {
-    // Do modifications on local since we always want to keep guid and androidId from local
-    
-    HistoryRecord localHist = (HistoryRecord) local;
-    HistoryRecord remoteHist = (HistoryRecord) remote;
-
-    // Determine which record is newer since this is the one we will take in case of conflict
-    HistoryRecord newer;
-    if (local.lastModified > remote.lastModified) {
-      newer = localHist;
-    } else {
-      newer = remoteHist;
-    }
-
-    // TODO Do this smarter (will differ between types of records which is why this isn't pulled up to super class)
-    // Do dumb resolution for now and just return the newer one with the android id added if it wasn't the local one
-    // Need to track changes (not implemented yet) in order to merge two changed bookmarks nicely
-    newer.androidID = localHist.androidID;
-
-    return newer;
+  protected String buildRecordString(Record record) {
+    HistoryRecord hist = (HistoryRecord) record;
+    return hist.title + hist.histURI;
   }
 
 }

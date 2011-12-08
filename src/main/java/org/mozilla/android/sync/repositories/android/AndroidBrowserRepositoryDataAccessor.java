@@ -32,7 +32,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
       cur.moveToNext();
     }
   }
-
+  
   public Uri insert(Record record) {
     ContentValues cv = getContentValues(record);
     return context.getContentResolver().insert(getUri(), cv);
@@ -63,6 +63,11 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     where = (where.substring(0, where.length() -2) + ")");
     // TODO this is a potential source of error, make sure this query works
     return context.getContentResolver().query(getUri(), null, where, null, null);
+  }
+  
+  public Cursor fetch(long androidId) {
+    return context.getContentResolver().query(getUri(), null, 
+        BrowserContract.CommonColumns._ID + " = " + Long.toString(androidId), null, null);
   }
   
   public void delete(Record record) {
