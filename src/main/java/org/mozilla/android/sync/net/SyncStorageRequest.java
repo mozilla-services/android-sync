@@ -111,7 +111,7 @@ public class SyncStorageRequest implements Resource {
       // Clients can use their delegate interface to specify X-Weave-If-Unmodified-Since.
       String ifUnmodifiedSince = this.request.delegate.ifUnmodifiedSince();
       if (ifUnmodifiedSince != null) {
-        request.setHeader("X-Weave-If-Unmodified-Since", ifUnmodifiedSince);
+        request.setHeader("x-weave-if-unmodified-since", ifUnmodifiedSince);
       }
     }
   }
