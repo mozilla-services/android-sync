@@ -127,7 +127,9 @@ public class Server11RepositorySession extends RepositorySession {
         Log.i(LOG_TAG, "Got exception calling onFetchedRecord with WBO.", ex);
         // TODO: handle this better.
         throw new RuntimeException(ex);
-      }   
+      } finally {
+        workTracker.decrementOutstanding();
+      }
     }
 
     @Override
