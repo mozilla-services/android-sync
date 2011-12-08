@@ -91,7 +91,7 @@ public class SyncConfiguration implements CredentialsSource {
   }
   
   public String storageURL(boolean trailingSlash) {
-    return clusterURL + GlobalSession.API_VERSION + username +
+    return clusterURL + GlobalSession.API_VERSION + "/" + username +
            (trailingSlash ? "/storage/" : "/storage");
   }
 
