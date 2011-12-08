@@ -93,6 +93,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   public void consumerIsDone() {
     Log.d(LOG_TAG, "Consumer is done. Are we waiting for it? " + waitingForQueueDone);
     if (waitingForQueueDone) {
+      waitingForQueueDone = false;
       delegate.onFlowCompleted(this);
     }
   }
@@ -183,6 +184,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
       // Start a consumer thread.
       this.consumer = new RecordConsumer(this);
       new Thread(this.consumer).start();
+      waitingForQueueDone = true;
       source.fetchSince(timestamp, this);
       return;
     }

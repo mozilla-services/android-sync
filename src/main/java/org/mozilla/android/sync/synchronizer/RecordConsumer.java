@@ -51,7 +51,12 @@ class RecordConsumer implements Runnable {
     synchronized (storeSerializer) {
       Log.d(LOG_TAG, "storeSerially() took storeSerializer.");
       Log.d(LOG_TAG, "Storing...");
-      this.delegate.store(record);
+      try {
+        this.delegate.store(record);
+      } catch (Exception e) {
+        Log.w(LOG_TAG, "Got exception in store. Not waiting.", e);
+        return;      // So we don't block for a stored() that never comes.
+      }
       try {
         storeSerializer.wait();
       } catch (InterruptedException e) {
@@ -91,6 +96,7 @@ class RecordConsumer implements Runnable {
         if (stopEventually) {
           Log.d(LOG_TAG, "Done with records and told to stop. Notifying consumer.");
           delegate.consumerIsDone();
+          return;
         }
         try {
           Log.d(LOG_TAG, "Not told to stop but no records. Waiting.");
