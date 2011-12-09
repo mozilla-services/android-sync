@@ -79,5 +79,17 @@ public class HistoryRecord extends Record {
     // TODO Auto-generated method stub
     return null;
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!o.getClass().equals(HistoryRecord.class)) return false;
+    HistoryRecord other = (HistoryRecord) o;
+    return
+        super.equals(other) &&
+        this.title.equals(other.title) &&
+        this.histURI.equals(other.histURI);
+    
+    // TODO other fields?
+  }
 
 }

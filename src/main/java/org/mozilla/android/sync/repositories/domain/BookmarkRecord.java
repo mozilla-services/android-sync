@@ -154,6 +154,24 @@ public class BookmarkRecord extends Record {
     }
     return rec;
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!o.getClass().equals(BookmarkRecord.class)) return false;
+    BookmarkRecord other = (BookmarkRecord) o;
+    return
+        super.equals(other) &&
+        this.title.equals(other.title) &&
+        this.bookmarkURI.equals(other.bookmarkURI) &&
+        this.parentID.equals(other.parentID) &&
+        this.parentName.equals(other.parentName) &&
+        this.type.equals(other.type);
+    
+    // TODO add back in once content providers have these columns
+    //assertEquals(recExpect.description, recActual.description);
+    //assertEquals(recExpect.keyword, recActual.keyword);
+    //assertEquals(recExpect.tags, recExpect.tags);
+  }
 
 }
 

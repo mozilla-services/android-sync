@@ -53,6 +53,17 @@ public abstract class Record {
     this.lastModified = lastModified;
     this.deleted = deleted;
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (o.getClass() != Record.class) return false;
+    Record other = (Record) o;
+    return 
+        this.guid.equals(other.guid) &&
+        this.collection.equals(other.collection) &&
+        this.lastModified == other.lastModified &&
+        this.deleted == other.deleted;
+  }
 
   public abstract void initFromPayload(CryptoRecord payload);
   public abstract CryptoRecord getPayload();
