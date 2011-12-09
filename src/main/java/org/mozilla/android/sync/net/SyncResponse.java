@@ -77,7 +77,7 @@ public class SyncResponse {
 
   private int getIntegerHeader(String h) {
     if (this.hasHeader(h)) {
-      Header header = this.response.getFirstHeader("retry-after");
+      Header header = this.response.getFirstHeader(h);
       return Integer.parseInt(header.getValue(), 10);
     }
     return -1;
