@@ -141,12 +141,5 @@ public class BookmarkHelpers {
     record.type = "separator";
     return record;
   }
-  
-  public static void verifyExpectedRecordReturned(BookmarkRecord expected, BookmarkRecord actual) {
-    assertEquals(expected.guid, actual.guid);
-    assertEquals(expected.title, actual.title);
-    assertEquals(expected.bookmarkURI, actual.bookmarkURI);
-    assertEquals(expected.description, actual.description);
-  }
 
 }

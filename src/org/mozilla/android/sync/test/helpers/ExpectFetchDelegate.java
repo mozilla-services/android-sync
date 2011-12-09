@@ -4,17 +4,27 @@
 package org.mozilla.android.sync.test.helpers;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.util.Log;
 
 public class ExpectFetchDelegate extends DefaultFetchDelegate {
-  private String[] expected;
-
-  public ExpectFetchDelegate(String[] guids) {
-    expected = guids;
-    Arrays.sort(expected);
+//  private String[] expected;
+//  Leave this for now...maybe there is a situation where
+//  we want to check only guids and not entire records.
+//  public ExpectFetchDelegate(String[] guids) {
+//    expected = guids;
+//    Arrays.sort(expected);
+//  }
+  
+  private HashMap<String, Record> expect = new HashMap<String, Record>();
+  
+  public ExpectFetchDelegate(Record[] records) {
+    for(int i = 0; i < records.length; i++) {
+      expect.put(records[i].guid, records[i]);
+    }
   }
 
   @Override
@@ -31,7 +41,7 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
 
   @Override
   public void onFetchCompleted(long end) {
-    super.onDone(this.records, this.expected, end);
+    super.onDone(this.records, this.expect, end);
   }
 
   public Record recordAt(int i) {

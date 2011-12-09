@@ -121,18 +121,4 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     deleteRemoteLocalNonexistent(remote);
   }
 
-  /*
-   * Helpers
-   */
-  @Override
-  protected void verifyExpectedRecordReturned(Record expected, Record actual) {
-    HistoryRecord recExpect = (HistoryRecord) expected;
-    HistoryRecord recActual = (HistoryRecord) actual;
-    assertEquals(recExpect.guid, recActual.guid);
-    assertEquals(recExpect.title, recActual.title);
-    assertEquals(recExpect.histURI, recActual.histURI);
-    assertEquals(recExpect.transitionType, recActual.transitionType);
-    assertEquals(recExpect.androidID, recActual.androidID);
-  }
-  
 }

@@ -156,12 +156,24 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   /*
    * Helpers
    */
+  /*
   @Override
-  protected void verifyExpectedRecordReturned(Record expected, Record actual) {
+  public static void verifyExpectedRecordReturned(Record expected, Record actual) {
+    verifyExpectedRecordRecordCommonFields(expected, actual);
     BookmarkRecord recExpect = (BookmarkRecord) expected;
     BookmarkRecord recActual = (BookmarkRecord) actual;
-    BookmarkHelpers.verifyExpectedRecordReturned(recExpect, recActual);
-    assertEquals(recExpect.androidID, recActual.androidID);
+    assertEquals(recExpect.title, recActual.title);
+    assertEquals(recExpect.bookmarkURI, recActual.bookmarkURI);
+    // TODO add back in once content providers have these columns
+    //assertEquals(recExpect.description, recActual.description);
+    //assertEquals(recExpect.keyword, recActual.keyword);
+    //assertEquals(recExpect.tags, recExpect.tags);
+    assertEquals(recExpect.parentID, recActual.parentID);
+    assertEquals(recExpect.parentName, recActual.parentName);
+    assertEquals(recExpect.type, recActual.type);
   }
+  */
 
+  // TODO verify android ID where necessary
+    //assertEquals(recExpect.androidID, recActual.androidID);
 }
