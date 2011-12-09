@@ -182,6 +182,15 @@ RepositorySessionFinishDelegate {
     }
     if (this.sessionA == null) {
       this.sessionA = session;
+
+      // Unbundle.
+      try {
+        this.sessionA.unbundle(this.getSynchronizer().bundleA);
+      } catch (Exception e) {
+        this.delegate.onSessionError(new UnbundleError(e, sessionA));
+        // TODO: abort
+        return;
+      }
       this.getSynchronizer().repositoryB.createSession(this, this.context);
       return;
     }
@@ -190,14 +199,7 @@ RepositorySessionFinishDelegate {
       // We no longer need a reference to our context.
       this.context = null;
 
-      // Unbundle each session.
-      try {
-        this.sessionA.unbundle(this.getSynchronizer().bundleA);
-      } catch (Exception e) {
-        this.delegate.onSessionError(new UnbundleError(e, sessionA));
-        // TODO: abort
-        return;
-      }
+      // Unbundle. We unbundled sessionA when that session was created.
       try {
         this.sessionB.unbundle(this.getSynchronizer().bundleB);
       } catch (Exception e) {
