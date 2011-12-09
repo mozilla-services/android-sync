@@ -44,9 +44,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.AlreadySyncingException;
 import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.GlobalSessionCallback;
+import org.mozilla.android.sync.SyncConfiguration;
 import org.mozilla.android.sync.SyncConfigurationException;
+import org.mozilla.android.sync.SyncException;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.delegates.GlobalSessionCallback;
 import org.mozilla.android.sync.setup.Constants;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 
@@ -66,7 +68,7 @@ import android.util.Log;
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback {
 
-  private static final String  TAG = "SyncAdapter";
+  private static final String  LOG_TAG = "SyncAdapter";
   private final AccountManager mAccountManager;
   private final Context        mContext;
 
@@ -78,24 +80,24 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   private void handleException(Exception e, SyncResult syncResult) {
     if (e instanceof OperationCanceledException) {
-      Log.e("rnewman", "Operation canceled. Aborting sync.");
+      Log.e(LOG_TAG, "Operation canceled. Aborting sync.");
       e.printStackTrace();
       return;
     }
     if (e instanceof AuthenticatorException) {
       syncResult.stats.numParseExceptions++;
-      Log.e("rnewman", "AuthenticatorException. Aborting sync.");
+      Log.e(LOG_TAG, "AuthenticatorException. Aborting sync.");
       e.printStackTrace();
       return;
     }
     if (e instanceof IOException) {
       syncResult.stats.numIoExceptions++;
-      Log.e("rnewman", "IOException. Aborting sync.");
+      Log.e(LOG_TAG, "IOException. Aborting sync.");
       e.printStackTrace();
       return;
     }
     syncResult.stats.numIoExceptions++;
-    Log.e("rnewman", "Unknown exception. Aborting sync.");
+    Log.e(LOG_TAG, "Unknown exception. Aborting sync.");
     e.printStackTrace();
   }
 
@@ -112,10 +114,23 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
       mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
     } catch (Exception e) {
-      Log.e("rnewman", "Couldn't invalidate auth token: " + e);
+      Log.e(LOG_TAG, "Couldn't invalidate auth token: " + e);
     }
 
   }
+
+  @Override
+  public void onSyncCanceled() {
+    super.onSyncCanceled();
+    // TODO: cancel the sync!
+    // From the docs: "This will be invoked on a separate thread than the sync
+    // thread and so you must consider the multi-threaded implications of the
+    // work that you do in this method."
+  }
+
+  public Object syncMonitor = new Object();
+  private SyncResult syncResult;
+
   @Override
   public void onPerformSync(final Account account,
                             final Bundle extras,
@@ -123,8 +138,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
 
-    Log.i("rnewman", "Got onPerformSync:");
-    Log.i("rnewman", "Account name: " + account.name);
+    Log.i(LOG_TAG, "Got onPerformSync:");
+    Log.i(LOG_TAG, "Account name: " + account.name);
     Log.i("rnewman", "XXX CLEARING AUTH TOKEN XXX");
     invalidateAuthToken(account);
 
@@ -132,6 +147,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
       @Override
       public void run(AccountManagerFuture<Bundle> future) {
+        Log.i(LOG_TAG, "AccountManagerCallback invoked.");
         // TODO: N.B.: Future must not be used on the main thread.
         try {
           Bundle bundle      = future.getResult(60L, TimeUnit.SECONDS);
@@ -139,11 +155,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           String syncKey     = bundle.getString(Constants.OPTION_SYNCKEY);
           String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
           if (password == null) {
-            Log.e("rnewman", "No password: aborting sync.");
+            Log.e(LOG_TAG, "No password: aborting sync.");
             return;
           }
           if (syncKey == null) {
-            Log.e("rnewman", "No Sync Key: aborting sync.");
+            Log.e(LOG_TAG, "No Sync Key: aborting sync.");
             return;
           }
           KeyBundle keyBundle = new KeyBundle(username, syncKey);
@@ -157,6 +173,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     };
     Handler handler = null;
     getAuthToken(account, callback, handler);
+    synchronized (syncMonitor) {
+      try {
+        Log.i(LOG_TAG, "Waiting on sync monitor.");
+        syncMonitor.wait();
+      } catch (InterruptedException e) {
+        Log.i(LOG_TAG, "Waiting on sync monitor interrupted.", e);
+      }
+    }
  }
 
 
@@ -173,27 +197,58 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              SyncResult syncResult,
                              String username, String password,
                              KeyBundle keyBundle) throws NoSuchAlgorithmException, UnsupportedEncodingException, SyncConfigurationException, IllegalArgumentException, AlreadySyncingException {
-    Log.i("rnewman", "Performing sync.");
+    Log.i(LOG_TAG, "Performing sync.");
+    this.syncResult = syncResult;
     String clusterURL = "https://phx-sync545.services.mozilla.com/";
-    GlobalSession globalSession = new GlobalSession(clusterURL, username, password, keyBundle, this, this.mContext);
+    GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API, 
+                                                    clusterURL, username, password, keyBundle,
+                                                    this, this.mContext);
+
     globalSession.start();
+
+  }
+
+  private void notifyMonitor() {
+    synchronized (syncMonitor) {
+      Log.i(LOG_TAG, "Notifying sync monitor.");
+      syncMonitor.notify();
+    }
   }
 
   // Implementing GlobalSession callbacks.
   @Override
   public void handleError(GlobalSession globalSession, Exception ex) {
-    Log.i("rnewman", "GlobalSession indicated error.");
+    Log.i(LOG_TAG, "GlobalSession indicated error.");
+    this.updateStats(globalSession, ex);
+    notifyMonitor();
+  }
+
+  /**
+   * Introspect the exception, incrementing the appropriate stat counters.
+   * TODO: increment number of inserts, deletes, conflicts.
+   *
+   * @param globalSession
+   * @param ex
+   */
+  private void updateStats(GlobalSession globalSession,
+                           Exception ex) {
+    if (ex instanceof SyncException) {
+      ((SyncException) ex).updateStats(globalSession, syncResult);
+    }
+    // TODO: non-SyncExceptions.
+    // TODO: wouldn't it be nice to update stats for *every* exception we get?
   }
 
   @Override
   public void handleSuccess(GlobalSession globalSession) {
-    Log.i("rnewman", "GlobalSession indicated success.");
+    Log.i(LOG_TAG, "GlobalSession indicated success.");
+    notifyMonitor();
   }
 
   @Override
   public void handleStageCompleted(Stage currentState,
                                    GlobalSession globalSession) {
-    Log.i("rnewman", "Stage completed: " + currentState);
+    Log.i(LOG_TAG, "Stage completed: " + currentState);
   }
 }
 

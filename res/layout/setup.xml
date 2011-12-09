@@ -2,7 +2,7 @@
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
   style="@style/TextFrame" >
 
-  <TextView
+  <TextView android:id="@+id/setup_title"
     style="@style/TextTitle"
     android:text="@string/title_connect" />
 
@@ -11,9 +11,9 @@
     android:layout_height="2dp"
     android:background="#FFFFFF" />
 
-  <TextView
+  <TextView android:id="@+id/setup_subtitle"
     style="@style/TextItem"
-    android:text="@string/pair_subtitle" />
+    android:text="@string/subtitle_connect" />
 
   <TextView
     style="@style/TextItem"
@@ -22,18 +22,17 @@
     android:text="@string/link_show" />
 
   <LinearLayout
-    android:id="@+android:id/jpake_block"
     style="@style/TextItem"
     android:orientation="vertical" >
 
-    <TextView
+    <TextView android:id="@+id/text_pin"
       style="@style/TextItem"
-      android:text="Row1\nRow2\nRow3"
+      android:text="@string/pin_default"
       android:textSize="40dp" />
 
   </LinearLayout>
 
-  <TextView
+  <TextView android:id="@+id/link_nodevice"
     style="@style/TextItem"
     android:clickable="true"
     android:onClick="manualClickHandler"

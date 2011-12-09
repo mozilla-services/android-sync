@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,13 +35,30 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync.stage;
 
-import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
 
-public interface MetaGlobalDelegate {
-  public void handleSuccess(MetaGlobal global);
-  public void handleMissing(MetaGlobal global);
-  public void handleFailure(SyncStorageResponse response);
-  public void handleError(Exception e);
+public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
+  @Override
+  public void execute(org.mozilla.android.sync.GlobalSession session) throws NoSuchStageException {
+    super.execute(session);
+  }
+
+  @Override
+  protected String getCollection() {
+    return "bookmarks";
+  }
+
+  @Override
+  protected boolean isEnabled() {
+    return true;
+    // TODO: fetch.
+  }
+
+  @Override
+  protected Repository getLocalRepository() {
+    return new AndroidBrowserBookmarksRepository();
+  }
 }

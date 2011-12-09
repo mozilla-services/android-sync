@@ -8,5 +8,4 @@ interface RecordsConsumerDelegate {
   public abstract ConcurrentLinkedQueue<Record> getQueue();
   public abstract void consumerIsDone();
   public abstract void store(Record record);
-
 }

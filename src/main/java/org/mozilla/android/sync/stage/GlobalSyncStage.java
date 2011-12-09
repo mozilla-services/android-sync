@@ -47,7 +47,6 @@ public interface GlobalSyncStage {
     fetchInfoCollections,       // Take a look at timestamps.
     fetchMetaGlobal,
     ensureKeysStage,
-    temporaryFetchBookmarks,    // TODO: XXX: TEMP: woohoo!
     /*
     ensureSpecialRecords,
     updateEngineTimestamps,
@@ -57,7 +56,8 @@ public interface GlobalSyncStage {
     updateEnabledEngines,
     syncEngines,
     */
-    completed
+    syncBookmarks,
+    completed,
   }
   public void execute(GlobalSession session) throws NoSuchStageException;
 }

@@ -38,7 +38,7 @@
 package org.mozilla.android.sync.repositories.domain;
 
 import org.mozilla.android.sync.CryptoRecord;
-import org.mozilla.android.sync.repositories.Utils;
+import org.mozilla.android.sync.Utils;
 
 public class HistoryRecord extends Record {
 

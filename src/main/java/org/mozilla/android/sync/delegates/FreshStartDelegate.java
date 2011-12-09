@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Chenxia Liu <liuche@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,28 +35,9 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.setup.main;
+package org.mozilla.android.sync.delegates;
 
-import org.mozilla.android.sync.R;
-
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
-
-public class SetupSuccessActivity extends Activity {
-  
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.success);
-  }
-
-  /* Click Handlers */
-  public void settingsClickHandler(View target) {
-    Intent intent = new Intent("android.settings.SYNC_SETTINGS");
-    startActivity(intent);
-    overridePendingTransition(0, 0);
-    finish();
-  }
+public interface FreshStartDelegate {
+  void onFreshStart();
+  void onFreshStartFailed(Exception e);
 }

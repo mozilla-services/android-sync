@@ -51,6 +51,7 @@ RecordsChannelDelegate,
 RepositorySessionCreationDelegate,
 RepositorySessionFinishDelegate {
 
+  protected static final String LOG_TAG = "SynchronizerSession";
   private Synchronizer synchronizer;
   private SynchronizerSessionDelegate delegate;
   private Context context;
@@ -67,14 +68,27 @@ RepositorySessionFinishDelegate {
    * Public API: constructor, init, synchronize.
    */
   public SynchronizerSession(Synchronizer synchronizer, SynchronizerSessionDelegate delegate) {
+    this.setSynchronizer(synchronizer);
+    this.delegate = delegate;
+  }
+
+  public Synchronizer getSynchronizer() {
+    return synchronizer;
+  }
+
+  public void setSynchronizer(Synchronizer synchronizer) {
     this.synchronizer = synchronizer;
-    this.delegate     = delegate;
   }
 
   public void init(Context context) {
     this.context = context;
     // Begin sessionA and sessionB, call onInitialized in callbacks.
-    this.synchronizer.repositoryA.createSession(this, context);
+    this.getSynchronizer().repositoryA.createSession(this, context);
+  }
+
+  // TODO: implement aborting.
+  public void abort() {
+    this.delegate.onSynchronizeAborted(this);
   }
 
   /**
@@ -89,6 +103,7 @@ RepositorySessionFinishDelegate {
     // TODO: failed record handling.
     channelAToB.flow(new RecordsChannelDelegate() {
       public void onFlowCompleted(RecordsChannel recordsChannel) {
+        Log.i(LOG_TAG, "First RecordsChannel flow completed. Starting next.");
         channelBToA.flow(session);
       }
 
@@ -105,13 +120,15 @@ RepositorySessionFinishDelegate {
 
       @Override
       public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
-        // Hmm. TODO
+        Log.w(LOG_TAG, "onFlowFinishedFailed. Reporting store error.", ex);
+        session.delegate.onStoreError(ex);
       }
     });
   }
 
   @Override
   public void onFlowCompleted(RecordsChannel channel) {
+    Log.i(LOG_TAG, "Second RecordsChannel flow completed. Notifying onSynchronized.");
     this.delegate.onSynchronized(this);
   }
 
@@ -165,13 +182,30 @@ RepositorySessionFinishDelegate {
     }
     if (this.sessionA == null) {
       this.sessionA = session;
-      this.synchronizer.repositoryB.createSession(this, this.context);
+      this.getSynchronizer().repositoryB.createSession(this, this.context);
       return;
     }
     if (this.sessionB == null) {
       this.sessionB = session;
       // We no longer need a reference to our context.
       this.context = null;
+
+      // Unbundle each session.
+      try {
+        this.sessionA.unbundle(this.getSynchronizer().bundleA);
+      } catch (Exception e) {
+        this.delegate.onSessionError(new UnbundleError(e, sessionA));
+        // TODO: abort
+        return;
+      }
+      try {
+        this.sessionB.unbundle(this.getSynchronizer().bundleB);
+      } catch (Exception e) {
+        // TODO: abort
+        this.delegate.onSessionError(new UnbundleError(e, sessionB));
+        return;
+      }
+
       this.delegate.onInitialized(this);
       return;
     }
@@ -193,10 +227,17 @@ RepositorySessionFinishDelegate {
   }
 
   @Override
-  public void onFinishSucceeded(RepositorySessionBundle bundle) {
+  public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
+    if (session == sessionA) {
+      this.synchronizer.bundleA = bundle;
+    } else if (session == sessionB) {
+      this.synchronizer.bundleB = bundle;
+    } else {
+      // TODO: hurrrrrr...
+    }
+
     if (this.sessionB == null) {
       this.sessionA = null;       // We're done.
-      // TODO: persist bundle.
     }
   }
 }

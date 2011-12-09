@@ -90,6 +90,9 @@ public abstract class RepositorySession {
 
   public void unbundle(RepositorySessionBundle bundle) {
     this.lastSyncTimestamp = 0;
+    if (bundle == null) {
+      return;
+    }
     if (bundle.containsKey("timestamp")) {
       try {
         this.lastSyncTimestamp = bundle.getLong("timestamp");
@@ -127,10 +130,21 @@ public abstract class RepositorySession {
     return bundle;
   }
 
+  /**
+   * Just like finish(), but doesn't do any work that should only be performed
+   * at the end of a successful sync, and can be called any time.
+   *
+   * @param delegate
+   */
+  public void abort(RepositorySessionFinishDelegate delegate) {
+    this.status = SessionStatus.DONE;    // TODO: ABORTED?
+    delegate.onFinishSucceeded(this, this.getBundle(null));
+  }
+
   public void finish(RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
-      delegate.onFinishSucceeded(this.getBundle(null));
+      delegate.onFinishSucceeded(this, this.getBundle(null));
     } else {
       Log.e(tag, "Tried to finish() an unstarted or already finished session");
       delegate.onFinishFailed(new InvalidSessionTransitionException(null));
@@ -139,5 +153,10 @@ public abstract class RepositorySession {
  
   protected boolean confirmSessionActive() {
     return status == SessionStatus.ACTIVE ? true : false;
+  }
+
+  public void abort() {
+    // TODO: do something here.
+
   }
 }

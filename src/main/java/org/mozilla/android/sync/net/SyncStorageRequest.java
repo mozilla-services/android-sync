@@ -40,6 +40,7 @@ package org.mozilla.android.sync.net;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -70,11 +71,11 @@ public class SyncStorageRequest implements Resource {
   /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
-  public class SyncResourceDelegate implements ResourceDelegate {
-
+  public class SyncStorageResourceDelegate extends SyncResourceDelegate {
     protected SyncStorageRequest request;
 
-    SyncResourceDelegate(SyncStorageRequest request) {
+    SyncStorageResourceDelegate(SyncStorageRequest request) {
+      super(request);
       this.request = request;
     }
 
@@ -105,12 +106,8 @@ public class SyncStorageRequest implements Resource {
     }
 
     @Override
-    public int connectionTimeout() {
-      return 30 * 1000;             // Wait 30s for a connection to open.
-    }
-    @Override
-    public int socketTimeout() {
-      return 5 * 60 * 1000;         // Wait 5 minutes for data.
+    public void handleTransportException(GeneralSecurityException e) {
+      this.request.delegate.handleRequestError(e);
     }
 
     @Override
@@ -120,7 +117,7 @@ public class SyncStorageRequest implements Resource {
       // Clients can use their delegate interface to specify X-Weave-If-Unmodified-Since.
       String ifUnmodifiedSince = this.request.delegate.ifUnmodifiedSince();
       if (ifUnmodifiedSince != null) {
-        request.setHeader("X-Weave-If-Unmodified-Since", ifUnmodifiedSince);
+        request.setHeader("x-weave-if-unmodified-since", ifUnmodifiedSince);
       }
     }
   }
@@ -136,7 +133,7 @@ public class SyncStorageRequest implements Resource {
 
   // Default implementation. Override this.
   protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
-    return new SyncResourceDelegate(request);
+    return new SyncStorageResourceDelegate(request);
   }
 
   public void get() {
@@ -144,6 +141,7 @@ public class SyncStorageRequest implements Resource {
   }
 
   public void delete() {
+    this.resource.request.addHeader("x-confirm-delete", "1");
     this.resource.delete();
   }
 

@@ -12,12 +12,16 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.android.sync.net.BaseResource;
 import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.android.sync.net.SyncStorageCollectionRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
+
+import android.util.Log;
 
 public class TestLineByLineHandling {
   static String                STORAGE_URL = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/lines";
@@ -83,6 +87,12 @@ public class TestLineByLineHandling {
     public void handleRequestError(Exception ex) {
       fail("Should not be called.");
     }
+  }
+
+  @Before
+  public void setUp() {
+    Log.i("TestMetaGlobal", "Faking SSL context.");
+    BaseResource.enablePlainHTTPConnectionManager();
   }
 
   @Test

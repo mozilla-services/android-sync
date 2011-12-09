@@ -9,9 +9,13 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 
+import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.net.BaseResource;
 
@@ -41,6 +45,11 @@ public class TestResource {
     public void handleHttpIOException(IOException e) {
       fail("Should not occur.");
     }
+
+    @Override
+    public void handleTransportException(GeneralSecurityException e) {
+      fail("Should not occur.");
+    }
   }
 
   private class TrivialTestResourceDelegate extends BaseTestResourceDelegate {
@@ -54,6 +63,12 @@ public class TestResource {
       assertEquals(response.getStatusLine().getStatusCode(), 200);
       data.stopHTTPServer();
     }
+  }
+
+  @Before
+  public void setUp() {
+    Log.i("TestMetaGlobal", "Faking SSL context.");
+    BaseResource.enablePlainHTTPConnectionManager();
   }
 
   @Test

@@ -54,7 +54,8 @@ import android.util.Log;
  * per-profile databases (in contrast to "global").
  */
 public class AndroidBrowserMirrorBookmarkSynchronizer {
-  private static final String tag = "AndroidBrowserMirrorBookmarkSynchronizer";
+  private static final String LOG_TAG = "AndroidBrowserMirrorBookmarkSynchronizer";
+
   private Context context;
   private AndroidBrowserBookmarksDatabaseHelper dbHelper;
   private ArrayList<Long> visitedDroidIds = new ArrayList<Long>();
@@ -70,6 +71,7 @@ public class AndroidBrowserMirrorBookmarkSynchronizer {
    * db to the local Moz bookmark db.
    */
   public void syncAndroidBrowserToMirror() {
+    Log.i(LOG_TAG, "Syncing Android browser tables to our local mirror.");
 
     // Get all bookmarks from Moz table (which will reflect last
     // known state of stock bookmarks - i.e. a snapshot)
@@ -99,7 +101,8 @@ public class AndroidBrowserMirrorBookmarkSynchronizer {
       curDroid.close();
       curMoz.moveToNext();
     }
-    
+
+    Log.d(LOG_TAG, "Done with first cursor. Closing.");
     curMoz.close();
     
     // Find any bookmarks in the local store that we didn't visit
@@ -127,19 +130,20 @@ public class AndroidBrowserMirrorBookmarkSynchronizer {
       dbHelper.insert(DBUtils.bookmarkFromAndroidBrowserCursor(curNew));     
       curNew.moveToNext();
     }
-    
+
+    Log.d(LOG_TAG, "Done with second cursor. Closing.");
     curNew.close();
-    
   }
   
   // Apply changes from local snapshot to stock bookmarks db
   // Must provide a list of guids modified in the last sync
   // This should be run at the end of a sync
   public void syncMirrorToAndroidBrowser(String[] guids) {
+    Log.i(LOG_TAG, "Syncing our local mirror to Android browser tables.");
     
     // Check that there have been guids changed
     if (guids == null || guids.length < 1) {
-      Log.w(tag, "No guids to sync for syncMozToStock");
+      Log.w(LOG_TAG, "No guids to sync for syncMozToStock");
       return;
     }
     
@@ -174,13 +178,15 @@ public class AndroidBrowserMirrorBookmarkSynchronizer {
           context.getContentResolver().update(
               Browser.BOOKMARKS_URI, cv, Browser.BookmarkColumns._ID + "=" + androidId, null);
         }
-        
+
+        Log.d(LOG_TAG, "Done with first cursor. Closing.");
         curDroid.close();
       }
       
       curMoz.moveToNext();
     }
-    
+
+    Log.d(LOG_TAG, "Done with second cursor. Closing.");
     curMoz.close();
     visitedDroidIds.clear();
   }

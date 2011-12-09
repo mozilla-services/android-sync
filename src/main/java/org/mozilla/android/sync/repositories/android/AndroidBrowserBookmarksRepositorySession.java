@@ -43,8 +43,11 @@ import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 
 public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
+
+  private static final String LOG_TAG = "AndroidBrowserBookmarksRepositorySession";
 
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
@@ -58,12 +61,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   
   @Override
   protected Record reconcileRecords(Record local, Record remote) {
-    // Do modifications on local since we always want to keep guid and androidId from local
+    Log.i(LOG_TAG, "Reconciling " + local.guid + " against " + remote.guid);
     
+    // Do modifications on local since we always want to keep guid and androidId from local.
     BookmarkRecord localBookmark = (BookmarkRecord) local;
     BookmarkRecord remoteBookmark = (BookmarkRecord) remote;
 
-    // Determine which record is newer since this is the one we will take in case of conflict
+    // Determine which record is newer since this is the one we will take in case of conflict.
+    // Yes, clock drift. *sigh*
     BookmarkRecord newer;
     if (local.lastModified > remote.lastModified) {
       newer = localBookmark;

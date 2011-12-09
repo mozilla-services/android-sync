@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- * Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -69,7 +69,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
 
   // TODO: this is awful.
   public class SyncCollectionResourceDelegate extends
-      SyncStorageRequest.SyncResourceDelegate {
+      SyncStorageResourceDelegate {
 
     SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
       super(request);

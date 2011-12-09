@@ -35,19 +35,22 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.NonObjectJSONException;
+import org.mozilla.android.sync.delegates.InfoCollectionsDelegate;
+import org.mozilla.android.sync.net.SyncStorageRecordRequest;
+import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.android.sync.net.SyncStorageResponse;
 
 import android.util.Log;
 
 public class InfoCollections implements SyncStorageRequestDelegate {
+  private static final String LOG_TAG = "InfoCollections";
   protected String infoURL;
   protected String credentials;
 
@@ -122,7 +125,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   private void unpack(SyncStorageResponse response) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
     this.response = response;
     this.setRecord(response.jsonObjectBody());
-    Log.i("rnewman", "Record is " + this.record.toJSONString());
+    Log.i(LOG_TAG, "info/collections is " + this.record.toJSONString());
     HashMap<String, Double> map = new HashMap<String, Double>();
     map.putAll((HashMap<String, Double>) this.record.object);
     this.timestamps = map;

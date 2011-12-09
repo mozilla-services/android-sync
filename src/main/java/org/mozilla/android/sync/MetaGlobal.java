@@ -35,19 +35,21 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.CryptoRecord;
-import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.NonObjectJSONException;
+import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.android.sync.net.SyncStorageRecordRequest;
+import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.android.sync.net.SyncStorageResponse;
 
 import android.util.Log;
 
 public class MetaGlobal implements SyncStorageRequestDelegate {
+  private static final String LOG_TAG = "MetaGlobal";
   protected String metaURL;
   protected String credentials;
 
@@ -125,7 +127,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   private void unpack(SyncStorageResponse response) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
     this.response = response;
     this.setRecord(response.jsonObjectBody());
-    Log.i("rnewman", "meta/global is " + record.payload.toJSONString());
+    Log.i(LOG_TAG, "meta/global is " + record.payload.toJSONString());
     this.isModified = false;
     this.storageVersion = (Long) record.payload.get("storageVersion");
     this.engines  = record.payload.getObject("engines");

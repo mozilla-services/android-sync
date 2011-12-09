@@ -35,12 +35,14 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.net;
+package org.mozilla.android.sync.delegates;
 
-import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.android.sync.GlobalSession;
+import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 
-public interface InfoCollectionsDelegate {
-  public void handleSuccess(InfoCollections global);
-  public void handleFailure(SyncStorageResponse response);
-  public void handleError(Exception e);
+
+public interface GlobalSessionCallback {
+  void handleError(GlobalSession globalSession, Exception ex);
+  void handleSuccess(GlobalSession globalSession);
+  void handleStageCompleted(Stage currentState, GlobalSession globalSession);
 }

@@ -222,4 +222,12 @@ public class CryptoRecord extends Record {
   public CryptoRecord getPayload() {
     throw new IllegalStateException("Can't do this with a CryptoRecord.");
   }
+
+  // TODO: this only works with encrypted object, and has other limitations.
+  public JSONObject toJSONObject() {
+    ExtendedJSONObject o = new ExtendedJSONObject();
+    o.put(KEY_PAYLOAD, payload.toJSONString());
+    o.put(KEY_ID,      this.guid);
+    return o.object;
+  }
 }

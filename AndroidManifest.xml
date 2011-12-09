@@ -7,7 +7,7 @@
 
     <uses-library android:name="android.test.runner" />
 
-    <uses-sdk android:minSdkVersion="10" />
+    <uses-sdk android:minSdkVersion="8" />
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_CREDENTIALS" />
@@ -29,8 +29,7 @@
         <activity
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:name="org.mozilla.android.sync.setup.main.SetupSyncActivity"
-            android:theme="@style/ThemeTransparent" >
+            android:name="org.mozilla.android.sync.setup.activities.SetupSyncActivity" >
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
 
@@ -40,18 +39,16 @@
         <activity
             android:clearTaskOnLaunch="true"
             android:launchMode="singleTask"
-            android:name="org.mozilla.android.sync.setup.main.AccountActivity"
-            android:theme="@style/ThemeTransparent" />
+            android:name="org.mozilla.android.sync.setup.activities.AccountActivity"
+            android:windowSoftInputMode="adjustResize"/>
         <activity
-            android:name="org.mozilla.android.sync.setup.main.SetupFailureActivity"
-            android:theme="@style/ThemeTransparent" />
+            android:name="org.mozilla.android.sync.setup.activities.SetupFailureActivity" />
         <activity
-            android:name="org.mozilla.android.sync.setup.main.SetupSuccessActivity"
-            android:theme="@style/ThemeTransparent" />
+            android:name="org.mozilla.android.sync.setup.activities.SetupSuccessActivity" />
 
         <service
             android:exported="true"
-            android:name="org.mozilla.android.sync.setup.main.SyncAuthenticatorService" >
+            android:name="org.mozilla.android.sync.setup.SyncAuthenticatorService" >
             <intent-filter >
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>

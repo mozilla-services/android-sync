@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.domain;
+package org.mozilla.android.sync.cryptographer;
 
 public class CryptoStatusBundle {
 

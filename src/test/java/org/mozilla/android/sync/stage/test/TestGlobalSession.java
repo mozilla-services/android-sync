@@ -9,8 +9,8 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.GlobalSessionCallback;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.delegates.GlobalSessionCallback;
 import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
 
 public class TestGlobalSession {

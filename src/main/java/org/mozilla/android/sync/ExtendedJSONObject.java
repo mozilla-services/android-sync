@@ -131,11 +131,13 @@ public class ExtendedJSONObject {
 
   public ExtendedJSONObject getObject(String key) throws NonObjectJSONException {
     Object o = this.object.get(key);
+    if (o instanceof ExtendedJSONObject) {
+      return (ExtendedJSONObject) o;
+    }
     if (o instanceof JSONObject) {
       return new ExtendedJSONObject((JSONObject) o);
-    } else {
-      throw new NonObjectJSONException(o);
     }
+    throw new NonObjectJSONException(o);
   }
 
   public ExtendedJSONObject clone() {

@@ -40,8 +40,8 @@ package org.mozilla.android.sync.stage;
 import java.net.URISyntaxException;
 
 import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.net.MetaGlobal;
-import org.mozilla.android.sync.net.MetaGlobalDelegate;
+import org.mozilla.android.sync.MetaGlobal;
+import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
 
 public class FetchMetaGlobalStage implements GlobalSyncStage {
@@ -55,12 +55,7 @@ public class FetchMetaGlobalStage implements GlobalSyncStage {
 
     @Override
     public void handleSuccess(MetaGlobal global) {
-      try {
-        // TODO: decide whether more work needs to be done?
-        session.advance();
-      } catch (NoSuchStageException e) {
-        session.abort(e, "No such stage.");
-      }
+      session.processMetaGlobal(global);
     }
 
     @Override
@@ -75,9 +70,8 @@ public class FetchMetaGlobalStage implements GlobalSyncStage {
 
     @Override
     public void handleMissing(MetaGlobal global) {
-      // TODO: fail/create new.
+      session.processMissingMetaGlobal(global);
     }
-
   }
 
   @Override

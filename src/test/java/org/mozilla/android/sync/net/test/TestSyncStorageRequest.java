@@ -125,7 +125,6 @@ public class TestSyncStorageRequest {
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
     r.get();
-
   }
 
   @Test

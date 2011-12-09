@@ -35,13 +35,15 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.repositories;
+package org.mozilla.android.sync.middleware;
 
 import java.io.UnsupportedEncodingException;
 
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.android.sync.repositories.RecordFactory;
+import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -94,6 +96,7 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
 
   public Crypto5MiddlewareRepositorySession(RepositorySession session, Crypto5MiddlewareRepository repository, RecordFactory recordFactory) {
     super(repository);
+    this.inner = session;
     this.keyBundle = repository.keyBundle;
     this.recordFactory = recordFactory;
   }
@@ -159,6 +162,9 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   }
 
   private DecryptingTransformingFetchDelegate makeUnwrappingDelegate(RepositorySessionFetchRecordsDelegate inner) {
+    if (inner == null) {
+      throw new IllegalArgumentException("Inner delegate cannot be null!");
+    }
     return new DecryptingTransformingFetchDelegate(inner, this.keyBundle, this.recordFactory);
   }
 

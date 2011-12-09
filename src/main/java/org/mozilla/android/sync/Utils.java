@@ -19,6 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
+ * Jason Voll <jvoll@mozilla.com>
  * Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -37,11 +38,21 @@
 
 package org.mozilla.android.sync;
 
-import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
+import java.util.Random;
 
+import org.apache.commons.codec.binary.Base64;
 
-public interface GlobalSessionCallback {
-  void handleError(GlobalSession globalSession, Exception ex);
-  void handleSuccess(GlobalSession globalSession);
-  void handleStageCompleted(Stage currentState, GlobalSession globalSession);
+public class Utils {
+
+  public static String generateGuid() {
+    byte[] encodedBytes = Base64.encodeBase64(generateRandomBytes(9), false);
+    return new String(encodedBytes).replace("+", "-").replace("/", "_");
+  }
+
+  private static byte[] generateRandomBytes(int length) {
+    byte[] bytes = new byte[length];
+    Random random = new Random(System.nanoTime());
+    random.nextBytes(bytes);
+    return bytes;
+  }
 }

@@ -36,7 +36,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync;
+package org.mozilla.android.sync.cryptographer;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -50,13 +50,13 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.CryptoInfo;
 import org.mozilla.android.sync.crypto.Cryptographer;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.Utils;
-import org.mozilla.android.sync.domain.CryptoStatusBundle;
-import org.mozilla.android.sync.domain.CryptoStatusBundle.CryptoStatus;
+import org.mozilla.android.sync.cryptographer.CryptoStatusBundle.CryptoStatus;
 
 /*
  * This class acts as a wrapper for the Cryptographer class.

@@ -37,9 +37,10 @@
 
 package org.mozilla.android.sync.repositories.delegates;
 
+import org.mozilla.android.sync.repositories.RepositorySession;
 import org.mozilla.android.sync.repositories.RepositorySessionBundle;
 
 public interface RepositorySessionFinishDelegate {
   public void onFinishFailed(Exception ex);
-  public void onFinishSucceeded(RepositorySessionBundle bundle);
+  public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle);
 }

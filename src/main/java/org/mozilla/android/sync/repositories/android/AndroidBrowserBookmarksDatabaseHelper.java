@@ -100,7 +100,7 @@ public class AndroidBrowserBookmarksDatabaseHelper extends AndroidBrowserReposit
     cv.put(COL_BMK_URI,         rec.bookmarkURI);
     cv.put(COL_DESCRIP,         rec.description);
     cv.put(COL_LOAD_IN_SIDEBAR, rec.loadInSidebar ? 1 : 0);
-    cv.put(COL_TAGS,            rec.tags);
+    cv.put(COL_TAGS,            rec.tags == null ? "[]" : rec.tags.toJSONString());
     cv.put(COL_KEYWORD,         rec.keyword);
     cv.put(COL_PARENT_ID,       rec.parentID);
     cv.put(COL_PARENT_NAME,     rec.parentName);
@@ -112,7 +112,7 @@ public class AndroidBrowserBookmarksDatabaseHelper extends AndroidBrowserReposit
     cv.put(COL_SITE_URI,        rec.siteURI);
     cv.put(COL_FEED_URI,        rec.feedURI);
     cv.put(COL_POS,             rec.pos);
-    cv.put(COL_CHILDREN,        rec.children);
+    cv.put(COL_CHILDREN,        rec.children == null ? "[]" : rec.children.toJSONString());
     cv.put(COL_LAST_MOD,        rec.lastModified);
     cv.put(COL_DELETED,         rec.deleted);
     return cv;

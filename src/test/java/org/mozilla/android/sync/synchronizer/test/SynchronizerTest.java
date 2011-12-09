@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.synchronizer.Synchronizer;
+import org.mozilla.android.sync.synchronizer.SynchronizerDelegate;
 import org.mozilla.android.sync.synchronizer.SynchronizerSession;
 import org.mozilla.android.sync.synchronizer.SynchronizerSessionDelegate;
 import org.mozilla.android.sync.test.WBORepository;
@@ -31,7 +32,7 @@ public class SynchronizerTest {
   }
 
   @Test
-  public void test() {    
+  public void testSynchronizerSession() {
     Context context = null;
     final WBORepository repoA = new WBORepository();
     final WBORepository repoB = new WBORepository();
@@ -100,8 +101,68 @@ public class SynchronizerTest {
       public void onFetchError(Exception e) {
         fail("Should be no fetch error.");
       }
+
+      @Override
+      public void onSynchronizeAborted(SynchronizerSession synchronizerSession) {
+        fail("Sync should not be aborted.");
+      }
     });
     syncSession.init(context);
   }
 
+
+  @Test
+  public void testSynchronizer() {
+    Context context = null;
+    final WBORepository repoA = new WBORepository();
+    final WBORepository repoB = new WBORepository();
+
+    final String collection  = "bookmarks";
+    final boolean deleted    = false;
+    final String guidA       = "abcdabcdabcd";
+    final String guidB       = "ffffffffffff";
+    final long lastModifiedA = 312345;
+    final long lastModifiedB = 412345;
+    BookmarkRecord bookmarkRecordA = new BookmarkRecord(guidA, collection, lastModifiedA, deleted);
+    BookmarkRecord bookmarkRecordB = new BookmarkRecord(guidB, collection, lastModifiedB, deleted);
+
+    repoA.wbos.put(guidA, bookmarkRecordA);
+    repoB.wbos.put(guidB, bookmarkRecordB);
+    Synchronizer synchronizer = new Synchronizer();
+    synchronizer.repositoryA = repoA;
+    synchronizer.repositoryB = repoB;
+    synchronizer.synchronize(context, new SynchronizerDelegate() {
+
+      @Override
+      public void onSynchronized(Synchronizer synchronizer) {
+        // Verify contents.
+        assertTrue(repoA.wbos.containsKey(guidA));
+        assertTrue(repoA.wbos.containsKey(guidB));
+        assertTrue(repoB.wbos.containsKey(guidA));
+        assertTrue(repoB.wbos.containsKey(guidB));
+        BookmarkRecord aa = (BookmarkRecord) repoA.wbos.get(guidA);
+        BookmarkRecord ab = (BookmarkRecord) repoA.wbos.get(guidB);
+        BookmarkRecord ba = (BookmarkRecord) repoB.wbos.get(guidA);
+        BookmarkRecord bb = (BookmarkRecord) repoB.wbos.get(guidB);
+        recordEquals(aa, guidA, lastModifiedA, deleted, collection);
+        recordEquals(ab, guidB, lastModifiedB, deleted, collection);
+        recordEquals(ba, guidA, lastModifiedA, deleted, collection);
+        recordEquals(bb, guidB, lastModifiedB, deleted, collection);
+        recordEquals(aa, ba);
+        recordEquals(ab, bb);
+      }
+
+      @Override
+      public void onSynchronizeFailed(Synchronizer synchronizer,
+                                      Exception lastException, String reason) {
+        fail("Sync should not fail.");
+      }
+
+      @Override
+      public void onSynchronizeAborted(Synchronizer synchronize) {
+        fail("Sync should not be aborted.");
+      }
+
+    });
+  }
 }

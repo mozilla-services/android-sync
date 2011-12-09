@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.android.sync.setup.main;
+package org.mozilla.android.sync.setup.activities;
 
 import org.mozilla.android.sync.R;
 import org.mozilla.android.sync.setup.Constants;
@@ -53,7 +53,7 @@ import android.view.View;
 import android.widget.EditText;
 
 public class AccountActivity extends AccountAuthenticatorActivity {
-  private final static String TAG = "AccountAuthenticatorActivity";
+  private final static String TAG = "AccountActivity";
   private AccountManager mAccountManager;
   private Context mContext;
   private String username;
@@ -70,8 +70,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   
   @Override
   public void onStart() {
+    super.onStart();
     // Start with an empty form
-    super.onCreate(null);
     setContentView(R.layout.account);
   }
   
@@ -106,12 +106,14 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     // Add sync key
     userbundle.putString(Constants.OPTION_SYNCKEY, key);
     mAccountManager.addAccountExplicitly(account, password, userbundle);
+
     Log.d(TAG, "account: " + account.toString());
     // Set components to sync (default: all)
     ContentResolver.setSyncAutomatically(account, Browser.BOOKMARKS_URI.getAuthority(), true);
     // TODO: add other ContentProviders as needed (e.g. passwords)
     // TODO: for each, also add to res/xml to make visible in account settings
     ContentResolver.setMasterSyncAutomatically(true);
+    Log.d(TAG, "finished setting syncables");
     
     final Intent intent = new Intent();
     intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
@@ -119,14 +121,11 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
     setAccountAuthenticatorResult(intent.getExtras());
     
-    // Successful authentication result
-    setResult(RESULT_OK, intent);
-//    Intent acctIntent = new Intent("android.settings.SYNC_SETTINGS");
-//    startActivity(acctIntent);
-//    moveTaskToBack(true);
-    
     // Testing out the authFailure case
     //authFailure();
+
+    // Successful authentication result
+    setResult(RESULT_OK, intent);
     authSuccess();
   }
   

@@ -38,6 +38,7 @@
 package org.mozilla.android.sync.stage;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
@@ -47,17 +48,17 @@ import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.GlobalSession;
 import org.mozilla.android.sync.NonObjectJSONException;
 import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.android.sync.delegates.KeyUploadDelegate;
 import org.mozilla.android.sync.net.SyncStorageRecordRequest;
 import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.android.sync.net.SyncStorageResponse;
-import org.mozilla.android.sync.stage.GlobalSyncStage;
-import org.mozilla.android.sync.stage.NoSuchStageException;
 
 import android.util.Log;
 
-public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDelegate {
-
+public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDelegate, KeyUploadDelegate {
+  private static final String LOG_TAG = "EnsureKeysStage";
   private GlobalSession session;
+  private boolean retrying = false;
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
@@ -75,7 +76,6 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
 
   @Override
   public String credentials() {
-    // TODO Auto-generated method stub
     return session.credentials();
   }
 
@@ -91,7 +91,7 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
     try {
       ExtendedJSONObject body = response.jsonObjectBody();
       Log.i("rnewman", "Fetched keys: " + body.toJSONString());
-      k.setKeyPairsFromWBO(CryptoRecord.fromJSONRecord(body), session.syncKeyBundle);
+      k.setKeyPairsFromWBO(CryptoRecord.fromJSONRecord(body), session.config.syncKeyBundle);
 
     } catch (IllegalStateException e) {
       session.abort(e, "Invalid keys WBO.");
@@ -122,12 +122,58 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
 
   @Override
   public void handleRequestFailure(SyncStorageResponse response) {
+    if (retrying) {
+      session.handleHTTPError(response, "Failure in refetching uploaded keys.");
+      return;
+    }
+
+    int statusCode = response.getStatusCode();
+    Log.i(LOG_TAG, "Got " + statusCode + " fetching keys.");
+    if (statusCode == 404) {
+      // No keys. Generate and upload, then refetch.
+      CryptoRecord keysWBO;
+      try {
+        keysWBO = CollectionKeys.generateCollectionKeysRecord();
+      } catch (CryptoException e) {
+        session.abort(e, "Couldn't generate new key bundle.");
+        return;
+      }
+      keysWBO.keyBundle = session.config.syncKeyBundle;
+      try {
+        keysWBO.encrypt();
+      } catch (UnsupportedEncodingException e) {
+        // Shouldn't occur, so let's not waste too much time on niceties. TODO
+        session.abort(e, "Couldn't encrypt new key bundle: unsupported encoding.");
+        return;
+      } catch (CryptoException e) {
+        session.abort(e, "Couldn't encrypt new key bundle.");
+        return;
+      }
+      session.uploadKeys(keysWBO, this);
+      return;
+    }
     session.handleHTTPError(response, "Failure fetching keys.");
   }
 
   @Override
   public void handleRequestError(Exception ex) {
     session.abort(ex, "Failure fetching keys.");
+  }
+
+  @Override
+  public void onKeysUploaded() {
+    Log.i(LOG_TAG, "New keys uploaded. Starting stage again to fetch them.");
+    try {
+      this.execute(this.session);
+    } catch (NoSuchStageException e) {
+      session.abort(e, "No such stage.");
+    }
+  }
+
+  @Override
+  public void onKeyUploadFailed(Exception e) {
+    Log.i(LOG_TAG, "Key upload failed. Aborting sync.");
+    session.abort(e, "Key upload failed.");
   }
 
 }
