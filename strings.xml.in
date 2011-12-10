@@ -1,5 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
   <string name="sync_app_name">Firefox Sync</string>
   <string name="sync_title_connect">Connect to Sync</string>
   <string name="sync_title_pair">Pair a Device</string>
@@ -45,4 +43,3 @@
   <string name="unfiled">Unsorted Bookmarks</string>
   <string name="desktop">Desktop Bookmarks</string>
   <string name="mobile">Mobile Bookmarks</string>
-</resources>
