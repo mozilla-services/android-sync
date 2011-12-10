@@ -7,7 +7,7 @@
 
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator" />
+                android:resource="@xml/sync_authenticator" />
         </service>
         <service
             android:exported="true"
@@ -18,5 +18,5 @@
 
             <meta-data
                 android:name="android.content.SyncAdapter"
-                android:resource="@xml/syncadapter" />
+                android:resource="@xml/sync_syncadapter" />
         </service>
