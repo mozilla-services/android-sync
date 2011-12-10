@@ -139,6 +139,11 @@ public class JpakeClient implements JpakeRequestDelegate {
     setClientId();
   }
 
+  // TODO: thread pool.
+  private static void runOnThread(Runnable run) {
+    new Thread(run).start();
+  }
+
   public enum State {
     GET_CHANNEL, STEP_ONE_GET, STEP_TWO_GET, PUT, ABORT, ENCRYPT_PUT, REPORT_FAILURE, KEY_VERIFY;
   }
@@ -170,8 +175,14 @@ public class JpakeClient implements JpakeRequestDelegate {
     // TODO: fetch from prefs
     jpakeMaxTries = 300;
 
-    createSecret();
-    getChannel();
+    final JpakeClient self = this;
+    runOnThread(new Runnable() {
+      @Override
+      public void run() {
+        self.createSecret();
+        self.getChannel();
+      }
+    });
   }
 
   /**
@@ -192,14 +203,14 @@ public class JpakeClient implements JpakeRequestDelegate {
     }
     Log.d(TAG, error);
 
-    if (Constants.JPAKE_ERROR_CHANNEL.equals(error)
-        || Constants.JPAKE_ERROR_NETWORK.equals(error)
-        || Constants.JPAKE_ERROR_NODATA.equals(error)) {
-      ssActivity.displayAbort(error);
+    if (Constants.JPAKE_ERROR_CHANNEL.equals(error) ||
+        Constants.JPAKE_ERROR_NETWORK.equals(error) ||
+        Constants.JPAKE_ERROR_NODATA.equals(error)) {
+      // No report.
     } else {
       reportFailure(error);
-      ssActivity.displayAbort(error);
     }
+    ssActivity.displayAbort(error);
   }
 
   /*
@@ -207,19 +218,24 @@ public class JpakeClient implements JpakeRequestDelegate {
    */
   private void reportFailure(String error) {
     Log.d(TAG, "reporting error to server");
-    JpakeRequest report;
-    try {
-      report = new JpakeRequest(jpakeServer + "report",
-          makeRequestResourceDelegate());
-      report.post(new StringEntity(""));
-      this.error = error;
-    } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    this.error = error;
+    runOnThread(new Runnable() {
+      @Override
+      public void run() {
+        JpakeRequest report;
+        try {
+          report = new JpakeRequest(jpakeServer + "report",
+              makeRequestResourceDelegate());
+          report.post(new StringEntity(""));
+        } catch (URISyntaxException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      }});
+
   }
 
   /* Utility functions */
@@ -375,21 +391,26 @@ public class JpakeClient implements JpakeRequestDelegate {
 
   private void putStep() {
     Log.d(TAG, "Uploading message.");
-    JpakeRequest putRequest = null;
-    try {
-      putRequest = new JpakeRequest(jpakeServer + channelUrl,
-          makeRequestResourceDelegate());
-    } catch (URISyntaxException e) {
-      e.printStackTrace();
-      abort(Constants.JPAKE_ERROR_CHANNEL);
-      return;
-    }
-    try {
-      putRequest.put(jsonEntity(jOutgoing.object));
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    runOnThread(new Runnable() {
+      @Override
+      public void run() {
+        JpakeRequest putRequest = null;
+        try {
+          putRequest = new JpakeRequest(jpakeServer + channelUrl,
+              makeRequestResourceDelegate());
+        } catch (URISyntaxException e) {
+          e.printStackTrace();
+          abort(Constants.JPAKE_ERROR_CHANNEL);
+          return;
+        }
+        try {
+          putRequest.put(jsonEntity(jOutgoing.object));
+        } catch (UnsupportedEncodingException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+      }
+    });
   }
 
   private void getStep() {
@@ -439,6 +460,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     state = State.STEP_TWO_GET;
     putStep();
   }
+
   private void computeFinal() {
     Log.d(TAG, "Computing final round.");
     // TODO: crypto

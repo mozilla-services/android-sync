@@ -66,7 +66,6 @@ public class SetupSyncActivity extends Activity {
   public void onResume() {
     super.onResume();
 
-
     // Check whether Sync accounts exist; if so, display Pair text
     AccountManager mAccountManager = AccountManager.get(this);
     Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
@@ -77,7 +76,7 @@ public class SetupSyncActivity extends Activity {
       ((TextView) findViewById(R.id.link_nodevice)).setVisibility(View.INVISIBLE);
     }
     // Start J-PAKE
-    JpakeClient jClient = new JpakeClient(this);
+    final JpakeClient jClient = new JpakeClient(this);
     jClient.receiveNoPin();
   }
 
@@ -94,30 +93,66 @@ public class SetupSyncActivity extends Activity {
 
   // Controller methods
   public void displayPin(String pin) {
+    if (pin == null) {
+      Log.w(TAG, "Asked to display null pin.");
+      return;
+    }
     // format PIN
-    int charPerLine = pin.length()/3;
-    String prettyPin = pin.substring(0, charPerLine) + "\n";
-    prettyPin += pin.substring(charPerLine, 2*charPerLine) + "\n";
-    prettyPin += pin.substring(2*charPerLine, pin.length());
-    ((TextView) findViewById(R.id.text_pin)).setText(prettyPin);
+    int charPerLine = pin.length() / 3;
+    String prettyPin  = pin.substring(0, charPerLine) + "\n";
+    prettyPin        += pin.substring(charPerLine, 2 * charPerLine) + "\n";
+    prettyPin        += pin.substring(2 * charPerLine, pin.length());
+    final String toDisplay = prettyPin;
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        TextView view = ((TextView) findViewById(R.id.text_pin));
+        if (view == null) {
+          Log.w(TAG, "Couldn't find view to display PIN.");
+          return;
+        }
+        view.setText(toDisplay);
+      }
+    });
   }
 
   public void displayAbort(String error) {
     // TODO: display abort error or something
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        // TODO
+      }
+    });
   }
 
   public void onPaired() {
     // TODO Auto-generated method stub
-
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        // TODO
+      }
+    });
   }
 
   public void onComplete(JSONObject newData) {
     // TODO Auto-generated method stub
-
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        // TODO
+      }
+    });
   }
 
   public void onPairingStart() {
     // TODO Auto-generated method stub
-
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        // TODO
+      }
+    });
   }
 }
