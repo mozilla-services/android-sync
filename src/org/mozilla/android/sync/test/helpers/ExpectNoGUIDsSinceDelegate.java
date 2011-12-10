@@ -5,13 +5,21 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertEquals;
 
+import org.mozilla.android.sync.repositories.android.DBUtils;
+
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
   
   @Override
   public void onGuidsSinceSucceeded(String[] guids) {
     AssertionError err = null;
     try {
-      assertEquals(0, guids.length);
+      boolean bookmarks = false;
+      for (int i = 0; i < guids.length; i++) {
+        if(DBUtils.SPECIAL_GUIDS_MAP.containsKey(guids[i])) {
+          bookmarks = true;
+        }
+      }
+      assertEquals(0, bookmarks ? guids.length - 5 : guids.length);
     } catch (AssertionError e) {
       err = e;
     }

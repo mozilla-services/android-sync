@@ -4,11 +4,13 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
+import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -40,7 +42,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   @Override
   public void testFetchAll() {
     Record[] expected = new Record[3];
-    expected[0] = BookmarkHelpers.createFolder();
+    expected[0] = BookmarkHelpers.createFolder1();
     expected[1] = BookmarkHelpers.createBookmark1();
     expected[2] = BookmarkHelpers.createBookmark2();
     basicFetchAllTest(expected);
@@ -75,13 +77,13 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   @Override
   public void testFetchOneRecordByGuid() {
-    fetchOneRecordByGuid(BookmarkHelpers.createFolder(),
+    fetchOneRecordByGuid(BookmarkHelpers.createFolder1(),
         BookmarkHelpers.createBookmark2());
   }
   
   @Override
   public void testFetchMultipleRecordsByGuids() {
-    BookmarkRecord record0 = BookmarkHelpers.createFolder();
+    BookmarkRecord record0 = BookmarkHelpers.createFolder1();
     BookmarkRecord record1 = BookmarkHelpers.createBookmark1();
     BookmarkRecord record2 = BookmarkHelpers.createBookmark2();
     fetchMultipleRecordsByGuids(record0, record1, record2);
@@ -95,7 +97,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     
   @Override
   public void testWipe() {
-    doWipe(BookmarkHelpers.createFolder(), BookmarkHelpers.createBookmark2());
+    doWipe(BookmarkHelpers.createFolder1(), BookmarkHelpers.createBookmark2());
   }
   
   @Override
@@ -190,7 +192,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
 
   public void testStoreFolder() {
-    basicStoreTest(BookmarkHelpers.createFolder());
+    basicStoreTest(BookmarkHelpers.createFolder1());
   }
 
   public void testStoreLivemark() {
@@ -205,6 +207,102 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     prepSession();    
     performWait(storeRunnable(getSession(), record, new ExpectInvalidTypeStoreDelegate()));
   }
+  
+  /*
+   * Re-parenting tests
+   */
+  // Insert two records missing parent, then insert their parent.
+  // Make sure they end up with the correct parent on fetch.
+  public void testBasicReparenting() {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    
+    Record[] expected = new Record[] {
+        BookmarkHelpers.createBookmark1(),
+        BookmarkHelpers.createBookmark2(),
+        BookmarkHelpers.createFolder1()
+    };
+    performWait(storeRunnable(session, expected[0]));
+    performWait(storeRunnable(session, expected[1]));
+    performWait(storeRunnable(session, expected[2]));
+
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
+    performWait(fetchAllRunnable(session, delegate));
+  }
+  
+  // Insert 3 folders and 4 bookmarks in different orders
+  // and make sure they come out parented correctly
+  public void testMultipleFolderReparenting1() {
+    Record[] expected = new Record[] {
+        BookmarkHelpers.createBookmark1(),
+        BookmarkHelpers.createBookmark2(),
+        BookmarkHelpers.createBookmark3(),
+        BookmarkHelpers.createFolder1(),
+        BookmarkHelpers.createBookmark4(),
+        BookmarkHelpers.createFolder3(),
+        BookmarkHelpers.createFolder2(),
+    };
+    doMultipleFolderReparentingTest(expected);
+  }
+  
+  public void testMultipleFolderReparenting2() {
+    Record[] expected = new Record[] {
+        BookmarkHelpers.createBookmark1(),
+        BookmarkHelpers.createBookmark2(),
+        BookmarkHelpers.createBookmark3(),
+        BookmarkHelpers.createFolder1(),
+        BookmarkHelpers.createBookmark4(),
+        BookmarkHelpers.createFolder3(),
+        BookmarkHelpers.createFolder2(),
+    };
+    doMultipleFolderReparentingTest(expected);
+  }
+  
+  public void testMultipleFolderReparenting3() {
+    Record[] expected = new Record[] {
+        BookmarkHelpers.createBookmark1(),
+        BookmarkHelpers.createBookmark2(),
+        BookmarkHelpers.createBookmark3(),
+        BookmarkHelpers.createFolder1(),
+        BookmarkHelpers.createBookmark4(),
+        BookmarkHelpers.createFolder3(),
+        BookmarkHelpers.createFolder2(),
+    };
+    doMultipleFolderReparentingTest(expected);
+  }
+  
+  private void doMultipleFolderReparentingTest(Record[] expected) {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    performWait(storeRunnable(session, expected[0]));
+    performWait(storeRunnable(session, expected[1]));
+    performWait(storeRunnable(session, expected[2]));
+    performWait(storeRunnable(session, expected[3]));
+    performWait(storeRunnable(session, expected[4]));
+    performWait(storeRunnable(session, expected[5]));
+    performWait(storeRunnable(session, expected[6]));
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
+    performWait(fetchAllRunnable(session, delegate));
+  }
+  
+  
+  // TODO comment on bug 708485 to tell lucasr what to do
+  
+  // Insert a record without a parent and check that it is
+  // put into unfiled bookmarks. Call finish() and check
+  // for an error returned stating that there are still
+  // records that need to be re-parented.
+  public void testFinishBeforeReparent() {
+    
+  }
+  
+  // More complicated situation in which we insert folders
+  // that exist with children but with a different guid.
+  // TODO basic tests for inserting existing records with
+  // different guid first.
+  
+  
+  
   /*
   @Override
   public void testRemoteNewerTimeStamp() {

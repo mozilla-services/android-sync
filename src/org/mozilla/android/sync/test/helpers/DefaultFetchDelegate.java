@@ -8,8 +8,10 @@ import static junit.framework.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.mozilla.gecko.sync.repositories.android.DBUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
 import android.util.Log;
 
@@ -50,11 +52,17 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
     Log.i("rnewman", "onDone. Test Waiter is " + testWaiter());
     Log.i("rnewman", "End timestamp is " + end);
     try {
-      assertEquals(expected.size(), records.size());
+      
+      int count = 0;
       for (Record record : records) {
-        Record expect = expected.get(record.guid);
-        assertEquals(record, expected.get(record.guid));
+        // Ignore special guids for bookmarks
+        if (!DBUtils.SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
+          Record expect = expected.get(record.guid);
+          assertEquals(record, expected.get(record.guid));
+          count++;
+        }
       }
+      assertEquals(expected.size(), count);
       Log.i("rnewman", "Notifying success.");
       testWaiter().performNotify();
     } catch (AssertionError e) {
