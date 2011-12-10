@@ -1,4 +1,6 @@
+AndroidManifest.xml
 .metadata
+*.pyc
 *~
 .*.sw?
 .sw?
