@@ -46,11 +46,14 @@
       <artifactId>sync-crypto</artifactId>
       <version>1.3-libs</version>
     </dependency>
+    <!--  To match Android. *sigh* -->
+    <!--
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.2</version>    <!--  To match Android. *sigh* -->
+      <version>1.2</version>
     </dependency>
+    -->
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>
@@ -60,6 +63,7 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>4.1.2</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.android</groupId>
@@ -71,6 +75,7 @@
       <groupId>javassist</groupId>
       <artifactId>javassist</artifactId>
       <version>3.12.1.GA</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.simpleframework</groupId>
@@ -118,22 +123,24 @@
       </plugin>
       <plugin>
         <groupId>com.jayway.maven.plugins.android.generation2</groupId>
-        <!--
         <artifactId>android-maven-plugin</artifactId>
-        <version>3.0.0-alpha-13</version>
-        -->
-        <artifactId>maven-android-plugin</artifactId>
-        <version>2.8.4</version>
+        <version>3.0.0</version>
         <configuration>
           <sdk>
-            <!-- platform or api level (api level 14)-->
-            <platform>14</platform>
+            <!-- platform or api level (api level 11)-->
+            <platform>11</platform>
           </sdk>
           <emulator>
             <!-- the name of the avd device to use for starting the emulator -->
-            <avd>android-14</avd>
+            <avd>native-sync-fennec</avd>
           </emulator>
           <undeployBeforeDeploy>true</undeployBeforeDeploy>
+          <dex>
+            <jvmArguments>
+              <jvmArgument>-Xms512m</jvmArgument>
+              <jvmArgument>-Xmx1600m</jvmArgument>
+            </jvmArguments>
+          </dex>
         </configuration>
         <extensions>true</extensions>
       </plugin>

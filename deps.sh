@@ -1,4 +1,4 @@
 ./build-manifest.sh
 ./build-strings.sh
-mvn android:apk
+mvn clean
 mvn assembly:assembly

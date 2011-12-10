@@ -16,6 +16,9 @@ else
   mkdir -p $SYNC
 fi
 
+echo "Building."
+./deps.sh
+
 echo "Copying resources..."
 # I'm guessing these go here.
 rsync -av res/drawable $ANDROID/base/resources/
