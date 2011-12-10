@@ -24,12 +24,13 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records) {
+  public void onFetchSucceeded(Record[] records, long end) {
     sharedFail("Hit default delegate");
   }
 
-  protected void onDone(ArrayList<Record> records, String[] expected) {
+  protected void onDone(ArrayList<Record> records, String[] expected, long end) {
     Log.i("rnewman", "onDone. Test Waiter is " + testWaiter());
+    Log.i("rnewman", "End timestamp is " + end);
     try {
       assertEquals(expected.length, records.size());
       for (Record record : records) {
@@ -56,8 +57,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchCompleted() {
+  public void onFetchCompleted(long end) {
     sharedFail("Hit default delegate");
   }
-  
 }

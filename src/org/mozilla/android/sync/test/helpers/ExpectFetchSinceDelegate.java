@@ -22,7 +22,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records) {
+  public void onFetchSucceeded(Record[] records, long end) {
     AssertionError err = null;
     try {
       assertEquals(records.length, this.expected.length);

@@ -18,10 +18,10 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records) {
+  public void onFetchSucceeded(Record[] records, long end) {
     Log.i("rnewman", "fetchCallback: " + ((records == null) ? "null" : "" + records.length) + " records.");
     this.records.addAll(Arrays.asList(records));
-    this.onFetchCompleted();
+    this.onFetchCompleted(end);
   }
 
   @Override
@@ -30,8 +30,8 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchCompleted() {
-    super.onDone(this.records, this.expected);
+  public void onFetchCompleted(long end) {
+    super.onDone(this.records, this.expected, end);
   }
 
   public Record recordAt(int i) {

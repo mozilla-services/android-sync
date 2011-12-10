@@ -556,7 +556,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
         getSession().fetch(new String[] { Utils.generateGuid() },
             new RepositorySessionFetchRecordsDelegate() {
               @Override
-              public void onFetchSucceeded(Record[] records) {
+              public void onFetchSucceeded(Record[] records, long end) {
                 fail("Session inactive, should fail");
                 performNotify();
               }
@@ -574,7 +574,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
               }
 
               @Override
-              public void onFetchCompleted() {
+              public void onFetchCompleted(long end) {
                 fail("Session inactive, should fail");
                 performNotify();
               }
