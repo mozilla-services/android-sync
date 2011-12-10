@@ -5,8 +5,8 @@
   <string name="sync_title_pair">Pair a Device</string>
 
   <!-- JPAKE Key Screen -->
-  <string name="sync_subtitle_connect">From a Firefox Sync-connected computer, go to Sync options and select "Add a device"</string>
-  <string name="sync_subtitle_pair">From the device to be paired, go to Sync options and select "Pair a device"</string>
+  <string name="sync_subtitle_connect">From a Firefox Sync-connected computer, go to Sync options and select “Add a device”</string>
+  <string name="sync_subtitle_pair">From the device to be paired, go to Sync options and select “Pair a device”</string>
   <string name="sync_pin_default">...\n...\n...\n</string>
   <string name="sync_link_show"><a href="https://support.mozilla.com/en-US/kb/add-a-device-to-firefox-sync">Show me how</a></string>
   <string name="sync_link_nodevice"><a href="#">I\'m not near my computer…</a></string>
