@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/TextFrame" >
+    style="@style/SyncTextFrame" >
     <TextView
-        style="@style/TextTitle"
+        style="@style/SyncTextTitle"
         android:text="@string/sync_title_success" />
     <View
         android:layout_width="fill_parent"
