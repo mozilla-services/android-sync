@@ -7,7 +7,7 @@
 
     <uses-library android:name="android.test.runner" />
 
-    <uses-sdk android:minSdkVersion="8" />
+    <uses-sdk android:minSdkVersion="7" />
 
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_CREDENTIALS" />
@@ -32,8 +32,12 @@
             android:name="org.mozilla.android.sync.setup.activities.SetupSyncActivity" >
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter >
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="sync" android:host="org.mozilla.android" android:path="/setup"/>
             </intent-filter>
         </activity>
         <activity
