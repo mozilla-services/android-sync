@@ -63,7 +63,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.account);
+    setContentView(R.layout.sync_account);
     mContext = getApplicationContext();
     mAccountManager = AccountManager.get(getApplicationContext());
   }
@@ -72,7 +72,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   public void onStart() {
     super.onStart();
     // Start with an empty form
-    setContentView(R.layout.account);
+    setContentView(R.layout.sync_account);
   }
   
   public void cancelClickHandler(View target) {

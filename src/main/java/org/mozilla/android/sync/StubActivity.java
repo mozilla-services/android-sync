@@ -42,20 +42,16 @@ import android.os.Bundle;
 import android.util.Log;
 
 /*
- * Activity is just here to keep the android build
- * happy until we have an actual service or proper
- * app to build all this code into.
- *
- * TODO delete me later
+ * Activity is just here for testing.
  */
-public class MainActivity extends Activity {
+public class StubActivity extends Activity {
 
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
-      Log.i("rnewman", "In MainActivity onCreate.");
+      Log.i("rnewman", "In StubActivity onCreate.");
       super.onCreate(savedInstanceState);
-      setContentView(R.layout.main);
+      setContentView(R.layout.sync_stub);
       Log.i("rnewman", "Done with onCreate.");
   }
 }
