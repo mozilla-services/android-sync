@@ -11,9 +11,12 @@
     android:layout_height="2dp"
     android:background="#FFFFFF" />
 
-  <TextView android:id="@+id/setup_subtitle"
-    style="@style/SyncTextItem"
-    android:text="@string/sync_subtitle_connect" />
+  <TextView
+      android:id="@+id/setup_subtitle"
+      style="@style/SyncTextItem"
+      android:layout_marginTop="10dp"
+      android:layout_marginBottom="10dp"
+      android:text="@string/sync_subtitle_connect" />
 
   <TextView
     style="@style/SyncTextItem"
@@ -44,10 +47,11 @@
     android:gravity="center"
     android:orientation="horizontal" >
 
-    <Button
-      style="@style/SyncButtonCommon"
-      android:onClick="cancelClickHandler"
-      android:text="@string/sync_button_cancel" />
+      <Button
+          style="@style/SyncButtonCommon"
+          android:layout_marginTop="10dp"
+          android:onClick="cancelClickHandler"
+          android:text="@string/sync_button_cancel" />
 
   </LinearLayout>
 
