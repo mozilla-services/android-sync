@@ -3,7 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.MainActivity;
+import org.mozilla.android.sync.StubActivity;
 import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.RepositorySession;
@@ -31,13 +31,13 @@ import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentationTestCase2<StubActivity> {
   
   protected AndroidBrowserRepositoryDataAccessor helper;
   protected static final String tag = "AndroidBrowserRepositoryTest";
   
   public AndroidBrowserRepositoryTest() {
-    super(MainActivity.class);
+    super(StubActivity.class);
   }
 
   public Context getApplicationContext() {
