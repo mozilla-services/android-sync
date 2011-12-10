@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/TextFrame" >
+    style="@style/SyncTextFrame" >
     <TextView
-      style="@style/TextTitle"
+      style="@style/SyncTextTitle"
       android:text="@string/sync_title_fail" />
     <View 
       android:layout_width="fill_parent"
       android:layout_height="2dp"
       android:background="#FFFFFF"/>
     <TextView
-      style="@style/TextItem"
+      style="@style/SyncTextItem"
       android:text="@string/sync_subtitle_fail" />
 
     <LinearLayout
@@ -23,18 +23,18 @@
             android:orientation="horizontal" >
 
             <Button
-                style="@style/ButtonCommon"
+                style="@style/SyncButtonCommon"
                 android:text="@string/sync_button_tryagain"
                 android:onClick="tryAgainClickHandler" />
 
             <Button
-                style="@style/ButtonCommon"
+                style="@style/SyncButtonCommon"
                 android:onClick="manualClickHandler"
                 android:text="@string/sync_button_manual" />
         </LinearLayout>
 
         <Button
-            style="@style/ButtonCommon"
+            style="@style/SyncButtonCommon"
             android:onClick="cancelClickHandler"
             android:text="@string/sync_button_cancel" />
     </LinearLayout>

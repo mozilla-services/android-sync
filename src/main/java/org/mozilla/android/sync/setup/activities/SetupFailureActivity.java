@@ -51,7 +51,7 @@ public class SetupFailureActivity extends Activity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.failure);
+    setContentView(R.layout.sync_setup_failure);
     mContext = this.getApplicationContext();
   }
   

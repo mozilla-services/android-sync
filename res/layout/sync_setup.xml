@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  style="@style/TextFrame" >
+  style="@style/SyncTextFrame" >
 
   <TextView android:id="@+id/setup_title"
-    style="@style/TextTitle"
+    style="@style/SyncTextTitle"
     android:text="@string/sync_title_connect" />
 
   <View
@@ -11,29 +11,32 @@
     android:layout_height="2dp"
     android:background="#FFFFFF" />
 
-  <TextView android:id="@+id/setup_subtitle"
-    style="@style/TextItem"
-    android:text="@string/sync_subtitle_connect" />
+  <TextView
+      android:id="@+id/setup_subtitle"
+      style="@style/SyncTextItem"
+      android:layout_marginTop="10dp"
+      android:layout_marginBottom="10dp"
+      android:text="@string/sync_subtitle_connect" />
 
   <TextView
-    style="@style/TextItem"
+    style="@style/SyncTextItem"
     android:autoLink="web"
     android:clickable="true"
     android:text="@string/sync_link_show" />
 
   <LinearLayout
-    style="@style/TextItem"
+    style="@style/SyncTextItem"
     android:orientation="vertical" >
 
     <TextView android:id="@+id/text_pin"
-      style="@style/TextItem"
+      style="@style/SyncTextItem"
       android:text="@string/sync_pin_default"
       android:textSize="40dp" />
 
   </LinearLayout>
 
   <TextView android:id="@+id/link_nodevice"
-    style="@style/TextItem"
+    style="@style/SyncTextItem"
     android:clickable="true"
     android:onClick="manualClickHandler"
     android:text="@string/sync_link_nodevice" />
@@ -44,10 +47,11 @@
     android:gravity="center"
     android:orientation="horizontal" >
 
-    <Button
-      style="@style/ButtonCommon"
-      android:onClick="cancelClickHandler"
-      android:text="@string/sync_button_cancel" />
+      <Button
+          style="@style/SyncButtonCommon"
+          android:layout_marginTop="10dp"
+          android:onClick="cancelClickHandler"
+          android:text="@string/sync_button_cancel" />
 
   </LinearLayout>
 

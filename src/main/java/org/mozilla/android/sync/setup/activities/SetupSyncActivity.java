@@ -59,7 +59,7 @@ public class SetupSyncActivity extends Activity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.setup);
+    setContentView(R.layout.sync_setup);
   }
 
   @Override

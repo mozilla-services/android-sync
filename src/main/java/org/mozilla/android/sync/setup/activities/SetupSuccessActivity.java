@@ -49,7 +49,7 @@ public class SetupSuccessActivity extends Activity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.success);
+    setContentView(R.layout.sync_setup_success);
   }
 
   /* Click Handlers */
