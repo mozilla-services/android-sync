@@ -144,7 +144,7 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
     }
 
     @Override
-    public void onFetchSucceeded(Record[] records) {
+    public void onFetchSucceeded(Record[] records, long end) {
       for (Record record : records) {
         try {
           this.onFetchedRecord(record);
@@ -152,12 +152,12 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
           this.onFetchFailed(e, record);
         }
       }
-      this.onFetchCompleted();
+      this.onFetchCompleted(end);
     }
 
     @Override
-    public void onFetchCompleted() {
-      next.onFetchCompleted();
+    public void onFetchCompleted(long end) {
+      next.onFetchCompleted(end);
     }
   }
 

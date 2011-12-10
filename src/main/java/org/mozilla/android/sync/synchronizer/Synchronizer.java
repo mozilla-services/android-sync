@@ -55,6 +55,7 @@ public class Synchronizer {
 
   /**
    * Wrap a SynchronizerDelegate in a SynchronizerSessionDelegate.
+   * Also handle communication of bundled data.
    *
    * @author rnewman
    */
@@ -77,7 +78,8 @@ public class Synchronizer {
 
     @Override
     public void onSynchronized(SynchronizerSession session) {
-      Log.d(LOG_TAG, "Notifying SynchronizerDelegate of onSynchronized.");
+      Log.d(LOG_TAG, "Got onSynchronized.");
+      Log.d(LOG_TAG, "Notifying SynchronizerDelegate.");
       this.synchronizerDelegate.onSynchronized(session.getSynchronizer());
     }
 
@@ -119,6 +121,6 @@ public class Synchronizer {
   public void synchronize(Context context, SynchronizerDelegate delegate) {
     SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);
     SynchronizerSession session = new SynchronizerSession(this, sessionDelegate);
-    session.init(context);
+    session.init(context, bundleA, bundleB);
   }
 }

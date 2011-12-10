@@ -74,8 +74,8 @@ public abstract class RepositorySession {
   protected Repository repository;
 
   // The time that the last sync on this collection completed, in milliseconds.
-  protected long lastSyncTimestamp;
-  protected long syncBeginTimestamp;
+  public long lastSyncTimestamp;
+  public long syncBeginTimestamp;
 
   public RepositorySession(Repository repository) {
     this.repository = repository;

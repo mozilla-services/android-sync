@@ -5,7 +5,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Date;
+
 import org.junit.Test;
+import org.mozilla.android.sync.repositories.RepositorySessionBundle;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.synchronizer.Synchronizer;
 import org.mozilla.android.sync.synchronizer.SynchronizerDelegate;
@@ -16,6 +19,11 @@ import org.mozilla.android.sync.test.WBORepository;
 import android.content.Context;
 
 public class SynchronizerTest {
+
+  public static void assertInRangeInclusive(long earliest, long value, long latest) {
+    assertTrue(earliest <= value);
+    assertTrue(latest   >= value);
+  }
 
   public static void recordEquals(BookmarkRecord r, String guid, long lastModified, boolean deleted, String collection) {
     assertEquals(r.guid,         guid);
@@ -107,9 +115,66 @@ public class SynchronizerTest {
         fail("Sync should not be aborted.");
       }
     });
-    syncSession.init(context);
+    syncSession.init(context, new RepositorySessionBundle(0), new RepositorySessionBundle(0));
   }
 
+  public abstract class SuccessfulSynchronizerDelegate implements SynchronizerDelegate {
+    long syncAOne = 0;
+    long syncBOne = 0;
+
+    @Override
+    public void onSynchronizeFailed(Synchronizer synchronizer,
+                                    Exception lastException, String reason) {
+      fail("Should not fail.");
+    }
+
+    @Override
+    public void onSynchronizeAborted(Synchronizer synchronize) {
+      fail("Should not abort.");
+    }
+  }
+
+  @Test
+  public void testSynchronizerPersists() {
+    final long earliest = new Date().getTime();
+
+    Context context = null;
+    final WBORepository repoA = new WBORepository();
+    final WBORepository repoB = new WBORepository();
+    Synchronizer synchronizer = new Synchronizer();
+    synchronizer.repositoryA = repoA;
+    synchronizer.repositoryB = repoB;
+
+    final SuccessfulSynchronizerDelegate delegateOne = new SuccessfulSynchronizerDelegate() {
+      @Override
+      public void onSynchronized(Synchronizer synchronizer) {
+        long now = new Date().getTime();
+        syncAOne = synchronizer.bundleA.getTimestamp();
+        syncBOne = synchronizer.bundleB.getTimestamp();
+        assertInRangeInclusive(earliest, syncAOne, now);
+        assertInRangeInclusive(earliest, syncBOne, now);
+      }
+    };
+    final SuccessfulSynchronizerDelegate delegateTwo = new SuccessfulSynchronizerDelegate() {
+      @Override
+      public void onSynchronized(Synchronizer synchronizer) {
+        long now = new Date().getTime();
+        syncAOne = synchronizer.bundleA.getTimestamp();
+        syncBOne = synchronizer.bundleB.getTimestamp();
+        assertInRangeInclusive(earliest, syncAOne, now);
+        assertInRangeInclusive(earliest, syncBOne, now);
+        assertTrue(syncAOne > delegateOne.syncAOne);
+        assertTrue(syncBOne > delegateOne.syncBOne);
+      }
+    };
+    synchronizer.synchronize(context, delegateOne);
+    try {
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      fail("Thread interrupted!");
+    }
+    synchronizer.synchronize(context, delegateTwo);
+  }
 
   @Test
   public void testSynchronizer() {
