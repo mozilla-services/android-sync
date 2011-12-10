@@ -132,7 +132,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       ArrayList<String> guids = new ArrayList<String>();
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
-        guids.add(DBUtils.getStringFromCursor(cur, dbHelper.getGuidColumn()));
+        guids.add(DBUtils.getStringFromCursor(cur, "guid"));
         cur.moveToNext();
       }
       cur.close();
@@ -266,7 +266,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
       Cursor cur = dbHelper.fetchAll();
       try {
-        delegate.onFetchSucceeded(compileIntoRecordsArray(cur));
+        delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
       } catch (NoGuidForIdException e) {
         delegate.onFetchFailed(e, null);
       }
