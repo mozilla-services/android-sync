@@ -91,6 +91,36 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       return(DBUtils.getAndroidIdFromUri(insert(record)));
   }
 
+  public void checkAndBuildSpecialGuids() {
+
+    // Do check, if any are missing insert them all
+    // TODO mobile should always exist as the root,
+    // remove this once that is true
+
+    Cursor cur = fetch(DBUtils.SPECIAL_GUIDS);
+    cur.moveToFirst();
+    int count = 0;
+    while (!cur.isAfterLast()) {
+      count++;
+      cur.moveToNext();
+    }
+    cur.close();
+    if (count != DBUtils.SPECIAL_GUIDS.length) {
+      long mobileRoot = insertSpecialFolder("mobile", 0);
+      long desktop = insertSpecialFolder("places", mobileRoot);
+      insertSpecialFolder("unfiled", desktop);
+      insertSpecialFolder("menu", desktop);
+      insertSpecialFolder("toolbar", desktop);
+    }
+  }
+
+  private long insertSpecialFolder(String guid, long parentId) {
+      BookmarkRecord record = new BookmarkRecord(guid);
+      record.title = DBUtils.SPECIAL_GUIDS_MAP.get(guid);
+      record.type = "folder";
+      return(DBUtils.getAndroidIdFromUri(insert(record)));
+  }
+
   @Override
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();

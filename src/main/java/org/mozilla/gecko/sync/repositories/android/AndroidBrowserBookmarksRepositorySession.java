@@ -159,7 +159,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       delegate.onBeginFailed(e);
       return;
     }
-    
     // To deal with parent mapping of bookmarks we have to do some
     // hairy stuff, here's the setup for it
     cur.moveToFirst();

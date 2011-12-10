@@ -197,7 +197,7 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     final JpakeClient self = this;
 
-    Log.e(TAG, "testing createZkp vs checkZkp");
+    Log.e(LOG_TAG, "testing createZkp vs checkZkp");
     sanityCheckZkp();
 
 //    runOnThread(new Runnable() {
@@ -238,7 +238,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    Log.e(TAG, "finished testing zkp");
+    Log.e(LOG_TAG, "finished testing zkp");
   }
 
   /**
