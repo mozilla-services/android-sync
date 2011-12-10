@@ -1,4 +1,5 @@
 AndroidManifest.xml
+res/values/strings.xml
 .metadata
 *.pyc
 *~
