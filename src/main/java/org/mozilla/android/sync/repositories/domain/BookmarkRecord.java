@@ -43,6 +43,8 @@ import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.Utils;
 
+import android.util.Log;
+
 /**
  * Covers the fields used by all bookmark objects.
  * @author rnewman
@@ -70,7 +72,6 @@ public class BookmarkRecord extends Record {
 
   // Note: redundant accessors are evil. We're all grownups; let's just use
   // public fields.
-  public boolean loadInSidebar;
   public String  title;
   public String  bookmarkURI;
   public String  description;
@@ -79,12 +80,6 @@ public class BookmarkRecord extends Record {
   public String  parentName;
   public long    androidParentID;
   public String  type;
-  public String  generatorURI;
-  public String  staticTitle;
-  public String  folderName;
-  public String  queryID;
-  public String  siteURI;
-  public String  feedURI;
   public String  pos;
 
   public JSONArray children;
@@ -108,7 +103,6 @@ public class BookmarkRecord extends Record {
     this.description   = (String) p.get("description");
     this.parentID      = (String) p.get("parentid");
     this.parentName    = (String) p.get("parentName");
-    this.loadInSidebar = getBooleanProperty(p, "loadInSidebar", false);
 
     // Bookmark.
     if (this.type == "bookmark") {
@@ -143,7 +137,6 @@ public class BookmarkRecord extends Record {
     rec.payload.put("description", this.description);
     rec.payload.put("parentid", this.parentID);
     rec.payload.put("parentName", this.parentName);
-    rec.payload.put("loadInSidebar", new Boolean(this.loadInSidebar));
     if (this.type == "bookmark") {
       rec.payload.put("bmkUri", bookmarkURI);
       rec.payload.put("keyword", keyword);
@@ -159,13 +152,14 @@ public class BookmarkRecord extends Record {
   public boolean equals(Object o) {
     if (!o.getClass().equals(BookmarkRecord.class)) return false;
     BookmarkRecord other = (BookmarkRecord) o;
-    return
-        super.equals(other) &&
-        this.title.equals(other.title) &&
-        this.bookmarkURI.equals(other.bookmarkURI) &&
-        this.parentID.equals(other.parentID) &&
-        this.parentName.equals(other.parentName) &&
-        this.type.equals(other.type);
+    Log.i("check", "equal");
+    if (!super.equals(other)) return false;
+    if (!((this.title == other.title) || this.title.equals(other.title))) return false;
+    if (!((this.bookmarkURI == other.bookmarkURI) || this.bookmarkURI.equals(other.bookmarkURI))) return false;
+    if (!((this.parentID == other.parentID) || this.parentID.equals(other.parentID))) return false;
+    if (!((this.parentName == other.parentName) || this.parentName.equals(other.parentName))) return false;
+    if (!((this.type == other.type) || this.type.equals(other.type))) return false;
+    return true;
     
     // TODO add back in once content providers have these columns
     //assertEquals(recExpect.description, recActual.description);

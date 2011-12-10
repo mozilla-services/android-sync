@@ -43,10 +43,13 @@ import java.util.HashMap;
 import org.mozilla.android.sync.repositories.InactiveSessionException;
 import org.mozilla.android.sync.repositories.InvalidBookmarkTypeException;
 import org.mozilla.android.sync.repositories.InvalidRequestException;
+import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.android.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.android.sync.repositories.NoGuidForIdException;
+import org.mozilla.android.sync.repositories.ProfileDatabaseException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -66,8 +69,40 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     super(repository);
   }
   
+  @Override
+  public void begin(RepositorySessionBeginDelegate delegate) {
+    if (this.status == SessionStatus.UNSTARTED) {
+      this.status = SessionStatus.ACTIVE;
+      this.syncBeginTimestamp = System.currentTimeMillis();
+    } else {
+      Log.e(tag, "Tried to begin() an already active or finished session");
+      delegate.onBeginFailed(new InvalidSessionTransitionException(null));
+      return;
+    }
+    
+    try {
+      // We do this check here even though it results in one extra call to the DB
+      // because if we didn't, we have to do a check on every other call since there
+      // is no way of knowing which call would be hit first.
+      checkDatabase();
+    } catch (ProfileDatabaseException e) {
+      Log.e(tag, "ProfileDatabaseException from begin. Fennec must be launched once until this error is fixed");
+      delegate.onBeginFailed(e);
+      return;
+    }  
+    delegate.onBeginSucceeded(this);
+  }
+  
   protected abstract String buildRecordString(Record record);
 
+  protected void checkDatabase() throws ProfileDatabaseException {
+    try {
+      dbHelper.fetch(new String[] { "none" });
+    } catch (NullPointerException e) {
+      throw new ProfileDatabaseException(e);
+    }
+  }
+  
   // guids since method and thread
   @Override
   public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
@@ -97,7 +132,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       ArrayList<String> guids = new ArrayList<String>();
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
-        guids.add(DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID));
+        guids.add(DBUtils.getStringFromCursor(cur, dbHelper.getGuidColumn()));
         cur.moveToNext();
       }
       cur.close();

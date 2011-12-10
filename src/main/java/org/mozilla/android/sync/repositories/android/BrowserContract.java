@@ -59,7 +59,7 @@ public class BrowserContract {
     
     // TODO waiting on mobile team to use these column names and add
     // deleted for both content providers
-    interface SyncColumns {
+    /*interface SyncColumns {
         public static final String GUID = "guid";
 
         public static final String DATE_CREATED = "created";
@@ -68,8 +68,9 @@ public class BrowserContract {
         
         // NOTE: This column doesn't exist in fennec's code yet!!!
         public static final String DELETED = "deleted";
-    }
+    }*/
 
+    /*
     interface CommonColumns {
         public static final String _ID = "_id";
 
@@ -77,14 +78,17 @@ public class BrowserContract {
 
         public static final String TITLE = "title";
     }
+    */
 
+    /*
     interface ImageColumns {
         public static final String FAVICON = "favicon";
 
         public static final String THUMBNAIL = "thumbnail";
     }
+    */
 
-    public static final class Images implements ImageColumns, SyncColumns {
+    /*public static final class Images implements ImageColumns, SyncColumns {
         private Images() {}
 
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "images");
@@ -92,11 +96,22 @@ public class BrowserContract {
         public static final String URL = "url_key";
 
         public static final String FAVICON_URL = "favicon_url";
-    }
+    }*/
 
-    public static final class Bookmarks implements CommonColumns, ImageColumns, SyncColumns {
+    public static final class Bookmarks /*implements CommonColumns, ImageColumns, SyncColumns*/ {
         private Bookmarks() {}
 
+        public static final String GUID = "bookmarks.guid";
+
+        public static final String DATE_CREATED = "created";
+
+        public static final String DATE_MODIFIED = "bookmarks.modified";
+        
+        public static final String _ID = "_id";
+
+        public static final String URL = "url";
+
+        public static final String TITLE = "title";
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "bookmarks");
 
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/bookmark";
@@ -110,9 +125,21 @@ public class BrowserContract {
         public static final String POSITION = "position";
     }
 
-    public static final class History implements CommonColumns, ImageColumns, SyncColumns {
+    public static final class History /*implements CommonColumns, ImageColumns, SyncColumns*/ {
         private History() {}
 
+        public static final String _ID = "history._id";
+
+        public static final String URL = "history.url";
+
+        public static final String TITLE = "history.title";
+        
+        public static final String GUID = "history.guid";
+
+        public static final String DATE_CREATED = "history.created";
+
+        public static final String DATE_MODIFIED = "history.modified";
+        
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "history");
 
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/browser-history";

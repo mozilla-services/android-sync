@@ -44,7 +44,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.R;
-import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.HistoryRecord;
 
@@ -101,21 +100,24 @@ public class DBUtils {
   //Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it
   public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur, String parentId, String parentName) {
 
-    String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+    // TODO NOTE NOTE NOTE carrying on our screwy qualify/not qualify problem,
+    // the hard coded column names below are because these must be unqualified!
+    //String guid = getStringFromCursor(cur, BrowserContract.Bookmarks.GUID);
+    String guid = getStringFromCursor(cur, "guid");
     String collection = "bookmarks";
-    long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
+    long lastModified = getLongFromCursor(cur, "modified");
 
     BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified);
 
-    rec.title = getStringFromCursor(cur, BrowserContract.CommonColumns.TITLE);
-    rec.bookmarkURI = getStringFromCursor(cur, BrowserContract.CommonColumns.URL);
+    rec.title = getStringFromCursor(cur, BrowserContract.Bookmarks.TITLE);
+    rec.bookmarkURI = getStringFromCursor(cur, BrowserContract.Bookmarks.URL);
     //rec.description = getStringFromCursor(cur, BrowserContract.COL_DESCRIP);
     //rec.tags = getJSONArrayFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TAGS);
     //rec.keyword = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_KEYWORD);
     rec.type = cur.getInt(cur.getColumnIndex(BrowserContract.Bookmarks.IS_FOLDER)) == 0 ? 
       AndroidBrowserBookmarksDataAccessor.TYPE_BOOKMARK : AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER;
     
-    rec.androidID = getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+    rec.androidID = getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
     // TODO implement crazy position resolution stuff
     //rec.pos = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_POS);
     
@@ -134,15 +136,15 @@ public class DBUtils {
   //Create a HistoryRecord object from a cursor on a row with a Moz History record in it
   public static HistoryRecord historyFromMirrorCursor(Cursor cur) {
 
-    String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+    String guid = getStringFromCursor(cur, BrowserContract.History.GUID);
     String collection = "history";
-    long lastModified = getLongFromCursor(cur,BrowserContract.SyncColumns.DATE_MODIFIED); 
+    long lastModified = getLongFromCursor(cur,BrowserContract.History.DATE_MODIFIED); 
 
     HistoryRecord rec = new HistoryRecord(guid, collection, lastModified);
 
-    rec.title = getStringFromCursor(cur, BrowserContract.CommonColumns.TITLE); 
-    rec.histURI = getStringFromCursor(cur, BrowserContract.CommonColumns.URL); 
-    rec.androidID = getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+    rec.title = getStringFromCursor(cur, BrowserContract.History.TITLE); 
+    rec.histURI = getStringFromCursor(cur, BrowserContract.History.URL); 
+    rec.androidID = getLongFromCursor(cur, BrowserContract.History._ID);
     // TODO currently not compatible with our notion of visits
     //rec.visits = getStringFromCursor(cur, AndroidBrowserHistoryDataAccessor.COL_VISITS);
     rec.dateVisited = getLongFromCursor(cur, BrowserContract.History.DATE_LAST_VISITED); 

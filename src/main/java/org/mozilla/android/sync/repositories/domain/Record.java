@@ -56,13 +56,12 @@ public abstract class Record {
   
   @Override
   public boolean equals(Object o) {
-    if (o.getClass() != Record.class) return false;
     Record other = (Record) o;
-    return 
-        this.guid.equals(other.guid) &&
-        this.collection.equals(other.collection) &&
-        this.lastModified == other.lastModified &&
-        this.deleted == other.deleted;
+    // Note: I the == on strings are in case of nulls
+    if(!((this.guid == other.guid) || (this.guid.equals(other.guid)))) return false;
+    if(!((this.collection == other.collection) || (this.collection.equals(other.collection)))) return false;
+    if(this.deleted != other.deleted) return false;
+    return true;
   }
 
   public abstract void initFromPayload(CryptoRecord payload);

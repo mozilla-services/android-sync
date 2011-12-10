@@ -39,6 +39,38 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
     return PROVIDER_URI;
   }
 
+  /*
+  @Override
+  protected String[] getAllColumns() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+  */
+
+  @Override
+  protected String getGuidColumn() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected String getDateModifiedColumn() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected String getDeletedColumn() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected String getAndroidIDColumn() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
   
   // Old test code used as a POC for accessing passwords content provider
   // Working to get content provider up and running

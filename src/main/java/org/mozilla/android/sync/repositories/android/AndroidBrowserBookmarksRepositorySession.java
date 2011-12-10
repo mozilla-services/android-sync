@@ -42,7 +42,9 @@ import java.util.HashMap;
 
 import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.android.sync.repositories.NoGuidForIdException;
+import org.mozilla.android.sync.repositories.ProfileDatabaseException;
 import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.android.sync.repositories.domain.Record;
 
@@ -69,11 +71,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     long androidParentId = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
     String guid = idToGuid.get(androidParentId);
     
+    // TODO Ignore parent names not being found until our special ids are put in
+    if (guid == null) {
+      return DBUtils.bookmarkFromMirrorCursor(cur, "", "");
+    }
     // Get parent name
     Cursor name = dataAccessor.fetch(new String[] { guid });
     name.moveToFirst();
     // TODO temp error string until we throw proper exception
-    String parentName = "ERROR";
+    String parentName = "";
     if (!name.isAfterLast()) {
       parentName = DBUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
     }
@@ -96,13 +102,22 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
   
   @Override
-  public void begin(org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate delegate) {
+  public void begin(RepositorySessionBeginDelegate delegate) {
     if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;
       this.syncBeginTimestamp = System.currentTimeMillis();
     } else {
       Log.e(tag, "Tried to begin() an already active or finished session");
       delegate.onBeginFailed(new InvalidSessionTransitionException(null));
+      return;
+    }
+    
+    try {
+      checkDatabase();
+    } catch (ProfileDatabaseException e) {
+      Log.e(tag, "ProfileDatabaseException from begin. Fennec must be launched once until this error is fixed");
+      delegate.onBeginFailed(e);
+      return;
     }
     
     // To deal with parent mapping of bookmarks we have to do some
@@ -110,8 +125,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     Cursor cur = dataAccessor.getGuidsIDsForFolders();
     cur.moveToFirst();
     while(!cur.isAfterLast()) {
-      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-      long id = DBUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.GUID);
+      long id = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
       guidToID.put(guid, id);
       idToGuid.put(id, guid);
     }
@@ -127,7 +142,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     if (guidToID.containsKey(bmk.parentID)) {
       bmk.androidParentID = guidToID.get(bmk.parentID);
     }
-    else {
+    // TODO change this back to else once our special
+    // guids are inserted in their db by default
+    else if (false){
       bmk.androidParentID = guidToID.get("unfiled");
       ArrayList<String> children;
       if (missingParentToChildren.containsKey(bmk.parentID)) {

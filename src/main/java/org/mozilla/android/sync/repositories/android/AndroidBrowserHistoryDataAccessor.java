@@ -61,14 +61,47 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
     HistoryRecord rec = (HistoryRecord) record;
-    cv.put(BrowserContract.SyncColumns.GUID,            rec.guid);
-    cv.put(BrowserContract.SyncColumns.DATE_MODIFIED,        rec.lastModified);
-    cv.put(BrowserContract.CommonColumns.TITLE,           rec.title);
-    cv.put(BrowserContract.CommonColumns.URL,        rec.histURI);
+    cv.put(BrowserContract.History.GUID,            rec.guid);
+    cv.put(BrowserContract.History.DATE_MODIFIED,        rec.lastModified);
+    cv.put(BrowserContract.History.TITLE,           rec.title);
+    cv.put(BrowserContract.History.URL,        rec.histURI);
     //cv.put(BrowserContract.History.VISITS,          rec.visits);
     //cv.put(COL_TRANS_TYPE,      rec.transitionType);
     cv.put(BrowserContract.History.DATE_LAST_VISITED,    rec.dateVisited);
     return cv;
+  }
+
+  // TODO complete these once bookmarks is in good shape
+  /*
+  @Override
+  protected String[] getAllColumns() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+  */
+
+  @Override
+  protected String getGuidColumn() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected String getDateModifiedColumn() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected String getDeletedColumn() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected String getAndroidIDColumn() {
+    // TODO Auto-generated method stub
+    return null;
   }
   
   // Missing columns
