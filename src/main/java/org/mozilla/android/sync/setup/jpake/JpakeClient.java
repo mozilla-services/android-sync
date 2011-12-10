@@ -50,6 +50,7 @@ import java.util.TimerTask;
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.ExtendedJSONObject;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.CryptoInfo;
@@ -74,8 +75,8 @@ public class JpakeClient implements JpakeRequestDelegate {
   private static String TAG = "JpakeClient";
 
   // J-PAKE constants
-  private final static int REQUEST_TIMEOUT = 60; // 1 minute
-  private final static int SOCKET_TIMEOUT = 5 * 60; // 5 minutes
+  private final static int REQUEST_TIMEOUT = 60 * 1000; // 1 minute
+  private final static int SOCKET_TIMEOUT = 5 * 60 * 1000; // 5 minutes
   private final static int KEYEXCHANGE_VERSION = 3;
 
   private final static String JPAKE_SIGNERID_SENDER = "sender";
@@ -109,7 +110,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   private KeyBundle keyBundle;
 
   private ExtendedJSONObject jOutgoing;
-  private ExtendedJSONObject incoming;
+  private ExtendedJSONObject jIncoming;
 
   private String error;
   private int pollTries = 0;
@@ -132,31 +133,31 @@ public class JpakeClient implements JpakeRequestDelegate {
     jpakeServer = "https://setup.services.mozilla.com/";
     jpakePollInterval = 1; // 1 second
     jpakeMaxTries = MAX_TRIES_START;
-    
+
     timerScheduler = new Timer();
-    
+
     setClientId();
   }
 
   public enum State {
     GET_CHANNEL, STEP_ONE_GET, STEP_TWO_GET, PUT, ABORT, ENCRYPT_PUT, REPORT_FAILURE, KEY_VERIFY;
   }
-  
+
   public class GetStepTimerTask extends TimerTask {
 
     private JpakeRequest request;
-    
+
     public GetStepTimerTask(JpakeRequest request) {
       this.request = request;
     }
-    
+
     @Override
     public void run() {
       request.get();
     }
-    
+
   }
-  
+
   /**
    * Initiate pairing and receive data without providing a PIN. The PIN will be
    * generated and passed on to the controller to be displayed to the user.
@@ -298,6 +299,14 @@ public class JpakeClient implements JpakeRequestDelegate {
     return bytes;
   }
 
+  private ExtendedJSONObject makeJZkp(String gr, String r1, String id) {
+    ExtendedJSONObject result = new ExtendedJSONObject();
+    result.put(Constants.GR, gr);
+    result.put(Constants.B, r1);
+    result.put(Constants.ID, id);
+    return result;
+  }
+
   /**
    * Helper method for doing actual decryption.
    *
@@ -400,16 +409,36 @@ public class JpakeClient implements JpakeRequestDelegate {
 
   private void computeStepOne() {
     Log.d(TAG, "Computing round 1.");
-    // TODO: crypto - port nsSyncJpake.cpp
-    state = State.STEP_ONE_GET;
-  }
+    ExtendedJSONObject jStepOne = new ExtendedJSONObject();
+    JpakeCrypto.round1(mySignerId, jStepOne);
 
+    // set outgoing message
+    ExtendedJSONObject jOne = new ExtendedJSONObject();
+    jOne.put(Constants.GX1, jStepOne.get(Constants.GX1));
+    jOne.put(Constants.GX2, jStepOne.get(Constants.GX2));
+
+    ExtendedJSONObject jZkp1 = makeJZkp((String) jStepOne.get(Constants.ZKP_X1), (String) jStepOne.get(Constants.R1), mySignerId);
+    ExtendedJSONObject jZkp2 = makeJZkp((String) jStepOne.get(Constants.ZKP_X2), (String) jStepOne.get(Constants.R2), mySignerId);
+
+    jOne.put(Constants.ZKP_X1, jZkp1);
+    jOne.put(Constants.ZKP_X2, jZkp2);
+
+    jOutgoing = new ExtendedJSONObject();
+    jOutgoing.put(Constants.KEY_TYPE, mySignerId + "1");
+    jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
+    jOutgoing.put(Constants.KEY_PAYLOAD, jOne);
+
+    state = State.STEP_ONE_GET;
+//    putStep();
+  }
   private void computeStepTwo() {
     Log.d(TAG, "Computing round 2.");
-    // TODO: crypto
-    state = State.STEP_TWO_GET;
-  }
+    ExtendedJSONObject jStepTwo = new ExtendedJSONObject();
 
+//    JpakeCrypto.round2(theirSignerId, jStepTwo, secret, gx1, gx2, gx3, gx4, r3, r4, gr3, gr4);
+    state = State.STEP_TWO_GET;
+    putStep();
+  }
   private void computeFinal() {
     Log.d(TAG, "Computing final round.");
     // TODO: crypto
@@ -434,6 +463,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.KEY_TYPE, mySignerId + "3");
     jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
     jOutgoing.put(Constants.KEY_PAYLOAD, jPayload.object);
+    state = State.KEY_VERIFY;
+    putStep();
   }
 
   /*
@@ -474,9 +505,9 @@ public class JpakeClient implements JpakeRequestDelegate {
   private void decryptData() {
     Log.d(TAG, "Verifying their key");
     if (!(theirSignerId + "3")
-        .equals((String) incoming.get(Constants.KEY_TYPE))) {
+        .equals((String) jIncoming.get(Constants.KEY_TYPE))) {
       try {
-        Log.e(TAG, "Invalid round 3 data: " + jsonEntity(incoming.object));
+        Log.e(TAG, "Invalid round 3 data: " + jsonEntity(jIncoming.object));
       } catch (UnsupportedEncodingException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -487,7 +518,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     Log.d(TAG, "Decrypting data.");
     String cleartext = null;
     try {
-      cleartext = decryptPayload(incoming, keyBundle).toString();
+      cleartext = decryptPayload(jIncoming, keyBundle).toString();
     } catch (UnsupportedEncodingException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -589,29 +620,35 @@ public class JpakeClient implements JpakeRequestDelegate {
     Header[] etagHeaders;
     switch (this.state) {
       case GET_CHANNEL:
-        String body;
+        Object body = null;
         try {
-          body = response.body();
-        } catch (IllegalStateException e) {
-          e.printStackTrace();
-          abort(Constants.JPAKE_ERROR_CHANNEL);
-          return;
-        } catch (IOException e) {
-          e.printStackTrace();
-          abort(Constants.JPAKE_ERROR_CHANNEL);
+          body = response.jsonBody();
+        } catch (IllegalStateException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
+        } catch (IOException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
+        } catch (ParseException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
+        }
+        String channel = body instanceof String ? (String) body : null;
+        if (channel == null) { // should be string
+          abort(Constants.JPAKE_ERROR_INVALID);
           return;
         }
-        channel = body.substring(1, body.length() - 1); // slice out quotes
         channelUrl = jpakeServer + channel;
         Log.d(TAG, "using channel " + channel);
 
+        Log.d(TAG, "secret " + secret + " channel " + channel);
         ssActivity.displayPin(secret + channel);
 
         // Set up next step.
         this.state = State.STEP_ONE_GET;
         computeStepOne();
         break;
-        
+
       case STEP_ONE_GET:
         ssActivity.onPairingStart();
         jpakeMaxTries = MAX_TRIES_FIRST_MSG;
@@ -633,13 +670,13 @@ public class JpakeClient implements JpakeRequestDelegate {
         theirEtag = etagHeaders[0].getValue();
         Log.d(TAG, "theirEtag: " + theirEtag);
         try {
-          incoming = response.jsonObjectBody();
+          jIncoming = response.jsonObjectBody();
         } catch (Exception e) {
           Log.e(TAG, "Server responded wiht invalid JSON.");
           abort(Constants.JPAKE_ERROR_INVALID);
           e.printStackTrace();
         }
-        Log.d(TAG, "fetched message " + incoming.get(Constants.KEY_TYPE));
+        Log.d(TAG, "fetched message " + jIncoming.get(Constants.KEY_TYPE));
 
         if (this.state == State.STEP_ONE_GET) {
           computeStepTwo();
@@ -694,6 +731,15 @@ public class JpakeClient implements JpakeRequestDelegate {
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       request.setHeader(new BasicHeader("X-KeyExchange-Id", clientId));
+      Log.d(TAG, "setting header: " + clientId);
+
+      Header[] headers = request.getAllHeaders();
+      for (Header h : headers) {
+        Log.d(TAG, "Header: " + h);
+      }
+      Log.d(TAG, request.getURI().toString());
+      Log.d(TAG, request.toString());
+
       switch (state) {
         case REPORT_FAILURE:
           // optional: set report cid to delete channel
@@ -740,9 +786,10 @@ public class JpakeClient implements JpakeRequestDelegate {
     @Override
     public void handleHttpIOException(IOException e) {
       // TODO: pass this on!
-      Log.e(TAG, "HttpIOException: " + e.getMessage());
+      Log.e(TAG, "HttpIOException", e);
       switch (state) {
         case GET_CHANNEL:
+          Log.e(TAG, "Failed on GetChannel.", e);
           break;
 
         case STEP_ONE_GET:
@@ -757,7 +804,7 @@ public class JpakeClient implements JpakeRequestDelegate {
           break;
 
         default:
-          Log.e(TAG, "unhandled HTTP i/o exception");
+          Log.e(TAG, "Unhandled HTTP I/O exception.", e);
       }
     }
 

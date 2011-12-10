@@ -94,7 +94,12 @@ public class SetupSyncActivity extends Activity {
 
   // Controller methods
   public void displayPin(String pin) {
-    ((TextView) findViewById(R.id.text_pin)).setText(pin);
+    // format PIN
+    int charPerLine = pin.length()/3;
+    String prettyPin = pin.substring(0, charPerLine) + "\n";
+    prettyPin += pin.substring(charPerLine, 2*charPerLine) + "\n";
+    prettyPin += pin.substring(2*charPerLine, pin.length());
+    ((TextView) findViewById(R.id.text_pin)).setText(prettyPin);
   }
 
   public void displayAbort(String error) {
