@@ -8,7 +8,7 @@
   <includeBaseDirectory>false</includeBaseDirectory>
   <dependencySets>
     <dependencySet>
-      <outputDirectory>/bundle</outputDirectory>
+      <outputDirectory>/</outputDirectory>
       <useProjectArtifact>false</useProjectArtifact>
       <unpack>true</unpack>
       <scope>runtime</scope>
