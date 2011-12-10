@@ -18,11 +18,15 @@ fi
 
 echo "Copying resources..."
 # I'm guessing these go here.
-#rsync -av res/drawable $ANDROID/app/android/
-#rsync -av res/drawable-hdpi $ANDROID/app/android/
-#rsync -av res/drawable-mdpi $ANDROID/app/android/
-#rsync -av res/drawable-ldpi $ANDROID/app/android/
-#rsync -av res/layout/*.xml $ANDROID/app/android/layout/
+rsync -av res/drawable $ANDROID/base/resources/
+rsync -av res/drawable-hdpi $ANDROID/base/resources/
+rsync -av res/drawable-mdpi $ANDROID/base/resources/
+rsync -av res/drawable-ldpi $ANDROID/base/resources/
+rsync -av res/layout/*.xml $ANDROID/base/resources/layout/
+rsync -av res/layout/*.xml $ANDROID/base/resources/layout/
+rsync -av res/xml/*.xml $ANDROID/base/resources/xml/
+rsync -av strings.xml.in $SYNC/
+find res/drawable* -name '*.png' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-resources.mn
 
 echo "Creating README.txt."
 echo $WARNING > $SYNC/README.txt
@@ -33,6 +37,7 @@ rsync -a manifests $SYNC/
 echo "Copying dependencies..."
 DEPSDIR=$DESTDIR/other-licenses/android-sync-deps
 rm -r $DEPSDIR
+mkdir $DEPSDIR
 rsync -a target/android-sync-android-sync.jar $DEPSDIR/android-sync-deps.jar
 
 echo "Copying jar..."
