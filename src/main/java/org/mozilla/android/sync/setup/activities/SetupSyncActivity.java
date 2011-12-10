@@ -72,8 +72,8 @@ public class SetupSyncActivity extends Activity {
     Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
     Log.d(TAG, "number: " + accts.length);
     if (accts.length > 0) {
-      ((TextView) findViewById(R.id.setup_title)).setText(getString(R.string.title_pair));
-      ((TextView) findViewById(R.id.setup_subtitle)).setText(getString(R.string.subtitle_pair));
+      ((TextView) findViewById(R.id.setup_title)).setText(getString(R.string.sync_title_pair));
+      ((TextView) findViewById(R.id.setup_subtitle)).setText(getString(R.string.sync_subtitle_pair));
       ((TextView) findViewById(R.id.link_nodevice)).setVisibility(View.INVISIBLE);
     }
     // Start J-PAKE
