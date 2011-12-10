@@ -3,6 +3,7 @@ package org.mozilla.android.sync.net;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.Scanner;
 
 import org.json.simple.parser.ParseException;
@@ -77,7 +78,7 @@ public class SyncResponse {
 
   private int getIntegerHeader(String h) {
     if (this.hasHeader(h)) {
-      Header header = this.response.getFirstHeader("retry-after");
+      Header header = this.response.getFirstHeader(h);
       return Integer.parseInt(header.getValue(), 10);
     }
     return -1;
@@ -94,8 +95,31 @@ public class SyncResponse {
     return this.getIntegerHeader("x-weave-backoff");
   }
 
-  public int weaveTimestamp() throws NumberFormatException {
-    return this.getIntegerHeader("x-weave-timestamp");
+  // This lives until Bug 708956 lands, and we don't have to do it any more.
+  public static long decimalSecondsToMilliseconds(String decimal) {
+    try {
+      return new BigDecimal(decimal).movePointRight(3).longValue();
+    } catch (Exception e) {
+      return -1;
+    }
+  }
+
+  /**
+   * The timestamp returned from a Sync server is a decimal number of seconds,
+   * e.g., 1323393518.04.
+   *
+   * We want milliseconds since epoch.
+   *
+   * @return milliseconds since the epoch, as a long, or -1 if the header
+   *         was missing or invalid.
+   */
+  public long normalizedWeaveTimestamp() {
+    String h = "x-weave-timestamp";
+    if (!this.hasHeader(h)) {
+      return -1;
+    }
+
+    return decimalSecondsToMilliseconds(this.response.getFirstHeader(h).getValue());
   }
 
   public int weaveRecords() throws NumberFormatException {

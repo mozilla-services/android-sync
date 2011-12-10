@@ -60,14 +60,16 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   public RepositorySession sink;
   private RecordsChannelDelegate delegate;
   private long timestamp;
+  private long end = -1;                     // Oo er, missus.
+
   private boolean sourceBegun = false;
   private boolean sinkBegun   = false;
 
-  public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate, long timestamp) {
+  public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate) {
     this.source = source;
     this.sink   = sink;
     this.delegate = delegate;
-    this.timestamp = timestamp;
+    this.timestamp = source.lastSyncTimestamp;
   }
 
   /*
@@ -94,7 +96,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
     Log.d(LOG_TAG, "Consumer is done. Are we waiting for it? " + waitingForQueueDone);
     if (waitingForQueueDone) {
       waitingForQueueDone = false;
-      delegate.onFlowCompleted(this);
+      delegate.onFlowCompleted(this, end);
     }
   }
 
@@ -134,8 +136,9 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   }
 
   @Override
-  public void onFetchCompleted() {
+  public void onFetchCompleted(long end) {
     Log.i(LOG_TAG, "onFetchCompleted. Stopping consumer once stores are done.");
+    this.end = end;
     this.consumer.stop(false);
   }
 
@@ -152,7 +155,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records) {
+  public void onFetchSucceeded(Record[] records, long end) {
     for (Record record : records) {
       this.toProcess.add(record);
     }

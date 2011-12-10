@@ -39,6 +39,7 @@ package org.mozilla.android.sync.repositories;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 
 import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.DelayedWorkTracker;
@@ -88,13 +89,28 @@ public class Server11RepositorySession extends RepositorySession {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Log.i(LOG_TAG, "Fetch done.");
+
+      long normalizedTimestamp = -1;
+      try {
+        normalizedTimestamp = response.normalizedWeaveTimestamp();
+      } catch (NumberFormatException e) {
+        Log.w(LOG_TAG, "Malformed X-Weave-Timestamp header received.", e);
+      }
+      if (-1 == normalizedTimestamp) {
+        Log.w(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
+        normalizedTimestamp = new Date().getTime();
+      }
+
+      Log.d(LOG_TAG, "Fetch completed. Timestamp is " + normalizedTimestamp);
+      final long ts = normalizedTimestamp;
+
       // When we're done processing other events, finish.
       workTracker.delayWorkItem(new Runnable() {
         @Override
         public void run() {
           Log.d(LOG_TAG, "Delayed onFetchCompleted running.");
           // TODO: verify number of returned records.
-          delegate.onFetchCompleted();
+          delegate.onFetchCompleted(ts);
         }
       });      
     }

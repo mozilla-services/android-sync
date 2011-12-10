@@ -61,8 +61,10 @@ RepositorySessionFinishDelegate {
    */
   private RepositorySession sessionA;
   private RepositorySession sessionB;
-
-  // TODO: bundle in and out.
+  private RepositorySessionBundle bundleA;
+  private RepositorySessionBundle bundleB;
+  private long pendingATimestamp = -1;
+  private long pendingBTimestamp = -1;
 
   /*
    * Public API: constructor, init, synchronize.
@@ -80,8 +82,10 @@ RepositorySessionFinishDelegate {
     this.synchronizer = synchronizer;
   }
 
-  public void init(Context context) {
+  public void init(Context context, RepositorySessionBundle bundleA, RepositorySessionBundle bundleB) {
     this.context = context;
+    this.bundleA = bundleA;
+    this.bundleB = bundleB;
     // Begin sessionA and sessionB, call onInitialized in callbacks.
     this.getSynchronizer().repositoryA.createSession(this, context);
   }
@@ -96,14 +100,15 @@ RepositorySessionFinishDelegate {
    */
   public void synchronize() {
     // TODO: pull timestamps from somewhere...
-    final RecordsChannel channelAToB = new RecordsChannel(this.sessionA, this.sessionB, this, 0);
-    final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this, 0);
+    final RecordsChannel channelAToB = new RecordsChannel(this.sessionA, this.sessionB, this);
+    final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this);
     final SynchronizerSession session = this;
 
     // TODO: failed record handling.
     channelAToB.flow(new RecordsChannelDelegate() {
-      public void onFlowCompleted(RecordsChannel recordsChannel) {
+      public void onFlowCompleted(RecordsChannel recordsChannel, long end) {
         Log.i(LOG_TAG, "First RecordsChannel flow completed. Starting next.");
+        pendingATimestamp = end;
         channelBToA.flow(session);
       }
 
@@ -127,8 +132,9 @@ RepositorySessionFinishDelegate {
   }
 
   @Override
-  public void onFlowCompleted(RecordsChannel channel) {
+  public void onFlowCompleted(RecordsChannel channel, long end) {
     Log.i(LOG_TAG, "Second RecordsChannel flow completed. Notifying onSynchronized.");
+    pendingBTimestamp = end;
     this.delegate.onSynchronized(this);
   }
 
@@ -182,6 +188,15 @@ RepositorySessionFinishDelegate {
     }
     if (this.sessionA == null) {
       this.sessionA = session;
+
+      // Unbundle.
+      try {
+        this.sessionA.unbundle(this.bundleA);
+      } catch (Exception e) {
+        this.delegate.onSessionError(new UnbundleError(e, sessionA));
+        // TODO: abort
+        return;
+      }
       this.getSynchronizer().repositoryB.createSession(this, this.context);
       return;
     }
@@ -190,16 +205,9 @@ RepositorySessionFinishDelegate {
       // We no longer need a reference to our context.
       this.context = null;
 
-      // Unbundle each session.
+      // Unbundle. We unbundled sessionA when that session was created.
       try {
-        this.sessionA.unbundle(this.getSynchronizer().bundleA);
-      } catch (Exception e) {
-        this.delegate.onSessionError(new UnbundleError(e, sessionA));
-        // TODO: abort
-        return;
-      }
-      try {
-        this.sessionB.unbundle(this.getSynchronizer().bundleB);
+        this.sessionB.unbundle(this.bundleB);
       } catch (Exception e) {
         // TODO: abort
         this.delegate.onSessionError(new UnbundleError(e, sessionB));
@@ -228,9 +236,14 @@ RepositorySessionFinishDelegate {
 
   @Override
   public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
+    Log.i(LOG_TAG, "onFinishSucceeded.");
     if (session == sessionA) {
+      Log.i(LOG_TAG, "onFinishSucceeded: bumping session A's timestamp to " + pendingATimestamp);
+      bundle.bumpTimestamp(pendingATimestamp);
       this.synchronizer.bundleA = bundle;
     } else if (session == sessionB) {
+      Log.i(LOG_TAG, "onFinishSucceeded: bumping session B's timestamp to " + pendingBTimestamp);
+      bundle.bumpTimestamp(pendingBTimestamp);
       this.synchronizer.bundleB = bundle;
     } else {
       // TODO: hurrrrrr...

@@ -63,6 +63,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   // guids since method and thread
+  @Override
   public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
     GuidsSinceThread thread = new GuidsSinceThread(timestamp, delegate, dbHelper);
     thread.start();
@@ -75,8 +76,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     private AndroidBrowserRepositoryDatabaseHelper dbHelper;
 
     public GuidsSinceThread(long timestamp,
-        RepositorySessionGuidsSinceDelegate delegate,
-        AndroidBrowserRepositoryDatabaseHelper dbHelper) {
+                            RepositorySessionGuidsSinceDelegate delegate,
+                            AndroidBrowserRepositoryDatabaseHelper dbHelper) {
       this.timestamp = timestamp;
       this.delegate = delegate;
       this.dbHelper = dbHelper;
@@ -124,20 +125,24 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected abstract Record recordFromMirrorCursor(Cursor cur);
 
   // Fetch since method and thread
+  @Override
   public void fetchSince(long timestamp,
-      RepositorySessionFetchRecordsDelegate delegate) {
-    FetchSinceThread thread = new FetchSinceThread(timestamp, delegate);
+                         RepositorySessionFetchRecordsDelegate delegate) {
+    FetchSinceThread thread = new FetchSinceThread(timestamp, syncBeginTimestamp, delegate);
     thread.start();
   }
 
   class FetchSinceThread extends Thread {
 
-    private long                                  timestamp;
+    private long since;
+    private long end;
     private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchSinceThread(long timestamp,
-        RepositorySessionFetchRecordsDelegate delegate) {
-      this.timestamp = timestamp;
+    public FetchSinceThread(long since,
+                            long end,
+                            RepositorySessionFetchRecordsDelegate delegate) {
+      this.since    = since;
+      this.end      = end;
       this.delegate = delegate;
     }
 
@@ -147,25 +152,29 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
 
-      Cursor cur = dbHelper.fetchSince(timestamp);
-      delegate.onFetchSucceeded(compileIntoRecordsArray(cur));
+      Cursor cur = dbHelper.fetchSince(since);
+      delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
     }
   }
 
   // Fetch method and thread
+  @Override
   public void fetch(String[] guids,
-      RepositorySessionFetchRecordsDelegate delegate) {
-    FetchThread thread = new FetchThread(guids, delegate);
+                    RepositorySessionFetchRecordsDelegate delegate) {
+    FetchThread thread = new FetchThread(guids, syncBeginTimestamp, delegate);
     thread.start();
   }
 
   class FetchThread extends Thread {
-    private String[]                              guids;
+    private String[] guids;
+    private long     end;
     private RepositorySessionFetchRecordsDelegate delegate;
 
     public FetchThread(String[] guids,
-        RepositorySessionFetchRecordsDelegate delegate) {
-      this.guids = guids;
+                       long end,
+                       RepositorySessionFetchRecordsDelegate delegate) {
+      this.guids    = guids;
+      this.end      = end;
       this.delegate = delegate;
     }
 
@@ -179,7 +188,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         Log.e(tag, "No guids sent to fetch");
         delegate.onFetchFailed(new InvalidRequestException(null), null);
       } else {
-        delegate.onFetchSucceeded(doFetch(guids));
+        delegate.onFetchSucceeded(doFetch(guids), end);
       }
     }
   }
@@ -190,15 +199,18 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   // Fetch all method and thread
+  @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
-    FetchAllThread thread = new FetchAllThread(delegate);
+    FetchAllThread thread = new FetchAllThread(syncBeginTimestamp, delegate);
     thread.start();
   }
 
   class FetchAllThread extends Thread {
+    private long end;
     private RepositorySessionFetchRecordsDelegate delegate;
 
-    public FetchAllThread(RepositorySessionFetchRecordsDelegate delegate) {
+    public FetchAllThread(long end, RepositorySessionFetchRecordsDelegate delegate) {
+      this.end      = end;
       this.delegate = delegate;
     }
 
@@ -209,11 +221,12 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
 
       Cursor cur = dbHelper.fetchAllOrderByAndroidId();
-      delegate.onFetchSucceeded(compileIntoRecordsArray(cur));
+      delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
     }
   }
 
   // Store method and thread
+  @Override
   public void store(Record record, RepositorySessionStoreDelegate delegate) {
     StoreThread thread = new StoreThread(record, delegate);
     thread.start();
@@ -277,6 +290,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected abstract Record reconcileRecords(Record local, Record remote);
 
   // Wipe method and thread.
+  @Override
   public void wipe(RepositorySessionWipeDelegate delegate) {
     WipeThread thread = new WipeThread(delegate);
     thread.start();

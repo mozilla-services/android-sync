@@ -43,7 +43,7 @@ public class WBORepository extends Repository {
           delegate.onFetchedRecord(record);
         }
       }
-      delegate.onFetchCompleted();
+      delegate.onFetchCompleted(syncBeginTimestamp);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class WBORepository extends Repository {
           delegate.onFetchedRecord(wbos.get(guid));
         }
       }
-      delegate.onFetchCompleted();
+      delegate.onFetchCompleted(syncBeginTimestamp);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class WBORepository extends Repository {
         Record record = entry.getValue();
         delegate.onFetchedRecord(record);
       }
-      delegate.onFetchCompleted();
+      delegate.onFetchCompleted(syncBeginTimestamp);
     }
 
     @Override

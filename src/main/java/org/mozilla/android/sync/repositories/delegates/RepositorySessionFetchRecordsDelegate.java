@@ -43,9 +43,19 @@ import org.mozilla.android.sync.repositories.domain.Record;
 public interface RepositorySessionFetchRecordsDelegate {
   public void onFetchFailed(Exception ex, Record record);
   public void onFetchedRecord(Record record);
-  public void onFetchCompleted();
+
+  /**
+   * Called when all records in this fetch have been returned.
+   *
+   * @param end
+   *        A millisecond-resolution timestamp indicating the *remote* timestamp
+   *        at the end of the range of records. Usually this is the timestamp at
+   *        which the request was received.
+   *        E.g., the (normalized) value of the X-Weave-Timestamp header.
+   */
+  public void onFetchCompleted(long end);
 
   // Shorthand for calling onFetchedRecord for each record in turn, then
   // calling onFetchCompleted.
-  public void onFetchSucceeded(Record[] records);
+  public void onFetchSucceeded(Record[] records, long end);
 }

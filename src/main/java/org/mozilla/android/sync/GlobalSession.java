@@ -524,7 +524,7 @@ public class GlobalSession implements CredentialsSource {
 
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
-        wipeDelegate.onWiped(response.weaveTimestamp());
+        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
       }
 
       @Override
