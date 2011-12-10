@@ -145,6 +145,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/assembly/deps.xml</descriptor>
+          </descriptors>
+        </configuration>
       </plugin>
     </plugins>
   </build>
