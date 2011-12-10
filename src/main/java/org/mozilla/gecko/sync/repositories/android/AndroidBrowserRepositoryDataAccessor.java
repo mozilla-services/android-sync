@@ -95,7 +95,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public void updateByGuid(String guid, ContentValues cv) {
     context.getContentResolver().update(getUri(), cv,
-        getGuidColumn(), new String[] { guid});
+        "guid = '" + guid +"'", null);
   }
 
 

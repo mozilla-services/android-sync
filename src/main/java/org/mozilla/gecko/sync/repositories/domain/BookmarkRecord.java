@@ -152,7 +152,6 @@ public class BookmarkRecord extends Record {
   public boolean equals(Object o) {
     if (!o.getClass().equals(BookmarkRecord.class)) return false;
     BookmarkRecord other = (BookmarkRecord) o;
-    Log.i("check", "equal");
     if (!super.equals(other)) return false;
     if (!((this.title == other.title) || this.title.equals(other.title))) return false;
     if (!((this.bookmarkURI == other.bookmarkURI) || this.bookmarkURI.equals(other.bookmarkURI))) return false;

@@ -55,20 +55,29 @@ import android.util.Log;
 public class DBUtils {
 
   private static final String LOG_TAG = "DBUtils";
-  private static HashMap<String, String> SPECIAL_GUIDS;
+  public static String[] SPECIAL_GUIDS = new String[] {
+    "menu",
+    "places",
+    //"tags",
+    "toolbar",
+    "unfiled",
+    //"desktop",
+    "mobile"
+  };
+  public static HashMap<String, String> SPECIAL_GUIDS_MAP;
 
   // TODO there has got to be a better way of solving this problem,
   // come back to this when brain is less fried!
   public static void initialize(Context context) {
-    if (SPECIAL_GUIDS == null) {
-      SPECIAL_GUIDS = new HashMap<String, String>();
-      SPECIAL_GUIDS.put("menu", context.getString(R.string.menu));
-      SPECIAL_GUIDS.put("places", context.getString(R.string.places));
-      SPECIAL_GUIDS.put("tags", context.getString(R.string.tags));
-      SPECIAL_GUIDS.put("toolbar", context.getString(R.string.toolbar));
-      SPECIAL_GUIDS.put("unfiled", context.getString(R.string.unfiled));
-      SPECIAL_GUIDS.put("desktop", context.getString(R.string.desktop));
-      SPECIAL_GUIDS.put("mobile", context.getString(R.string.mobile));
+    if (SPECIAL_GUIDS_MAP == null) {
+      SPECIAL_GUIDS_MAP = new HashMap<String, String>();
+      SPECIAL_GUIDS_MAP.put("menu", context.getString(R.string.menu));
+      SPECIAL_GUIDS_MAP.put("places", context.getString(R.string.places));
+      //SPECIAL_GUIDS_MAP.put("tags", context.getString(R.string.tags));
+      SPECIAL_GUIDS_MAP.put("toolbar", context.getString(R.string.toolbar));
+      SPECIAL_GUIDS_MAP.put("unfiled", context.getString(R.string.unfiled));
+      //SPECIAL_GUIDS_MAP.put("desktop", context.getString(R.string.desktop));
+      SPECIAL_GUIDS_MAP.put("mobile", context.getString(R.string.mobile));
     }
   }
 
@@ -125,8 +134,8 @@ public class DBUtils {
     rec.parentID = parentId;
     // Set parent name
     // Always set the parent name for special folders back to default so stuff doesn't go crazy
-    if (SPECIAL_GUIDS.containsKey(rec.parentID)) {
-      rec.parentName = SPECIAL_GUIDS.get(rec.parentID);
+    if (SPECIAL_GUIDS_MAP.containsKey(rec.parentID)) {
+      rec.parentName = SPECIAL_GUIDS_MAP.get(rec.parentID);
     } else {
       rec.parentName = parentName;
     }

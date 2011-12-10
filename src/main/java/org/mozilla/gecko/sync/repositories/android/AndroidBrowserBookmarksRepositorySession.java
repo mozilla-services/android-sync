@@ -85,6 +85,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
     else {
       // TODO throw an exception
+      // TODO investigate why this is being hit happening
       Log.e(tag, "Couldn't find record with guid " + guid + " while looking for parent name");
     }
     return DBUtils.bookmarkFromMirrorCursor(cur, guid, parentName);
@@ -120,15 +121,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       return;
     }
 
+    // Check for the existence of special folders
+    // and insert them if they don't exist.
+    dataAccessor.checkAndBuildSpecialGuids();
+
     // To deal with parent mapping of bookmarks we have to do some
     // hairy stuff, here's the setup for it
     Cursor cur = dataAccessor.getGuidsIDsForFolders();
     cur.moveToFirst();
     while(!cur.isAfterLast()) {
-      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.GUID);
+      String guid = DBUtils.getStringFromCursor(cur, "guid");
       long id = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
       guidToID.put(guid, id);
       idToGuid.put(id, guid);
+      cur.moveToNext();
     }
     cur.close();
 
@@ -142,9 +148,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     if (guidToID.containsKey(bmk.parentID)) {
       bmk.androidParentID = guidToID.get(bmk.parentID);
     }
-    // TODO change this back to else once our special
-    // guids are inserted in their db by default
-    else if (false){
+    else {
       bmk.androidParentID = guidToID.get("unfiled");
       ArrayList<String> children;
       if (missingParentToChildren.containsKey(bmk.parentID)) {
