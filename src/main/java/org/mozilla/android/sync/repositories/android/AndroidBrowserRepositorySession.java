@@ -63,6 +63,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   // guids since method and thread
+  @Override
   public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
     GuidsSinceThread thread = new GuidsSinceThread(timestamp, delegate, dbHelper);
     thread.start();
@@ -124,6 +125,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected abstract Record recordFromMirrorCursor(Cursor cur);
 
   // Fetch since method and thread
+  @Override
   public void fetchSince(long timestamp,
       RepositorySessionFetchRecordsDelegate delegate) {
     FetchSinceThread thread = new FetchSinceThread(timestamp, delegate);
@@ -190,6 +192,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   // Fetch all method and thread
+  @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
     FetchAllThread thread = new FetchAllThread(delegate);
     thread.start();
@@ -214,6 +217,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   // Store method and thread
+  @Override
   public void store(Record record, RepositorySessionStoreDelegate delegate) {
     StoreThread thread = new StoreThread(record, delegate);
     thread.start();
@@ -277,6 +281,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected abstract Record reconcileRecords(Record local, Record remote);
 
   // Wipe method and thread.
+  @Override
   public void wipe(RepositorySessionWipeDelegate delegate) {
     WipeThread thread = new WipeThread(delegate);
     thread.start();
