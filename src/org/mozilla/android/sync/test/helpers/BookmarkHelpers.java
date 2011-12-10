@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import static junit.framework.Assert.assertEquals;
-
 import org.json.simple.JSONArray;
 import org.mozilla.android.sync.Utils;
 import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
@@ -12,6 +10,8 @@ import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
 public class BookmarkHelpers {
 
   private static String parentID = Utils.generateGuid();
+  private static String bmk1Guid= Utils.generateGuid();
+  private static String bmk2Guid = Utils.generateGuid();
   private static String parentName = "main";
 
   /*
@@ -24,11 +24,10 @@ public class BookmarkHelpers {
     tags.add("tag1");
     tags.add("tag2");
     tags.add("tag3");
-    record.guid = Utils.generateGuid();
+    record.guid = bmk1Guid;
     record.title = "Foo!!!";
     record.bookmarkURI = "http://foo.bar.com";
     record.description = "This is a description for foo.bar.com";
-    record.loadInSidebar = true;
     record.tags = tags;
     record.keyword = "fooooozzzzz";
     record.parentID = parentID;
@@ -42,11 +41,11 @@ public class BookmarkHelpers {
     BookmarkRecord record = new BookmarkRecord();
     JSONArray tags = new JSONArray();
     tags.add("tag1");
-    tags.add("tag2");    record.guid = Utils.generateGuid();
+    tags.add("tag2");    
+    record.guid = bmk2Guid;
     record.title = "Bar???";
     record.bookmarkURI = "http://bar.foo.com";
     record.description = "This is a description for Bar???";
-    record.loadInSidebar = false;
     record.tags = tags;
     record.keyword = "keywordzzz";
     record.parentID = parentID;
@@ -62,12 +61,9 @@ public class BookmarkHelpers {
     tags.add("tag1");
     tags.add("tag2");
     record.guid = Utils.generateGuid();
-    record.generatorURI = "http://generatoruri.com";
-    record.staticTitle = "Static Microsummary Title";
     record.title = "Microsummary 1";
     record.bookmarkURI = "www.bmkuri.com";
     record.description = "microsummary description";
-    record.loadInSidebar = false;
     record.tags = tags;
     record.keyword = "keywordzzz";
     record.parentID = parentID;
@@ -79,12 +75,9 @@ public class BookmarkHelpers {
   public static BookmarkRecord createQuery() {
     BookmarkRecord record = new BookmarkRecord();
     record.guid = Utils.generateGuid();
-    record.folderName = "Query Folder Name";
-    record.queryID = "OptionalQueryId";
     record.title = "Query 1";
     record.bookmarkURI = "http://www.query.com";
     record.description = "Query 1 description";
-    record.loadInSidebar = true;
     record.tags = new JSONArray();
     record.keyword = "queryKeyword";
     record.parentID = parentID;
@@ -100,14 +93,15 @@ public class BookmarkHelpers {
     BookmarkRecord record = new BookmarkRecord();
     record.guid = parentID;
     record.title = parentName;
+    // TODO this will change once we have proper base folders in DB
     // No parent since this is the menu folder
     record.parentID = "";
     record.parentName = "";
     // TODO verify how we want to store these string arrays
     // pretty sure I verified that this is actually how other clients do it, but double check
     JSONArray children = new JSONArray();
-    children.add(Utils.generateGuid());
-    children.add(Utils.generateGuid());
+    children.add(bmk1Guid);
+    children.add(bmk2Guid);
     record.children = children;
     record.type = "folder";
     return record;
@@ -117,8 +111,6 @@ public class BookmarkHelpers {
   public static BookmarkRecord createLivemark() {
     BookmarkRecord record = new BookmarkRecord();
     record.guid = Utils.generateGuid();
-    record.siteURI = "http://site.uri.com";
-    record.feedURI = "http://rss.site.uri.com";
     record.title = "Livemark title";
     record.parentID = parentID;
     record.parentName = parentName;

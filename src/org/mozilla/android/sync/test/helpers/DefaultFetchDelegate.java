@@ -52,7 +52,8 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
     try {
       assertEquals(expected.size(), records.size());
       for (Record record : records) {
-        assertEquals(records, expected.get(record).guid);
+        Record expect = expected.get(record.guid);
+        assertEquals(record, expected.get(record.guid));
       }
       Log.i("rnewman", "Notifying success.");
       testWaiter().performNotify();
