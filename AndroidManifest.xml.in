@@ -17,7 +17,8 @@
     <uses-permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS"/>
     <uses-permission android:name="org.mozilla.gecko.PASSWORDS"/>
 
-    <application android:debuggable="true">
+    <application android:debuggable="true"
+                 android:label="@string/sync_app_name">
 
 #include manifests/SyncAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
