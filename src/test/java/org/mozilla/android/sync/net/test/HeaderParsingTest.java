@@ -3,7 +3,7 @@ package org.mozilla.android.sync.net.test;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.mozilla.android.sync.net.SyncResponse;
+import org.mozilla.gecko.sync.net.SyncResponse;
 
 public class HeaderParsingTest {
 

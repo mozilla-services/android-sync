@@ -5,7 +5,8 @@ package org.mozilla.android.sync.net.test;
 
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
-import org.mozilla.android.sync.net.ResourceDelegate;
+
+import org.mozilla.gecko.sync.net.ResourceDelegate;
 
 /**
  * Implement a default set of delegate roles, such as 0 timeouts.

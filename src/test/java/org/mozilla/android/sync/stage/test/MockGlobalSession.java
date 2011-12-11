@@ -3,18 +3,18 @@
 
 package org.mozilla.android.sync.stage.test;
 
-import org.mozilla.android.sync.GlobalSession;
-import org.mozilla.android.sync.SyncConfiguration;
-import org.mozilla.android.sync.SyncConfigurationException;
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.delegates.GlobalSessionCallback;
-import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.stage.EnsureKeysStage;
-import org.mozilla.android.sync.stage.FetchInfoCollectionsStage;
-import org.mozilla.android.sync.stage.FetchMetaGlobalStage;
-import org.mozilla.android.sync.stage.GlobalSyncStage.Stage;
-import org.mozilla.android.sync.stage.NoSuchStageException;
-import org.mozilla.android.sync.stage.ServerSyncStage;
+import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.SyncConfigurationException;
+import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.stage.EnsureKeysStage;
+import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
+import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
+import org.mozilla.gecko.sync.stage.NoSuchStageException;
+import org.mozilla.gecko.sync.stage.ServerSyncStage;
+import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.Context;
 

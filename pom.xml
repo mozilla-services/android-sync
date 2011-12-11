@@ -2,7 +2,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.mozilla.android.sync</groupId>
+  <groupId>org.mozilla.gecko</groupId>
   <artifactId>android-sync</artifactId>
   <version>1</version>
   <packaging>apk</packaging>
@@ -101,7 +101,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.mozilla.android.sync</groupId>
+                  <groupId>org.mozilla.gecko</groupId>
                   <artifactId>android-sync</artifactId>
                   <version>1</version>
                   <type>jar</type>

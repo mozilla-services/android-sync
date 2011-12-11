@@ -7,11 +7,11 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.MetaGlobal;
-import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.android.sync.net.BaseResource;
-import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.MetaGlobal;
+import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 

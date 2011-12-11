@@ -12,12 +12,12 @@ import java.util.Arrays;
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
-import org.mozilla.android.sync.CryptoRecord;
-import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.NonObjectJSONException;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.Utils;
+import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 
 public class TestCryptoRecord {
   String base64EncryptionKey = "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=";
