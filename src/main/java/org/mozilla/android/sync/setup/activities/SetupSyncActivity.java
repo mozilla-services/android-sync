@@ -54,16 +54,42 @@ import android.widget.TextView;
 
 public class SetupSyncActivity extends Activity {
   private final static String TAG = "SetupSync";
+  private TextView setupTitleView;
+  private TextView setupNoDeviceLinkTitleView;
+  private TextView setupSubtitleView;
+  private TextView pinTextView;
+
+  public SetupSyncActivity() {
+    super();
+    Log.i(TAG, "SetupSyncActivity constructor called.");
+  }
 
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    Log.i(TAG, "Called SetupSyncActivity.onCreate.");
     super.onCreate(savedInstanceState);
+    Log.i(TAG, "Loading content view " + R.layout.sync_setup);
     setContentView(R.layout.sync_setup);
+
+    setupTitleView             = ((TextView) findViewById(R.id.setup_title));
+    setupSubtitleView          = (TextView) findViewById(R.id.setup_subtitle);
+    setupNoDeviceLinkTitleView = (TextView) findViewById(R.id.link_nodevice);
+    pinTextView                = ((TextView) findViewById(R.id.text_pin));
+    if (setupTitleView == null) {
+      Log.e(TAG, "No title view.");
+    }
+    if (setupSubtitleView == null) {
+      Log.e(TAG, "No subtitle view.");
+    }
+    if (setupNoDeviceLinkTitleView == null) {
+      Log.e(TAG, "No 'no device' link view.");
+    }
   }
 
   @Override
   public void onResume() {
+    Log.i(TAG, "Called SetupSyncActivity.onResume.");
     super.onResume();
 
     // Check whether Sync accounts exist; if so, display Pair text
@@ -71,9 +97,9 @@ public class SetupSyncActivity extends Activity {
     Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
     Log.d(TAG, "number: " + accts.length);
     if (accts.length > 0) {
-      ((TextView) findViewById(R.id.setup_title)).setText(getString(R.string.sync_title_pair));
-      ((TextView) findViewById(R.id.setup_subtitle)).setText(getString(R.string.sync_subtitle_pair));
-      ((TextView) findViewById(R.id.link_nodevice)).setVisibility(View.INVISIBLE);
+      setupTitleView.setText(getString(R.string.sync_title_pair));
+      setupSubtitleView.setText(getString(R.string.sync_subtitle_pair));
+      setupNoDeviceLinkTitleView.setVisibility(View.INVISIBLE);
     }
     // Start J-PAKE
     final JpakeClient jClient = new JpakeClient(this);
@@ -106,7 +132,7 @@ public class SetupSyncActivity extends Activity {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        TextView view = ((TextView) findViewById(R.id.text_pin));
+        TextView view = pinTextView;
         if (view == null) {
           Log.w(TAG, "Couldn't find view to display PIN.");
           return;
