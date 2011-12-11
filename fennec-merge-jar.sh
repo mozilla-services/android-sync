@@ -30,6 +30,8 @@ rsync -av res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -av res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -av strings.xml.in $SYNC/
 find res/drawable* -name '*.png' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-resources.mn
+find res/layout    -name '*.xml' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-layout-resources.mn
+find res/xml       -name '*.xml' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-xml-resources.mn
 
 echo "Creating README.txt."
 echo $WARNING > $SYNC/README.txt
