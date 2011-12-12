@@ -5,7 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertNotNull;
 
-import org.mozilla.android.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
 
 public class ExpectBeginDelegate extends DefaultBeginDelegate {
 

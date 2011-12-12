@@ -4,8 +4,8 @@
 package org.mozilla.android.sync.test.helpers;
 
 import org.json.simple.JSONArray;
-import org.mozilla.android.sync.Utils;
-import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
 public class BookmarkHelpers {
 

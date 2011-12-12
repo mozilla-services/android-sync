@@ -3,12 +3,12 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 
 import android.content.Context;
 import android.util.Log;

@@ -1,6 +1,6 @@
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 
 import static junit.framework.Assert.fail;
 

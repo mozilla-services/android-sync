@@ -3,7 +3,7 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.domain.HistoryRecord;
+import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 
 public class HistoryHelpers {
   

@@ -3,14 +3,14 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserBookmarksRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
-import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
-import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.util.Log;
 

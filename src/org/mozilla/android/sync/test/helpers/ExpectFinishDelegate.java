@@ -1,7 +1,7 @@
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.RepositorySessionBundle;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 
 public class ExpectFinishDelegate extends DefaultFinishDelegate {
   

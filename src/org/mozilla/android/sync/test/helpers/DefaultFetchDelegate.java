@@ -8,8 +8,8 @@ import static junit.framework.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
-import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.util.Log;
 

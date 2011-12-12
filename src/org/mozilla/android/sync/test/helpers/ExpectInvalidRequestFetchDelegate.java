@@ -5,8 +5,8 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.fail;
 
-import org.mozilla.android.sync.repositories.InvalidRequestException;
-import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.InvalidRequestException;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.util.Log;
 

@@ -1,8 +1,8 @@
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.RepositorySessionBundle;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 
 public class DefaultFinishDelegate extends DefaultDelegate implements RepositorySessionFinishDelegate {
 

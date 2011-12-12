@@ -9,7 +9,7 @@ import static junit.framework.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   private String[] expected;

@@ -6,7 +6,7 @@ package org.mozilla.android.sync.test.helpers;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.util.Log;
 

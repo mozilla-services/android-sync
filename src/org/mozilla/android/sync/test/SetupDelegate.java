@@ -5,9 +5,9 @@ package org.mozilla.android.sync.test;
 
 import static junit.framework.Assert.assertNotNull;
 
-import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 
 /**
  * Pokes field in AndroidBookmarksTestHelper.

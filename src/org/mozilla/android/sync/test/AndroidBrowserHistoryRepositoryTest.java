@@ -3,13 +3,13 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserHistoryRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
-import org.mozilla.android.sync.repositories.domain.HistoryRecord;
-import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class AndroidBrowserHistoryRepositoryTest /*extends AndroidBrowserRepositoryTest*/ {
   

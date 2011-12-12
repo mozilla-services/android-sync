@@ -3,17 +3,6 @@
 
 package org.mozilla.android.sync.test;
 
-import org.mozilla.android.sync.StubActivity;
-import org.mozilla.android.sync.Utils;
-import org.mozilla.android.sync.repositories.InactiveSessionException;
-import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
-import org.mozilla.android.sync.repositories.android.AndroidBrowserRepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
-import org.mozilla.android.sync.repositories.domain.Record;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
@@ -26,6 +15,17 @@ import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
+import org.mozilla.gecko.sync.StubActivity;
+import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;

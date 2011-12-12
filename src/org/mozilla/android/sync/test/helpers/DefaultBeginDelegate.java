@@ -3,8 +3,8 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 
 public class DefaultBeginDelegate extends DefaultDelegate implements RepositorySessionBeginDelegate {
 

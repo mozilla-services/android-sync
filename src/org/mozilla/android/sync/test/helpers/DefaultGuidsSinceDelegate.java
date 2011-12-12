@@ -3,7 +3,7 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 
 public class DefaultGuidsSinceDelegate extends DefaultDelegate implements RepositorySessionGuidsSinceDelegate {
 
