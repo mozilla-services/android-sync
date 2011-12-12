@@ -46,6 +46,7 @@ import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.ProfileDatabaseException;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -56,7 +57,6 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSince
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.database.Cursor;
 import android.util.Log;
@@ -93,6 +93,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       delegate.onBeginFailed(e);
       return;
     } catch (Exception e) {
+      delegate.onBeginFailed(e);
+      return;
+    } catch (NullCursorException e) {
       delegate.onBeginFailed(e);
       return;
     }

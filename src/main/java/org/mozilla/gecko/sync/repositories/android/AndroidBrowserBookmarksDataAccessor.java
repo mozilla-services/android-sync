@@ -4,6 +4,7 @@ import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -91,11 +92,10 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       return(DBUtils.getAndroidIdFromUri(insert(record)));
   }
 
-  public void checkAndBuildSpecialGuids() {
-
-    // Do check, if any are missing insert them all
+  public void checkAndBuildSpecialGuids() throws NullCursorException {
+    // Do check. If any are missing, insert them all.
     // TODO mobile should always exist as the root,
-    // remove this once that is true
+    // remove this once that is true.
 
     Cursor cur = fetch(DBUtils.SPECIAL_GUIDS);
     cur.moveToFirst();

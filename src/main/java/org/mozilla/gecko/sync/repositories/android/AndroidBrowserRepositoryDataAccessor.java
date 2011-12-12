@@ -2,6 +2,7 @@ package org.mozilla.gecko.sync.repositories.android;
 
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -51,6 +52,11 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   
   protected void delete(String guid) {
     context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
+  }
+
+  protected void queryTimeLogger(String methodCallingQuery) {
+    long elapsedTime = queryEnd - queryStart;
+    Log.i(LOG_TAG, "Query timer: " + methodCallingQuery + " took " + elapsedTime + "ms.");
   }
 
   public Uri insert(Record record) {
