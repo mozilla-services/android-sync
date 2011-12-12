@@ -40,13 +40,14 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.mozilla.android.sync.repositories.BookmarkNeedsReparentingException;
-import org.mozilla.android.sync.repositories.NoGuidForIdException;
-import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
-import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
-import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
+import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -68,7 +69,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
-  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException {
+  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException {
     long androidParentId = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
     String guid = idToGuid.get(androidParentId);
 
@@ -102,40 +103,22 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     Log.i(tag, "Ignoring record with guid: " + record.guid + " and type: " + ((BookmarkRecord)record).type);
     return false;
   }
-<<<<<<< HEAD
 
-  // TODO clean this up to work like finish()
   @Override
   public void begin(RepositorySessionBeginDelegate delegate) {
-    if (this.status == SessionStatus.UNSTARTED) {
-      this.status = SessionStatus.ACTIVE;
-      this.syncBeginTimestamp = System.currentTimeMillis();
-    } else {
-      Log.e(tag, "Tried to begin() an already active or finished session");
-      delegate.onBeginFailed(new InvalidSessionTransitionException(null));
-      return;
-    }
-
+    // Check for the existence of special folders
+    // and insert them if they don't exist.
+    Cursor cur;
     try {
-      checkDatabase();
-    } catch (ProfileDatabaseException e) {
-      Log.e(tag, "ProfileDatabaseException from begin. Fennec must be launched once until this error is fixed");
+      dataAccessor.checkAndBuildSpecialGuids();
+      cur = dataAccessor.getGuidsIDsForFolders();
+    } catch (NullCursorException e) {
       delegate.onBeginFailed(e);
       return;
     }
 
-=======
-
-  @Override
-  public void begin(RepositorySessionBeginDelegate delegate) {
->>>>>>> Fixed reconcilliation. Added ability to detech and resolve a store where a record already exists but has different guid.
-    // Check for the existence of special folders
-    // and insert them if they don't exist.
-    dataAccessor.checkAndBuildSpecialGuids();
-
     // To deal with parent mapping of bookmarks we have to do some
     // hairy stuff, here's the setup for it
-    Cursor cur = dataAccessor.getGuidsIDsForFolders();
     cur.moveToFirst();
     while(!cur.isAfterLast()) {
       String guid = DBUtils.getStringFromCursor(cur, "guid");
@@ -145,13 +128,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       cur.moveToNext();
     }
     cur.close();
-<<<<<<< HEAD
-
-    delegate.onBeginSucceeded(this);
-=======
 
     super.begin(delegate);
->>>>>>> Fixed reconcilliation. Added ability to detech and resolve a store where a record already exists but has different guid.
   }
 
   @Override
@@ -166,7 +144,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   };
 
   @Override
-  protected long insert(Record record) throws NoGuidForIdException {
+  protected long insert(Record record) throws NoGuidForIdException, NullCursorException {
     BookmarkRecord bmk = (BookmarkRecord) record;
     // Check if parent exists
     if (guidToID.containsKey(bmk.parentID)) {

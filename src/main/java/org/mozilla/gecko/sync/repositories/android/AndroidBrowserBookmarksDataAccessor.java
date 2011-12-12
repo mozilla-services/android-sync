@@ -2,6 +2,7 @@ package org.mozilla.gecko.sync.repositories.android;
 
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -23,13 +24,17 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return BrowserContract.Bookmarks.CONTENT_URI;
   }
 
-  protected Cursor getGuidsIDsForFolders() {
+  protected Cursor getGuidsIDsForFolders() throws NullCursorException {
     String where = BrowserContract.Bookmarks.IS_FOLDER + "=1";
-    Log.i("break", "point");
-    return context.getContentResolver().query(getUri(), null, where, null, null);
-//    return context.getContentResolver().query(getUri(),
-//        new String[] { BrowserContract.Bookmarks.GUID, BrowserContract.Bookmarks._ID },
-//        where, null, null);
+    queryStart = System.currentTimeMillis();
+    Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
+    queryEnd = System.currentTimeMillis();
+    queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders");
+    if (cur == null) {
+      Log.e(tag, "Got null cursor exception in AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders");
+      throw new NullCursorException(null);
+    }
+    return cur;
   }
 
   protected void updateParent(String guid, long newParentId) {
@@ -38,11 +43,10 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     updateByGuid(guid, cv);
   }
 
-  public void checkAndBuildSpecialGuids() {
-
-    // Do check, if any are missing insert them all
+  public void checkAndBuildSpecialGuids() throws NullCursorException {
+    // Do check. If any are missing, insert them all.
     // TODO mobile should always exist as the root,
-    // remove this once that is true
+    // remove this once that is true.
 
     Cursor cur = fetch(DBUtils.SPECIAL_GUIDS);
     cur.moveToFirst();

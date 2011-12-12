@@ -1,6 +1,6 @@
-package org.mozilla.android.sync.repositories;
+package org.mozilla.gecko.sync.repositories;
 
-import org.mozilla.android.sync.SyncException;
+import org.mozilla.gecko.sync.SyncException;
 
 public class BookmarkNeedsReparentingException extends SyncException {
 
