@@ -40,6 +40,7 @@ package org.mozilla.gecko.sync.repositories.android;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCleanDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.Context;
 
@@ -50,7 +51,7 @@ public abstract class AndroidBrowserRepository extends Repository {
     new CreateSessionThread(delegate, context).start();
   }
 
-  // TODO tests for cleanup of deleted record
+  // TODO tests for cleanup of deleted records
   @Override
   public void clean(boolean success, RepositorySessionCleanDelegate delegate, Context context) {
     // Only clean deleted records if success
@@ -72,7 +73,12 @@ public abstract class AndroidBrowserRepository extends Repository {
     }
 
     public void run() {
-      getDataAccessor(context).purgeDeleted();
+      try {
+        getDataAccessor(context).purgeDeleted();
+      } catch (NullCursorException e) {
+        delegate.onCleanFailed(AndroidBrowserRepository.this, e);
+        return;
+      }
       delegate.onCleaned(AndroidBrowserRepository.this);
     }
   }
