@@ -40,13 +40,15 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
-import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
-import org.mozilla.gecko.sync.repositories.ProfileDatabaseException;
-import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
-import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
-import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.android.sync.repositories.BookmarkNeedsReparentingException;
+import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
+import org.mozilla.android.sync.repositories.NoGuidForIdException;
+import org.mozilla.android.sync.repositories.ProfileDatabaseException;
+import org.mozilla.android.sync.repositories.Repository;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.android.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -58,6 +60,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   private HashMap<Long, String> idToGuid = new HashMap<Long, String>();
   private HashMap<String, ArrayList<String>> missingParentToChildren = new HashMap<String, ArrayList<String>>();
   private AndroidBrowserBookmarksDataAccessor dataAccessor;
+  private int needsReparenting = 0;
 
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
@@ -102,6 +105,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return false;
   }
 
+  // TODO clean this up to work like finish()
   @Override
   public void begin(RepositorySessionBeginDelegate delegate) {
     if (this.status == SessionStatus.UNSTARTED) {
@@ -142,6 +146,17 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
+  public void finish(RepositorySessionFinishDelegate delegate) {
+    if (needsReparenting != 0) {
+      Log.e(tag, "Finish called but " + needsReparenting +
+          " bookmark(s) have been placed in unsorted bookmarks and not been reparented.");
+      delegate.onFinishFailed(new BookmarkNeedsReparentingException(null));
+    } else {
+      super.finish(delegate);
+    }
+  };
+
+  @Override
   protected void insert(Record record) {
     BookmarkRecord bmk = (BookmarkRecord) record;
     // Check if parent exists
@@ -157,6 +172,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         children = new ArrayList<String>();
       }
       children.add(bmk.guid);
+      needsReparenting++;
       missingParentToChildren.put(bmk.parentID, children);
     }
 
@@ -173,6 +189,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         ArrayList<String> children = missingParentToChildren.get(bmk.guid);
         for (String child : children) {
           dataAccessor.updateParent(child, id);
+          needsReparenting--;
         }
         missingParentToChildren.remove(bmk.guid);
       }
