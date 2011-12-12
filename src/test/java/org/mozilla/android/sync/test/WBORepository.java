@@ -5,16 +5,16 @@ import static org.junit.Assert.fail;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import org.mozilla.android.sync.repositories.Repository;
-import org.mozilla.android.sync.repositories.RepositorySession;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionCreationDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionStoreDelegate;
-import org.mozilla.android.sync.repositories.delegates.RepositorySessionWipeDelegate;
-import org.mozilla.android.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
 

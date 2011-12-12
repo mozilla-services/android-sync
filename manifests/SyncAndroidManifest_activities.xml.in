@@ -2,7 +2,7 @@
             android:icon="@drawable/sync_ic_launcher"
             android:label="@string/sync_app_name"
             android:launchMode="singleTask"
-            android:name="org.mozilla.android.sync.setup.activities.SetupSyncActivity" >
+            android:name="org.mozilla.gecko.sync.setup.activities.SetupSyncActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -15,9 +15,9 @@
         <activity
             android:clearTaskOnLaunch="true"
             android:launchMode="singleTask"
-            android:name="org.mozilla.android.sync.setup.activities.AccountActivity"
+            android:name="org.mozilla.gecko.sync.setup.activities.AccountActivity"
             android:windowSoftInputMode="adjustResize"/>
         <activity
-            android:name="org.mozilla.android.sync.setup.activities.SetupFailureActivity" />
+            android:name="org.mozilla.gecko.sync.setup.activities.SetupFailureActivity" />
         <activity
-            android:name="org.mozilla.android.sync.setup.activities.SetupSuccessActivity" />
+            android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />

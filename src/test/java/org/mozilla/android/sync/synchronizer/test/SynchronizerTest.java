@@ -8,13 +8,13 @@ import static org.junit.Assert.fail;
 import java.util.Date;
 
 import org.junit.Test;
-import org.mozilla.android.sync.repositories.RepositorySessionBundle;
-import org.mozilla.android.sync.repositories.domain.BookmarkRecord;
-import org.mozilla.android.sync.synchronizer.Synchronizer;
-import org.mozilla.android.sync.synchronizer.SynchronizerDelegate;
-import org.mozilla.android.sync.synchronizer.SynchronizerSession;
-import org.mozilla.android.sync.synchronizer.SynchronizerSessionDelegate;
 import org.mozilla.android.sync.test.WBORepository;
+import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
+import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.synchronizer.Synchronizer;
+import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
+import org.mozilla.gecko.sync.synchronizer.SynchronizerSession;
+import org.mozilla.gecko.sync.synchronizer.SynchronizerSessionDelegate;
 
 import android.content.Context;
 

@@ -12,11 +12,11 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.junit.Test;
-import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.android.sync.net.SyncStorageResponse;
-import org.mozilla.android.sync.net.WBOCollectionRequestDelegate;
+import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 
 public class TestWBOCollectionRequestDelegate {
 

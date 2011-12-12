@@ -17,7 +17,7 @@ else
 fi
 
 echo "Building."
-./deps.sh
+#./deps.sh
 
 echo "Copying resources..."
 # I'm guessing these go here.
@@ -47,5 +47,24 @@ rm -r $DEPSDIR
 mkdir $DEPSDIR
 rsync -a target/android-sync-android-sync.jar $DEPSDIR/android-sync-deps.jar
 
-echo "Copying jar..."
-rsync -a target/android-sync.jar $SYNC/android-sync.jar
+#echo "Copying jar..."
+#rsync -a target/android-sync.jar $SYNC/android-sync.jar
+
+#echo "Removing R.class. It will be built by Fennec."
+#zip -d $SYNC/android-sync.jar \
+  #"org/mozilla/gecko/R\$attr.class" \
+  #"org/mozilla/gecko/R\$drawable.class" \
+  #"org/mozilla/gecko/R\$id.class" \
+  #"org/mozilla/gecko/R\$layout.class" \
+  #"org/mozilla/gecko/R\$string.class" \
+  #"org/mozilla/gecko/R\$style.class" \
+  #"org/mozilla/gecko/R\$xml.class" \
+  #"org/mozilla/gecko/R.class"
+
+echo "Copying sources. All use of R must be compiled with Fennec."
+SOURCEDIR="src/main/java/org/mozilla/gecko/sync"
+SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' | sed "s,$SOURCEDIR/,sync/,")
+echo "Source files: \n  $SOURCEFILES"
+rsync --include "*.java" -a $SOURCEDIR $ANDROID/base/
+echo $WARNING > $ANDROID/base/sync/README.txt
+echo $SOURCEFILES > $SYNC/java-sources.mn

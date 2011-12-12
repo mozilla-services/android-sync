@@ -17,7 +17,7 @@ import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.android.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BaseResource;
 
 public class TestResource {
 
