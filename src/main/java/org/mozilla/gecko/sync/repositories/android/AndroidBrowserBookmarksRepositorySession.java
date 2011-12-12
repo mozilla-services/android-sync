@@ -115,6 +115,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     } catch (NullCursorException e) {
       delegate.onBeginFailed(e);
       return;
+    } catch (Exception e) {
+      delegate.onBeginFailed(e);
+      return;
     }
     
     // To deal with parent mapping of bookmarks we have to do some

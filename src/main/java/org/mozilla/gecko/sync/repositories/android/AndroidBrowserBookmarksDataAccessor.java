@@ -30,10 +30,6 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders");
-    if (cur == null) {
-      Log.e(tag, "Got null cursor exception in AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders");
-      throw new NullCursorException(null);
-    }
     return cur;
   }
 

@@ -79,7 +79,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     return cur;
   }
   
-  public Cursor getGUIDsSince(long timestamp) {
+  public Cursor getGUIDsSince(long timestamp) throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
         null,
@@ -87,6 +87,10 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
         Long.toString(timestamp), null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".getGUIDsSince");
+    if (cur == null) {
+      Log.e(tag, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.getGUIDsSince");
+      throw new NullCursorException(null);
+    }
     return cur;
   }
 

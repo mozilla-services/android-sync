@@ -78,6 +78,9 @@ public abstract class AndroidBrowserRepository extends Repository {
       } catch (NullCursorException e) {
         delegate.onCleanFailed(AndroidBrowserRepository.this, e);
         return;
+      } catch (Exception e) {
+        delegate.onCleanFailed(AndroidBrowserRepository.this, e);
+        return;
       }
       delegate.onCleaned(AndroidBrowserRepository.this);
     }
