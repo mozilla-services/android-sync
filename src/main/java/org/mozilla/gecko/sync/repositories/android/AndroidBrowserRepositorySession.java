@@ -93,6 +93,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     } catch (NullCursorException e) {
       delegate.onBeginFailed(e);
       return;
+    } catch (Exception e) {
+      delegate.onBeginFailed(e);
+      return;
     }
     delegate.onBeginSucceeded(this);
   }
@@ -131,10 +134,14 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
 
-      Cursor cur = dbHelper.getGUIDsSince(timestamp);
-      if (cur == null) {
-        Log.e(tag, "Got null cursor in AndroidBrowserRepositorySession.GuidsSinceThread");
-        delegate.onGuidsSinceFailed(new NullCursorException(null));
+      Cursor cur;
+      try {
+        cur = dbHelper.getGUIDsSince(timestamp);
+      } catch (NullCursorException e) {
+        delegate.onGuidsSinceFailed(e);
+        return;
+      } catch (Exception e) {
+        delegate.onGuidsSinceFailed(e);
         return;
       }
 
@@ -197,19 +204,15 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
 
-      Cursor cur;
       try {
-        cur = dbHelper.fetchSince(since);
-      } catch (NullCursorException e1) {
-        delegate.onFetchFailed(e1, null);
-        return;
-      }
-      try {
-        delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
+        delegate.onFetchSucceeded(compileIntoRecordsArray(dbHelper.fetchSince(since)), end);
       } catch (NoGuidForIdException e) {
         delegate.onFetchFailed(e, null);
         return;
       } catch (NullCursorException e) {
+        delegate.onFetchFailed(e, null);
+        return;
+      } catch (Exception e) {
         delegate.onFetchFailed(e, null);
         return;
       }
@@ -253,6 +256,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           delegate.onFetchFailed(e, null);
         } catch (NullCursorException e) {
           delegate.onFetchFailed(e, null);
+        } catch (Exception e) {
+        delegate.onFetchFailed(e, null);
+        return;
         }
       }
     }
@@ -300,6 +306,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       } catch (NullCursorException e) {
         delegate.onFetchFailed(e, null);
         return;
+      } catch (Exception e) {
+        delegate.onFetchFailed(e, null);
+        return;
       }
     }
   }
@@ -341,6 +350,21 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       Record existingRecord;
       try {
         existingRecord = findExistingRecord(this.record);
+
+        // If the record is new and not deleted, store it
+        if (existingRecord == null && !record.deleted) {
+          record.androidID = insert(record);
+        } else if (existingRecord != null) {
+
+          dbHelper.delete(existingRecord);
+          // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
+          // and our existing record has a newer timestamp, we will restore the existing record
+          if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
+            // Record exists already, need to figure out what to store
+            Record store = reconcileRecords(existingRecord, record);
+            record.androidID = insert(store);
+          }
+        }
       } catch (MultipleRecordsForGuidException e) {
         Log.e(tag, "Multiple records returned for given guid: " + record.guid);
         delegate.onStoreFailed(e);
@@ -351,37 +375,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       } catch (NullCursorException e) {
         delegate.onStoreFailed(e);
         return;
-      }
-
-      // If the record is new and not deleted, store it
-      if (existingRecord == null && !record.deleted) {
-        try {
-          record.androidID = insert(record);
-        } catch (NoGuidForIdException e) {
-          delegate.onStoreFailed(e);
-          return;
-        } catch (NullCursorException e) {
-          delegate.onStoreFailed(e);
-          return;
-        }
-      } else if (existingRecord != null) {
-
-        dbHelper.delete(existingRecord);
-        // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
-        // and our existing record has a newer timestamp, we will restore the existing record
-        if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
-          // Record exists already, need to figure out what to store
-          Record store = reconcileRecords(existingRecord, record);
-          try {
-            record.androidID = insert(store);
-          } catch (NoGuidForIdException e) {
-            delegate.onStoreFailed(e);
-            return;
-          } catch (NullCursorException e) {
-            delegate.onStoreFailed(e);
-            return;
-          }
-        }
+      } catch (Exception e) {
+        delegate.onStoreFailed(e);
+        return;
       }
 
       // Invoke callback with result.
