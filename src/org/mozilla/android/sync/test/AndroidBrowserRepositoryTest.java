@@ -6,9 +6,14 @@ package org.mozilla.android.sync.test;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectBeginFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.Utils;
@@ -513,7 +518,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       assertNotNull(ex);
     }
   }
-  /*
   
   public void testStoreNullRecord() {
     prepSession();
@@ -625,7 +629,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     };
     performWait(run);
   }  
-  */
   
   private void verifyInactiveException(Exception ex) {
     if (ex.getClass() != InactiveSessionException.class) {
