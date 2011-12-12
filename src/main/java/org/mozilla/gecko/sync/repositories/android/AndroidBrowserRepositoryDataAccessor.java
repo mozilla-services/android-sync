@@ -87,7 +87,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public void delete(Record record) {
     context.getContentResolver().delete(getUri(),
-        getGuidColumn(), new String[] { record.guid });
+        "guid = '" + record.guid +"'", null);
   }
 
   // TODO do we need a mark deleted and a deleted column. Probably not since

@@ -41,9 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.mozilla.android.sync.repositories.BookmarkNeedsReparentingException;
-import org.mozilla.android.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.android.sync.repositories.NoGuidForIdException;
-import org.mozilla.android.sync.repositories.ProfileDatabaseException;
 import org.mozilla.android.sync.repositories.Repository;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.android.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -104,6 +102,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     Log.i(tag, "Ignoring record with guid: " + record.guid + " and type: " + ((BookmarkRecord)record).type);
     return false;
   }
+<<<<<<< HEAD
 
   // TODO clean this up to work like finish()
   @Override
@@ -125,6 +124,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       return;
     }
 
+=======
+
+  @Override
+  public void begin(RepositorySessionBeginDelegate delegate) {
+>>>>>>> Fixed reconcilliation. Added ability to detech and resolve a store where a record already exists but has different guid.
     // Check for the existence of special folders
     // and insert them if they don't exist.
     dataAccessor.checkAndBuildSpecialGuids();
@@ -141,8 +145,13 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       cur.moveToNext();
     }
     cur.close();
+<<<<<<< HEAD
 
     delegate.onBeginSucceeded(this);
+=======
+
+    super.begin(delegate);
+>>>>>>> Fixed reconcilliation. Added ability to detech and resolve a store where a record already exists but has different guid.
   }
 
   @Override
@@ -157,7 +166,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   };
 
   @Override
-  protected void insert(Record record) {
+  protected long insert(Record record) throws NoGuidForIdException {
     BookmarkRecord bmk = (BookmarkRecord) record;
     // Check if parent exists
     if (guidToID.containsKey(bmk.parentID)) {
@@ -177,6 +186,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
 
     long id = DBUtils.getAndroidIdFromUri(dbHelper.insert(bmk));
+    putRecordToGuidMap(buildRecordString(bmk), bmk.guid);
     bmk.androidID = id;
 
     // If record is folder, update maps and re-parent children if necessary
@@ -194,6 +204,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         missingParentToChildren.remove(bmk.guid);
       }
     }
+    return id;
   }
 
   @Override

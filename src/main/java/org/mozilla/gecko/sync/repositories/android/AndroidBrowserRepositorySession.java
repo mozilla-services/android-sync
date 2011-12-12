@@ -321,14 +321,26 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
       // If the record is new and not deleted, store it
       if (existingRecord == null && !record.deleted) {
-        insert(record);
+        try {
+          record.androidID = insert(record);
+        } catch (NoGuidForIdException e) {
+          delegate.onStoreFailed(e);
+          return;
+        }
       } else if (existingRecord != null) {
 
         dbHelper.delete(existingRecord);
-        if (!record.deleted) {
+        // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
+        // and our existing record has a newer timestamp, we will restore the existing record
+        if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
           // Record exists already, need to figure out what to store
           Record store = reconcileRecords(existingRecord, record);
-          insert(store);
+          try {
+            record.androidID = insert(store);
+          } catch (NoGuidForIdException e) {
+            delegate.onStoreFailed(e);
+            return;
+          }
         }
       }
 
@@ -338,8 +350,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   }
 
-  protected void insert(Record record) {
-    dbHelper.insert(record);
+  protected long insert(Record record) throws NoGuidForIdException {
+    putRecordToGuidMap(buildRecordString(record), record.guid);
+    return DBUtils.getAndroidIdFromUri(dbHelper.insert(record));
   }
 
   // Check if record already exists locally
@@ -362,17 +375,28 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   public HashMap<String, String> getRecordToGuidMap() throws NoGuidForIdException {
     if (recordToGuid == null) {
-      recordToGuid = new HashMap<String, String>();
-      Cursor cur = dbHelper.fetchAll();
-      cur.moveToFirst();
-      while (!cur.isAfterLast()) {
-        Record record = recordFromMirrorCursor(cur);
-        recordToGuid.put(buildRecordString(record), record.guid);
-        cur.moveToNext();
-      }
-      cur.close();
+      createRecordToGuidMap();
     }
     return recordToGuid;
+  }
+
+  private void createRecordToGuidMap() throws NoGuidForIdException {
+    recordToGuid = new HashMap<String, String>();
+    Cursor cur = dbHelper.fetchAll();
+    cur.moveToFirst();
+    while (!cur.isAfterLast()) {
+      Record record = recordFromMirrorCursor(cur);
+      recordToGuid.put(buildRecordString(record), record.guid);
+      cur.moveToNext();
+    }
+    cur.close();
+  }
+
+  public void putRecordToGuidMap(String guid, String recordString) throws NoGuidForIdException {
+    if (recordToGuid == null) {
+      createRecordToGuidMap();
+    }
+    recordToGuid.put(guid, recordString);
   }
 
   protected Record reconcileRecords(Record local, Record remote) {
