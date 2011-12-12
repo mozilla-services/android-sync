@@ -8,6 +8,7 @@ import org.mozilla.android.sync.test.helpers.DefaultFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
@@ -108,7 +109,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     basicStoreTest(BookmarkHelpers.createBookmark1());
   }
 
-
+  /*
   @Override
   public void testRemoteNewerTimeStamp() {
     // TODO Auto-generated method stub
@@ -117,7 +118,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     		"providers overwrite our faked lastModified times (this is the correct " +
     		"action for Fennec, but doesn't let us test the way we were).");
   }
+  */
 
+  /*
   @Override
   public void testLocalNewerTimeStamp() {
     // TODO Auto-generated method stub
@@ -126,7 +129,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     		"providers overwrite our faked lastModified times (this is the correct " +
     		"action for Fennec, but doesn't let us test the way we were).");
   }
+  */
 
+  /*
   @Override
   public void testDeleteRemoteNewer() {
     // TODO Auto-generated method stub
@@ -135,7 +140,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     		"providers overwrite our faked lastModified times (this is the correct " +
     		"action for Fennec, but doesn't let us test the way we were).");
   }
+  */
 
+  /*
   @Override
   public void testDeleteLocalNewer() {
     // TODO Auto-generated method stub
@@ -143,8 +150,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     		"Timing event related tests need to be modified since Fennec content " +
     		"providers overwrite our faked lastModified times (this is the correct " +
     		"action for Fennec, but doesn't let us test the way we were).");
-  }
+  }*/
 
+  /*
   @Override
   public void testDeleteRemoteLocalNonexistent() {
     // TODO Auto-generated method stub
@@ -153,6 +161,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     		"providers overwrite our faked lastModified times (this is the correct " +
     		"action for Fennec, but doesn't let us test the way we were).");
   }
+  */
 
   @Override
   public void testFetchSinceOneRecord() {
@@ -299,43 +308,49 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     
   }
   
+  /*
+   * Test storing identical records with different guids.
+   * For bookmarks identical is defined by the following fields
+   * being the same: title, uri, type, parentName
+   */
+  public void testStoreIdenticalExceptGuid() {
+    Record record0 = BookmarkHelpers.createBookmarkInMobileFolder1();
+    Record record1 = BookmarkHelpers.createBookmarkInMobileFolder1();
+    record1.guid = Utils.generateGuid();
+    assert(!record0.guid.equals(record1.guid));
+    storeIdenticalExceptGuid(record0, record1);
+  }
+  
   // More complicated situation in which we insert folders
   // that exist with children but with a different guid.
   // TODO basic tests for inserting existing records with
   // different guid first.
   
-  
-  
-  /*
   @Override
   public void testRemoteNewerTimeStamp() {
-    BookmarkRecord local = BookmarkHelpers.createBookmark1();
-    BookmarkRecord remote = BookmarkHelpers.createBookmark2();
-    local.androidID = 54321;
+    BookmarkRecord local = BookmarkHelpers.createBookmarkInMobileFolder1();
+    BookmarkRecord remote = BookmarkHelpers.createBookmarkInMobileFolder2();
     remoteNewerTimeStamp(local, remote);
   }
 
   @Override
   public void testLocalNewerTimeStamp() {
-    BookmarkRecord local = BookmarkHelpers.createBookmark1();
-    BookmarkRecord remote = BookmarkHelpers.createBookmark2();
-    local.androidID = 54321;
+    BookmarkRecord local = BookmarkHelpers.createBookmarkInMobileFolder1();
+    BookmarkRecord remote = BookmarkHelpers.createBookmarkInMobileFolder2();
     localNewerTimeStamp(local, remote);
   }
   
   @Override
   public void testDeleteRemoteNewer() {
-    BookmarkRecord local = BookmarkHelpers.createBookmark1();
-    BookmarkRecord remote = BookmarkHelpers.createBookmark2();
-    local.androidID = 54321;
+    BookmarkRecord local = BookmarkHelpers.createBookmarkInMobileFolder1();
+    BookmarkRecord remote = BookmarkHelpers.createBookmarkInMobileFolder2();
     deleteRemoteNewer(local, remote);
   }
   
   @Override
   public void testDeleteLocalNewer() {
-    BookmarkRecord local = BookmarkHelpers.createBookmark1();
-    BookmarkRecord remote = BookmarkHelpers.createBookmark2();
-    local.androidID = 54321;
+    BookmarkRecord local = BookmarkHelpers.createBookmarkInMobileFolder1();
+    BookmarkRecord remote = BookmarkHelpers.createBookmarkInMobileFolder2();
     deleteLocalNewer(local, remote);
   }
   
@@ -344,28 +359,4 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     BookmarkRecord remote = BookmarkHelpers.createBookmark2();
     deleteRemoteLocalNonexistent(remote);
   }
-  */
-  /*
-   * Helpers
-   */
-  /*
-  @Override
-  public static void verifyExpectedRecordReturned(Record expected, Record actual) {
-    verifyExpectedRecordRecordCommonFields(expected, actual);
-    BookmarkRecord recExpect = (BookmarkRecord) expected;
-    BookmarkRecord recActual = (BookmarkRecord) actual;
-    assertEquals(recExpect.title, recActual.title);
-    assertEquals(recExpect.bookmarkURI, recActual.bookmarkURI);
-    // TODO add back in once content providers have these columns
-    //assertEquals(recExpect.description, recActual.description);
-    //assertEquals(recExpect.keyword, recActual.keyword);
-    //assertEquals(recExpect.tags, recExpect.tags);
-    assertEquals(recExpect.parentID, recActual.parentID);
-    assertEquals(recExpect.parentName, recActual.parentName);
-    assertEquals(recExpect.type, recActual.type);
-  }
-  */
-
-  // TODO verify android ID where necessary
-    //assertEquals(recExpect.androidID, recActual.androidID);
 }

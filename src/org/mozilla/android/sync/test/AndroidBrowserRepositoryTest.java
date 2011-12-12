@@ -83,7 +83,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
         new SetupDelegate(), true, getRepository());
     // Clear old data.
-    wipe();
+    //wipe();
   }
   
   protected void prepEmptySession() {
@@ -204,6 +204,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   public abstract void testDeleteRemoteNewer();
   public abstract void testDeleteLocalNewer();
   public abstract void testDeleteRemoteLocalNonexistent();
+  public abstract void testStoreIdenticalExceptGuid();
   
   /*
    * Test abstractions
@@ -377,20 +378,17 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     // Automatically will be assigned lastModified = current time.
     performWait(storeRunnable(session, local));
 
-    // Create second bookmark to be passed to store. Give it a later
-    // last modified timestamp and set it as same GUID.
     remote.guid = local.guid;
-    remote.lastModified = local.lastModified + 1000;
+    
+    // Get the timestamp and make remote newer than it
+    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
+    performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
+    remote.lastModified = timestampDelegate.records.get(0).lastModified + 1000;
     performWait(storeRunnable(session, remote));
 
-    Record[] expected = new Record[] { local };
+    Record[] expected = new Record[] { remote };
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
-
-    // Check that one record comes back, it is the remote one, and has android
-    // ID same as first.
-    assertEquals(1, delegate.recordCount());
-    assertEquals(delegate.records.get(0).androidID, remote.androidID);
   }
 
   /*
@@ -401,30 +399,25 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
 
-    // Local record newer.
-    long timestamp = 1000000000;
-    local.lastModified = timestamp;
     performWait(storeRunnable(session, local));
 
-    // Create an older version of a record with the same GUID.
     remote.guid = local.guid;
-    remote.lastModified = timestamp - 100;
+    
+    
+    // Get the timestamp and make remote older than it
+    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
+    performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
+    remote.lastModified = timestampDelegate.records.get(0).lastModified - 1000;
     performWait(storeRunnable(session, remote));
     
-    // Do a fetch and make sure that we get back the first (local) record.
+    // Do a fetch and make sure that we get back the local record.
     Record[] expected = new Record[] { local };
-    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
-    performWait(fetchAllRunnable(session, delegate));
-
-    // Check that one record comes back, it is the local one
-    assertEquals(1, delegate.recordCount());
-    assertEquals(delegate.records.get(0).androidID, local.androidID);
+    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(expected)));
   }
   
   /*
    * Insert a record that is marked as deleted, remote has newer timestamp
    */
-  
   protected void deleteRemoteNewer(Record local, Record remote) {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
@@ -435,21 +428,29 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     // Pass the same record to store, but mark it deleted and modified
     // more recently
-    local.lastModified = local.lastModified + 1000;
-    local.deleted = true;
-    performWait(storeRunnable(session, local));
+    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
+    performWait(fetchRunnable(session, new String[] { local.guid }, timestampDelegate));
+    remote.lastModified = timestampDelegate.records.get(0).lastModified + 1000;
+    remote.deleted = true;
+    remote.guid = local.guid;
+    performWait(storeRunnable(session, remote));
 
-    Record[] expected = new Record[] { local };
-    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
-    performWait(fetchAllRunnable(session, delegate));
-
-    // Check that one record comes back, marked deleted and with
-    // and androidId
-    assertEquals(1, delegate.recordCount());
-    Record record = delegate.recordAt(0);
-    assertEquals(local.androidID, record.androidID);
-    assertEquals(true, record.deleted);
+    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[]{})));
+  }
+  
+  // Store two records that are identical (this has different meanings based on the
+  // type of record) other than their guids. The record existing locally already
+  // should have its guid replaced (the assumption is that the record existed locally
+  // and then sync was enabled and this record existed on another sync'd device).
+  public void storeIdenticalExceptGuid(Record record0, Record record1) {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
     
+    performWait(storeRunnable(session, record0));
+    performWait(storeRunnable(session, record1));
+    
+    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(
+        new Record[] { record1 })));
   }
   
   /*
@@ -460,27 +461,21 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
 
-    // Local record newer.
-    long timestamp = 1000000000;
-    local.lastModified = timestamp;
     performWait(storeRunnable(session, local));
 
     // Create an older version of a record with the same GUID.
     remote.guid = local.guid;
-    remote.lastModified = timestamp - 100;
+    
+    // Get the timestamp and make remote older than it
+    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
+    performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
+    remote.lastModified = timestampDelegate.records.get(0).lastModified - 1000;
     remote.deleted = true;
     performWait(storeRunnable(session, remote));
 
     // Do a fetch and make sure that we get back the first (local) record.
     Record[] expected = new Record[] { local };
-    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
-    performWait(fetchAllRunnable(session, delegate));
-
-    // Check that one record comes back, it is the local one, and not deleted
-    assertEquals(1, delegate.recordCount());
-    Record record = delegate.recordAt(0);
-    assertEquals(local.androidID, record.androidID);
-    assertEquals(false, record.deleted);
+    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(expected)));
   }
   
   /*
@@ -499,9 +494,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(new Record[]{});
     performWait(fetchAllRunnable(session, delegate));
-
-    // Check that no records are returned
-    assertEquals(0, delegate.recordCount());
   }
   
   /*
@@ -628,7 +620,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       }
     };
     performWait(run);
-  }  
+  }
   
   private void verifyInactiveException(Exception ex) {
     if (ex.getClass() != InactiveSessionException.class) {
