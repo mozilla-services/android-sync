@@ -39,9 +39,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   // UGLY, MESSY, and with some luck and cooperation from #mobile TEMPORARY!
   
   // ALSO must store folder before records if we we are checking that the
-  // records returned are the same as those sent in. Parent folder resolution
-  // not quite right yet, partially because missing special folders in conent
-  // provider. Change this back later since we want to test not doing this.
+  // records returned are the same as those sent in. If you don't want to
+  // store a folder first, store your record in "mobile" or one of the fodlers
+  // that always exists.
   
   @Override
   public void testFetchAll() {
@@ -109,60 +109,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     basicStoreTest(BookmarkHelpers.createBookmark1());
   }
 
-  /*
-  @Override
-  public void testRemoteNewerTimeStamp() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
-  }
-  */
-
-  /*
-  @Override
-  public void testLocalNewerTimeStamp() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
-  }
-  */
-
-  /*
-  @Override
-  public void testDeleteRemoteNewer() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
-  }
-  */
-
-  /*
-  @Override
-  public void testDeleteLocalNewer() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
-  }*/
-
-  /*
-  @Override
-  public void testDeleteRemoteLocalNonexistent() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
-  }
-  */
-
   @Override
   public void testFetchSinceOneRecord() {
     // TODO Auto-generated method stub
@@ -192,7 +138,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   /*
    * Test storing each different type of Bookmark record.
-   * TODO We expect any records with type other than "bookmark"
+   * We expect any records with type other than "bookmark"
    * or "folder" to fail. For now we throw these away.
    */
   public void testStoreMicrosummary() {
@@ -304,8 +250,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
         }
       }
     });
-    
-    
   }
   
   /*
@@ -313,6 +257,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    * For bookmarks identical is defined by the following fields
    * being the same: title, uri, type, parentName
    */
+  @Override
   public void testStoreIdenticalExceptGuid() {
     Record record0 = BookmarkHelpers.createBookmarkInMobileFolder1();
     Record record1 = BookmarkHelpers.createBookmarkInMobileFolder1();
@@ -321,10 +266,51 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     storeIdenticalExceptGuid(record0, record1);
   }
   
-  // More complicated situation in which we insert folders
-  // that exist with children but with a different guid.
-  // TODO basic tests for inserting existing records with
-  // different guid first.
+  /*
+   * More complicated situation in which we insert a folder
+   * followed by a couple of its children. We then insert
+   * the folder again but with a different guid. Children
+   * must still get correct parent when they are fetched.
+   * Store a record after with the new guid as the parent
+   * and make sure it works as well.
+   */
+  public void testStoreIdenticalFoldersWithChildren() {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    Record record0 = BookmarkHelpers.createFolder1();
+    performWait(storeRunnable(session, record0));
+    
+    // Get timestamp so that the conflicting folder that we store below is newer
+    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { record0 });
+    performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
+    
+    Record record1 = BookmarkHelpers.createBookmark1();
+    Record record2 = BookmarkHelpers.createBookmark2();
+    Record record3 = BookmarkHelpers.createFolder1();
+    BookmarkRecord bmk3 = (BookmarkRecord) record3;
+    record3.guid = Utils.generateGuid();
+    record3.lastModified = timestampDelegate.records.get(0).lastModified + 3000;
+    assert(!record0.guid.equals(record3.guid));
+    
+    // Store an additional record after duplicate folder inserted
+    // with new guid and make sure it comes back as well 
+    Record record4 = BookmarkHelpers.createBookmark3();
+    BookmarkRecord bmk4 = (BookmarkRecord) record4;
+    bmk4.parentID = bmk3.guid;
+    bmk4.parentName = bmk3.parentName;
+    
+    doStore(session, new Record[] {
+      record1, record2, record3, bmk4
+    });
+    BookmarkRecord bmk1 = (BookmarkRecord) record1;
+    bmk1.parentID = record3.guid;
+    BookmarkRecord bmk2 = (BookmarkRecord) record2;
+    bmk2.parentID = record3.guid;
+    Record[] expect = new Record[] {
+        bmk1, bmk2, record3
+    };
+    fetchAllRunnable(session, new ExpectFetchDelegate(expect));
+  }
   
   @Override
   public void testRemoteNewerTimeStamp() {

@@ -171,17 +171,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   protected abstract AndroidBrowserRepository getRepository();
   protected abstract AndroidBrowserRepositoryDataAccessor getDataAccessor();
   
-  /*public static void verifyExpectedRecordReturned(Record expected, Record actual) {
-    if (expected.getClass() == BookmarkRecord.class) {
-      AndroidBrowserBookmarksRepositoryTest.verifyExpectedRecordReturned(expected, actual);
-    } else if ()
-    assertEquals(expected.guid, actual.guid);
-    assertEquals(expected.collection, actual.collection);
-    assertEquals(expected.deleted, actual.deleted);
-    assertEquals(expected.lastModified, actual.lastModified);
-  }
-  */
-  
   protected void doStore(RepositorySession session, Record[] records) {
     for (int i = 0; i < records.length; i++) {
       performWait(storeRunnable(session, records[i]));
@@ -447,6 +436,10 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     AndroidBrowserRepositorySession session = getSession();
     
     performWait(storeRunnable(session, record0));
+    
+    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { record0 });
+    performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
+    record1.lastModified = timestampDelegate.records.get(0).lastModified + 3000;
     performWait(storeRunnable(session, record1));
     
     performWait(fetchAllRunnable(session, new ExpectFetchDelegate(
