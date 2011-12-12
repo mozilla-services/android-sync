@@ -7,6 +7,6 @@ public class ExpectFinishDelegate extends DefaultFinishDelegate {
   
   @Override
   public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
-    // no-op: finished successfully
+    //no-op
   }
 }

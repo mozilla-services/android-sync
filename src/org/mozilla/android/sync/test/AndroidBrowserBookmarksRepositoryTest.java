@@ -4,8 +4,11 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
+import org.mozilla.android.sync.test.helpers.DefaultFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
+import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
@@ -214,20 +217,12 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   // Insert two records missing parent, then insert their parent.
   // Make sure they end up with the correct parent on fetch.
   public void testBasicReparenting() {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
-    
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
         BookmarkHelpers.createFolder1()
     };
-    performWait(storeRunnable(session, expected[0]));
-    performWait(storeRunnable(session, expected[1]));
-    performWait(storeRunnable(session, expected[2]));
-
-    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
-    performWait(fetchAllRunnable(session, delegate));
+    doMultipleFolderReparentingTest(expected);
   }
   
   // Insert 3 folders and 4 bookmarks in different orders
@@ -274,25 +269,33 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   private void doMultipleFolderReparentingTest(Record[] expected) {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
-    performWait(storeRunnable(session, expected[0]));
-    performWait(storeRunnable(session, expected[1]));
-    performWait(storeRunnable(session, expected[2]));
-    performWait(storeRunnable(session, expected[3]));
-    performWait(storeRunnable(session, expected[4]));
-    performWait(storeRunnable(session, expected[5]));
-    performWait(storeRunnable(session, expected[6]));
+    doStore(session, expected);
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
+    session.finish(new ExpectFinishDelegate());
   }
   
-  
-  // TODO comment on bug 708485 to tell lucasr what to do
   
   // Insert a record without a parent and check that it is
   // put into unfiled bookmarks. Call finish() and check
   // for an error returned stating that there are still
   // records that need to be re-parented.
   public void testFinishBeforeReparent() {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    Record[] records = new Record[] {
+      BookmarkHelpers.createBookmark1()  
+    };
+    doStore(session, records);
+    session.finish(new DefaultFinishDelegate() {
+      @Override
+      public void onFinishFailed(Exception ex) {
+        if (ex.getClass() != BookmarkNeedsReparentingException.class) {
+          fail("Expected: " + BookmarkNeedsReparentingException.class + " but got " + ex.getClass());
+        }
+      }
+    });
+    
     
   }
   

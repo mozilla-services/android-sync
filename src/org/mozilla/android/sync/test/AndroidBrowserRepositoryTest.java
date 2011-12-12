@@ -6,14 +6,9 @@ package org.mozilla.android.sync.test;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectBeginFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.Utils;
@@ -181,6 +176,12 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     assertEquals(expected.lastModified, actual.lastModified);
   }
   */
+  
+  protected void doStore(RepositorySession session, Record[] records) {
+    for (int i = 0; i < records.length; i++) {
+      performWait(storeRunnable(session, records[i]));
+    }
+  }
   
   // Tests to implement
   public abstract void testFetchAll();
