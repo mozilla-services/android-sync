@@ -43,8 +43,6 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 
-import android.util.Log;
-
 /**
  * Covers the fields used by all bookmark objects.
  * @author rnewman
