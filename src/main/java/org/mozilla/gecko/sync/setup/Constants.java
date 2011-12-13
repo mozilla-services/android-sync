@@ -47,18 +47,18 @@ public class Constants {
   // Constants for JSON payload
 
   // private
-  public static final String B1 = "b1";
-  public static final String B2 = "b2";
+  public static final String ZKP_KEY_B1 = "b1";
+  public static final String ZKP_KEY_B2 = "b2";
 
 // protocol
-  public static final String KEY_PAYLOAD = "payload";
-  public static final String KEY_CIPHERTEXT = "ciphertext";
-  public static final String KEY_HMAC = "hmac";
-  public static final String KEY_IV = "IV";
-  public static final String KEY_TYPE = "type";
-  public static final String KEY_VERSION = "version";
+  public static final String JSON_KEY_PAYLOAD = "payload";
+  public static final String JSON_KEY_CIPHERTEXT = "ciphertext";
+  public static final String JSON_KEY_HMAC = "hmac";
+  public static final String JSON_KEY_IV = "IV";
+  public static final String JSON_KEY_TYPE = "type";
+  public static final String JSON_KEY_VERSION = "version";
 
-  public static final String ETAG = "etag";
+  public static final String JSON_KEY_ETAG = "etag";
 
   public static final String ZKP_KEY_X1 = "x1";
   public static final String ZKP_KEY_X2 = "x2";
