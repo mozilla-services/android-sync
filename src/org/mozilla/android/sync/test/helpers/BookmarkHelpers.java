@@ -25,15 +25,13 @@ public class BookmarkHelpers {
   /*
    * Helpers for creating bookmark records of different types
    */
-  @SuppressWarnings("unchecked")
   public static BookmarkRecord createBookmarkInMobileFolder1() {
     BookmarkRecord rec = createBookmark1();
     rec.parentID = mobileFolderGuid;
     rec.parentName = mobileFolderName;
     return rec;
   }
-  
-  @SuppressWarnings("unchecked")
+
   public static BookmarkRecord createBookmarkInMobileFolder2() {
     BookmarkRecord rec = createBookmark2();
     rec.parentID = mobileFolderGuid;
