@@ -62,6 +62,7 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 
@@ -91,7 +92,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   private final static String JPAKE_VERIFY_VALUE      = "0123456789ABCDEF";
 
   private final static int    MAX_TRIES_START         = 10;
-//  private final static int    MAX_TRIES_FIRST_MSG     = 300;
+  //  private final static int    MAX_TRIES_FIRST_MSG     = 300;
   private final static int    MAX_TRIES_FIRST_MSG     = 25;
   private final static int    MAX_TRIES_LAST_MSG      = 300;
 
@@ -196,49 +197,13 @@ public class JpakeClient implements JpakeRequestDelegate {
     jpakeMaxTries = 300;
 
     final JpakeClient self = this;
-
-    Log.e(LOG_TAG, "testing createZkp vs checkZkp");
-    sanityCheckZkp();
-
-//    runOnThread(new Runnable() {
-//      @Override
-//      public void run() {
-//        self.createSecret();
-//        self.getChannel();
-//      }
-//    });
-  }
-
-  /*
-   * Testing createZkp vs checkZkp
-   */
-  private void sanityCheckZkp() {
-    JpakeCrypto jc = new JpakeCrypto();
-    ExtendedJSONObject r1 = new ExtendedJSONObject();
-    jc.round1(mySignerId, r1);
-
-    ExtendedJSONObject r2 = new ExtendedJSONObject();
-    String secret = "1234567890ab";
-
-    // Extract message fields.
-    BigInteger gx3 = new BigInteger((String) r1.get(Constants.ZKP_KEY_GX1), 16);
-    BigInteger gx4 = new BigInteger((String) r1.get(Constants.ZKP_KEY_GX2), 16);
-
-    ExtendedJSONObject zkp3 = makeJZkp((String) r1.get(Constants.CRYPTO_KEY_GR1),
-        (String) r1.get(Constants.ZKP_KEY_B1), mySignerId);
-    ExtendedJSONObject zkp4 = makeJZkp((String) r1.get(Constants.CRYPTO_KEY_GR2),
-        (String) r1.get(Constants.ZKP_KEY_B2), mySignerId);
-
-    try {
-      jc.round2(mySignerId, r2, secret, gx3, gx4, zkp3, zkp4);
-    } catch (Gx4IsOneException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (IncorrectZkpException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    Log.e(LOG_TAG, "finished testing zkp");
+    runOnThread(new Runnable() {
+      @Override
+      public void run() {
+        self.createSecret();
+        self.getChannel();
+      }
+    });
   }
 
   /**
@@ -267,6 +232,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       reportFailure(error);
     }
     ssActivity.displayAbort(error);
+    finished = true;
   }
 
   /*
@@ -284,10 +250,8 @@ public class JpakeClient implements JpakeRequestDelegate {
               makeRequestResourceDelegate());
           report.post(new StringEntity(""));
         } catch (URISyntaxException e) {
-          // TODO Auto-generated catch block
           e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
-          // TODO Auto-generated catch block
           e.printStackTrace();
         }
       }
@@ -391,6 +355,7 @@ public class JpakeClient implements JpakeRequestDelegate {
    */
   public static byte[] decryptPayload(ExtendedJSONObject payload,
       KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
+    Log.e(LOG_TAG, "decryptPayload()");
     byte[] ciphertext = Base64.decodeBase64(((String) payload
         .get(Constants.JSON_KEY_CIPHERTEXT)).getBytes("UTF-8"));
     byte[] iv = Base64.decodeBase64(((String) payload.get(Constants.JSON_KEY_IV))
@@ -420,11 +385,11 @@ public class JpakeClient implements JpakeRequestDelegate {
     Cryptographer.encrypt(info);
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv = new String(Base64.encodeBase64(info.getIV()));
-    String hmac = Utils.byte2hex(info.getHMAC());
     ExtendedJSONObject payload = new ExtendedJSONObject();
     payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
-    payload.put(Constants.JSON_KEY_HMAC, hmac);
     payload.put(Constants.JSON_KEY_IV, iv);
+    //String hmac = Utils.byte2hex(info.getHMAC());
+    //payload.put(Constants.JSON_KEY_HMAC, hmac);
     return payload;
   }
 
@@ -463,9 +428,9 @@ public class JpakeClient implements JpakeRequestDelegate {
         try {
           putRequest.put(jsonEntity(jOutgoing.object));
         } catch (UnsupportedEncodingException e) {
-          // TODO Auto-generated catch block
           e.printStackTrace();
         }
+        Log.d(LOG_TAG, "what are we sending?");
         Log.i(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
       }
     });
@@ -512,7 +477,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       return;
     }
 
-    Log.e(LOG_TAG, "jIncoming format: " + jIncoming.toJSONString());
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
@@ -529,7 +493,6 @@ public class JpakeClient implements JpakeRequestDelegate {
         return;
       }
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
@@ -548,7 +511,6 @@ public class JpakeClient implements JpakeRequestDelegate {
         return;
       }
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
@@ -558,7 +520,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       jpakeCrypto.round2(mySignerId, jStepTwo, secret, gx3, gx4,
           zkpPayload3, zkpPayload4);
     } catch (Gx4IsOneException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
@@ -580,6 +541,7 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     nextPhase = State.STEP_TWO_GET;
     state = State.PUT;
+    Log.d(LOG_TAG, "computeStepTwo finished");
     putStep();
   }
 
@@ -605,20 +567,19 @@ public class JpakeClient implements JpakeRequestDelegate {
         return;
       }
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    BigInteger b = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
+    Log.d(LOG_TAG, "iPayload: " + iPayload.toJSONString());
+    BigInteger a = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A), 16);
 
     ExtendedJSONObject zkpPayload = null;
     try {
       zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     try {
-      keyBundle = jpakeCrypto.finalRound(b, zkpPayload, secret);
+      keyBundle = jpakeCrypto.finalRound(a, zkpPayload, secret);
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
@@ -634,13 +595,13 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (CryptoException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
-
+    Log.e(LOG_TAG, "enc key64: " + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
+    Log.e(LOG_TAG, "enc key16: " + bytesToString16(keyBundle.getEncryptionKey()));
+    Log.e(LOG_TAG, "enc key: " + keyBundle.getEncryptionKey());
     jOutgoing = new ExtendedJSONObject();
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
@@ -670,10 +631,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       jPayload = encryptPayload(jOutData, keyBundle);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (CryptoException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     jOutgoing = new ExtendedJSONObject();
@@ -692,7 +651,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       try {
         Log.e(LOG_TAG, "Invalid round 3 data: " + jsonEntity(jIncoming.object));
       } catch (UnsupportedEncodingException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       }
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
@@ -703,7 +661,6 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       cleartext = decryptPayload(jIncoming, keyBundle).toString();
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (CryptoException e) {
       e.printStackTrace();
@@ -749,7 +706,6 @@ public class JpakeClient implements JpakeRequestDelegate {
           return;
         }
         pollTries += 1;
-        Log.i(LOG_TAG, "Have tried " + pollTries + " times.");
         scheduleGetRequest(jpakePollInterval);
         return;
       case 404:
@@ -757,6 +713,9 @@ public class JpakeClient implements JpakeRequestDelegate {
         abort(Constants.JPAKE_ERROR_NODATA);
         break;
       case 412: // "Precondition failed"
+        Log.d(LOG_TAG, "Message already replaced on server by other party.");
+        onRequestSuccess(res);
+        break;
       default:
         Log.e(LOG_TAG, "Could not retrieve data. Server responded with HTTP "
             + statusCode);
@@ -783,10 +742,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       Log.e(LOG_TAG, "body:" + response.body());
     } catch (IllegalStateException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
@@ -794,7 +751,6 @@ public class JpakeClient implements JpakeRequestDelegate {
   @Override
   public void onRequestError(Exception e) {
     // TODO Auto-generated method stub
-
   }
 
   @Override
@@ -809,13 +765,10 @@ public class JpakeClient implements JpakeRequestDelegate {
       try {
         body = response.jsonBody();
       } catch (IllegalStateException e1) {
-        // TODO Auto-generated catch block
         e1.printStackTrace();
       } catch (IOException e1) {
-        // TODO Auto-generated catch block
         e1.printStackTrace();
       } catch (ParseException e1) {
-        // TODO Auto-generated catch block
         e1.printStackTrace();
       }
       String channel = body instanceof String ? (String) body : null;
@@ -854,25 +807,20 @@ public class JpakeClient implements JpakeRequestDelegate {
       }
 
       theirEtag = etagHeaders[0].toString();
-      Log.d(LOG_TAG, "theirEtag: " + theirEtag);
+      Log.d(LOG_TAG, "GET: theirEtag: " + theirEtag);
       Log.i(LOG_TAG, "received incoming!");
       try {
         jIncoming = response.jsonObjectBody();
       } catch (IllegalStateException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (ParseException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (NonObjectJSONException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       }
-      Log.d(LOG_TAG, "fetched message " + jIncoming.get(Constants.JSON_KEY_TYPE));
-
+      Log.d(LOG_TAG, "incoming message: " + jIncoming.toJSONString());
       if (this.state == State.STEP_ONE_GET) {
         computeStepTwo();
       } else if (this.state == State.STEP_TWO_GET) {
@@ -880,19 +828,23 @@ public class JpakeClient implements JpakeRequestDelegate {
       } else if (this.state == State.KEY_VERIFY) {
         decryptData();
       }
-      this.state = State.PUT;
       break;
 
     case KEY_VERIFY:
       jpakeMaxTries = MAX_TRIES_LAST_MSG;
     case PUT:
-      etagHeaders = response.httpResponse().getHeaders("etag");
-      myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
-      Log.i(LOG_TAG, "myEtag: " + myEtag);
+//      if (myEtag == null) { // Only have one etag.
+        etagHeaders = response.httpResponse().getHeaders("etag");
+        for (Header h : etagHeaders) {
+          Log.d(LOG_TAG, "PUT header:" +  h.getValue());
+        }
+        myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
+//      }
+      Log.i(LOG_TAG, "PUT: myEtag: " + myEtag);
 
       // Pause twice the poll interval.
-      scheduleGetRequest(2 * jpakePollInterval);
       state = nextPhase;
+      scheduleGetRequest(2 * jpakePollInterval);
       Log.i(LOG_TAG, "scheduling 2xPollInterval for " + state.name());
       break;
 
@@ -906,6 +858,12 @@ public class JpakeClient implements JpakeRequestDelegate {
     default:
       Log.e(LOG_TAG, "Unhandled response success.");
     }
+  }
+
+  private String bytesToString16(byte[] bytes) {
+    byte[] output = new byte[bytes.length + 1];
+    System.arraycopy(bytes, 0, output, 1, bytes.length);
+    return new BigInteger(bytes).toString(16);
   }
 
   /* ResourceDelegate that handles Resource responses */
@@ -930,12 +888,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       request.setHeader(new BasicHeader("X-KeyExchange-Id", clientId));
-      Log.d(LOG_TAG, "setting header: " + clientId);
+      Log.d(LOG_TAG, "setting ID header: " + clientId);
 
-      Header[] headers = request.getAllHeaders();
-      for (Header h : headers) {
-        Log.d(LOG_TAG, "Header: " + h);
-      }
       Log.d(LOG_TAG, request.toString());
       switch (state) {
       case REPORT_FAILURE:
@@ -954,7 +908,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       case STEP_TWO_GET:
         if (myEtag != null) {
           request.setHeader(new BasicHeader("If-None-Match", myEtag));
-          Log.i(LOG_TAG, "myHeader " + myEtag);
+          Log.i(LOG_TAG, "GET: myHeader " + myEtag);
         }
         break;
       }
@@ -962,11 +916,13 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
+      // TODO: maybe use of http requests is wasteful?
       if (isSuccess(response)) {
         this.requestDelegate.onRequestSuccess(response);
       } else {
         this.requestDelegate.onRequestFailure(response);
       }
+      SyncResourceDelegate.consumeEntity(response.getEntity());
     }
 
     @Override
@@ -993,7 +949,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       case STEP_ONE_GET:
       case STEP_TWO_GET:
         break;
-
       case PUT:
         break;
 
