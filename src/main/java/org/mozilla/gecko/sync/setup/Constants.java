@@ -47,33 +47,33 @@ public class Constants {
   // Constants for JSON payload
 
   // private
-  public static final String B1 = "b1";
-  public static final String B2 = "b2";
+  public static final String ZKP_KEY_B1 = "b1";
+  public static final String ZKP_KEY_B2 = "b2";
 
 // protocol
-  public static final String KEY_PAYLOAD = "payload";
-  public static final String KEY_CIPHERTEXT = "ciphertext";
-  public static final String KEY_HMAC = "hmac";
-  public static final String KEY_IV = "IV";
-  public static final String KEY_TYPE = "type";
-  public static final String KEY_VERSION = "version";
+  public static final String JSON_KEY_PAYLOAD = "payload";
+  public static final String JSON_KEY_CIPHERTEXT = "ciphertext";
+  public static final String JSON_KEY_HMAC = "hmac";
+  public static final String JSON_KEY_IV = "IV";
+  public static final String JSON_KEY_TYPE = "type";
+  public static final String JSON_KEY_VERSION = "version";
 
-  public static final String ETAG = "etag";
+  public static final String JSON_KEY_ETAG = "etag";
 
-  public static final String X1 = "x1";
-  public static final String X2 = "x2";
+  public static final String CRYPTO_KEY_GR1 = "gr1";
+  public static final String CRYPTO_KEY_GR2 = "gr2";
 
-  public static final String GX1 = "gx1";
-  public static final String GX2 = "gx2";
+  public static final String ZKP_KEY_GX1 = "gx1";
+  public static final String ZKP_KEY_GX2 = "gx2";
 
-  public static final String ZKP_X1 = "zkp_x1";
-  public static final String ZKP_X2 = "zkp_x2";
-  public static final String B = "b";
-  public static final String GR = "gr";
-  public static final String ID = "id";
+  public static final String ZKP_KEY_ZKP_X1 = "zkp_x1";
+  public static final String ZKP_KEY_ZKP_X2 = "zkp_x2";
+  public static final String ZKP_KEY_B = "b";
+  public static final String ZKP_KEY_GR = "gr";
+  public static final String ZKP_KEY_ID = "id";
 
-  public static final String A = "A";
-  public static final String ZKP_A = "zkp_A";
+  public static final String ZKP_KEY_A = "A";
+  public static final String ZKP_KEY_ZKP_A = "zkp_A";
 
   // JPAKE Errors
   public static final String JPAKE_ERROR_CHANNEL = "jpake.error.channel";
