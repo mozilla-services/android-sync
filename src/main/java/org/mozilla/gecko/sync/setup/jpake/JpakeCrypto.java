@@ -50,7 +50,10 @@ import org.mozilla.android.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.setup.Constants;
 
+import android.util.Log;
+
 public class JpakeCrypto {
+  private static final String     TAG              = "JpakeCrypto";
 
   /*
    * primes p and q, and generator g - from original Mozilla jpake
@@ -91,7 +94,6 @@ public class JpakeCrypto {
   // HKDF params for generating encryption key and HMAC.
   private static final byte[]     EMPTY_BYTES      = {};
   private static final byte[]     ENCR_INPUT_BYTES = { 1 };
-  private static final byte[]     HMAC_INPUT_BYTES = { 2 };
 
   // Jpake params for this key exchange.
   private BigInteger              x2;
@@ -101,7 +103,7 @@ public class JpakeCrypto {
   private BigInteger              gx4;
 
   public void round1(String mySignerId, ExtendedJSONObject values) {
-    // randomly select x1 from [0,q], x2 from [1,q]
+    // randomly select x1 from [0,q), x2 from [1,q)
     BigInteger x1 = getRandom(Q); // [0, q)
     // [1, q)
     BigInteger x2 = this.x2 = BigInteger.ONE.add(getRandom(Q
@@ -114,10 +116,10 @@ public class JpakeCrypto {
     String[] gZkp1 = getZkp(P, Q, G, x1, mySignerId);
     String[] gZkp2 = getZkp(P, Q, G, x2, mySignerId);
 
-    values.put(Constants.GX1, gx1.toString(16));
-    values.put(Constants.GX2, gx2.toString(16));
-    values.put(Constants.ZKP_X1, gZkp1[0]);
-    values.put(Constants.ZKP_X2, gZkp2[0]);
+    values.put(Constants.ZKP_KEY_GX1, gx1.toString(16));
+    values.put(Constants.ZKP_KEY_GX2, gx2.toString(16));
+    values.put(Constants.ZKP_KEY_ZKP_X1, gZkp1[0]);
+    values.put(Constants.ZKP_KEY_ZKP_X2, gZkp2[0]);
     values.put(Constants.B1, gZkp1[1]);
     values.put(Constants.B2, gZkp2[1]);
   }
@@ -144,12 +146,13 @@ public class JpakeCrypto {
     BigInteger a = y1.modPow(y2, P);
     String[] aZkp = getZkp(P, Q, G, a, theirSignerId);
 
-    valuesOut.put(Constants.A, a);
-    valuesOut.put(Constants.ZKP_A, aZkp[0]);
-    valuesOut.put(Constants.B, aZkp[1]);
+    valuesOut.put(Constants.ZKP_KEY_A, a);
+    valuesOut.put(Constants.ZKP_KEY_ZKP_A, aZkp[0]);
+    valuesOut.put(Constants.ZKP_KEY_B, aZkp[1]);
   }
 
-  public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp_B, String s) throws IncorrectZkpException {
+  public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp_B, String s)
+      throws IncorrectZkpException {
 
     BigInteger g1 = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
         .mod(P);
@@ -164,16 +167,17 @@ public class JpakeCrypto {
     y1 = y1.modPow(this.x2, P);
 
     // Generate HMAC and Encryption keys from synckey.
-    byte[] synckey = y1.toByteArray();
-    Mac hmacHasher = HKDF.makeHMACHasher(synckey);
-    // TODO: ok w/o username?
-    byte[] encrBytes = Utils.concatAll(EMPTY_BYTES, HKDF.HMAC_INPUT,
+    byte[] prk = y1.toByteArray();
+    // TODO: make sure is correct format
+    byte[] info = Utils.concatAll(EMPTY_BYTES, HKDF.HMAC_INPUT,
         ENCR_INPUT_BYTES);
-    byte[] encrKey = HKDF.digestBytes(encrBytes, hmacHasher);
-    byte[] hmacBytes = Utils.concatAll(encrKey, HKDF.HMAC_INPUT,
-        HMAC_INPUT_BYTES);
+    byte[] okm = HKDF.hkdfExpand(prk, info, 32 * 2);
+    byte[] enc = new byte[32];
+    byte[] hmac = new byte[32];
+    System.arraycopy(okm, 0, enc, 0, 32);
+    System.arraycopy(okm, 32, hmac, 0, 32);
 
-    return new KeyBundle(encrKey, hmacBytes);
+    return new KeyBundle(enc, hmac);
   }
 
   /* Helper Methods */
@@ -189,9 +193,9 @@ public class JpakeCrypto {
     result[0] = gr.toString(16);
     BigInteger gx = g.modPow(x, p);
 
-    BigInteger b = computeBHash(g, gr, gx, id);
-    // ZKP value: r-x*h
-    result[1] = r.subtract(x.multiply(b)).mod(p).toString(16);
+    BigInteger h = computeBHash(g, gr, gx, id);
+    // ZKP value = b = r-x*h
+    result[1] = r.subtract(x.multiply(h)).mod(p).toString(16);
 
     return result;
   }
@@ -199,20 +203,25 @@ public class JpakeCrypto {
   private void checkZkp(BigInteger g1, BigInteger gx, ExtendedJSONObject zkp)
       throws IncorrectZkpException {
     // extract zkp
-    BigInteger gr = new BigInteger((String) zkp.get(Constants.GR), 16);
-    BigInteger s = new BigInteger((String) zkp.get(Constants.B), 16);
-    String signerId = (String) zkp.get(Constants.ID);
+    BigInteger gr = new BigInteger((String) zkp.get(Constants.ZKP_KEY_GR), 16);
+    BigInteger b = new BigInteger((String) zkp.get(Constants.ZKP_KEY_B), 16);
+    String signerId = (String) zkp.get(Constants.ZKP_KEY_ID);
 
     BigInteger h = computeBHash(g1, gr, gx, signerId);
-    // Check parameters of zkp, and compare to computed hash
-    if ((gx.compareTo(BigInteger.ZERO) < 1) // g^x > 1
-        || gx.compareTo(P.subtract(BigInteger.ONE)) > -1 // g^x < p-1
-        || gx.modPow(Q, P).compareTo(BigInteger.ONE) == 0 // g^x^q = 1
-        /*
-         * Since s = r+h*x
-         * g^s = g^r*g^x^h
-         */
-        || g1.modPow(s, P).compareTo(gr.multiply(gx.modPow(h, P))) != 0) {
+
+    // Check parameters of zkp, and compare to computed hash. These shouldn't
+    // fail.
+    if (gx.compareTo(BigInteger.ZERO) < 1) {// g^x > 1
+      Log.i(TAG, "g^x > 1");
+      throw new IncorrectZkpException();
+    } else if (gx.compareTo(P.subtract(BigInteger.ONE)) > -1) { // g^x < p-1
+      Log.i(TAG, "g^x < p-1");
+      throw new IncorrectZkpException();
+    } else if (gr.compareTo(
+        g1.modPow(b, P).multiply(gx.modPow(h, P)).mod(P)) != 0) {
+      // b = r-h*x ==> g^r = g^b*g^x^(h)
+      Log.i(TAG, "g^b = " + g1.modPow(b, P).toString(16));
+      Log.i(TAG, "zkp calculation incorrect");
       throw new IncorrectZkpException();
     }
   }
@@ -221,17 +230,51 @@ public class JpakeCrypto {
       String id) {
     MessageDigest sha = null;
     try {
-      sha = MessageDigest.getInstance("SHA-1");
+      sha = MessageDigest.getInstance("SHA-256");
+      byte[] gBytes = bigIntToUnsignedByteArray(g);
+      byte[] grBytes = bigIntToUnsignedByteArray(gr);
+      byte[] gxBytes = bigIntToUnsignedByteArray(gx);
+      byte[] idBytes = id.getBytes();
 
-      sha.update(g.toByteArray());
-      sha.update(gr.toByteArray());
-      sha.update(gx.toByteArray());
-      sha.update(id.getBytes());
+      sha.update(byteLengthAsBytes(gBytes));
+      sha.update(gBytes);
+      
+      sha.update(byteLengthAsBytes(grBytes));
+      sha.update(grBytes);
+      sha.update(byteLengthAsBytes(gxBytes));
+      sha.update(gxBytes);
+      sha.update(byteLengthAsBytes(idBytes));
+      sha.update(idBytes);
     } catch (NoSuchAlgorithmException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
     return new BigInteger(sha.digest());
+  }
+
+  private byte[] byteLengthAsBytes(byte[] b) {
+    int byteLen = b.length;
+    byte[] ret = new byte[2];
+    // big endian
+    ret[0] = (byte) ((byteLen >> 8) & 0xff);
+    ret[1] = (byte) (byteLen & 0xff);
+    return ret;
+  }
+
+  /*
+   * Helper function to strip the twos-complement sign bit when converting a
+   * BigInteger to byte[] if it affects the number of bytes
+   */
+  private byte[] bigIntToUnsignedByteArray(BigInteger bi) {
+    byte[] bytes = bi.toByteArray();
+    int len = bytes.length;
+    if (Math.ceil(bi.bitLength() / 8) < bytes.length) {
+      byte[] res = new byte[len];
+      System.arraycopy(bytes, 1, res, 0, len);
+      return res;
+    } else {
+      return bytes;
+    }
   }
 
   /*
