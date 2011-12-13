@@ -37,8 +37,13 @@
 
 package org.mozilla.gecko.sync.net;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+
+import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.util.EntityUtils;
 
 /**
  * Shared abstract class for resource delegate that use the same timeouts
@@ -70,5 +75,25 @@ public abstract class SyncResourceDelegate implements ResourceDelegate {
 
   @Override
   public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+  }
+
+  /**
+   * Best-effort attempt to ensure that the entity has been fully consumed.
+   */
+  public static void consumeEntity(HttpEntity entity) {
+    try {
+      EntityUtils.consume(entity);
+    } catch (Exception e) {
+      // Doesn't matter.
+    }
+  }
+
+  public static void consumeReader(BufferedReader reader) {
+    try {
+      while ((reader.readLine()) != null) {
+      }
+    } catch (IOException e) {
+      return;
+    }
   }
 }

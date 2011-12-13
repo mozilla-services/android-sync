@@ -45,6 +45,15 @@ import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 
+/**
+ * ResourceDelegate implementers must ensure that HTTP responses
+ * are fully consumed to ensure that connections are returned to
+ * the pool:
+ *
+ *          EntityUtils.consume(entity);
+ * @author rnewman
+ *
+ */
 public interface ResourceDelegate {
   // Request augmentation.
   String getCredentials();
