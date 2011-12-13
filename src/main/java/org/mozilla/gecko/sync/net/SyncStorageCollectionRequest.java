@@ -114,11 +114,13 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
             delegate.handleRequestProgress(line);
           } catch (Exception ex) {
             delegate.handleRequestError(new HandleProgressException(ex));
+            SyncResourceDelegate.consumeEntity(entity);
             return;
           }
         }
       } catch (IOException ex) {
         delegate.handleRequestError(ex);
+        SyncResourceDelegate.consumeEntity(entity);
         return;
       } finally {
         // Attempt to close the stream and reader.
@@ -131,7 +133,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
         }
       }
       // We're done processing the entity. Don't let fetching the body succeed!
-      response.setEntity(new CompletedEntity(entity));
+      SyncResourceDelegate.consumeEntity(entity);
       delegate.handleRequestSuccess(new SyncStorageResponse(response));
     }
   }

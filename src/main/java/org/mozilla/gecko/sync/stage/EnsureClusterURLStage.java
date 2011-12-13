@@ -46,6 +46,7 @@ import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.CompletedEntity;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 
 import android.util.Log;
@@ -86,6 +87,7 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
             InputStream content = entity.getContent();
             BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
             output = reader.readLine();
+            SyncResourceDelegate.consumeReader(reader);
             reader.close();
           } catch (IllegalStateException e) {
             delegate.handleError(e);
@@ -101,14 +103,17 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
         case 400:
           Log.i(LOG_TAG, "Got 400 for cluster URL request.");
           delegate.handleFailure(response);
+          SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         case 404:
           Log.i(LOG_TAG, "Server doesn't support user API. Using serverURL as clusterURL.");
           delegate.handleSuccess(serverURL);
+          SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         default:
           Log.w(LOG_TAG, "Got " + status + " fetching node/weave. Returning failure.");
           delegate.handleFailure(response);
+          SyncResourceDelegate.consumeEntity(response.getEntity());
         }
       }
 
