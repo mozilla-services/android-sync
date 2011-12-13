@@ -229,16 +229,9 @@ public class JpakeCrypto {
     // Calculate the ZKP b value = (r-x*h) % q.
     BigInteger h = computeBHash(g, gr, gx, mySignerId);
     Log.e(TAG, "myhash: " + h.toString(16));
+    // ZKP value = b = r-x*h
     BigInteger b = r.subtract(x.multiply(h)).mod(Q);
     result[1] = BigIntegerHelper.toEvenLengthHex(b);
-
-    Log.i(TAG, "g^b = " + g.modPow(b, P).toString(16));
-    Log.i(TAG, "b = " + b.toString(16));
-    Log.i(TAG, "gr = " + gr.toString(16));
-    Log.i(TAG, "gx = " + gx.toString(16));
-    Log.i(TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
-    Log.i(TAG, "gb*g(xh) = " + g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P));
-    Log.e(TAG, "h = " + h.toString(16));
 
     return result;
   }
@@ -253,7 +246,6 @@ public class JpakeCrypto {
     BigInteger b = new BigInteger((String) zkp.get(Constants.ZKP_KEY_B), 16);
     String signerId = (String) zkp.get(Constants.ZKP_KEY_ID);
 
-    Log.e(TAG, "checkZkp");
     BigInteger h = computeBHash(g, gr, gx, signerId);
 
     // Check parameters of zkp, and compare to computed hash. These shouldn't
@@ -322,44 +314,6 @@ public class JpakeCrypto {
     byte[] b = new byte[] { (byte) (length >>> 8), (byte) (length & 0xff) };
     sha.update(b);
     sha.update(data);
-  }
-
-  /*
-   * Helper function to return the length of a byte array in a byte[2].
-   */
-  private byte[] byteLengthAsBytes(byte[] b) {
-    int byteLen = b.length;
-    byte[] ret = new byte[2];
-    // Big endian.
-    ret[0] = (byte) ((byteLen >> 8) & 0xff);
-    ret[1] = (byte) (byteLen & 0xff);
-    return ret;
-  }
-
-  /*
-   * Helper function to strip the twos-complement sign bit when converting a
-   * BigInteger to byte[] if it affects the number of bytes.
-   */
-  private byte[] bigIntToUnsignedByteArray(BigInteger bi) {
-    byte[] bytes = bi.toByteArray();
-    int len = bytes.length;
-    Log.e(TAG, "length " + len);
-    // if (len > 0 && bytes[0] == 0) {
-    // byte[] res = new byte[len - 1];
-    // System.arraycopy(bytes, 1, res, 0, len - 1);
-    // return res;
-    // }
-    // return bytes;
-
-    // Cast bitLength to double so ceil will have an effect.
-    Log.e(TAG, "ceil len/8: " + Math.ceil(((double) bi.bitLength()) / 8));
-    if (Math.ceil(((double) bi.bitLength()) / 8) == len) {
-      return bytes;
-    }
-    len--;
-    byte[] res = new byte[len];
-    System.arraycopy(bytes, 1, res, 0, len);
-    return res;
   }
 
   /*
