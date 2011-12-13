@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
@@ -18,6 +19,7 @@ import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
@@ -151,11 +153,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       }
     };
   }
-  /*
-  public static Runnable fetchRunnable(final RepositorySession session, final String[] guids) {
-    return fetchRunnable(session, guids, guids);
-  }
-  */
+  
   public static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final DefaultFetchDelegate delegate) {
     return new Runnable() {
       @Override
@@ -166,6 +164,16 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   }
   public static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final Record[] expected) {
     return fetchRunnable(session, guids, new ExpectFetchDelegate(expected));
+  }
+  
+  public static Runnable cleanRunnable(final Repository repository, final boolean success, final Context context, final DefaultCleanDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        repository.clean(success, delegate, context);
+        
+      }
+    };
   }
 
   protected abstract AndroidBrowserRepository getRepository();
@@ -194,6 +202,8 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   public abstract void testDeleteLocalNewer();
   public abstract void testDeleteRemoteLocalNonexistent();
   public abstract void testStoreIdenticalExceptGuid();
+  public abstract void testCleanMultipleRecords();
+  public abstract void testCleanSuccessFalse();
   
   /*
    * Test abstractions
@@ -214,6 +224,44 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       performWait(storeRunnable(session, record)); 
     }
     performWait(fetchAllRunnable(session, expected));
+  }
+  
+  /*
+   * Tests for clean
+   */
+  // Input: 4 records; 2 which are to be cleaned, 2 which should remain after the clean
+  protected void cleanMultipleRecords(Record delete0, Record delete1, Record keep0, Record keep1) {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    delete0.deleted = true;
+    delete1.deleted = true;
+    doStore(session, new Record[] {
+        delete0, delete1, keep0, keep1
+    });
+    performWait(cleanRunnable(getRepository(), true, getApplicationContext(), new DefaultCleanDelegate() {
+      public void onCleaned(Repository repo) {
+        testWaiter().performNotify();
+      }
+    })); 
+    
+    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[] { keep0, keep1})));
+  }
+  
+  // Store 2 records, 1 marked deleted. Call clean with success = false, both records should remain.
+  protected void cleanSuccessFalse(Record record0, Record record1) {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    record0.deleted = true;
+    doStore(session, new Record[] {
+        record0, record1
+    });
+    performWait(cleanRunnable(getRepository(), false, getApplicationContext(), new DefaultCleanDelegate() {
+      public void onCleaned(Repository repo) {
+        testWaiter().performNotify();
+      }
+    })); 
+    
+    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[] { record0, record1})));
   }
   
   /*
