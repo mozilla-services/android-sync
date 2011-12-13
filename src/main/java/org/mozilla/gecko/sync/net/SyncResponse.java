@@ -54,23 +54,24 @@ public class SyncResponse {
    * @throws ParseException
    */
   public Object jsonBody() throws IllegalStateException, IOException,
-                           ParseException {
-                            HttpEntity entity = this.response.getEntity();
-                            if (entity == null) {
-                              return null;
-                            }
-                            InputStream content = entity.getContent();
-                            return ExtendedJSONObject.parse(content);
-                          }
+                          ParseException {
+    HttpEntity entity = this.response.getEntity();
+    if (entity == null) {
+      return null;
+    }
+    InputStream content = entity.getContent();
+    return ExtendedJSONObject.parse(content);
+  }
 
-  public ExtendedJSONObject jsonObjectBody() throws IllegalStateException, IOException,
-                                 ParseException, NonObjectJSONException {
-                                  Object body = this.jsonBody();
-                                  if (body instanceof ExtendedJSONObject) {
-                                    return (ExtendedJSONObject) body;
-                                  }
-                                  throw new NonObjectJSONException(body);
-                                }
+  public ExtendedJSONObject jsonObjectBody() throws IllegalStateException,
+                                            IOException, ParseException,
+                                            NonObjectJSONException {
+    Object body = this.jsonBody();
+    if (body instanceof ExtendedJSONObject) {
+      return (ExtendedJSONObject) body;
+    }
+    throw new NonObjectJSONException(body);
+  }
 
   private boolean hasHeader(String h) {
     return this.response.containsHeader(h);

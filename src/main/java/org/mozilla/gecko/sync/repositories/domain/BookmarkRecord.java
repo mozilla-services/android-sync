@@ -43,8 +43,6 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 
-import android.util.Log;
-
 /**
  * Covers the fields used by all bookmark objects.
  * @author rnewman
@@ -81,6 +79,7 @@ public class BookmarkRecord extends Record {
   public long    androidParentID;
   public String  type;
   public String  pos;
+  public long    androidPosition;
 
   public JSONArray children;
   public JSONArray tags;
@@ -152,13 +151,24 @@ public class BookmarkRecord extends Record {
   public boolean equals(Object o) {
     if (!o.getClass().equals(BookmarkRecord.class)) return false;
     BookmarkRecord other = (BookmarkRecord) o;
-    Log.i("check", "equal");
     if (!super.equals(other)) return false;
     if (!((this.title == other.title) || this.title.equals(other.title))) return false;
     if (!((this.bookmarkURI == other.bookmarkURI) || this.bookmarkURI.equals(other.bookmarkURI))) return false;
     if (!((this.parentID == other.parentID) || this.parentID.equals(other.parentID))) return false;
     if (!((this.parentName == other.parentName) || this.parentName.equals(other.parentName))) return false;
     if (!((this.type == other.type) || this.type.equals(other.type))) return false;
+    
+    // Check children
+    if (this.type.equals("folder")) {
+      // Check if they are both null
+      if (this.children == other.children) return true;
+      
+      if (this.children.size() != other.children.size()) return false;
+      for (int i = 0; i < this.children.size(); i++) {
+        String child = (String) this.children.get(i);
+        if (!other.children.contains(child)) return false;
+      }
+    }
     return true;
 
     // TODO add back in once content providers have these columns
