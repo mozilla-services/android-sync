@@ -9,6 +9,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class ExpectStoredDelegate extends DefaultStoreDelegate {
   String expectedGUID;
+  Record storedRecord;
 
   public ExpectStoredDelegate(String guid) {
     this.expectedGUID = guid;
@@ -16,6 +17,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
 
   @Override
   public void onStoreSucceeded(Record record) {
+    this.storedRecord = record;
     try {
       if (this.expectedGUID != null) {
         assertEquals(this.expectedGUID, record.guid);

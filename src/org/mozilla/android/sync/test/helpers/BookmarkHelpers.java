@@ -9,14 +9,36 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
 public class BookmarkHelpers {
 
-  private static String parentID = Utils.generateGuid();
+  private static String mobileFolderGuid = "mobile";
+  private static String mobileFolderName = "Mobile Bookmarks";
+  private static String topFolderGuid = Utils.generateGuid();
+  private static String topFolderName = "My Top Folder";
+  private static String middleFolderGuid = Utils.generateGuid();
+  private static String middleFolderName = "My Middle Folder";
+  private static String bottomFolderGuid = Utils.generateGuid();
+  private static String bottomFolderName = "My Bottom Folder";
   private static String bmk1Guid= Utils.generateGuid();
   private static String bmk2Guid = Utils.generateGuid();
-  private static String parentName = "main";
+  private static String bmk3Guid = Utils.generateGuid();
+  private static String bmk4Guid = Utils.generateGuid();
 
   /*
    * Helpers for creating bookmark records of different types
    */
+  public static BookmarkRecord createBookmarkInMobileFolder1() {
+    BookmarkRecord rec = createBookmark1();
+    rec.parentID = mobileFolderGuid;
+    rec.parentName = mobileFolderName;
+    return rec;
+  }
+
+  public static BookmarkRecord createBookmarkInMobileFolder2() {
+    BookmarkRecord rec = createBookmark2();
+    rec.parentID = mobileFolderGuid;
+    rec.parentName = mobileFolderName;
+    return rec;
+  }
+  
   @SuppressWarnings("unchecked")
   public static BookmarkRecord createBookmark1() {
     BookmarkRecord record = new BookmarkRecord();
@@ -30,8 +52,8 @@ public class BookmarkHelpers {
     record.description = "This is a description for foo.bar.com";
     record.tags = tags;
     record.keyword = "fooooozzzzz";
-    record.parentID = parentID;
-    record.parentName = parentName;
+    record.parentID = topFolderGuid;
+    record.parentName = topFolderName;
     record.type = "bookmark";
     return record;
   }
@@ -48,8 +70,44 @@ public class BookmarkHelpers {
     record.description = "This is a description for Bar???";
     record.tags = tags;
     record.keyword = "keywordzzz";
-    record.parentID = parentID;
-    record.parentName = parentName;
+    record.parentID = topFolderGuid;
+    record.parentName = topFolderName;
+    record.type = "bookmark";
+    return record;
+  }
+  
+  @SuppressWarnings("unchecked")
+  public static BookmarkRecord createBookmark3() {
+    BookmarkRecord record = new BookmarkRecord();
+    JSONArray tags = new JSONArray();
+    tags.add("tag1");
+    tags.add("tag2");    
+    record.guid = bmk3Guid;
+    record.title = "Bmk3";
+    record.bookmarkURI = "http://bmk3.com";
+    record.description = "This is a description for bmk3";
+    record.tags = tags;
+    record.keyword = "snooozzz";
+    record.parentID = middleFolderGuid;
+    record.parentName = middleFolderName;
+    record.type = "bookmark";
+    return record;
+  }
+  
+  @SuppressWarnings("unchecked")
+  public static BookmarkRecord createBookmark4() {
+    BookmarkRecord record = new BookmarkRecord();
+    JSONArray tags = new JSONArray();
+    tags.add("tag1");
+    tags.add("tag2");    
+    record.guid = bmk4Guid;
+    record.title = "Bmk4";
+    record.bookmarkURI = "http://bmk4.com";
+    record.description = "This is a description for bmk4?";
+    record.tags = tags;
+    record.keyword = "booooozzz";
+    record.parentID = bottomFolderGuid;
+    record.parentName = bottomFolderName;
     record.type = "bookmark";
     return record;
   }
@@ -66,8 +124,8 @@ public class BookmarkHelpers {
     record.description = "microsummary description";
     record.tags = tags;
     record.keyword = "keywordzzz";
-    record.parentID = parentID;
-    record.parentName = parentName;
+    record.parentID = topFolderGuid;
+    record.parentName = topFolderName;
     record.type = "microsummary";
     return record;
   }
@@ -80,28 +138,68 @@ public class BookmarkHelpers {
     record.description = "Query 1 description";
     record.tags = new JSONArray();
     record.keyword = "queryKeyword";
-    record.parentID = parentID;
-    record.parentName = parentName;
+    record.parentID = topFolderGuid;
+    record.parentName = topFolderName;
     record.type = "query";
     return record;
   }
 
   @SuppressWarnings("unchecked")
-  public static BookmarkRecord createFolder() {
+  public static BookmarkRecord createFolder1() {
     // Make this the Menu folder since each DB will
     // have at least this folder
     BookmarkRecord record = new BookmarkRecord();
-    record.guid = parentID;
-    record.title = parentName;
+    record.guid = topFolderGuid;
+    record.title = topFolderName;
     // TODO this will change once we have proper base folders in DB
     // No parent since this is the menu folder
-    record.parentID = "";
-    record.parentName = "";
+    record.parentID = "mobile";
+    record.parentName = "Mobile Bookmarks";
     // TODO verify how we want to store these string arrays
     // pretty sure I verified that this is actually how other clients do it, but double check
     JSONArray children = new JSONArray();
     children.add(bmk1Guid);
     children.add(bmk2Guid);
+    record.children = children;
+    record.type = "folder";
+    return record;
+  }
+  
+  @SuppressWarnings("unchecked")
+  public static BookmarkRecord createFolder2() {
+    // Make this the Menu folder since each DB will
+    // have at least this folder
+    BookmarkRecord record = new BookmarkRecord();
+    record.guid = middleFolderGuid;
+    record.title = middleFolderName;
+    // TODO this will change once we have proper base folders in DB
+    // No parent since this is the menu folder
+    record.parentID = topFolderGuid;
+    record.parentName = topFolderName; 
+    // TODO verify how we want to store these string arrays
+    // pretty sure I verified that this is actually how other clients do it, but double check
+    JSONArray children = new JSONArray();
+    children.add(bmk3Guid);
+    record.children = children;
+    record.type = "folder";
+    return record;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static BookmarkRecord createFolder3() {
+    // Make this the Menu folder since each DB will
+    // have at least this folder
+    BookmarkRecord record = new BookmarkRecord();
+    record.guid = bottomFolderGuid;
+    record.title = bottomFolderName;
+    // TODO this will change once we have proper base folders in DB
+    // No parent since this is the menu folder
+    record.parentID = middleFolderGuid;
+    record.parentName = middleFolderName;
+    // TODO verify how we want to store these string arrays
+    // pretty sure I verified that this is actually how other clients do it, but double check
+    JSONArray children = new JSONArray();
+    children.add(bmk4Guid);
     record.children = children;
     record.type = "folder";
     return record;
@@ -112,8 +210,8 @@ public class BookmarkHelpers {
     BookmarkRecord record = new BookmarkRecord();
     record.guid = Utils.generateGuid();
     record.title = "Livemark title";
-    record.parentID = parentID;
-    record.parentName = parentName;
+    record.parentID = topFolderGuid;
+    record.parentName = topFolderName;
     // TODO verify how we want to store these string arrays
     // pretty sure I verified that this is actually how other clients do it, but double check
     JSONArray children = new JSONArray();
@@ -128,8 +226,8 @@ public class BookmarkHelpers {
     BookmarkRecord record = new BookmarkRecord();
     record.guid = Utils.generateGuid();
     record.pos = "3";
-    record.parentID = parentID;
-    record.parentName = parentName;
+    record.parentID = topFolderGuid;
+    record.parentName = topFolderName;
     record.type = "separator";
     return record;
   }
