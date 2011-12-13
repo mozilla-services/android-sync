@@ -47,8 +47,8 @@ public class Constants {
   // Constants for JSON payload
 
   // private
-  public static final String R1 = "r1";
-  public static final String R2 = "r2";
+  public static final String B1 = "b1";
+  public static final String B2 = "b2";
 
 // protocol
   public static final String KEY_PAYLOAD = "payload";
@@ -59,6 +59,9 @@ public class Constants {
   public static final String KEY_VERSION = "version";
 
   public static final String ETAG = "etag";
+
+  public static final String X1 = "x1";
+  public static final String X2 = "x2";
 
   public static final String GX1 = "gx1";
   public static final String GX2 = "gx2";
