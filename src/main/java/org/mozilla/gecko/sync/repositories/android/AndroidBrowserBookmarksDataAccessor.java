@@ -30,12 +30,16 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders");
+    if (cur == null) {
+      throw new NullCursorException(null);
+    }
     return cur;
   }
 
-  protected void updateParent(String guid, long newParentId) {
+  protected void updateParentAndPosition(String guid, long newParentId, long position) {
     ContentValues cv = new ContentValues();
     cv.put(BrowserContract.Bookmarks.PARENT, newParentId);
+    cv.put(BrowserContract.Bookmarks.POSITION, position);
     updateByGuid(guid, cv);
   }
 
@@ -79,6 +83,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     //cv.put(COL_TAGS,            rec.tags);
     //cv.put(COL_KEYWORD,         rec.keyword);
     cv.put(BrowserContract.Bookmarks.PARENT,          rec.androidParentID);
+    cv.put(BrowserContract.Bookmarks.POSITION, rec.androidPosition);
 
     // NOTE: Only bookmark and folder types should make it this far,
     // other types should be filtered out and droppped
@@ -88,6 +93,19 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     //cv.put(BrowserContract.Bookmarks.POSITION,        rec.pos);
     cv.put("modified", rec.lastModified);
     return cv;
+  }
+
+  // Returns a cursor with any records that list the given androidID as a parent
+  public Cursor getChildren(long androidID) throws NullCursorException {
+    String where = BrowserContract.Bookmarks.PARENT + "=" + androidID;
+    queryStart = System.currentTimeMillis();
+    Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
+    queryEnd = System.currentTimeMillis();
+    queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getChildren");
+    if (cur == null) {
+      throw new NullCursorException(null);
+    }
+    return cur;
   }
 
   /*

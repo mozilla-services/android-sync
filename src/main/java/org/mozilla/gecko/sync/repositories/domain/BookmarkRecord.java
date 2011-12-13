@@ -81,6 +81,7 @@ public class BookmarkRecord extends Record {
   public long    androidParentID;
   public String  type;
   public String  pos;
+  public long    androidPosition;
 
   public JSONArray children;
   public JSONArray tags;
@@ -158,6 +159,18 @@ public class BookmarkRecord extends Record {
     if (!((this.parentID == other.parentID) || this.parentID.equals(other.parentID))) return false;
     if (!((this.parentName == other.parentName) || this.parentName.equals(other.parentName))) return false;
     if (!((this.type == other.type) || this.type.equals(other.type))) return false;
+
+    // Check children
+    if (this.type.equals("folder")) {
+      // Check if they are both null
+      if (this.children == other.children) return true;
+
+      if (this.children.size() != other.children.size()) return false;
+      for (int i = 0; i < this.children.size(); i++) {
+        String child = (String) this.children.get(i);
+        if (!other.children.contains(child)) return false;
+      }
+    }
     return true;
 
     // TODO add back in once content providers have these columns

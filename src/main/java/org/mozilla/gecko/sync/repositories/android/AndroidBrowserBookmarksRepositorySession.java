@@ -40,24 +40,27 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.json.simple.JSONArray;
+import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
 import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
-import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
+
 
 public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
 
   private HashMap<String, Long> guidToID = new HashMap<String, Long>();
   private HashMap<Long, String> idToGuid = new HashMap<Long, String>();
   private HashMap<String, ArrayList<String>> missingParentToChildren = new HashMap<String, ArrayList<String>>();
+  private HashMap<String, JSONArray> parentToChildArray = new HashMap<String, JSONArray>();
   private AndroidBrowserBookmarksDataAccessor dataAccessor;
   private int needsReparenting = 0;
 
@@ -75,13 +78,13 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     // TODO Ignore parent names not being found until our special ids are put in
     if (guid == null) {
-      return DBUtils.bookmarkFromMirrorCursor(cur, "", "");
+      return DBUtils.bookmarkFromMirrorCursor(cur, "", "", null);
     }
     // Get parent name
+    String parentName = "";
     Cursor name = dataAccessor.fetch(new String[] { guid });
     name.moveToFirst();
     // TODO temp error string until we throw proper exception
-    String parentName = "";
     if (!name.isAfterLast()) {
       parentName = DBUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
     }
@@ -90,7 +93,36 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       // TODO investigate why this is being hit happening
       Log.e(tag, "Couldn't find record with guid " + guid + " while looking for parent name");
     }
-    return DBUtils.bookmarkFromMirrorCursor(cur, guid, parentName);
+    name.close();
+
+    long isFolder = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
+    JSONArray childArray = null;
+    if (isFolder == 1) {
+      long androidID = guidToID.get(DBUtils.getStringFromCursor(cur, "guid"));
+      Cursor children = dataAccessor.getChildren(androidID);
+      children.moveToFirst();
+      int count = 0;
+      // TODO fix this horrible (but functional) code
+      while(!children.isAfterLast()) {
+        count++;
+        children.moveToNext();
+      }
+      children.moveToFirst();
+      String[] kids = new String[count];
+      while(!children.isAfterLast()) {
+        if (childArray == null) childArray = new JSONArray();
+        String childGuid = DBUtils.getStringFromCursor(children, "guid");
+        int childPosition = (int) DBUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
+        kids[childPosition] = childGuid;
+        children.moveToNext();
+      }
+      children.close();
+      for(int i = 0; i < kids.length; i++) {
+        childArray.add(kids[i]);
+      }
+
+    }
+    return DBUtils.bookmarkFromMirrorCursor(cur, guid, parentName, childArray);
   }
 
   @Override
@@ -151,7 +183,19 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     BookmarkRecord bmk = (BookmarkRecord) record;
     // Check if parent exists
     if (guidToID.containsKey(bmk.parentID)) {
+      // TODO consider joining these two data structure somehow
       bmk.androidParentID = guidToID.get(bmk.parentID);
+      JSONArray children = parentToChildArray.get(bmk.parentID);
+      if (children != null) {
+        if (!children.contains(bmk.guid)) {
+          children.add(bmk.guid);
+          parentToChildArray.put(bmk.parentID, children);
+        }
+        bmk.androidPosition = children.indexOf(bmk.guid);
+      } else if (!bmk.type.equals(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+        // TODO if children is null AND it isn't a folder blow up
+        // since this shouldn't happen
+      }
     }
     else {
       bmk.androidParentID = guidToID.get("unfiled");
@@ -175,15 +219,26 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       guidToID.put(bmk.guid, id);
       idToGuid.put(id, bmk.guid);
 
-      // re-parent
+      JSONArray childArray = bmk.children;
+
+      // Re-parent.
       if(missingParentToChildren.containsKey(bmk.guid)) {
-        ArrayList<String> children = missingParentToChildren.get(bmk.guid);
-        for (String child : children) {
-          dataAccessor.updateParent(child, id);
+        for (String child : missingParentToChildren.get(bmk.guid)) {
+          long position;
+          // TODO add a check to make sure children isn't null, it shouldn't be,
+          // but if it is then we have problems and need to stop storing this record
+          if (bmk.children.contains(child)) {
+            position = childArray.indexOf(child);
+          } else {
+            childArray.add(child);
+            position = childArray.indexOf(child);
+          }
+          dataAccessor.updateParentAndPosition(child, id, position);
           needsReparenting--;
         }
         missingParentToChildren.remove(bmk.guid);
       }
+      parentToChildArray.put(bmk.guid, childArray);
     }
     return id;
   }

@@ -107,7 +107,7 @@ public class DBUtils {
   }
 
   //Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it
-  public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur, String parentId, String parentName) {
+  public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur, String parentId, String parentName, JSONArray children) {
 
     // TODO NOTE NOTE NOTE carrying on our screwy qualify/not qualify problem,
     // the hard coded column names below are because these must be unqualified!
@@ -129,6 +129,8 @@ public class DBUtils {
     rec.androidID = getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
     // TODO implement crazy position resolution stuff
     //rec.pos = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_POS);
+    rec.androidPosition = getLongFromCursor(cur, BrowserContract.Bookmarks.POSITION);
+    rec.children = children;
 
     // Need to restore the parentId since it isn't stored in content provider
     rec.parentID = parentId;
