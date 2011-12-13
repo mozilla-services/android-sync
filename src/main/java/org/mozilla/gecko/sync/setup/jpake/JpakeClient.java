@@ -356,10 +356,10 @@ public class JpakeClient implements JpakeRequestDelegate {
   public static byte[] decryptPayload(ExtendedJSONObject payload,
       KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
     byte[] ciphertext = Base64.decodeBase64(((String) payload
-        .get(Constants.KEY_CIPHERTEXT)).getBytes("UTF-8"));
-    byte[] iv = Base64.decodeBase64(((String) payload.get(Constants.KEY_IV))
+        .get(Constants.JSON_KEY_CIPHERTEXT)).getBytes("UTF-8"));
+    byte[] iv = Base64.decodeBase64(((String) payload.get(Constants.JSON_KEY_IV))
         .getBytes("UTF-8"));
-    byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.KEY_HMAC));
+    byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.JSON_KEY_HMAC));
     return Cryptographer
         .decrypt(new CryptoInfo(ciphertext, iv, hmac, keybundle));
   }
@@ -386,9 +386,9 @@ public class JpakeClient implements JpakeRequestDelegate {
     String iv = new String(Base64.encodeBase64(info.getIV()));
     String hmac = Utils.byte2hex(info.getHMAC());
     ExtendedJSONObject payload = new ExtendedJSONObject();
-    payload.put(Constants.KEY_CIPHERTEXT, message);
-    payload.put(Constants.KEY_HMAC, hmac);
-    payload.put(Constants.KEY_IV, iv);
+    payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
+    payload.put(Constants.JSON_KEY_HMAC, hmac);
+    payload.put(Constants.JSON_KEY_IV, iv);
     return payload;
   }
 
@@ -450,18 +450,18 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     ExtendedJSONObject jZkp1 = makeJZkp(
         (String) jStepOne.get(Constants.ZKP_KEY_ZKP_X1),
-        (String) jStepOne.get(Constants.B1), mySignerId);
+        (String) jStepOne.get(Constants.ZKP_KEY_B1), mySignerId);
     ExtendedJSONObject jZkp2 = makeJZkp(
         (String) jStepOne.get(Constants.ZKP_KEY_ZKP_X2),
-        (String) jStepOne.get(Constants.B2), mySignerId);
+        (String) jStepOne.get(Constants.ZKP_KEY_B2), mySignerId);
 
     jOne.put(Constants.ZKP_KEY_ZKP_X1, jZkp1);
     jOne.put(Constants.ZKP_KEY_ZKP_X2, jZkp2);
 
     jOutgoing = new ExtendedJSONObject();
-    jOutgoing.put(Constants.KEY_TYPE, mySignerId + "1");
-    jOutgoing.put(Constants.KEY_PAYLOAD, jOne);
-    jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
+    jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "1");
+    jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
+    jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
 
     nextPhase = State.STEP_ONE_GET;
     state = State.PUT;
@@ -472,7 +472,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     Log.d(TAG, "Computing round 2.");
 
     // Check incoming message sender.
-    if (!jIncoming.get(Constants.KEY_TYPE).equals(theirSignerId + "1")) {
+    if (!jIncoming.get(Constants.JSON_KEY_TYPE).equals(theirSignerId + "1")) {
       Log.e(TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
@@ -481,7 +481,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
-      iPayload = jIncoming.getObject(Constants.KEY_PAYLOAD);
+      iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
       if (iPayload == null
           || iPayload.getObject(Constants.ZKP_KEY_ZKP_X1) == null
           || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X1)
@@ -520,7 +520,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     // Jpake round 2
     ExtendedJSONObject jStepTwo = new ExtendedJSONObject();
     try {
-      jpakeCrypto.round2(theirSignerId, jStepTwo, secret, gx3, gx4,
+      jpakeCrypto.round2(mySignerId, jStepTwo, secret, gx3, gx4,
           zkpPayload3, zkpPayload4);
     } catch (Gx4IsOneException e) {
       // TODO Auto-generated catch block
@@ -539,9 +539,9 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     // Make outgoing message.
     jOutgoing = new ExtendedJSONObject();
-    jOutgoing.put(Constants.KEY_TYPE, mySignerId + "2");
-    jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
-    jOutgoing.put(Constants.KEY_PAYLOAD, oPayload);
+    jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "2");
+    jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
+    jOutgoing.put(Constants.JSON_KEY_PAYLOAD, oPayload);
 
     nextPhase = State.STEP_TWO_GET;
     state = State.PUT;
@@ -551,7 +551,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   private void computeFinal() {
     Log.d(TAG, "Computing final round.");
     // Check incoming message type.
-    if (!jIncoming.get(Constants.KEY_TYPE).equals(theirSignerId + "2")) {
+    if (!jIncoming.get(Constants.JSON_KEY_TYPE).equals(theirSignerId + "2")) {
       Log.e(TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
@@ -560,7 +560,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
-      iPayload = jIncoming.getObject(Constants.KEY_PAYLOAD);
+      iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
       if (iPayload == null
           || iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null
           || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_A).get(
@@ -607,9 +607,9 @@ public class JpakeClient implements JpakeRequestDelegate {
     }
 
     jOutgoing = new ExtendedJSONObject();
-    jOutgoing.put(Constants.KEY_TYPE, mySignerId + "3");
-    jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
-    jOutgoing.put(Constants.KEY_PAYLOAD, jPayload.object);
+    jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
+    jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
+    jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jPayload.object);
     nextPhase = State.KEY_VERIFY;
     state = State.PUT;
     putStep();
@@ -642,9 +642,9 @@ public class JpakeClient implements JpakeRequestDelegate {
       e.printStackTrace();
     }
     jOutgoing = new ExtendedJSONObject();
-    jOutgoing.put(Constants.KEY_TYPE, mySignerId + "3");
-    jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
-    jOutgoing.put(Constants.KEY_PAYLOAD, jPayload.object);
+    jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
+    jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
+    jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jPayload.object);
 
     state = State.ENCRYPT_PUT;
     putStep();
@@ -653,7 +653,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   private void decryptData() {
     Log.d(TAG, "Verifying their key");
     if (!(theirSignerId + "3").equals((String) jIncoming
-        .get(Constants.KEY_TYPE))) {
+        .get(Constants.JSON_KEY_TYPE))) {
       try {
         Log.e(TAG, "Invalid round 3 data: " + jsonEntity(jIncoming.object));
       } catch (UnsupportedEncodingException e) {
@@ -835,7 +835,7 @@ public class JpakeClient implements JpakeRequestDelegate {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
-      Log.d(TAG, "fetched message " + jIncoming.get(Constants.KEY_TYPE));
+      Log.d(TAG, "fetched message " + jIncoming.get(Constants.JSON_KEY_TYPE));
 
       if (this.state == State.STEP_ONE_GET) {
         computeStepTwo();
