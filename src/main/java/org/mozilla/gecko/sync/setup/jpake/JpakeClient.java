@@ -90,7 +90,8 @@ public class JpakeClient implements JpakeRequestDelegate {
   private final static String JPAKE_VERIFY_VALUE      = "0123456789ABCDEF";
 
   private final static int    MAX_TRIES_START         = 10;
-  private final static int    MAX_TRIES_FIRST_MSG     = 300;
+//  private final static int    MAX_TRIES_FIRST_MSG     = 300;
+  private final static int    MAX_TRIES_FIRST_MSG     = 25;
   private final static int    MAX_TRIES_LAST_MSG      = 300;
 
   // JPAKE shared variables
@@ -122,11 +123,11 @@ public class JpakeClient implements JpakeRequestDelegate {
   // Jpake state
   private boolean             finished                = false;
   private State               state                   = State.GET_CHANNEL;
+  private State               nextPhase;
 
   private JSONObject          newData;
   private String              jOutData;
   private Timer               timerScheduler;
-  private TimerTask           getStepTimerTask;
 
   private JpakeCrypto         jpakeCrypto;
 
@@ -136,7 +137,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     // Set JPAKE params from prefs
     // TODO: remove hardcoding
     jpakeServer = "https://setup.services.mozilla.com/";
-    jpakePollInterval = 1; // 1 second
+    jpakePollInterval = 1 * 1000; // 1 second
     jpakeMaxTries = MAX_TRIES_START;
 
     timerScheduler = new Timer();
@@ -166,6 +167,20 @@ public class JpakeClient implements JpakeRequestDelegate {
       request.get();
     }
 
+  }
+
+  private void scheduleGetRequest(int delay) {
+    JpakeRequest getRequest = null;
+    try {
+      getRequest = new JpakeRequest(channelUrl, makeRequestResourceDelegate());
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+      abort(Constants.JPAKE_ERROR_CHANNEL);
+      return;
+    }
+
+    GetStepTimerTask getStepTimerTask = new GetStepTimerTask(getRequest);
+    timerScheduler.schedule(getStepTimerTask, delay);
   }
 
   /**
@@ -323,9 +338,9 @@ public class JpakeClient implements JpakeRequestDelegate {
 
   private ExtendedJSONObject makeJZkp(String gr, String b, String id) {
     ExtendedJSONObject result = new ExtendedJSONObject();
-    result.put(Constants.GR, gr);
-    result.put(Constants.B, b);
-    result.put(Constants.ID, id);
+    result.put(Constants.ZKP_KEY_GR, gr);
+    result.put(Constants.ZKP_KEY_B, b);
+    result.put(Constants.ZKP_KEY_ID, id);
     return result;
   }
 
@@ -415,23 +430,9 @@ public class JpakeClient implements JpakeRequestDelegate {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
+        Log.i(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
       }
     });
-  }
-
-  private void getStep() {
-    Log.d(LOG_TAG, "Retrieving next message.");
-    JpakeRequest putRequest = null;
-    try {
-      putRequest = new JpakeRequest(channelUrl, makeRequestResourceDelegate());
-    } catch (URISyntaxException e) {
-      e.printStackTrace();
-      abort(Constants.JPAKE_ERROR_CHANNEL);
-      return;
-    }
-
-    getStepTimerTask = new GetStepTimerTask(putRequest);
-    putRequest.get();
   }
 
   private void computeStepOne() {
@@ -444,25 +445,26 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     // Set outgoing message.
     ExtendedJSONObject jOne = new ExtendedJSONObject();
-    jOne.put(Constants.GX1, jStepOne.get(Constants.GX1));
-    jOne.put(Constants.GX2, jStepOne.get(Constants.GX1));
+    jOne.put(Constants.ZKP_KEY_GX1, jStepOne.get(Constants.ZKP_KEY_GX1));
+    jOne.put(Constants.ZKP_KEY_GX2, jStepOne.get(Constants.ZKP_KEY_GX1));
 
     ExtendedJSONObject jZkp1 = makeJZkp(
-        (String) jStepOne.get(Constants.ZKP_X1),
+        (String) jStepOne.get(Constants.ZKP_KEY_ZKP_X1),
         (String) jStepOne.get(Constants.B1), mySignerId);
     ExtendedJSONObject jZkp2 = makeJZkp(
-        (String) jStepOne.get(Constants.ZKP_X2),
+        (String) jStepOne.get(Constants.ZKP_KEY_ZKP_X2),
         (String) jStepOne.get(Constants.B2), mySignerId);
 
-    jOne.put(Constants.ZKP_X1, jZkp1);
-    jOne.put(Constants.ZKP_X2, jZkp2);
+    jOne.put(Constants.ZKP_KEY_ZKP_X1, jZkp1);
+    jOne.put(Constants.ZKP_KEY_ZKP_X2, jZkp2);
 
     jOutgoing = new ExtendedJSONObject();
     jOutgoing.put(Constants.KEY_TYPE, mySignerId + "1");
     jOutgoing.put(Constants.KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
 
-    state = State.STEP_ONE_GET;
+    nextPhase = State.STEP_ONE_GET;
+    state = State.PUT;
     putStep();
   }
 
@@ -479,49 +481,37 @@ public class JpakeClient implements JpakeRequestDelegate {
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
-      iPayload = jIncoming.getJSONObject(Constants.KEY_PAYLOAD);
+      iPayload = jIncoming.getObject(Constants.KEY_PAYLOAD);
       if (iPayload == null
-          || iPayload.getJSONObject(Constants.ZKP_X1) == null
-          || !theirSignerId.equals(iPayload.getJSONObject(Constants.ZKP_X1)
-              .get(Constants.ID))
-          || iPayload.getJSONObject(Constants.ZKP_X2) == null
-          || !theirSignerId.equals(iPayload.getJSONObject(Constants.ZKP_X2)
-              .get(Constants.ID))) {
-        Log.e(LOG_TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
+          || iPayload.getObject(Constants.ZKP_KEY_ZKP_X1) == null
+          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X1)
+              .get(Constants.ZKP_KEY_ID))
+          || iPayload.getObject(Constants.ZKP_KEY_ZKP_X2) == null
+          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X2)
+              .get(Constants.ZKP_KEY_ID))) {
+        Log.e(TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
         abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
         return;
       }
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (ParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     } catch (NonObjectJSONException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
     // Extract message fields.
-    BigInteger gx3 = new BigInteger((String) iPayload.get(Constants.GX1), 16);
-    BigInteger gx4 = new BigInteger((String) iPayload.get(Constants.GX2), 16);
+    BigInteger gx3 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX1), 16);
+    BigInteger gx4 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
 
     ExtendedJSONObject zkpPayload3 = null;
     ExtendedJSONObject zkpPayload4 = null;
     try {
-      zkpPayload3 = iPayload.getJSONObject(Constants.ZKP_X1);
-      zkpPayload4 = iPayload.getJSONObject(Constants.ZKP_X2);
+      zkpPayload3 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X1);
+      zkpPayload4 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X2);
       if (zkpPayload3 == null || zkpPayload4 == null) {
         Log.e(LOG_TAG, "Invalid round 1 zkpPayload message");
         abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
         return;
       }
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (ParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     } catch (NonObjectJSONException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -542,10 +532,10 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     // Make outgoing payload.
     ExtendedJSONObject oPayload = new ExtendedJSONObject();
-    ExtendedJSONObject zkpA = makeJZkp((String) jStepTwo.get(Constants.ZKP_A),
-        (String) jStepTwo.get(Constants.B), mySignerId);
-    oPayload.put(Constants.A, jStepTwo.get(Constants.A));
-    oPayload.put(Constants.ZKP_A, zkpA);
+    ExtendedJSONObject zkpA = makeJZkp((String) jStepTwo.get(Constants.ZKP_KEY_ZKP_A),
+        (String) jStepTwo.get(Constants.ZKP_KEY_B), mySignerId);
+    oPayload.put(Constants.ZKP_KEY_A, jStepTwo.get(Constants.ZKP_KEY_A));
+    oPayload.put(Constants.ZKP_KEY_ZKP_A, zkpA);
 
     // Make outgoing message.
     jOutgoing = new ExtendedJSONObject();
@@ -553,7 +543,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
     jOutgoing.put(Constants.KEY_PAYLOAD, oPayload);
 
-    state = State.STEP_TWO_GET;
+    nextPhase = State.STEP_TWO_GET;
+    state = State.PUT;
     putStep();
   }
 
@@ -569,36 +560,24 @@ public class JpakeClient implements JpakeRequestDelegate {
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
-      iPayload = jIncoming.getJSONObject(Constants.KEY_PAYLOAD);
+      iPayload = jIncoming.getObject(Constants.KEY_PAYLOAD);
       if (iPayload == null
-          || iPayload.getJSONObject(Constants.ZKP_A) == null
-          || !theirSignerId.equals(iPayload.getJSONObject(Constants.ZKP_A).get(
-              Constants.ID))) {
+          || iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null
+          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_A).get(
+              Constants.ZKP_KEY_ID))) {
         Log.e(LOG_TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
         abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
         return;
       }
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (ParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     } catch (NonObjectJSONException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    BigInteger b = new BigInteger((String) iPayload.get(Constants.GX2), 16);
+    BigInteger b = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
 
     ExtendedJSONObject zkpPayload = null;
     try {
-      zkpPayload = iPayload.getJSONObject(Constants.ZKP_A);
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (ParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
     } catch (NonObjectJSONException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -631,7 +610,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.KEY_TYPE, mySignerId + "3");
     jOutgoing.put(Constants.KEY_VERSION, KEYEXCHANGE_VERSION);
     jOutgoing.put(Constants.KEY_PAYLOAD, jPayload.object);
-    state = State.KEY_VERIFY;
+    nextPhase = State.KEY_VERIFY;
+    state = State.PUT;
     putStep();
   }
 
@@ -734,12 +714,14 @@ public class JpakeClient implements JpakeRequestDelegate {
           return;
         }
         pollTries += 1;
-        timerScheduler.schedule(getStepTimerTask, jpakePollInterval);
+        Log.i(LOG_TAG, "Have tried " + pollTries + " times.");
+        scheduleGetRequest(jpakePollInterval);
         return;
       case 404:
         Log.e(LOG_TAG, "No data found in channel.");
         abort(Constants.JPAKE_ERROR_NODATA);
         break;
+      case 412: // "Precondition failed"
       default:
         Log.e(LOG_TAG, "Could not retrieve data. Server responded with HTTP "
             + statusCode);
@@ -835,34 +817,22 @@ public class JpakeClient implements JpakeRequestDelegate {
         }
         return;
       }
-      theirEtag = etagHeaders[0].getValue();
+      theirEtag = etagHeaders[0].toString();
       Log.d(LOG_TAG, "theirEtag: " + theirEtag);
-      try {
-        Log.i(LOG_TAG, "response body: " + response.jsonBody());
-      } catch (IllegalStateException e2) {
-        // TODO Auto-generated catch block
-        e2.printStackTrace();
-      } catch (IOException e2) {
-        // TODO Auto-generated catch block
-        e2.printStackTrace();
-      } catch (ParseException e2) {
-        // TODO Auto-generated catch block
-        e2.printStackTrace();
-      }
+      Log.i(LOG_TAG, "received incoming!");
       try {
         jIncoming = response.jsonObjectBody();
-      } catch (Exception e) {
-        try {
-          Log.e(LOG_TAG,
-              "Server responded with invalid JSON. " + response.body());
-        } catch (IllegalStateException e1) {
-          // TODO Auto-generated catch block
-          e1.printStackTrace();
-        } catch (IOException e1) {
-          // TODO Auto-generated catch block
-          e1.printStackTrace();
-        }
-        abort(Constants.JPAKE_ERROR_INVALID);
+      } catch (IllegalStateException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (ParseException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (NonObjectJSONException e) {
+        // TODO Auto-generated catch block
         e.printStackTrace();
       }
       Log.d(LOG_TAG, "fetched message " + jIncoming.get(Constants.KEY_TYPE));
@@ -881,10 +851,13 @@ public class JpakeClient implements JpakeRequestDelegate {
       jpakeMaxTries = MAX_TRIES_LAST_MSG;
     case PUT:
       etagHeaders = response.httpResponse().getHeaders("etag");
-      myEtag = response.httpResponse().getHeaders("etag")[0].toString();
+      myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
+      Log.i(LOG_TAG, "myEtag: " + myEtag);
 
-      // TODO: pause twice the poll interval
-      getStep();
+      // Pause twice the poll interval.
+      scheduleGetRequest(2 * jpakePollInterval);
+      state = nextPhase;
+      Log.i(LOG_TAG, "scheduling 2xPollInterval for " + state.name());
       break;
 
     case ENCRYPT_PUT:
@@ -927,7 +900,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       for (Header h : headers) {
         Log.d(LOG_TAG, "Header: " + h);
       }
-      Log.d(LOG_TAG, request.getURI().toString());
+
       Log.d(LOG_TAG, request.toString());
 
       switch (state) {
@@ -947,6 +920,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       case STEP_TWO_GET:
         if (myEtag != null) {
           request.setHeader(new BasicHeader("If-None-Match", myEtag));
+          Log.i(LOG_TAG, "myHeader " + myEtag);
         }
         break;
       }

@@ -60,20 +60,20 @@ public class Constants {
 
   public static final String ETAG = "etag";
 
-  public static final String X1 = "x1";
-  public static final String X2 = "x2";
+  public static final String ZKP_KEY_X1 = "x1";
+  public static final String ZKP_KEY_X2 = "x2";
 
-  public static final String GX1 = "gx1";
-  public static final String GX2 = "gx2";
+  public static final String ZKP_KEY_GX1 = "gx1";
+  public static final String ZKP_KEY_GX2 = "gx2";
 
-  public static final String ZKP_X1 = "zkp_x1";
-  public static final String ZKP_X2 = "zkp_x2";
-  public static final String B = "b";
-  public static final String GR = "gr";
-  public static final String ID = "id";
+  public static final String ZKP_KEY_ZKP_X1 = "zkp_x1";
+  public static final String ZKP_KEY_ZKP_X2 = "zkp_x2";
+  public static final String ZKP_KEY_B = "b";
+  public static final String ZKP_KEY_GR = "gr";
+  public static final String ZKP_KEY_ID = "id";
 
-  public static final String A = "A";
-  public static final String ZKP_A = "zkp_A";
+  public static final String ZKP_KEY_A = "A";
+  public static final String ZKP_KEY_ZKP_A = "zkp_A";
 
   // JPAKE Errors
   public static final String JPAKE_ERROR_CHANNEL = "jpake.error.channel";
