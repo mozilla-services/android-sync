@@ -43,6 +43,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
+//import javax.crypto.Mac;
+
 import org.mozilla.android.sync.crypto.HKDF;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.Utils;
@@ -91,7 +93,6 @@ public class JpakeCrypto {
                                                            + "99410E73B", 16);
 
   // HKDF params for generating encryption key and HMAC.
-  private static final byte[]     EMPTY_BYTES      = {};
   private static final byte[]     ENCR_INPUT_BYTES = { 1 };
 
   // Jpake params for this key exchange.
@@ -115,7 +116,6 @@ public class JpakeCrypto {
     BigInteger x1 = getRandom(Q); // [0, q)
     BigInteger x2 = this.x2 = BigInteger.ONE.add(getRandom(Q
         .subtract(BigInteger.ONE))); // [1, q)
-
     BigInteger gx1 = this.gx1 = G.modPow(x1, P);
     BigInteger gx2 = this.gx2 = G.modPow(x2, P);
 
@@ -201,9 +201,7 @@ public class JpakeCrypto {
     // Generate HMAC and Encryption keys from synckey.
     byte[] prk = y1.toByteArray();
     // TODO: make sure is correct format
-    byte[] info = Utils.concatAll(EMPTY_BYTES, HKDF.HMAC_INPUT,
-        ENCR_INPUT_BYTES);
-    byte[] okm = HKDF.hkdfExpand(prk, info, 32 * 2);
+    byte[] okm = HKDF.hkdfExpand(prk, HKDF.HMAC_INPUT, 32 * 2);
     byte[] enc = new byte[32];
     byte[] hmac = new byte[32];
     System.arraycopy(okm, 0, enc, 0, 32);
@@ -324,15 +322,6 @@ public class JpakeCrypto {
     byte[] b = new byte[] { (byte) (length >>> 8), (byte) (length & 0xff) };
     sha.update(b);
     sha.update(data);
-  }
-
-  private void printBytes(byte[] bytes) {
-    try {
-      Log.e(TAG, "bytes[] " + new String(bytes, "UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
   }
 
   /*

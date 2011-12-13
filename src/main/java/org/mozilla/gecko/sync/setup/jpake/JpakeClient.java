@@ -566,8 +566,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       e.printStackTrace();
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
-      // TODO: remove after testing
-      //abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
     }
 
     // Make outgoing payload.
@@ -997,10 +996,8 @@ public class JpakeClient implements JpakeRequestDelegate {
       case STEP_ONE_GET:
       case STEP_TWO_GET:
         break;
-
       case PUT:
         break;
-
       case REPORT_FAILURE:
         Log.e(LOG_TAG, "Report failed: " + error);
         break;
