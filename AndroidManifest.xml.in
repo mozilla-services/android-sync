@@ -28,6 +28,6 @@
     <instrumentation
         android:label="Sync tests"
         android:name="android.test.InstrumentationTestRunner"
-        android:targetPackage="org.mozilla.gecko.sync" />
+        android:targetPackage="org.mozilla.gecko" />
 
 </manifest>
