@@ -96,6 +96,7 @@ public class JpakeCrypto {
   private static final byte[]     ENCR_INPUT_BYTES = { 1 };
 
   // Jpake params for this key exchange.
+  private String                  mySignerId;
   private BigInteger              x2;
   private BigInteger              gx1;
   private BigInteger              gx2;
@@ -103,6 +104,8 @@ public class JpakeCrypto {
   private BigInteger              gx4;
 
   public void round1(String mySignerId, ExtendedJSONObject values) {
+    this.mySignerId = mySignerId;
+
     // randomly select x1 from [0,q), x2 from [1,q)
     BigInteger x1 = getRandom(Q); // [0, q)
     // [1, q)
@@ -113,18 +116,18 @@ public class JpakeCrypto {
     BigInteger gx2 = this.gx2 = G.modPow(x2, P);
 
     // generate zero knowledge proofs
-    String[] gZkp1 = getZkp(P, Q, G, x1, mySignerId);
-    String[] gZkp2 = getZkp(P, Q, G, x2, mySignerId);
+    String[] zkp1 = createZkp(P, Q, G, gx1, x1);
+    String[] zkp2 = createZkp(P, Q, G, gx2, x2);
 
     values.put(Constants.ZKP_KEY_GX1, gx1.toString(16));
     values.put(Constants.ZKP_KEY_GX2, gx2.toString(16));
-    values.put(Constants.ZKP_KEY_ZKP_X1, gZkp1[0]);
-    values.put(Constants.ZKP_KEY_ZKP_X2, gZkp2[0]);
-    values.put(Constants.B1, gZkp1[1]);
-    values.put(Constants.B2, gZkp2[1]);
+    values.put(Constants.ZKP_KEY_ZKP_X1, zkp1[0]);
+    values.put(Constants.ZKP_KEY_ZKP_X2, zkp2[0]);
+    values.put(Constants.ZKP_KEY_B1, zkp1[1]);
+    values.put(Constants.ZKP_KEY_B2, zkp2[1]);
   }
 
-  public void round2(String theirSignerId, ExtendedJSONObject valuesOut,
+  public void round2(String mySignerId, ExtendedJSONObject valuesOut,
       String secret, BigInteger gx3, BigInteger gx4, ExtendedJSONObject zkp1,
       ExtendedJSONObject zkp2) throws Gx4IsOneException, IncorrectZkpException {
 
@@ -133,30 +136,33 @@ public class JpakeCrypto {
     }
 
     // check ZKP
+    Log.e(TAG, "starting zkp1");
     checkZkp(G, gx3, zkp1);
+    Log.e(TAG, "finished zkp1");
     checkZkp(G, gx4, zkp2);
+    Log.e(TAG, "finished zkp2");
 
     this.gx3 = gx3;
     this.gx4 = gx4;
 
-    // compute a = g^[(x1+x3+x4)*x2*secret)]
+    // Compute a = g^[(x1+x3+x4)*(x2*secret)].
     BigInteger y1 = gx3.multiply(gx4).mod(P).multiply(gx1).mod(P);
     BigInteger y2 = this.x2.multiply(new BigInteger(secret.getBytes())).mod(P);
 
     BigInteger a = y1.modPow(y2, P);
-    String[] aZkp = getZkp(P, Q, G, a, theirSignerId);
+    String[] zkpA = createZkp(P, Q, y1, y2, a);
 
     valuesOut.put(Constants.ZKP_KEY_A, a);
-    valuesOut.put(Constants.ZKP_KEY_ZKP_A, aZkp[0]);
-    valuesOut.put(Constants.ZKP_KEY_B, aZkp[1]);
+    valuesOut.put(Constants.ZKP_KEY_ZKP_A, zkpA[0]);
+    valuesOut.put(Constants.ZKP_KEY_B, zkpA[1]);
   }
 
-  public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp_B, String s)
+  public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp, String s)
       throws IncorrectZkpException {
 
     BigInteger g1 = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
         .mod(P);
-    checkZkp(g1, b, zkp_B);
+    checkZkp(g1, b, zkp);
 
     // Calculate shared key g^(x1+x3)x2*x4*s, which is equivalent to
     // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2
@@ -182,8 +188,8 @@ public class JpakeCrypto {
 
   /* Helper Methods */
 
-  private String[] getZkp(BigInteger p, BigInteger q, BigInteger g,
-      BigInteger x, String id) {
+  private String[] createZkp(BigInteger p, BigInteger q, BigInteger g,
+      BigInteger gx, BigInteger x) {
     String[] result = new String[2];
 
     // generate random r for exponent
@@ -191,9 +197,8 @@ public class JpakeCrypto {
 
     BigInteger gr = g.modPow(r, p);
     result[0] = gr.toString(16);
-    BigInteger gx = g.modPow(x, p);
 
-    BigInteger h = computeBHash(g, gr, gx, id);
+    BigInteger h = computeBHash(g, gr, gx, mySignerId);
     // ZKP value = b = r-x*h
     result[1] = r.subtract(x.multiply(h)).mod(p).toString(16);
 
@@ -222,7 +227,7 @@ public class JpakeCrypto {
       // b = r-h*x ==> g^r = g^b*g^x^(h)
       Log.i(TAG, "g^b = " + g1.modPow(b, P).toString(16));
       Log.i(TAG, "zkp calculation incorrect");
-      throw new IncorrectZkpException();
+//      throw new IncorrectZkpException();
     }
   }
 
@@ -269,6 +274,7 @@ public class JpakeCrypto {
     byte[] bytes = bi.toByteArray();
     int len = bytes.length;
     if (Math.ceil(bi.bitLength() / 8) < bytes.length) {
+      len--;
       byte[] res = new byte[len];
       System.arraycopy(bytes, 1, res, 0, len);
       return res;
