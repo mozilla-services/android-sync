@@ -993,7 +993,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       case STEP_ONE_GET:
       case STEP_TWO_GET:
         break;
-
       case PUT:
         break;
 
