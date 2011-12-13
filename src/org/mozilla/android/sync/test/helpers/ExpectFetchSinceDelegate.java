@@ -8,7 +8,9 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
+import org.mozilla.gecko.sync.repositories.android.DBUtils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
@@ -25,12 +27,18 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   public void onFetchSucceeded(Record[] records, long end) {
     AssertionError err = null;
     try {
-      assertEquals(records.length, this.expected.length);
 
+      HashMap<String, String> specialGuids = DBUtils.SPECIAL_GUIDS_MAP;
+      int countSpecials = 0;
       for (Record record : records) {
-        assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
+        if (!specialGuids.containsKey(record.guid)) {
+          assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
+        } else {
+          countSpecials++;
+        }
         assertTrue(record.lastModified >= this.earliest);
       }
+      assertEquals(this.expected.length, records.length - countSpecials);
     } catch (AssertionError e) {
       err = e;
     }

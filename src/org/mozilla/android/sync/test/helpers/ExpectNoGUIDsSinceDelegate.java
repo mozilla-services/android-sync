@@ -5,7 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertEquals;
 
-import org.mozilla.android.sync.repositories.android.DBUtils;
+import org.mozilla.gecko.sync.repositories.android.DBUtils;
 
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
   

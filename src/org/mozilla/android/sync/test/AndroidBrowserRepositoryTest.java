@@ -286,39 +286,42 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   protected void guidsSinceReturnNoRecords(Record record0) {
     prepEmptySession();
     AndroidBrowserRepositorySession session = getSession();
-    long timestamp = System.currentTimeMillis();
 
     //  Store 1 record in the past.
-    record0.lastModified = timestamp - 1000;
     performWait(storeRunnable(session, record0));
 
     String[] expected = {};
-    performWait(guidsSinceRunnable(session, timestamp, expected));
+    performWait(guidsSinceRunnable(session, System.currentTimeMillis() + 1000, expected));
   }
 
   /*
    * Tests for fetchSince
    */  
   protected void fetchSinceOneRecord(Record record0, Record record1) {
-    prepEmptySession();
+    prepSession();
     AndroidBrowserRepositorySession session = getSession();
-    long timestamp = System.currentTimeMillis();
 
-    record0.lastModified = timestamp;       // Verify inclusive retrieval.
-    record1.lastModified = timestamp + 3000;
     performWait(storeRunnable(session, record0));
+    long timestamp = System.currentTimeMillis();
+    synchronized(this) {
+    try {
+      wait(1000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    }
     performWait(storeRunnable(session, record1));
 
     // Fetch just record1 
     String[] expectedOne = new String[1];
     expectedOne[0] = record1.guid;
-    performWait(fetchSinceRunnable(session, timestamp + 1, expectedOne));
+    performWait(fetchSinceRunnable(session, timestamp + 10, expectedOne));
 
     // Fetch both, relying on inclusiveness.
     String[] expectedBoth = new String[2];
     expectedBoth[0] = record0.guid;
     expectedBoth[1] = record1.guid;
-    performWait(fetchSinceRunnable(session, timestamp, expectedBoth));
+    performWait(fetchSinceRunnable(session, timestamp - 3000, expectedBoth));
   }
   
   protected void fetchSinceReturnNoRecords(Record record) {
@@ -327,9 +330,9 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     
     performWait(storeRunnable(session, record));
 
-    long timestamp = System.currentTimeMillis() / 1000;
+    long timestamp = System.currentTimeMillis();
 
-    performWait(fetchSinceRunnable(session, timestamp, new String[] {}));
+    performWait(fetchSinceRunnable(session, timestamp + 2000, new String[] {}));
   }
   
   protected void fetchOneRecordByGuid(Record record0, Record record1) {

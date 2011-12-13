@@ -59,17 +59,14 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     guidsSinceReturnMultipleRecords(record0, record1);
   }
   
-  /*
-   *TODO anything "since" fails due to content provider overwriting our
-   *last modified time stamps. Need to find a new way to test this.
   @Override
   public void testGuidsSinceReturnNoRecords() {
-    guidsSinceReturnNoRecords(BookmarkHelpers.createBookmark1());
+    guidsSinceReturnNoRecords(BookmarkHelpers.createBookmarkInMobileFolder1());
   }
 
   @Override
   public void testFetchSinceOneRecord() {
-    fetchSinceOneRecord(BookmarkHelpers.createFolder(),
+    fetchSinceOneRecord(BookmarkHelpers.createFolder1(),
         BookmarkHelpers.createBookmark2());
   }
 
@@ -77,7 +74,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   public void testFetchSinceReturnNoRecords() {
     fetchSinceReturnNoRecords(BookmarkHelpers.createBookmark1());
   }
-  */
 
   @Override
   public void testFetchOneRecordByGuid() {
@@ -107,33 +103,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   @Override
   public void testStore() {
     basicStoreTest(BookmarkHelpers.createBookmark1());
-  }
-
-  @Override
-  public void testFetchSinceOneRecord() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
-  }
-
-  @Override
-  public void testFetchSinceReturnNoRecords() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
-  }
-
-  @Override
-  public void testGuidsSinceReturnNoRecords() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "This test didn't actually pass. It is currently just a stub. " +
-    		"Timing event related tests need to be modified since Fennec content " +
-    		"providers overwrite our faked lastModified times (this is the correct " +
-    		"action for Fennec, but doesn't let us test the way we were).");
   }
 
   /*
