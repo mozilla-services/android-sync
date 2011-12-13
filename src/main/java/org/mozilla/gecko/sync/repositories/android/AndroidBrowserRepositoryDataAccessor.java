@@ -41,8 +41,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     // TODO write tests for this
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
-        new String[] { getGuidColumn() },
-        getDeletedColumn() + "= 1", null, null);
+        null, getDeletedColumn() + "= 1", null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".purgeDeleted");
     if (cur == null) {

@@ -107,6 +107,9 @@ public class BrowserContract {
 
         public static final String DATE_MODIFIED = "bookmarks.modified";
 
+        // this column doesn't exist yet!
+        //public static final String DELETED = "deleted";
+
         public static final String _ID = "_id";
 
         public static final String URL = "url";
