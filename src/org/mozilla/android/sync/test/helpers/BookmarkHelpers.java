@@ -159,12 +159,10 @@ public class BookmarkHelpers {
     record.parentName = "Mobile Bookmarks";
     // TODO verify how we want to store these string arrays
     // pretty sure I verified that this is actually how other clients do it, but double check
-    /*
     JSONArray children = new JSONArray();
     children.add(bmk1Guid);
     children.add(bmk2Guid);
     record.children = children;
-    */
     record.type = "folder";
     return record;
   }
@@ -182,12 +180,9 @@ public class BookmarkHelpers {
     record.parentName = topFolderName; 
     // TODO verify how we want to store these string arrays
     // pretty sure I verified that this is actually how other clients do it, but double check
-    /*
     JSONArray children = new JSONArray();
-    children.add(bmk1Guid);
-    children.add(bmk2Guid);
+    children.add(bmk3Guid);
     record.children = children;
-    */
     record.type = "folder";
     return record;
   }
@@ -205,12 +200,9 @@ public class BookmarkHelpers {
     record.parentName = middleFolderName;
     // TODO verify how we want to store these string arrays
     // pretty sure I verified that this is actually how other clients do it, but double check
-    /*
     JSONArray children = new JSONArray();
-    children.add(bmk1Guid);
-    children.add(bmk2Guid);
+    children.add(bmk4Guid);
     record.children = children;
-    */
     record.type = "folder";
     return record;
   }

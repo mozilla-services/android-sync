@@ -66,8 +66,8 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   @Override
   public void testFetchSinceOneRecord() {
-    fetchSinceOneRecord(BookmarkHelpers.createFolder1(),
-        BookmarkHelpers.createBookmark2());
+    fetchSinceOneRecord(BookmarkHelpers.createBookmarkInMobileFolder1(),
+        BookmarkHelpers.createBookmarkInMobileFolder2());
   }
 
   @Override
@@ -77,8 +77,8 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   @Override
   public void testFetchOneRecordByGuid() {
-    fetchOneRecordByGuid(BookmarkHelpers.createFolder1(),
-        BookmarkHelpers.createBookmark2());
+    fetchOneRecordByGuid(BookmarkHelpers.createBookmarkInMobileFolder1(),
+        BookmarkHelpers.createBookmarkInMobileFolder2());
   }
   
   @Override
@@ -97,7 +97,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     
   @Override
   public void testWipe() {
-    doWipe(BookmarkHelpers.createFolder1(), BookmarkHelpers.createBookmark2());
+    doWipe(BookmarkHelpers.createBookmarkInMobileFolder1(), BookmarkHelpers.createBookmarkInMobileFolder2());
   }
   
   @Override
@@ -346,4 +346,19 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
   */
   
+  public void testBasicPositioning() {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    Record[] expected = new Record[] {
+        BookmarkHelpers.createBookmark1(),
+        BookmarkHelpers.createFolder1(),
+        BookmarkHelpers.createBookmark2()
+    };
+    doStore(session, expected);
+    
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
+    performWait(fetchAllRunnable(session, delegate));
+    Log.i("poop", "poo");
+    // TODO check android positions 
+  }
 }
