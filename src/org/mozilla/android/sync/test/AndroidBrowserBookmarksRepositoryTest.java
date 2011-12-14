@@ -315,36 +315,23 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     deleteRemoteLocalNonexistent(remote);
   }
 
+  /*
   @Override
   public void testCleanMultipleRecords() {
     // TODO Auto-generated method stub
     Log.w(tag, "Not implemented yet, waiting on deleted field");
   }
+  */
 
-  @Override
-  public void testCleanSuccessFalse() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "Not implemented yet, waiting on deleted field");
-  }
-
-  /*
-   * TODO put these back in once we have a "deleted" column.
-   * Also check into deletion tests once that column is in.
   @Override
   public void testCleanMultipleRecords() {
     cleanMultipleRecords(
         BookmarkHelpers.createBookmarkInMobileFolder1(),
+        BookmarkHelpers.createBookmarkInMobileFolder2(),
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
         BookmarkHelpers.createFolder1());
   }
-
-  @Override
-  public void testCleanSuccessFalse() {
-    cleanSuccessFalse(BookmarkHelpers.createBookmark2(),
-        BookmarkHelpers.createFolder1());
-  }
-  */
   
   public void testBasicPositioning() {
     prepSession();

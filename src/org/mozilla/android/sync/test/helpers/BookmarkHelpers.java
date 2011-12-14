@@ -27,6 +27,7 @@ public class BookmarkHelpers {
    */
   public static BookmarkRecord createBookmarkInMobileFolder1() {
     BookmarkRecord rec = createBookmark1();
+    rec.guid = Utils.generateGuid();
     rec.parentID = mobileFolderGuid;
     rec.parentName = mobileFolderName;
     return rec;
@@ -34,6 +35,7 @@ public class BookmarkHelpers {
 
   public static BookmarkRecord createBookmarkInMobileFolder2() {
     BookmarkRecord rec = createBookmark2();
+    rec.guid = Utils.generateGuid();
     rec.parentID = mobileFolderGuid;
     rec.parentName = mobileFolderName;
     return rec;

@@ -21,14 +21,17 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
+import org.mozilla.gecko.sync.repositories.android.BrowserContract;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
@@ -203,7 +206,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   public abstract void testDeleteRemoteLocalNonexistent();
   public abstract void testStoreIdenticalExceptGuid();
   public abstract void testCleanMultipleRecords();
-  public abstract void testCleanSuccessFalse();
   
   /*
    * Test abstractions
@@ -230,38 +232,27 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
    * Tests for clean
    */
   // Input: 4 records; 2 which are to be cleaned, 2 which should remain after the clean
-  protected void cleanMultipleRecords(Record delete0, Record delete1, Record keep0, Record keep1) {
+  protected void cleanMultipleRecords(Record delete0, Record delete1, Record keep0, Record keep1, Record keep2) {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
-    delete0.deleted = true;
-    delete1.deleted = true;
     doStore(session, new Record[] {
-        delete0, delete1, keep0, keep1
+        delete0, delete1, keep0, keep1, keep2
     });
+    
+    // force two record to appear deleted
+    AndroidBrowserRepositoryDataAccessor db = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
+    ContentValues cv = new ContentValues();
+    cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
+    db.updateByGuid(delete0.guid, cv);
+    db.updateByGuid(delete1.guid, cv);
+    
     performWait(cleanRunnable(getRepository(), true, getApplicationContext(), new DefaultCleanDelegate() {
       public void onCleaned(Repository repo) {
         testWaiter().performNotify();
       }
     })); 
     
-    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[] { keep0, keep1})));
-  }
-  
-  // Store 2 records, 1 marked deleted. Call clean with success = false, both records should remain.
-  protected void cleanSuccessFalse(Record record0, Record record1) {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
-    record0.deleted = true;
-    doStore(session, new Record[] {
-        record0, record1
-    });
-    performWait(cleanRunnable(getRepository(), false, getApplicationContext(), new DefaultCleanDelegate() {
-      public void onCleaned(Repository repo) {
-        testWaiter().performNotify();
-      }
-    })); 
-    
-    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[] { record0, record1})));
+    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
   }
   
   /*
