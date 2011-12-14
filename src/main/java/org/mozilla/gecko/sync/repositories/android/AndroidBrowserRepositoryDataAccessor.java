@@ -45,8 +45,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   public void purgeDeleted() throws NullCursorException {
     // TODO write tests for this
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(),
-        null, getDeletedColumn() + "= 1", null, null);
+    Uri uri = getUri().buildUpon().appendQueryParameter(BrowserContract.PARAM_SHOW_DELETED, "true").build();
+    Cursor cur = context.getContentResolver().query(uri,
+        null, BrowserContract.SyncColumns.IS_DELETED + "= 1", null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".purgeDeleted");
     if (cur == null) {
@@ -56,9 +57,10 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     cur.moveToFirst();
     while (!cur.isAfterLast()) {
       String guid = DBUtils.getStringFromCursor(cur, getGuidColumn());
-      context.getContentResolver().delete(getUri(), getGuidColumn(), new String[] { guid });
+      context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
       cur.moveToNext();
     }
+    cur.close();
   }
   
   protected void queryTimeLogger(String methodCallingQuery) {
