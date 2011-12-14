@@ -196,13 +196,49 @@ public class JpakeClient implements JpakeRequestDelegate {
     jpakeMaxTries = 300;
 
     final JpakeClient self = this;
-    runOnThread(new Runnable() {
-      @Override
-      public void run() {
-        self.createSecret();
-        self.getChannel();
-      }
-    });
+
+    Log.e(TAG, "testing createZkp vs checkZkp");
+    sanityCheckZkp();
+
+//    runOnThread(new Runnable() {
+//      @Override
+//      public void run() {
+//        self.createSecret();
+//        self.getChannel();
+//      }
+//    });
+  }
+
+  /*
+   * Testing createZkp vs checkZkp
+   */
+  private void sanityCheckZkp() {
+    JpakeCrypto jc = new JpakeCrypto();
+    ExtendedJSONObject r1 = new ExtendedJSONObject();
+    jc.round1(mySignerId, r1);
+
+    ExtendedJSONObject r2 = new ExtendedJSONObject();
+    String secret = "1234567890ab";
+
+    // Extract message fields.
+    BigInteger gx3 = new BigInteger((String) r1.get(Constants.ZKP_KEY_GX1), 16);
+    BigInteger gx4 = new BigInteger((String) r1.get(Constants.ZKP_KEY_GX2), 16);
+
+    ExtendedJSONObject zkp3 = makeJZkp((String) r1.get(Constants.CRYPTO_KEY_GR1),
+        (String) r1.get(Constants.ZKP_KEY_B1), mySignerId);
+    ExtendedJSONObject zkp4 = makeJZkp((String) r1.get(Constants.CRYPTO_KEY_GR2),
+        (String) r1.get(Constants.ZKP_KEY_B2), mySignerId);
+
+    try {
+      jc.round2(mySignerId, r2, secret, gx3, gx4, zkp3, zkp4);
+    } catch (Gx4IsOneException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (IncorrectZkpException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    Log.e(TAG, "finished testing zkp");
   }
 
   /**
