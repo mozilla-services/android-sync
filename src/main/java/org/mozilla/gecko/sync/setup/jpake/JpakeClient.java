@@ -197,7 +197,7 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     final JpakeClient self = this;
 
-    Log.e(TAG, "testing createZkp vs checkZkp");
+    Log.e(LOG_TAG, "testing createZkp vs checkZkp");
     sanityCheckZkp();
 
 //    runOnThread(new Runnable() {
@@ -238,7 +238,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    Log.e(TAG, "finished testing zkp");
+    Log.e(LOG_TAG, "finished testing zkp");
   }
 
   /**
@@ -495,7 +495,6 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "1");
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
-
     Log.e(LOG_TAG, "jOutgoing format: " + jOutgoing.toJSONString());
 
     nextPhase = State.STEP_ONE_GET;
