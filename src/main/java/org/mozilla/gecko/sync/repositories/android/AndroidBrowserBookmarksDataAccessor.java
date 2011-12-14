@@ -42,7 +42,15 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     cv.put(BrowserContract.Bookmarks.POSITION, position);
     updateByGuid(guid, cv);
   } 
-  
+
+  private long insertSpecialFolder(String guid, long parentId) {
+      BookmarkRecord record = new BookmarkRecord(guid);
+      record.title = DBUtils.SPECIAL_GUIDS_MAP.get(guid);
+      record.type = "folder";
+      record.androidParentID = parentId;
+      return(DBUtils.getAndroidIdFromUri(insert(record)));
+  }
+
   /*
    * Verify that all special guids are present and that they aren't set to deleted.
    * Inser them if they aren't there.
@@ -60,7 +68,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
         mobileRoot = DBUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
       }
       count++;
-      
+
       // Make sure none of these folders are marked as deleted
       if (DBUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1) {
         ContentValues cv = new ContentValues();
@@ -70,7 +78,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       cur.moveToNext();
     }
     cur.close();
-    
+
     // Insert them if missing
     if (count != DBUtils.SPECIAL_GUIDS.length) {
       if (!containsMobileFolder) {
@@ -83,51 +91,6 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     }
   }
 
-  private long insertSpecialFolder(String guid, long parentId) {
-      BookmarkRecord record = new BookmarkRecord(guid);
-      record.title = DBUtils.SPECIAL_GUIDS_MAP.get(guid);
-      record.type = "folder";
-      record.androidParentID = parentId;
-      return(DBUtils.getAndroidIdFromUri(insert(record)));
-  }
-
-  public void checkAndBuildSpecialGuids() throws NullCursorException {
-    // Do check. If any are missing, insert them all.
-    // TODO mobile should always exist as the root,
-    // remove this once that is true.
-
-    Cursor cur = fetch(DBUtils.SPECIAL_GUIDS);
-    cur.moveToFirst();
-    int count = 0;
-    boolean containsMobileFolder = false;
-    long mobileRoot = 0;
-    while (!cur.isAfterLast()) {
-      if (DBUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.GUID).equals("mobile")) {
-        containsMobileFolder = true;
-        mobileRoot = DBUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
-      }
-      count++;
-      cur.moveToNext();
-    }
-    cur.close();
-    if (count != DBUtils.SPECIAL_GUIDS.length) {
-      if (!containsMobileFolder) {
-        mobileRoot = insertSpecialFolder("mobile", 0);
-      }
-      long desktop = insertSpecialFolder("places", mobileRoot);
-      insertSpecialFolder("unfiled", desktop);
-      insertSpecialFolder("menu", desktop);
-      insertSpecialFolder("toolbar", desktop);
-    }
-  }
-
-  private long insertSpecialFolder(String guid, long parentId) {
-      BookmarkRecord record = new BookmarkRecord(guid);
-      record.title = DBUtils.SPECIAL_GUIDS_MAP.get(guid);
-      record.type = "folder";
-      record.androidParentID = parentId;
-      return(DBUtils.getAndroidIdFromUri(insert(record)));
-  }
 
   @Override
   protected ContentValues getContentValues(Record record) {

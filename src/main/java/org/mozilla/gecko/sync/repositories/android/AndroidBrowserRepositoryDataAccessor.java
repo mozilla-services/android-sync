@@ -3,13 +3,12 @@ package org.mozilla.gecko.sync.repositories.android;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
-import android.provider.Browser.BookmarkColumns;
 import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryDataAccessor {

@@ -95,12 +95,6 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     } catch (Exception e) {
       delegate.onBeginFailed(e);
       return;
-    } catch (NullCursorException e) {
-      delegate.onBeginFailed(e);
-      return;
-    } catch (Exception e) {
-      delegate.onBeginFailed(e);
-      return;
     }
     delegate.onBeginSucceeded(this);
   }
