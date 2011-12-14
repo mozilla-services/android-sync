@@ -1,14 +1,12 @@
 package org.mozilla.gecko.sync.repositories.android;
 
-import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
-import android.provider.Browser.BookmarkColumns;
 import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryDataAccessor {
@@ -20,34 +18,24 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     this.context = context;
   }
 
-  //protected abstract String[] getAllColumns();
+  protected abstract String[] getAllColumns();
   protected abstract ContentValues getContentValues(Record record);
   protected abstract Uri getUri();
   protected long queryStart = 0;
   protected long queryEnd = 0;
-  // TODO find a cleaner way of doing this
-  // once we are sure that qualifying columns
-  // is necessary and mobile team isn't changing their
-  // content provider.
-  protected abstract String getGuidColumn();
-  protected abstract String getDateModifiedColumn();
-  protected abstract String getDeletedColumn();
-  protected abstract String getAndroidIDColumn();
 
   public void wipe() {
     Log.i("wipe", "wiping: " + getUri());
-    // TODO once I can actually delete properly, change this to
-    // only not delete the mobile folder
-    String where = BrowserContract.SyncColumns.GUID + " NOT IN ('mobile', 'menu', 'places', 'toolbar', 'unfiled')";
+    String where = BrowserContract.SyncColumns.GUID + " NOT IN ('mobile')";
     context.getContentResolver().delete(getUri(), where, null);
   }
 
   public void purgeDeleted() throws NullCursorException {
-    // TODO write tests for this
     queryStart = System.currentTimeMillis();
     Uri uri = getUri().buildUpon().appendQueryParameter(BrowserContract.PARAM_SHOW_DELETED, "true").build();
     Cursor cur = context.getContentResolver().query(uri,
-        null, BrowserContract.SyncColumns.IS_DELETED + "= 1", null, null);
+        new String[] { BrowserContract.SyncColumns.GUID },
+        BrowserContract.SyncColumns.IS_DELETED + "= 1", null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".purgeDeleted");
     if (cur == null) {
@@ -56,7 +44,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     }
     cur.moveToFirst();
     while (!cur.isAfterLast()) {
-      String guid = DBUtils.getStringFromCursor(cur, getGuidColumn());
+      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
       context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
       cur.moveToNext();
     }
@@ -75,7 +63,8 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public Cursor fetchAll() throws NullCursorException {
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), BrowserContract.Bookmarks.BookmarksColumns, null, null, null);
+    Cursor cur = context.getContentResolver().query(getUri(),
+        getAllColumns(), null, null, null);
     queryEnd = System.currentTimeMillis();
 
     queryTimeLogger(tag + ".fetchAll");
@@ -89,8 +78,8 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   public Cursor getGUIDsSince(long timestamp) throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
-        null,
-        getDateModifiedColumn() + " >= " +
+        new String[] { BrowserContract.SyncColumns.GUID },
+        BrowserContract.SyncColumns.DATE_MODIFIED + " >= " +
         Long.toString(timestamp), null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".getGUIDsSince");
@@ -103,8 +92,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public Cursor fetchSince(long timestamp) throws NullCursorException {
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), null,
-        getDateModifiedColumn() + " >= " +
+    Cursor cur = context.getContentResolver().query(getUri(),
+        getAllColumns(),
+        BrowserContract.SyncColumns.DATE_MODIFIED + " >= " +
         Long.toString(timestamp), null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".fetchSince");
@@ -122,7 +112,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     }
     where = (where.substring(0, where.length() -2) + ")");
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), BrowserContract.Bookmarks.BookmarksColumns, where, null, null);
+    Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".fetch");
     if (cur == null) {
@@ -134,11 +124,11 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public void delete(Record record) {
     context.getContentResolver().delete(getUri(),
-        "guid = '" + record.guid +"'", null);
+         BrowserContract.SyncColumns.GUID + " = '" + record.guid +"'", null);
   }
 
   public void updateByGuid(String guid, ContentValues cv) {
     context.getContentResolver().update(getUri(), cv,
-        "guid = '" + guid +"'", null);
+        BrowserContract.SyncColumns.GUID + " = '" + guid +"'", null);
   }
 }

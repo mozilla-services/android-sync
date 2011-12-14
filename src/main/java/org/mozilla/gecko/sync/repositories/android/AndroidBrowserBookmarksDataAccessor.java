@@ -9,7 +9,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
@@ -44,25 +43,35 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     updateByGuid(guid, cv);
   }
 
+  /*
+   * Verify that all special guids are present and that they aren't set to deleted.
+   * Inser them if they aren't there.
+   */
   public void checkAndBuildSpecialGuids() throws NullCursorException {
-    // Do check. If any are missing, insert them all.
-    // TODO mobile should always exist as the root,
-    // remove this once that is true.
-
     Cursor cur = fetch(DBUtils.SPECIAL_GUIDS);
     cur.moveToFirst();
     int count = 0;
     boolean containsMobileFolder = false;
     long mobileRoot = 0;
     while (!cur.isAfterLast()) {
-      if (DBUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.GUID).equals("mobile")) {
+      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+      if (guid.equals("mobile")) {
         containsMobileFolder = true;
         mobileRoot = DBUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
       }
       count++;
+
+      // Make sure none of these folders are marked as deleted
+      if (DBUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1) {
+        ContentValues cv = new ContentValues();
+        cv.put(BrowserContract.SyncColumns.IS_DELETED, 0);
+        updateByGuid(guid, cv);
+      }
       cur.moveToNext();
     }
     cur.close();
+
+    // Insert them if missing
     if (count != DBUtils.SPECIAL_GUIDS.length) {
       if (!containsMobileFolder) {
         mobileRoot = insertSpecialFolder("mobile", 0);
@@ -110,7 +119,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   public Cursor getChildren(long androidID) throws NullCursorException {
     String where = BrowserContract.Bookmarks.PARENT + "=" + androidID;
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
+    Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getChildren");
     if (cur == null) {
@@ -120,25 +129,8 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   }
 
   @Override
-  protected String getGuidColumn() {
-    return BrowserContract.Bookmarks.GUID;
-  }
-
-  @Override
-  protected String getDateModifiedColumn() {
-    return BrowserContract.Bookmarks.DATE_MODIFIED;
-  }
-
-  @Override
-  protected String getDeletedColumn() {
-    Log.e(tag, "This column doesn't exist yet in their schema");
-    return null;
-  }
-
-  @Override
-  protected String getAndroidIDColumn() {
-    // TODO Auto-generated method stub
-    return null;
+  protected String[] getAllColumns() {
+    return BrowserContract.Bookmarks.BookmarksColumns;
   }
 
 }

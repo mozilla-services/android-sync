@@ -71,35 +71,8 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
     return cv;
   }
 
-  // TODO complete these once bookmarks is in good shape
-  /*
   @Override
   protected String[] getAllColumns() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-  */
-
-  @Override
-  protected String getGuidColumn() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected String getDateModifiedColumn() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected String getDeletedColumn() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected String getAndroidIDColumn() {
     // TODO Auto-generated method stub
     return null;
   }
