@@ -44,6 +44,7 @@ import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
 import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -71,30 +72,36 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     dataAccessor = (AndroidBrowserBookmarksDataAccessor) dbHelper;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException {
+  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     long androidParentId = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
     String guid = idToGuid.get(androidParentId);
 
-    // TODO Ignore parent names not being found until our special ids are put in
     if (guid == null) {
-      return DBUtils.bookmarkFromMirrorCursor(cur, "", "", null);
+      // if the parent has been stored and somehow has a null guid, throw an error
+      if (idToGuid.containsKey(androidParentId)) {
+        Log.e(tag, "Have the parent android id for the record but the parent's guid wasn't found");
+        throw new NoGuidForIdException(null);
+      } else {
+        return DBUtils.bookmarkFromMirrorCursor(cur, "", "", null);
+      }
     }
+
     // Get parent name
     String parentName = "";
     Cursor name = dataAccessor.fetch(new String[] { guid });
     name.moveToFirst();
-    // TODO temp error string until we throw proper exception
     if (!name.isAfterLast()) {
       parentName = DBUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
     }
     else {
-      // TODO throw an exception
-      // TODO investigate why this is being hit happening
       Log.e(tag, "Couldn't find record with guid " + guid + " while looking for parent name");
+      throw new ParentNotFoundException(null);
     }
     name.close();
 
+    // If record is a folder, build out the children array
     long isFolder = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
     JSONArray childArray = null;
     if (isFolder == 1) {
@@ -102,7 +109,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       Cursor children = dataAccessor.getChildren(androidID);
       children.moveToFirst();
       int count = 0;
-      // TODO fix this horrible (but functional) code
+
+      // Get children into array in correct order
       while(!children.isAfterLast()) {
         count++;
         children.moveToNext();
@@ -169,6 +177,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   @Override
   public void finish(RepositorySessionFinishDelegate delegate) {
+    // Override finish to do this check; make sure all records
+    // needing re-parenting have been re-parented.
     if (needsReparenting != 0) {
       Log.e(tag, "Finish called but " + needsReparenting +
           " bookmark(s) have been placed in unsorted bookmarks and not been reparented.");
@@ -178,12 +188,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
   };
 
+  // TODO this code is yucky, cleanup or comment or something
+  @SuppressWarnings("unchecked")
   @Override
-  protected long insert(Record record) throws NoGuidForIdException, NullCursorException {
+  protected long insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     BookmarkRecord bmk = (BookmarkRecord) record;
+
     // Check if parent exists
     if (guidToID.containsKey(bmk.parentID)) {
-      // TODO consider joining these two data structure somehow
       bmk.androidParentID = guidToID.get(bmk.parentID);
       JSONArray children = parentToChildArray.get(bmk.parentID);
       if (children != null) {
@@ -222,8 +234,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       if(missingParentToChildren.containsKey(bmk.guid)) {
         for (String child : missingParentToChildren.get(bmk.guid)) {
           long position;
-          // TODO add a check to make sure children isn't null, it shouldn't be,
-          // but if it is then we have problems and need to stop storing this record
           if (bmk.children.contains(child)) {
             position = childArray.indexOf(child);
           } else {
