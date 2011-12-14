@@ -192,9 +192,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
           parentToChildArray.put(bmk.parentID, children);
         }
         bmk.androidPosition = children.indexOf(bmk.guid);
-      } else if (!bmk.type.equals(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
-        // TODO if children is null AND it isn't a folder blow up
-        // since this shouldn't happen
       }
     }
     else {

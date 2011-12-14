@@ -1,14 +1,14 @@
 package org.mozilla.gecko.sync.repositories.android;
 
+import org.json.simple.JSONArray;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.provider.Browser.BookmarkColumns;
 import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
@@ -90,8 +90,11 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     cv.put(BrowserContract.Bookmarks.TITLE,       rec.title);
     cv.put(BrowserContract.Bookmarks.URL,         rec.bookmarkURI);
     cv.put(BrowserContract.Bookmarks.DESCRIPTION,         rec.description);
-    //cv.put(COL_TAGS,            rec.tags);
-    //cv.put(COL_KEYWORD,         rec.keyword);
+    if (rec.tags == null) {
+      rec.tags = new JSONArray();
+    }
+    cv.put(BrowserContract.Bookmarks.TAGS,            rec.tags.toJSONString());
+    cv.put(BrowserContract.Bookmarks.KEYWORD,         rec.keyword);
     cv.put(BrowserContract.Bookmarks.PARENT,          rec.androidParentID);
     cv.put(BrowserContract.Bookmarks.POSITION, rec.androidPosition);
 
@@ -99,8 +102,6 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     // other types should be filtered out and droppped
     cv.put(BrowserContract.Bookmarks.IS_FOLDER, rec.type.equalsIgnoreCase(TYPE_FOLDER) ? 1 : 0);
 
-    // TODO deal with positioning stuff
-    //cv.put(BrowserContract.Bookmarks.POSITION,        rec.pos);
     cv.put("modified", rec.lastModified);
     return cv;
   }
@@ -117,25 +118,6 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     }
     return cur;
   }
-
-  /*
-  @Override
-  protected String[] getAllColumns() {
-    return new String[] {
-        BrowserContract.Bookmarks.GUID,
-        BrowserContract.Bookmarks.POSITION,
-        BrowserContract.Bookmarks.IS_FOLDER,
-        BrowserContract.Bookmarks.TITLE,
-        BrowserContract.Bookmarks._ID,
-        BrowserContract.Bookmarks.DATE_CREATED,
-        BrowserContract.Bookmarks.PARENT,
-        BrowserContract.Bookmarks.URL,
-        BrowserContract.Bookmarks.DATE_MODIFIED
-    };
-
-    //bookmarks.guid AS guid, position, folder, title, thumbnail, bookmarks._id AS _id, bookmarks.created AS created, favicon, parent, url, bookmarks.modified AS modified
-  }
-  */
 
   @Override
   protected String getGuidColumn() {
