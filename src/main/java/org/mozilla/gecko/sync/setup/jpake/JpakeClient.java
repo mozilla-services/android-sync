@@ -72,7 +72,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class JpakeClient implements JpakeRequestDelegate {
-  private static String lOG_TAG = "JpakeClient";
+  private static String LOG_TAG = "JpakeClient";
 
   // J-PAKE constants
   private final static int REQUEST_TIMEOUT = 60 * 1000; // 1 minute
@@ -195,13 +195,13 @@ public class JpakeClient implements JpakeRequestDelegate {
    *          Defaults to user abort
    */
   public void abort(String error) {
-    Log.d(lOG_TAG, "aborting...");
+    Log.d(LOG_TAG, "aborting...");
     finished = true;
 
     if (error == null) {
       error = Constants.JPAKE_ERROR_USERABORT;
     }
-    Log.d(lOG_TAG, error);
+    Log.d(LOG_TAG, error);
 
     if (Constants.JPAKE_ERROR_CHANNEL.equals(error) ||
         Constants.JPAKE_ERROR_NETWORK.equals(error) ||
@@ -217,7 +217,7 @@ public class JpakeClient implements JpakeRequestDelegate {
    * Make a /report post to to server
    */
   private void reportFailure(String error) {
-    Log.d(lOG_TAG, "reporting error to server");
+    Log.d(LOG_TAG, "reporting error to server");
     this.error = error;
     runOnThread(new Runnable() {
       @Override
@@ -373,7 +373,7 @@ public class JpakeClient implements JpakeRequestDelegate {
 
   /* Main functionality Steps */
   private void getChannel() {
-    Log.d(lOG_TAG, "Getting channel.");
+    Log.d(LOG_TAG, "Getting channel.");
     if (finished)
       return;
 
@@ -390,7 +390,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   private void putStep() {
-    Log.d(lOG_TAG, "Uploading message.");
+    Log.d(LOG_TAG, "Uploading message.");
     runOnThread(new Runnable() {
       @Override
       public void run() {
@@ -414,7 +414,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   private void getStep() {
-    Log.d(lOG_TAG, "Retrieving next message.");
+    Log.d(LOG_TAG, "Retrieving next message.");
     JpakeRequest putRequest = null;
     try {
       putRequest = new JpakeRequest(jpakeServer + channelUrl,
@@ -429,7 +429,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   private void computeStepOne() {
-    Log.d(lOG_TAG, "Computing round 1.");
+    Log.d(LOG_TAG, "Computing round 1.");
     ExtendedJSONObject jStepOne = new ExtendedJSONObject();
     JpakeCrypto.round1(mySignerId, jStepOne);
 
@@ -453,7 +453,7 @@ public class JpakeClient implements JpakeRequestDelegate {
 //    putStep();
   }
   private void computeStepTwo() {
-    Log.d(lOG_TAG, "Computing round 2.");
+    Log.d(LOG_TAG, "Computing round 2.");
     ExtendedJSONObject jStepTwo = new ExtendedJSONObject();
 
 //    JpakeCrypto.round2(theirSignerId, jStepTwo, secret, gx1, gx2, gx3, gx4, r3, r4, gr3, gr4);
@@ -462,13 +462,13 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   private void computeFinal() {
-    Log.d(lOG_TAG, "Computing final round.");
+    Log.d(LOG_TAG, "Computing final round.");
     // TODO: crypto
     computeKeyVerification();
   }
 
   private void computeKeyVerification() {
-    Log.d(lOG_TAG, "Encrypting key verification value.");
+    Log.d(LOG_TAG, "Encrypting key verification value.");
 
     ExtendedJSONObject jPayload = null;
     try {
@@ -495,7 +495,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   public void sendAndComplete(JSONObject jObj)
       throws JpakeNoActivePairingException {
     if (!paired || finished) {
-      Log.d(lOG_TAG, "Can't send data, no active pairing!");
+      Log.d(LOG_TAG, "Can't send data, no active pairing!");
       throw new JpakeNoActivePairingException();
     }
 
@@ -504,7 +504,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   private void encryptData() {
-    Log.d(lOG_TAG, "Encrypting data.");
+    Log.d(LOG_TAG, "Encrypting data.");
     ExtendedJSONObject jPayload = null;
     try {
       jPayload = encryptPayload(jOutData, keyBundle);
@@ -525,11 +525,11 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   private void decryptData() {
-    Log.d(lOG_TAG, "Verifying their key");
+    Log.d(LOG_TAG, "Verifying their key");
     if (!(theirSignerId + "3")
         .equals((String) jIncoming.get(Constants.KEY_TYPE))) {
       try {
-        Log.e(lOG_TAG, "Invalid round 3 data: " + jsonEntity(jIncoming.object));
+        Log.e(LOG_TAG, "Invalid round 3 data: " + jsonEntity(jIncoming.object));
       } catch (UnsupportedEncodingException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -537,7 +537,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
     }
 
-    Log.d(lOG_TAG, "Decrypting data.");
+    Log.d(LOG_TAG, "Decrypting data.");
     String cleartext = null;
     try {
       cleartext = decryptPayload(jIncoming, keyBundle).toString();
@@ -546,7 +546,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       e.printStackTrace();
     } catch (CryptoException e) {
       e.printStackTrace();
-      Log.e(lOG_TAG, "Failed to decrypt data.");
+      Log.e(LOG_TAG, "Failed to decrypt data.");
       abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     }
@@ -554,7 +554,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       newData = getJSONObject(cleartext);
     } catch (Exception e) {
       e.printStackTrace();
-      Log.e(lOG_TAG, "Invalid data: " + cleartext);
+      Log.e(LOG_TAG, "Invalid data: " + cleartext);
       abort(Constants.JPAKE_ERROR_INVALID);
       return;
     }
@@ -562,7 +562,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   }
 
   private void complete() {
-    Log.d(lOG_TAG, "Exchange complete.");
+    Log.d(LOG_TAG, "Exchange complete.");
     finished = true;
     ssActivity.onComplete(newData);
   }
@@ -573,7 +573,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     JpakeResponse response = new JpakeResponse(res);
     switch (this.state) {
       case GET_CHANNEL:
-        Log.e(lOG_TAG, "getChannel failure: " + response.getStatusCode());
+        Log.e(LOG_TAG, "getChannel failure: " + response.getStatusCode());
         abort(Constants.JPAKE_ERROR_CHANNEL);
         break;
       case STEP_ONE_GET:
@@ -581,9 +581,9 @@ public class JpakeClient implements JpakeRequestDelegate {
         int statusCode = response.getStatusCode();
         switch (statusCode) {
           case 304:
-            Log.d(lOG_TAG, "Channel hasn't been updated yet. Will try again later");
+            Log.d(LOG_TAG, "Channel hasn't been updated yet. Will try again later");
             if (pollTries >= jpakeMaxTries) {
-              Log.d(lOG_TAG, "Tried for " + pollTries + " times, aborting");
+              Log.d(LOG_TAG, "Tried for " + pollTries + " times, aborting");
               abort(Constants.JPAKE_ERROR_TIMEOUT);
               return;
             }
@@ -591,11 +591,11 @@ public class JpakeClient implements JpakeRequestDelegate {
             timerScheduler.schedule(getStepTimerTask, jpakePollInterval);
             return;
           case 404:
-            Log.e(lOG_TAG, "No data found in channel.");
+            Log.e(LOG_TAG, "No data found in channel.");
             abort(Constants.JPAKE_ERROR_NODATA);
             break;
           default:
-            Log.e(lOG_TAG, "Could not retrieve data. Server responded with HTTP "
+            Log.e(LOG_TAG, "Could not retrieve data. Server responded with HTTP "
                 + statusCode);
             abort(Constants.JPAKE_ERROR_SERVER);
             return;
@@ -603,22 +603,22 @@ public class JpakeClient implements JpakeRequestDelegate {
         pollTries = 0;
         break;
       case PUT:
-        Log.e(lOG_TAG, "Could not upload data. Server responded with HTTP "
+        Log.e(LOG_TAG, "Could not upload data. Server responded with HTTP "
             + response.getStatusCode());
         abort(Constants.JPAKE_ERROR_SERVER);
         break;
       case ABORT:
-        Log.e(lOG_TAG, "Abort: request failure.");
+        Log.e(LOG_TAG, "Abort: request failure.");
         break;
       case REPORT_FAILURE:
-        Log.e(lOG_TAG, "ReportFailure: failure. Server responded with HTTP "
+        Log.e(LOG_TAG, "ReportFailure: failure. Server responded with HTTP "
             + response.getStatusCode());
         break;
       default:
-        Log.e(lOG_TAG, "Unhandled request failure.");
+        Log.e(LOG_TAG, "Unhandled request failure.");
     }
     try {
-      Log.e(lOG_TAG, "body:" + response.body());
+      Log.e(LOG_TAG, "body:" + response.body());
     } catch (IllegalStateException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -661,9 +661,9 @@ public class JpakeClient implements JpakeRequestDelegate {
           return;
         }
         channelUrl = jpakeServer + channel;
-        Log.d(lOG_TAG, "using channel " + channel);
+        Log.d(LOG_TAG, "using channel " + channel);
 
-        Log.d(lOG_TAG, "secret " + secret + " channel " + channel);
+        Log.d(LOG_TAG, "secret " + secret + " channel " + channel);
         ssActivity.displayPin(secret + channel);
 
         // Set up next step.
@@ -679,7 +679,7 @@ public class JpakeClient implements JpakeRequestDelegate {
         etagHeaders = response.httpResponse().getHeaders("etag");
         if (etagHeaders == null) {
           try {
-            Log.e(lOG_TAG,
+            Log.e(LOG_TAG,
                 "Server did not supply ETag for message: " + response.body());
             abort(Constants.JPAKE_ERROR_SERVER);
           } catch (IllegalStateException e) {
@@ -690,15 +690,15 @@ public class JpakeClient implements JpakeRequestDelegate {
           return;
         }
         theirEtag = etagHeaders[0].getValue();
-        Log.d(lOG_TAG, "theirEtag: " + theirEtag);
+        Log.d(LOG_TAG, "theirEtag: " + theirEtag);
         try {
           jIncoming = response.jsonObjectBody();
         } catch (Exception e) {
-          Log.e(lOG_TAG, "Server responded wiht invalid JSON.");
+          Log.e(LOG_TAG, "Server responded wiht invalid JSON.");
           abort(Constants.JPAKE_ERROR_INVALID);
           e.printStackTrace();
         }
-        Log.d(lOG_TAG, "fetched message " + jIncoming.get(Constants.KEY_TYPE));
+        Log.d(LOG_TAG, "fetched message " + jIncoming.get(Constants.KEY_TYPE));
 
         if (this.state == State.STEP_ONE_GET) {
           computeStepTwo();
@@ -725,10 +725,10 @@ public class JpakeClient implements JpakeRequestDelegate {
         break;
 
       case ABORT:
-        Log.e(lOG_TAG, "Key exchange successfully aborted.");
+        Log.e(LOG_TAG, "Key exchange successfully aborted.");
         break;
       default:
-        Log.e(lOG_TAG, "Unhandled response success.");
+        Log.e(LOG_TAG, "Unhandled response success.");
     }
   }
 
@@ -753,14 +753,14 @@ public class JpakeClient implements JpakeRequestDelegate {
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       request.setHeader(new BasicHeader("X-KeyExchange-Id", clientId));
-      Log.d(lOG_TAG, "setting header: " + clientId);
+      Log.d(LOG_TAG, "setting header: " + clientId);
 
       Header[] headers = request.getAllHeaders();
       for (Header h : headers) {
-        Log.d(lOG_TAG, "Header: " + h);
+        Log.d(LOG_TAG, "Header: " + h);
       }
-      Log.d(lOG_TAG, request.getURI().toString());
-      Log.d(lOG_TAG, request.toString());
+      Log.d(LOG_TAG, request.getURI().toString());
+      Log.d(LOG_TAG, request.toString());
 
       switch (state) {
         case REPORT_FAILURE:
@@ -795,23 +795,23 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     @Override
     public void handleHttpProtocolException(ClientProtocolException e) {
-      Log.e(lOG_TAG, "Got HTTP protocol exception.", e);
+      Log.e(LOG_TAG, "Got HTTP protocol exception.", e);
       this.requestDelegate.onRequestError(e);
     }
 
     @Override
     public void handleTransportException(GeneralSecurityException e) {
-      Log.e(lOG_TAG, "Got HTTP transport exception.", e);
+      Log.e(LOG_TAG, "Got HTTP transport exception.", e);
       this.requestDelegate.onRequestError(e);
     }
 
     @Override
     public void handleHttpIOException(IOException e) {
       // TODO: pass this on!
-      Log.e(lOG_TAG, "HttpIOException", e);
+      Log.e(LOG_TAG, "HttpIOException", e);
       switch (state) {
         case GET_CHANNEL:
-          Log.e(lOG_TAG, "Failed on GetChannel.", e);
+          Log.e(LOG_TAG, "Failed on GetChannel.", e);
           break;
 
         case STEP_ONE_GET:
@@ -822,11 +822,11 @@ public class JpakeClient implements JpakeRequestDelegate {
           break;
 
         case REPORT_FAILURE:
-          Log.e(lOG_TAG, "Report failed: " + error);
+          Log.e(LOG_TAG, "Report failed: " + error);
           break;
 
         default:
-          Log.e(lOG_TAG, "Unhandled HTTP I/O exception.", e);
+          Log.e(LOG_TAG, "Unhandled HTTP I/O exception.", e);
       }
     }
 

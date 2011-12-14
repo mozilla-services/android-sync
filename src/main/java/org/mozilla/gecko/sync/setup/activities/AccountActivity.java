@@ -84,7 +84,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
    * accessed by Fennec and Sync Service.
    */
   public void connectClickHandler(View target) {
-    Log.d(LOG_TAG, "ConnectClickHandler");
+    Log.d(LOG_TAG, "connectClickHandler for view " + target);
     username = ((EditText) findViewById(R.id.username)).getText().toString();
     password = ((EditText) findViewById(R.id.password)).getText().toString();
     key = ((EditText) findViewById(R.id.key)).getText().toString();
