@@ -139,7 +139,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
 
   @Override
   protected String getDeletedColumn() {
-    Log.e(tag, "This column doesn't exist yet in their schema");
+    Log.e(LOG_TAG, "This column doesn't exist yet in their schema");
     return null;
   }
 
