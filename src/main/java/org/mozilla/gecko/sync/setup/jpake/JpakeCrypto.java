@@ -37,7 +37,6 @@
 
 package org.mozilla.gecko.sync.setup.jpake;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -157,11 +156,8 @@ public class JpakeCrypto {
     }
 
     // Check ZKP.
-    Log.e(TAG, "starting zkp3");
     checkZkp(G, gx3, zkp3);
-    Log.e(TAG, "finished zkp3");
     checkZkp(G, gx4, zkp4);
-    Log.e(TAG, "finished zkp4");
 
     this.gx3 = gx3;
     this.gx4 = gx4;
@@ -234,22 +230,8 @@ public class JpakeCrypto {
 
     // Calculate the ZKP b value = (r-x*h) % q.
     BigInteger h = computeBHash(g, gr, gx, mySignerId);
-    Log.e(TAG, "myhash: " + h.toString(16));
     BigInteger b = r.subtract(x.multiply(h)).mod(Q);
     result[1] = b.toString(16);
-
-//    Log.i(TAG, "gb*g(xh) = " + g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P).toString(16));
-//    Log.i(TAG, "gr = " + gr.toString(16));
-//    Log.i(TAG, "r = " + r.toString(16));
-//    Log.i(TAG, "b = " + b.toString(16));
-//    Log.i(TAG, "g^(r-xh) = " + gr.multiply(gx.modPow(h.negate(), P)).mod(P));
-//    Log.i(TAG, "h = " + h.toString(16));
-//    Log.i(TAG, "gx = " + gx.toString(16));
-//    Log.i(TAG, "x = " + x.toString(16));
-//    Log.i(TAG, "g^q % p == 1? = " + g.modPow(Q, P));
-//    Log.i(TAG, "g^x = " + g.modPow(x, P).toString(16));
-//    Log.i(TAG, "g^x^Q = " + g.modPow(x,  P).modPow(Q, P).toString(16));
-//    Log.e(TAG, "----- = " + gx.modPow(Q, P).toString(16));
 
     return result;
   }
@@ -264,31 +246,33 @@ public class JpakeCrypto {
     BigInteger b = new BigInteger((String) zkp.get(Constants.ZKP_KEY_B), 16);
     String signerId = (String) zkp.get(Constants.ZKP_KEY_ID);
 
-    Log.e(TAG, "checkZkp");
     BigInteger h = computeBHash(g, gr, gx, signerId);
 
     // Check parameters of zkp, and compare to computed hash. These shouldn't
     // fail.
     if (gx.compareTo(BigInteger.ZERO) < 1) {// g^x > 1
-      Log.i(TAG, "g^x > 1");
+      Log.e(TAG, "g^x > 1 fails");
       throw new IncorrectZkpException();
     } else if (gx.compareTo(P.subtract(BigInteger.ONE)) > -1) { // g^x < p-1
-      Log.i(TAG, "g^x < p-1");
+      Log.e(TAG, "g^x < p-1 fails");
       throw new IncorrectZkpException();
+    } else if (gx.modPow(Q, P).compareTo(BigInteger.ONE) != 0) {
+      Log.e(TAG, "g^x^q % p = 1 fails");
     } else if (gr.compareTo(g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P)) != 0) {
       // b = r-h*x ==> g^r = g^b*g^x^(h)
-      Log.i(TAG, "g^b = " + g.modPow(b, P).toString(16));
-      Log.i(TAG, "b = " + b.toString(16));
-      Log.i(TAG, "gr = " + gr.toString(16));
-      Log.i(TAG, "gx = " + gx.toString(16));
-      Log.i(TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
       Log.i(TAG, "gb*g(xh) = "
           + g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P).toString(16));
-      Log.e(TAG, "h = " + h.toString(16));
+      Log.d(TAG, "gr = " + gr.toString(16));
+      Log.d(TAG, "b = " + b.toString(16));
+      Log.d(TAG, "g^b = " + g.modPow(b, P).toString(16));
+      Log.d(TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
+      Log.d(TAG, "gx = " + gx.toString(16));
+      Log.d(TAG, "h = " + h.toString(16));
       Log.e(TAG, "zkp calculation incorrect");
-      // throw new IncorrectZkpException();
-    } else {
-      Log.d(TAG, "*** SUCCESS ***");
+      throw new IncorrectZkpException();
+    }
+    else {
+      Log.d(TAG, "*** ZKP SUCCESS ***");
     }
   }
 
@@ -299,7 +283,6 @@ public class JpakeCrypto {
    */
   private BigInteger computeBHash(BigInteger g, BigInteger gr, BigInteger gx,
       String id) {
-    Log.e(TAG, "Computing Hash.\ng = " + g.toString(16) + "\ngr = " + gr.toString(16) + "\ngx = " + gx.toString(16) + "\nid = " + id);
     MessageDigest sha = null;
     try {
       sha = MessageDigest.getInstance("SHA-256");
@@ -307,9 +290,6 @@ public class JpakeCrypto {
       byte[] grBytes = bigIntToUnsignedByteArray(gr);
       byte[] gxBytes = bigIntToUnsignedByteArray(gx);
       byte[] idBytes = id.getBytes();
-
-//      byte[] allBytes = Utils.concatAll(byteLengthAsBytes(gBytes), gBytes, byteLengthAsBytes(grBytes), grBytes, byteLengthAsBytes(gxBytes), gxBytes, byteLengthAsBytes(idBytes), idBytes);
-//      sha.update(allBytes);
 
       sha.update(byteLengthAsBytes(gBytes));
       sha.update(gBytes);
@@ -319,21 +299,6 @@ public class JpakeCrypto {
       sha.update(gxBytes);
       sha.update(byteLengthAsBytes(idBytes));
       sha.update(idBytes);
-
-      // Log.e(TAG,
-      // "glen " + new BigInteger(byteLengthAsBytes(gBytes)).toString(16));
-//      byteArrayToString(byteLengthAsBytes(gBytes));
-//      // Log.e(TAG,
-//      // "grlen " + new BigInteger(byteLengthAsBytes(grBytes)).toString(16));
-//      byteArrayToString(byteLengthAsBytes(grBytes));
-//      // Log.e(TAG,
-//      // "gxlen " + new BigInteger(byteLengthAsBytes(gxBytes)).toString(16));
-//      byteArrayToString(byteLengthAsBytes(gxBytes));
-//      // Log.e(TAG,
-//      // "idlen " + new BigInteger(byteLengthAsBytes(idBytes)).toString(16));
-//      byteArrayToString(byteLengthAsBytes(idBytes));
-
-      Log.e(TAG, "\n\n");
     } catch (NoSuchAlgorithmException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -343,17 +308,7 @@ public class JpakeCrypto {
     // Hack to make sure BigInt doesn't twos-complement our hash.
     byte[] hash0 = new byte[hash.length + 1]; // Pad with a 0 byte.
     System.arraycopy(hash, 0, hash0, 1, hash.length);
-    Log.e(TAG, "Hash0BigInt = " + new BigInteger(hash0).toString(16));
     return new BigInteger(hash0);
-  }
-
-  private void printBytes(byte[] bytes) {
-    try {
-      Log.e(TAG, "bytes[] " + new String(bytes, "UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
   }
 
   /*
@@ -375,22 +330,13 @@ public class JpakeCrypto {
   private byte[] bigIntToUnsignedByteArray(BigInteger bi) {
     byte[] bytes = bi.toByteArray();
     int len = bytes.length;
-    Log.e(TAG, "length " + len);
-//    if (len > 0 && bytes[0] == 0) {
-//      byte[] res = new byte[len - 1];
-//      System.arraycopy(bytes, 1, res, 0, len - 1);
-//      return res;
-//    }
-//    return bytes;
 
     // Cast bitLength to double so ceil will have an effect.
-    Log.e(TAG, "ceil len/8: " + Math.ceil(((double) bi.bitLength()) / 8));
-    if (Math.ceil(((double) bi.bitLength()) / 8) == len) {
+    if (bytes[0] != 0) {
       return bytes;
     }
-    len--;
-    byte[] res = new byte[len];
-    System.arraycopy(bytes, 1, res, 0, len);
+    byte[] res = new byte[len - 1];
+    System.arraycopy(bytes, 1, res, 0, len - 1);
     return res;
   }
 
