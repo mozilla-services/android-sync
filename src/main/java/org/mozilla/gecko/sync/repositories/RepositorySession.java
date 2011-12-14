@@ -66,6 +66,7 @@ public abstract class RepositorySession {
   public enum SessionStatus {
     UNSTARTED,
     ACTIVE,
+    ABORTED,
     DONE
   }
 
@@ -157,6 +158,6 @@ public abstract class RepositorySession {
 
   public void abort() {
     // TODO: do something here.
-
+    status = SessionStatus.ABORTED;
   }
 }
