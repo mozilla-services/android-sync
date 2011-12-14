@@ -69,7 +69,7 @@ public abstract class RepositorySession {
     DONE
   }
 
-  private static final String tag = "RepositorySession";
+  private static final String LOG_TAG = "RepositorySession";
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
 
@@ -108,7 +108,7 @@ public abstract class RepositorySession {
       this.syncBeginTimestamp = System.currentTimeMillis();
       delegate.onBeginSucceeded(this);
     } else {
-      Log.e(tag, "Tried to begin() an already active or finished session");
+      Log.e(LOG_TAG, "Tried to begin() an already active or finished session");
       delegate.onBeginFailed(new InvalidSessionTransitionException(null));
     }
   }
@@ -146,7 +146,7 @@ public abstract class RepositorySession {
       this.status = SessionStatus.DONE;
       delegate.onFinishSucceeded(this, this.getBundle(null));
     } else {
-      Log.e(tag, "Tried to finish() an unstarted or already finished session");
+      Log.e(LOG_TAG, "Tried to finish() an unstarted or already finished session");
       delegate.onFinishFailed(new InvalidSessionTransitionException(null));
     }
   }
