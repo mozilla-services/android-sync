@@ -53,7 +53,7 @@ import android.view.View;
 import android.widget.EditText;
 
 public class AccountActivity extends AccountAuthenticatorActivity {
-  private final static String TAG = "AccountActivity";
+  private final static String LOG_TAG = "AccountActivity";
   private AccountManager mAccountManager;
   private Context mContext;
   private String username;
@@ -84,7 +84,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
    * accessed by Fennec and Sync Service.
    */
   public void connectClickHandler(View target) {
-    Log.d("connecting", "ConnectClickHandler");
+    Log.d(LOG_TAG, "ConnectClickHandler");
     username = ((EditText) findViewById(R.id.username)).getText().toString();
     password = ((EditText) findViewById(R.id.password)).getText().toString();
     key = ((EditText) findViewById(R.id.key)).getText().toString();
@@ -107,13 +107,13 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     userbundle.putString(Constants.OPTION_SYNCKEY, key);
     mAccountManager.addAccountExplicitly(account, password, userbundle);
 
-    Log.d(TAG, "account: " + account.toString());
+    Log.d(LOG_TAG, "account: " + account.toString());
     // Set components to sync (default: all)
     ContentResolver.setSyncAutomatically(account, Browser.BOOKMARKS_URI.getAuthority(), true);
     // TODO: add other ContentProviders as needed (e.g. passwords)
     // TODO: for each, also add to res/xml to make visible in account settings
     ContentResolver.setMasterSyncAutomatically(true);
-    Log.d(TAG, "finished setting syncables");
+    Log.d(LOG_TAG, "finished setting syncables");
 
     final Intent intent = new Intent();
     intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
