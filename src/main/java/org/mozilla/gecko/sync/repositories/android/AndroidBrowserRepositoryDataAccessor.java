@@ -6,7 +6,9 @@ import org.mozilla.gecko.sync.repositories.NullCursorException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.provider.Browser.BookmarkColumns;
 import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryDataAccessor {
@@ -34,7 +36,10 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public void wipe() {
     Log.i("wipe", "wiping: " + getUri());
-    context.getContentResolver().delete(getUri(), "", null);
+    // TODO once I can actually delete properly, change this to
+    // only not delete the mobile folder
+    String where = BrowserContract.SyncColumns.GUID + " NOT IN ('mobile', 'menu', 'places', 'toolbar', 'unfiled')";
+    context.getContentResolver().delete(getUri(), where, null);
   }
   
   public void purgeDeleted() throws NullCursorException {
@@ -68,8 +73,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   
   public Cursor fetchAll() throws NullCursorException {
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), null, null, null, null);
+    Cursor cur = context.getContentResolver().query(getUri(), BrowserContract.Bookmarks.BookmarksColumns, null, null, null);
     queryEnd = System.currentTimeMillis();
+    
     queryTimeLogger(tag + ".fetchAll");
     if (cur == null) {
       Log.e(tag, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetchAll");
@@ -108,13 +114,13 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
 
   public Cursor fetch(String guids[]) throws NullCursorException {
-    String where = getGuidColumn() + " in (";
+    String where = "guid" + " in (";
     for (String guid : guids) {
       where = where + "'" + guid + "', ";
     }
     where = (where.substring(0, where.length() -2) + ")");
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
+    Cursor cur = context.getContentResolver().query(getUri(), BrowserContract.Bookmarks.BookmarksColumns, where, null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(tag + ".fetch");
     if (cur == null) {

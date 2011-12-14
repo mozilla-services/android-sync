@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.provider.Browser.BookmarkColumns;
 import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
@@ -51,13 +52,21 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     Cursor cur = fetch(DBUtils.SPECIAL_GUIDS);
     cur.moveToFirst();
     int count = 0;
+    boolean containsMobileFolder = false;
+    long mobileRoot = 0;
     while (!cur.isAfterLast()) {
+      if (DBUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.GUID).equals("mobile")) {
+        containsMobileFolder = true;
+        mobileRoot = DBUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+      }
       count++;
       cur.moveToNext();
     }
     cur.close();
     if (count != DBUtils.SPECIAL_GUIDS.length) {
-      long mobileRoot = insertSpecialFolder("mobile", 0);
+      if (!containsMobileFolder) {
+        mobileRoot = insertSpecialFolder("mobile", 0);
+      }
       long desktop = insertSpecialFolder("places", mobileRoot);
       insertSpecialFolder("unfiled", desktop);
       insertSpecialFolder("menu", desktop);
@@ -69,6 +78,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       BookmarkRecord record = new BookmarkRecord(guid);
       record.title = DBUtils.SPECIAL_GUIDS_MAP.get(guid);
       record.type = "folder";
+      record.androidParentID = parentId;
       return(DBUtils.getAndroidIdFromUri(insert(record)));
   }
 
@@ -79,7 +89,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     cv.put("guid",          rec.guid);
     cv.put(BrowserContract.Bookmarks.TITLE,       rec.title);
     cv.put(BrowserContract.Bookmarks.URL,         rec.bookmarkURI);
-    //cv.put(BrowserContract.Bookmarks.,         rec.description);
+    cv.put(BrowserContract.Bookmarks.DESCRIPTION,         rec.description);
     //cv.put(COL_TAGS,            rec.tags);
     //cv.put(COL_KEYWORD,         rec.keyword);
     cv.put(BrowserContract.Bookmarks.PARENT,          rec.androidParentID);
