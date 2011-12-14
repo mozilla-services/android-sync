@@ -358,7 +358,20 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
-    Log.i("poop", "poo");
-    // TODO check android positions 
+    
+    int found = 0;
+    for (int i = 0; i < delegate.records.size(); i++) {
+      BookmarkRecord rec = (BookmarkRecord) delegate.records.get(i);
+      if (rec.guid.equals(expected[0].guid)) {
+        assertEquals(0, ((BookmarkRecord) delegate.records.get(i)).androidPosition);
+        found++;
+      } else if (rec.guid.equals(expected[2].guid)) {
+        assertEquals(1, ((BookmarkRecord) delegate.records.get(i)).androidPosition);
+        found++;
+      }
+    }
+    assertEquals(2, found);
+    
   }
+  
 }
