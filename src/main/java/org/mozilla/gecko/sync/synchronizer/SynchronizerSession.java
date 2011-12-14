@@ -228,7 +228,7 @@ RepositorySessionFinishDelegate {
   public void onFinishFailed(Exception ex) {
     if (this.sessionB == null) {
       // Ah, it was a problem cleaning up. Never mind.
-      Log.w("rnewman", "Got exception cleaning up first after second session creation failed.", ex);
+      Log.w(LOG_TAG, "Got exception cleaning up first after second session creation failed.", ex);
       return;
     }
     // TODO
