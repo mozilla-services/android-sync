@@ -11,7 +11,7 @@ import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpEntity;
 
 public class JpakeRequest implements Resource {
-  private static String TAG = "JPAKE_REQUEST";
+  private static String LOG_TAG = "JPAKE_REQUEST";
 
   private BaseResource resource;
   public JpakeRequestDelegate delegate;
@@ -23,7 +23,7 @@ public class JpakeRequest implements Resource {
   public JpakeRequest(URI uri, ResourceDelegate delegate) {
     this.resource = new BaseResource(uri);
     this.resource.delegate = delegate;
-    Log.d(TAG, "new uri: " + uri);
+    Log.d(LOG_TAG, "new uri: " + uri);
   }
 
   @Override
