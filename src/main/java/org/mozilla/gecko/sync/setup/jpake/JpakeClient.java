@@ -443,13 +443,13 @@ public class JpakeClient implements JpakeRequestDelegate {
     // Set outgoing message.
     ExtendedJSONObject jOne = new ExtendedJSONObject();
     jOne.put(Constants.ZKP_KEY_GX1, jStepOne.get(Constants.ZKP_KEY_GX1));
-    jOne.put(Constants.ZKP_KEY_GX2, jStepOne.get(Constants.ZKP_KEY_GX1));
+    jOne.put(Constants.ZKP_KEY_GX2, jStepOne.get(Constants.ZKP_KEY_GX2));
 
     ExtendedJSONObject jZkp1 = makeJZkp(
-        (String) jStepOne.get(Constants.ZKP_KEY_ZKP_X1),
+        (String) jStepOne.get(Constants.CRYPTO_KEY_GR1),
         (String) jStepOne.get(Constants.ZKP_KEY_B1), mySignerId);
     ExtendedJSONObject jZkp2 = makeJZkp(
-        (String) jStepOne.get(Constants.ZKP_KEY_ZKP_X2),
+        (String) jStepOne.get(Constants.CRYPTO_KEY_GR2),
         (String) jStepOne.get(Constants.ZKP_KEY_B2), mySignerId);
 
     jOne.put(Constants.ZKP_KEY_ZKP_X1, jZkp1);
@@ -459,6 +459,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "1");
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
+
+    Log.e(LOG_TAG, "jOutgoing format: " + jOutgoing.toJSONString());
 
     nextPhase = State.STEP_ONE_GET;
     state = State.PUT;
@@ -475,6 +477,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       return;
     }
 
+    Log.e(LOG_TAG, "jIncoming format: " + jIncoming.toJSONString());
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
