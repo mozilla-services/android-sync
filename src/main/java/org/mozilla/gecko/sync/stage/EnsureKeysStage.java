@@ -90,7 +90,7 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
     CollectionKeys k = new CollectionKeys();
     try {
       ExtendedJSONObject body = response.jsonObjectBody();
-      Log.i("rnewman", "Fetched keys: " + body.toJSONString());
+      Log.i(LOG_TAG, "Fetched keys: " + body.toJSONString());
       k.setKeyPairsFromWBO(CryptoRecord.fromJSONRecord(body), session.config.syncKeyBundle);
 
     } catch (IllegalStateException e) {
