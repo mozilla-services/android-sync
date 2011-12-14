@@ -63,7 +63,7 @@ import android.util.Log;
 public abstract class AndroidBrowserRepositorySession extends RepositorySession {
 
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
-  protected static final String tag = "AndroidBrowserRepositorySession";
+  protected static final String LOG_TAG = "AndroidBrowserRepositorySession";
   private HashMap<String, String> recordToGuid;
 
   public AndroidBrowserRepositorySession(Repository repository) {
@@ -76,7 +76,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       this.status = SessionStatus.ACTIVE;
       this.syncBeginTimestamp = System.currentTimeMillis();
     } else {
-      Log.e(tag, "Tried to begin() an already active or finished session");
+      Log.e(LOG_TAG, "Tried to begin() an already active or finished session");
       delegate.onBeginFailed(new InvalidSessionTransitionException(null));
       return;
     }
@@ -87,7 +87,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       // is no way of knowing which call would be hit first.
       checkDatabase();
     } catch (ProfileDatabaseException e) {
-      Log.e(tag, "ProfileDatabaseException from begin. Fennec must be launched once until this error is fixed");
+      Log.e(LOG_TAG, "ProfileDatabaseException from begin. Fennec must be launched once until this error is fixed");
       delegate.onBeginFailed(e);
       return;
     } catch (NullCursorException e) {
@@ -247,7 +247,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
 
       if (guids == null || guids.length < 1) {
-        Log.e(tag, "No guids sent to fetch");
+        Log.e(LOG_TAG, "No guids sent to fetch");
         delegate.onFetchFailed(new InvalidRequestException(null), null);
       } else {
         try {
@@ -326,7 +326,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
     public StoreThread(Record record, RepositorySessionStoreDelegate delegate) {
       if (record == null) {
-        Log.e(tag, "Record sent to store was null");
+        Log.e(LOG_TAG, "Record sent to store was null");
         throw new IllegalArgumentException("record is null.");
       }
       this.record = record;
@@ -366,7 +366,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           }
         }
       } catch (MultipleRecordsForGuidException e) {
-        Log.e(tag, "Multiple records returned for given guid: " + record.guid);
+        Log.e(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
         delegate.onStoreFailed(e);
         return;
       } catch (NoGuidForIdException e) {
@@ -436,7 +436,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   protected Record reconcileRecords(Record local, Record remote) {
-    Log.i(tag, "Reconciling " + local.guid + " against " + remote.guid);
+    Log.i(LOG_TAG, "Reconciling " + local.guid + " against " + remote.guid);
 
     // Determine which record is newer since this is the one we will take in case of conflict.
     // Yes, clock drift. *sigh*
