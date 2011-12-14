@@ -74,9 +74,13 @@ public abstract class RepositorySession {
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
 
-  // The time that the last sync on this collection completed, in milliseconds.
+  // The time that the last sync on this collection completed, in milliseconds since epoch.
   public long lastSyncTimestamp;
   public long syncBeginTimestamp;
+
+  public static long now() {
+    return System.currentTimeMillis();
+  }
 
   public RepositorySession(Repository repository) {
     this.repository = repository;
