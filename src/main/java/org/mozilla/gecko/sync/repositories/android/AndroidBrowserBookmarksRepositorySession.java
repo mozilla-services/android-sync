@@ -195,7 +195,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     
     // Check if parent exists
     if (guidToID.containsKey(bmk.parentID)) {
-      // TODO consider joining these two data structure somehow
       bmk.androidParentID = guidToID.get(bmk.parentID);
       JSONArray children = parentToChildArray.get(bmk.parentID);
       if (children != null) {
