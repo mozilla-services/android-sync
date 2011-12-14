@@ -12,7 +12,7 @@ import android.util.Log;
 public abstract class AndroidBrowserRepositoryDataAccessor {
 
   protected Context context;
-  protected String tag = "AndroidBrowserRepositoryDataAccessor";
+  protected String LOG_TAG = "AndroidBrowserRepositoryDataAccessor";
 
   public AndroidBrowserRepositoryDataAccessor(Context context) {
     this.context = context;
@@ -33,7 +33,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   protected abstract String getAndroidIDColumn();
 
   public void wipe() {
-    Log.i("wipe", "wiping: " + getUri());
+    Log.i(LOG_TAG, "wiping: " + getUri());
     context.getContentResolver().delete(getUri(), "", null);
   }
   
@@ -43,9 +43,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     Cursor cur = context.getContentResolver().query(getUri(),
         null, getDeletedColumn() + "= 1", null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(tag + ".purgeDeleted");
+    queryTimeLogger(LOG_TAG + ".purgeDeleted");
     if (cur == null) {
-      Log.e(tag, "Got back a null cursor in AndroidBrowserRepositoryDataAccessor.purgeDeleted");
+      Log.e(LOG_TAG, "Got back a null cursor in AndroidBrowserRepositoryDataAccessor.purgeDeleted");
       throw new NullCursorException(null);
     }
     cur.moveToFirst();
@@ -58,7 +58,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   
   protected void queryTimeLogger(String methodCallingQuery) {
     long elapsedTime = queryEnd - queryStart;
-    Log.i(tag, "Query timer: " + methodCallingQuery + " took " + elapsedTime + "ms.");
+    Log.i(LOG_TAG, "Query timer: " + methodCallingQuery + " took " + elapsedTime + "ms.");
   }
 
   public Uri insert(Record record) {
@@ -70,9 +70,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(), null, null, null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(tag + ".fetchAll");
+    queryTimeLogger(LOG_TAG + ".fetchAll");
     if (cur == null) {
-      Log.e(tag, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetchAll");
+      Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetchAll");
       throw new NullCursorException(null);
     }
     return cur;
@@ -85,9 +85,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
         getDateModifiedColumn() + " >= " +
         Long.toString(timestamp), null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(tag + ".getGUIDsSince");
+    queryTimeLogger(LOG_TAG + ".getGUIDsSince");
     if (cur == null) {
-      Log.e(tag, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.getGUIDsSince");
+      Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.getGUIDsSince");
       throw new NullCursorException(null);
     }
     return cur;
@@ -99,9 +99,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
         getDateModifiedColumn() + " >= " +
         Long.toString(timestamp), null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(tag + ".fetchSince");
+    queryTimeLogger(LOG_TAG + ".fetchSince");
     if (cur == null) {
-      Log.e(tag, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetchSince");
+      Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetchSince");
       throw new NullCursorException(null);
     }
     return cur;
@@ -116,9 +116,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(tag + ".fetch");
+    queryTimeLogger(LOG_TAG + ".fetch");
     if (cur == null) {
-      Log.e(tag, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetch");
+      Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetch");
       throw new NullCursorException(null);
     }
     return cur;
