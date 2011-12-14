@@ -183,4 +183,12 @@ public class BrowserContract {
 
         public static final String VERSION = "version";
     }
+
+    public static final class Schema {
+        private Schema() {}
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "schema");
+
+        public static final String VERSION = "version";
+    }
 }

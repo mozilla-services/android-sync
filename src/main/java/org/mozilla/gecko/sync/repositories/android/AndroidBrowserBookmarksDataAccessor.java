@@ -4,7 +4,6 @@ import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -100,13 +99,21 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     Cursor cur = fetch(DBUtils.SPECIAL_GUIDS);
     cur.moveToFirst();
     int count = 0;
+    boolean containsMobileFolder = false;
+    long mobileRoot = 0;
     while (!cur.isAfterLast()) {
+      if (DBUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.GUID).equals("mobile")) {
+        containsMobileFolder = true;
+        mobileRoot = DBUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+      }
       count++;
       cur.moveToNext();
     }
     cur.close();
     if (count != DBUtils.SPECIAL_GUIDS.length) {
-      long mobileRoot = insertSpecialFolder("mobile", 0);
+      if (!containsMobileFolder) {
+        mobileRoot = insertSpecialFolder("mobile", 0);
+      }
       long desktop = insertSpecialFolder("places", mobileRoot);
       insertSpecialFolder("unfiled", desktop);
       insertSpecialFolder("menu", desktop);
@@ -118,6 +125,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       BookmarkRecord record = new BookmarkRecord(guid);
       record.title = DBUtils.SPECIAL_GUIDS_MAP.get(guid);
       record.type = "folder";
+      record.androidParentID = parentId;
       return(DBUtils.getAndroidIdFromUri(insert(record)));
   }
 
