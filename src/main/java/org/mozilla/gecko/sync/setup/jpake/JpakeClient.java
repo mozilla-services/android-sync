@@ -61,6 +61,7 @@ import org.mozilla.android.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 
@@ -130,7 +131,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   private Timer               timerScheduler;
 
   private JpakeCrypto         jpakeCrypto;
-
+  
   public JpakeClient(SetupSyncActivity activity) {
     ssActivity = activity;
 
@@ -428,6 +429,7 @@ public class JpakeClient implements JpakeRequestDelegate {
         } catch (UnsupportedEncodingException e) {
           e.printStackTrace();
         }
+        Log.d(LOG_TAG, "what are we sending?");
         Log.i(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
       }
     });
@@ -461,7 +463,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
 
-    Log.e(LOG_TAG, "jOutgoing format: " + jOutgoing.toJSONString());
+    Log.d(LOG_TAG, "jOutgoing format: " + jOutgoing.toJSONString());
 
     nextPhase = State.STEP_ONE_GET;
     state = State.PUT;
@@ -478,7 +480,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       return;
     }
 
-    Log.e(LOG_TAG, "jIncoming format: " + jIncoming.toJSONString());
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
@@ -543,6 +544,7 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     nextPhase = State.STEP_TWO_GET;
     state = State.PUT;
+    Log.d(LOG_TAG, "computeStepTwo finished");
     putStep();
   }
 
@@ -570,7 +572,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     } catch (NonObjectJSONException e) {
       e.printStackTrace();
     }
-    BigInteger b = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
+    Log.d(LOG_TAG, "iPayload: " + iPayload.toJSONString());
+    BigInteger a = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A), 16);
 
     ExtendedJSONObject zkpPayload = null;
     try {
@@ -579,7 +582,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       e.printStackTrace();
     }
     try {
-      keyBundle = jpakeCrypto.finalRound(b, zkpPayload, secret);
+      keyBundle = jpakeCrypto.finalRound(a, zkpPayload, secret);
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
@@ -704,7 +707,6 @@ public class JpakeClient implements JpakeRequestDelegate {
           return;
         }
         pollTries += 1;
-        Log.i(LOG_TAG, "Have tried " + pollTries + " times.");
         scheduleGetRequest(jpakePollInterval);
         return;
       case 404:
@@ -712,6 +714,9 @@ public class JpakeClient implements JpakeRequestDelegate {
         abort(Constants.JPAKE_ERROR_NODATA);
         break;
       case 412: // "Precondition failed"
+        Log.d(LOG_TAG, "Message already replaced on server by other party.");
+        onRequestSuccess(res);
+        break;
       default:
         Log.e(LOG_TAG, "Could not retrieve data. Server responded with HTTP "
             + statusCode);
@@ -815,8 +820,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       } catch (NonObjectJSONException e) {
         e.printStackTrace();
       }
-      Log.d(LOG_TAG, "fetched message " + jIncoming.get(Constants.JSON_KEY_TYPE));
-
+      Log.d(LOG_TAG, "incoming message: " + jIncoming.toJSONString());
       if (this.state == State.STEP_ONE_GET) {
         computeStepTwo();
       } else if (this.state == State.STEP_TWO_GET) {
@@ -824,7 +828,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       } else if (this.state == State.KEY_VERIFY) {
         decryptData();
       }
-      this.state = State.PUT;
       break;
 
     case KEY_VERIFY:
@@ -835,8 +838,8 @@ public class JpakeClient implements JpakeRequestDelegate {
       Log.i(LOG_TAG, "myEtag: " + myEtag);
 
       // Pause twice the poll interval.
-      scheduleGetRequest(2 * jpakePollInterval);
       state = nextPhase;
+      scheduleGetRequest(2 * jpakePollInterval);
       Log.i(LOG_TAG, "scheduling 2xPollInterval for " + state.name());
       break;
 
@@ -908,11 +911,13 @@ public class JpakeClient implements JpakeRequestDelegate {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
+      // TODO: maybe use of http requests is wasteful?
       if (isSuccess(response)) {
         this.requestDelegate.onRequestSuccess(response);
       } else {
         this.requestDelegate.onRequestFailure(response);
       }
+      SyncResourceDelegate.consumeEntity(response.getEntity());
     }
 
     @Override

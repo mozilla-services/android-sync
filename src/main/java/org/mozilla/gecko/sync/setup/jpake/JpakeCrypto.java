@@ -50,7 +50,7 @@ import org.mozilla.gecko.sync.setup.Constants;
 import android.util.Log;
 
 public class JpakeCrypto {
-  private static final String     TAG              = "JpakeCrypto";
+  private static final String     LOG_TAG              = "JpakeCrypto";
 
   /*
    * Primes P and Q, and generator G - from original Mozilla jpake
@@ -155,6 +155,8 @@ public class JpakeCrypto {
       String secret, BigInteger gx3, BigInteger gx4, ExtendedJSONObject zkp3,
       ExtendedJSONObject zkp4) throws Gx4IsOneException, IncorrectZkpException {
 
+    Log.d(LOG_TAG, "round2 started");
+    
     if (gx4 == BigInteger.ONE) {
       throw new Gx4IsOneException();
     }
@@ -176,6 +178,7 @@ public class JpakeCrypto {
     valuesOut.put(Constants.ZKP_KEY_A, a.toString(16));
     valuesOut.put(Constants.ZKP_KEY_ZKP_A, zkpA[0]);
     valuesOut.put(Constants.ZKP_KEY_B, zkpA[1]);
+    Log.d(LOG_TAG, "round2 finished");
   }
 
   /**
@@ -183,28 +186,32 @@ public class JpakeCrypto {
    *
    * @param b
    * @param zkp
-   * @param s
-   * @return
+   * @param secret
+   * 
+   * @return KeyBundle
    * @throws IncorrectZkpException
    */
-  public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp, String s)
+  public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp, String secret)
       throws IncorrectZkpException {
+    Log.d(LOG_TAG, "final round started");
 
-    BigInteger g1 = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
+    BigInteger g123 = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
         .mod(P);
-    checkZkp(g1, b, zkp);
+    checkZkp(g123, b, zkp);
 
-    // Calculate shared key g^(x1+x3)x2*x4*s, which is equivalent to
+    // Calculate shared key g^(x1+x3)*x2*x4*secret, which is equivalent to
     // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.
 
-    BigInteger y1 = this.gx4.modPow(this.x2, P); // gx4^x2
-    BigInteger minusS = Q.subtract(new BigInteger(s.getBytes())).mod(P);
-    y1 = y1.modPow(minusS, P); // gx4^x2^-s
-    y1 = b.multiply(y1).mod(P); // B*(gx4^x2^-s)
-    y1 = y1.modPow(this.x2, P);
+    BigInteger s = new BigInteger(secret.getBytes());
+    BigInteger k = this.gx4.modPow(this.x2, P); // gx4^x2
+    //BigInteger minusS = Q.subtract(new BigInteger(secret.getBytes())).mod(P);
+    k = k.modPow(s.negate(), P); // gx4^x2^-s
+    k = b.multiply(k).mod(P); // B*(gx4^x2^-s)
+    k = k.modPow(this.x2, P); // to power x2
 
     // Generate HMAC and Encryption keys from synckey.
-    byte[] prk = y1.toByteArray();
+    byte[] prk = k.toByteArray();
+    
     // TODO: make sure is correct format
     byte[] info = Utils.concatAll(EMPTY_BYTES, HKDF.HMAC_INPUT,
         ENCR_INPUT_BYTES);
@@ -214,6 +221,7 @@ public class JpakeCrypto {
     System.arraycopy(okm, 0, enc, 0, 32);
     System.arraycopy(okm, 32, hmac, 0, 32);
 
+    Log.d(LOG_TAG, "final round finished; returning key");
     return new KeyBundle(enc, hmac);
   }
 
@@ -256,28 +264,28 @@ public class JpakeCrypto {
     // Check parameters of zkp, and compare to computed hash. These shouldn't
     // fail.
     if (gx.compareTo(BigInteger.ZERO) < 1) {// g^x > 1
-      Log.e(TAG, "g^x > 1 fails");
+      Log.e(LOG_TAG, "g^x > 1 fails");
       throw new IncorrectZkpException();
     } else if (gx.compareTo(P.subtract(BigInteger.ONE)) > -1) { // g^x < p-1
-      Log.e(TAG, "g^x < p-1 fails");
+      Log.e(LOG_TAG, "g^x < p-1 fails");
       throw new IncorrectZkpException();
     } else if (gx.modPow(Q, P).compareTo(BigInteger.ONE) != 0) {
-      Log.e(TAG, "g^x^q % p = 1 fails");
+      Log.e(LOG_TAG, "g^x^q % p = 1 fails");
     } else if (gr.compareTo(g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P)) != 0) {
       // b = r-h*x ==> g^r = g^b*g^x^(h)
-      Log.i(TAG, "gb*g(xh) = "
+      Log.i(LOG_TAG, "gb*g(xh) = "
           + g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P).toString(16));
-      Log.d(TAG, "gr = " + gr.toString(16));
-      Log.d(TAG, "b = " + b.toString(16));
-      Log.d(TAG, "g^b = " + g.modPow(b, P).toString(16));
-      Log.d(TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
-      Log.d(TAG, "gx = " + gx.toString(16));
-      Log.d(TAG, "h = " + h.toString(16));
-      Log.e(TAG, "zkp calculation incorrect");
+      Log.d(LOG_TAG, "gr = " + gr.toString(16));
+      Log.d(LOG_TAG, "b = " + b.toString(16));
+      Log.d(LOG_TAG, "g^b = " + g.modPow(b, P).toString(16));
+      Log.d(LOG_TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
+      Log.d(LOG_TAG, "gx = " + gx.toString(16));
+      Log.d(LOG_TAG, "h = " + h.toString(16));
+      Log.e(LOG_TAG, "zkp calculation incorrect");
       throw new IncorrectZkpException();
     }
     else {
-      Log.d(TAG, "*** ZKP SUCCESS ***");
+      Log.d(LOG_TAG, "*** ZKP SUCCESS ***");
     }
   }
 
