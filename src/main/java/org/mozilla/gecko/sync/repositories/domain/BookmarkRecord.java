@@ -157,6 +157,9 @@ public class BookmarkRecord extends Record {
     if (!((this.parentID == other.parentID) || this.parentID.equals(other.parentID))) return false;
     if (!((this.parentName == other.parentName) || this.parentName.equals(other.parentName))) return false;
     if (!((this.type == other.type) || this.type.equals(other.type))) return false;
+    if (!((this.description == other.description) || this.description.equals(other.description))) return false;
+    if (!((this.keyword == other.keyword) || this.keyword.equals(other.keyword))) return false;
+    if (!((this.tags == other.tags) || this.tags.toString().equals(other.tags.toString()))) return false;
 
     // Check children
     if (this.type.equals("folder")) {
@@ -170,11 +173,6 @@ public class BookmarkRecord extends Record {
       }
     }
     return true;
-
-    // TODO add back in once content providers have these columns
-    //assertEquals(recExpect.description, recActual.description);
-    //assertEquals(recExpect.keyword, recActual.keyword);
-    //assertEquals(recExpect.tags, recExpect.tags);
   }
 
 }

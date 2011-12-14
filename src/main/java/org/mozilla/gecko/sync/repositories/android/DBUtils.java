@@ -58,10 +58,8 @@ public class DBUtils {
   public static String[] SPECIAL_GUIDS = new String[] {
     "menu",
     "places",
-    //"tags",
     "toolbar",
     "unfiled",
-    //"desktop",
     "mobile"
   };
   public static HashMap<String, String> SPECIAL_GUIDS_MAP;
@@ -73,10 +71,8 @@ public class DBUtils {
       SPECIAL_GUIDS_MAP = new HashMap<String, String>();
       SPECIAL_GUIDS_MAP.put("menu", context.getString(R.string.menu));
       SPECIAL_GUIDS_MAP.put("places", context.getString(R.string.places));
-      //SPECIAL_GUIDS_MAP.put("tags", context.getString(R.string.tags));
       SPECIAL_GUIDS_MAP.put("toolbar", context.getString(R.string.toolbar));
       SPECIAL_GUIDS_MAP.put("unfiled", context.getString(R.string.unfiled));
-      //SPECIAL_GUIDS_MAP.put("desktop", context.getString(R.string.desktop));
       SPECIAL_GUIDS_MAP.put("mobile", context.getString(R.string.mobile));
     }
   }
@@ -90,6 +86,10 @@ public class DBUtils {
   }
 
   private static JSONArray getJSONArrayFromCursor(Cursor cur, String colId) {
+    String jsonArrayAsString = getStringFromCursor(cur, colId);
+    if (jsonArrayAsString == null) {
+      return new JSONArray();
+    }
     try {
       return (JSONArray) new JSONParser().parse(getStringFromCursor(cur, colId));
     } catch (ParseException e) {
@@ -109,26 +109,20 @@ public class DBUtils {
   //Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it
   public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur, String parentId, String parentName, JSONArray children) {
 
-    // TODO NOTE NOTE NOTE carrying on our screwy qualify/not qualify problem,
-    // the hard coded column names below are because these must be unqualified!
-    //String guid = getStringFromCursor(cur, BrowserContract.Bookmarks.GUID);
-    String guid = getStringFromCursor(cur, "guid");
+    String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "bookmarks";
-    long lastModified = getLongFromCursor(cur, "modified");
-
+    long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
     BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified);
 
     rec.title = getStringFromCursor(cur, BrowserContract.Bookmarks.TITLE);
     rec.bookmarkURI = getStringFromCursor(cur, BrowserContract.Bookmarks.URL);
-    //rec.description = getStringFromCursor(cur, BrowserContract.COL_DESCRIP);
-    //rec.tags = getJSONArrayFromCursor(curMoz, AndroidBrowserBookmarksDatabaseHelper.COL_TAGS);
-    //rec.keyword = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_KEYWORD);
+    rec.description = getStringFromCursor(cur, BrowserContract.Bookmarks.DESCRIPTION);
+    rec.tags = getJSONArrayFromCursor(cur, BrowserContract.Bookmarks.TAGS);
+    rec.keyword = getStringFromCursor(cur, BrowserContract.Bookmarks.KEYWORD);
     rec.type = cur.getInt(cur.getColumnIndex(BrowserContract.Bookmarks.IS_FOLDER)) == 0 ?
       AndroidBrowserBookmarksDataAccessor.TYPE_BOOKMARK : AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER;
 
     rec.androidID = getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
-    // TODO implement crazy position resolution stuff
-    //rec.pos = getStringFromCursor(cur, AndroidBrowserBookmarksDatabaseHelper.COL_POS);
     rec.androidPosition = getLongFromCursor(cur, BrowserContract.Bookmarks.POSITION);
     rec.children = children;
 
