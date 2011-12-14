@@ -47,6 +47,7 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import android.util.Log;
 
 public class FetchInfoCollectionsStage implements GlobalSyncStage {
+  private static final String LOG_TAG = "FetchInfoCollectionsStage";
 
   public class StageInfoCollectionsDelegate implements InfoCollectionsDelegate {
 
@@ -58,7 +59,7 @@ public class FetchInfoCollectionsStage implements GlobalSyncStage {
     @Override
     public void handleSuccess(InfoCollections global) {
       try {
-        Log.i("rnewman", "Got timestamps: ");
+        Log.i(LOG_TAG, "Got timestamps: ");
 
         // TODO: decide whether more work needs to be done?
         session.advance();
