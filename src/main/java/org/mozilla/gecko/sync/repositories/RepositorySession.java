@@ -181,8 +181,8 @@ public abstract class RepositorySession {
     }
   }
 
-  protected boolean confirmSessionActive() {
-    return status == SessionStatus.ACTIVE ? true : false;
+  public boolean isActive() {
+    return status == SessionStatus.ACTIVE;
   }
 
   public void abort() {

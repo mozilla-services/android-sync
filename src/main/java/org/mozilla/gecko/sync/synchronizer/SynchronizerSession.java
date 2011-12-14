@@ -65,6 +65,8 @@ RepositorySessionFinishDelegate {
   private RepositorySessionBundle bundleB;
   private long pendingATimestamp = -1;
   private long pendingBTimestamp = -1;
+  private boolean flowAToBCompleted = false;
+  private boolean flowBToACompleted = false;
 
   private static void warn(String msg, Exception e) {
     System.out.println("WARN: " + msg);
@@ -114,16 +116,16 @@ RepositorySessionFinishDelegate {
    */
   public void synchronize() {
     // TODO: pull timestamps from somewhere...
-    final RecordsChannel channelAToB = new RecordsChannel(this.sessionA, this.sessionB, this);
-    final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this);
     final SynchronizerSession session = this;
 
     // TODO: failed record handling.
-    channelAToB.flow(new RecordsChannelDelegate() {
+    final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this);
+    RecordsChannelDelegate channelDelegate = new RecordsChannelDelegate() {
       public void onFlowCompleted(RecordsChannel recordsChannel, long end) {
         info("First RecordsChannel flow completed. Starting next.");
         pendingATimestamp = end;
-        channelBToA.flow(session);
+        flowAToBCompleted = true;
+        channelBToA.flow();
       }
 
       @Override
@@ -144,14 +146,20 @@ RepositorySessionFinishDelegate {
         warn("onFlowFinishedFailed. Reporting store error.", ex);
         session.delegate.onStoreError(ex);
       }
-    });
+    };
+    final RecordsChannel channelAToB = new RecordsChannel(this.sessionA, this.sessionB, channelDelegate);
+    info("Starting A to B flow. Channel is " + channelAToB);
+    channelAToB.beginAndFlow();
   }
 
   @Override
   public void onFlowCompleted(RecordsChannel channel, long end) {
     info("Second RecordsChannel (" + channel + ") flow completed. Notifying onSynchronized.");
     pendingBTimestamp = end;
-    this.delegate.onSynchronized(this);
+    flowBToACompleted = true;
+
+    // Finish the two sessions.
+    this.sessionA.finish(this);
   }
 
   @Override
@@ -251,22 +259,34 @@ RepositorySessionFinishDelegate {
   }
 
   @Override
-  public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
-    Log.i(LOG_TAG, "onFinishSucceeded.");
+  public void onFinishSucceeded(RepositorySession session,
+                                RepositorySessionBundle bundle) {
+    info("onFinishSucceeded. Flows? " +
+         flowAToBCompleted + ", " + flowBToACompleted);
+
     if (session == sessionA) {
-      Log.i(LOG_TAG, "onFinishSucceeded: bumping session A's timestamp to " + pendingATimestamp);
-      bundle.bumpTimestamp(pendingATimestamp);
-      this.synchronizer.bundleA = bundle;
+      if (flowAToBCompleted) {
+        info("onFinishSucceeded: bumping session A's timestamp to " + pendingATimestamp);
+        bundle.bumpTimestamp(pendingATimestamp);
+        this.synchronizer.bundleA = bundle;
+      }
+      if (this.sessionB != null) {
+        // On to the next.
+        this.sessionB.finish(this);
+      }
     } else if (session == sessionB) {
-      Log.i(LOG_TAG, "onFinishSucceeded: bumping session B's timestamp to " + pendingBTimestamp);
-      bundle.bumpTimestamp(pendingBTimestamp);
-      this.synchronizer.bundleB = bundle;
+      if (flowBToACompleted) {
+        info("onFinishSucceeded: bumping session B's timestamp to " + pendingBTimestamp);
+        bundle.bumpTimestamp(pendingBTimestamp);
+        this.synchronizer.bundleB = bundle;
+        this.delegate.onSynchronized(this);
+      }
     } else {
       // TODO: hurrrrrr...
     }
 
     if (this.sessionB == null) {
-      this.sessionA = null;       // We're done.
+      this.sessionA = null; // We're done.
     }
   }
 }

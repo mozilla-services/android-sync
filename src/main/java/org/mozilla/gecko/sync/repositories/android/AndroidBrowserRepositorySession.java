@@ -128,7 +128,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onGuidsSinceFailed(new InactiveSessionException(null));
         return;
       }
@@ -198,7 +198,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
@@ -240,7 +240,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
@@ -285,7 +285,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
@@ -333,7 +333,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onStoreFailed(new InactiveSessionException(null));
         return;
       }
@@ -475,7 +475,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onWipeFailed(new InactiveSessionException(null));
         return;
       }
