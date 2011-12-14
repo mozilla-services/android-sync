@@ -103,44 +103,62 @@ public class JpakeCrypto {
   private BigInteger              gx3;
   private BigInteger              gx4;
 
+  /**
+   * 
+   * @param mySignerId
+   * @param values
+   */
   public void round1(String mySignerId, ExtendedJSONObject values) {
+    // mySignerId used for creating ZKP.
     this.mySignerId = mySignerId;
-    
-    // randomly select x1 from [0,q), x2 from [1,q)
+
+    // Randomly select x1 from [0,q), x2 from [1,q).
     BigInteger x1 = getRandom(Q); // [0, q)
-    // [1, q)
     BigInteger x2 = this.x2 = BigInteger.ONE.add(getRandom(Q
-        .subtract(BigInteger.ONE)));
+        .subtract(BigInteger.ONE))); // [1, q)
 
     BigInteger gx1 = this.gx1 = G.modPow(x1, P);
     BigInteger gx2 = this.gx2 = G.modPow(x2, P);
 
-    // generate zero knowledge proofs
-    String[] zkp1 = createZkp(P, Q, G, gx1, x1);
-    String[] zkp2 = createZkp(P, Q, G, gx2, x2);
+    // Generate zero knowledge proofs.
+    String[] zkp1 = createZkp(G, x1, gx1);
+    String[] zkp2 = createZkp(G, x2, gx2);
 
+    // Store round1 return values.
     values.put(Constants.ZKP_KEY_GX1, gx1.toString(16));
     values.put(Constants.ZKP_KEY_GX2, gx2.toString(16));
-    values.put(Constants.ZKP_KEY_ZKP_X1, zkp1[0]);
-    values.put(Constants.ZKP_KEY_ZKP_X2, zkp2[0]);
+    values.put(Constants.CRYPTO_KEY_GR1, zkp1[0]);
+    values.put(Constants.CRYPTO_KEY_GR2, zkp2[0]);
     values.put(Constants.ZKP_KEY_B1, zkp1[1]);
     values.put(Constants.ZKP_KEY_B2, zkp2[1]);
   }
 
+  /**
+   * 
+   * @param mySignerId
+   * @param valuesOut
+   * @param secret
+   * @param gx3
+   * @param gx4
+   * @param zkp3
+   * @param zkp4
+   * @throws Gx4IsOneException
+   * @throws IncorrectZkpException
+   */
   public void round2(String mySignerId, ExtendedJSONObject valuesOut,
-      String secret, BigInteger gx3, BigInteger gx4, ExtendedJSONObject zkp1,
-      ExtendedJSONObject zkp2) throws Gx4IsOneException, IncorrectZkpException {
+      String secret, BigInteger gx3, BigInteger gx4, ExtendedJSONObject zkp3,
+      ExtendedJSONObject zkp4) throws Gx4IsOneException, IncorrectZkpException {
 
     if (gx4 == BigInteger.ONE) {
       throw new Gx4IsOneException();
     }
 
-    // check ZKP
-    Log.e(TAG, "starting zkp1");
-    checkZkp(G, gx3, zkp1);
-    Log.e(TAG, "finished zkp1");
-    checkZkp(G, gx4, zkp2);
-    Log.e(TAG, "finished zkp2");
+    // Check ZKP.
+    Log.e(TAG, "starting zkp3");
+    checkZkp(G, gx3, zkp3);
+    Log.e(TAG, "finished zkp3");
+    checkZkp(G, gx4, zkp4);
+    Log.e(TAG, "finished zkp4");
 
     this.gx3 = gx3;
     this.gx4 = gx4;
@@ -150,13 +168,21 @@ public class JpakeCrypto {
     BigInteger y2 = this.x2.multiply(new BigInteger(secret.getBytes())).mod(P);
 
     BigInteger a = y1.modPow(y2, P);
-    String[] zkpA = createZkp(P, Q, y1, y2, a);
+    String[] zkpA = createZkp(y1, y2, a);
 
-    valuesOut.put(Constants.ZKP_KEY_A, a);
+    valuesOut.put(Constants.ZKP_KEY_A, a.toString(16));
     valuesOut.put(Constants.ZKP_KEY_ZKP_A, zkpA[0]);
     valuesOut.put(Constants.ZKP_KEY_B, zkpA[1]);
   }
 
+  /**
+   * 
+   * @param b
+   * @param zkp
+   * @param s
+   * @return
+   * @throws IncorrectZkpException
+   */
   public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp, String s)
       throws IncorrectZkpException {
 
@@ -165,7 +191,8 @@ public class JpakeCrypto {
     checkZkp(g1, b, zkp);
 
     // Calculate shared key g^(x1+x3)x2*x4*s, which is equivalent to
-    // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2
+    // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.
+    
     BigInteger y1 = this.gx4.modPow(this.x2, P); // gx4^x2
     BigInteger minusS = Q.subtract(new BigInteger(s.getBytes())).mod(P);
     y1 = y1.modPow(minusS, P); // gx4^x2^-s
@@ -188,31 +215,40 @@ public class JpakeCrypto {
 
   /* Helper Methods */
 
-  private String[] createZkp(BigInteger p, BigInteger q, BigInteger g,
-      BigInteger gx, BigInteger x) {
+  /*
+   * Generate the ZKP b = r - x*h, and g^r, where h = hash(g, g^r, g^x, id). (We
+   * pass in gx to save on an exponentiation of g^x)
+   */
+  private String[] createZkp(BigInteger g, BigInteger x, BigInteger gx) {
     String[] result = new String[2];
 
-    // generate random r for exponent
-    BigInteger r = getRandom(q);
+    // Generate random r for exponent.
+    BigInteger r = getRandom(Q);
 
-    BigInteger gr = g.modPow(r, p);
+    // Calculate g^r for ZKP.
+    BigInteger gr = g.modPow(r, P);
     result[0] = gr.toString(16);
 
+    // Calculate the ZKP b value = (r-x*h) % q.
     BigInteger h = computeBHash(g, gr, gx, mySignerId);
-    // ZKP value = b = r-x*h
-    result[1] = r.subtract(x.multiply(h)).mod(p).toString(16);
+    Log.e(TAG, "myhash: " + h.toString(16));
+    result[1] = r.subtract(x.multiply(h)).mod(Q).toString(16);
 
     return result;
   }
 
-  private void checkZkp(BigInteger g1, BigInteger gx, ExtendedJSONObject zkp)
+  /*
+   * Verify ZKP.
+   */
+  private void checkZkp(BigInteger g, BigInteger gx, ExtendedJSONObject zkp)
       throws IncorrectZkpException {
-    // extract zkp
+    // Extract ZKP params.
     BigInteger gr = new BigInteger((String) zkp.get(Constants.ZKP_KEY_GR), 16);
     BigInteger b = new BigInteger((String) zkp.get(Constants.ZKP_KEY_B), 16);
     String signerId = (String) zkp.get(Constants.ZKP_KEY_ID);
-
-    BigInteger h = computeBHash(g1, gr, gx, signerId);
+    
+    Log.e(TAG, "checkZkp");
+    BigInteger h = computeBHash(g, gr, gx, signerId);
 
     // Check parameters of zkp, and compare to computed hash. These shouldn't
     // fail.
@@ -222,15 +258,22 @@ public class JpakeCrypto {
     } else if (gx.compareTo(P.subtract(BigInteger.ONE)) > -1) { // g^x < p-1
       Log.i(TAG, "g^x < p-1");
       throw new IncorrectZkpException();
-    } else if (gr.compareTo(
-        g1.modPow(b, P).multiply(gx.modPow(h, P)).mod(P)) != 0) {
+    } else if (gr.compareTo(g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P)) != 0) {
       // b = r-h*x ==> g^r = g^b*g^x^(h)
-      Log.i(TAG, "g^b = " + g1.modPow(b, P).toString(16));
+      Log.i(TAG, "g^b = " + g.modPow(b, P).toString(16));
+      Log.i(TAG, "b = " + b.toString(16));
+      Log.i(TAG, "gr = " + gr.toString(16));
+      Log.i(TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
+      Log.e(TAG, "h = " + h.toString(16));
       Log.i(TAG, "zkp calculation incorrect");
 //      throw new IncorrectZkpException();
     }
   }
 
+  /*
+   * Use SHA-256 to compute a BigInteger hash of g, gr, gx values with mySignerId to
+   * prevent replay. Does not make a twos-complement BigInteger form hash.
+   */
   private BigInteger computeBHash(BigInteger g, BigInteger gr, BigInteger gx,
       String id) {
     MessageDigest sha = null;
@@ -243,24 +286,36 @@ public class JpakeCrypto {
 
       sha.update(byteLengthAsBytes(gBytes));
       sha.update(gBytes);
-      
       sha.update(byteLengthAsBytes(grBytes));
       sha.update(grBytes);
       sha.update(byteLengthAsBytes(gxBytes));
       sha.update(gxBytes);
       sha.update(byteLengthAsBytes(idBytes));
       sha.update(idBytes);
+      
+      Log.e(TAG, "glen " + new BigInteger(byteLengthAsBytes(gBytes)).toString(16));
+      Log.e(TAG, "grlen " + new BigInteger(byteLengthAsBytes(grBytes)).toString(16));
+      Log.e(TAG, "gxlen " + new BigInteger(byteLengthAsBytes(gxBytes)).toString(16));
+      Log.e(TAG, "idlen " + new BigInteger(byteLengthAsBytes(idBytes)).toString(16));
+      
     } catch (NoSuchAlgorithmException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    return new BigInteger(sha.digest());
+    byte[] hash = sha.digest();
+    // Hack to make sure BigInt doesn't twos-complement our hash.
+    byte[] hash0 = new byte[hash.length + 1]; // Pad with a 0 byte.
+    System.arraycopy(hash, 0, hash0, 1, hash.length);
+    return new BigInteger(hash0);
   }
 
+  /*
+   * Helper function to return the length of a byte array in a byte[2].
+   */
   private byte[] byteLengthAsBytes(byte[] b) {
     int byteLen = b.length;
     byte[] ret = new byte[2];
-    // big endian
+    // Big endian.
     ret[0] = (byte) ((byteLen >> 8) & 0xff);
     ret[1] = (byte) (byteLen & 0xff);
     return ret;
@@ -268,7 +323,7 @@ public class JpakeCrypto {
 
   /*
    * Helper function to strip the twos-complement sign bit when converting a
-   * BigInteger to byte[] if it affects the number of bytes
+   * BigInteger to byte[] if it affects the number of bytes.
    */
   private byte[] bigIntToUnsignedByteArray(BigInteger bi) {
     byte[] bytes = bi.toByteArray();
@@ -277,6 +332,9 @@ public class JpakeCrypto {
       len--;
       byte[] res = new byte[len];
       System.arraycopy(bytes, 1, res, 0, len);
+      byte[] test = new byte[len + 1];
+      System.arraycopy(res, 0, test, 1, len);
+      Log.e(TAG, "compare truncate to orig\n" + bi.toString(16) + "\n" + new BigInteger(test).toString(16));
       return res;
     } else {
       return bytes;
@@ -284,7 +342,7 @@ public class JpakeCrypto {
   }
 
   /*
-   * Helper Function to generate a uniformly random value in [0, q]
+   * Helper Function to generate a uniformly random value in [0, q].
    */
   private BigInteger getRandom(BigInteger q) {
     int maxBytes = (int) Math.ceil(q.bitLength() / 8);
