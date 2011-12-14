@@ -60,8 +60,8 @@ public class Constants {
 
   public static final String JSON_KEY_ETAG = "etag";
 
-  public static final String ZKP_KEY_X1 = "x1";
-  public static final String ZKP_KEY_X2 = "x2";
+  public static final String CRYPTO_KEY_GR1 = "gr1";
+  public static final String CRYPTO_KEY_GR2 = "gr2";
 
   public static final String ZKP_KEY_GX1 = "gx1";
   public static final String ZKP_KEY_GX2 = "gx2";
