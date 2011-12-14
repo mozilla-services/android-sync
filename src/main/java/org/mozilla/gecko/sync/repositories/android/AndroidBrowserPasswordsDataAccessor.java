@@ -48,25 +48,7 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
   */
 
   @Override
-  protected String getGuidColumn() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected String getDateModifiedColumn() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected String getDeletedColumn() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  protected String getAndroidIDColumn() {
+  protected String[] getAllColumns() {
     // TODO Auto-generated method stub
     return null;
   }
