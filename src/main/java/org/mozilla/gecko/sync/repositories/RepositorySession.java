@@ -76,7 +76,6 @@ public abstract class RepositorySession {
 
   // The time that the last sync on this collection completed, in milliseconds since epoch.
   public long lastSyncTimestamp;
-  public long syncBeginTimestamp;
 
   public static long now() {
     return System.currentTimeMillis();
@@ -112,14 +111,27 @@ public abstract class RepositorySession {
     Log.e(LOG_TAG, msg);
   }
 
-  public void begin(RepositorySessionBeginDelegate delegate) {
-     if (this.status == SessionStatus.UNSTARTED) {
+  /**
+   * Synchronously perform the shared work of beginning. Throws on failure.
+   * @throws InvalidSessionTransitionException
+   *
+   */
+  protected void sharedBegin() throws InvalidSessionTransitionException {
+    if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;
-      this.syncBeginTimestamp = System.currentTimeMillis();
-      delegate.onBeginSucceeded(this);
     } else {
-      Log.e(LOG_TAG, "Tried to begin() an already active or finished session");
-      delegate.onBeginFailed(new InvalidSessionTransitionException(null));
+      error("Tried to begin() an already active or finished session");
+      throw new InvalidSessionTransitionException(null);
+    }
+  }
+
+  public void begin(RepositorySessionBeginDelegate delegate) {
+    try {
+      sharedBegin();
+      delegate.onBeginSucceeded(this);
+
+    } catch (Exception e) {
+      delegate.onBeginFailed(e);
     }
   }
 
