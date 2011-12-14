@@ -140,7 +140,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
     Log.i(LOG_TAG, "Got onPerformSync:");
     Log.i(LOG_TAG, "Account name: " + account.name);
-    Log.i("rnewman", "XXX CLEARING AUTH TOKEN XXX");
+    Log.i(LOG_TAG, "XXX CLEARING AUTH TOKEN XXX");
     invalidateAuthToken(account);
 
     final SyncAdapter self = this;
