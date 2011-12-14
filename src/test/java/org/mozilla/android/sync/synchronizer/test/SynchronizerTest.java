@@ -153,6 +153,10 @@ public class SynchronizerTest {
         long now = new Date().getTime();
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
+        System.out.println("Earliest is " + earliest);
+        System.out.println("syncAOne is " + syncAOne);
+        System.out.println("syncBOne is " + syncBOne);
+        System.out.println("Now: " + now);
         assertInRangeInclusive(earliest, syncAOne, now);
         assertInRangeInclusive(earliest, syncBOne, now);
       }
@@ -163,6 +167,10 @@ public class SynchronizerTest {
         long now = new Date().getTime();
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
+        System.out.println("Earliest is " + earliest);
+        System.out.println("syncAOne is " + syncAOne);
+        System.out.println("syncBOne is " + syncBOne);
+        System.out.println("Now: " + now);
         assertInRangeInclusive(earliest, syncAOne, now);
         assertInRangeInclusive(earliest, syncBOne, now);
         assertTrue(syncAOne > delegateOne.syncAOne);

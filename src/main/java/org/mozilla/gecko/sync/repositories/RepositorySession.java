@@ -141,14 +141,22 @@ public abstract class RepositorySession {
 
   /**
    * Override this in your subclasses to return values to save between sessions.
+   * Note that RepositorySession automatically bumps the timestamp to the time
+   * the last sync began. If unbundled but not begun, this will be the same as the
+   * value in the input bundle.
+   *
+   * The Synchronizer most likely wants to bump the bundle timestamp to be a value
+   * return from a fetch call.
+   *
    * @param optional
    * @return
    */
   protected RepositorySessionBundle getBundle(RepositorySessionBundle optional) {
+    System.out.println("RepositorySession.getBundle(optional).");
+    // Why don't we just persist the old bundle?
     RepositorySessionBundle bundle = (optional == null) ? new RepositorySessionBundle() : optional;
-
-    // TODO: real value.
     bundle.put("timestamp", this.lastSyncTimestamp);
+    System.out.println("Setting bundle timestamp to " + this.lastSyncTimestamp);
     return bundle;
   }
 
