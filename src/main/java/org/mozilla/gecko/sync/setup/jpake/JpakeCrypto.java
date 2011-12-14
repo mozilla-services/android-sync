@@ -43,8 +43,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-import javax.crypto.Mac;
-
 import org.mozilla.android.sync.crypto.HKDF;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.Utils;
@@ -275,7 +273,8 @@ public class JpakeCrypto {
       Log.i(TAG, "gr = " + gr.toString(16));
       Log.i(TAG, "gx = " + gx.toString(16));
       Log.i(TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
-      Log.i(TAG, "gb*g(xh) = " + g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P));
+      Log.i(TAG, "gb*g(xh) = "
+          + g.modPow(b, P).multiply(gx.modPow(h, P)).mod(P));
       Log.e(TAG, "h = " + h.toString(16));
       Log.e(TAG, "zkp calculation incorrect");
       // throw new IncorrectZkpException();
@@ -289,53 +288,42 @@ public class JpakeCrypto {
    */
   private BigInteger computeBHash(BigInteger g, BigInteger gr, BigInteger gx,
       String id) {
-    Log.e(TAG, "Computing Hash.\ng = " + g.toString(16) + "\ngr = " + gr.toString(16) + "\ngx = " + gx.toString(16) + "\nid = " + id);
+    Log.e(TAG,
+        "Computing Hash.\ng = " + g.toString(16) + "\ngr = " + gr.toString(16)
+            + "\ngx = " + gx.toString(16) + "\nid = " + id);
     MessageDigest sha = null;
     try {
       sha = MessageDigest.getInstance("SHA-256");
-      byte[] gBytes = bigIntToUnsignedByteArray(g);
-      byte[] grBytes = bigIntToUnsignedByteArray(gr);
-      byte[] gxBytes = bigIntToUnsignedByteArray(gx);
-      byte[] idBytes = id.getBytes();
+      sha.reset();
 
-//      byte[] allBytes = Utils.concatAll(byteLengthAsBytes(gBytes), gBytes, byteLengthAsBytes(grBytes), grBytes, byteLengthAsBytes(gxBytes), gxBytes, byteLengthAsBytes(idBytes), idBytes);
-//      sha.update(allBytes);
+      /*
+       * Note: you should ensure the items in H(...) have clear boundaries. It
+       * is simple if the other party knows sizes of g, gr, gx and signerID and
+       * hence the boundary is unambiguous. If not, you'd better prepend each
+       * item with its byte length, but I've omitted that here.
+       */
 
-      sha.update(byteLengthAsBytes(gBytes));
-      sha.update(gBytes);
-      sha.update(byteLengthAsBytes(grBytes));
-      sha.update(grBytes);
-      sha.update(byteLengthAsBytes(gxBytes));
-      sha.update(gxBytes);
-      sha.update(byteLengthAsBytes(idBytes));
-      sha.update(idBytes);
-
-
-      Log.e(TAG,
-          "glen " + new BigInteger(byteLengthAsBytes(gBytes)).toString(16));
-      printBytes(byteLengthAsBytes(gBytes));
-      Log.e(TAG,
-          "grlen " + new BigInteger(byteLengthAsBytes(grBytes)).toString(16));
-      printBytes(byteLengthAsBytes(grBytes));
-      Log.e(TAG,
-          "gxlen " + new BigInteger(byteLengthAsBytes(gxBytes)).toString(16));
-      printBytes(byteLengthAsBytes(gxBytes));
-      Log.e(TAG,
-          "idlen " + new BigInteger(byteLengthAsBytes(idBytes)).toString(16));
-      printBytes(byteLengthAsBytes(idBytes));
-
-      Log.e(TAG, "\n\n");
+      hashByteArrayWithLength(sha,
+          BigIntegerHelper.BigIntegerToByteArrayWithoutSign(g));
+      hashByteArrayWithLength(sha,
+          BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gr));
+      hashByteArrayWithLength(sha,
+          BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gx));
+      hashByteArrayWithLength(sha, id.getBytes());
     } catch (NoSuchAlgorithmException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
     byte[] hash = sha.digest();
 
-    // Hack to make sure BigInt doesn't twos-complement our hash.
-    byte[] hash0 = new byte[hash.length + 1]; // Pad with a 0 byte.
-    System.arraycopy(hash, 0, hash0, 1, hash.length);
-    Log.e(TAG, "Hash0BigInt = " + new BigInteger(hash0).toString(16));
-    return new BigInteger(hash0);
+    return BigIntegerHelper.ByteArrayToBigIntegerWithoutSign(hash);
+  }
+
+  private static void hashByteArrayWithLength(MessageDigest sha, byte[] data) {
+    int length = data.length;
+    byte[] b = new byte[] { (byte) (length >>> 8), (byte) (length & 0xff) };
+    sha.update(b);
+    sha.update(data);
   }
 
   private void printBytes(byte[] bytes) {
@@ -367,12 +355,12 @@ public class JpakeCrypto {
     byte[] bytes = bi.toByteArray();
     int len = bytes.length;
     Log.e(TAG, "length " + len);
-//    if (len > 0 && bytes[0] == 0) {
-//      byte[] res = new byte[len - 1];
-//      System.arraycopy(bytes, 1, res, 0, len - 1);
-//      return res;
-//    }
-//    return bytes;
+    // if (len > 0 && bytes[0] == 0) {
+    // byte[] res = new byte[len - 1];
+    // System.arraycopy(bytes, 1, res, 0, len - 1);
+    // return res;
+    // }
+    // return bytes;
 
     // Cast bitLength to double so ceil will have an effect.
     Log.e(TAG, "ceil len/8: " + Math.ceil(((double) bi.bitLength()) / 8));
