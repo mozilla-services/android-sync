@@ -142,6 +142,8 @@ public class SynchronizerTest {
     final WBORepository repoA = new WBORepository();
     final WBORepository repoB = new WBORepository();
     Synchronizer synchronizer = new Synchronizer();
+    synchronizer.bundleA     = new RepositorySessionBundle(0);
+    synchronizer.bundleB     = new RepositorySessionBundle(0);
     synchronizer.repositoryA = repoA;
     synchronizer.repositoryB = repoB;
 
@@ -194,6 +196,8 @@ public class SynchronizerTest {
     repoA.wbos.put(guidA, bookmarkRecordA);
     repoB.wbos.put(guidB, bookmarkRecordB);
     Synchronizer synchronizer = new Synchronizer();
+    synchronizer.bundleA     = new RepositorySessionBundle(0);
+    synchronizer.bundleB     = new RepositorySessionBundle(0);
     synchronizer.repositoryA = repoA;
     synchronizer.repositoryB = repoB;
     synchronizer.synchronize(context, new SynchronizerDelegate() {
