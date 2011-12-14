@@ -495,7 +495,6 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "1");
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
-
     Log.e(LOG_TAG, "jOutgoing format: " + jOutgoing.toJSONString());
 
     nextPhase = State.STEP_ONE_GET;
