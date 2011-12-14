@@ -41,7 +41,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-
 import org.mozilla.android.sync.crypto.HKDF;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.Utils;
