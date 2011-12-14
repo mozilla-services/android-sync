@@ -142,6 +142,8 @@ public class SynchronizerTest {
     final WBORepository repoA = new WBORepository();
     final WBORepository repoB = new WBORepository();
     Synchronizer synchronizer = new Synchronizer();
+    synchronizer.bundleA     = new RepositorySessionBundle(0);
+    synchronizer.bundleB     = new RepositorySessionBundle(0);
     synchronizer.repositoryA = repoA;
     synchronizer.repositoryB = repoB;
 
@@ -151,6 +153,10 @@ public class SynchronizerTest {
         long now = new Date().getTime();
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
+        System.out.println("Earliest is " + earliest);
+        System.out.println("syncAOne is " + syncAOne);
+        System.out.println("syncBOne is " + syncBOne);
+        System.out.println("Now: " + now);
         assertInRangeInclusive(earliest, syncAOne, now);
         assertInRangeInclusive(earliest, syncBOne, now);
       }
@@ -161,6 +167,10 @@ public class SynchronizerTest {
         long now = new Date().getTime();
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
+        System.out.println("Earliest is " + earliest);
+        System.out.println("syncAOne is " + syncAOne);
+        System.out.println("syncBOne is " + syncBOne);
+        System.out.println("Now: " + now);
         assertInRangeInclusive(earliest, syncAOne, now);
         assertInRangeInclusive(earliest, syncBOne, now);
         assertTrue(syncAOne > delegateOne.syncAOne);
@@ -194,6 +204,8 @@ public class SynchronizerTest {
     repoA.wbos.put(guidA, bookmarkRecordA);
     repoB.wbos.put(guidB, bookmarkRecordB);
     Synchronizer synchronizer = new Synchronizer();
+    synchronizer.bundleA     = new RepositorySessionBundle(0);
+    synchronizer.bundleB     = new RepositorySessionBundle(0);
     synchronizer.repositoryA = repoA;
     synchronizer.repositoryB = repoB;
     synchronizer.synchronize(context, new SynchronizerDelegate() {

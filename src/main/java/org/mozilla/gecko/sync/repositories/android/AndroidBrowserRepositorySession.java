@@ -73,12 +73,10 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   @Override
   public void begin(RepositorySessionBeginDelegate delegate) {
-    if (this.status == SessionStatus.UNSTARTED) {
-      this.status = SessionStatus.ACTIVE;
-      this.syncBeginTimestamp = System.currentTimeMillis();
-    } else {
-      Log.e(LOG_TAG, "Tried to begin() an already active or finished session");
-      delegate.onBeginFailed(new InvalidSessionTransitionException(null));
+    try {
+      super.sharedBegin();
+    } catch (InvalidSessionTransitionException e) {
+      delegate.onBeginFailed(e);
       return;
     }
 
@@ -130,7 +128,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onGuidsSinceFailed(new InactiveSessionException(null));
         return;
       }
@@ -181,7 +179,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   @Override
   public void fetchSince(long timestamp,
                          RepositorySessionFetchRecordsDelegate delegate) {
-    FetchSinceThread thread = new FetchSinceThread(timestamp, syncBeginTimestamp, delegate);
+    FetchSinceThread thread = new FetchSinceThread(timestamp, now(), delegate);
     thread.start();
   }
 
@@ -200,7 +198,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
@@ -224,7 +222,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   @Override
   public void fetch(String[] guids,
                     RepositorySessionFetchRecordsDelegate delegate) {
-    FetchThread thread = new FetchThread(guids, syncBeginTimestamp, delegate);
+    FetchThread thread = new FetchThread(guids, now(), delegate);
     thread.start();
   }
 
@@ -242,7 +240,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
@@ -273,7 +271,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   // Fetch all method and thread
   @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
-    FetchAllThread thread = new FetchAllThread(syncBeginTimestamp, delegate);
+    FetchAllThread thread = new FetchAllThread(now(), delegate);
     thread.start();
   }
 
@@ -287,7 +285,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onFetchFailed(new InactiveSessionException(null), null);
         return;
       }
@@ -335,7 +333,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onStoreFailed(new InactiveSessionException(null));
         return;
       }
@@ -477,7 +475,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     public void run() {
-      if (!confirmSessionActive()) {
+      if (!isActive()) {
         delegate.onWipeFailed(new InactiveSessionException(null));
         return;
       }

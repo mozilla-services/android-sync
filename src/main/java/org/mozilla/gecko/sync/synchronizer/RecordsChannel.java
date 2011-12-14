@@ -62,9 +62,6 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   private long timestamp;
   private long end = -1;                     // Oo er, missus.
 
-  private boolean sourceBegun = false;
-  private boolean sinkBegun   = false;
-
   public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate) {
     this.source = source;
     this.sink   = sink;
@@ -100,23 +97,46 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
     }
   }
 
+  protected boolean isReady() {
+    return source.isActive() && sink.isActive();
+  }
 
   /**
    * Attempt to abort an outstanding fetch. Finish both sessions.
    */
   public void abort() {
-    if (sourceBegun) {
+    if (source.isActive()) {
       source.abort();
     }
-    if (sinkBegun) {
+    if (sink.isActive()) {
       sink.abort();
     }
   }
 
-  public void flow(RecordsChannelDelegate delegate) {
-    source.begin(this);
+  /**
+   * Start records flowing through the channel.
+   */
+  public void flow() {
+    if (!isReady()) {
+      RepositorySession failed = source;
+      if (source.isActive()) {
+        failed = sink;
+      }
+      this.delegate.onFlowBeginFailed(this, new SessionNotBegunException(failed));
+    }
+    // Start a consumer thread.
+    this.consumer = new RecordConsumer(this);
+    new Thread(this.consumer).start();
+    waitingForQueueDone = true;
+    source.fetchSince(timestamp, this);
   }
 
+  /**
+   * Begin both sessions, invoking flow() when done.
+   */
+  public void beginAndFlow() {
+    source.begin(this);
+  }
 
   @Override
   public void store(Record record) {
@@ -170,25 +190,10 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   @Override
   public void onBeginSucceeded(RepositorySession session) {
     if (session == source) {
-      if (sourceBegun) {
-        // TODO: inconsistency!
-        return;
-      }
-      sourceBegun = true;
       sink.begin(this);
-      return;
     }
     if (session == sink) {
-      if (sinkBegun) {
-        // TODO: inconsistency!
-        return;
-      }
-      sinkBegun = true;
-      // Start a consumer thread.
-      this.consumer = new RecordConsumer(this);
-      new Thread(this.consumer).start();
-      waitingForQueueDone = true;
-      source.fetchSince(timestamp, this);
+      this.flow();
       return;
     }
 

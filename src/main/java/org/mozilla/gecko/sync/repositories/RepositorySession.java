@@ -66,6 +66,7 @@ public abstract class RepositorySession {
   public enum SessionStatus {
     UNSTARTED,
     ACTIVE,
+    ABORTED,
     DONE
   }
 
@@ -73,9 +74,12 @@ public abstract class RepositorySession {
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
 
-  // The time that the last sync on this collection completed, in milliseconds.
+  // The time that the last sync on this collection completed, in milliseconds since epoch.
   public long lastSyncTimestamp;
-  public long syncBeginTimestamp;
+
+  public static long now() {
+    return System.currentTimeMillis();
+  }
 
   public RepositorySession(Repository repository) {
     this.repository = repository;
@@ -102,14 +106,32 @@ public abstract class RepositorySession {
     }
   }
 
-  public void begin(RepositorySessionBeginDelegate delegate) {
-     if (this.status == SessionStatus.UNSTARTED) {
+  private static void error(String msg) {
+    System.err.println("ERROR: " + msg);
+    Log.e(LOG_TAG, msg);
+  }
+
+  /**
+   * Synchronously perform the shared work of beginning. Throws on failure.
+   * @throws InvalidSessionTransitionException
+   *
+   */
+  protected void sharedBegin() throws InvalidSessionTransitionException {
+    if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;
-      this.syncBeginTimestamp = System.currentTimeMillis();
-      delegate.onBeginSucceeded(this);
     } else {
-      Log.e(LOG_TAG, "Tried to begin() an already active or finished session");
-      delegate.onBeginFailed(new InvalidSessionTransitionException(null));
+      error("Tried to begin() an already active or finished session");
+      throw new InvalidSessionTransitionException(null);
+    }
+  }
+
+  public void begin(RepositorySessionBeginDelegate delegate) {
+    try {
+      sharedBegin();
+      delegate.onBeginSucceeded(this);
+
+    } catch (Exception e) {
+      delegate.onBeginFailed(e);
     }
   }
 
@@ -119,14 +141,22 @@ public abstract class RepositorySession {
 
   /**
    * Override this in your subclasses to return values to save between sessions.
+   * Note that RepositorySession automatically bumps the timestamp to the time
+   * the last sync began. If unbundled but not begun, this will be the same as the
+   * value in the input bundle.
+   *
+   * The Synchronizer most likely wants to bump the bundle timestamp to be a value
+   * return from a fetch call.
+   *
    * @param optional
    * @return
    */
   protected RepositorySessionBundle getBundle(RepositorySessionBundle optional) {
+    System.out.println("RepositorySession.getBundle(optional).");
+    // Why don't we just persist the old bundle?
     RepositorySessionBundle bundle = (optional == null) ? new RepositorySessionBundle() : optional;
-
-    // TODO: real value.
     bundle.put("timestamp", this.lastSyncTimestamp);
+    System.out.println("Setting bundle timestamp to " + this.lastSyncTimestamp);
     return bundle;
   }
 
@@ -151,12 +181,12 @@ public abstract class RepositorySession {
     }
   }
 
-  protected boolean confirmSessionActive() {
-    return status == SessionStatus.ACTIVE ? true : false;
+  public boolean isActive() {
+    return status == SessionStatus.ACTIVE;
   }
 
   public void abort() {
     // TODO: do something here.
-
+    status = SessionStatus.ABORTED;
   }
 }

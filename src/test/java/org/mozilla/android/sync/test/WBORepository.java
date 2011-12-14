@@ -37,33 +37,36 @@ public class WBORepository extends Repository {
     @Override
     public void fetchSince(long timestamp,
                            RepositorySessionFetchRecordsDelegate delegate) {
+      long fetchBegin = System.currentTimeMillis();
       for (Entry<String, Record> entry : wbos.entrySet()) {
         Record record = entry.getValue();
         if (record.lastModified >= timestamp) {
           delegate.onFetchedRecord(record);
         }
       }
-      delegate.onFetchCompleted(syncBeginTimestamp);
+      delegate.onFetchCompleted(fetchBegin);
     }
 
     @Override
     public void fetch(String[] guids,
                       RepositorySessionFetchRecordsDelegate delegate) {
+      long fetchBegin = System.currentTimeMillis();
       for (String guid : guids) {
         if (wbos.containsKey(guid)) {
           delegate.onFetchedRecord(wbos.get(guid));
         }
       }
-      delegate.onFetchCompleted(syncBeginTimestamp);
+      delegate.onFetchCompleted(fetchBegin);
     }
 
     @Override
     public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
+      long fetchBegin = System.currentTimeMillis();
       for (Entry<String, Record> entry : wbos.entrySet()) {
         Record record = entry.getValue();
         delegate.onFetchedRecord(record);
       }
-      delegate.onFetchCompleted(syncBeginTimestamp);
+      delegate.onFetchCompleted(fetchBegin);
     }
 
     @Override

@@ -2,7 +2,11 @@ package org.mozilla.gecko.sync.repositories;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
+import android.util.Log;
+
 public class RepositorySessionBundle extends ExtendedJSONObject {
+
+  private static final String LOG_TAG = "RepositorySessionBundle";
 
   public RepositorySessionBundle() {
     super();
@@ -21,6 +25,7 @@ public class RepositorySessionBundle extends ExtendedJSONObject {
   }
 
   public void setTimestamp(long timestamp) {
+    Log.d(LOG_TAG, "Setting timestamp on RepositorySessionBundle to " + timestamp);
     this.put("timestamp", new Long(timestamp));
   }
 
