@@ -107,6 +107,11 @@ public abstract class RepositorySession {
     }
   }
 
+  private static void error(String msg) {
+    System.err.println("ERROR: " + msg);
+    Log.e(LOG_TAG, msg);
+  }
+
   public void begin(RepositorySessionBeginDelegate delegate) {
      if (this.status == SessionStatus.UNSTARTED) {
       this.status = SessionStatus.ACTIVE;

@@ -66,6 +66,20 @@ RepositorySessionFinishDelegate {
   private long pendingATimestamp = -1;
   private long pendingBTimestamp = -1;
 
+  private static void warn(String msg, Exception e) {
+    System.out.println("WARN: " + msg);
+    e.printStackTrace(System.err);
+    Log.w(LOG_TAG, msg, e);
+  }
+  private static void warn(String msg) {
+    System.out.println("WARN: " + msg);
+    Log.w(LOG_TAG, msg);
+  }
+  private static void info(String msg) {
+    System.out.println("INFO: " + msg);
+    Log.i(LOG_TAG, msg);
+  }
+
   /*
    * Public API: constructor, init, synchronize.
    */
@@ -107,25 +121,27 @@ RepositorySessionFinishDelegate {
     // TODO: failed record handling.
     channelAToB.flow(new RecordsChannelDelegate() {
       public void onFlowCompleted(RecordsChannel recordsChannel, long end) {
-        Log.i(LOG_TAG, "First RecordsChannel flow completed. Starting next.");
+        info("First RecordsChannel flow completed. Starting next.");
         pendingATimestamp = end;
         channelBToA.flow(session);
       }
 
       @Override
       public void onFlowBeginFailed(RecordsChannel recordsChannel, Exception ex) {
+        warn("First RecordsChannel flow failed to begin.");
         session.delegate.onSessionError(ex);
       }
 
       @Override
       public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
         // TODO: clean up, tear down, abort.
+        warn("First RecordsChannel flow failed.");
         session.delegate.onStoreError(ex);
       }
 
       @Override
       public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
-        Log.w(LOG_TAG, "onFlowFinishedFailed. Reporting store error.", ex);
+        warn("onFlowFinishedFailed. Reporting store error.", ex);
         session.delegate.onStoreError(ex);
       }
     });
@@ -133,27 +149,27 @@ RepositorySessionFinishDelegate {
 
   @Override
   public void onFlowCompleted(RecordsChannel channel, long end) {
-    Log.i(LOG_TAG, "Second RecordsChannel flow completed. Notifying onSynchronized.");
+    info("Second RecordsChannel (" + channel + ") flow completed. Notifying onSynchronized.");
     pendingBTimestamp = end;
     this.delegate.onSynchronized(this);
   }
 
   @Override
   public void onFlowBeginFailed(RecordsChannel recordsChannel, Exception ex) {
-    // TODO Auto-generated method stub
-
+    warn("Second RecordsChannel flow failed to begin.", ex);
   }
 
   @Override
   public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO Auto-generated method stub
 
+    warn("Second RecordsChannel flow failed.");
   }
 
   @Override
   public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO Auto-generated method stub
-
+    warn("First RecordsChannel flow failed to finish.");
   }
 
 
@@ -228,7 +244,7 @@ RepositorySessionFinishDelegate {
   public void onFinishFailed(Exception ex) {
     if (this.sessionB == null) {
       // Ah, it was a problem cleaning up. Never mind.
-      Log.w(LOG_TAG, "Got exception cleaning up first after second session creation failed.", ex);
+      warn("Got exception cleaning up first after second session creation failed.", ex);
       return;
     }
     // TODO
