@@ -47,13 +47,14 @@ import android.util.Log;
  * Activity is just here for testing.
  */
 public class StubActivity extends Activity {
+  private static final String LOG_TAG = "StubActivity";
 
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
-      Log.i("rnewman", "In StubActivity onCreate.");
+      Log.i(LOG_TAG, "In StubActivity onCreate.");
       super.onCreate(savedInstanceState);
       setContentView(R.layout.sync_stub);
-      Log.i("rnewman", "Done with onCreate.");
+      Log.i(LOG_TAG, "Done with onCreate.");
   }
 }

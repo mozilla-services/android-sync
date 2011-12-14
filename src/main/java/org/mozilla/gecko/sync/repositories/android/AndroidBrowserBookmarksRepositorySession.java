@@ -81,7 +81,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     if (guid == null) {
       // if the parent has been stored and somehow has a null guid, throw an error
       if (idToGuid.containsKey(androidParentId)) {
-        Log.e(tag, "Have the parent android id for the record but the parent's guid wasn't found");
+        Log.e(LOG_TAG, "Have the parent android id for the record but the parent's guid wasn't found");
         throw new NoGuidForIdException(null);
       } else {
         return DBUtils.bookmarkFromMirrorCursor(cur, "", "", null);
@@ -96,7 +96,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       parentName = DBUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
     }
     else {
-      Log.e(tag, "Couldn't find record with guid " + guid + " while looking for parent name");
+      Log.e(LOG_TAG, "Couldn't find record with guid " + guid + " while looking for parent name");
       throw new ParentNotFoundException(null);
     }
     name.close();
@@ -140,7 +140,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
       return true;
     }
-    Log.i(tag, "Ignoring record with guid: " + record.guid + " and type: " + ((BookmarkRecord)record).type);
+    Log.i(LOG_TAG, "Ignoring record with guid: " + record.guid + " and type: " + ((BookmarkRecord)record).type);
     return false;
   }
   
@@ -180,7 +180,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // Override finish to do this check; make sure all records
     // needing re-parenting have been re-parented.
     if (needsReparenting != 0) {
-      Log.e(tag, "Finish called but " + needsReparenting +
+      Log.e(LOG_TAG, "Finish called but " + needsReparenting +
           " bookmark(s) have been placed in unsorted bookmarks and not been reparented.");
       delegate.onFinishFailed(new BookmarkNeedsReparentingException(null));
     } else {
