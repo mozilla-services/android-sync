@@ -53,7 +53,7 @@ import android.view.View;
 import android.widget.TextView;
 
 public class SetupSyncActivity extends Activity {
-  private final static String TAG = "SetupSync";
+  private final static String LOG_TAG = "SetupSync";
   private TextView setupTitleView;
   private TextView setupNoDeviceLinkTitleView;
   private TextView setupSubtitleView;
@@ -61,15 +61,15 @@ public class SetupSyncActivity extends Activity {
 
   public SetupSyncActivity() {
     super();
-    Log.i(TAG, "SetupSyncActivity constructor called.");
+    Log.i(LOG_TAG, "SetupSyncActivity constructor called.");
   }
 
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    Log.i(TAG, "Called SetupSyncActivity.onCreate.");
+    Log.i(LOG_TAG, "Called SetupSyncActivity.onCreate.");
     super.onCreate(savedInstanceState);
-    Log.i(TAG, "Loading content view " + R.layout.sync_setup);
+    Log.i(LOG_TAG, "Loading content view " + R.layout.sync_setup);
     setContentView(R.layout.sync_setup);
 
     setupTitleView             = ((TextView) findViewById(R.id.setup_title));
@@ -77,25 +77,25 @@ public class SetupSyncActivity extends Activity {
     setupNoDeviceLinkTitleView = (TextView) findViewById(R.id.link_nodevice);
     pinTextView                = ((TextView) findViewById(R.id.text_pin));
     if (setupTitleView == null) {
-      Log.e(TAG, "No title view.");
+      Log.e(LOG_TAG, "No title view.");
     }
     if (setupSubtitleView == null) {
-      Log.e(TAG, "No subtitle view.");
+      Log.e(LOG_TAG, "No subtitle view.");
     }
     if (setupNoDeviceLinkTitleView == null) {
-      Log.e(TAG, "No 'no device' link view.");
+      Log.e(LOG_TAG, "No 'no device' link view.");
     }
   }
 
   @Override
   public void onResume() {
-    Log.i(TAG, "Called SetupSyncActivity.onResume.");
+    Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
     super.onResume();
 
     // Check whether Sync accounts exist; if so, display Pair text
     AccountManager mAccountManager = AccountManager.get(this);
     Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
-    Log.d(TAG, "number: " + accts.length);
+    Log.d(LOG_TAG, "number: " + accts.length);
     if (accts.length > 0) {
       setupTitleView.setText(getString(R.string.sync_title_pair));
       setupSubtitleView.setText(getString(R.string.sync_subtitle_pair));
@@ -120,7 +120,7 @@ public class SetupSyncActivity extends Activity {
   // Controller methods
   public void displayPin(String pin) {
     if (pin == null) {
-      Log.w(TAG, "Asked to display null pin.");
+      Log.w(LOG_TAG, "Asked to display null pin.");
       return;
     }
     // format PIN
@@ -134,7 +134,7 @@ public class SetupSyncActivity extends Activity {
       public void run() {
         TextView view = pinTextView;
         if (view == null) {
-          Log.w(TAG, "Couldn't find view to display PIN.");
+          Log.w(LOG_TAG, "Couldn't find view to display PIN.");
           return;
         }
         view.setText(toDisplay);
