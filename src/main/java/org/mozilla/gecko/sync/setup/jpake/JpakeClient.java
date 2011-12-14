@@ -233,6 +233,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       reportFailure(error);
     }
     ssActivity.displayAbort(error);
+    receiveNoPin();
   }
 
   /*

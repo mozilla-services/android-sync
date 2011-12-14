@@ -92,7 +92,6 @@ public class JpakeCrypto {
 
   // HKDF params for generating encryption key and HMAC.
   private static final byte[]     EMPTY_BYTES      = {};
-  private static final byte[]     ENCR_INPUT_BYTES = { 1 };
 
   // Jpake params for this key exchange.
   private String                  mySignerId;
@@ -213,9 +212,7 @@ public class JpakeCrypto {
     byte[] prk = k.toByteArray();
     
     // TODO: make sure is correct format
-    byte[] info = Utils.concatAll(EMPTY_BYTES, HKDF.HMAC_INPUT,
-        ENCR_INPUT_BYTES);
-    byte[] okm = HKDF.hkdfExpand(prk, info, 32 * 2);
+    byte[] okm = HKDF.hkdfExpand(prk, HKDF.HMAC_INPUT, 32 * 2);
     byte[] enc = new byte[32];
     byte[] hmac = new byte[32];
     System.arraycopy(okm, 0, enc, 0, 32);
