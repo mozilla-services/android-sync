@@ -53,8 +53,8 @@ public class JpakeCrypto {
   private static final String     TAG              = "JpakeCrypto";
 
   /*
-   * primes p and q, and generator g - from original Mozilla jpake
-   * implementation
+   * Primes P and Q, and generator G - from original Mozilla jpake
+   * implementation.
    */
   private static final BigInteger P                = new BigInteger(
                                                        "90066455B5CFC38F9CAA4A48B4281F292C260FEEF01FD61037E56258A7795A1C"
@@ -103,11 +103,13 @@ public class JpakeCrypto {
   private BigInteger              gx4;
 
   /**
+   * Round 1 of JPAKE protocol.
+   * Generate x1, x2, and ZKP for them.
    *
    * @param mySignerId
-   * @param values
+   * @param valuesOut
    */
-  public void round1(String mySignerId, ExtendedJSONObject values) {
+  public void round1(String mySignerId, ExtendedJSONObject valuesOut) {
     // mySignerId used for creating ZKP.
     this.mySignerId = mySignerId;
 
@@ -126,15 +128,18 @@ public class JpakeCrypto {
     String[] zkp2 = createZkp(G, x2, gx2);
 
     // Store round1 return values.
-    values.put(Constants.ZKP_KEY_GX1, gx1.toString(16));
-    values.put(Constants.ZKP_KEY_GX2, gx2.toString(16));
-    values.put(Constants.CRYPTO_KEY_GR1, zkp1[0]);
-    values.put(Constants.CRYPTO_KEY_GR2, zkp2[0]);
-    values.put(Constants.ZKP_KEY_B1, zkp1[1]);
-    values.put(Constants.ZKP_KEY_B2, zkp2[1]);
+    valuesOut.put(Constants.ZKP_KEY_GX1, gx1.toString(16));
+    valuesOut.put(Constants.ZKP_KEY_GX2, gx2.toString(16));
+    valuesOut.put(Constants.CRYPTO_KEY_GR1, zkp1[0]);
+    valuesOut.put(Constants.CRYPTO_KEY_GR2, zkp2[0]);
+    valuesOut.put(Constants.ZKP_KEY_B1, zkp1[1]);
+    valuesOut.put(Constants.ZKP_KEY_B2, zkp2[1]);
   }
 
   /**
+   * Round 2 of JPAKE protocol.
+   * Generate A and ZKP for A.
+   * Verify ZKP from other party. Does not check for replay ZKP.
    *
    * @param mySignerId
    * @param valuesOut
@@ -174,6 +179,7 @@ public class JpakeCrypto {
   }
 
   /**
+   * Final round of JPAKE protocol.
    *
    * @param b
    * @param zkp
@@ -299,7 +305,6 @@ public class JpakeCrypto {
       sha.update(byteLengthAsBytes(idBytes));
       sha.update(idBytes);
     } catch (NoSuchAlgorithmException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     byte[] hash = sha.digest();
@@ -349,7 +354,7 @@ public class JpakeCrypto {
     new SecureRandom().nextBytes(bytes);
     BigInteger randInt = new BigInteger(bytes);
     // TODO: is this going to be very slow?
-    // TODO: add some bit shifting/masking to decrease mod computation
+    // add some bit shifting/masking to decrease mod computation
     return randInt.mod(q);
   }
 }

@@ -249,10 +249,8 @@ public class JpakeClient implements JpakeRequestDelegate {
               makeRequestResourceDelegate());
           report.post(new StringEntity(""));
         } catch (URISyntaxException e) {
-          // TODO Auto-generated catch block
           e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
-          // TODO Auto-generated catch block
           e.printStackTrace();
         }
       }
@@ -428,7 +426,6 @@ public class JpakeClient implements JpakeRequestDelegate {
         try {
           putRequest.put(jsonEntity(jOutgoing.object));
         } catch (UnsupportedEncodingException e) {
-          // TODO Auto-generated catch block
           e.printStackTrace();
         }
         Log.i(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
@@ -498,7 +495,6 @@ public class JpakeClient implements JpakeRequestDelegate {
         return;
       }
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
@@ -517,7 +513,6 @@ public class JpakeClient implements JpakeRequestDelegate {
         return;
       }
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
@@ -527,7 +522,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       jpakeCrypto.round2(mySignerId, jStepTwo, secret, gx3, gx4,
           zkpPayload3, zkpPayload4);
     } catch (Gx4IsOneException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
@@ -574,7 +568,6 @@ public class JpakeClient implements JpakeRequestDelegate {
         return;
       }
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     BigInteger b = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
@@ -583,7 +576,6 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
     } catch (NonObjectJSONException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     try {
@@ -603,10 +595,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (CryptoException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
 
@@ -639,10 +629,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       jPayload = encryptPayload(jOutData, keyBundle);
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (CryptoException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
     jOutgoing = new ExtendedJSONObject();
@@ -661,7 +649,6 @@ public class JpakeClient implements JpakeRequestDelegate {
       try {
         Log.e(LOG_TAG, "Invalid round 3 data: " + jsonEntity(jIncoming.object));
       } catch (UnsupportedEncodingException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       }
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
@@ -672,7 +659,6 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       cleartext = decryptPayload(jIncoming, keyBundle).toString();
     } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (CryptoException e) {
       e.printStackTrace();
@@ -752,10 +738,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     try {
       Log.e(LOG_TAG, "body:" + response.body());
     } catch (IllegalStateException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
@@ -763,7 +747,6 @@ public class JpakeClient implements JpakeRequestDelegate {
   @Override
   public void onRequestError(Exception e) {
     // TODO Auto-generated method stub
-
   }
 
   @Override
@@ -778,13 +761,10 @@ public class JpakeClient implements JpakeRequestDelegate {
       try {
         body = response.jsonBody();
       } catch (IllegalStateException e1) {
-        // TODO Auto-generated catch block
         e1.printStackTrace();
       } catch (IOException e1) {
-        // TODO Auto-generated catch block
         e1.printStackTrace();
       } catch (ParseException e1) {
-        // TODO Auto-generated catch block
         e1.printStackTrace();
       }
       String channel = body instanceof String ? (String) body : null;
@@ -827,16 +807,12 @@ public class JpakeClient implements JpakeRequestDelegate {
       try {
         jIncoming = response.jsonObjectBody();
       } catch (IllegalStateException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (ParseException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       } catch (NonObjectJSONException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       }
       Log.d(LOG_TAG, "fetched message " + jIncoming.get(Constants.JSON_KEY_TYPE));
