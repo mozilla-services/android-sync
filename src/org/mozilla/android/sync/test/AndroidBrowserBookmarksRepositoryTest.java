@@ -18,8 +18,6 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySessi
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
-import android.util.Log;
-
 public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
   
   @Override
@@ -314,14 +312,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     BookmarkRecord remote = BookmarkHelpers.createBookmark2();
     deleteRemoteLocalNonexistent(remote);
   }
-
-  /*
-  @Override
-  public void testCleanMultipleRecords() {
-    // TODO Auto-generated method stub
-    Log.w(tag, "Not implemented yet, waiting on deleted field");
-  }
-  */
 
   @Override
   public void testCleanMultipleRecords() {

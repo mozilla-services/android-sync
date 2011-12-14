@@ -148,17 +148,11 @@ public class BookmarkHelpers {
 
   @SuppressWarnings("unchecked")
   public static BookmarkRecord createFolder1() {
-    // Make this the Menu folder since each DB will
-    // have at least this folder
     BookmarkRecord record = new BookmarkRecord();
     record.guid = topFolderGuid;
     record.title = topFolderName;
-    // TODO this will change once we have proper base folders in DB
-    // No parent since this is the menu folder
     record.parentID = "mobile";
     record.parentName = "Mobile Bookmarks";
-    // TODO verify how we want to store these string arrays
-    // pretty sure I verified that this is actually how other clients do it, but double check
     JSONArray children = new JSONArray();
     children.add(bmk1Guid);
     children.add(bmk2Guid);
@@ -169,17 +163,11 @@ public class BookmarkHelpers {
   
   @SuppressWarnings("unchecked")
   public static BookmarkRecord createFolder2() {
-    // Make this the Menu folder since each DB will
-    // have at least this folder
     BookmarkRecord record = new BookmarkRecord();
     record.guid = middleFolderGuid;
     record.title = middleFolderName;
-    // TODO this will change once we have proper base folders in DB
-    // No parent since this is the menu folder
     record.parentID = topFolderGuid;
     record.parentName = topFolderName; 
-    // TODO verify how we want to store these string arrays
-    // pretty sure I verified that this is actually how other clients do it, but double check
     JSONArray children = new JSONArray();
     children.add(bmk3Guid);
     record.children = children;
@@ -189,17 +177,11 @@ public class BookmarkHelpers {
 
   @SuppressWarnings("unchecked")
   public static BookmarkRecord createFolder3() {
-    // Make this the Menu folder since each DB will
-    // have at least this folder
     BookmarkRecord record = new BookmarkRecord();
     record.guid = bottomFolderGuid;
     record.title = bottomFolderName;
-    // TODO this will change once we have proper base folders in DB
-    // No parent since this is the menu folder
     record.parentID = middleFolderGuid;
     record.parentName = middleFolderName;
-    // TODO verify how we want to store these string arrays
-    // pretty sure I verified that this is actually how other clients do it, but double check
     JSONArray children = new JSONArray();
     children.add(bmk4Guid);
     record.children = children;
@@ -214,8 +196,6 @@ public class BookmarkHelpers {
     record.title = "Livemark title";
     record.parentID = topFolderGuid;
     record.parentName = topFolderName;
-    // TODO verify how we want to store these string arrays
-    // pretty sure I verified that this is actually how other clients do it, but double check
     JSONArray children = new JSONArray();
     children.add(Utils.generateGuid());
     children.add(Utils.generateGuid());
