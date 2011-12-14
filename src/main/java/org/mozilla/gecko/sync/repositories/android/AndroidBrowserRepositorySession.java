@@ -46,6 +46,7 @@ import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.MultipleRecordsForGuidException;
 import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
+import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.ProfileDatabaseException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
@@ -160,7 +161,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  protected Record[] compileIntoRecordsArray(Cursor cur) throws NoGuidForIdException, NullCursorException {
+  protected Record[] compileIntoRecordsArray(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     ArrayList<Record> records = new ArrayList<Record>();
     cur.moveToFirst();
     while (!cur.isAfterLast()) {
@@ -174,7 +175,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     return recordArray;
   }
 
-  protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException;
+  protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
 
   // Fetch since method and thread
   @Override
@@ -264,7 +265,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  Record[] doFetch(String[] guids) throws NoGuidForIdException, NullCursorException {
+  Record[] doFetch(String[] guids) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Cursor cur = dbHelper.fetch(guids);
     return compileIntoRecordsArray(cur);
   }
@@ -386,13 +387,14 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   }
   
-  protected long insert(Record record) throws NoGuidForIdException, NullCursorException {
+  protected long insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     putRecordToGuidMap(buildRecordString(record), record.guid);
     return DBUtils.getAndroidIdFromUri(dbHelper.insert(record));
   }
 
   // Check if record already exists locally
-  protected Record findExistingRecord(Record record) throws MultipleRecordsForGuidException, NoGuidForIdException, NullCursorException {
+  protected Record findExistingRecord(Record record) throws MultipleRecordsForGuidException,
+    NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record[] records = doFetch(new String[] { record.guid });
     if (records.length == 1) {
       return records[0];
@@ -409,14 +411,14 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     return null;
   }
 
-  public HashMap<String, String> getRecordToGuidMap() throws NoGuidForIdException, NullCursorException {
+  public HashMap<String, String> getRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     if (recordToGuid == null) {
       createRecordToGuidMap();
     }
     return recordToGuid;
   }
 
-  private void createRecordToGuidMap() throws NoGuidForIdException, NullCursorException {
+  private void createRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     recordToGuid = new HashMap<String, String>();
     Cursor cur = dbHelper.fetchAll();
     cur.moveToFirst();
@@ -428,7 +430,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     cur.close();
   }
 
-  public void putRecordToGuidMap(String guid, String recordString) throws NoGuidForIdException, NullCursorException {
+  public void putRecordToGuidMap(String guid, String recordString) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     if (recordToGuid == null) {
       createRecordToGuidMap();
     }

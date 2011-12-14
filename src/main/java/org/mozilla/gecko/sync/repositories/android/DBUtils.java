@@ -62,10 +62,9 @@ public class DBUtils {
     "unfiled",
     "mobile"
   };
+  
+  // Map of guids to their localized name strings
   public static HashMap<String, String> SPECIAL_GUIDS_MAP;
-
-  // TODO there has got to be a better way of solving this problem,
-  // come back to this when brain is less fried!
   public static void initialize(Context context) {
     if (SPECIAL_GUIDS_MAP == null) {
       SPECIAL_GUIDS_MAP = new HashMap<String, String>();

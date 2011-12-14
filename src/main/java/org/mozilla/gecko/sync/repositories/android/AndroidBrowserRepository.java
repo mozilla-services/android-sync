@@ -51,7 +51,6 @@ public abstract class AndroidBrowserRepository extends Repository {
     new CreateSessionThread(delegate, context).start();
   }
 
-  // TODO tests for cleanup of deleted records
   @Override
   public void clean(boolean success, RepositorySessionCleanDelegate delegate, Context context) {
     // Only clean deleted records if success
