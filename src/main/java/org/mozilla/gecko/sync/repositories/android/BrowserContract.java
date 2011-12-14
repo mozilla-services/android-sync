@@ -66,7 +66,7 @@ public class BrowserContract {
         public static final String _ID = "_id";
     }
 
-    interface SyncColumns {
+    public interface SyncColumns {
         public static final String GUID = "guid";
 
         public static final String DATE_CREATED = "created";
