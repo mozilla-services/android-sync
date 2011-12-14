@@ -56,12 +56,12 @@ import android.os.IBinder;
 import android.util.Log;
 
 public class SyncAuthenticatorService extends Service {
-  private static final String TAG = "SyncAuthenticatorService";
+  private static final String lOG_TAG = "SyncAuthenticatorService";
   private SyncAccountAuthenticator sAccountAuthenticator = null;
 
   @Override
   public void onCreate() {
-    Log.d(TAG, "onCreate");
+    Log.d(lOG_TAG, "onCreate");
     sAccountAuthenticator = getAuthenticator();
   }
 
@@ -93,7 +93,7 @@ public class SyncAuthenticatorService extends Service {
     public Bundle addAccount(AccountAuthenticatorResponse response,
         String accountType, String authTokenType, String[] requiredFeatures,
         Bundle options) throws NetworkErrorException {
-      Log.d(TAG, "addAccount()");
+      Log.d(lOG_TAG, "addAccount()");
       final Intent intent = new Intent(mContext, SetupSyncActivity.class);
       intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE,
           response);
@@ -108,14 +108,14 @@ public class SyncAuthenticatorService extends Service {
     @Override
     public Bundle confirmCredentials(AccountAuthenticatorResponse response,
         Account account, Bundle options) throws NetworkErrorException {
-      Log.d(TAG, "confirmCredentials()");
+      Log.d(lOG_TAG, "confirmCredentials()");
       return null;
     }
 
     @Override
     public Bundle editProperties(AccountAuthenticatorResponse response,
         String accountType) {
-      Log.d(TAG, "editProperties");
+      Log.d(lOG_TAG, "editProperties");
       return null;
     }
 
@@ -123,7 +123,7 @@ public class SyncAuthenticatorService extends Service {
     public Bundle getAuthToken(AccountAuthenticatorResponse response,
         Account account, String authTokenType, Bundle options)
         throws NetworkErrorException {
-      Log.d(TAG, "getAuthToken()");
+      Log.d(lOG_TAG, "getAuthToken()");
       if (!authTokenType.equals(Constants.AUTHTOKEN_TYPE_PLAIN)) {
         final Bundle result = new Bundle();
         result.putString(AccountManager.KEY_ERROR_MESSAGE,
@@ -169,14 +169,14 @@ public class SyncAuthenticatorService extends Service {
 
     @Override
     public String getAuthTokenLabel(String authTokenType) {
-      Log.d(TAG, "getAuthTokenLabel()");
+      Log.d(lOG_TAG, "getAuthTokenLabel()");
       return null;
     }
 
     @Override
     public Bundle hasFeatures(AccountAuthenticatorResponse response,
         Account account, String[] features) throws NetworkErrorException {
-      Log.d(TAG, "hasFeatures()");
+      Log.d(lOG_TAG, "hasFeatures()");
       return null;
     }
 
@@ -184,7 +184,7 @@ public class SyncAuthenticatorService extends Service {
     public Bundle updateCredentials(AccountAuthenticatorResponse response,
         Account account, String authTokenType, Bundle options)
         throws NetworkErrorException {
-      Log.d(TAG, "updateCredentials()");
+      Log.d(lOG_TAG, "updateCredentials()");
       return null;
     }
   }
