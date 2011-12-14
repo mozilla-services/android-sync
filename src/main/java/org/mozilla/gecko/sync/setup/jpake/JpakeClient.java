@@ -464,7 +464,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
 
-    Log.e(TAG, "jOutgoing format: " + jOutgoing.toJSONString());
+    Log.e(LOG_TAG, "jOutgoing format: " + jOutgoing.toJSONString());
 
     nextPhase = State.STEP_ONE_GET;
     state = State.PUT;
@@ -481,7 +481,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       return;
     }
 
-    Log.e(TAG, "jIncoming format: " + jIncoming.toJSONString());
+    Log.e(LOG_TAG, "jIncoming format: " + jIncoming.toJSONString());
     // Check incoming message fields.
     ExtendedJSONObject iPayload = null;
     try {
@@ -493,7 +493,7 @@ public class JpakeClient implements JpakeRequestDelegate {
           || iPayload.getObject(Constants.ZKP_KEY_ZKP_X2) == null
           || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X2)
               .get(Constants.ZKP_KEY_ID))) {
-        Log.e(TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
+        Log.e(LOG_TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
         abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
         return;
       }
