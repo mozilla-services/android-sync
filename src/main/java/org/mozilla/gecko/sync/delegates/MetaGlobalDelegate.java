@@ -45,4 +45,5 @@ public interface MetaGlobalDelegate {
   public void handleMissing(MetaGlobal global);
   public void handleFailure(SyncStorageResponse response);
   public void handleError(Exception e);
+  public MetaGlobalDelegate deferred();
 }

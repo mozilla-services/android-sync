@@ -124,4 +124,22 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
   public void put(CryptoRecord record) {
     this.put(record.toJSONObject());
   }
+
+  public void deferGet() {
+    final SyncStorageRecordRequest self = this;
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        self.get();
+      }}).start();
+  }
+
+  public void deferPut(final JSONObject body) {
+    final SyncStorageRecordRequest self = this;
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        self.put(body);
+      }}).start();
+  }
 }

@@ -82,7 +82,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
       this.doFetch();
       return;
     }
-    callback.handleSuccess(this);
+    callback.deferred().handleSuccess(this);
   }
 
   private void doFetch() {
@@ -90,7 +90,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
       this.isUploading = false;
       SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
       r.delegate = this;
-      r.get();
+      r.deferGet();
     } catch (URISyntaxException e) {
       callback.handleError(e);
     }
@@ -105,9 +105,9 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
       this.isUploading = true;
       SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
 
-      // TODO: PUT!
+      // TODO: PUT! Body!
       r.delegate = this;
-      r.get();
+      r.deferPut(null);
     } catch (URISyntaxException e) {
       callback.handleError(e);
     }
