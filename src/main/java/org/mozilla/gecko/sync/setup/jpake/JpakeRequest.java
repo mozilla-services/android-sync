@@ -14,7 +14,7 @@ public class JpakeRequest implements Resource {
   private static String LOG_TAG = "JPAKE_REQUEST";
 
   private BaseResource resource;
-  public JpakeRequestDelegate delegate;
+  public JPakeRequestDelegate delegate;
 
   public JpakeRequest(String uri, ResourceDelegate delegate) throws URISyntaxException {
     this(new URI(uri), delegate);

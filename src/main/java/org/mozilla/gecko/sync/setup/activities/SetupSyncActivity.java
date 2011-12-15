@@ -41,7 +41,7 @@ package org.mozilla.gecko.sync.setup.activities;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.setup.Constants;
-import org.mozilla.gecko.sync.setup.jpake.JpakeClient;
+import org.mozilla.gecko.sync.setup.jpake.JPakeClient;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -102,7 +102,7 @@ public class SetupSyncActivity extends Activity {
       setupNoDeviceLinkTitleView.setVisibility(View.INVISIBLE);
     }
     // Start J-PAKE
-    final JpakeClient jClient = new JpakeClient(this);
+    final JPakeClient jClient = new JPakeClient(this);
     jClient.receiveNoPin();
   }
 
