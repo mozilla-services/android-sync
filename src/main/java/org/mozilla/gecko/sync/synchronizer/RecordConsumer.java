@@ -14,6 +14,7 @@ class RecordConsumer implements Runnable {
   private boolean stopEventually = false;
   private boolean stopImmediately = false;
   private RecordsConsumerDelegate delegate;
+  private long counter = 0;
 
   public RecordConsumer(RecordsConsumerDelegate delegate) {
     this.delegate = delegate;
@@ -26,35 +27,51 @@ class RecordConsumer implements Runnable {
     }
   }
 
+  private static void info(String message) {
+    System.out.println("INFO: " + message);
+    Log.i(LOG_TAG, message);
+  }
+
+  private static void warn(String message, Exception ex) {
+    System.out.println("WARN: " + message);
+    Log.w(LOG_TAG, message, ex);
+  }
+
+  private static void debug(String message) {
+    System.out.println("DEBUG: " + message);
+    Log.d(LOG_TAG, message);
+  }
+
   public void stop(boolean immediately) {
-    Log.d(LOG_TAG, "Called stop(" + immediately + ").");
+    debug("Called stop(" + immediately + ").");
     synchronized (monitor) {
-      Log.d(LOG_TAG, "stop() took monitor.");
+      debug("stop() took monitor.");
       this.stopEventually = true;
       this.stopImmediately = immediately;
       monitor.notify();
-      Log.d(LOG_TAG, "stop() dropped monitor.");
+      debug("stop() dropped monitor.");
     }
   }
 
   private Object storeSerializer = new Object();
   public void stored() {
-    Log.d(LOG_TAG, "Record stored. Notifying.");
+    debug("Record stored. Notifying.");
     synchronized (storeSerializer) {
-      Log.d(LOG_TAG, "stored() took storeSerializer.");
+      debug("stored() took storeSerializer.");
+      counter++;
       storeSerializer.notify();
-      Log.d(LOG_TAG, "stored() dropped storeSerializer.");
+      debug("stored() dropped storeSerializer.");
     }
   }
   private void storeSerially(Record record) {
-    Log.d(LOG_TAG, "New record to store.");
+    debug("New record to store.");
     synchronized (storeSerializer) {
-      Log.d(LOG_TAG, "storeSerially() took storeSerializer.");
-      Log.d(LOG_TAG, "Storing...");
+      debug("storeSerially() took storeSerializer.");
+      debug("Storing...");
       try {
         this.delegate.store(record);
       } catch (Exception e) {
-        Log.w(LOG_TAG, "Got exception in store. Not waiting.", e);
+        warn("Got exception in store. Not waiting.", e);
         return;      // So we don't block for a stored() that never comes.
       }
       try {
@@ -62,49 +79,54 @@ class RecordConsumer implements Runnable {
       } catch (InterruptedException e) {
         // TODO
       }
-      Log.d(LOG_TAG, "storeSerially() dropped storeSerializer.");
+      debug("storeSerially() dropped storeSerializer.");
     }
+  }
+
+  private void consumerIsDone() {
+    info("Consumer is done. Processed " + counter + ((counter == 1) ? " record." : " records."));
+    delegate.consumerIsDone();
   }
 
   @Override
   public void run() {
     while (true) {
       synchronized (monitor) {
-        Log.d(LOG_TAG, "run() took monitor.");
+        debug("run() took monitor.");
         if (stopImmediately) {
-          Log.d(LOG_TAG, "Stopping immediately. Clearing queue.");
+          debug("Stopping immediately. Clearing queue.");
           delegate.getQueue().clear();
-          Log.d(LOG_TAG, "Notifying consumer.");
-          delegate.consumerIsDone();
+          debug("Notifying consumer.");
+          consumerIsDone();
           return;
         }
-        Log.d(LOG_TAG, "run() dropped monitor.");
+        debug("run() dropped monitor.");
       }
       // The queue is concurrent-safe.
       while (!delegate.getQueue().isEmpty()) {
-        Log.d(LOG_TAG, "Grabbing record...");
+        debug("Grabbing record...");
         Record record = delegate.getQueue().remove();
         // Block here, allowing us to process records
         // serially.
-        Log.d(LOG_TAG, "Invoking storeSerially...");
+        debug("Invoking storeSerially...");
         this.storeSerially(record);
-        Log.d(LOG_TAG, "Done with record.");
+        debug("Done with record.");
       }
       synchronized (monitor) {
-        Log.d(LOG_TAG, "run() took monitor.");
+        debug("run() took monitor.");
 
         if (stopEventually) {
-          Log.d(LOG_TAG, "Done with records and told to stop. Notifying consumer.");
-          delegate.consumerIsDone();
+          debug("Done with records and told to stop. Notifying consumer.");
+          consumerIsDone();
           return;
         }
         try {
-          Log.d(LOG_TAG, "Not told to stop but no records. Waiting.");
+          debug("Not told to stop but no records. Waiting.");
           monitor.wait(10000);
         } catch (InterruptedException e) {
           // TODO
         }
-        Log.d(LOG_TAG, "run() dropped monitor.");
+        debug("run() dropped monitor.");
       }
     }
   }
