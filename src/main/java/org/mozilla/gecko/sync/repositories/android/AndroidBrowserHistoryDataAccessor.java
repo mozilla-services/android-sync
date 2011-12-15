@@ -37,6 +37,8 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -70,8 +72,18 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
     cv.put(BrowserContract.History.DATE_MODIFIED,        rec.lastModified);
     cv.put(BrowserContract.History.TITLE,           rec.title);
     cv.put(BrowserContract.History.URL,        rec.histURI);
-    // TODO fix this to get our last visited date out
-    //cv.put(BrowserContract.History.DATE_LAST_VISITED,    rec.dateVisited);
+    if (rec.visits != null) {
+      JSONArray visits = (JSONArray) rec.visits;
+      long mostRecent = 0;
+      for (int i = 0; i < visits.size(); i++) {
+        JSONObject visit = (JSONObject) visits.get(i);
+        long visitDate = (Long) visit.get(AndroidBrowserHistoryRepositorySession.KEY_DATE);
+        if (visitDate > mostRecent) {
+          mostRecent = visitDate;
+        }
+      }
+      cv.put(BrowserContract.History.DATE_LAST_VISITED,    mostRecent);
+    }
     return cv;
   }
 
@@ -86,5 +98,11 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
     dataExtender.store(record.guid, rec.visits);
     return super.insert(record);
   }  
+  
+  @Override
+  protected void delete(String guid) {
+    context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
+    dataExtender.delete(guid);
+  }
 
 }

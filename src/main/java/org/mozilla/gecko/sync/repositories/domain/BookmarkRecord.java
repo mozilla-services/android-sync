@@ -151,6 +151,8 @@ public class BookmarkRecord extends Record {
   public boolean equals(Object o) {
     if (!o.getClass().equals(BookmarkRecord.class)) return false;
     BookmarkRecord other = (BookmarkRecord) o;
+    
+    // TODO I still see a potential for hitting a NullPointerException
     if (!super.equals(other)) return false;
     if (!((this.title == other.title) || this.title.equals(other.title))) return false;
     if (!((this.bookmarkURI == other.bookmarkURI) || this.bookmarkURI.equals(other.bookmarkURI))) return false;
@@ -165,6 +167,8 @@ public class BookmarkRecord extends Record {
     if (this.type.equals("folder")) {
       // Check if they are both null
       if (this.children == other.children) return true;
+      else if (this.children == null && other.children!= null) return false;
+      else if (this.children!= null && other.children== null) return false;
       
       if (this.children.size() != other.children.size()) return false;
       for (int i = 0; i < this.children.size(); i++) {

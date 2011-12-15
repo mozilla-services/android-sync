@@ -20,7 +20,6 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
 
   // History Table
   public static final String TBL_HISTORY_EXT = "HistoryExtension";
-  public static final String COL_ID = "id";
   public static final String COL_GUID = "guid";
   public static final String COL_VISITS = "visits";
   
@@ -28,13 +27,11 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
     super(context, DB_NAME, null, SCHEMA_VERSION);
   }
 
+  @Override
   public void onCreate(SQLiteDatabase db) {
-    
     String createTableSql = "CREATE TABLE " + TBL_HISTORY_EXT + " ("
-        + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-        + COL_GUID + " TEXT, "
+        + COL_GUID + " TEXT PRIMARY KEY, "
         + COL_VISITS + " TEXT)";
-    
     db.execSQL(createTableSql);
   }
 
@@ -99,7 +96,8 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
     // insert new
     ContentValues cv = new ContentValues();
     cv.put(COL_GUID, guid);
-    cv.put(COL_VISITS, visits.toJSONString());
+    if (visits == null) cv.put(COL_VISITS, new JSONArray().toJSONString());
+    else cv.put(COL_VISITS, visits.toJSONString());
     long rowId = db.insert(TBL_HISTORY_EXT, null, cv);
     Log.i(TAG, "Inserted history extension record into row: " + rowId);
     return rowId;
@@ -107,8 +105,10 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
   
   public Cursor fetch(String guid) throws NullCursorException {
     SQLiteDatabase db = this.getCachedReadableDatabase();
+    long queryStart = System.currentTimeMillis();
     Cursor cur = db.query(TBL_HISTORY_EXT, new String[] { COL_GUID, COL_VISITS },
         COL_GUID + " = '" + guid + "'", null, null, null, null);
+    DBUtils.queryTimeLogger("AndroidBrowserHistoryDataExtender.fetch(guid)", queryStart, System.currentTimeMillis());
     if (cur == null) {
       Log.e(TAG, "Got a null cursor while doing fetch for guid " + guid + " on history extension table");
       throw new NullCursorException(null);

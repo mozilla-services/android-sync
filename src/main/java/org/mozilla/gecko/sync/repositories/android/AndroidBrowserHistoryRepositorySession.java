@@ -43,7 +43,6 @@ import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -51,6 +50,10 @@ import android.content.Context;
 import android.database.Cursor;
 
 public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserRepositorySession {
+  
+  public static final String KEY_DATE = "date";
+  public static final String KEY_TYPE = "type";
+  public static final long DEFAULT_VISIT_TYPE = 1;
 
   public AndroidBrowserHistoryRepositorySession(Repository repository, Context context) {
     super(repository);
@@ -71,31 +74,55 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
   @Override
   protected Record[] doFetch(String[] guids) throws NoGuidForIdException,
       NullCursorException, ParentNotFoundException {
+    return addVisitsToRecords(super.doFetch(guids));
+  }
+  
+  @Override
+  protected Record[] doFetchSince(long since) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    return addVisitsToRecords(super.doFetchSince(since));
+  }
+  
+  @Override
+  protected Record[] doFetchAll() throws NullCursorException, NoGuidForIdException, ParentNotFoundException {
+    return addVisitsToRecords(super.doFetchAll());
+  }
+  
+  @SuppressWarnings("unchecked")
+  private Record[] addVisitsToRecords(Record[] records) throws NullCursorException {
     AndroidBrowserHistoryDataExtender dataExtender = ((AndroidBrowserHistoryDataAccessor) dbHelper).getHistoryDataExtender();
-    Record[] records = super.doFetch(guids);
-    for(Record record : records) {
-      HistoryRecord hist = (HistoryRecord) record;
-      Cursor visits = dataExtender.fetch(record.guid);
+    for(int i = 0; i < records.length; i++) {
+      HistoryRecord hist = (HistoryRecord) records[i];
+      Cursor visits = dataExtender.fetch(hist.guid);
       visits.moveToFirst();
       JSONArray visitsArray = DBUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
       long missingRecords = hist.fennecVisitCount - visitsArray.size();
       
       // Add missingRecords -1 fake visits
-      if (missingRecords > 1) {
+      if (missingRecords >= 1) {
         
-        for (int i = 0; i < missingRecords -1; i++) {
-          JSONObject fake = new JSONObject();
-          
-          // Set fake visit timestamp to be just previous to
-          // the real one we are about to add.
-          // TODO Left off here
-          fake.put(key, value)
+        if (missingRecords > 1) {
+          for (int j = 0; j < missingRecords -1; j++) {
+            JSONObject fake = new JSONObject();
+            
+            // Set fake visit timestamp to be just previous to
+            // the real one we are about to add.
+            fake.put(KEY_DATE, (long) Math.abs(((1 + j) - hist.lastModified)));
+            fake.put(KEY_TYPE, DEFAULT_VISIT_TYPE);
+            visitsArray.add(fake);
+          }
         }
+        
+        // Add the 1 actual record we have
+        // (unfortunately we still have to fake the
+        // visit type since Fennec doesn't track that)
+        JSONObject real = new JSONObject();
+        real.put(KEY_DATE, hist.fennecDateVisited);
+        real.put(KEY_TYPE, DEFAULT_VISIT_TYPE);
+        visitsArray.add(real);
       }
-      
+      hist.visits = visitsArray;
+      records[i] = hist;
     }
-    
-    
     
     return records;
   }

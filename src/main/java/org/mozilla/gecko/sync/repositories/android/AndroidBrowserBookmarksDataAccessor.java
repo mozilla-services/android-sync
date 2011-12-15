@@ -29,7 +29,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders");
+    DBUtils.queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders", queryStart, queryEnd);
     if (cur == null) {
       throw new NullCursorException(null);
     }
@@ -121,7 +121,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getChildren");
+    DBUtils.queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getChildren", queryStart, queryEnd);
     if (cur == null) {
       throw new NullCursorException(null);
     }

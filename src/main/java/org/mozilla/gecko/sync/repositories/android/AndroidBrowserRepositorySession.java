@@ -204,7 +204,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
 
       try {
-        delegate.onFetchSucceeded(compileIntoRecordsArray(dbHelper.fetchSince(since)), end);
+        delegate.onFetchSucceeded(doFetchSince(since), end);
       } catch (NoGuidForIdException e) {
         delegate.onFetchFailed(e, null);
         return;
@@ -216,6 +216,10 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
     }
+  }
+  
+  protected Record[] doFetchSince(long since) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    return compileIntoRecordsArray(dbHelper.fetchSince(since));
   }
 
   // Fetch method and thread
@@ -290,15 +294,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
 
-      Cursor cur;
       try {
-        cur = dbHelper.fetchAll();
-      } catch (NullCursorException e) {
-        delegate.onFetchFailed(e, null);
-        return;
-      }
-      try {
-        delegate.onFetchSucceeded(compileIntoRecordsArray(cur), end);
+        delegate.onFetchSucceeded(doFetchAll(), end);
       } catch (NoGuidForIdException e) {
         delegate.onFetchFailed(e, null);
         return;
@@ -310,6 +307,10 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
     }
+  }
+  
+  protected Record[] doFetchAll() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    return compileIntoRecordsArray(dbHelper.fetchAll());
   }
 
   // Store method and thread

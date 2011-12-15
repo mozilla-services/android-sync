@@ -43,11 +43,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     }
     cur.moveToFirst();
     while (!cur.isAfterLast()) {
-      String guid = DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-      context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
+      delete(DBUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID));
       cur.moveToNext();
     }
     cur.close();
+  }
+  
+  protected void delete(String guid) {
+    context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
   }
 
   public Uri insert(Record record) {

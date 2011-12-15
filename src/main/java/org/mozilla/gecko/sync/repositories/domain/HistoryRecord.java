@@ -37,7 +37,10 @@
 
 package org.mozilla.gecko.sync.repositories.domain;
 
+import java.util.HashMap;
+
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
 
@@ -87,7 +90,33 @@ public class HistoryRecord extends Record {
     return
         super.equals(other) &&
         this.title.equals(other.title) &&
-        this.histURI.equals(other.histURI);
+        this.histURI.equals(other.histURI) &&
+        this.checkVisitsEquals(other);
+  }
+  
+  private boolean checkVisitsEquals(HistoryRecord other) {
+    
+    // Handle nulls
+    if (this.visits == other.visits) return true;
+    else if ((this.visits == null || this.visits.size() == 0) && (other.visits != null && other.visits.size() !=0)) return false;
+    else if ((this.visits != null && this.visits.size() != 0) && (other.visits == null || other.visits.size() == 0)) return false;
+    
+    // Check size
+    if (this.visits.size() != other.visits.size()) return false;
+    
+    HashMap<String, Long> otherVisits = new HashMap<String, Long>();
+    for (int i = 0; i < other.visits.size(); i++) {
+      JSONObject visit = (JSONObject) other.visits.get(i);
+      otherVisits.put((String)visit.get("date"), (Long)visit.get("type"));
+    }
+    
+    for (int i = 0; i < this.visits.size(); i++) {
+      JSONObject visit = (JSONObject) this.visits.get(i);
+      if (!otherVisits.containsKey(visit.get("date"))) return false;
+      if (otherVisits.get(visit.get("date")) != (Long) visit.get("type")) return false;
+    }
+    
+    return true;
   }
   
 //  
