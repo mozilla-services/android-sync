@@ -75,8 +75,8 @@ import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
-public class JpakeClient implements JpakeRequestDelegate {
-  private static String       LOG_TAG                     = "JpakeClient";
+public class JPakeClient implements JPakeRequestDelegate {
+  private static String       LOG_TAG                 = "JpakeClient";
 
   // J-PAKE constants
   private final static int    REQUEST_TIMEOUT         = 60 * 1000;         // 1
@@ -92,7 +92,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   private final static String JPAKE_VERIFY_VALUE      = "0123456789ABCDEF";
 
   private final static int    MAX_TRIES_START         = 10;
-  //  private final static int    MAX_TRIES_FIRST_MSG     = 300;
+  // private final static int MAX_TRIES_FIRST_MSG = 300;
   private final static int    MAX_TRIES_FIRST_MSG     = 25;
   private final static int    MAX_TRIES_LAST_MSG      = 300;
 
@@ -131,9 +131,10 @@ public class JpakeClient implements JpakeRequestDelegate {
   private String              jOutData;
   private Timer               timerScheduler;
 
-  private JpakeCrypto         jpakeCrypto;
+  private JPakeParty          jParty;
+  private JPakeNumGenerator   numGen;
 
-  public JpakeClient(SetupSyncActivity activity) {
+  public JPakeClient(SetupSyncActivity activity) {
     ssActivity = activity;
 
     // Set JPAKE params from prefs
@@ -196,7 +197,10 @@ public class JpakeClient implements JpakeRequestDelegate {
     // TODO: fetch from prefs
     jpakeMaxTries = 300;
 
-    final JpakeClient self = this;
+    jParty = new JPakeParty(mySignerId);
+    numGen = new JPakeNumGeneratorRandom();
+
+    final JPakeClient self = this;
     runOnThread(new Runnable() {
       @Override
       public void run() {
@@ -336,10 +340,13 @@ public class JpakeClient implements JpakeRequestDelegate {
     return bytes;
   }
 
-  private ExtendedJSONObject makeJZkp(String gr, String b, String id) {
+  /*
+   * Helper function to generate a JSON encoded ZKP.
+   */
+  private ExtendedJSONObject makeJZkp(BigInteger gr, BigInteger b, String id) {
     ExtendedJSONObject result = new ExtendedJSONObject();
-    result.put(Constants.ZKP_KEY_GR, gr);
-    result.put(Constants.ZKP_KEY_B, b);
+    result.put(Constants.ZKP_KEY_GR, BigIntegerHelper.toEvenLengthHex(gr));
+    result.put(Constants.ZKP_KEY_B, BigIntegerHelper.toEvenLengthHex(b));
     result.put(Constants.ZKP_KEY_ID, id);
     return result;
   }
@@ -358,8 +365,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     Log.e(LOG_TAG, "decryptPayload()");
     byte[] ciphertext = Base64.decodeBase64(((String) payload
         .get(Constants.JSON_KEY_CIPHERTEXT)).getBytes("UTF-8"));
-    byte[] iv = Base64.decodeBase64(((String) payload.get(Constants.JSON_KEY_IV))
-        .getBytes("UTF-8"));
+    byte[] iv = Base64.decodeBase64(((String) payload
+        .get(Constants.JSON_KEY_IV)).getBytes("UTF-8"));
     byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.JSON_KEY_HMAC));
     return Cryptographer
         .decrypt(new CryptoInfo(ciphertext, iv, hmac, keybundle));
@@ -388,8 +395,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     ExtendedJSONObject payload = new ExtendedJSONObject();
     payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
     payload.put(Constants.JSON_KEY_IV, iv);
-    //String hmac = Utils.byte2hex(info.getHMAC());
-    //payload.put(Constants.JSON_KEY_HMAC, hmac);
+    // String hmac = Utils.byte2hex(info.getHMAC());
+    // payload.put(Constants.JSON_KEY_HMAC, hmac);
     return payload;
   }
 
@@ -438,20 +445,20 @@ public class JpakeClient implements JpakeRequestDelegate {
 
   private void computeStepOne() {
     Log.d(LOG_TAG, "Computing round 1.");
-    ExtendedJSONObject jStepOne = new ExtendedJSONObject();
-    jpakeCrypto.round1(mySignerId, jStepOne);
+
+    JPakeCrypto.round1(jParty, numGen);
 
     // Set outgoing message.
     ExtendedJSONObject jOne = new ExtendedJSONObject();
-    jOne.put(Constants.ZKP_KEY_GX1, jStepOne.get(Constants.ZKP_KEY_GX1));
-    jOne.put(Constants.ZKP_KEY_GX2, jStepOne.get(Constants.ZKP_KEY_GX2));
+    jOne.put(Constants.ZKP_KEY_GX1,
+        BigIntegerHelper.toEvenLengthHex(jParty.gx1));
+    jOne.put(Constants.ZKP_KEY_GX2,
+        BigIntegerHelper.toEvenLengthHex(jParty.gx2));
 
-    ExtendedJSONObject jZkp1 = makeJZkp(
-        (String) jStepOne.get(Constants.CRYPTO_KEY_GR1),
-        (String) jStepOne.get(Constants.ZKP_KEY_B1), mySignerId);
-    ExtendedJSONObject jZkp2 = makeJZkp(
-        (String) jStepOne.get(Constants.CRYPTO_KEY_GR2),
-        (String) jStepOne.get(Constants.ZKP_KEY_B2), mySignerId);
+    Zkp zkp1 = jParty.zkp1;
+    Zkp zkp2 = jParty.zkp2;
+    ExtendedJSONObject jZkp1 = makeJZkp(zkp1.gr, zkp1.b, mySignerId);
+    ExtendedJSONObject jZkp2 = makeJZkp(zkp2.gr, zkp2.b, mySignerId);
 
     jOne.put(Constants.ZKP_KEY_ZKP_X1, jZkp1);
     jOne.put(Constants.ZKP_KEY_ZKP_X2, jZkp2);
@@ -497,8 +504,10 @@ public class JpakeClient implements JpakeRequestDelegate {
     }
 
     // Extract message fields.
-    BigInteger gx3 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX1), 16);
-    BigInteger gx4 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
+    jParty.gx3 = new BigInteger(
+        (String) iPayload.get(Constants.ZKP_KEY_GX1), 16);
+    jParty.gx4 = new BigInteger(
+        (String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
 
     ExtendedJSONObject zkpPayload3 = null;
     ExtendedJSONObject zkpPayload4 = null;
@@ -514,11 +523,21 @@ public class JpakeClient implements JpakeRequestDelegate {
       e.printStackTrace();
     }
 
+    // Extract ZKPs.
+    String zkp3_gr = (String) zkpPayload3.get(Constants.ZKP_KEY_GR);
+    String zkp3_b = (String) zkpPayload3.get(Constants.ZKP_KEY_B);
+    String zkp3_id = (String) zkpPayload3.get(Constants.ZKP_KEY_ID);
+
+    String zkp4_gr = (String) zkpPayload4.get(Constants.ZKP_KEY_GR);
+    String zkp4_b = (String) zkpPayload4.get(Constants.ZKP_KEY_B);
+    String zkp4_id = (String) zkpPayload4.get(Constants.ZKP_KEY_ID);
+
+    jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b, 16), zkp3_id);
+    jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b, 16), zkp4_id);
+
     // Jpake round 2
-    ExtendedJSONObject jStepTwo = new ExtendedJSONObject();
     try {
-      jpakeCrypto.round2(mySignerId, jStepTwo, secret, gx3, gx4,
-          zkpPayload3, zkpPayload4);
+      JPakeCrypto.round2(secret, jParty, numGen);
     } catch (Gx4IsOneException e) {
       e.printStackTrace();
     } catch (IncorrectZkpException e) {
@@ -527,11 +546,11 @@ public class JpakeClient implements JpakeRequestDelegate {
     }
 
     // Make outgoing payload.
+    Zkp zkpA = jParty.thisZkpA;
     ExtendedJSONObject oPayload = new ExtendedJSONObject();
-    ExtendedJSONObject zkpA = makeJZkp((String) jStepTwo.get(Constants.ZKP_KEY_ZKP_A),
-        (String) jStepTwo.get(Constants.ZKP_KEY_B), mySignerId);
-    oPayload.put(Constants.ZKP_KEY_A, jStepTwo.get(Constants.ZKP_KEY_A));
-    oPayload.put(Constants.ZKP_KEY_ZKP_A, zkpA);
+    ExtendedJSONObject jZkpA = makeJZkp(zkpA.gr, zkpA.b, zkpA.id);
+    oPayload.put(Constants.ZKP_KEY_A, BigIntegerHelper.toEvenLengthHex(jParty.thisA));
+    oPayload.put(Constants.ZKP_KEY_ZKP_A, jZkpA);
 
     // Make outgoing message.
     jOutgoing = new ExtendedJSONObject();
@@ -560,8 +579,8 @@ public class JpakeClient implements JpakeRequestDelegate {
       iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
       if (iPayload == null
           || iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null
-          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_A).get(
-              Constants.ZKP_KEY_ID))) {
+          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_A)
+              .get(Constants.ZKP_KEY_ID))) {
         Log.e(LOG_TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
         abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
         return;
@@ -569,8 +588,10 @@ public class JpakeClient implements JpakeRequestDelegate {
     } catch (NonObjectJSONException e) {
       e.printStackTrace();
     }
+    // Extract fields.
     Log.d(LOG_TAG, "iPayload: " + iPayload.toJSONString());
-    BigInteger a = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A), 16);
+    jParty.otherA = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A),
+        16);
 
     ExtendedJSONObject zkpPayload = null;
     try {
@@ -578,8 +599,15 @@ public class JpakeClient implements JpakeRequestDelegate {
     } catch (NonObjectJSONException e) {
       e.printStackTrace();
     }
+    // Extract ZKP.
+    String gr = (String) zkpPayload.get(Constants.ZKP_KEY_GR);
+    String b = (String) zkpPayload.get(Constants.ZKP_KEY_B);
+    String id = (String) zkpPayload.get(Constants.ZKP_KEY_ID);
+
+    jParty.otherZkpA = new Zkp(new BigInteger(gr, 16), new BigInteger(b, 16), id);
+
     try {
-      keyBundle = jpakeCrypto.finalRound(a, zkpPayload, secret);
+      keyBundle = JPakeCrypto.finalRound(secret, jParty);
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
@@ -599,8 +627,12 @@ public class JpakeClient implements JpakeRequestDelegate {
     } catch (CryptoException e) {
       e.printStackTrace();
     }
-    Log.e(LOG_TAG, "enc key64: " + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
-    Log.e(LOG_TAG, "enc key16: " + bytesToString16(keyBundle.getEncryptionKey()));
+    Log.e(
+        LOG_TAG,
+        "enc key64: "
+            + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
+    Log.e(LOG_TAG, "enc key16: "
+        + bytesToString16(keyBundle.getEncryptionKey()));
     Log.e(LOG_TAG, "enc key: " + keyBundle.getEncryptionKey());
     jOutgoing = new ExtendedJSONObject();
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
@@ -615,10 +647,10 @@ public class JpakeClient implements JpakeRequestDelegate {
    *
    */
   public void sendAndComplete(JSONObject jObj)
-      throws JpakeNoActivePairingException {
+      throws JPakeNoActivePairingException {
     if (!paired || finished) {
       Log.d(LOG_TAG, "Can't send data, no active pairing!");
-      throw new JpakeNoActivePairingException();
+      throw new JPakeNoActivePairingException();
     }
 
     jOutData = jObj.toJSONString();
@@ -688,7 +720,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   /* JpakeRequestDelegate methods */
   @Override
   public void onRequestFailure(HttpResponse res) {
-    JpakeResponse response = new JpakeResponse(res);
+    JPakeResponse response = new JPakeResponse(res);
     switch (this.state) {
     case GET_CHANNEL:
       Log.e(LOG_TAG, "getChannel failure: " + response.getStatusCode());
@@ -757,7 +789,7 @@ public class JpakeClient implements JpakeRequestDelegate {
   public void onRequestSuccess(HttpResponse res) {
     if (finished)
       return;
-    JpakeResponse response = new JpakeResponse(res);
+    JPakeResponse response = new JPakeResponse(res);
     Header[] etagHeaders;
     switch (this.state) {
     case GET_CHANNEL:
@@ -833,13 +865,13 @@ public class JpakeClient implements JpakeRequestDelegate {
     case KEY_VERIFY:
       jpakeMaxTries = MAX_TRIES_LAST_MSG;
     case PUT:
-//      if (myEtag == null) { // Only have one etag.
-        etagHeaders = response.httpResponse().getHeaders("etag");
-        for (Header h : etagHeaders) {
-          Log.d(LOG_TAG, "PUT header:" +  h.getValue());
-        }
-        myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
-//      }
+      // if (myEtag == null) { // Only have one etag.
+      etagHeaders = response.httpResponse().getHeaders("etag");
+      for (Header h : etagHeaders) {
+        Log.d(LOG_TAG, "PUT header:" + h.getValue());
+      }
+      myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
+      // }
       Log.i(LOG_TAG, "PUT: myEtag: " + myEtag);
 
       // Pause twice the poll interval.
@@ -873,9 +905,9 @@ public class JpakeClient implements JpakeRequestDelegate {
 
   public class JpakeRequestResourceDelegate implements ResourceDelegate {
 
-    private JpakeRequestDelegate requestDelegate;
+    private JPakeRequestDelegate requestDelegate;
 
-    public JpakeRequestResourceDelegate(JpakeRequestDelegate delegate) {
+    public JpakeRequestResourceDelegate(JPakeRequestDelegate delegate) {
       this.requestDelegate = delegate;
     }
 
