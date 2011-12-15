@@ -150,6 +150,7 @@ public class GlobalSession implements CredentialsSource {
       throw new SyncConfigurationException();
     }
 
+    Log.i(LOG_TAG, "GlobalSession initialized with bundle " + persisted);
     URI clusterURI;
     try {
       clusterURI = (clusterURL == null) ? null : new URI(clusterURL);
