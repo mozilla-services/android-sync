@@ -263,7 +263,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  Record[] doFetch(String[] guids) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  protected Record[] doFetch(String[] guids) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Cursor cur = dbHelper.fetch(guids);
     return compileIntoRecordsArray(cur);
   }

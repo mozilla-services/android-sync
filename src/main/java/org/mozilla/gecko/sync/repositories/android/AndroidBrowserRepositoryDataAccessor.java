@@ -36,7 +36,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
         new String[] { BrowserContract.SyncColumns.GUID },
         BrowserContract.SyncColumns.IS_DELETED + "= 1", null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(LOG_TAG + ".purgeDeleted");
+    DBUtils.queryTimeLogger(LOG_TAG + ".purgeDeleted", queryStart, queryEnd);
     if (cur == null) {
       Log.e(LOG_TAG, "Got back a null cursor in AndroidBrowserRepositoryDataAccessor.purgeDeleted");
       throw new NullCursorException(null);
@@ -48,11 +48,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
       cur.moveToNext();
     }
     cur.close();
-  }
-  
-  protected void queryTimeLogger(String methodCallingQuery) {
-    long elapsedTime = queryEnd - queryStart;
-    Log.i(LOG_TAG, "Query timer: " + methodCallingQuery + " took " + elapsedTime + "ms.");
   }
 
   public Uri insert(Record record) {
@@ -66,7 +61,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
         getAllColumns(), null, null, null);
     queryEnd = System.currentTimeMillis();
     
-    queryTimeLogger(LOG_TAG + ".fetchAll");
+    DBUtils.queryTimeLogger(LOG_TAG + ".fetchAll", queryStart, queryEnd);
     if (cur == null) {
       Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetchAll");
       throw new NullCursorException(null);
@@ -81,7 +76,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
         BrowserContract.SyncColumns.DATE_MODIFIED + " >= " +
         Long.toString(timestamp), null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(LOG_TAG + ".getGUIDsSince");
+    DBUtils.queryTimeLogger(LOG_TAG + ".getGUIDsSince", queryStart, queryEnd);
     if (cur == null) {
       Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.getGUIDsSince");
       throw new NullCursorException(null);
@@ -96,7 +91,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
         BrowserContract.SyncColumns.DATE_MODIFIED + " >= " +
         Long.toString(timestamp), null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(LOG_TAG + ".fetchSince");
+    DBUtils.queryTimeLogger(LOG_TAG + ".fetchSince", queryStart, queryEnd);
     if (cur == null) {
       Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetchSince");
       throw new NullCursorException(null);
@@ -113,7 +108,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, null, null);
     queryEnd = System.currentTimeMillis();
-    queryTimeLogger(LOG_TAG + ".fetch");
+    DBUtils.queryTimeLogger(LOG_TAG + ".fetch", queryStart, queryEnd);
     if (cur == null) {
       Log.e(LOG_TAG, "Got null cursor exception in AndroidBrowserRepositoryDataAccessor.fetch");
       throw new NullCursorException(null);

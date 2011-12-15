@@ -46,9 +46,15 @@ import android.net.Uri;
 
 public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
+  private AndroidBrowserHistoryDataExtender dataExtender;
 
   public AndroidBrowserHistoryDataAccessor(Context context) {
     super(context);
+    dataExtender = new AndroidBrowserHistoryDataExtender(context);
+  }
+  
+  public AndroidBrowserHistoryDataExtender getHistoryDataExtender() {
+    return dataExtender;
   }
 
   @Override
@@ -64,9 +70,8 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
     cv.put(BrowserContract.History.DATE_MODIFIED,        rec.lastModified);
     cv.put(BrowserContract.History.TITLE,           rec.title);
     cv.put(BrowserContract.History.URL,        rec.histURI);
-    //cv.put(BrowserContract.History.VISITS,          rec.visits);
-    //cv.put(COL_TRANS_TYPE,      rec.transitionType);
-    cv.put(BrowserContract.History.DATE_LAST_VISITED,    rec.dateVisited);
+    // TODO fix this to get our last visited date out
+    //cv.put(BrowserContract.History.DATE_LAST_VISITED,    rec.dateVisited);
     return cv;
   }
 
@@ -74,5 +79,12 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
   protected String[] getAllColumns() {
     return BrowserContract.History.HistoryColumns;
   }
+  
+  @Override
+  public Uri insert(Record record) {
+    HistoryRecord rec = (HistoryRecord) record;
+    dataExtender.store(record.guid, rec.visits);
+    return super.insert(record);
+  }  
 
 }

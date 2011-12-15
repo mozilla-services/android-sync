@@ -84,7 +84,7 @@ public class DBUtils {
     return cur.getLong(cur.getColumnIndex(colId));
   }
 
-  private static JSONArray getJSONArrayFromCursor(Cursor cur, String colId) {
+  public static JSONArray getJSONArrayFromCursor(Cursor cur, String colId) {
     String jsonArrayAsString = getStringFromCursor(cur, colId);
     if (jsonArrayAsString == null) {
       return new JSONArray();
@@ -148,11 +148,15 @@ public class DBUtils {
     rec.title = getStringFromCursor(cur, BrowserContract.History.TITLE);
     rec.histURI = getStringFromCursor(cur, BrowserContract.History.URL);
     rec.androidID = getLongFromCursor(cur, BrowserContract.History._ID);
-    // TODO currently not compatible with our notion of visits
-    //rec.visits = getStringFromCursor(cur, AndroidBrowserHistoryDataAccessor.COL_VISITS);
-    rec.dateVisited = getLongFromCursor(cur, BrowserContract.History.DATE_LAST_VISITED);
+    rec.fennecDateVisited = getLongFromCursor(cur, BrowserContract.History.DATE_LAST_VISITED);
+    rec.fennecVisitCount = getLongFromCursor(cur, BrowserContract.History.VISITS);
 
     return rec;
+  }
+  
+  public static void queryTimeLogger(String methodCallingQuery, long queryStart, long queryEnd) {
+    long elapsedTime = queryEnd - queryStart;
+    Log.i(LOG_TAG, "Query timer: " + methodCallingQuery + " took " + elapsedTime + "ms.");
   }
 
 }

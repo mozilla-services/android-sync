@@ -37,6 +37,7 @@
 
 package org.mozilla.gecko.sync.repositories.domain;
 
+import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
 
@@ -61,12 +62,11 @@ public class HistoryRecord extends Record {
     super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
 
-  public String   title;
-  public String   histURI;
-  // TODO figure out how we are translating visits between formats
-  public String   visits;
-  public long     transitionType;
-  public long     dateVisited;
+  public String     title;
+  public String     histURI;
+  public JSONArray  visits;
+  public long       fennecDateVisited;
+  public long       fennecVisitCount;
 
   @Override
   public void initFromPayload(CryptoRecord payload) {

@@ -37,7 +37,13 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -61,5 +67,36 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
     HistoryRecord hist = (HistoryRecord) record;
     return hist.title + hist.histURI;
   }
-
+  
+  @Override
+  protected Record[] doFetch(String[] guids) throws NoGuidForIdException,
+      NullCursorException, ParentNotFoundException {
+    AndroidBrowserHistoryDataExtender dataExtender = ((AndroidBrowserHistoryDataAccessor) dbHelper).getHistoryDataExtender();
+    Record[] records = super.doFetch(guids);
+    for(Record record : records) {
+      HistoryRecord hist = (HistoryRecord) record;
+      Cursor visits = dataExtender.fetch(record.guid);
+      visits.moveToFirst();
+      JSONArray visitsArray = DBUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
+      long missingRecords = hist.fennecVisitCount - visitsArray.size();
+      
+      // Add missingRecords -1 fake visits
+      if (missingRecords > 1) {
+        
+        for (int i = 0; i < missingRecords -1; i++) {
+          JSONObject fake = new JSONObject();
+          
+          // Set fake visit timestamp to be just previous to
+          // the real one we are about to add.
+          // TODO Left off here
+          fake.put(key, value)
+        }
+      }
+      
+    }
+    
+    
+    
+    return records;
+  }
 }
