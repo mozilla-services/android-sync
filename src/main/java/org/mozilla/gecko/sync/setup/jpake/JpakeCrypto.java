@@ -124,8 +124,8 @@ public class JpakeCrypto {
     String[] zkp2 = createZkp(G, x2, gx2);
 
     // Store round1 return values.
-    values.put(Constants.ZKP_KEY_GX1, gx1.toString(16));
-    values.put(Constants.ZKP_KEY_GX2, gx2.toString(16));
+    values.put(Constants.ZKP_KEY_GX1, BigIntegerHelper.toEvenLengthHex(gx1));
+    values.put(Constants.ZKP_KEY_GX2, BigIntegerHelper.toEvenLengthHex(gx2));
     values.put(Constants.CRYPTO_KEY_GR1, zkp1[0]);
     values.put(Constants.CRYPTO_KEY_GR2, zkp2[0]);
     values.put(Constants.ZKP_KEY_B1, zkp1[1]);
@@ -169,7 +169,7 @@ public class JpakeCrypto {
     BigInteger a = y1.modPow(y2, P);
     String[] zkpA = createZkp(y1, y2, a);
 
-    valuesOut.put(Constants.ZKP_KEY_A, a.toString(16));
+    valuesOut.put(Constants.ZKP_KEY_A, BigIntegerHelper.toEvenLengthHex(a));
     valuesOut.put(Constants.ZKP_KEY_ZKP_A, zkpA[0]);
     valuesOut.put(Constants.ZKP_KEY_B, zkpA[1]);
   }
@@ -226,13 +226,13 @@ public class JpakeCrypto {
 
     // Calculate g^r for ZKP.
     BigInteger gr = g.modPow(r, P);
-    result[0] = gr.toString(16);
+    result[0] = BigIntegerHelper.toEvenLengthHex(gr);
 
     // Calculate the ZKP b value = (r-x*h) % q.
     BigInteger h = computeBHash(g, gr, gx, mySignerId);
     Log.e(TAG, "myhash: " + h.toString(16));
     BigInteger b = r.subtract(x.multiply(h)).mod(Q);
-    result[1] = b.toString(16);
+    result[1] = BigIntegerHelper.toEvenLengthHex(b);
 
     Log.i(TAG, "g^b = " + g.modPow(b, P).toString(16));
     Log.i(TAG, "b = " + b.toString(16));
