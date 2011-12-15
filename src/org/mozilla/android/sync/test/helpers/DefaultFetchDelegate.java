@@ -12,7 +12,6 @@ import java.util.HashMap;
 import org.mozilla.gecko.sync.repositories.android.DBUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
-import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
 import android.util.Log;
 
@@ -37,13 +36,13 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
       
       int expectedCount = 0;
       for (String key : expected.keySet()) {
-        if (!DBUtils.SPECIAL_GUIDS_MAP.containsKey(key)) {
+        if (DBUtils.SPECIAL_GUIDS_MAP == null || !DBUtils.SPECIAL_GUIDS_MAP.containsKey(key)) {
           expectedCount++;
         }
       }
       for (Record record : records) {
         // Ignore special guids for bookmarks
-        if (!DBUtils.SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
+        if (DBUtils.SPECIAL_GUIDS_MAP == null || !DBUtils.SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
           Record expect = expected.get(record.guid);
           if (expect == null) {
             fail("Do not expect to get back a record with guid: " + record.guid);

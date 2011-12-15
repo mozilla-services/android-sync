@@ -39,4 +39,24 @@ public class HistoryHelpers {
     return record;
   }
   
+  public static HistoryRecord createHistory4() {
+    HistoryRecord record = new HistoryRecord();
+    record.title          = "History 4";
+    record.histURI        = "http://history.page4.com";
+    record.visits         = "visits4, visits4, visits4";
+    record.transitionType = 4;
+    record.dateVisited    = DATE_VISITED + 400;
+    return record;
+  }
+  
+  public static HistoryRecord createHistory5() {
+    HistoryRecord record = new HistoryRecord();
+    record.title          = "History 5";
+    record.histURI        = "http://history.page5.com";
+    record.visits         = "visits5, visits5, visits5";
+    record.transitionType = 5;
+    record.dateVisited    = DATE_VISITED + 500;
+    return record;
+  }
+  
 }

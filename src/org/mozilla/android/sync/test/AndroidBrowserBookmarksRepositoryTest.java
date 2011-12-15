@@ -31,14 +31,11 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
  
   // NOTE NOTE NOTE
-  // Currently queries require the qualifier (i.e. "bookmarks.guid"), inserts
-  // require that the qualifier is not there. Oh...and the qualifier is only
-  // required for columns that exist in multiple tables (like guid, url, etc.)
-  // UGLY, MESSY, and with some luck and cooperation from #mobile TEMPORARY!
-  
-  // ALSO must store folder before records if we we are checking that the
-  // records returned are the same as those sent in. If you don't want to
-  // store a folder first, store your record in "mobile" or one of the fodlers
+  // Must store folder before records if we we are checking that the
+  // records returned are the same as those sent in. If the folder isn't stored
+  // first, the returned records won't be identical to those stored because we
+  // aren't able to find the parent name/guid when we do a fetch. If you don't want
+  // to store a folder first, store your record in "mobile" or one of the folders
   // that always exists.
   
   @Override
@@ -196,7 +193,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     performWait(fetchAllRunnable(session, delegate));
     session.finish(new ExpectFinishDelegate());
   }
-  
   
   // Insert a record without a parent and check that it is
   // put into unfiled bookmarks. Call finish() and check

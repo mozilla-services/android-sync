@@ -21,7 +21,6 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
@@ -207,6 +206,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   public abstract void testStoreIdenticalExceptGuid();
   public abstract void testCleanMultipleRecords();
   
+  
   /*
    * Test abstractions
    */
@@ -240,7 +240,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     });
     
     // force two record to appear deleted
-    AndroidBrowserRepositoryDataAccessor db = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
+    AndroidBrowserRepositoryDataAccessor db = getDataAccessor(); 
     ContentValues cv = new ContentValues();
     cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
     db.updateByGuid(delete0.guid, cv);

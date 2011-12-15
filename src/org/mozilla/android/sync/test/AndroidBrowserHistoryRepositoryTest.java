@@ -4,6 +4,7 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
@@ -11,10 +12,8 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataA
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
-public class AndroidBrowserHistoryRepositoryTest /*extends AndroidBrowserRepositoryTest*/ {
+public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
   
-  /*
-   * Comment out while getting bookmars working!
   @Override
   protected AndroidBrowserRepository getRepository() {
     return new AndroidBrowserHistoryRepository();
@@ -32,6 +31,31 @@ public class AndroidBrowserHistoryRepositoryTest /*extends AndroidBrowserReposit
     expected[1] = HistoryHelpers.createHistory2();
     basicFetchAllTest(expected);
   }
+
+  /*
+   * Test storing identical records with different guids.
+   * For bookmarks identical is defined by the following fields
+   * being the same: title, uri, type, parentName
+   */
+  @Override
+  public void testStoreIdenticalExceptGuid() {
+    Record record0 = HistoryHelpers.createHistory1(); 
+    Record record1 = HistoryHelpers.createHistory1();
+    record1.guid = Utils.generateGuid();
+    assert(!record0.guid.equals(record1.guid));
+    storeIdenticalExceptGuid(record0, record1);
+  }
+  
+  @Override
+  public void testCleanMultipleRecords() {
+    cleanMultipleRecords(
+        HistoryHelpers.createHistory1(),
+        HistoryHelpers.createHistory2(),
+        HistoryHelpers.createHistory3(),
+        HistoryHelpers.createHistory4(),
+        HistoryHelpers.createHistory5()
+    );
+  } 
 
   @Override
   public void testGuidsSinceReturnMultipleRecords() {
@@ -122,6 +146,4 @@ public class AndroidBrowserHistoryRepositoryTest /*extends AndroidBrowserReposit
     HistoryRecord remote = HistoryHelpers.createHistory2();
     deleteRemoteLocalNonexistent(remote);
   }
-
-*/
 }

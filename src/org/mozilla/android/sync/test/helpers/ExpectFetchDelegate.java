@@ -11,13 +11,6 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.util.Log;
 
 public class ExpectFetchDelegate extends DefaultFetchDelegate {
-//  private String[] expected;
-//  Leave this for now...maybe there is a situation where
-//  we want to check only guids and not entire records.
-//  public ExpectFetchDelegate(String[] guids) {
-//    expected = guids;
-//    Arrays.sort(expected);
-//  }
   
   private HashMap<String, Record> expect = new HashMap<String, Record>();
   
