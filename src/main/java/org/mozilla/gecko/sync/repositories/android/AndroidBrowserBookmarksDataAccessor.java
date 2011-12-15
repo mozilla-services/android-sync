@@ -21,7 +21,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
 
   @Override
   protected Uri getUri() {
-    return BrowserContract.Bookmarks.CONTENT_URI.buildUpon().appendQueryParameter(BrowserContract.PARAM_SHOW_DELETED, "true").build();
+    return BrowserContract.Bookmarks.CONTENT_URI;
   }
 
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {

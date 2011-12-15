@@ -108,7 +108,10 @@ public class BrowserContract {
         public static final String TOOLBAR_FOLDER_GUID = "toolbar";
         public static final String UNFILED_FOLDER_GUID = "unfiled";
 
-        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "bookmarks").buildUpon().appendQueryParameter(PARAM_IS_SYNC, "true").build();
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "bookmarks")
+            .buildUpon().appendQueryParameter(PARAM_IS_SYNC, "true")
+            .appendQueryParameter(PARAM_SHOW_DELETED, "true")
+            .build();
 
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/bookmark";
 
@@ -148,7 +151,10 @@ public class BrowserContract {
     public static final class History implements CommonColumns, URLColumns, ImageColumns, SyncColumns {
         private History() {}
 
-        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "history");
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "history")
+            .buildUpon().appendQueryParameter(PARAM_IS_SYNC, "true")
+            .appendQueryParameter(PARAM_SHOW_DELETED, "true")
+            .build();
 
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/browser-history";
 
@@ -157,6 +163,18 @@ public class BrowserContract {
         public static final String DATE_LAST_VISITED = "date";
 
         public static final String VISITS = "visits";
+        
+        public static final String[] HistoryColumns = new String[] {
+          _ID,
+          GUID,
+          DATE_CREATED,
+          DATE_MODIFIED,
+          IS_DELETED,
+          TITLE,
+          URL,
+          DATE_LAST_VISITED,
+          VISITS
+        };
     }
 
     public static final class Schema {

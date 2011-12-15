@@ -32,9 +32,8 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   
   public void purgeDeleted() throws NullCursorException {
     queryStart = System.currentTimeMillis();
-    Uri uri = getUri().buildUpon().appendQueryParameter(BrowserContract.PARAM_SHOW_DELETED, "true").build();
-    Cursor cur = context.getContentResolver().query(uri,
-        new String[] { BrowserContract.SyncColumns.GUID }, 
+    Cursor cur = context.getContentResolver().query(getUri(),
+        new String[] { BrowserContract.SyncColumns.GUID },
         BrowserContract.SyncColumns.IS_DELETED + "= 1", null, null);
     queryEnd = System.currentTimeMillis();
     queryTimeLogger(LOG_TAG + ".purgeDeleted");

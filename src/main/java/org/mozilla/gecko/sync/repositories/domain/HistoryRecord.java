@@ -88,8 +88,28 @@ public class HistoryRecord extends Record {
         super.equals(other) &&
         this.title.equals(other.title) &&
         this.histURI.equals(other.histURI);
-
-    // TODO other fields?
   }
+  
+//  
+//  Example record:
+//
+//  {id:"--DUvUomABNq",
+//   histUri:"https://bugzilla.mozilla.org/show_bug.cgi?id=697634",
+//   title:"697634 \u2013 xpcshell test failures on 10.7",
+//   visits:[{date:1320087601465600, type:2},
+//           {date:1320084970724990, type:1},
+//           {date:1320084847035717, type:1},
+//           {date:1319764134412287, type:1},
+//           {date:1319757917982518, type:1},
+//           {date:1319751664627351, type:1},
+//           {date:1319681421072326, type:1},
+//           {date:1319681306455594, type:1},
+//           {date:1319678117125234, type:1},
+//           {date:1319677508862901, type:1}]
+//  }
+//   
+//"type" is a transition type:
+//
+//https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsINavHistoryService#Transition_type_constants
 
 }

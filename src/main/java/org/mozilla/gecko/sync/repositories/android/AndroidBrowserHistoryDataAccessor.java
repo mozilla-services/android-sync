@@ -46,7 +46,6 @@ import android.net.Uri;
 
 public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
-  private static final Uri PROVIDER_URI = Uri.parse("content://org.mozilla.gecko.providers.browser/history");
 
   public AndroidBrowserHistoryDataAccessor(Context context) {
     super(context);
@@ -54,7 +53,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
 
   @Override
   protected Uri getUri() {
-    return PROVIDER_URI;
+    return BrowserContract.History.CONTENT_URI;
   }
 
   @Override
@@ -73,12 +72,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
 
   @Override
   protected String[] getAllColumns() {
-    // TODO Auto-generated method stub
-    return null;
+    return BrowserContract.History.HistoryColumns;
   }
-
-  // Missing columns
-  //visits- they seem to store a count...which is not the same as us
-  //transition type
 
 }

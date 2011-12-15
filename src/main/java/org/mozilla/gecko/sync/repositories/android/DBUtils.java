@@ -140,10 +140,9 @@ public class DBUtils {
   //Create a HistoryRecord object from a cursor on a row with a Moz History record in it
   public static HistoryRecord historyFromMirrorCursor(Cursor cur) {
 
-    String guid = getStringFromCursor(cur, BrowserContract.History.GUID);
+    String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "history";
-    long lastModified = getLongFromCursor(cur,BrowserContract.History.DATE_MODIFIED);
-
+    long lastModified = getLongFromCursor(cur,BrowserContract.SyncColumns.DATE_MODIFIED);
     HistoryRecord rec = new HistoryRecord(guid, collection, lastModified);
 
     rec.title = getStringFromCursor(cur, BrowserContract.History.TITLE);
