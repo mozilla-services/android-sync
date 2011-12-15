@@ -1,45 +1,45 @@
-  <string name="sync_app_name">Firefox Sync</string>
-  <string name="sync_title_connect">Connect to Sync</string>
-  <string name="sync_title_pair">Pair a Device</string>
+  <string name="sync_app_name">&sync_app_name;</string>
+  <string name="sync_title_connect">&sync_title_connect;</string>
+  <string name="sync_title_pair">&sync_title_pair;</string>
 
   <!-- JPAKE Key Screen -->
-  <string name="sync_subtitle_connect">From a Firefox Sync-connected computer, go to Sync options and select “Add a device”</string>
-  <string name="sync_subtitle_pair">From the device to be paired, go to Sync options and select “Pair a device”</string>
-  <string name="sync_pin_default">...\n...\n...\n</string>
-  <string name="sync_link_show"><a href="https://support.mozilla.com/en-US/kb/add-a-device-to-firefox-sync">Show me how</a></string>
-  <string name="sync_link_nodevice"><a href="#">I\'m not near my computer…</a></string>
+  <string name="sync_subtitle_connect">&sync_subtitle_connect;</string>
+  <string name="sync_subtitle_pair">&sync_subtitle_pair;</string>
+  <string name="sync_pin_default">&sync_pin_default;</string>
+  <string name="sync_link_show">&sync_link_show;</string>
+  <string name="sync_link_nodevice">&sync_link_nodevice;</string>
 
   <!-- Account Login Screen -->
-  <string name="sync_subtitle_account">Enter your Firefox Sync account information</string>
-  <string name="sync_input_username">Account Name</string>
-  <string name="sync_input_password">Password</string>
-  <string name="sync_input_key">Recovery Key</string>
-  <string name="sync_checkbox_server">Use custom server</string>
-  <string name="sync_input_server">Server URL</string>
+  <string name="sync_subtitle_account">&sync_subtitle_account;</string>
+  <string name="sync_input_username">&sync_input_username;</string>
+  <string name="sync_input_password">&sync_input_password;</string>
+  <string name="sync_input_key">&sync_input_key;</string>
+  <string name="sync_checkbox_server">&sync_checkbox_server;</string>
+  <string name="sync_input_server">&sync_input_server;</string>
   
   <!-- Setup Fail -->
-  <string name="sync_title_fail">Cannot Set Up Sync</string>
-  <string name="sync_subtitle_fail">Firefox Sync could not connect to the server. Would you like to try again?</string>
-  <string name="sync_button_tryagain">Try again</string>
-  <string name="sync_button_manual">Manual Setup</string>
+  <string name="sync_title_fail">&sync_title_fail;</string>
+  <string name="sync_subtitle_fail">&sync_subtitle_fail;</string>
+  <string name="sync_button_tryagain">&sync_button_tryagain;</string>
+  <string name="sync_button_manual">&sync_button_manual;</string>
   
   <!-- Setup Success -->
-  <string name="sync_title_success">Setup Complete</string>
-  <string name="sync_subtitle_success">Your data is now being encrypted and synchronized in the background.</string>
-  <string name="sync_settings">Settings</string>
+  <string name="sync_title_success">&sync_title_success;</string>
+  <string name="sync_subtitle_success">&sync_subtitle_success;</string>
+  <string name="sync_settings">&sync_settings;</string>
   
   <!-- Common text -->
-  <string name="sync_button_cancel">Cancel</string>
-  <string name="sync_button_connect">Connect</string>
+  <string name="sync_button_cancel">&sync_button_cancel;</string>
+  <string name="sync_button_connect">&sync_button_connect;</string>
   
   <!-- Account strings -->
-  <string name="sync_account_label">Firefox Sync</string>
+  <string name="sync_account_label">&sync_account_label;</string>
   
   <!-- Bookmark folder strings -->
-  <string name="menu">Bookmarks Menu</string>
-  <string name="places"></string>
-  <string name="tags">Tags</string>
-  <string name="toolbar">Bookmarks Toolbar</string>
-  <string name="unfiled">Unsorted Bookmarks</string>
-  <string name="desktop">Desktop Bookmarks</string>
-  <string name="mobile">Mobile Bookmarks</string>
+  <string name="menu">&menu;</string>
+  <string name="places">&places;</string>
+  <string name="tags">&tags;</string>
+  <string name="toolbar">&toolbar;</string>
+  <string name="unfiled">&unfiled;</string>
+  <string name="desktop">&desktop;</string>
+  <string name="mobile">&mobile;</string>

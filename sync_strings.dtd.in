@@ -1,0 +1,45 @@
+<!ENTITY sync_app_name 'Firefox Sync'>
+<!ENTITY sync_title_connect 'Connect to Sync'>
+<!ENTITY sync_title_pair 'Pair a Device'>
+
+  <!-- JPAKE Key Screen -->
+<!ENTITY sync_subtitle_connect 'From a Firefox Sync-connected computer, go to Sync options and select “Add a device”'>
+<!ENTITY sync_subtitle_pair 'From the device to be paired, go to Sync options and select “Pair a device”'>
+<!ENTITY sync_pin_default '...\n...\n...\n'>
+<!ENTITY sync_link_show '<a href="https://support.mozilla.com/en-US/kb/add-a-device-to-firefox-sync">Show me how</a>'>
+<!ENTITY sync_link_nodevice '<a href="#">I\'m not near my computer…</a>'>
+
+  <!-- Account Login Screen -->
+<!ENTITY sync_subtitle_account 'Enter your Firefox Sync account information'>
+<!ENTITY sync_input_username 'Account Name'>
+<!ENTITY sync_input_password 'Password'>
+<!ENTITY sync_input_key 'Recovery Key'>
+<!ENTITY sync_checkbox_server 'Use custom server'>
+<!ENTITY sync_input_server 'Server URL'>
+  
+  <!-- Setup Fail -->
+<!ENTITY sync_title_fail 'Cannot Set Up Sync'>
+<!ENTITY sync_subtitle_fail 'Firefox Sync could not connect to the server. Would you like to try again?'>
+<!ENTITY sync_button_tryagain 'Try again'>
+<!ENTITY sync_button_manual 'Manual Setup'>
+  
+  <!-- Setup Success -->
+<!ENTITY sync_title_success 'Setup Complete'>
+<!ENTITY sync_subtitle_success 'Your data is now being encrypted and synchronized in the background.'>
+<!ENTITY sync_settings 'Settings'>
+  
+  <!-- Common text -->
+<!ENTITY sync_button_cancel 'Cancel'>
+<!ENTITY sync_button_connect 'Connect'>
+  
+  <!-- Account strings -->
+<!ENTITY sync_account_label 'Firefox Sync'>
+  
+  <!-- Bookmark folder strings -->
+<!ENTITY menu 'Bookmarks Menu'>
+<!ENTITY places ''>
+<!ENTITY tags 'Tags'>
+<!ENTITY toolbar 'Bookmarks Toolbar'>
+<!ENTITY unfiled 'Unsorted Bookmarks'>
+<!ENTITY desktop 'Desktop Bookmarks'>
+<!ENTITY mobile 'Mobile Bookmarks'>
