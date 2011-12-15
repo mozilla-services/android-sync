@@ -3,6 +3,7 @@ package org.mozilla.android.sync.synchronizer.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.util.Date;
@@ -186,11 +187,25 @@ public class SynchronizerTest {
     synchronizer.synchronize(context, delegateTwo);
   }
 
+  private Synchronizer getTestSynchronizer(long tsA, long tsB) {
+    WBORepository repoA = new WBORepository();
+    WBORepository repoB = new WBORepository();
+    Synchronizer synchronizer = new Synchronizer();
+    synchronizer.bundleA      = new RepositorySessionBundle(tsA);
+    synchronizer.bundleB      = new RepositorySessionBundle(tsB);
+    synchronizer.repositoryA  = repoA;
+    synchronizer.repositoryB  = repoB;
+    return synchronizer;
+  }
+
+  /**
+   * Let's put data in two repos and synchronize them with last sync
+   * timestamps later than all of the records. Verify that no records
+   * are exchanged.
+   */
   @Test
-  public void testSynchronizer() {
+  public void testSynchronizerFakeTimestamps() {
     Context context = null;
-    final WBORepository repoA = new WBORepository();
-    final WBORepository repoB = new WBORepository();
 
     final String collection  = "bookmarks";
     final boolean deleted    = false;
@@ -201,13 +216,64 @@ public class SynchronizerTest {
     BookmarkRecord bookmarkRecordA = new BookmarkRecord(guidA, collection, lastModifiedA, deleted);
     BookmarkRecord bookmarkRecordB = new BookmarkRecord(guidB, collection, lastModifiedB, deleted);
 
+    Synchronizer synchronizer = getTestSynchronizer(lastModifiedA + 10, lastModifiedB + 10);
+    final WBORepository repoA = (WBORepository) synchronizer.repositoryA;
+    final WBORepository repoB = (WBORepository) synchronizer.repositoryB;
+
     repoA.wbos.put(guidA, bookmarkRecordA);
     repoB.wbos.put(guidB, bookmarkRecordB);
-    Synchronizer synchronizer = new Synchronizer();
-    synchronizer.bundleA     = new RepositorySessionBundle(0);
-    synchronizer.bundleB     = new RepositorySessionBundle(0);
-    synchronizer.repositoryA = repoA;
-    synchronizer.repositoryB = repoB;
+    synchronizer.synchronize(context, new SynchronizerDelegate() {
+
+      @Override
+      public void onSynchronized(Synchronizer synchronizer) {
+        // Verify contents.
+        assertTrue(repoA.wbos.containsKey(guidA));
+        assertTrue(repoB.wbos.containsKey(guidB));
+        assertFalse(repoB.wbos.containsKey(guidA));
+        assertFalse(repoA.wbos.containsKey(guidB));
+        BookmarkRecord aa = (BookmarkRecord) repoA.wbos.get(guidA);
+        BookmarkRecord ab = (BookmarkRecord) repoA.wbos.get(guidB);
+        BookmarkRecord ba = (BookmarkRecord) repoB.wbos.get(guidA);
+        BookmarkRecord bb = (BookmarkRecord) repoB.wbos.get(guidB);
+        assertNull(ab);
+        assertNull(ba);
+        recordEquals(aa, guidA, lastModifiedA, deleted, collection);
+        recordEquals(bb, guidB, lastModifiedB, deleted, collection);
+      }
+
+      @Override
+      public void onSynchronizeFailed(Synchronizer synchronizer,
+                                      Exception lastException, String reason) {
+        fail("Sync should not fail.");
+      }
+
+      @Override
+      public void onSynchronizeAborted(Synchronizer synchronize) {
+        fail("Sync should not be aborted.");
+      }
+    });
+  }
+
+
+  @Test
+  public void testSynchronizer() {
+    Context context = null;
+
+    final String collection  = "bookmarks";
+    final boolean deleted    = false;
+    final String guidA       = "abcdabcdabcd";
+    final String guidB       = "ffffffffffff";
+    final long lastModifiedA = 312345;
+    final long lastModifiedB = 412345;
+    BookmarkRecord bookmarkRecordA = new BookmarkRecord(guidA, collection, lastModifiedA, deleted);
+    BookmarkRecord bookmarkRecordB = new BookmarkRecord(guidB, collection, lastModifiedB, deleted);
+
+    Synchronizer synchronizer = getTestSynchronizer(0, 0);
+    final WBORepository repoA = (WBORepository) synchronizer.repositoryA;
+    final WBORepository repoB = (WBORepository) synchronizer.repositoryB;
+
+    repoA.wbos.put(guidA, bookmarkRecordA);
+    repoB.wbos.put(guidB, bookmarkRecordB);
     synchronizer.synchronize(context, new SynchronizerDelegate() {
 
       @Override
@@ -239,7 +305,6 @@ public class SynchronizerTest {
       public void onSynchronizeAborted(Synchronizer synchronize) {
         fail("Sync should not be aborted.");
       }
-
     });
   }
 }
