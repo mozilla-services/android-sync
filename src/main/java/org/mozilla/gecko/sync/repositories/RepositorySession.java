@@ -128,10 +128,10 @@ public abstract class RepositorySession {
   public void begin(RepositorySessionBeginDelegate delegate) {
     try {
       sharedBegin();
-      delegate.onBeginSucceeded(this);
+      delegate.deferredBeginDelegate().onBeginSucceeded(this);
 
     } catch (Exception e) {
-      delegate.onBeginFailed(e);
+      delegate.deferredBeginDelegate().onBeginFailed(e);
     }
   }
 
@@ -168,16 +168,16 @@ public abstract class RepositorySession {
    */
   public void abort(RepositorySessionFinishDelegate delegate) {
     this.status = SessionStatus.DONE;    // TODO: ABORTED?
-    delegate.onFinishSucceeded(this, this.getBundle(null));
+    delegate.deferredFinishDelegate().onFinishSucceeded(this, this.getBundle(null));
   }
 
   public void finish(RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
-      delegate.onFinishSucceeded(this, this.getBundle(null));
+      delegate.deferredFinishDelegate().onFinishSucceeded(this, this.getBundle(null));
     } else {
       Log.e(LOG_TAG, "Tried to finish() an unstarted or already finished session");
-      delegate.onFinishFailed(new InvalidSessionTransitionException(null));
+      delegate.deferredFinishDelegate().onFinishFailed(new InvalidSessionTransitionException(null));
     }
   }
 

@@ -40,16 +40,16 @@ package org.mozilla.gecko.sync.synchronizer;
 
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.DeferrableRepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 
 import android.content.Context;
 import android.util.Log;
 
-public class SynchronizerSession implements
-RecordsChannelDelegate,
-RepositorySessionCreationDelegate,
-RepositorySessionFinishDelegate {
+public class SynchronizerSession
+extends DeferrableRepositorySessionCreationDelegate
+implements RecordsChannelDelegate,
+           RepositorySessionFinishDelegate {
 
   protected static final String LOG_TAG = "SynchronizerSession";
   private Synchronizer synchronizer;
@@ -288,5 +288,37 @@ RepositorySessionFinishDelegate {
     if (this.sessionB == null) {
       this.sessionA = null; // We're done.
     }
+  }
+
+  @Override
+  public RepositorySessionFinishDelegate deferredFinishDelegate() {
+    final SynchronizerSession self = this;
+    return new RepositorySessionFinishDelegate() {
+      @Override
+      public void onFinishSucceeded(final RepositorySession session,
+                                    final RepositorySessionBundle bundle) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onFinishSucceeded(session, bundle);
+          }
+        }).start();
+      }
+
+      @Override
+      public void onFinishFailed(final Exception ex) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onFinishFailed(ex);
+          }
+        }).start();
+      }
+
+      @Override
+      public RepositorySessionFinishDelegate deferredFinishDelegate() {
+        return this;
+      }
+    };
   }
 }

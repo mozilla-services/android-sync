@@ -199,4 +199,67 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
 
     // TODO: error!
   }
+
+  @Override
+  public RepositorySessionStoreDelegate deferredStoreDelegate() {
+    final RepositorySessionStoreDelegate self = this;
+    return new RepositorySessionStoreDelegate() {
+      @Override
+      public void onStoreSucceeded(final Record record) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onStoreSucceeded(record);
+          }
+        }).start();
+      }
+
+      @Override
+      public void onStoreFailed(final Exception ex) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onStoreFailed(ex);
+          }
+        }).start();
+      }
+
+      @Override
+      public RepositorySessionStoreDelegate deferredStoreDelegate() {
+        return this;
+      }
+    };
+  }
+
+  @Override
+  public RepositorySessionBeginDelegate deferredBeginDelegate() {
+    final RepositorySessionBeginDelegate self = this;
+    return new RepositorySessionBeginDelegate() {
+
+      @Override
+      public void onBeginSucceeded(final RepositorySession session) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onBeginSucceeded(session);
+          }
+        }).start();
+      }
+
+      @Override
+      public void onBeginFailed(final Exception ex) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onBeginFailed(ex);
+          }
+        }).start();
+      }
+
+      @Override
+      public RepositorySessionBeginDelegate deferredBeginDelegate() {
+        return this;
+      }
+    };
+  }
 }

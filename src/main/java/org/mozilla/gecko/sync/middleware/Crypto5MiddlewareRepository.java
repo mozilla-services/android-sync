@@ -54,11 +54,11 @@ import android.content.Context;
  * @author rnewman
  *
  */
-public class Crypto5MiddlewareRepository extends Repository {
+public class Crypto5MiddlewareRepository extends MiddlewareRepository {
 
   public RecordFactory recordFactory = new IdentityRecordFactory();
 
-  public class Crypto5MiddlewareRepositorySessionCreationDelegate implements RepositorySessionCreationDelegate {
+  public class Crypto5MiddlewareRepositorySessionCreationDelegate extends MiddlewareRepository.SessionCreationDelegate {
     private Crypto5MiddlewareRepository repository;
     private RepositorySessionCreationDelegate outerDelegate;
 
@@ -83,7 +83,6 @@ public class Crypto5MiddlewareRepository extends Repository {
       }
       this.outerDelegate.onSessionCreated(cryptoSession);
     }
-
   }
 
   public KeyBundle keyBundle;

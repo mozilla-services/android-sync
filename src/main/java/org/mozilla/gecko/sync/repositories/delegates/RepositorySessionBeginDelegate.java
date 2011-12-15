@@ -50,4 +50,5 @@ import org.mozilla.gecko.sync.repositories.RepositorySession;
 public interface RepositorySessionBeginDelegate {
   public void onBeginFailed(Exception ex);
   public void onBeginSucceeded(RepositorySession session);
+  public RepositorySessionBeginDelegate deferredBeginDelegate();
 }

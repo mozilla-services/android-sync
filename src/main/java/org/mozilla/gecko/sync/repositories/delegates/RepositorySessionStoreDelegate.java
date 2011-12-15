@@ -39,7 +39,15 @@ package org.mozilla.gecko.sync.repositories.delegates;
 
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+/**
+ * These methods *must* be invoked asynchronously. Use deferredStoreDelegate if you
+ * need help doing this.
+ *
+ * @author rnewman
+ *
+ */
 public interface RepositorySessionStoreDelegate {
   public void onStoreFailed(Exception ex);
   public void onStoreSucceeded(Record record);
+  public RepositorySessionStoreDelegate deferredStoreDelegate();
 }

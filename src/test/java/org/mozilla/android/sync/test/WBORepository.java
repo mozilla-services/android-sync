@@ -23,6 +23,7 @@ public class WBORepository extends Repository {
   public class WBORepositorySession extends RepositorySession {
 
     public HashMap<String, Record> wbos;
+
     public WBORepositorySession(WBORepository repository) {
       super(repository);
       wbos = new HashMap<String, Record>();
@@ -47,43 +48,63 @@ public class WBORepository extends Repository {
       delegate.onFetchCompleted(fetchBegin);
     }
 
+    private abstract class ThreadRunnable implements Runnable {
+      public void runOnThread() {
+        new Thread(this).start();
+      }
+    }
+
     @Override
-    public void fetch(String[] guids,
-                      RepositorySessionFetchRecordsDelegate delegate) {
-      long fetchBegin = System.currentTimeMillis();
-      for (String guid : guids) {
-        if (wbos.containsKey(guid)) {
-          delegate.onFetchedRecord(wbos.get(guid));
+    public void fetch(final String[] guids,
+                      final RepositorySessionFetchRecordsDelegate delegate) {
+      new ThreadRunnable() {
+        @Override
+        public void run() {
+          long fetchBegin = System.currentTimeMillis();
+          for (String guid : guids) {
+            if (wbos.containsKey(guid)) {
+              delegate.onFetchedRecord(wbos.get(guid));
+            }
+          }
+          delegate.onFetchCompleted(fetchBegin);
         }
-      }
-      delegate.onFetchCompleted(fetchBegin);
+      }.runOnThread();
     }
 
     @Override
-    public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
-      long fetchBegin = System.currentTimeMillis();
-      for (Entry<String, Record> entry : wbos.entrySet()) {
-        Record record = entry.getValue();
-        delegate.onFetchedRecord(record);
-      }
-      delegate.onFetchCompleted(fetchBegin);
+    public void fetchAll(final RepositorySessionFetchRecordsDelegate delegate) {
+      new ThreadRunnable() {
+        @Override
+        public void run() {
+          long fetchBegin = System.currentTimeMillis();
+          for (Entry<String, Record> entry : wbos.entrySet()) {
+            Record record = entry.getValue();
+            delegate.onFetchedRecord(record);
+          }
+          delegate.onFetchCompleted(fetchBegin);
+        }
+      }.runOnThread();
     }
 
     @Override
-    public void store(Record record, RepositorySessionStoreDelegate delegate) {
+    public void store(final Record record,
+                      final RepositorySessionStoreDelegate delegate) {
       wbos.put(record.guid, record);
-      delegate.onStoreSucceeded(record);
+      delegate.deferredStoreDelegate().onStoreSucceeded(record);
     }
 
     @Override
-    public void wipe(RepositorySessionWipeDelegate delegate) {
+    public void wipe(final RepositorySessionWipeDelegate delegate) {
+
       this.wbos = new HashMap<String, Record>();
+      ((WBORepository) this.repository).wbos = new HashMap<String, Record>();
+      delegate.deferredWipeDelegate().onWipeSucceeded();
     }
 
     @Override
     public void finish(RepositorySessionFinishDelegate delegate) {
       ((WBORepository) repository).wbos = this.wbos;
-      delegate.onFinishSucceeded(this, this.getBundle());
+      delegate.deferredFinishDelegate().onFinishSucceeded(this, this.getBundle());
     }
 
     @Override
@@ -103,13 +124,14 @@ public class WBORepository extends Repository {
   @Override
   public void createSession(RepositorySessionCreationDelegate delegate,
                             Context context) {
-    delegate.onSessionCreated(new WBORepositorySession(this));
+    delegate.deferredCreationDelegate().onSessionCreated(new WBORepositorySession(this));
   }
 
   public HashMap<String, Record> cloneWBOs() {
     HashMap<String, Record> out = new HashMap<String, Record>();
     for (Entry<String, Record> entry : wbos.entrySet()) {
-      out.put(entry.getKey(), entry.getValue());   // Assume that records are immutable.
+      out.put(entry.getKey(), entry.getValue()); // Assume that records are
+                                                 // immutable.
     }
     return out;
   }
