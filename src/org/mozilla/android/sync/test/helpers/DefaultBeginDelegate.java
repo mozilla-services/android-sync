@@ -17,4 +17,34 @@ public class DefaultBeginDelegate extends DefaultDelegate implements RepositoryS
   public void onBeginSucceeded(RepositorySession session) {
     sharedFail("Default begin delegate hit.");
   }
+
+  @Override
+  public RepositorySessionBeginDelegate deferredBeginDelegate() {
+    final RepositorySessionBeginDelegate self = this;
+    return new RepositorySessionBeginDelegate() {
+
+      @Override
+      public void onBeginSucceeded(final RepositorySession session) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onBeginSucceeded(session);
+          }}).start();
+      }
+
+      @Override
+      public void onBeginFailed(final Exception ex) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onBeginFailed(ex);
+          }}).start();
+      }
+
+      @Override
+      public RepositorySessionBeginDelegate deferredBeginDelegate() {
+        return this;
+      }
+    };
+  }
 }

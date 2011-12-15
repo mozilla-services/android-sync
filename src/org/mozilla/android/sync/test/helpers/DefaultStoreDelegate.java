@@ -16,5 +16,37 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   @Override
   public void onStoreSucceeded(Record record) {
     sharedFail("DefaultStoreDelegate used");
+  }
+
+  @Override
+  public RepositorySessionStoreDelegate deferredStoreDelegate() {
+    final RepositorySessionStoreDelegate self = this;
+    return new RepositorySessionStoreDelegate() {
+
+      @Override
+      public void onStoreSucceeded(final Record record) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onStoreSucceeded(record);
+          }
+        }).start();
+      }
+
+      @Override
+      public void onStoreFailed(final Exception ex) {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onStoreFailed(ex);
+          }
+        }).start();
+      }
+
+      @Override
+      public RepositorySessionStoreDelegate deferredStoreDelegate() {
+        return this;
+      }
+    };
   }   
 }
