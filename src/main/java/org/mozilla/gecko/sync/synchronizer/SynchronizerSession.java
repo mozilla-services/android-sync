@@ -38,6 +38,7 @@
 package org.mozilla.gecko.sync.synchronizer;
 
 
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.DeferrableRepositorySessionCreationDelegate;
@@ -297,22 +298,22 @@ implements RecordsChannelDelegate,
       @Override
       public void onFinishSucceeded(final RepositorySession session,
                                     final RepositorySessionBundle bundle) {
-        new Thread(new Runnable() {
+        ThreadPool.run(new Runnable() {
           @Override
           public void run() {
             self.onFinishSucceeded(session, bundle);
           }
-        }).start();
+        });
       }
 
       @Override
       public void onFinishFailed(final Exception ex) {
-        new Thread(new Runnable() {
+        ThreadPool.run(new Runnable() {
           @Override
           public void run() {
             self.onFinishFailed(ex);
           }
-        }).start();
+        });
       }
 
       @Override

@@ -512,38 +512,38 @@ public class GlobalSession implements CredentialsSource {
 
               @Override
               public void handleSuccess(final MetaGlobal global) {
-                new Thread(new Runnable() {
+                ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
                     self.handleSuccess(global);
-                  }}).start();
+                  }});
               }
 
               @Override
               public void handleMissing(final MetaGlobal global) {
-                new Thread(new Runnable() {
+                ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
                     self.handleMissing(global);
-                  }}).start();
+                  }});
               }
 
               @Override
               public void handleFailure(final SyncStorageResponse response) {
-                new Thread(new Runnable() {
+                ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
                     self.handleFailure(response);
-                  }}).start();
+                  }});
               }
 
               @Override
               public void handleError(final Exception e) {
-                new Thread(new Runnable() {
+                ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
                     self.handleError(e);
-                  }}).start();
+                  }});
               }
 
               @Override

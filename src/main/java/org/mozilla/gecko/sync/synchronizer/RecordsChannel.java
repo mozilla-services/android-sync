@@ -39,6 +39,7 @@ package org.mozilla.gecko.sync.synchronizer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -126,7 +127,7 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
     }
     // Start a consumer thread.
     this.consumer = new RecordConsumer(this);
-    new Thread(this.consumer).start();
+    ThreadPool.run(this.consumer);
     waitingForQueueDone = true;
     source.fetchSince(timestamp, this);
   }
@@ -206,22 +207,22 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
     return new RepositorySessionStoreDelegate() {
       @Override
       public void onStoreSucceeded(final Record record) {
-        new Thread(new Runnable() {
+        ThreadPool.run(new Runnable() {
           @Override
           public void run() {
             self.onStoreSucceeded(record);
           }
-        }).start();
+        });
       }
 
       @Override
       public void onStoreFailed(final Exception ex) {
-        new Thread(new Runnable() {
+        ThreadPool.run(new Runnable() {
           @Override
           public void run() {
             self.onStoreFailed(ex);
           }
-        }).start();
+        });
       }
 
       @Override
@@ -238,22 +239,22 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
 
       @Override
       public void onBeginSucceeded(final RepositorySession session) {
-        new Thread(new Runnable() {
+        ThreadPool.run(new Runnable() {
           @Override
           public void run() {
             self.onBeginSucceeded(session);
           }
-        }).start();
+        });
       }
 
       @Override
       public void onBeginFailed(final Exception ex) {
-        new Thread(new Runnable() {
+        ThreadPool.run(new Runnable() {
           @Override
           public void run() {
             self.onBeginFailed(ex);
           }
-        }).start();
+        });
       }
 
       @Override

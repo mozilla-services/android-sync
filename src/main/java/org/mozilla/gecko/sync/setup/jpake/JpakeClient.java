@@ -58,6 +58,7 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.NoKeyBundleException;
 import org.mozilla.android.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
@@ -139,9 +140,8 @@ public class JpakeClient implements JpakeRequestDelegate {
     setClientId();
   }
 
-  // TODO: thread pool.
   private static void runOnThread(Runnable run) {
-    new Thread(run).start();
+    ThreadPool.run(run);
   }
 
   public enum State {

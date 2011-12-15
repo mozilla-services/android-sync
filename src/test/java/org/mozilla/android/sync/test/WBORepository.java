@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -48,9 +49,10 @@ public class WBORepository extends Repository {
       delegate.onFetchCompleted(fetchBegin);
     }
 
+    // TODO: replace by direct ThreadPool use.
     private abstract class ThreadRunnable implements Runnable {
       public void runOnThread() {
-        new Thread(this).start();
+        ThreadPool.run(this);
       }
     }
 
