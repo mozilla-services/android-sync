@@ -42,9 +42,11 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
+import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncException;
@@ -186,19 +188,28 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   /**
    * Now that we have a sync key and password, go ahead and do the work.
-   * @throws UnsupportedEncodingException
    * @throws NoSuchAlgorithmException
    * @throws IllegalArgumentException
    * @throws SyncConfigurationException
    * @throws AlreadySyncingException
+   * @throws NonObjectJSONException
+   * @throws ParseException
+   * @throws IOException
    */
   protected void performSync(Account account, Bundle extras, String authority,
                              ContentProviderClient provider,
                              SyncResult syncResult,
                              String username, String password,
-                             KeyBundle keyBundle) throws NoSuchAlgorithmException, UnsupportedEncodingException, SyncConfigurationException, IllegalArgumentException, AlreadySyncingException {
+                             KeyBundle keyBundle)
+                                 throws NoSuchAlgorithmException,
+                                        SyncConfigurationException,
+                                        IllegalArgumentException,
+                                        AlreadySyncingException,
+                                        IOException, ParseException,
+                                        NonObjectJSONException {
     Log.i(LOG_TAG, "Performing sync.");
     this.syncResult = syncResult;
+    // TODO: remove clusterURL!
     String clusterURL = "https://phx-sync545.services.mozilla.com/";
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
                                                     clusterURL, username, password, keyBundle,

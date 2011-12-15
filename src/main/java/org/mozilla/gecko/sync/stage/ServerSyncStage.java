@@ -109,8 +109,8 @@ public abstract class ServerSyncStage implements
     synchronizer.repositoryB = this.getLocalRepository();
 
     SynchronizerConfiguration config = session.configForEngine(this.getEngineName());
-    synchronizer.bundleA = config.remoteBundle();
-    synchronizer.bundleB = config.localBundle();
+    synchronizer.bundleA = config.remoteBundle;
+    synchronizer.bundleB = config.localBundle;
 
     // TODO: should wipe in either direction?
     return synchronizer;
