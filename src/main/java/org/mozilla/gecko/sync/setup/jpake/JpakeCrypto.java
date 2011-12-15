@@ -37,6 +37,7 @@
 
 package org.mozilla.gecko.sync.setup.jpake;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -169,7 +170,13 @@ public class JpakeCrypto {
 
     // Compute a = g^[(x1+x3+x4)*(x2*secret)].
     BigInteger y1 = gx3.multiply(gx4).mod(P).multiply(gx1).mod(P);
-    BigInteger y2 = this.x2.multiply(new BigInteger(secret.getBytes())).mod(P);
+    BigInteger y2 = null;
+    try {
+      y2 = this.x2.multiply(new BigInteger(secret.getBytes("ascii"))).mod(P);
+    } catch (UnsupportedEncodingException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 
     BigInteger a = y1.modPow(y2, P);
     String[] zkpA = createZkp(y1, y2, a);
@@ -201,10 +208,9 @@ public class JpakeCrypto {
     // Calculate shared key g^(x1+x3)*x2*x4*secret, which is equivalent to
     // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.
 
-    BigInteger s = new BigInteger(secret.getBytes());
     BigInteger k = this.gx4.modPow(this.x2, P); // gx4^x2
-    //BigInteger minusS = Q.subtract(new BigInteger(secret.getBytes())).mod(P);
-    k = k.modPow(s.negate(), P); // gx4^x2^-s
+    BigInteger negS = Q.subtract(new BigInteger(secret.getBytes())).mod(P);
+    k = k.modPow(negS.negate(), P); // gx4^x2^-s
     k = b.multiply(k).mod(P); // B*(gx4^x2^-s)
     k = k.modPow(this.x2, P); // to power x2
 

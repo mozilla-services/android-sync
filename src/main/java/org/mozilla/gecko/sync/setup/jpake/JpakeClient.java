@@ -233,7 +233,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       reportFailure(error);
     }
     ssActivity.displayAbort(error);
-    receiveNoPin();
+    finished = true;
   }
 
   /*
@@ -356,6 +356,7 @@ public class JpakeClient implements JpakeRequestDelegate {
    */
   public static byte[] decryptPayload(ExtendedJSONObject payload,
       KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
+    Log.e(LOG_TAG, "decryptPayload()");
     byte[] ciphertext = Base64.decodeBase64(((String) payload
         .get(Constants.JSON_KEY_CIPHERTEXT)).getBytes("UTF-8"));
     byte[] iv = Base64.decodeBase64(((String) payload.get(Constants.JSON_KEY_IV))
@@ -385,11 +386,11 @@ public class JpakeClient implements JpakeRequestDelegate {
     Cryptographer.encrypt(info);
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv = new String(Base64.encodeBase64(info.getIV()));
-    String hmac = Utils.byte2hex(info.getHMAC());
     ExtendedJSONObject payload = new ExtendedJSONObject();
     payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
-    payload.put(Constants.JSON_KEY_HMAC, hmac);
     payload.put(Constants.JSON_KEY_IV, iv);
+    //String hmac = Utils.byte2hex(info.getHMAC());
+    //payload.put(Constants.JSON_KEY_HMAC, hmac);
     return payload;
   }
 
@@ -603,7 +604,9 @@ public class JpakeClient implements JpakeRequestDelegate {
     } catch (CryptoException e) {
       e.printStackTrace();
     }
-
+    Log.e(LOG_TAG, "enc key64: " + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
+    Log.e(LOG_TAG, "enc key16: " + bytesToString16(keyBundle.getEncryptionKey()));
+    Log.e(LOG_TAG, "enc key: " + keyBundle.getEncryptionKey());
     jOutgoing = new ExtendedJSONObject();
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
@@ -807,8 +810,11 @@ public class JpakeClient implements JpakeRequestDelegate {
         }
         return;
       }
+      for (Header h : etagHeaders) {
+        Log.i(LOG_TAG, "GET etag headers: " + h.getValue());
+      }
       theirEtag = etagHeaders[0].toString();
-      Log.d(LOG_TAG, "theirEtag: " + theirEtag);
+      Log.d(LOG_TAG, "GET: theirEtag: " + theirEtag);
       Log.i(LOG_TAG, "received incoming!");
       try {
         jIncoming = response.jsonObjectBody();
@@ -834,9 +840,14 @@ public class JpakeClient implements JpakeRequestDelegate {
     case KEY_VERIFY:
       jpakeMaxTries = MAX_TRIES_LAST_MSG;
     case PUT:
-      etagHeaders = response.httpResponse().getHeaders("etag");
-      myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
-      Log.i(LOG_TAG, "myEtag: " + myEtag);
+//      if (myEtag == null) { // Only have one etag.
+        etagHeaders = response.httpResponse().getHeaders("etag");
+        for (Header h : etagHeaders) {
+          Log.d(LOG_TAG, "PUT header:" +  h.getValue());
+        }
+        myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
+//      }
+      Log.i(LOG_TAG, "PUT: myEtag: " + myEtag);
 
       // Pause twice the poll interval.
       state = nextPhase;
@@ -854,6 +865,12 @@ public class JpakeClient implements JpakeRequestDelegate {
     default:
       Log.e(LOG_TAG, "Unhandled response success.");
     }
+  }
+  
+  private String bytesToString16(byte[] bytes) {
+    byte[] output = new byte[bytes.length + 1];
+    System.arraycopy(bytes, 0, output, 1, bytes.length);
+    return new BigInteger(bytes).toString(16);
   }
 
   /* ResourceDelegate that handles Resource responses */
@@ -878,12 +895,7 @@ public class JpakeClient implements JpakeRequestDelegate {
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       request.setHeader(new BasicHeader("X-KeyExchange-Id", clientId));
-      Log.d(LOG_TAG, "setting header: " + clientId);
-
-      Header[] headers = request.getAllHeaders();
-      for (Header h : headers) {
-        Log.d(LOG_TAG, "Header: " + h);
-      }
+      Log.d(LOG_TAG, "setting ID header: " + clientId);
 
       Log.d(LOG_TAG, request.toString());
 
@@ -904,7 +916,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       case STEP_TWO_GET:
         if (myEtag != null) {
           request.setHeader(new BasicHeader("If-None-Match", myEtag));
-          Log.i(LOG_TAG, "myHeader " + myEtag);
+          Log.i(LOG_TAG, "GET: myHeader " + myEtag);
         }
         break;
       }
