@@ -113,7 +113,6 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   public void testRemoteNewerTimeStamp() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
-    local.androidID = 54321;
     remoteNewerTimeStamp(local, remote);
   }
 
@@ -121,7 +120,6 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   public void testLocalNewerTimeStamp() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
-    local.androidID = 54321;
     localNewerTimeStamp(local, remote);
   }
   
@@ -129,7 +127,6 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   public void testDeleteRemoteNewer() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
-    local.androidID = 54321;
     deleteRemoteNewer(local, remote);
   }
   
@@ -137,7 +134,6 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   public void testDeleteLocalNewer() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
-    local.androidID = 54321;
     deleteLocalNewer(local, remote);
   }
   

@@ -31,7 +31,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
       HashMap<String, String> specialGuids = DBUtils.SPECIAL_GUIDS_MAP;
       int countSpecials = 0;
       for (Record record : records) {
-        if (!specialGuids.containsKey(record.guid)) {
+        if (specialGuids == null || !specialGuids.containsKey(record.guid)) {
           assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
         } else {
           countSpecials++;
