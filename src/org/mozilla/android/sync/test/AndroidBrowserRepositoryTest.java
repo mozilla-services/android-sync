@@ -386,6 +386,35 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
             fail("wipe should have succeeded");
             performNotify();
           }
+          @Override
+          public RepositorySessionWipeDelegate deferredWipeDelegate() {
+            final RepositorySessionWipeDelegate self = this;
+            return new RepositorySessionWipeDelegate() {
+
+              @Override
+              public void onWipeSucceeded() {
+                new Thread(new Runnable() {
+                  @Override
+                  public void run() {
+                    self.onWipeSucceeded();
+                  }}).start();
+              }
+
+              @Override
+              public void onWipeFailed(final Exception ex) {
+                new Thread(new Runnable() {
+                  @Override
+                  public void run() {
+                    self.onWipeFailed(ex);
+                  }}).start();
+              }
+
+              @Override
+              public RepositorySessionWipeDelegate deferredWipeDelegate() {
+                return this;
+              }
+            };
+          }
         });
       }
     };
