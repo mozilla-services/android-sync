@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test;
 
-import static junit.framework.Assert.fail;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -22,8 +20,9 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelega
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
+import android.test.AndroidTestCase;
 
-public class Crypto5MiddlewareRepositorySessionTest {
+public class Crypto5MiddlewareRepositorySessionTest extends AndroidTestCase {
 
   public class MockRecord extends Record {
     private int value;
@@ -102,7 +101,9 @@ public class Crypto5MiddlewareRepositorySessionTest {
           result.add(entry.getKey());
         }
       }
-      delegate.onGuidsSinceSucceeded((String[]) result.toArray());
+      String[] guids = new String[result.size()];
+      result.toArray(guids);
+      delegate.onGuidsSinceSucceeded(guids);
     }
 
     @Override
@@ -142,16 +143,20 @@ public class Crypto5MiddlewareRepositorySessionTest {
   public void testGuidsSince() {
     CryptoTestRepository repo = new CryptoTestRepository();
     repo.createSession(new RepositorySessionCreationDelegate() {
-      
       @Override
       public void onSessionCreated(RepositorySession session) {
-        
         ((CryptoTestRepositorySession) session).guidsSince(0, new ExpectGuidsSinceDelegate(new String[0]));
       }
       
       @Override
       public void onSessionCreateFailed(Exception ex) {
         fail("Session creation should not fail.");
+      }
+
+      @Override
+      public RepositorySessionCreationDelegate deferredCreationDelegate() {
+        // TODO: do we need to defer here?
+        return this;
       }
     }, null);
   }
