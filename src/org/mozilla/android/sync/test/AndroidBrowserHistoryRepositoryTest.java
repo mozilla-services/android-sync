@@ -6,7 +6,6 @@ package org.mozilla.android.sync.test;
 import org.json.simple.JSONObject;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
@@ -45,11 +44,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
    */
   @Override
   public void testStoreIdenticalExceptGuid() {
-    Record record0 = HistoryHelpers.createHistory1(); 
-    Record record1 = HistoryHelpers.createHistory1();
-    record1.guid = Utils.generateGuid();
-    assert(!record0.guid.equals(record1.guid));
-    storeIdenticalExceptGuid(record0, record1);
+    storeIdenticalExceptGuid(HistoryHelpers.createHistory1());
   }
   
   @Override
@@ -145,8 +140,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   
   @Override
   public void testDeleteRemoteLocalNonexistent() {
-    HistoryRecord remote = HistoryHelpers.createHistory2();
-    deleteRemoteLocalNonexistent(remote);
+    deleteRemoteLocalNonexistent(HistoryHelpers.createHistory2());
   }
   
   /*

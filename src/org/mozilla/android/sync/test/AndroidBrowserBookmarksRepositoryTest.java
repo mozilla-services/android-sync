@@ -222,11 +222,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    */
   @Override
   public void testStoreIdenticalExceptGuid() {
-    Record record0 = BookmarkHelpers.createBookmarkInMobileFolder1();
-    Record record1 = BookmarkHelpers.createBookmarkInMobileFolder1();
-    record1.guid = Utils.generateGuid();
-    assert(!record0.guid.equals(record1.guid));
-    storeIdenticalExceptGuid(record0, record1);
+    storeIdenticalExceptGuid(BookmarkHelpers.createBookmarkInMobileFolder1());
   }
   
   /*

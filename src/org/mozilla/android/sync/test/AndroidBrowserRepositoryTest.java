@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.Arrays;
+
 import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
@@ -462,7 +464,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     remote.guid = local.guid;
     
-    
     // Get the timestamp and make remote older than it
     ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
@@ -501,19 +502,35 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   // type of record) other than their guids. The record existing locally already
   // should have its guid replaced (the assumption is that the record existed locally
   // and then sync was enabled and this record existed on another sync'd device).
-  public void storeIdenticalExceptGuid(Record record0, Record record1) {
+  public void storeIdenticalExceptGuid(Record record0) {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
     
     performWait(storeRunnable(session, record0));
     
-    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { record0 });
+    DefaultFetchDelegate timestampDelegate = getTimestampDelegate(record0.guid);
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
-    record1.lastModified = timestampDelegate.records.get(0).lastModified + 3000;
-    performWait(storeRunnable(session, record1));
+    record0.lastModified = timestampDelegate.records.get(0).lastModified + 3000;
+    record0.guid = Utils.generateGuid();
+    performWait(storeRunnable(session, record0));
     
     performWait(fetchAllRunnable(session, new ExpectFetchDelegate(
-        new Record[] { record1 })));
+        new Record[] { record0 })));
+  }
+  
+  // Special delegate so that we don't verify parenting is correct since
+  // at some points it won't be since parent folder hasn't been stored.
+  private DefaultFetchDelegate getTimestampDelegate(final String guid) {
+    return new DefaultFetchDelegate() {
+      
+      @Override
+      public void onFetchSucceeded(Record[] records, long end) {
+        this.records.addAll(Arrays.asList(records));
+        assertEquals(guid, records[0].guid);
+        testWaiter().performNotify();
+      }
+      
+    };
   }
   
   /*

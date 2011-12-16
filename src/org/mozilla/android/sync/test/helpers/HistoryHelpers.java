@@ -10,7 +10,7 @@ import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 public class HistoryHelpers {
   
   @SuppressWarnings("unchecked")
-  private static JSONArray getDefaultVisits() {
+  private static JSONArray getVisits1() {
     JSONArray json = new JSONArray();
     JSONObject obj = new JSONObject();
     obj.put("date", 1320087601465600L);
@@ -31,11 +31,26 @@ public class HistoryHelpers {
     return json;
   }
   
+  @SuppressWarnings("unchecked")
+  private static JSONArray getVisits2() {
+    JSONArray json = new JSONArray();
+    JSONObject obj = new JSONObject();
+    obj = new JSONObject();
+    obj.put("date", 1319764134412345L);
+    obj.put("type", 4L);
+    json.add(obj);
+    obj = new JSONObject();
+    obj.put("date", 1319681306454321L);
+    obj.put("type", 3L);
+    json.add(obj);
+    return json;
+  }
+  
   public static HistoryRecord createHistory1() {
     HistoryRecord record = new HistoryRecord();
     record.title          = "History 1";
     record.histURI        = "http://history.page1.com";
-    record.visits = getDefaultVisits();
+    record.visits         = getVisits1();
     return record;
   }
   
@@ -44,7 +59,7 @@ public class HistoryHelpers {
     HistoryRecord record = new HistoryRecord();
     record.title          = "History 2";
     record.histURI        = "http://history.page2.com";
-    record.visits         = getDefaultVisits();
+    record.visits         = getVisits2();
     return record;
   }
   
@@ -52,7 +67,7 @@ public class HistoryHelpers {
     HistoryRecord record = new HistoryRecord();
     record.title          = "History 3";
     record.histURI        = "http://history.page3.com";
-    record.visits         = getDefaultVisits();
+    record.visits         = getVisits2();
     return record;
   }
   
@@ -60,7 +75,7 @@ public class HistoryHelpers {
     HistoryRecord record = new HistoryRecord();
     record.title          = "History 4";
     record.histURI        = "http://history.page4.com";
-    record.visits         = getDefaultVisits();
+    record.visits         = getVisits1();
     return record;
   }
   
@@ -68,7 +83,7 @@ public class HistoryHelpers {
     HistoryRecord record = new HistoryRecord();
     record.title          = "History 5";
     record.histURI        = "http://history.page5.com";
-    record.visits         = getDefaultVisits();
+    record.visits         = getVisits2();
     return record;
   }
   

@@ -5,7 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertEquals;
 
-import org.mozilla.gecko.sync.repositories.android.DBUtils;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
   
@@ -15,7 +15,7 @@ public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
     try {
       boolean bookmarks = false;
       for (int i = 0; i < guids.length; i++) {
-        if(DBUtils.SPECIAL_GUIDS_MAP.containsKey(guids[i])) {
+        if(RepoUtils.SPECIAL_GUIDS_MAP.containsKey(guids[i])) {
           bookmarks = true;
         }
       }

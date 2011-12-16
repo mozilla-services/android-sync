@@ -10,7 +10,7 @@ import static junit.framework.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import org.mozilla.gecko.sync.repositories.android.DBUtils;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
@@ -28,7 +28,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
     AssertionError err = null;
     try {
 
-      HashMap<String, String> specialGuids = DBUtils.SPECIAL_GUIDS_MAP;
+      HashMap<String, String> specialGuids = RepoUtils.SPECIAL_GUIDS_MAP;
       int countSpecials = 0;
       for (Record record : records) {
         if (specialGuids == null || !specialGuids.containsKey(record.guid)) {
