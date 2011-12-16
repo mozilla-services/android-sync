@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,29 +35,24 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.gecko.sync.stage;
+package org.mozilla.gecko.sync.repositories.domain;
 
-import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.repositories.RecordFactory;
 
-public interface GlobalSyncStage {
-  public static enum Stage {
-    idle,                       // Start state.
-    checkPreconditions,         // Preparation of the basics. TODO: clear status
-    ensureClusterURL,           // Setting up where we talk to.
-    fetchInfoCollections,       // Take a look at timestamps.
-    fetchMetaGlobal,
-    ensureKeysStage,
-    /*
-    ensureSpecialRecords,
-    updateEngineTimestamps,
-    syncClientsEngine,
-    processFirstSyncPref,
-    processClientCommands,
-    updateEnabledEngines,
-    */
-    syncBookmarks,
-    syncHistory,
-    completed,
+/**
+ * Turns CryptoRecords into HistoryRecords.
+ *
+ * @author rnewman
+ *
+ */
+public class HistoryRecordFactory extends RecordFactory {
+
+  @Override
+  public Record createRecord(Record record) {
+    HistoryRecord r = new HistoryRecord();
+    r.initFromPayload((CryptoRecord) record);
+    return r;
   }
-  public void execute(GlobalSession session) throws NoSuchStageException;
+
 }

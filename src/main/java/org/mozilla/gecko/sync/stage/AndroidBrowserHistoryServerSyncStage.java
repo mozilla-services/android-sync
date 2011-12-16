@@ -19,7 +19,7 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Richard Newman <rnewman@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -37,27 +37,33 @@
 
 package org.mozilla.gecko.sync.stage;
 
-import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.repositories.RecordFactory;
+import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
+import org.mozilla.gecko.sync.repositories.domain.HistoryRecordFactory;
 
-public interface GlobalSyncStage {
-  public static enum Stage {
-    idle,                       // Start state.
-    checkPreconditions,         // Preparation of the basics. TODO: clear status
-    ensureClusterURL,           // Setting up where we talk to.
-    fetchInfoCollections,       // Take a look at timestamps.
-    fetchMetaGlobal,
-    ensureKeysStage,
-    /*
-    ensureSpecialRecords,
-    updateEngineTimestamps,
-    syncClientsEngine,
-    processFirstSyncPref,
-    processClientCommands,
-    updateEnabledEngines,
-    */
-    syncBookmarks,
-    syncHistory,
-    completed,
+public class AndroidBrowserHistoryServerSyncStage extends ServerSyncStage {
+  @Override
+  public void execute(org.mozilla.gecko.sync.GlobalSession session) throws NoSuchStageException {
+    super.execute(session);
   }
-  public void execute(GlobalSession session) throws NoSuchStageException;
+
+  @Override
+  protected String getCollection() {
+    return "history";
+  }
+  @Override
+  protected String getEngineName() {
+    return "history";
+  }
+
+  @Override
+  protected Repository getLocalRepository() {
+    return new AndroidBrowserHistoryRepository();
+  }
+
+  @Override
+  protected RecordFactory getRecordFactory() {
+    return new HistoryRecordFactory();
+  }
 }
