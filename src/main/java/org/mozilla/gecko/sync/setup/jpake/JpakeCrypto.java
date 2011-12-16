@@ -311,6 +311,17 @@ public class JPakeCrypto {
    * Helper function to generate encryption key and HMAC from a byte array.
    */
   public static void generateKeyAndHmac(byte[] key, byte[] encOut, byte[] hmacOut) {
+//    MessageDigest sha = null;
+//    try {
+//      sha = MessageDigest.getInstance("SHA-256");
+//    } catch (NoSuchAlgorithmException e) {
+//      // TODO Auto-generated catch block
+//      e.printStackTrace();
+//    }
+//    sha.reset();
+//    sha.update(key);
+//    byte[] prk = sha.digest();
+    
     byte[] okm = HKDF.hkdfExpand(key, HKDF.HMAC_INPUT, 32 * 2);
     System.arraycopy(okm, 0, encOut, 0, 32);
     System.arraycopy(okm, 32, hmacOut, 0, 32);

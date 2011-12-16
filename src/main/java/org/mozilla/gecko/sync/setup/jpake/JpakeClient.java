@@ -59,8 +59,8 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.NoKeyBundleException;
 import org.mozilla.android.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -188,7 +188,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   /**
    * Initiate pairing and receive data without providing a PIN. The PIN will be
    * generated and passed on to the controller to be displayed to the user.
-   *
+   * 
    * Starts JPAKE protocol.
    */
   public void receiveNoPin() {
@@ -214,7 +214,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Abort the current pairing. The channel on the server will be deleted if the
    * abort wasn't due to a network or server error. The controller's 'onAbort()'
    * method is notified in all cases.
-   *
+   * 
    * @param error
    *          [can be null] Error constant indicating the reason for the abort.
    *          Defaults to user abort
@@ -301,11 +301,11 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   /*
    * Helper for turning a JSON object into a payload.
-   *
+   * 
    * @param body
-   *
+   * 
    * @return
-   *
+   * 
    * @throws UnsupportedEncodingException
    */
   protected StringEntity jsonEntity(JSONObject body)
@@ -330,7 +330,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   /*
    * Helper to generate random bytes
-   *
+   * 
    * @param length Number of bytes to generate
    */
   private static byte[] generateRandomBytes(int length) {
@@ -353,10 +353,10 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   /**
    * Helper method for doing actual decryption.
-   *
+   * 
    * Input: JSONObject containing a valid payload (cipherText, IV, HMAC),
    * KeyBundle with keys for decryption. Output: byte[] clearText
-   *
+   * 
    * @throws CryptoException
    * @throws UnsupportedEncodingException
    */
@@ -374,11 +374,11 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   /**
    * Helper method for doing actual encryption.
-   *
+   * 
    * Input: String of JSONObject KeyBundle with keys for decryption
-   *
+   * 
    * Output: ExtendedJSONObject with IV, hmac, ciphertext
-   *
+   * 
    * @throws CryptoException
    * @throws UnsupportedEncodingException
    */
@@ -394,11 +394,11 @@ public class JPakeClient implements JPakeRequestDelegate {
     System.out.println("done encrypting");
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv = new String(Base64.encodeBase64(info.getIV()));
+Log.e(LOG_TAG, "Outgoing message: " + message + "\nOutgoing IV: " + iv);
+
     ExtendedJSONObject payload = new ExtendedJSONObject();
     payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
     payload.put(Constants.JSON_KEY_IV, iv);
-    // String hmac = Utils.byte2hex(info.getHMAC());
-    // payload.put(Constants.JSON_KEY_HMAC, hmac);
     return payload;
   }
 
@@ -642,14 +642,13 @@ public class JPakeClient implements JPakeRequestDelegate {
       e.printStackTrace();
     }
     Log.e(
-        LOG_TAG,
-        "enc key64: "
+        LOG_TAG, "enc key64: "
             + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
-    Log.e(LOG_TAG, "enc key16: "
-        + bytesToString16(keyBundle.getEncryptionKey()));
-    Log.e(LOG_TAG, "enc key: " + keyBundle.getEncryptionKey());
-
-    System.out.println("making JSON object");
+    Log.e(LOG_TAG, "hmac64: " + new String(Base64.encodeBase64(keyBundle.getHMACKey())));
+    String iv = (String) jPayload.get(Constants.JSON_KEY_IV);
+    System.out.println("IV: " + iv + ", len=" + iv.length());
+    System.out.println("payload: " + jPayload.object);
+    
     ExtendedJSONObject result = new ExtendedJSONObject();
     result.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
     result.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
@@ -658,8 +657,10 @@ public class JPakeClient implements JPakeRequestDelegate {
   }
 
   /*
-   * Unused (as of now) helper method to check the verification message sent by
-   * the other device against self-derived key.
+   * (Unused) helper method to check the verification message sent by the other
+   * device against self-derived key.
+   * 
+   * (used when PIN is entered onto device)
    */
   private boolean verifyPairing(ExtendedJSONObject verificationObject,
       KeyBundle keyBundle) throws CryptoException, IOException, ParseException,
@@ -670,21 +671,29 @@ public class JPakeClient implements JPakeRequestDelegate {
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return false;
     }
-    ExtendedJSONObject payload = verificationObject.getObject(Constants.JSON_KEY_PAYLOAD);
-    String theirCiphertext = (String) payload.get(Constants.JSON_KEY_CIPHERTEXT);
+    ExtendedJSONObject payload = verificationObject
+        .getObject(Constants.JSON_KEY_PAYLOAD);
+    String theirCiphertext = (String) payload
+        .get(Constants.JSON_KEY_CIPHERTEXT);
     String iv = (String) payload.get(Constants.JSON_KEY_IV);
     boolean correctPairing = verifyCiphertext(theirCiphertext, iv, keyBundle);
     return correctPairing;
   }
 
-  public boolean verifyCiphertext(String theirCiphertext, String iv, KeyBundle keyBundle)
-      throws UnsupportedEncodingException, CryptoException {
+  /*
+   * Helper function to verify an incoming ciphertext and IV against derived
+   * keyBundle.
+   * 
+   * TODO: make less of a mess. (although not actually used except in testing
+   * right now.)
+   */
+  public boolean verifyCiphertext(String theirCiphertext, String iv,
+      KeyBundle keyBundle) throws UnsupportedEncodingException, CryptoException {
     byte[] cleartextBytes = JPAKE_VERIFY_VALUE.getBytes("UTF-8");
-    System.out.println("making CryptoInfo");
     CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle);
-    info.setIV(iv.getBytes("UTF-8"));
+    info.setIV(Base64.decodeBase64(iv));
+
     Cryptographer.encrypt(info);
-    System.out.println("done encrypting");
     String myCiphertext = new String(Base64.encodeBase64(info.getMessage()));
     System.out.println("myCiphertext: " + myCiphertext + "\ntheirCiphertext: "
         + theirCiphertext);
@@ -1022,9 +1031,9 @@ public class JPakeClient implements JPakeRequestDelegate {
       // TODO: pass this on!
       Log.e(LOG_TAG, "HttpIOException", e);
       switch (state) {
-        case GET_CHANNEL:
-          Log.e(LOG_TAG, "Failed on GetChannel.", e);
-          break;
+      case GET_CHANNEL:
+        Log.e(LOG_TAG, "Failed on GetChannel.", e);
+        break;
 
       case STEP_ONE_GET:
       case STEP_TWO_GET:
@@ -1032,12 +1041,12 @@ public class JPakeClient implements JPakeRequestDelegate {
       case PUT:
         break;
 
-        case REPORT_FAILURE:
-          Log.e(LOG_TAG, "Report failed: " + error);
-          break;
+      case REPORT_FAILURE:
+        Log.e(LOG_TAG, "Report failed: " + error);
+        break;
 
-        default:
-          Log.e(LOG_TAG, "Unhandled HTTP I/O exception.", e);
+      default:
+        Log.e(LOG_TAG, "Unhandled HTTP I/O exception.", e);
       }
     }
 

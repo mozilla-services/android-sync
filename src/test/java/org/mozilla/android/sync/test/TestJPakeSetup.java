@@ -144,23 +144,18 @@ public class TestJPakeSetup {
     System.out.println("generating verification message");
     ExtendedJSONObject verificationMsg = jClientStateless
         .computeKeyVerification(keyBundle1);
-    System.out.println("touching payload");
     ExtendedJSONObject payload = verificationMsg.getObject(Constants.JSON_KEY_PAYLOAD);
-    System.out.println("extracting String");
     String ciphertext1 = (String) payload.get(Constants.JSON_KEY_CIPHERTEXT);
     String iv1 = (String) payload.get(Constants.JSON_KEY_IV);
-    System.out.println("ciphertext1: " + ciphertext1);
-    System.out.println("IV: " + iv1 + " len: " + iv1.length());
 
-    System.out.println(">>> finalRound2");
     // party2 computes the key as well, using its copy of the secret.
     KeyBundle keyBundle2 = JPakeCrypto.finalRound(secret2, party2);
     // party2 fetches the encrypted message and verifies the pairing against its
     // own derived key.
     System.out.println(">>> AES: " + new String(Base64.encodeBase64(keyBundle2.getEncryptionKey())));
     System.out.println(">>> HMAC: " + new String(Base64.encodeBase64(keyBundle2.getHMACKey())));
-    System.out.println("verifying ciphertext");
-    boolean isSuccess = jClientStateless.verifyCiphertext(ciphertext1, iv1, keyBundle1);
+    
+    boolean isSuccess = jClientStateless.verifyCiphertext(ciphertext1, iv1, keyBundle2);
     return isSuccess;
 
   }
