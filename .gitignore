@@ -1,4 +1,5 @@
 AndroidManifest.xml
+src/main/java/org/mozilla/gecko/sync/repositories/android/Authorities.java
 res/values/strings.xml
 .metadata
 *.pyc

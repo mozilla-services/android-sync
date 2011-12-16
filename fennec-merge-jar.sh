@@ -49,8 +49,13 @@ rsync -a target/android-sync-android-sync.jar $DEPSDIR/android-sync-deps.jar
 
 echo "Copying sources. All use of R must be compiled with Fennec."
 SOURCEDIR="src/main/java/org/mozilla/gecko/sync"
-SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' | sed "s,$SOURCEDIR/,sync/,")
+SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' -not -name 'Authorities.java' | sed "s,$SOURCEDIR/,sync/,")
 echo "Source files: \n  $SOURCEFILES"
-rsync --include "*.java" -a $SOURCEDIR $ANDROID/base/
+rsync --include "*.java" --exclude 'Authorities.java' -a $SOURCEDIR $ANDROID/base/
+
+echo "Copying preprocessor Authorities file."
+PREPROCESS_FILES="sync/repositories/android/Authorities.java"
+cp $SOURCEDIR/repositories/android/Authorities.in $ANDROID/base/sync/repositories/android/Authorities.java
+echo $PREPROCESS_FILES > $SYNC/preprocess-sources.mn
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $SOURCEFILES > $SYNC/java-sources.mn

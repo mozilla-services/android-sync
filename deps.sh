@@ -1,3 +1,4 @@
+./build-authorities.sh
 ./build-manifest.sh
 ./build-strings.sh
 mvn clean
