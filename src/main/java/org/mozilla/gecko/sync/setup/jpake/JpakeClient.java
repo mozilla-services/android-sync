@@ -78,7 +78,7 @@ import ch.boye.httpclientandroidlib.message.BasicHeader;
 public class JPakeClient implements JPakeRequestDelegate {
   private static String       LOG_TAG                 = "JPakeClient";
 
-  // J-PAKE constants
+  // J-Pake constants.
   private final static int    REQUEST_TIMEOUT         = 60 * 1000;         // 1
                                                                             // minute
   private final static int    SOCKET_TIMEOUT          = 5 * 60 * 1000;     // 5
@@ -92,44 +92,46 @@ public class JPakeClient implements JPakeRequestDelegate {
   private final static String JPAKE_VERIFY_VALUE      = "0123456789ABCDEF";
 
   private final static int    MAX_TRIES_START         = 10;
-  // private final static int MAX_TRIES_FIRST_MSG = 300;
-  private final static int    MAX_TRIES_FIRST_MSG     = 25;
+  private final static int    MAX_TRIES_FIRST_MSG     = 300;
   private final static int    MAX_TRIES_LAST_MSG      = 300;
 
-  // JPAKE shared variables
-  private String              jpakeServer;
-  private int                 jpakePollInterval;
-  private int                 jpakeMaxTries;
-
+  // UI Controller.
   private SetupSyncActivity   ssActivity;
 
-  // Jpake negotiation vars
+  // J-Pake session values.
   private String              clientId;
   private String              secret;
-  private String              channel;
-  private String              channelUrl;
 
   private String              myEtag;
   private String              mySignerId;
   private String              theirEtag;
   private String              theirSignerId;
 
-  private KeyBundle           myKeyBundle;
-
-  private ExtendedJSONObject  jOutgoing;
-  private ExtendedJSONObject  jIncoming;
+  // J-Pake state.
+  private boolean             finished                = false;
+  private State               state                   = State.GET_CHANNEL;
+  private State               nextPhase;
   private String              error;
   private int                 pollTries               = 0;
   private boolean             paired                  = false;
 
-  // Jpake state
-  private boolean             finished                = false;
-  private State               state                   = State.GET_CHANNEL;
-  private State               nextPhase;
+  private String              jpakeServer;
+  private int                 jpakePollInterval;
+  private int                 jpakeMaxTries;
+  private String              channel;
+  private String              channelUrl;
+
+  // J-Pake delayed-task scheduler. Used for timing.
+  private Timer               timerScheduler;
+
+  // J-Pake session data.
+  private KeyBundle           myKeyBundle;
+
+  private ExtendedJSONObject  jOutgoing;
+  private ExtendedJSONObject  jIncoming;
 
   private JSONObject          newData;
   private String              jOutData;
-  private Timer               timerScheduler;
 
   private JPakeParty          jParty;
   private JPakeNumGenerator   numGen;
@@ -360,16 +362,16 @@ public class JPakeClient implements JPakeRequestDelegate {
    * @throws CryptoException
    * @throws UnsupportedEncodingException
    */
-  public static byte[] decryptPayload(ExtendedJSONObject payload,
+  public byte[] decryptPayload(ExtendedJSONObject payload,
       KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
-    Log.e(LOG_TAG, "decryptPayload()");
     byte[] ciphertext = Base64.decodeBase64(((String) payload
         .get(Constants.JSON_KEY_CIPHERTEXT)).getBytes("UTF-8"));
     byte[] iv = Base64.decodeBase64(((String) payload
         .get(Constants.JSON_KEY_IV)).getBytes("UTF-8"));
     byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.JSON_KEY_HMAC));
-    return Cryptographer
+    byte[] plainbytes = Cryptographer
         .decrypt(new CryptoInfo(ciphertext, iv, hmac, keybundle));
+    return plainbytes;
   }
 
   /**
@@ -388,19 +390,18 @@ public class JPakeClient implements JPakeRequestDelegate {
       throw new NoKeyBundleException();
     }
     byte[] cleartextBytes = data.getBytes("UTF-8");
-    System.out.println("Cryptographer");
     CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle);
     Cryptographer.encrypt(info);
-    System.out.println("done encrypting");
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv = new String(Base64.encodeBase64(info.getIV()));
-    // String iv =
-    // BigIntegerHelper.ByteArrayToBigIntegerWithoutSign(info.getIV();
-    Log.e(LOG_TAG, "Outgoing message: " + message + "\nOutgoing IV: " + iv);
 
     ExtendedJSONObject payload = new ExtendedJSONObject();
     payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
     payload.put(Constants.JSON_KEY_IV, iv);
+    if (this.state == State.ENCRYPT_PUT) {
+      String hmac = Utils.byte2hex(info.getHMAC());
+      payload.put(Constants.JSON_KEY_HMAC, hmac);
+    }
     return payload;
   }
 
@@ -441,8 +442,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         } catch (UnsupportedEncodingException e) {
           e.printStackTrace();
         }
-        Log.d(LOG_TAG, "what are we sending?");
-        Log.i(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
+        Log.d(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
       }
     });
   }
@@ -471,7 +471,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "1");
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
-    Log.e(LOG_TAG, "jOutgoing format: " + jOutgoing.toJSONString());
+    Log.d(LOG_TAG, "Sending: " + jOutgoing.toJSONString());
 
     nextPhase = State.STEP_ONE_GET;
     state = State.PUT;
@@ -567,7 +567,6 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     nextPhase = State.STEP_TWO_GET;
     state = State.PUT;
-    Log.d(LOG_TAG, "computeStepTwo finished");
     putStep();
   }
 
@@ -596,7 +595,6 @@ public class JPakeClient implements JPakeRequestDelegate {
       e.printStackTrace();
     }
     // Extract fields.
-    Log.d(LOG_TAG, "iPayload: " + iPayload.toJSONString());
     jParty.otherA = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A),
         16);
 
@@ -624,6 +622,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
     jOutgoing = computeKeyVerification(myKeyBundle);
     nextPhase = State.KEY_VERIFY;
+    this.state = State.PUT;
     putStep();
   }
 
@@ -631,11 +630,9 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Helper method to compute verification message from JPake key bundle.
    */
   public ExtendedJSONObject computeKeyVerification(KeyBundle keyBundle) {
-    System.out.println("computeKeyVerification");
     Log.d(LOG_TAG, "Encrypting key verification value.");
     // KeyBundle not null
     ExtendedJSONObject jPayload = null;
-    System.out.println("try encryptPayload");
     try {
       jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
     } catch (UnsupportedEncodingException e) {
@@ -643,15 +640,12 @@ public class JPakeClient implements JPakeRequestDelegate {
     } catch (CryptoException e) {
       e.printStackTrace();
     }
-    Log.e(
+    Log.d(
         LOG_TAG,
         "enc key64: "
             + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
     Log.e(LOG_TAG,
         "hmac64: " + new String(Base64.encodeBase64(keyBundle.getHMACKey())));
-    String iv = (String) jPayload.get(Constants.JSON_KEY_IV);
-    System.out.println("IV: " + iv + ", len=" + iv.length());
-    System.out.println("payload: " + jPayload.object);
 
     ExtendedJSONObject result = new ExtendedJSONObject();
     result.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
@@ -664,7 +658,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * (Unused) helper method to check the verification message sent by the other
    * device against self-derived key.
    *
-   * (used when PIN is entered onto device)
+   * (Used when pairing through entering a PIN generated by another device.)
    */
   private boolean verifyPairing(ExtendedJSONObject verificationObject,
       KeyBundle keyBundle) throws CryptoException, IOException, ParseException,
@@ -699,8 +693,6 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     Cryptographer.encrypt(info);
     String myCiphertext = new String(Base64.encodeBase64(info.getMessage()));
-    System.out.println("myCiphertext: " + myCiphertext + "\ntheirCiphertext: "
-        + theirCiphertext);
     return myCiphertext.equals(theirCiphertext);
   }
 
@@ -710,7 +702,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   public void sendAndComplete(JSONObject jObj)
       throws JPakeNoActivePairingException {
     if (!paired || finished) {
-      Log.d(LOG_TAG, "Can't send data, no active pairing!");
+      Log.e(LOG_TAG, "Can't send data, no active pairing!");
       throw new JPakeNoActivePairingException();
     }
 
@@ -720,6 +712,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   private void encryptData(KeyBundle keyBundle) {
     Log.d(LOG_TAG, "Encrypting data.");
+    state = State.ENCRYPT_PUT;
     ExtendedJSONObject jPayload = null;
     try {
       jPayload = encryptPayload(jOutData, keyBundle);
@@ -733,7 +726,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jPayload.object);
 
-    state = State.ENCRYPT_PUT;
     putStep();
   }
 
@@ -749,17 +741,23 @@ public class JPakeClient implements JPakeRequestDelegate {
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
     }
 
+    // Decrypt payload and verify HMAC.
+    ExtendedJSONObject iPayload = null;
+    try {
+      iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
+    } catch (NonObjectJSONException e1) {
+      e1.printStackTrace();
+    }
     Log.d(LOG_TAG, "Decrypting data.");
     String cleartext = null;
     try {
-      cleartext = decryptPayload(jIncoming, keyBundle).toString();
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-    } catch (CryptoException e) {
-      e.printStackTrace();
-      Log.e(LOG_TAG, "Failed to decrypt data.");
-      abort(Constants.JPAKE_ERROR_INTERNAL);
-      return;
+      cleartext = new String(decryptPayload(iPayload, keyBundle), "UTF-8");
+    } catch (UnsupportedEncodingException e1) {
+      // TODO Auto-generated catch block
+      e1.printStackTrace();
+    } catch (CryptoException e1) {
+      // TODO Auto-generated catch block
+      e1.printStackTrace();
     }
     try {
       newData = getJSONObject(cleartext);
@@ -787,6 +785,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       Log.e(LOG_TAG, "getChannel failure: " + response.getStatusCode());
       abort(Constants.JPAKE_ERROR_CHANNEL);
       break;
+    case KEY_VERIFY:
     case STEP_ONE_GET:
     case STEP_TWO_GET:
       int statusCode = response.getStatusCode();
@@ -794,7 +793,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       case 304:
         Log.d(LOG_TAG, "Channel hasn't been updated yet. Will try again later");
         if (pollTries >= jpakeMaxTries) {
-          Log.d(LOG_TAG, "Tried for " + pollTries + " times, aborting");
+          Log.e(LOG_TAG, "Tried for " + pollTries + " times, aborting");
           abort(Constants.JPAKE_ERROR_TIMEOUT);
           return;
         }
@@ -830,14 +829,7 @@ public class JPakeClient implements JPakeRequestDelegate {
           + response.getStatusCode());
       break;
     default:
-      Log.e(LOG_TAG, "Unhandled request failure.");
-    }
-    try {
-      Log.e(LOG_TAG, "body:" + response.body());
-    } catch (IllegalStateException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "Unhandled request failure " + response.getStatusCode());
     }
   }
 
@@ -872,7 +864,6 @@ public class JPakeClient implements JPakeRequestDelegate {
       channelUrl = jpakeServer + channel;
       Log.d(LOG_TAG, "using channel " + channel);
 
-      Log.d(LOG_TAG, "secret " + secret + " channel " + channel);
       ssActivity.displayPin(secret + channel);
 
       // Set up next step.
@@ -884,6 +875,8 @@ public class JPakeClient implements JPakeRequestDelegate {
       ssActivity.onPairingStart();
       jpakeMaxTries = MAX_TRIES_FIRST_MSG;
       // fall through
+    case KEY_VERIFY:
+      jpakeMaxTries = MAX_TRIES_LAST_MSG;
     case STEP_TWO_GET:
       etagHeaders = response.httpResponse().getHeaders("etag");
       if (etagHeaders == null) {
@@ -900,8 +893,6 @@ public class JPakeClient implements JPakeRequestDelegate {
       }
 
       theirEtag = etagHeaders[0].toString();
-      Log.d(LOG_TAG, "GET: theirEtag: " + theirEtag);
-      Log.i(LOG_TAG, "received incoming!");
       try {
         jIncoming = response.jsonObjectBody();
       } catch (IllegalStateException e) {
@@ -923,17 +914,9 @@ public class JPakeClient implements JPakeRequestDelegate {
       }
       break;
 
-    case KEY_VERIFY:
-      jpakeMaxTries = MAX_TRIES_LAST_MSG;
     case PUT:
-      // if (myEtag == null) { // Only have one etag.
       etagHeaders = response.httpResponse().getHeaders("etag");
-      for (Header h : etagHeaders) {
-        Log.d(LOG_TAG, "PUT header:" + h.getValue());
-      }
       myEtag = response.httpResponse().getHeaders("etag")[0].getValue();
-      // }
-      Log.i(LOG_TAG, "PUT: myEtag: " + myEtag);
 
       // Pause twice the poll interval.
       state = nextPhase;
@@ -951,12 +934,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     default:
       Log.e(LOG_TAG, "Unhandled response success.");
     }
-  }
-
-  private String bytesToString16(byte[] bytes) {
-    byte[] output = new byte[bytes.length + 1];
-    System.arraycopy(bytes, 0, output, 1, bytes.length);
-    return new BigInteger(bytes).toString(16);
   }
 
   /* ResourceDelegate that handles Resource responses */
@@ -983,7 +960,6 @@ public class JPakeClient implements JPakeRequestDelegate {
       request.setHeader(new BasicHeader("X-KeyExchange-Id", clientId));
       Log.d(LOG_TAG, "setting ID header: " + clientId);
 
-      Log.d(LOG_TAG, request.toString());
       switch (state) {
       case REPORT_FAILURE:
         // optional: set report cid to delete channel
@@ -997,11 +973,11 @@ public class JPakeClient implements JPakeRequestDelegate {
           request.setHeader(new BasicHeader("If-None-Match", "*"));
         }
         // fall through
+      case KEY_VERIFY:
       case STEP_ONE_GET:
       case STEP_TWO_GET:
         if (myEtag != null) {
           request.setHeader(new BasicHeader("If-None-Match", myEtag));
-          Log.i(LOG_TAG, "GET: myHeader " + myEtag);
         }
         break;
       }
