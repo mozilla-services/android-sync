@@ -44,6 +44,11 @@ public class MockGlobalSession extends GlobalSession {
     }
 
     @Override
+    protected String getEngineName() {
+      return null;
+    }
+
+    @Override
     protected RecordFactory getRecordFactory() {
       return null;
     }

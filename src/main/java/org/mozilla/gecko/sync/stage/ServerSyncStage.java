@@ -75,6 +75,7 @@ public abstract class ServerSyncStage implements
     return true;
   }
   protected abstract String getCollection();
+  protected abstract String getEngineName();
   protected abstract Repository getLocalRepository();
   protected abstract RecordFactory getRecordFactory();
 

@@ -52,11 +52,9 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   protected String getCollection() {
     return "bookmarks";
   }
-
   @Override
-  protected boolean isEnabled() {
-    return true;
-    // TODO: fetch.
+  protected String getEngineName() {
+    return "bookmarks";
   }
 
   @Override
