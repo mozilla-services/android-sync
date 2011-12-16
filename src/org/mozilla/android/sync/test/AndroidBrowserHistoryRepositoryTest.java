@@ -3,7 +3,6 @@
 
 package org.mozilla.android.sync.test;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
