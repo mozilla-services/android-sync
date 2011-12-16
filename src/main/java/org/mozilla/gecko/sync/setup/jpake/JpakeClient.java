@@ -613,7 +613,7 @@ public class JpakeClient implements JpakeRequestDelegate {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    BigInteger b = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
+    BigInteger b = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A), 16);
 
     ExtendedJSONObject zkpPayload = null;
     try {
