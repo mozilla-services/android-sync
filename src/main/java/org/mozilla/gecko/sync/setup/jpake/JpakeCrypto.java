@@ -39,12 +39,14 @@ package org.mozilla.gecko.sync.setup.jpake;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import org.mozilla.android.sync.crypto.HKDF;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.setup.Constants;
 
@@ -188,16 +190,8 @@ public class JpakeCrypto {
     Log.d(LOG_TAG, "round2 finished");
   }
 
-  /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * 
-=======
-=======
+  /* 
    * Final round of JPAKE protocol.
->>>>>>> cleanup
-   *
->>>>>>> moar debugging and testing - hash seems amiss...
    * @param b
    * @param zkp
    * @param secret
@@ -208,25 +202,20 @@ public class JpakeCrypto {
   public KeyBundle finalRound(BigInteger b, ExtendedJSONObject zkp, String secret)
       throws IncorrectZkpException {
     Log.d(LOG_TAG, "final round started");
-
-    BigInteger g123 = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
-        .mod(P);
-    checkZkp(g123, b, zkp);
+    BigInteger gb = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
+        .mod(P);    checkZkp(gb, b, zkp);
 
     // Calculate shared key g^(x1+x3)*x2*x4*secret, which is equivalent to
-    // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.
-
-    BigInteger k = this.gx4.modPow(this.x2, P); // gx4^x2
-    BigInteger negS = Q.subtract(new BigInteger(secret.getBytes())).mod(P);
-    k = k.modPow(negS.negate(), P); // gx4^x2^-s
-    k = b.multiply(k).mod(P); // B*(gx4^x2^-s)
-    k = k.modPow(this.x2, P); // to power x2
+    // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.   
+    BigInteger k = gx4.modPow(x2.multiply(new BigInteger(secret.getBytes())).negate().mod(Q), P).multiply(b)
+        .modPow(x2, P);
 
     // Generate HMAC and Encryption keys from synckey.
-    byte[] prk = k.toByteArray();
-
+    byte[] prk = BigIntegerHelper.BigIntegerToByteArrayWithoutSign(k);    
+    byte[] zerokey = new byte[32];
+    
     // TODO: make sure is correct format
-    byte[] okm = HKDF.hkdfExpand(prk, HKDF.HMAC_INPUT, 32 * 2);
+    byte[] okm = HMACSHA256(prk, zerokey);
     byte[] enc = new byte[32];
     byte[] hmac = new byte[32];
     System.arraycopy(okm, 0, enc, 0, 32);
@@ -234,6 +223,22 @@ public class JpakeCrypto {
 
     Log.d(LOG_TAG, "final round finished; returning key");
     return new KeyBundle(enc, hmac);
+  }
+  
+  // TODO Replace this function with the one in the  crypto library
+  private byte[] HMACSHA256(byte[] data, byte[] key) {
+    byte[] result = null;
+    try {
+      Mac hmacSha256;
+      hmacSha256 = Mac.getInstance("HmacSHA256");
+      SecretKeySpec secret_key = new SecretKeySpec(key,
+          "HmacSHA256");
+      hmacSha256.init(secret_key);
+      result = hmacSha256.doFinal(data);
+    } catch (GeneralSecurityException e) {
+      Log.d(LOG_TAG, e.toString());
+    }
+    return result;
   }
 
   /* Helper Methods */
