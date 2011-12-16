@@ -59,8 +59,8 @@ import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.android.sync.crypto.NoKeyBundleException;
 import org.mozilla.android.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -76,7 +76,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class JPakeClient implements JPakeRequestDelegate {
-  private static String       LOG_TAG                 = "JpakeClient";
+  private static String       LOG_TAG                 = "JPakeClient";
 
   // J-PAKE constants
   private final static int    REQUEST_TIMEOUT         = 60 * 1000;         // 1
@@ -114,7 +114,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   private String              theirEtag;
   private String              theirSignerId;
 
-  private KeyBundle           keyBundle;
+  private KeyBundle           myKeyBundle;
 
   private ExtendedJSONObject  jOutgoing;
   private ExtendedJSONObject  jIncoming;
@@ -388,15 +388,17 @@ public class JPakeClient implements JPakeRequestDelegate {
       throw new NoKeyBundleException();
     }
     byte[] cleartextBytes = data.getBytes("UTF-8");
+    System.out.println("Cryptographer");
     CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle);
     Cryptographer.encrypt(info);
+    System.out.println("done encrypting");
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv = new String(Base64.encodeBase64(info.getIV()));
+Log.e(LOG_TAG, "Outgoing message: " + message + "\nOutgoing IV: " + iv);
+
     ExtendedJSONObject payload = new ExtendedJSONObject();
     payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
     payload.put(Constants.JSON_KEY_IV, iv);
-    // String hmac = Utils.byte2hex(info.getHMAC());
-    // payload.put(Constants.JSON_KEY_HMAC, hmac);
     return payload;
   }
 
@@ -504,10 +506,10 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
     // Extract message fields.
-    jParty.gx3 = new BigInteger(
-        (String) iPayload.get(Constants.ZKP_KEY_GX1), 16);
-    jParty.gx4 = new BigInteger(
-        (String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
+    jParty.gx3 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX1),
+        16);
+    jParty.gx4 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2),
+        16);
 
     ExtendedJSONObject zkpPayload3 = null;
     ExtendedJSONObject zkpPayload4 = null;
@@ -532,8 +534,10 @@ public class JPakeClient implements JPakeRequestDelegate {
     String zkp4_b = (String) zkpPayload4.get(Constants.ZKP_KEY_B);
     String zkp4_id = (String) zkpPayload4.get(Constants.ZKP_KEY_ID);
 
-    jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b, 16), zkp3_id);
-    jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b, 16), zkp4_id);
+    jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b,
+        16), zkp3_id);
+    jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b,
+        16), zkp4_id);
 
     // Jpake round 2
     try {
@@ -549,7 +553,8 @@ public class JPakeClient implements JPakeRequestDelegate {
     Zkp zkpA = jParty.thisZkpA;
     ExtendedJSONObject oPayload = new ExtendedJSONObject();
     ExtendedJSONObject jZkpA = makeJZkp(zkpA.gr, zkpA.b, zkpA.id);
-    oPayload.put(Constants.ZKP_KEY_A, BigIntegerHelper.toEvenLengthHex(jParty.thisA));
+    oPayload.put(Constants.ZKP_KEY_A,
+        BigIntegerHelper.toEvenLengthHex(jParty.thisA));
     oPayload.put(Constants.ZKP_KEY_ZKP_A, jZkpA);
 
     // Make outgoing message.
@@ -604,22 +609,31 @@ public class JPakeClient implements JPakeRequestDelegate {
     String b = (String) zkpPayload.get(Constants.ZKP_KEY_B);
     String id = (String) zkpPayload.get(Constants.ZKP_KEY_ID);
 
-    jParty.otherZkpA = new Zkp(new BigInteger(gr, 16), new BigInteger(b, 16), id);
+    jParty.otherZkpA = new Zkp(new BigInteger(gr, 16), new BigInteger(b, 16),
+        id);
 
+    myKeyBundle = null;
     try {
-      keyBundle = JPakeCrypto.finalRound(secret, jParty);
+      myKeyBundle = JPakeCrypto.finalRound(secret, jParty);
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       e.printStackTrace();
     }
-    computeKeyVerification();
+    jOutgoing = computeKeyVerification(myKeyBundle);
+    nextPhase = State.KEY_VERIFY;
+    putStep();
   }
 
-  private void computeKeyVerification() {
+  /*
+   * Helper method to compute verification message from JPake key bundle.
+   */
+  public ExtendedJSONObject computeKeyVerification(KeyBundle keyBundle) {
+    System.out.println("computeKeyVerification");
     Log.d(LOG_TAG, "Encrypting key verification value.");
-
+    // KeyBundle not null
     ExtendedJSONObject jPayload = null;
+    System.out.println("try encryptPayload");
     try {
       jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
     } catch (UnsupportedEncodingException e) {
@@ -628,19 +642,62 @@ public class JPakeClient implements JPakeRequestDelegate {
       e.printStackTrace();
     }
     Log.e(
-        LOG_TAG,
-        "enc key64: "
+        LOG_TAG, "enc key64: "
             + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
-    Log.e(LOG_TAG, "enc key16: "
-        + bytesToString16(keyBundle.getEncryptionKey()));
-    Log.e(LOG_TAG, "enc key: " + keyBundle.getEncryptionKey());
-    jOutgoing = new ExtendedJSONObject();
-    jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
-    jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
-    jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jPayload.object);
-    nextPhase = State.KEY_VERIFY;
-    state = State.PUT;
-    putStep();
+    Log.e(LOG_TAG, "hmac64: " + new String(Base64.encodeBase64(keyBundle.getHMACKey())));
+    String iv = (String) jPayload.get(Constants.JSON_KEY_IV);
+    System.out.println("IV: " + iv + ", len=" + iv.length());
+    System.out.println("payload: " + jPayload.object);
+
+    ExtendedJSONObject result = new ExtendedJSONObject();
+    result.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
+    result.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
+    result.put(Constants.JSON_KEY_PAYLOAD, jPayload.object);
+    return result;
+  }
+
+  /*
+   * (Unused) helper method to check the verification message sent by the other
+   * device against self-derived key.
+   *
+   * (used when PIN is entered onto device)
+   */
+  private boolean verifyPairing(ExtendedJSONObject verificationObject,
+      KeyBundle keyBundle) throws CryptoException, IOException, ParseException,
+      NonObjectJSONException {
+    if (!jIncoming.get(Constants.JSON_KEY_TYPE).equals(theirSignerId + "3")) {
+      Log.e(LOG_TAG,
+          "Invalid round 3 message: " + verificationObject.toJSONString());
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return false;
+    }
+    ExtendedJSONObject payload = verificationObject
+        .getObject(Constants.JSON_KEY_PAYLOAD);
+    String theirCiphertext = (String) payload
+        .get(Constants.JSON_KEY_CIPHERTEXT);
+    String iv = (String) payload.get(Constants.JSON_KEY_IV);
+    boolean correctPairing = verifyCiphertext(theirCiphertext, iv, keyBundle);
+    return correctPairing;
+  }
+
+  /*
+   * Helper function to verify an incoming ciphertext and IV against derived
+   * keyBundle.
+   *
+   * TODO: make less of a mess. (although not actually used except in testing
+   * right now.)
+   */
+  public boolean verifyCiphertext(String theirCiphertext, String iv,
+      KeyBundle keyBundle) throws UnsupportedEncodingException, CryptoException {
+    byte[] cleartextBytes = JPAKE_VERIFY_VALUE.getBytes("UTF-8");
+    CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle);
+    info.setIV(Base64.decodeBase64(iv));
+
+    Cryptographer.encrypt(info);
+    String myCiphertext = new String(Base64.encodeBase64(info.getMessage()));
+    System.out.println("myCiphertext: " + myCiphertext + "\ntheirCiphertext: "
+        + theirCiphertext);
+    return myCiphertext.equals(theirCiphertext);
   }
 
   /*
@@ -654,10 +711,10 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
     jOutData = jObj.toJSONString();
-    encryptData();
+    encryptData(myKeyBundle);
   }
 
-  private void encryptData() {
+  private void encryptData(KeyBundle keyBundle) {
     Log.d(LOG_TAG, "Encrypting data.");
     ExtendedJSONObject jPayload = null;
     try {
@@ -676,7 +733,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     putStep();
   }
 
-  private void decryptData() {
+  private void decryptData(KeyBundle keyBundle) {
     Log.d(LOG_TAG, "Verifying their key");
     if (!(theirSignerId + "3").equals((String) jIncoming
         .get(Constants.JSON_KEY_TYPE))) {
@@ -858,7 +915,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       } else if (this.state == State.STEP_TWO_GET) {
         computeFinal();
       } else if (this.state == State.KEY_VERIFY) {
-        decryptData();
+        decryptData(myKeyBundle);
       }
       break;
 
@@ -974,9 +1031,9 @@ public class JPakeClient implements JPakeRequestDelegate {
       // TODO: pass this on!
       Log.e(LOG_TAG, "HttpIOException", e);
       switch (state) {
-        case GET_CHANNEL:
-          Log.e(LOG_TAG, "Failed on GetChannel.", e);
-          break;
+      case GET_CHANNEL:
+        Log.e(LOG_TAG, "Failed on GetChannel.", e);
+        break;
 
       case STEP_ONE_GET:
       case STEP_TWO_GET:
@@ -984,12 +1041,12 @@ public class JPakeClient implements JPakeRequestDelegate {
       case PUT:
         break;
 
-        case REPORT_FAILURE:
-          Log.e(LOG_TAG, "Report failed: " + error);
-          break;
+      case REPORT_FAILURE:
+        Log.e(LOG_TAG, "Report failed: " + error);
+        break;
 
-        default:
-          Log.e(LOG_TAG, "Unhandled HTTP I/O exception.", e);
+      default:
+        Log.e(LOG_TAG, "Unhandled HTTP I/O exception.", e);
       }
     }
 

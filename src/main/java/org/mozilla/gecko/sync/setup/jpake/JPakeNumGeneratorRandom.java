@@ -16,7 +16,7 @@ public class JPakeNumGeneratorRandom implements JPakeNumGenerator {
     new SecureRandom().nextBytes(bytes);
     BigInteger randInt = new BigInteger(bytes);
     // TODO: is this going to be very slow?
-    // add some bit shifting/masking to decrease mod computation
+    // bit shifting/masking to decrease mod computation
     return randInt.mod(r);
   }
 

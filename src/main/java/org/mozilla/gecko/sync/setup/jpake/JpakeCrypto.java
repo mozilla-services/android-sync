@@ -44,7 +44,6 @@ import java.security.NoSuchAlgorithmException;
 
 import org.mozilla.android.sync.crypto.HKDF;
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.setup.Constants;
 
 import android.util.Log;
 
@@ -92,7 +91,7 @@ public class JPakeCrypto {
   /**
    *
    * Round 1 of JPAKE protocol.
-   * Generate x1, x2, and ZKP for them.
+   * Generate x1, x2, and ZKP for other party.
    *
    * @param mySignerId
    * @param valuesOut
@@ -172,34 +171,43 @@ public class JPakeCrypto {
   public static KeyBundle finalRound(String secret, JPakeParty jp)
       throws IncorrectZkpException {
     Log.d(LOG_TAG, "final round started");
-
-    BigInteger g123 = jp.gx1.multiply(jp.gx2).mod(P).multiply(jp.gx3)
-        .mod(P);
-    checkZkp(g123, jp.otherA, jp.otherZkpA);
+    BigInteger gb = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
+        .mod(P);    checkZkp(gb, b, zkp);
 
     // Calculate shared key g^(x1+x3)*x2*x4*secret, which is equivalent to
     // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.
-    BigInteger k = jp.gx4.modPow(jp.x2, P); // gx4^x2
-    BigInteger negS = null;
-    try {
-      // negS = new BigInteger(secret.getBytes("US-ASCII")).mod(P);
-      negS = Q.subtract(new BigInteger(secret.getBytes("US-ASCII"))).mod(P);
-    } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
-    }
-    k = k.modPow(negS.negate(), P); // gx4^x2^-s
-    k = jp.otherA.multiply(k).mod(P); // B*(gx4^x2^-s)
-    k = k.modPow(jp.x2, P); // Raise to x2 power.
+    BigInteger k = gx4.modPow(x2.multiply(new BigInteger(secret.getBytes())).negate().mod(Q), P).multiply(b)
+        .modPow(x2, P);
 
     // Generate HMAC and Encryption keys from synckey.
-    byte[] prk = BigIntegerHelper.BigIntegerToByteArrayWithoutSign(k);
+    byte[] zerokey = new byte[32];
+    byte[] prk = HMACSHA256(BigIntegerHelper.BigIntegerToByteArrayWithoutSign(k), zerokey);
+    // TODO: make sure is correct format
 
+    byte[] okm =  HKDF.hkdfExpand(prk, HKDF.HMAC_INPUT, 32 * 2);
     byte[] enc = new byte[32];
     byte[] hmac = new byte[32];
-    generateKeyAndHmac(prk, enc, hmac);
+    System.arraycopy(okm, 0, enc, 0, 32);
+    System.arraycopy(okm, 32, hmac, 0, 32);
 
     Log.d(LOG_TAG, "final round finished; returning key");
     return new KeyBundle(enc, hmac);
+  }
+
+  // TODO Replace this function with the one in the  crypto library
+  private byte[] HMACSHA256(byte[] data, byte[] key) {
+    byte[] result = null;
+    try {
+      Mac hmacSha256;
+      hmacSha256 = Mac.getInstance("HmacSHA256");
+      SecretKeySpec secret_key = new SecretKeySpec(key,
+          "HmacSHA256");
+      hmacSha256.init(secret_key);
+      result = hmacSha256.doFinal(data);
+    } catch (GeneralSecurityException e) {
+      Log.d(LOG_TAG, e.toString());
+    }
+    return result;
   }
 
   /* Helper Methods */
@@ -313,6 +321,17 @@ public class JPakeCrypto {
    * Helper function to generate encryption key and HMAC from a byte array.
    */
   public static void generateKeyAndHmac(byte[] key, byte[] encOut, byte[] hmacOut) {
+//    MessageDigest sha = null;
+//    try {
+//      sha = MessageDigest.getInstance("SHA-256");
+//    } catch (NoSuchAlgorithmException e) {
+//      // TODO Auto-generated catch block
+//      e.printStackTrace();
+//    }
+//    sha.reset();
+//    sha.update(key);
+//    byte[] prk = sha.digest();
+
     byte[] okm = HKDF.hkdfExpand(key, HKDF.HMAC_INPUT, 32 * 2);
     System.arraycopy(okm, 0, encOut, 0, 32);
     System.arraycopy(okm, 32, hmacOut, 0, 32);

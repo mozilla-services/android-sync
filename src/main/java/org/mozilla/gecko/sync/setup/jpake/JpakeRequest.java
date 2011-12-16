@@ -23,7 +23,7 @@ public class JpakeRequest implements Resource {
   public JpakeRequest(URI uri, ResourceDelegate delegate) {
     this.resource = new BaseResource(uri);
     this.resource.delegate = delegate;
-    Log.d(LOG_TAG, "new uri: " + uri);
+    Log.d(LOG_TAG, "new URI: " + uri);
   }
 
   @Override
