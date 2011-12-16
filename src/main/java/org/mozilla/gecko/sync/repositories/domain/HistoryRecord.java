@@ -104,10 +104,10 @@ public class HistoryRecord extends Record {
     // Check size
     if (this.visits.size() != other.visits.size()) return false;
     
-    HashMap<String, Long> otherVisits = new HashMap<String, Long>();
+    HashMap<Long, Long> otherVisits = new HashMap<Long, Long>();
     for (int i = 0; i < other.visits.size(); i++) {
       JSONObject visit = (JSONObject) other.visits.get(i);
-      otherVisits.put((String)visit.get("date"), (Long)visit.get("type"));
+      otherVisits.put((Long)visit.get("date"), (Long)visit.get("type"));
     }
     
     for (int i = 0; i < this.visits.size(); i++) {
