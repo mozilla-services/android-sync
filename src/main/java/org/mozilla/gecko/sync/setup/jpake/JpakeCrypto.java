@@ -47,6 +47,7 @@ import java.security.SecureRandom;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.mozilla.android.sync.crypto.HKDF;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -212,11 +213,11 @@ public class JpakeCrypto {
         .modPow(x2, P);
 
     // Generate HMAC and Encryption keys from synckey.
-    byte[] prk = BigIntegerHelper.BigIntegerToByteArrayWithoutSign(k);    
     byte[] zerokey = new byte[32];
-    
+    byte[] prk = HMACSHA256(BigIntegerHelper.BigIntegerToByteArrayWithoutSign(k), zerokey);   
     // TODO: make sure is correct format
-    byte[] okm = HMACSHA256(prk, zerokey);
+    
+    byte[] okm =  HKDF.hkdfExpand(prk, HKDF.HMAC_INPUT, 32 * 2);
     byte[] enc = new byte[32];
     byte[] hmac = new byte[32];
     System.arraycopy(okm, 0, enc, 0, 32);
