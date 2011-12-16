@@ -70,9 +70,10 @@ public abstract class ServerSyncStage implements
    * Override these in your subclasses.
    *
    * @return
+   * @throws MetaGlobalException
    */
-  protected boolean isEnabled() {
-    return true;
+  protected boolean isEnabled() throws MetaGlobalException {
+    return session.engineIsEnabled(this.getEngineName());
   }
   protected abstract String getCollection();
   protected abstract String getEngineName();
@@ -100,29 +101,45 @@ public abstract class ServerSyncStage implements
     return cryptoRepo;
   }
 
+  public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException {
+    Repository remote = wrappedServerRepo();
+
+    Synchronizer synchronizer = new Synchronizer();
+    synchronizer.repositoryA = remote;
+    synchronizer.repositoryB = this.getLocalRepository();
+
+    SynchronizerConfiguration config = session.configForEngine(this.getEngineName());
+    synchronizer.bundleA = config.remoteBundle();
+    synchronizer.bundleB = config.localBundle();
+
+    // TODO: should wipe in either direction?
+    return synchronizer;
+  }
+
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
     Log.d(LOG_TAG, "Starting execute.");
 
     this.session = session;
-    if (!this.isEnabled()) {
-      Log.i(LOG_TAG, "Stage disabled; skipping.");
-      session.advance();
+    try {
+      if (!this.isEnabled()) {
+        Log.i(LOG_TAG, "Stage disabled; skipping.");
+        session.advance();
+        return;
+      }
+    } catch (MetaGlobalException e) {
+      session.abort(e, "Inappropriate meta/global; refusing to execute " + this.getEngineName() + " stage.");
       return;
     }
 
-    Repository remote;
+
+    Synchronizer synchronizer;
     try {
-      remote = wrappedServerRepo();
+      synchronizer = this.getConfiguredSynchronizer(session);
     } catch (NoCollectionKeysSetException e) {
       session.abort(e, "No CollectionKeys.");
       return;
     }
-    Synchronizer synchronizer = new Synchronizer();
-    synchronizer.repositoryA = remote;
-    synchronizer.repositoryB = this.getLocalRepository();
-    synchronizer.bundleA = null; // Fresh sync, effectively. TODO
-    synchronizer.bundleA = null;
     Log.d(LOG_TAG, "Invoking synchronizer.");
     synchronizer.synchronize(session.getContext(), this);
     Log.d(LOG_TAG, "Reached end of execute.");

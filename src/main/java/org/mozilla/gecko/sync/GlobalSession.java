@@ -38,12 +38,14 @@
 
 package org.mozilla.gecko.sync;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
@@ -68,6 +70,7 @@ import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 
 public class GlobalSession implements CredentialsSource {
@@ -130,11 +133,15 @@ public class GlobalSession implements CredentialsSource {
     return false;
   }
 
-  public GlobalSession(String userAPI, String clusterURL,
-                       String username, String password,
+  public GlobalSession(String userAPI,
+                       String clusterURL,
+                       String username,
+                       String password,
                        KeyBundle syncKeyBundle,
                        GlobalSessionCallback callback,
-                       Context context) throws SyncConfigurationException, IllegalArgumentException {
+                       Context context,
+                       Bundle persisted)
+                           throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
     if (callback == null) {
       throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
     }
@@ -165,6 +172,9 @@ public class GlobalSession implements CredentialsSource {
 
     this.callback        = callback;
     this.context         = context;
+
+    // TODO: populate saved configurations. We'll amend these after processing meta/global.
+    this.synchronizerConfigurations = new SynchronizerConfigurations(persisted);
     prepareStages();
   }
 
@@ -176,7 +186,7 @@ public class GlobalSession implements CredentialsSource {
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
     stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
 
-    // Sync collections. Hard-code for now.
+    // TODO: more stages.
     stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
     stages.put(Stage.completed,               new CompletedStage());
   }
@@ -560,5 +570,38 @@ public class GlobalSession implements CredentialsSource {
   public void requiresUpgrade() {
     Log.i(LOG_TAG, "Client outdated storage version; requires update.");
     // TODO: notify UI.
+  }
+
+  /**
+   * If meta/global is missing or malformed, throws a MetaGlobalException.
+   * Otherwise, returns true if there is an entry for this engine in the
+   * meta/global "engines" object.
+   *
+   * @param engineName
+   * @return
+   * @throws MetaGlobalException
+   */
+  public boolean engineIsEnabled(String engineName) throws MetaGlobalException {
+    if (this.config.metaGlobal == null) {
+      throw new MetaGlobalNotSetException();
+    }
+    if (this.config.metaGlobal.engines == null) {
+      throw new MetaGlobalMissingEnginesException();
+    }
+    return this.config.metaGlobal.engines.get(engineName) != null;
+  }
+
+  /**
+   * Return enough information to be able to reconstruct a Synchronizer.
+   *
+   * @param engineName
+   * @return
+   */
+  public SynchronizerConfiguration configForEngine(String engineName) {
+    return this.getSynchronizerConfigurations().forEngine(engineName);
+  }
+  private SynchronizerConfigurations synchronizerConfigurations;
+  private SynchronizerConfigurations getSynchronizerConfigurations() {
+    return this.synchronizerConfigurations;
   }
 }

@@ -8,6 +8,7 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.stage.EnsureKeysStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
@@ -24,7 +25,7 @@ public class MockGlobalSession extends GlobalSession {
   public MockGlobalSession(String clusterURL, String username, String password,
       KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context)
       throws SyncConfigurationException, IllegalArgumentException {
-    super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, syncKeyBundle, callback, context);
+    super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, syncKeyBundle, callback, context, null);
   }
 
   public class MockServerSyncStage extends ServerSyncStage {

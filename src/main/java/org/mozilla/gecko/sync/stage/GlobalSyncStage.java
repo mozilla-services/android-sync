@@ -54,7 +54,6 @@ public interface GlobalSyncStage {
     processFirstSyncPref,
     processClientCommands,
     updateEnabledEngines,
-    syncEngines,
     */
     syncBookmarks,
     completed,

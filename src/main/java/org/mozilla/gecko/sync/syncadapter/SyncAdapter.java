@@ -202,7 +202,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     String clusterURL = "https://phx-sync545.services.mozilla.com/";
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
                                                     clusterURL, username, password, keyBundle,
-                                                    this, this.mContext);
+                                                    this, this.mContext, null);
 
     globalSession.start();
 
