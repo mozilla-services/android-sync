@@ -42,6 +42,7 @@ import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 /**
  * Covers the fields used by all bookmark objects.
@@ -152,16 +153,7 @@ public class BookmarkRecord extends Record {
     if (!o.getClass().equals(BookmarkRecord.class)) return false;
     BookmarkRecord other = (BookmarkRecord) o;
     
-    // TODO I still see a potential for hitting a NullPointerException
     if (!super.equals(other)) return false;
-    if (!((this.title == other.title) || this.title.equals(other.title))) return false;
-    if (!((this.bookmarkURI == other.bookmarkURI) || this.bookmarkURI.equals(other.bookmarkURI))) return false;
-    if (!((this.parentID == other.parentID) || this.parentID.equals(other.parentID))) return false;
-    if (!((this.parentName == other.parentName) || this.parentName.equals(other.parentName))) return false;
-    if (!((this.type == other.type) || this.type.equals(other.type))) return false;
-    if (!((this.description == other.description) || this.description.equals(other.description))) return false;
-    if (!((this.keyword == other.keyword) || this.keyword.equals(other.keyword))) return false;
-    if (!((this.tags == other.tags) || this.tags.toString().equals(other.tags.toString()))) return false;
     
     // Check children
     if (this.type.equals("folder")) {
@@ -176,7 +168,26 @@ public class BookmarkRecord extends Record {
         if (!other.children.contains(child)) return false;
       }
     }
-    return true;
+    
+    return RepoUtils.stringsEqual(this.title, other.title)
+        && RepoUtils.stringsEqual(this.bookmarkURI, other.bookmarkURI)
+        && RepoUtils.stringsEqual(this.parentID, other.parentID)
+        && RepoUtils.stringsEqual(this.parentName, other.parentName)
+        && RepoUtils.stringsEqual(this.type, other.type)
+        && RepoUtils.stringsEqual(this.description, other.description)
+        && RepoUtils.stringsEqual(this.keyword, other.keyword)
+        && jsonArrayStringsEqual(this.tags, other.tags);
+  }
+  
+  // Converts to JSONArrays to strings and checks if they are the same.
+  // This is only useful for stuff like tags where we aren't actually
+  // touching the data there (and therefore ordering won't change)
+  private boolean jsonArrayStringsEqual(JSONArray a, JSONArray b) {
+    // Check for nulls
+    if (a == b) return true;
+    if (a == null && b != null) return false;
+    if (a != null && b == null) return false;
+    return RepoUtils.stringsEqual(a.toJSONString(), b.toJSONString());
   }
 
 }

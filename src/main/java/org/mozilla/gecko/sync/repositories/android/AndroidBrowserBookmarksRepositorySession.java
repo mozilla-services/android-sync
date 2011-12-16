@@ -67,7 +67,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
-    DBUtils.initialize(context);
+    RepoUtils.initialize(context);
     dbHelper = new AndroidBrowserBookmarksDataAccessor(context);
     dataAccessor = (AndroidBrowserBookmarksDataAccessor) dbHelper;
   }
@@ -75,7 +75,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   @SuppressWarnings("unchecked")
   @Override
   protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    long androidParentId = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
+    long androidParentId = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
     String guid = idToGuid.get(androidParentId);
 
     if (guid == null) {
@@ -84,7 +84,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Log.e(LOG_TAG, "Have the parent android id for the record but the parent's guid wasn't found");
         throw new NoGuidForIdException(null);
       } else {
-        return DBUtils.bookmarkFromMirrorCursor(cur, "", "", null);
+        return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
       }
     }
     
@@ -93,7 +93,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     Cursor name = dataAccessor.fetch(new String[] { guid });
     name.moveToFirst();
     if (!name.isAfterLast()) {
-      parentName = DBUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
+      parentName = RepoUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
     }
     else {
       Log.e(LOG_TAG, "Couldn't find record with guid " + guid + " while looking for parent name");
@@ -102,10 +102,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     name.close();
     
     // If record is a folder, build out the children array
-    long isFolder = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
+    long isFolder = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
     JSONArray childArray = null;
     if (isFolder == 1) {
-      long androidID = guidToID.get(DBUtils.getStringFromCursor(cur, "guid"));
+      long androidID = guidToID.get(RepoUtils.getStringFromCursor(cur, "guid"));
       Cursor children = dataAccessor.getChildren(androidID);
       children.moveToFirst();
       int count = 0;
@@ -119,8 +119,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       String[] kids = new String[count];
       while(!children.isAfterLast()) {
         if (childArray == null) childArray = new JSONArray();
-        String childGuid = DBUtils.getStringFromCursor(children, "guid");
-        int childPosition = (int) DBUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
+        String childGuid = RepoUtils.getStringFromCursor(children, "guid");
+        int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
         kids[childPosition] = childGuid;
         children.moveToNext();
       }
@@ -130,7 +130,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       }
       
     }
-    return DBUtils.bookmarkFromMirrorCursor(cur, guid, parentName, childArray);
+    return RepoUtils.bookmarkFromMirrorCursor(cur, guid, parentName, childArray);
   }
 
   @Override
@@ -164,8 +164,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // hairy stuff, here's the setup for it
     cur.moveToFirst();
     while(!cur.isAfterLast()) {
-      String guid = DBUtils.getStringFromCursor(cur, "guid");
-      long id = DBUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
+      String guid = RepoUtils.getStringFromCursor(cur, "guid");
+      long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
       guidToID.put(guid, id);
       idToGuid.put(id, guid);
       cur.moveToNext();
@@ -219,7 +219,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       missingParentToChildren.put(bmk.parentID, children);
     }
 
-    long id = DBUtils.getAndroidIdFromUri(dbHelper.insert(bmk));
+    long id = RepoUtils.getAndroidIdFromUri(dbHelper.insert(bmk));
     putRecordToGuidMap(buildRecordString(bmk), bmk.guid);
     bmk.androidID = id;
 

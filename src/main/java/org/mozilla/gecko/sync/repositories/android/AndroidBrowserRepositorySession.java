@@ -147,7 +147,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       ArrayList<String> guids = new ArrayList<String>();
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
-        guids.add(DBUtils.getStringFromCursor(cur, "guid"));
+        guids.add(RepoUtils.getStringFromCursor(cur, "guid"));
         cur.moveToNext();
       }
       cur.close();
@@ -174,6 +174,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
+  
+  
 
   // Fetch since method and thread
   @Override
@@ -388,7 +390,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   
   protected long insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     putRecordToGuidMap(buildRecordString(record), record.guid);
-    return DBUtils.getAndroidIdFromUri(dbHelper.insert(record));
+    return RepoUtils.getAndroidIdFromUri(dbHelper.insert(record));
   }
 
   // Check if record already exists locally

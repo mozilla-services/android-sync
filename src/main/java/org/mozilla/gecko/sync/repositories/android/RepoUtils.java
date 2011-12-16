@@ -46,13 +46,14 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
+import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-public class DBUtils {
+public class RepoUtils {
 
   private static final String LOG_TAG = "DBUtils";
   public static String[] SPECIAL_GUIDS = new String[] {
@@ -111,7 +112,8 @@ public class DBUtils {
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "bookmarks";
     long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
-    BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified);
+    boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
+    BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified, deleted);
 
     rec.title = getStringFromCursor(cur, BrowserContract.Bookmarks.TITLE);
     rec.bookmarkURI = getStringFromCursor(cur, BrowserContract.Bookmarks.URL);
@@ -143,7 +145,8 @@ public class DBUtils {
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "history";
     long lastModified = getLongFromCursor(cur,BrowserContract.SyncColumns.DATE_MODIFIED);
-    HistoryRecord rec = new HistoryRecord(guid, collection, lastModified);
+    boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
+    HistoryRecord rec = new HistoryRecord(guid, collection, lastModified, deleted);
 
     rec.title = getStringFromCursor(cur, BrowserContract.History.TITLE);
     rec.histURI = getStringFromCursor(cur, BrowserContract.History.URL);
@@ -154,9 +157,41 @@ public class DBUtils {
     return rec;
   }
   
+  public static PasswordRecord passwordFromMirrorCursor(Cursor cur) {
+    
+    String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+    String collection = "passwords";
+    long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
+    boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
+    PasswordRecord rec = new PasswordRecord(guid, collection, lastModified, deleted);
+    rec.hostname = getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);
+    rec.httpRealm = getStringFromCursor(cur, BrowserContract.Passwords.HTTP_REALM);
+    rec.formSubmitURL = getStringFromCursor(cur, BrowserContract.Passwords.FORM_SUBMIT_URL);
+    rec.usernameField = getStringFromCursor(cur, BrowserContract.Passwords.USERNAME_FIELD);
+    rec.passwordField = getStringFromCursor(cur, BrowserContract.Passwords.PASSWORD_FIELD);
+    rec.encType = getStringFromCursor(cur, BrowserContract.Passwords.ENC_TYPE);
+    
+    // TODO decryption of username/password here (Bug 711636)
+    rec.username = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
+    rec.password = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
+    
+    rec.timeLastUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED);
+    rec.timesUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED);
+    
+    return rec;
+  }
+  
   public static void queryTimeLogger(String methodCallingQuery, long queryStart, long queryEnd) {
     long elapsedTime = queryEnd - queryStart;
     Log.i(LOG_TAG, "Query timer: " + methodCallingQuery + " took " + elapsedTime + "ms.");
   }
 
+  public static boolean stringsEqual(String a, String b) {
+    // Check for nulls
+    if (a == b) return true;
+    if (a == null && b != null) return false;
+    if (a != null && b == null) return false;
+    
+    return a.equals(b);
+  }
 }

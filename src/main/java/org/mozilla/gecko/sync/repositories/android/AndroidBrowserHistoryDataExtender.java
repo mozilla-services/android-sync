@@ -108,7 +108,7 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
     long queryStart = System.currentTimeMillis();
     Cursor cur = db.query(TBL_HISTORY_EXT, new String[] { COL_GUID, COL_VISITS },
         COL_GUID + " = '" + guid + "'", null, null, null, null);
-    DBUtils.queryTimeLogger("AndroidBrowserHistoryDataExtender.fetch(guid)", queryStart, System.currentTimeMillis());
+    RepoUtils.queryTimeLogger("AndroidBrowserHistoryDataExtender.fetch(guid)", queryStart, System.currentTimeMillis());
     if (cur == null) {
       Log.e(TAG, "Got a null cursor while doing fetch for guid " + guid + " on history extension table");
       throw new NullCursorException(null);

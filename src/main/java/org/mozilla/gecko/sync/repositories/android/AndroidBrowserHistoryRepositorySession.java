@@ -62,7 +62,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
 
   @Override
   protected Record recordFromMirrorCursor(Cursor cur) {
-    return DBUtils.historyFromMirrorCursor(cur);
+    return RepoUtils.historyFromMirrorCursor(cur);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
       HistoryRecord hist = (HistoryRecord) records[i];
       Cursor visits = dataExtender.fetch(hist.guid);
       visits.moveToFirst();
-      JSONArray visitsArray = DBUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
+      JSONArray visitsArray = RepoUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
       long missingRecords = hist.fennecVisitCount - visitsArray.size();
       
       // Add missingRecords -1 fake visits

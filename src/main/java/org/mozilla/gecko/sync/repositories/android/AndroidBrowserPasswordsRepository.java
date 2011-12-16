@@ -35,16 +35,24 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.gecko.sync.repositories;
+package org.mozilla.gecko.sync.repositories.android;
 
-import org.mozilla.gecko.sync.SyncException;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
-public class InvalidBookmarkTypeException extends SyncException {
+import android.content.Context;
 
-  private static final long serialVersionUID = -6098516814844387449L;
+public class AndroidBrowserPasswordsRepository extends AndroidBrowserRepository {
 
-  public InvalidBookmarkTypeException(Exception e) {
-    super(e);
+  @Override
+  protected AndroidBrowserRepositoryDataAccessor getDataAccessor(Context context) {
+    return new AndroidBrowserPasswordsDataAccessor(context);
+  }
+
+  @Override
+  protected void sessionCreator(RepositorySessionCreationDelegate delegate,
+      Context context) {
+    AndroidBrowserPasswordsRepositorySession session = new AndroidBrowserPasswordsRepositorySession(AndroidBrowserPasswordsRepository.this, context);
+    delegate.onSessionCreated(session);
   }
 
 }

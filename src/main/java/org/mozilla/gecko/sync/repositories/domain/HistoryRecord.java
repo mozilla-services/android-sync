@@ -43,6 +43,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 public class HistoryRecord extends Record {
 
@@ -89,8 +90,8 @@ public class HistoryRecord extends Record {
     HistoryRecord other = (HistoryRecord) o;
     return
         super.equals(other) &&
-        this.title.equals(other.title) &&
-        this.histURI.equals(other.histURI) &&
+        RepoUtils.stringsEqual(this.title, other.title) &&
+        RepoUtils.stringsEqual(this.histURI, other.histURI) &&
         this.checkVisitsEquals(other);
   }
   

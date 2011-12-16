@@ -1,5 +1,4 @@
-/* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
- * ***** BEGIN LICENSE BLOCK *****
+/* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Mozilla Public License Version
@@ -50,6 +49,8 @@ import android.net.Uri;
 public class BrowserContract {
     // Local change: use generated authority URI.
     public static final Uri AUTHORITY_URI = Uri.parse("content://" + Authorities.BROWSER_AUTHORITY);
+    
+    public static final Uri PASSWORDS_AUTHORITY = Uri.parse("content://" + Authorities.PASSWORDS_AUTHORITY);
 
     public static final String DEFAULT_PROFILE = "default";
 
@@ -128,7 +129,7 @@ public class BrowserContract {
 
         public static final String KEYWORD = "keyword";
         
-        public static final String[] BookmarksColumns = new String[] {
+        public static final String[] BookmarkColumns = new String[] {
           _ID,
           GUID,
           DATE_CREATED,
@@ -183,4 +184,63 @@ public class BrowserContract {
 
         public static final String VERSION = "version";
     }
+    
+    public static final class Passwords {
+      private Passwords() {}
+
+      public static final Uri CONTENT_URI = Uri.withAppendedPath(PASSWORDS_AUTHORITY, "passwords")
+          .buildUpon().appendQueryParameter(PARAM_IS_SYNC, "true")
+          .appendQueryParameter(PARAM_SHOW_DELETED, "true")
+          .build();
+
+      public static final String CONTENT_TYPE = "vnd.android.cursor.dir/passwords";
+
+      public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/passwords";
+
+      public static final String _ID = "id";
+
+      public static final String HOSTNAME = "hostname";
+
+      public static final String HTTP_REALM = "httpRealm";
+
+      public static final String FORM_SUBMIT_URL = "formSubmitURL";
+
+      public static final String USERNAME_FIELD = "usernameField";
+
+      public static final String PASSWORD_FIELD = "passwordField";
+
+      public static final String ENCRYPTED_USERNAME = "encryptedUsername";
+
+      public static final String ENCRYPTED_PASSWORD = "encryptedPassword";
+
+      public static final String ENC_TYPE = "encType";
+
+      public static final String TIME_CREATED = "timeCreated";
+
+      public static final String TIME_LAST_USED = "timeLastUsed";
+
+      public static final String TIME_PASSWORD_CHANGED = "timePasswordChanged";
+
+      public static final String TIMES_USED = "timesUsed";
+      
+      public static final String[] PasswordColumns = new String[] {
+        _ID,
+        SyncColumns.GUID,
+        //TIME_CREATED,
+        //TIME_PASSWORD_CHANGED,
+        SyncColumns.DATE_CREATED,
+        SyncColumns.DATE_MODIFIED,
+        SyncColumns.IS_DELETED,
+        HOSTNAME,
+        HTTP_REALM,
+        FORM_SUBMIT_URL,
+        USERNAME_FIELD,
+        PASSWORD_FIELD,
+        ENCRYPTED_USERNAME,
+        ENCRYPTED_PASSWORD,
+        ENC_TYPE,
+        TIME_LAST_USED,
+        TIMES_USED
+      };
+  }
 }
