@@ -2,7 +2,6 @@ package org.mozilla.gecko.sync.setup.jpake;
 
 import java.math.BigInteger;
 
-
 public class JPakeParty {
 
   // Generated values for key exchange.

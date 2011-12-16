@@ -91,7 +91,7 @@ public class JPakeCrypto {
   /**
    * 
    * Round 1 of JPAKE protocol.
-   * Generate x1, x2, and ZKP for them.
+   * Generate x1, x2, and ZKP for other party.
    *
    * @param mySignerId
    * @param valuesOut

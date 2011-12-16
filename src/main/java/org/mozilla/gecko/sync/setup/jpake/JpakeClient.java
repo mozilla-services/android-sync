@@ -76,7 +76,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class JPakeClient implements JPakeRequestDelegate {
-  private static String       LOG_TAG                 = "JpakeClient";
+  private static String       LOG_TAG                 = "JPakeClient";
 
   // J-PAKE constants
   private final static int    REQUEST_TIMEOUT         = 60 * 1000;         // 1
