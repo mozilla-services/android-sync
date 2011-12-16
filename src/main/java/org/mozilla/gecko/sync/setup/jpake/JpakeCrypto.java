@@ -39,8 +39,12 @@ package org.mozilla.gecko.sync.setup.jpake;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.mozilla.android.sync.crypto.HKDF;
 import org.mozilla.android.sync.crypto.KeyBundle;
@@ -171,13 +175,14 @@ public class JPakeCrypto {
   public static KeyBundle finalRound(String secret, JPakeParty jp)
       throws IncorrectZkpException {
     Log.d(LOG_TAG, "final round started");
-    BigInteger gb = this.gx1.multiply(this.gx2).mod(P).multiply(this.gx3)
-        .mod(P);    checkZkp(gb, b, zkp);
+    BigInteger gb = jp.gx1.multiply(jp.gx2).mod(P).multiply(jp.gx3)
+        .mod(P);
+    checkZkp(gb, jp.otherA, jp.otherZkpA);
 
     // Calculate shared key g^(x1+x3)*x2*x4*secret, which is equivalent to
     // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.
-    BigInteger k = gx4.modPow(x2.multiply(new BigInteger(secret.getBytes())).negate().mod(Q), P).multiply(b)
-        .modPow(x2, P);
+    BigInteger k = jp.gx4.modPow(jp.x2.multiply(new BigInteger(secret.getBytes())).negate().mod(Q), P).multiply(jp.otherA)
+        .modPow(jp.x2, P);
 
     // Generate HMAC and Encryption keys from synckey.
     byte[] zerokey = new byte[32];
@@ -195,7 +200,7 @@ public class JPakeCrypto {
   }
 
   // TODO Replace this function with the one in the  crypto library
-  private byte[] HMACSHA256(byte[] data, byte[] key) {
+  private static byte[] HMACSHA256(byte[] data, byte[] key) {
     byte[] result = null;
     try {
       Mac hmacSha256;

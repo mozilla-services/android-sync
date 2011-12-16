@@ -394,7 +394,9 @@ public class JPakeClient implements JPakeRequestDelegate {
     System.out.println("done encrypting");
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv = new String(Base64.encodeBase64(info.getIV()));
-Log.e(LOG_TAG, "Outgoing message: " + message + "\nOutgoing IV: " + iv);
+    // String iv =
+    // BigIntegerHelper.ByteArrayToBigIntegerWithoutSign(info.getIV();
+    Log.e(LOG_TAG, "Outgoing message: " + message + "\nOutgoing IV: " + iv);
 
     ExtendedJSONObject payload = new ExtendedJSONObject();
     payload.put(Constants.JSON_KEY_CIPHERTEXT, message);
@@ -642,9 +644,11 @@ Log.e(LOG_TAG, "Outgoing message: " + message + "\nOutgoing IV: " + iv);
       e.printStackTrace();
     }
     Log.e(
-        LOG_TAG, "enc key64: "
+        LOG_TAG,
+        "enc key64: "
             + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
-    Log.e(LOG_TAG, "hmac64: " + new String(Base64.encodeBase64(keyBundle.getHMACKey())));
+    Log.e(LOG_TAG,
+        "hmac64: " + new String(Base64.encodeBase64(keyBundle.getHMACKey())));
     String iv = (String) jPayload.get(Constants.JSON_KEY_IV);
     System.out.println("IV: " + iv + ", len=" + iv.length());
     System.out.println("payload: " + jPayload.object);
