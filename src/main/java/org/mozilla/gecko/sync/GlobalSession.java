@@ -58,6 +58,7 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
@@ -649,7 +650,12 @@ public class GlobalSession implements CredentialsSource {
    * @return
    */
   public SynchronizerConfiguration configForEngine(String engineName) {
-    return this.getSynchronizerConfigurations().forEngine(engineName);
+    // TODO: we need an altogether better way of handling empty configs.
+    SynchronizerConfiguration stored = this.getSynchronizerConfigurations().forEngine(engineName);
+    if (stored == null) {
+      return new SynchronizerConfiguration(engineName, new RepositorySessionBundle(0), new RepositorySessionBundle(0));
+    }
+    return stored;
   }
   private SynchronizerConfigurations synchronizerConfigurations;
   private SynchronizerConfigurations getSynchronizerConfigurations() {

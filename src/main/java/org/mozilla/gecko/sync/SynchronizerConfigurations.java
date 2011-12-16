@@ -28,16 +28,19 @@ public class SynchronizerConfigurations {
   }
 
   public SynchronizerConfigurations(Bundle bundle) throws IOException, ParseException, NonObjectJSONException, UnknownSynchronizerConfigurationVersionException {
+    if (bundle == null) {
+      bundle = new Bundle();
+    }
+
     Bundle engineBundle = bundle.getBundle("engines");
     if (engineBundle == null) {
-      // No saved state.
-      // TODO
+      this.initializeDefaultEnginesMap();
       return;
     }
     int version = engineBundle.getInt("version");
     if (version == 0) {
       // No data in the bundle.
-      engines = new HashMap<String, SynchronizerConfiguration>();
+      this.initializeDefaultEnginesMap();
       return;
     }
     if (version == 1) {
@@ -45,6 +48,10 @@ public class SynchronizerConfigurations {
       return;
     }
     throw new UnknownSynchronizerConfigurationVersionException(version);
+  }
+
+  private void initializeDefaultEnginesMap() {
+    engines = new HashMap<String, SynchronizerConfiguration>();
   }
 
   public void fillBundle(Bundle bundle) {
