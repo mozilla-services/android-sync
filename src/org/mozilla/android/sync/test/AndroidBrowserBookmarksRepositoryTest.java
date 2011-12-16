@@ -244,7 +244,11 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     performWait(storeRunnable(session, record0));
     
     // Get timestamp so that the conflicting folder that we store below is newer
-    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { record0 });
+    // Children won't come back on this fetch since tehy haven't been stored, so remove them
+    // so that our delegate doesn't throw a failure
+    BookmarkRecord rec0 = (BookmarkRecord) record0;
+    rec0.children = null;
+    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { rec0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
     
     Record record1 = BookmarkHelpers.createBookmark1();

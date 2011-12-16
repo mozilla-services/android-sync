@@ -266,8 +266,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     String[] expected = new String[2];
     expected[0] = record0.guid;
     expected[1] = record1.guid;
-    record0.lastModified = timestamp + 1000;
-    record1.lastModified = timestamp + 1500;
 
     performWait(storeRunnable(session, record0));
     performWait(storeRunnable(session, record1));
@@ -422,8 +420,9 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   }
   
   /*
-   * Test for store conflict resolution
-   * NOTE: Must set an android ID for local record for these tests to work
+   * TODO adding or subtracting from lastModified timestamps does NOTHING
+   * since it gets overwritten when we store stuff. See other tests
+   * for ways to do this properly.
    */
 
   /*

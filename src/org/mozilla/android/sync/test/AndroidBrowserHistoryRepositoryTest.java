@@ -3,14 +3,21 @@
 
 package org.mozilla.android.sync.test;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
+import org.mozilla.gecko.sync.repositories.android.BrowserContract;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+
+import android.content.ContentValues;
 
 public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
   
@@ -141,5 +148,69 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   public void testDeleteRemoteLocalNonexistent() {
     HistoryRecord remote = HistoryHelpers.createHistory2();
     deleteRemoteLocalNonexistent(remote);
+  }
+  
+  /*
+   * Tests for adding some visits to a history record
+   * and doing a fetch.
+   */
+  @SuppressWarnings("unchecked")
+  public void testAddOneVisit() {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    
+    HistoryRecord record0 = HistoryHelpers.createHistory3();
+    performWait(storeRunnable(session, record0));
+    
+    // Add one visit to the count and put in a new
+    // last visited date.
+    ContentValues cv = new ContentValues();
+    int visits = record0.visits.size() + 1;
+    long newVisitTime = System.currentTimeMillis();
+    cv.put(BrowserContract.History.VISITS, visits);
+    cv.put(BrowserContract.History.DATE_LAST_VISITED, newVisitTime);
+    getDataAccessor().updateByGuid(record0.guid, cv);
+    
+    // Add expected visit to record for verification
+    JSONObject expectedVisit = new JSONObject();
+    expectedVisit.put("date", newVisitTime);
+    expectedVisit.put("type", 1L);
+    record0.visits.add(expectedVisit);
+    
+    performWait(fetchRunnable(session, new String[] { record0.guid }, new ExpectFetchDelegate(new Record[] { record0 })));
+  }
+  
+  @SuppressWarnings("unchecked")
+  public void testAddMultipleVisits() {
+    prepSession();
+    AndroidBrowserRepositorySession session = getSession();
+    
+    HistoryRecord record0 = HistoryHelpers.createHistory4();
+    performWait(storeRunnable(session, record0));
+    
+    // Add three visits to the count and put in a new
+    // last visited date.
+    ContentValues cv = new ContentValues();
+    int visits = record0.visits.size() + 3;
+    long newVisitTime = System.currentTimeMillis();
+    cv.put(BrowserContract.History.VISITS, visits);
+    cv.put(BrowserContract.History.DATE_LAST_VISITED, newVisitTime);
+    getDataAccessor().updateByGuid(record0.guid, cv);
+    
+    // Add expected visits to record for verification
+    JSONObject expectedVisit = new JSONObject();
+    expectedVisit.put("date", newVisitTime);
+    expectedVisit.put("type", 1L);
+    record0.visits.add(expectedVisit);
+    expectedVisit = new JSONObject();
+    expectedVisit.put("date", newVisitTime-1);
+    expectedVisit.put("type", 1L);
+    record0.visits.add(expectedVisit);
+    expectedVisit = new JSONObject();
+    expectedVisit.put("date", newVisitTime-2);
+    expectedVisit.put("type", 1L);
+    record0.visits.add(expectedVisit);
+    
+    performWait(fetchRunnable(session, new String[] { record0.guid }, new ExpectFetchDelegate(new Record[] { record0 })));
   }
 }

@@ -14,19 +14,19 @@ public class HistoryHelpers {
     JSONArray json = new JSONArray();
     JSONObject obj = new JSONObject();
     obj.put("date", 1320087601465600L);
-    obj.put("type", 2);
+    obj.put("type", 2L);
     json.add(obj);
     obj = new JSONObject();
     obj.put("date", 1320084970724990L);
-    obj.put("type", 1);
+    obj.put("type", 1L);
     json.add(obj);
     obj = new JSONObject();
     obj.put("date", 1319764134412287L);
-    obj.put("type", 1);
+    obj.put("type", 1L);
     json.add(obj);
     obj = new JSONObject();
     obj.put("date", 1319681306455594L);
-    obj.put("type", 2);
+    obj.put("type", 2L);
     json.add(obj);
     return json;
   }
