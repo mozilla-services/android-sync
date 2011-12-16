@@ -41,12 +41,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.CompletedEntity;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 
 import android.util.Log;
@@ -134,13 +135,53 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
     };
   }
 
-  public void execute(GlobalSession session) throws NoSuchStageException {
+  public void execute(final GlobalSession session) throws NoSuchStageException {
     if (session.config.clusterURL != null) {
       session.advance();
       return;
     }
-    // TODO: fetch clusterURL.
-    session.advance();
+    // TODO: support serverURL.
+
+    ClusterURLFetchDelegate delegate = new ClusterURLFetchDelegate() {
+
+      @Override
+      public void handleSuccess(final String url) {
+        try {
+          session.config.clusterURL = new URI(url);
+        } catch (URISyntaxException ex) {
+        }
+        ThreadPool.run(new Runnable() {
+
+          @Override
+          public void run() {
+            if (session.config.clusterURL == null) {
+              session.abort(new URISyntaxException(url, "Invalid URL"), "Invalid cluster URL.");
+              return;
+            }
+            try {
+              session.advance();
+            } catch (NoSuchStageException e) {
+              session.abort(e, "No such stage.");
+            }
+          }
+        });
+      }
+
+      @Override
+      public void handleFailure(HttpResponse response) {
+        session.abort(new Exception("HTTP failure."), "Got failure fetching cluster URL.");
+      }
+
+      @Override
+      public void handleError(Exception e) {
+        session.abort(e, "Got exception fetching cluster URL.");
+      }
+    };
+    try {
+      fetchClusterURL(null, session, delegate);
+    } catch (URISyntaxException e) {
+      session.abort(e, "Invalid URL for node/weave.");
+    }
   }
 
 }
