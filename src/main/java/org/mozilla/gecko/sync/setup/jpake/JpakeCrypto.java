@@ -182,8 +182,7 @@ public class JPakeCrypto {
     BigInteger k = jp.gx4.modPow(jp.x2, P); // gx4^x2
     BigInteger negS = null;
     try {
-      // negS = new BigInteger(secret.getBytes("US-ASCII")).mod(P);
-      negS = Q.subtract(new BigInteger(secret.getBytes("US-ASCII"))).mod(P);
+       negS = new BigInteger(secret.getBytes("US-ASCII")).mod(P);
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }

@@ -114,7 +114,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   private String              theirEtag;
   private String              theirSignerId;
 
-  private KeyBundle           keyBundle;
+  private KeyBundle           myKeyBundle;
 
   private ExtendedJSONObject  jOutgoing;
   private ExtendedJSONObject  jIncoming;
@@ -388,8 +388,10 @@ public class JPakeClient implements JPakeRequestDelegate {
       throw new NoKeyBundleException();
     }
     byte[] cleartextBytes = data.getBytes("UTF-8");
+    System.out.println("Cryptographer");
     CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle);
     Cryptographer.encrypt(info);
+    System.out.println("done encrypting");
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv = new String(Base64.encodeBase64(info.getIV()));
     ExtendedJSONObject payload = new ExtendedJSONObject();
@@ -504,10 +506,10 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
     // Extract message fields.
-    jParty.gx3 = new BigInteger(
-        (String) iPayload.get(Constants.ZKP_KEY_GX1), 16);
-    jParty.gx4 = new BigInteger(
-        (String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
+    jParty.gx3 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX1),
+        16);
+    jParty.gx4 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2),
+        16);
 
     ExtendedJSONObject zkpPayload3 = null;
     ExtendedJSONObject zkpPayload4 = null;
@@ -532,8 +534,10 @@ public class JPakeClient implements JPakeRequestDelegate {
     String zkp4_b = (String) zkpPayload4.get(Constants.ZKP_KEY_B);
     String zkp4_id = (String) zkpPayload4.get(Constants.ZKP_KEY_ID);
 
-    jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b, 16), zkp3_id);
-    jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b, 16), zkp4_id);
+    jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b,
+        16), zkp3_id);
+    jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b,
+        16), zkp4_id);
 
     // Jpake round 2
     try {
@@ -549,7 +553,8 @@ public class JPakeClient implements JPakeRequestDelegate {
     Zkp zkpA = jParty.thisZkpA;
     ExtendedJSONObject oPayload = new ExtendedJSONObject();
     ExtendedJSONObject jZkpA = makeJZkp(zkpA.gr, zkpA.b, zkpA.id);
-    oPayload.put(Constants.ZKP_KEY_A, BigIntegerHelper.toEvenLengthHex(jParty.thisA));
+    oPayload.put(Constants.ZKP_KEY_A,
+        BigIntegerHelper.toEvenLengthHex(jParty.thisA));
     oPayload.put(Constants.ZKP_KEY_ZKP_A, jZkpA);
 
     // Make outgoing message.
@@ -604,22 +609,31 @@ public class JPakeClient implements JPakeRequestDelegate {
     String b = (String) zkpPayload.get(Constants.ZKP_KEY_B);
     String id = (String) zkpPayload.get(Constants.ZKP_KEY_ID);
 
-    jParty.otherZkpA = new Zkp(new BigInteger(gr, 16), new BigInteger(b, 16), id);
+    jParty.otherZkpA = new Zkp(new BigInteger(gr, 16), new BigInteger(b, 16),
+        id);
 
+    myKeyBundle = null;
     try {
-      keyBundle = JPakeCrypto.finalRound(secret, jParty);
+      myKeyBundle = JPakeCrypto.finalRound(secret, jParty);
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       e.printStackTrace();
     }
-    computeKeyVerification();
+    jOutgoing = computeKeyVerification(myKeyBundle);
+    nextPhase = State.KEY_VERIFY;
+    putStep();
   }
 
-  private void computeKeyVerification() {
+  /*
+   * Helper method to compute verification message from JPake key bundle.
+   */
+  public ExtendedJSONObject computeKeyVerification(KeyBundle keyBundle) {
+    System.out.println("computeKeyVerification");
     Log.d(LOG_TAG, "Encrypting key verification value.");
-
+    // KeyBundle not null
     ExtendedJSONObject jPayload = null;
+    System.out.println("try encryptPayload");
     try {
       jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
     } catch (UnsupportedEncodingException e) {
@@ -634,13 +648,47 @@ public class JPakeClient implements JPakeRequestDelegate {
     Log.e(LOG_TAG, "enc key16: "
         + bytesToString16(keyBundle.getEncryptionKey()));
     Log.e(LOG_TAG, "enc key: " + keyBundle.getEncryptionKey());
-    jOutgoing = new ExtendedJSONObject();
-    jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
-    jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
-    jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jPayload.object);
-    nextPhase = State.KEY_VERIFY;
-    state = State.PUT;
-    putStep();
+
+    System.out.println("making JSON object");
+    ExtendedJSONObject result = new ExtendedJSONObject();
+    result.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
+    result.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
+    result.put(Constants.JSON_KEY_PAYLOAD, jPayload.object);
+    return result;
+  }
+
+  /*
+   * Unused (as of now) helper method to check the verification message sent by
+   * the other device against self-derived key.
+   */
+  private boolean verifyPairing(ExtendedJSONObject verificationObject,
+      KeyBundle keyBundle) throws CryptoException, IOException, ParseException,
+      NonObjectJSONException {
+    if (!jIncoming.get(Constants.JSON_KEY_TYPE).equals(theirSignerId + "3")) {
+      Log.e(LOG_TAG,
+          "Invalid round 3 message: " + verificationObject.toJSONString());
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return false;
+    }
+    ExtendedJSONObject payload = verificationObject.getObject(Constants.JSON_KEY_PAYLOAD);
+    String theirCiphertext = (String) payload.get(Constants.JSON_KEY_CIPHERTEXT);
+    String iv = (String) payload.get(Constants.JSON_KEY_IV);
+    boolean correctPairing = verifyCiphertext(theirCiphertext, iv, keyBundle);
+    return correctPairing;
+  }
+
+  public boolean verifyCiphertext(String theirCiphertext, String iv, KeyBundle keyBundle)
+      throws UnsupportedEncodingException, CryptoException {
+    byte[] cleartextBytes = JPAKE_VERIFY_VALUE.getBytes("UTF-8");
+    System.out.println("making CryptoInfo");
+    CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle);
+    info.setIV(iv.getBytes("UTF-8"));
+    Cryptographer.encrypt(info);
+    System.out.println("done encrypting");
+    String myCiphertext = new String(Base64.encodeBase64(info.getMessage()));
+    System.out.println("myCiphertext: " + myCiphertext + "\ntheirCiphertext: "
+        + theirCiphertext);
+    return myCiphertext.equals(theirCiphertext);
   }
 
   /*
@@ -654,10 +702,10 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
     jOutData = jObj.toJSONString();
-    encryptData();
+    encryptData(myKeyBundle);
   }
 
-  private void encryptData() {
+  private void encryptData(KeyBundle keyBundle) {
     Log.d(LOG_TAG, "Encrypting data.");
     ExtendedJSONObject jPayload = null;
     try {
@@ -676,7 +724,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     putStep();
   }
 
-  private void decryptData() {
+  private void decryptData(KeyBundle keyBundle) {
     Log.d(LOG_TAG, "Verifying their key");
     if (!(theirSignerId + "3").equals((String) jIncoming
         .get(Constants.JSON_KEY_TYPE))) {
@@ -858,7 +906,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       } else if (this.state == State.STEP_TWO_GET) {
         computeFinal();
       } else if (this.state == State.KEY_VERIFY) {
-        decryptData();
+        decryptData(myKeyBundle);
       }
       break;
 

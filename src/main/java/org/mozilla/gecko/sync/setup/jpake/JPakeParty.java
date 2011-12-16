@@ -14,8 +14,6 @@ public class JPakeParty {
   public BigInteger   gx2;
   public Zkp          zkp2;
 
-  private BigInteger  r;
-
   public BigInteger   thisA;
   public Zkp          thisZkpA;
 
