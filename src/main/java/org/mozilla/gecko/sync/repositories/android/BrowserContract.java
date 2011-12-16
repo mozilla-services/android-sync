@@ -48,9 +48,8 @@ import android.net.Uri;
  */
 
 public class BrowserContract {
-    public static final String AUTHORITY = "org.mozilla.gecko.providers.browser";
-
-    public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
+    // Local change: use generated authority URI.
+    public static final Uri AUTHORITY_URI = Uri.parse("content://" + Authorities.BROWSER_AUTHORITY);
 
     public static final String DEFAULT_PROFILE = "default";
 

@@ -9,7 +9,7 @@ import android.net.Uri;
 
 public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
-  private static final Uri PROVIDER_URI = Uri.parse("content://org.mozilla.gecko.providers.passwordsprovider/password");
+  private static final Uri PROVIDER_URI = Uri.parse("content://" + Authorities.PASSWORDS_AUTHORITY + "/password");
 
   public AndroidBrowserPasswordsDataAccessor(Context context) {
     super(context);
