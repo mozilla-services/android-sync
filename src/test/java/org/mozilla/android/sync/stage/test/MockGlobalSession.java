@@ -42,6 +42,11 @@ public class MockGlobalSession extends GlobalSession {
     protected Repository getLocalRepository() {
       return null;
     }
+
+    @Override
+    protected RecordFactory getRecordFactory() {
+      return null;
+    }
   }
 
   public class MockFetchInfoCollectionsStage extends FetchInfoCollectionsStage {

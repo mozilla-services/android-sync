@@ -39,8 +39,11 @@ package org.mozilla.gecko.sync.stage;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
+import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
+import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.Server11Repository;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecordFactory;
@@ -73,6 +76,7 @@ public abstract class ServerSyncStage implements
   }
   protected abstract String getCollection();
   protected abstract Repository getLocalRepository();
+  protected abstract RecordFactory getRecordFactory();
 
   /**
    * Return a Crypto5Middleware-wrapped Server11Repository.
@@ -91,7 +95,7 @@ public abstract class ServerSyncStage implements
                                                            collection,
                                                            session);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(serverRepo, collectionKey);
-    cryptoRepo.recordFactory = new BookmarkRecordFactory();
+    cryptoRepo.recordFactory = getRecordFactory();
     return cryptoRepo;
   }
 

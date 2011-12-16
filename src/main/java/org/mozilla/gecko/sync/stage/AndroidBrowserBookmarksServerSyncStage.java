@@ -37,8 +37,10 @@
 
 package org.mozilla.gecko.sync.stage;
 
+import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.gecko.sync.repositories.domain.BookmarkRecordFactory;
 
 public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   @Override
@@ -60,5 +62,10 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   @Override
   protected Repository getLocalRepository() {
     return new AndroidBrowserBookmarksRepository();
+  }
+
+  @Override
+  protected RecordFactory getRecordFactory() {
+    return new BookmarkRecordFactory();
   }
 }
