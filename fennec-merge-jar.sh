@@ -55,7 +55,7 @@ rsync --include "*.java" --exclude 'Authorities.java' -a $SOURCEDIR $ANDROID/bas
 
 echo "Copying preprocessor Authorities file."
 PREPROCESS_FILES="sync/repositories/android/Authorities.java"
-cp $SOURCEDIR/repositories/android/Authorities.in $ANDROID/base/sync/repositories/android/Authorities.java
+cp $SOURCEDIR/repositories/android/Authorities.java.in $ANDROID/base/sync/repositories/android/
 echo $PREPROCESS_FILES > $SYNC/preprocess-sources.mn
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $SOURCEFILES > $SYNC/java-sources.mn
