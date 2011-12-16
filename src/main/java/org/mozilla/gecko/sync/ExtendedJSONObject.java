@@ -86,13 +86,7 @@ public class ExtendedJSONObject {
                                                                      throws IOException,
                                                                      ParseException,
                                                                      NonObjectJSONException {
-    Reader in = new StringReader(jsonString);
-    Object obj = new JSONParser().parse(in);
-    if (obj instanceof JSONObject) {
-      return new ExtendedJSONObject((JSONObject) obj);
-    } else {
-      throw new NonObjectJSONException(obj);
-    }
+    return new ExtendedJSONObject(jsonString);
   }
 
   public ExtendedJSONObject() {
@@ -101,6 +95,20 @@ public class ExtendedJSONObject {
 
   public ExtendedJSONObject(JSONObject o) {
     this.object = o;
+  }
+
+  public ExtendedJSONObject(String jsonString) throws IOException, ParseException, NonObjectJSONException {
+    if (jsonString == null) {
+      this.object = new JSONObject();
+      return;
+    }
+    Reader in = new StringReader(jsonString);
+    Object obj = new JSONParser().parse(in);
+    if (obj instanceof JSONObject) {
+      this.object = ((JSONObject) obj);
+    } else {
+      throw new NonObjectJSONException(obj);
+    }
   }
 
   // Passthrough methods.

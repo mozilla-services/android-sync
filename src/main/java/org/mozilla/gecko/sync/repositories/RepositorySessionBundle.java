@@ -1,6 +1,10 @@
 package org.mozilla.gecko.sync.repositories;
 
+import java.io.IOException;
+
+import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 
 import android.util.Log;
 
@@ -10,6 +14,10 @@ public class RepositorySessionBundle extends ExtendedJSONObject {
 
   public RepositorySessionBundle() {
     super();
+  }
+
+  public RepositorySessionBundle(String jsonString) throws IOException, ParseException, NonObjectJSONException {
+    super(jsonString);
   }
 
   public RepositorySessionBundle(long lastSyncTimestamp) {
