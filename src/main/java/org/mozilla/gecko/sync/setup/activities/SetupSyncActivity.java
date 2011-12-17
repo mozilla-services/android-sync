@@ -39,9 +39,9 @@ package org.mozilla.gecko.sync.setup.activities;
 
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.repositories.android.Authorities;
 import org.mozilla.gecko.sync.setup.Constants;
-import org.mozilla.gecko.sync.setup.jpake.JPakeClient;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;

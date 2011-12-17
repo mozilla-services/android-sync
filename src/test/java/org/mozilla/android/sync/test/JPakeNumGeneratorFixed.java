@@ -2,7 +2,7 @@ package org.mozilla.android.sync.test;
 
 import java.math.BigInteger;
 
-import org.mozilla.gecko.sync.setup.jpake.JPakeNumGenerator;
+import org.mozilla.gecko.sync.jpake.JPakeNumGenerator;
 
 public class JPakeNumGeneratorFixed implements JPakeNumGenerator {
   private String[] values;

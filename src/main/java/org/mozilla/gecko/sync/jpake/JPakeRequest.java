@@ -1,4 +1,4 @@
-package org.mozilla.gecko.sync.setup.jpake;
+package org.mozilla.gecko.sync.jpake;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,17 +10,17 @@ import org.mozilla.gecko.sync.net.ResourceDelegate;
 import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpEntity;
 
-public class JpakeRequest implements Resource {
+public class JPakeRequest implements Resource {
   private static String LOG_TAG = "JPAKE_REQUEST";
 
   private BaseResource resource;
   public JPakeRequestDelegate delegate;
 
-  public JpakeRequest(String uri, ResourceDelegate delegate) throws URISyntaxException {
+  public JPakeRequest(String uri, ResourceDelegate delegate) throws URISyntaxException {
     this(new URI(uri), delegate);
   }
 
-  public JpakeRequest(URI uri, ResourceDelegate delegate) {
+  public JPakeRequest(URI uri, ResourceDelegate delegate) {
     this.resource = new BaseResource(uri);
     this.resource.delegate = delegate;
     Log.d(LOG_TAG, "new URI: " + uri);

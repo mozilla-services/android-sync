@@ -1,4 +1,4 @@
-package org.mozilla.gecko.sync.setup.jpake;
+package org.mozilla.gecko.sync.jpake;
 
 public class IncorrectZkpException extends Exception {
 

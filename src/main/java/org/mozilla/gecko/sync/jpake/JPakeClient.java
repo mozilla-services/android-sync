@@ -35,7 +35,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.gecko.sync.setup.jpake;
+package org.mozilla.gecko.sync.jpake;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -159,9 +159,9 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   public class GetStepTimerTask extends TimerTask {
 
-    private JpakeRequest request;
+    private JPakeRequest request;
 
-    public GetStepTimerTask(JpakeRequest request) {
+    public GetStepTimerTask(JPakeRequest request) {
       this.request = request;
     }
 
@@ -176,9 +176,9 @@ public class JPakeClient implements JPakeRequestDelegate {
    */
 
   private void scheduleGetRequest(int delay) {
-    JpakeRequest getRequest = null;
+    JPakeRequest getRequest = null;
     try {
-      getRequest = new JpakeRequest(channelUrl, makeRequestResourceDelegate());
+      getRequest = new JPakeRequest(channelUrl, makeRequestResourceDelegate());
     } catch (URISyntaxException e) {
       e.printStackTrace();
       abort(Constants.JPAKE_ERROR_CHANNEL);
@@ -252,9 +252,9 @@ public class JPakeClient implements JPakeRequestDelegate {
     runOnThread(new Runnable() {
       @Override
       public void run() {
-        JpakeRequest report;
+        JPakeRequest report;
         try {
-          report = new JpakeRequest(jpakeServer + "report",
+          report = new JPakeRequest(jpakeServer + "report",
               makeRequestResourceDelegate());
           report.post(new StringEntity(""));
         } catch (URISyntaxException e) {
@@ -413,9 +413,9 @@ public class JPakeClient implements JPakeRequestDelegate {
     if (finished)
       return;
 
-    JpakeRequest channelRequest = null;
+    JPakeRequest channelRequest = null;
     try {
-      channelRequest = new JpakeRequest(jpakeServer + "new_channel",
+      channelRequest = new JPakeRequest(jpakeServer + "new_channel",
           makeRequestResourceDelegate());
     } catch (URISyntaxException e) {
       e.printStackTrace();
@@ -430,9 +430,9 @@ public class JPakeClient implements JPakeRequestDelegate {
     runOnThread(new Runnable() {
       @Override
       public void run() {
-        JpakeRequest putRequest = null;
+        JPakeRequest putRequest = null;
         try {
-          putRequest = new JpakeRequest(channelUrl,
+          putRequest = new JPakeRequest(channelUrl,
               makeRequestResourceDelegate());
         } catch (URISyntaxException e) {
           e.printStackTrace();

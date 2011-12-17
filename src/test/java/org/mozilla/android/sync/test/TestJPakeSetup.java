@@ -13,14 +13,14 @@ import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.jpake.Gx4IsOneException;
+import org.mozilla.gecko.sync.jpake.IncorrectZkpException;
+import org.mozilla.gecko.sync.jpake.JPakeClient;
+import org.mozilla.gecko.sync.jpake.JPakeCrypto;
+import org.mozilla.gecko.sync.jpake.JPakeNumGenerator;
+import org.mozilla.gecko.sync.jpake.JPakeNumGeneratorRandom;
+import org.mozilla.gecko.sync.jpake.JPakeParty;
 import org.mozilla.gecko.sync.setup.Constants;
-import org.mozilla.gecko.sync.setup.jpake.Gx4IsOneException;
-import org.mozilla.gecko.sync.setup.jpake.IncorrectZkpException;
-import org.mozilla.gecko.sync.setup.jpake.JPakeClient;
-import org.mozilla.gecko.sync.setup.jpake.JPakeCrypto;
-import org.mozilla.gecko.sync.setup.jpake.JPakeNumGenerator;
-import org.mozilla.gecko.sync.setup.jpake.JPakeNumGeneratorRandom;
-import org.mozilla.gecko.sync.setup.jpake.JPakeParty;
 
 public class TestJPakeSetup {
   // Note: will throw NullPointerException if aborts. Only use stateless public
