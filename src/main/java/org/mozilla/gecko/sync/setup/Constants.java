@@ -39,7 +39,7 @@ package org.mozilla.gecko.sync.setup;
 
 public class Constants {
   // Constants for Firefox Sync SyncAdapter Accounts
-  public static final String ACCOUNTTYPE_SYNC = "account.type.sync";
+  public static final String ACCOUNTTYPE_SYNC = "org.mozilla.gecko.sync.account";
   public static final String OPTION_SYNCKEY = "option.synckey";
   public static final String OPTION_USERNAME = "option.username";
   public static final String AUTHTOKEN_TYPE_PLAIN = "auth.plain";
