@@ -15,7 +15,7 @@
         android:indeterminateOnly="true" />
     <TextView
         style="@style/SyncTextItem"
-        android:text="@string/jpake_subtitle_waiting" />
+        android:text="@string/sync_jpake_subtitle_waiting" />
     <Button
         style="@style/SyncButtonCommon"
         android:onClick="cancelClickHandler"

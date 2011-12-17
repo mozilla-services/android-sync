@@ -10,7 +10,7 @@
   <string name="sync_link_nodevice"><a href="#">I\'m not near my computer…</a></string>
 
    <!-- J-Pake Waiting Screen -->
-   <string name="jpake_subtitle_waiting">Waiting for other device...</string>
+   <string name="sync_jpake_subtitle_waiting">Waiting for other device…</string>
 
   <!-- Account Login Screen -->
   <string name="sync_subtitle_account">Enter your Firefox Sync account information</string>
