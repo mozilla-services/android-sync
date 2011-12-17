@@ -2,12 +2,15 @@
   <string name="sync_title_connect">Connect to Sync</string>
   <string name="sync_title_pair">Pair a Device</string>
 
-  <!-- JPAKE Key Screen -->
+  <!-- J-Pake PIN Screen -->
   <string name="sync_subtitle_connect">From a Firefox Sync-connected computer, go to Sync options and select “Add a device”</string>
   <string name="sync_subtitle_pair">From the device to be paired, go to Sync options and select “Pair a device”</string>
   <string name="sync_pin_default">...\n...\n...\n</string>
   <string name="sync_link_show"><a href="https://support.mozilla.com/en-US/kb/add-a-device-to-firefox-sync">Show me how</a></string>
   <string name="sync_link_nodevice"><a href="#">I\'m not near my computer…</a></string>
+
+   <!-- J-Pake Waiting Screen -->
+   <string name="jpake_subtitle_waiting">Waiting for other device...</string>
 
   <!-- Account Login Screen -->
   <string name="sync_subtitle_account">Enter your Firefox Sync account information</string>
@@ -27,6 +30,7 @@
   <string name="sync_title_success">Setup Complete</string>
   <string name="sync_subtitle_success">Your data is now being encrypted and synchronized in the background.</string>
   <string name="sync_settings">Settings</string>
+  <string name="sync_subtitle_manage">Your Firefox Sync account is already set up. Go to Settings to manage your account.</string>
   
   <!-- Common text -->
   <string name="sync_button_cancel">Cancel</string>

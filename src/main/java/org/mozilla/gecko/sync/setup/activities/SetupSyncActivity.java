@@ -37,27 +37,32 @@
 
 package org.mozilla.gecko.sync.setup.activities;
 
-
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.repositories.android.Authorities;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.jpake.JPakeClient;
 
 import android.accounts.Account;
+import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
-import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-public class SetupSyncActivity extends Activity {
+public class SetupSyncActivity extends AccountAuthenticatorActivity {
   private final static String LOG_TAG = "SetupSync";
-  private TextView setupTitleView;
-  private TextView setupNoDeviceLinkTitleView;
-  private TextView setupSubtitleView;
-  private TextView pinTextView;
+  private TextView            setupTitleView;
+  private TextView            setupNoDeviceLinkTitleView;
+  private TextView            setupSubtitleView;
+  private TextView            pinTextView;
+  private JPakeClient         jClient;
+  private AccountManager      mAccountManager;
+  private Context             mContext;
 
   public SetupSyncActivity() {
     super();
@@ -69,13 +74,15 @@ public class SetupSyncActivity extends Activity {
   public void onCreate(Bundle savedInstanceState) {
     Log.i(LOG_TAG, "Called SetupSyncActivity.onCreate.");
     super.onCreate(savedInstanceState);
-    Log.i(LOG_TAG, "Loading content view " + R.layout.sync_setup);
     setContentView(R.layout.sync_setup);
 
-    setupTitleView             = ((TextView) findViewById(R.id.setup_title));
-    setupSubtitleView          = (TextView) findViewById(R.id.setup_subtitle);
+    // Set up UI.
+    setupTitleView = ((TextView) findViewById(R.id.setup_title));
+    setupSubtitleView = (TextView) findViewById(R.id.setup_subtitle);
     setupNoDeviceLinkTitleView = (TextView) findViewById(R.id.link_nodevice);
-    pinTextView                = ((TextView) findViewById(R.id.text_pin));
+    pinTextView = ((TextView) findViewById(R.id.text_pin));
+
+    // UI checks.
     if (setupTitleView == null) {
       Log.e(LOG_TAG, "No title view.");
     }
@@ -85,6 +92,10 @@ public class SetupSyncActivity extends Activity {
     if (setupNoDeviceLinkTitleView == null) {
       Log.e(LOG_TAG, "No 'no device' link view.");
     }
+
+    // Set Activity variables.
+    mAccountManager = AccountManager.get(getApplicationContext());
+    mContext = getApplicationContext();
   }
 
   @Override
@@ -92,17 +103,22 @@ public class SetupSyncActivity extends Activity {
     Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
     super.onResume();
 
-    // Check whether Sync accounts exist; if so, display Pair text
+    // Check whether Sync accounts exist; if so, display Pair text.
     AccountManager mAccountManager = AccountManager.get(this);
-    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
-    Log.d(LOG_TAG, "number: " + accts.length);
+    Account[] accts = mAccountManager
+        .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
     if (accts.length > 0) {
-      setupTitleView.setText(getString(R.string.sync_title_pair));
-      setupSubtitleView.setText(getString(R.string.sync_subtitle_pair));
-      setupNoDeviceLinkTitleView.setVisibility(View.INVISIBLE);
+      authSuccess(false);
+      // TODO: Change when:
+      // 1. enable setting up multiple accounts.
+      // 2. enable pair with PIN (entering pin, rather than displaying)
+
+//      setupTitleView.setText(getString(R.string.sync_title_pair));
+//      setupSubtitleView.setText(getString(R.string.sync_subtitle_pair));
+//      setupNoDeviceLinkTitleView.setVisibility(View.INVISIBLE);
     }
-    // Start J-PAKE
-    final JPakeClient jClient = new JPakeClient(this);
+    // Start J-Pake algorithm for pairing.
+    jClient = new JPakeClient(this);
     jClient.receiveNoPin();
   }
 
@@ -113,6 +129,7 @@ public class SetupSyncActivity extends Activity {
     startActivity(accountIntent);
     overridePendingTransition(0, 0);
   }
+
   public void cancelClickHandler(View target) {
     finish();
   }
@@ -123,11 +140,12 @@ public class SetupSyncActivity extends Activity {
       Log.w(LOG_TAG, "Asked to display null pin.");
       return;
     }
-    // format PIN
+    // Format PIN for display.
     int charPerLine = pin.length() / 3;
-    String prettyPin  = pin.substring(0, charPerLine) + "\n";
-    prettyPin        += pin.substring(charPerLine, 2 * charPerLine) + "\n";
-    prettyPin        += pin.substring(2 * charPerLine, pin.length());
+    String prettyPin = pin.substring(0, charPerLine) + "\n";
+    prettyPin += pin.substring(charPerLine, 2 * charPerLine) + "\n";
+    prettyPin += pin.substring(2 * charPerLine, pin.length());
+
     final String toDisplay = prettyPin;
     runOnUiThread(new Runnable() {
       @Override
@@ -143,42 +161,95 @@ public class SetupSyncActivity extends Activity {
   }
 
   public void displayAbort(String error) {
-    // TODO: display abort error or something
+    // Start new JPakeClient for restarting JPake.
+    jClient = new JPakeClient(this);
+
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        // TODO
+        // Restart pairing process.
+        jClient.receiveNoPin();
       }
     });
   }
 
+  /**
+   * Device has finished key exchange, waiting for remote device to set up or
+   * link to a Sync account. Display "waiting for other device" dialog.
+   */
   public void onPaired() {
-    // TODO Auto-generated method stub
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        // TODO
+        Intent intent = new Intent(mContext, SetupWaitingActivity.class);
+        // TODO: respond with abort if canceled.
+        startActivityForResult(intent, 0);
       }
     });
   }
 
-  public void onComplete(JSONObject newData) {
-    // TODO Auto-generated method stub
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (resultCode == RESULT_CANCELED) {
+      displayAbort(Constants.JPAKE_ERROR_USERABORT);
+    }
+  }
+
+  /**
+   * On JPake completion, store the Sync Account credentials sent by other
+   * device. Display progress to user.
+   *
+   * @param jCreds
+   */
+  public void onComplete(JSONObject jCreds) {
+    String accountName = (String) jCreds.get(Constants.JSON_KEY_ACCOUNT);
+    String password = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
+    String synckey = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
+    String serverUrl = (String) jCreds.get(Constants.JSON_KEY_SERVER);
+
+    final Account account = new Account(accountName, Constants.ACCOUNTTYPE_SYNC);
+    final Bundle userbundle = new Bundle();
+
+    // Add sync key and serverUrl.
+    userbundle.putString(Constants.OPTION_SYNCKEY, synckey);
+    userbundle.putString(Constants.OPTION_SERVER, serverUrl);
+    mAccountManager.addAccountExplicitly(account, password, userbundle);
+
+    Log.d(LOG_TAG, "account: " + account.toString());
+    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
+    // TODO: add other ContentProviders as needed (e.g. passwords)
+    // TODO: for each, also add to res/xml to make visible in account settings
+
+    ContentResolver.setMasterSyncAutomatically(true);
+    Log.d(LOG_TAG, "finished setting syncables");
+
+    final Intent intent = new Intent();
+    intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, accountName);
+    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+    setAccountAuthenticatorResult(intent.getExtras());
+
+    setResult(RESULT_OK, intent);
+
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        // TODO
+        authSuccess(true);
       }
     });
   }
 
+  private void authSuccess(boolean isSetup) {
+    Intent intent = new Intent(mContext, SetupSuccessActivity.class);
+    intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, isSetup);
+    startActivity(intent);
+    finish();
+  }
+  /**
+   * JPake pairing has started, but when this device has generated the PIN for
+   * pairing, does not require UI feedback to user.
+   */
   public void onPairingStart() {
-    // TODO Auto-generated method stub
-    runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        // TODO
-      }
-    });
+    // Do nothing.
+    // TODO: add in functionality if/when adding pairWithPIN.
   }
 }

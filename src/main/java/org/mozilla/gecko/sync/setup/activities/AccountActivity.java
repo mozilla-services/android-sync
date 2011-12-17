@@ -38,6 +38,7 @@
 package org.mozilla.gecko.sync.setup.activities;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.repositories.android.Authorities;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.accounts.Account;
@@ -108,8 +109,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     mAccountManager.addAccountExplicitly(account, password, userbundle);
 
     Log.d(LOG_TAG, "account: " + account.toString());
-    // Set components to sync (default: all)
-    ContentResolver.setSyncAutomatically(account, Browser.BOOKMARKS_URI.getAuthority(), true);
+    // Set components to sync (default: all).
+    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
     // TODO: add other ContentProviders as needed (e.g. passwords)
     // TODO: for each, also add to res/xml to make visible in account settings
     ContentResolver.setMasterSyncAutomatically(true);
@@ -123,6 +124,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
     // Testing out the authFailure case
     //authFailure();
+
+    // TODO: Currently, we do not actually authenticate username/pass against Moz sync server.
 
     // Successful authentication result
     setResult(RESULT_OK, intent);
