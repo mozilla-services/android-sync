@@ -91,7 +91,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   private final static int    JPAKE_LENGTH_CLIENTID   = 256;
   private final static String JPAKE_VERIFY_VALUE      = "0123456789ABCDEF";
 
-  private final static int    MAX_TRIES_START         = 10;
+  private final static int    MAX_TRIES               = 10;
   private final static int    MAX_TRIES_FIRST_MSG     = 300;
   private final static int    MAX_TRIES_LAST_MSG      = 300;
 
@@ -143,7 +143,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     // TODO: remove hardcoding
     jpakeServer = "https://setup.services.mozilla.com/";
     jpakePollInterval = 1 * 1000; // 1 second
-    jpakeMaxTries = MAX_TRIES_START;
 
     timerScheduler = new Timer();
 
@@ -172,6 +171,9 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
   }
+  /*
+   * Helper method to schedule a GET request with some delay.
+   */
 
   private void scheduleGetRequest(int delay) {
     JpakeRequest getRequest = null;
@@ -197,7 +199,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     mySignerId = JPAKE_SIGNERID_RECEIVER;
     theirSignerId = JPAKE_SIGNERID_SENDER;
     // TODO: fetch from prefs
-    jpakeMaxTries = 300;
+    jpakeMaxTries = MAX_TRIES_FIRST_MSG;
 
     jParty = new JPakeParty(mySignerId);
     numGen = new JPakeNumGeneratorRandom();
@@ -873,7 +875,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     case STEP_ONE_GET:
       ssActivity.onPairingStart();
-      jpakeMaxTries = MAX_TRIES_FIRST_MSG;
+      jpakeMaxTries = MAX_TRIES;
       // fall through
     case KEY_VERIFY:
       jpakeMaxTries = MAX_TRIES_LAST_MSG;
@@ -920,6 +922,9 @@ public class JPakeClient implements JPakeRequestDelegate {
 
       // Pause twice the poll interval.
       state = nextPhase;
+      if (state == State.KEY_VERIFY) {
+        ssActivity.onPaired();
+      }
       scheduleGetRequest(2 * jpakePollInterval);
       Log.i(LOG_TAG, "scheduling 2xPollInterval for " + state.name());
       break;

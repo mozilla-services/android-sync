@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
-    android:contentAuthority="browser"
+    android:contentAuthority="org.mozilla.gecko.db.browser"
     android:accountType="account.type.sync"
     android:supportsUploading="true"
     android:userVisible="true"

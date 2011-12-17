@@ -10,6 +10,7 @@
         android:background="#FFFFFF" />
 
     <TextView
+        android:id="@+id/setup_success_subtitle"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
