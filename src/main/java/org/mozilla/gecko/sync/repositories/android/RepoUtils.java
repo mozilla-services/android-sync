@@ -69,11 +69,11 @@ public class RepoUtils {
   public static void initialize(Context context) {
     if (SPECIAL_GUIDS_MAP == null) {
       SPECIAL_GUIDS_MAP = new HashMap<String, String>();
-      SPECIAL_GUIDS_MAP.put("menu", context.getString(R.string.menu));
-      SPECIAL_GUIDS_MAP.put("places", context.getString(R.string.places));
-      SPECIAL_GUIDS_MAP.put("toolbar", context.getString(R.string.toolbar));
-      SPECIAL_GUIDS_MAP.put("unfiled", context.getString(R.string.unfiled));
-      SPECIAL_GUIDS_MAP.put("mobile", context.getString(R.string.mobile));
+      SPECIAL_GUIDS_MAP.put("menu",    context.getString(R.string.bookmarks_folder_menu));
+      SPECIAL_GUIDS_MAP.put("places",  context.getString(R.string.bookmarks_folder_places));
+      SPECIAL_GUIDS_MAP.put("toolbar", context.getString(R.string.bookmarks_folder_toolbar));
+      SPECIAL_GUIDS_MAP.put("unfiled", context.getString(R.string.bookmarks_folder_unfiled));
+      SPECIAL_GUIDS_MAP.put("mobile",  context.getString(R.string.bookmarks_folder_mobile));
     }
   }
 

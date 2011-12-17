@@ -30,6 +30,8 @@ rsync -av res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -av res/values/sync_styles.xml $ANDROID/base/resources/values/
 rsync -av res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -av strings.xml.in $SYNC/
+rsync -av sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
+
 echo "res/values/sync_styles.xml " > $SYNC/android-values-resources.mn
 find res/layout    -name '*.xml' > $SYNC/android-layout-resources.mn
 find res/drawable* -name '*.png' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-resources.mn

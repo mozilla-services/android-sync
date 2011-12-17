@@ -1,5 +1,10 @@
 #filter substitution
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [
+<!ENTITY syncBrand.fullName.label "Firefox Sync">
+<!ENTITY syncBrand.shortName.label "Sync">
+#include sync_strings.dtd.in
+]>
 <resources>
 #include strings.xml.in
 </resources>

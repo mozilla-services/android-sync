@@ -1,49 +1,50 @@
-  <string name="sync_app_name">Firefox Sync</string>
-  <string name="sync_title_connect">Connect to Sync</string>
-  <string name="sync_title_pair">Pair a Device</string>
+  <string name="sync_app_name">&sync.app.name.label;</string>
+  <string name="sync_title_connect">&sync.title.connect.label;</string>
+  <string name="sync_title_pair">&sync.title.pair.label;</string>
 
-  <!-- J-Pake PIN Screen -->
-  <string name="sync_subtitle_connect">From a Firefox Sync-connected computer, go to Sync options and select “Add a device”</string>
-  <string name="sync_subtitle_pair">From the device to be paired, go to Sync options and select “Pair a device”</string>
-  <string name="sync_pin_default">...\n...\n...\n</string>
-  <string name="sync_link_show"><a href="https://support.mozilla.com/en-US/kb/add-a-device-to-firefox-sync">Show me how</a></string>
-  <string name="sync_link_nodevice"><a href="#">I\'m not near my computer…</a></string>
+  <!-- J-PAKE PIN Screen -->
+  <string name="sync_subtitle_connect">&sync.subtitle.connect.label;</string>
+  <string name="sync_subtitle_pair">&sync.subtitle.pair.label;</string>
+  <string name="sync_pin_default">&sync.pin.default.label;</string>
+  <string name="sync_link_show">&sync.link.show.label;</string>
+  <string name="sync_link_nodevice">&sync.link.nodevice.label;</string>
 
-   <!-- J-Pake Waiting Screen -->
-   <string name="sync_jpake_subtitle_waiting">Waiting for other device…</string>
+  <!-- J-PAKE Waiting Screen -->
+  
+  <string name="sync_jpake_subtitle_waiting">&sync.jpake.subtitle.waiting.label;</string>
 
   <!-- Account Login Screen -->
-  <string name="sync_subtitle_account">Enter your Firefox Sync account information</string>
-  <string name="sync_input_username">Account Name</string>
-  <string name="sync_input_password">Password</string>
-  <string name="sync_input_key">Recovery Key</string>
-  <string name="sync_checkbox_server">Use custom server</string>
-  <string name="sync_input_server">Server URL</string>
+  <string name="sync_subtitle_account">&sync.subtitle.account.label;</string>
+  <string name="sync_input_username">&sync.input.username.label;</string>
+  <string name="sync_input_password">&sync.input.password.label;</string>
+  <string name="sync_input_key">&sync.input.key.label;</string>
+  <string name="sync_checkbox_server">&sync.checkbox.server.label;</string>
+  <string name="sync_input_server">&sync.input.server.label;</string>
   
   <!-- Setup Fail -->
-  <string name="sync_title_fail">Cannot Set Up Sync</string>
-  <string name="sync_subtitle_fail">Firefox Sync could not connect to the server. Would you like to try again?</string>
-  <string name="sync_button_tryagain">Try again</string>
-  <string name="sync_button_manual">Manual Setup</string>
+  <string name="sync_title_fail">&sync.title.fail.label;</string>
+  <string name="sync_subtitle_fail">&sync.subtitle.fail.label;</string>
+  <string name="sync_button_tryagain">&sync.button.tryagain.label;</string>
+  <string name="sync_button_manual">&sync.button.manual.label;</string>
   
   <!-- Setup Success -->
-  <string name="sync_title_success">Setup Complete</string>
-  <string name="sync_subtitle_success">Your data is now being encrypted and synchronized in the background.</string>
-  <string name="sync_settings">Settings</string>
-  <string name="sync_subtitle_manage">Your Firefox Sync account is already set up. Go to Settings to manage your account.</string>
+  <string name="sync_title_success">&sync.title.success.label;</string>
+  <string name="sync_subtitle_success">&sync.subtitle.success.label;</string>
+  <string name="sync_settings">&sync.settings.label;</string>
+  <string name="sync_subtitle_manage">&sync.subtitle.manage.label;</string>
   
   <!-- Common text -->
-  <string name="sync_button_cancel">Cancel</string>
-  <string name="sync_button_connect">Connect</string>
+  <string name="sync_button_cancel">&sync.button.cancel.label;</string>
+  <string name="sync_button_connect">&sync.button.connect.label;</string>
   
   <!-- Account strings -->
-  <string name="sync_account_label">Firefox Sync</string>
+  <string name="sync_account_label">&sync.account.label.label;</string>
   
   <!-- Bookmark folder strings -->
-  <string name="menu">Bookmarks Menu</string>
-  <string name="places"></string>
-  <string name="tags">Tags</string>
-  <string name="toolbar">Bookmarks Toolbar</string>
-  <string name="unfiled">Unsorted Bookmarks</string>
-  <string name="desktop">Desktop Bookmarks</string>
-  <string name="mobile">Mobile Bookmarks</string>
+  <string name="bookmarks_folder_menu">&bookmarks.folder.menu.label;</string>
+  <string name="bookmarks_folder_places">&bookmarks.folder.places.label;</string>
+  <string name="bookmarks_folder_tags">&bookmarks.folder.tags.label;</string>
+  <string name="bookmarks_folder_toolbar">&bookmarks.folder.toolbar.label;</string>
+  <string name="bookmarks_folder_unfiled">&bookmarks.folder.unfiled.label;</string>
+  <string name="bookmarks_folder_desktop">&bookmarks.folder.desktop.label;</string>
+  <string name="bookmarks_folder_mobile">&bookmarks.folder.mobile.label;</string>
