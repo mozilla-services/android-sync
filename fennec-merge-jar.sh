@@ -58,6 +58,14 @@ rsync --include "*.java" --exclude 'Authorities.java' -a $SOURCEDIR $ANDROID/bas
 echo "Copying preprocessor Authorities file."
 PREPROCESS_FILES="sync/repositories/android/Authorities.java"
 cp $SOURCEDIR/repositories/android/Authorities.java.in $ANDROID/base/sync/repositories/android/
+
+echo "Copying preprocessed sync_syncadapter.xml."
+cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
+
+# These seem to get copied anyway.
+rm $ANDROID/base/sync/repositories/android/Authorities.java
+rm $ANDROID/base/resources/xml/sync_syncadapter.xml
+
 echo $PREPROCESS_FILES > $SYNC/preprocess-sources.mn
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $SOURCEFILES > $SYNC/java-sources.mn
