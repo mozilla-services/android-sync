@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
 /**
