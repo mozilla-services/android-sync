@@ -37,10 +37,10 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCleanDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.Context;
 

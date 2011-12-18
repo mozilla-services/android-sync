@@ -11,13 +11,13 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
-import android.util.Log;
-import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.client.ClientProtocolException;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.gecko.sync.net.BaseResource;
+
+import android.util.Log;
+import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class TestResource {
 
