@@ -12,11 +12,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.junit.Test;
-import org.mozilla.android.sync.CryptoRecord;
 import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.net.SyncStorageRecordRequest;
-import org.mozilla.android.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
+import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class TestSyncStorageRequest {
 

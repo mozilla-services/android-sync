@@ -1,0 +1,12 @@
+* You need Maven 3. `brew update; brew install maven`.
+
+* You need to prepare the repo before you can use it:
+  * strings.xml doesn't exist. Modify strings.xml.in.
+  * AndroidManifest.xml doesn't exist. Modify the file fragments in manifests/.
+  * The same goes for other files that are produced by preprocess.sh.
+  * If you want to alter a value _to affect our build only_, put it in AndroidManifest.xml.in.
+  * Use preprocess.sh to build the real files to keep Eclipse happy. The output is ignored by Git, and the Fennec merge script skips them, too.
+
+* To merge to mozilla-central:
+
+  ./fennec-merge-jar.sh ~/moz/hg/mozilla-central

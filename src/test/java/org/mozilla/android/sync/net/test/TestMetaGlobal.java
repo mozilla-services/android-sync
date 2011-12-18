@@ -7,17 +7,19 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.android.sync.ExtendedJSONObject;
-import org.mozilla.android.sync.MetaGlobal;
-import org.mozilla.android.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.android.sync.net.BaseResource;
-import org.mozilla.android.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.MetaGlobal;
+import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
 import android.util.Log;
 
 public class TestMetaGlobal {
+  public static Object monitor = new Object();
+
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   public static final String META_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
   private HTTPServerTestHelper data    = new HTTPServerTestHelper();
@@ -61,6 +63,14 @@ public class TestMetaGlobal {
       assertTrue(global.isModified);
       assertEquals(global.getSyncID(), "foobar");
       data.stopHTTPServer();
+      synchronized (monitor) {
+        monitor.notify();
+      }
+    }
+
+    @Override
+    public MetaGlobalDelegate deferred() {
+      return this;
     }
   }
 
@@ -77,6 +87,9 @@ public class TestMetaGlobal {
       assertTrue(global.getEngines() instanceof ExtendedJSONObject);
       assertEquals(global.getStorageVersion(), new Long(5));
       data.stopHTTPServer();
+      synchronized (monitor) {
+        monitor.notify();
+      }
     }
 
     public void handleFailure(SyncStorageResponse response) {
@@ -89,6 +102,11 @@ public class TestMetaGlobal {
     }
 
     public void handleMissing(MetaGlobal global) {
+    }
+
+    @Override
+    public MetaGlobalDelegate deferred() {
+      return this;
     }
   }
 
@@ -105,24 +123,30 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalMissingFetch() {
+  public void testMetaGlobalMissingFetch() throws InterruptedException {
     data.startHTTPServer(new MissingMetaGlobalServer());
     MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     assertFalse(global.isModified);
     global.setSyncID("foobar");
     assertTrue(global.isModified);
     assertEquals(global.getSyncID(), "foobar");
-    global.fetch(new MissingMetaGlobalFetchDelegate(global));
+    synchronized (monitor) {
+      global.fetch(new MissingMetaGlobalFetchDelegate(global));
+      monitor.wait();
+    }
   }
 
   @Test
-  public void testMetaGlobalExistingFetch() {
+  public void testMetaGlobalExistingFetch() throws InterruptedException {
     data.startHTTPServer(new ExistingMetaGlobalServer());
     MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     assertNull(global.getSyncID());
     assertNull(global.getEngines());
     assertNull(global.getStorageVersion());
-    global.fetch(new ExistingMetaGlobalFetchDelegate(global));
+    synchronized (monitor) {
+      global.fetch(new ExistingMetaGlobalFetchDelegate(global));
+      monitor.wait();
+    }
   }
 
   // TODO: upload test.

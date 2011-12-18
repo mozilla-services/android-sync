@@ -1,0 +1,7 @@
+#filter substitution
+package org.mozilla.gecko.sync.repositories.android;
+
+public class Authorities {
+  public static final String BROWSER_AUTHORITY   = "@ANDROID_PACKAGE_NAME@.providers.browser";
+  public static final String PASSWORDS_AUTHORITY = "@ANDROID_PACKAGE_NAME@.providers.passwords";
+}

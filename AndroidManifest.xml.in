@@ -1,0 +1,33 @@
+#filter substitution
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.mozilla.gecko"
+    sharedUserId="notSharedUserId"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-library android:name="android.test.runner" />
+
+    <uses-sdk android:minSdkVersion="7" />
+
+#include manifests/SyncAndroidManifest_permissions.xml.in
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS"/>
+    <uses-permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS"/>
+    <uses-permission android:name="org.mozilla.gecko.PASSWORDS"/>
+
+    <application android:debuggable="true"
+                 android:label="@string/sync_app_name">
+
+#include manifests/SyncAndroidManifest_activities.xml.in
+#include manifests/SyncAndroidManifest_services.xml.in
+
+    </application>
+
+    <instrumentation
+        android:label="Sync tests"
+        android:name="android.test.InstrumentationTestRunner"
+        android:targetPackage="org.mozilla.gecko" />
+
+</manifest>

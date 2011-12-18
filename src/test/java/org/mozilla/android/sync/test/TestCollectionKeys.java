@@ -15,13 +15,13 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
-import org.mozilla.android.sync.CollectionKeys;
-import org.mozilla.android.sync.CryptoRecord;
-import org.mozilla.android.sync.NoCollectionKeysSetException;
-import org.mozilla.android.sync.NonObjectJSONException;
 import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.Cryptographer;
 import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.CollectionKeys;
+import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.NoCollectionKeysSetException;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 
 public class TestCollectionKeys {
 
