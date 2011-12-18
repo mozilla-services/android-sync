@@ -1,10 +1,12 @@
 package org.mozilla.android.sync.test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.parser.ParseException;
@@ -27,40 +29,61 @@ public class TestJPakeSetup {
   // methods.
   JPakeClient jClientStateless = new JPakeClient(null);
 
-  // TODO: liuche: fix me!
   /*
+   * Tests encryption key and hmac generation from a derived key, using values
+   * taken from a successful run of J-Pake.
+   */
   @Test
   public void testKeyDerivation() throws UnsupportedEncodingException {
-    String keyChars = "37d4d560949aefb501d2c342983242e5e35ecde0528becbca7ca2ae3801fcd21df7af1f02eea754312c9513c6ee599848248d6c28bde8d0efeade2ae061a0d0596b7fcc9e65d13295a05b26b5b96d6df0dc511210acb13058e4490100044eaa668c069eda903cb36b24369eb6d4e9a9e24b716864d63a7634d030b41a2e9f6d3e5339c136f12d0581c422ffa52c4ac685efc90f699a2a7b4bbb0f2c79dbcfe68fc4af715fb0bde8d58570a69f57e15121bfe36907fd6d46b41e7c772ef93c2579f9caf13c9fe4cbbd8a776d1f1c76d9c5aa9aa6ed5e591e5509c9c19f59becd777ad289b41fc018cb0b4a403eda41e614207f97a0f35187c4c343ef752e4c4b113c34b8f5ef0b5c3b42eae9bf461f86f82c0cdc5d7a830600d6347235b0f536c7a4b6d7439633af669263bb571a61b3b5f6686c30d7c967b45a2d45278d4e7eb3d4375bdef8add6bf41a9f299eb4d50f501d4d1a750f5a8640dab3ef99a9efa073743112e040105751d10edf5a1815e24c04c51b1e7f0d6f5560a2ea1c05b095";
-    String expectedCrypto64 = "pyNHjnsNGEf7EdpmahMW+e61aI6FlWZi+A/yVTyllE4=";
-    String expectedHmac64 = "cUgOr4cusq+bpfK+JCDxKD6w4OjdBNnqflyv7oXhjR8=";
+    String keyChars16 = "811565455b22c857a3e303d1f48ff72ae9ef42d9c3fe3740ce7772cb5bfe23491dd5b7ee5af4828ab9b7d5844866f378b4cf0156810aff0504ef2947402e8e40be1179cf7f37b231bc0db9e4e1bb239c849aa5c12ed2b0b4413017599270aae71ee993dd755ee8c045c5fe03d713894692bf72158d9835ad905442edfd8235e1d0c915053debfc49d8248e4dae16608743aef5dab061f49fd6edd0b93ecdf9feafcbe47eb7e6c3678356d96e9bcd87814b13b9eb1a791fd446d69cb040ec7d7194031267e26f266ee3decbc1a85c5203427361997adf9823fbffe16af9946f1347c5354956356732e436ef5f8307e96554cf69a54e4e8a78552e3f506e9310a1c4438d3ddce44a37482270533e47fc40dc84abfe39c1f95328d0d2540074f6301d4f121c2f0eac49c47a2c430614234ca26dede2a429e2fdb6d282a85174886c3a68c3cf5edc87ccb82af4ae4a9a26fffadc7f4d8ded4ff47b3d2d171f374b230e52e6b45963d3a0a6b20cbe6a440fd4a932279d52a6fd7694b4cbc0cb67ff3c";
+    String expectedEncKey64 = "3TXwVlWf6YbuIPcg8m/2U4UXYV4a8RNu6pE2GOVkJJo=";
+    String expectedHmac64 = "L49fnEPAD31G5uEKy5e4bGZ6IF3G/62qW6Ua/1NvBeQ=";
 
-    byte[] cryptoBytes = new byte[32];
+    byte[] encKeyBytes = new byte[32];
     byte[] hmacBytes = new byte[32];
-    JPakeCrypto.generateKeyAndHmac(keyChars.getBytes("UTF-8"), cryptoBytes,
+
+    JPakeCrypto.generateKeyAndHmac(new BigInteger(keyChars16, 16), encKeyBytes,
         hmacBytes);
-    System.out.println("crypto64: "
-        + new String(Base64.encodeBase64(cryptoBytes)));
-    System.out.println("hmac64: " + new String(Base64.encodeBase64(hmacBytes)));
+    String encKey64 = new String(Base64.encodeBase64(encKeyBytes));
+    String hmac64 = new String(Base64.encodeBase64(hmacBytes));
 
-    assertTrue(expectedCrypto64.equals(Base64.encodeBase64(cryptoBytes)));
-    assertTrue(expectedHmac64.equals(Base64.encodeBase64(hmacBytes)));
-  }
-  */
-
-  @Test
-  public void testJPakeCorrectSecret() throws Gx4IsOneException, IncorrectZkpException, IOException, ParseException, NonObjectJSONException, CryptoException {
-    String secret = "byubd7u75qmq";
-    JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
-    assertTrue(jPakeCryptoKeyExchange(gen, gen, secret, secret));
+    assertTrue(expectedEncKey64.equals(encKey64));
+    assertTrue(expectedHmac64.equals(hmac64));
   }
 
   /*
-   * Implementation of a JPake key exchange between two parties with the same
-   * server channel; otherwise, JPake fails immediately without communication.
-   * Specifically targets JPakeCrypto functionality.
+   * Test correct key derivation when both parties share a secret.
    */
-  public boolean jPakeCryptoKeyExchange(JPakeNumGenerator gen1,
+  @Test
+  public void testJPakeCorrectSecret() throws Gx4IsOneException,
+      IncorrectZkpException, IOException, ParseException,
+      NonObjectJSONException, CryptoException {
+    String secret = "byubd7u75qmq";
+    JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
+    // Keys derived should be the same.
+    assertTrue(jPakeDeriveSameKey(gen, gen, secret, secret));
+  }
+
+  /*
+   * Test incorrect key derivation when parties do not share the same secret.
+   */
+  @Test
+  public void testJPakeIncorrectSecret() throws Gx4IsOneException,
+      IncorrectZkpException, IOException, ParseException,
+      NonObjectJSONException, CryptoException {
+    String secret1 = "shareSecret1";
+    String secret2 = "shareSecret2";
+    JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
+    // Unsuccessful key derivation.
+    assertFalse(jPakeDeriveSameKey(gen, gen, secret1, secret2));
+  }
+
+  /*
+   * Helper simulation of a J-Pake key derivation between two parties, with
+   * secret1 and secret2. Both parties are assumed to be communicating on the
+   * same channel; otherwise, J-Pake would have failed immediately.
+   */
+  public boolean jPakeDeriveSameKey(JPakeNumGenerator gen1,
       JPakeNumGenerator gen2, String secret1, String secret2)
       throws Gx4IsOneException, IncorrectZkpException, IOException,
       ParseException, NonObjectJSONException, CryptoException {
@@ -137,17 +160,14 @@ public class TestJPakeSetup {
     party1.otherA = party2.thisA;
     party1.otherZkpA = party2.thisZkpA;
 
-    System.out.println(">>> finalRound1");
     KeyBundle keyBundle1 = JPakeCrypto.finalRound(secret1, party1);
     assertNotNull(keyBundle1);
-    System.out.println(">>> AES: " + new String(Base64.encodeBase64(keyBundle1.getEncryptionKey())));
-    System.out.println(">>> HMAC: " + new String(Base64.encodeBase64(keyBundle1.getHMACKey())));
 
     // party1 computes the shared key, generates en encrypted message to party2.
-    System.out.println("generating verification message");
     ExtendedJSONObject verificationMsg = jClientStateless
         .computeKeyVerification(keyBundle1);
-    ExtendedJSONObject payload = verificationMsg.getObject(Constants.JSON_KEY_PAYLOAD);
+    ExtendedJSONObject payload = verificationMsg
+        .getObject(Constants.JSON_KEY_PAYLOAD);
     String ciphertext1 = (String) payload.get(Constants.JSON_KEY_CIPHERTEXT);
     String iv1 = (String) payload.get(Constants.JSON_KEY_IV);
 
@@ -155,10 +175,9 @@ public class TestJPakeSetup {
     KeyBundle keyBundle2 = JPakeCrypto.finalRound(secret2, party2);
     // party2 fetches the encrypted message and verifies the pairing against its
     // own derived key.
-    System.out.println(">>> AES: " + new String(Base64.encodeBase64(keyBundle2.getEncryptionKey())));
-    System.out.println(">>> HMAC: " + new String(Base64.encodeBase64(keyBundle2.getHMACKey())));
 
-    boolean isSuccess = jClientStateless.verifyCiphertext(ciphertext1, iv1, keyBundle2);
+    boolean isSuccess = jClientStateless.verifyCiphertext(ciphertext1, iv1,
+        keyBundle2);
     return isSuccess;
 
   }
