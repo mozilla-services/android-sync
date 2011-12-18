@@ -963,7 +963,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       request.setHeader(new BasicHeader("X-KeyExchange-Id", clientId));
-      Log.d(LOG_TAG, "setting ID header: " + clientId);
 
       switch (state) {
       case REPORT_FAILURE:

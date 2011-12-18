@@ -110,14 +110,11 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       // TODO: Change when:
       // 1. enable setting up multiple accounts.
       // 2. enable pair with PIN (entering pin, rather than displaying)
-
-//      setupTitleView.setText(getString(R.string.sync_title_pair));
-//      setupSubtitleView.setText(getString(R.string.sync_subtitle_pair));
-//      setupNoDeviceLinkTitleView.setVisibility(View.INVISIBLE);
+    } else {
+      // Start J-Pake for pairing if no accounts present.
+      jClient = new JPakeClient(this);
+      jClient.receiveNoPin();
     }
-    // Start J-Pake algorithm for pairing.
-    jClient = new JPakeClient(this);
-    jClient.receiveNoPin();
   }
 
   /* Click Handlers */
@@ -223,6 +220,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     startActivity(intent);
     finish();
   }
+
   /**
    * JPake pairing has started, but when this device has generated the PIN for
    * pairing, does not require UI feedback to user.
