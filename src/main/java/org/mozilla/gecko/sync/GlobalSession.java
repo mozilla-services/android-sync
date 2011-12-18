@@ -68,8 +68,8 @@ import org.mozilla.gecko.sync.stage.EnsureKeysStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
-import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+import org.mozilla.gecko.sync.stage.NoSuchStageException;
 
 import android.content.Context;
 import android.os.Bundle;

@@ -15,8 +15,8 @@ import org.mozilla.android.sync.crypto.CryptoException;
 import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.cryptographer.CryptoStatusBundle;
-import org.mozilla.gecko.sync.cryptographer.SyncCryptographer;
 import org.mozilla.gecko.sync.cryptographer.CryptoStatusBundle.CryptoStatus;
+import org.mozilla.gecko.sync.cryptographer.SyncCryptographer;
 
 public class TestSyncCryptographer {
 

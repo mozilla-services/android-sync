@@ -184,17 +184,10 @@ public class JPakeCrypto {
     BigInteger k = jp.gx4.modPow(jp.x2.multiply(new BigInteger(secret.getBytes())).negate().mod(Q), P).multiply(jp.otherA)
         .modPow(jp.x2, P);
 
-    // Generate HMAC and Encryption keys from synckey.
-    byte[] zerokey = new byte[32];
-    byte[] prk = HMACSHA256(BigIntegerHelper.BigIntegerToByteArrayWithoutSign(k), zerokey);
-    // TODO: make sure is correct format
-
-    byte[] okm =  HKDF.hkdfExpand(prk, HKDF.HMAC_INPUT, 32 * 2);
     byte[] enc = new byte[32];
     byte[] hmac = new byte[32];
-    System.arraycopy(okm, 0, enc, 0, 32);
-    System.arraycopy(okm, 32, hmac, 0, 32);
-
+    generateKeyAndHmac(k, enc, hmac);
+    
     Log.d(LOG_TAG, "final round finished; returning key");
     return new KeyBundle(enc, hmac);
   }
@@ -325,19 +318,12 @@ public class JPakeCrypto {
   /*
    * Helper function to generate encryption key and HMAC from a byte array.
    */
-  public static void generateKeyAndHmac(byte[] key, byte[] encOut, byte[] hmacOut) {
-//    MessageDigest sha = null;
-//    try {
-//      sha = MessageDigest.getInstance("SHA-256");
-//    } catch (NoSuchAlgorithmException e) {
-//      // TODO Auto-generated catch block
-//      e.printStackTrace();
-//    }
-//    sha.reset();
-//    sha.update(key);
-//    byte[] prk = sha.digest();
+  public static void generateKeyAndHmac(BigInteger k, byte[] encOut, byte[] hmacOut) {
+   // Generate HMAC and Encryption keys from synckey.
+    byte[] zerokey = new byte[32];
+    byte[] prk = HMACSHA256(BigIntegerHelper.BigIntegerToByteArrayWithoutSign(k), zerokey);
 
-    byte[] okm = HKDF.hkdfExpand(key, HKDF.HMAC_INPUT, 32 * 2);
+    byte[] okm =  HKDF.hkdfExpand(prk, HKDF.HMAC_INPUT, 32 * 2);
     System.arraycopy(okm, 0, encOut, 0, 32);
     System.arraycopy(okm, 32, hmacOut, 0, 32);
   }

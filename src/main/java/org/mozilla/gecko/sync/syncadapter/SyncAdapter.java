@@ -38,7 +38,6 @@
 package org.mozilla.gecko.sync.syncadapter;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
