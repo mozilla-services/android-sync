@@ -139,7 +139,7 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
 
   public void execute(final GlobalSession session) throws NoSuchStageException {
 
-    if (session.config.clusterURL != null) {
+    if (session.config.getClusterURL() != null) {
       Log.i(LOG_TAG, "Cluster URL already set. Continuing with sync.");
       session.advance();
       return;
@@ -184,7 +184,7 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
             return;
           }
           Log.i(LOG_TAG, "Using serverURL <" + serverURL.toASCIIString() + "> as clusterURL.");
-          session.config.clusterURL = serverURL;
+          session.config.setClusterURL(serverURL);
         }
       }
 

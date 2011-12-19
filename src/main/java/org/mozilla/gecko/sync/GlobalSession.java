@@ -72,10 +72,11 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
-public class GlobalSession implements CredentialsSource {
+public class GlobalSession implements CredentialsSource, PrefsSource {
   public static final String API_VERSION   = "1.1";
   public static final long STORAGE_VERSION = 5;
   private static final String LOG_TAG = "GlobalSession";
@@ -139,6 +140,7 @@ public class GlobalSession implements CredentialsSource {
                        String serverURL,
                        String username,
                        String password,
+                       String prefsPath,
                        KeyBundle syncKeyBundle,
                        GlobalSessionCallback callback,
                        Context context,
@@ -166,13 +168,13 @@ public class GlobalSession implements CredentialsSource {
       throw new SyncConfigurationException();
     }
 
-    // TODO: use persisted.
-    config = new SyncConfiguration();
+    config = new SyncConfiguration(prefsPath, this);
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;
     config.username      = username;
     config.password      = password;
     config.syncKeyBundle = syncKeyBundle;
+    // clusterURL and syncID are set through `persisted`, or fetched from the server.
 
     this.callback        = callback;
     this.context         = context;
@@ -250,6 +252,15 @@ public class GlobalSession implements CredentialsSource {
     return config.syncID;
   }
 
+  /*
+   * PrefsSource methods.
+   */
+  @Override
+  public SharedPreferences getPrefs(String name, int mode) {
+    return this.getContext().getSharedPreferences(name, mode);
+  }
+
+  @Override
   public Context getContext() {
     return this.context;
   }
@@ -400,6 +411,7 @@ public class GlobalSession implements CredentialsSource {
       config.syncID = remoteSyncID;
       // TODO TODO TODO
     }
+    config.persistToPrefs();
     advance();
   }
 
@@ -422,6 +434,7 @@ public class GlobalSession implements CredentialsSource {
       @Override
       public void onFreshStart() {
         try {
+          globalSession.config.persistToPrefs();
           globalSession.restart();
         } catch (Exception e) {
           Log.w(LOG_TAG, "Got exception when restarting sync after freshStart.", e);
@@ -446,6 +459,7 @@ public class GlobalSession implements CredentialsSource {
       public void onWiped(long timestamp) {
         session.resetClient();
         session.config.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
+        session.config.persistToPrefs();
 
         MetaGlobal mg = new MetaGlobal(metaURL, credentials);
         mg.setSyncID(newSyncID);

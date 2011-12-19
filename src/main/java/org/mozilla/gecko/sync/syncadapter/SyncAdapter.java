@@ -42,6 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -171,8 +172,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
             return;
           }
           KeyBundle keyBundle = new KeyBundle(username, syncKey);
+
+          // Support multiple accounts by mapping each server/account pair to a branch of the
+          // shared preferences space.
+          String prefsPath = "sync.prefs." + Cryptographer.sha1Base32(serverURL + ":" + username);
           self.performSync(account, extras, authority, provider, syncResult,
-              username, password, serverURL, keyBundle);
+              username, password, prefsPath, serverURL, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
           return;
@@ -194,6 +199,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   /**
    * Now that we have a sync key and password, go ahead and do the work.
+   * @param prefsPath TODO
    * @throws NoSuchAlgorithmException
    * @throws IllegalArgumentException
    * @throws SyncConfigurationException
@@ -206,8 +212,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              ContentProviderClient provider,
                              SyncResult syncResult,
                              String username, String password,
-                             String serverURL,
-                             KeyBundle keyBundle)
+                             String prefsPath,
+                             String serverURL, KeyBundle keyBundle)
                                  throws NoSuchAlgorithmException,
                                         SyncConfigurationException,
                                         IllegalArgumentException,
@@ -218,8 +224,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     this.syncResult = syncResult;
     // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
-                                                    serverURL, username, password, keyBundle,
-                                                    this, this.mContext, extras);
+                                                    serverURL, username, password, prefsPath,
+                                                    keyBundle, this, this.mContext, extras);
 
     globalSession.start();
 
@@ -259,6 +265,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   @Override
   public void handleSuccess(GlobalSession globalSession) {
     Log.i(LOG_TAG, "GlobalSession indicated success.");
+    Log.i(LOG_TAG, "Prefs target: " + globalSession.config.prefsPath);
+    globalSession.config.persistToPrefs();
     notifyMonitor();
   }
 

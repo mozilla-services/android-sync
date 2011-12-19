@@ -91,7 +91,7 @@ public abstract class ServerSyncStage implements
   protected Repository wrappedServerRepo() throws NoCollectionKeysSetException {
     String collection = this.getCollection();
     KeyBundle collectionKey = session.keyForCollection(collection);
-    Server11Repository serverRepo = new Server11Repository(session.config.clusterURL.toASCIIString(),
+    Server11Repository serverRepo = new Server11Repository(session.config.getClusterURLString(),
                                                            session.config.username,
                                                            collection,
                                                            session);
