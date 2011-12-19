@@ -133,6 +133,8 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
         delegate.handleError(e);
       }
     };
+
+    resource.get();
   }
 
   public void execute(final GlobalSession session) throws NoSuchStageException {
