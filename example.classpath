@@ -3,7 +3,7 @@
 	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="src/test/java"/>
 	<classpathentry including="**/*.java" kind="src" path="src/main/java"/>
 	<classpathentry exported="true" kind="lib" path="/Users/rnewman/moz/git/android-sync/external/httpclientandroidlib-1.0.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/rnewman/moz/git/android-sync/external/android-sync-crypto-1.5-jar-with-dependencies.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/rnewman/moz/git/android-sync/external/android-sync-crypto-1.6-jar-with-dependencies.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:/Users/rnewman/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1-javadoc.jar!/"/>

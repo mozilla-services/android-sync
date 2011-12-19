@@ -44,7 +44,7 @@
     <dependency>
       <groupId>org.mozilla.android.sync</groupId>
       <artifactId>android-sync-crypto</artifactId>
-      <version>1.5-libs</version>
+      <version>1.6-libs</version>
     </dependency>
     <!--  To match Android. *sigh* -->
     <!--
