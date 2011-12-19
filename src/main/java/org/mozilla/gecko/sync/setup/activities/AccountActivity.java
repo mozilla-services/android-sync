@@ -50,7 +50,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class AccountActivity extends AccountAuthenticatorActivity {
   private final static String LOG_TAG = "AccountActivity";
@@ -69,11 +73,32 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     mAccountManager = AccountManager.get(getApplicationContext());
   }
 
+  protected void toggleServerField(boolean enabled) {
+    TextView serverField = (TextView) findViewById(R.id.server);
+    Log.i(LOG_TAG, "Toggling checkbox: " + enabled);
+    serverField.setFocusable(enabled);
+    serverField.setClickable(enabled);
+  }
+
   @Override
   public void onStart() {
     super.onStart();
     // Start with an empty form
     setContentView(R.layout.sync_account);
+    CheckBox serverCheckbox = (CheckBox) findViewById(R.id.checkbox_server);
+
+    Log.i(LOG_TAG, "Setting onCheckedChangeListener.");
+    OnCheckedChangeListener listener = new OnCheckedChangeListener() {
+
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        Log.i(LOG_TAG, "Toggling checkbox: " + isChecked);
+        toggleServerField(isChecked);
+      }
+    };
+    serverCheckbox.setOnCheckedChangeListener(listener);
+    // Enable or disable accordingly.
+    listener.onCheckedChanged(serverCheckbox, serverCheckbox.isChecked());
   }
 
   public void cancelClickHandler(View target) {

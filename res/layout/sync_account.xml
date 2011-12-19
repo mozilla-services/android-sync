@@ -32,8 +32,6 @@
 
   <EditText android:id="@+id/server"
     style="@style/SyncEditItem"
-    android:editable="false"
-    android:cursorVisible="false"
     android:hint="@string/sync_input_server" />
 
   <LinearLayout
