@@ -146,7 +146,7 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
     }
 
     Log.i(LOG_TAG, "Fetching cluster URL.");
-    ClusterURLFetchDelegate delegate = new ClusterURLFetchDelegate() {
+    final ClusterURLFetchDelegate delegate = new ClusterURLFetchDelegate() {
 
       @Override
       public void handleSuccess(final String url) {
@@ -194,10 +194,14 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
       }
     };
 
-    try {
-      fetchClusterURL(session, delegate);
-    } catch (URISyntaxException e) {
-      session.abort(e, "Invalid URL for node/weave.");
-    }
+    ThreadPool.run(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          fetchClusterURL(session, delegate);
+        } catch (URISyntaxException e) {
+          session.abort(e, "Invalid URL for node/weave.");
+        }
+      }});
   }
 }
