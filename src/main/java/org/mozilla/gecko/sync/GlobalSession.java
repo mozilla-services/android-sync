@@ -388,6 +388,7 @@ public class GlobalSession implements CredentialsSource {
     if (remoteSyncID == null) {
       // Corrupt meta/global.
       freshStart();
+      return;
     }
     String localSyncID = this.getSyncID();
     if (!remoteSyncID.equals(localSyncID)) {
