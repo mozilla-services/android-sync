@@ -154,8 +154,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           Bundle bundle      = future.getResult(60L, TimeUnit.SECONDS);
           String username    = bundle.getString(Constants.OPTION_USERNAME);
           String syncKey     = bundle.getString(Constants.OPTION_SYNCKEY);
+          String serverURL   = bundle.getString(Constants.OPTION_SERVER);
           String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-          String serverURL   = bundle.getString(Constants.JSON_KEY_SERVER);
           Log.d(LOG_TAG, "Username: " + username);
           Log.d(LOG_TAG, "Server:   " + serverURL);
           Log.d(LOG_TAG, "Password: " + password);  // TODO: remove
@@ -169,8 +169,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
             return;
           }
           KeyBundle keyBundle = new KeyBundle(username, syncKey);
-          self.performSync(account, extras, authority, provider,
-                           syncResult, username, password, keyBundle);
+          self.performSync(account, extras, authority, provider, syncResult,
+              username, password, serverURL, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
           return;
@@ -204,6 +204,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              ContentProviderClient provider,
                              SyncResult syncResult,
                              String username, String password,
+                             String serverURL,
                              KeyBundle keyBundle)
                                  throws NoSuchAlgorithmException,
                                         SyncConfigurationException,
@@ -213,11 +214,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                                         NonObjectJSONException {
     Log.i(LOG_TAG, "Performing sync.");
     this.syncResult = syncResult;
-    // TODO: remove clusterURL!
-    String clusterURL = "https://phx-sync545.services.mozilla.com/";
-    clusterURL = null;
+    // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
-                                                    clusterURL, username, password, keyBundle,
+                                                    serverURL, username, password, keyBundle,
                                                     this, this.mContext, null);
 
     globalSession.start();

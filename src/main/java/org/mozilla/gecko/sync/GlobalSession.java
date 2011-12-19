@@ -136,7 +136,7 @@ public class GlobalSession implements CredentialsSource {
   }
 
   public GlobalSession(String userAPI,
-                       String clusterURL,
+                       String serverURL,
                        String username,
                        String password,
                        KeyBundle syncKeyBundle,
@@ -153,9 +153,9 @@ public class GlobalSession implements CredentialsSource {
     }
 
     Log.i(LOG_TAG, "GlobalSession initialized with bundle " + persisted);
-    URI clusterURI;
+    URI serverURI;
     try {
-      clusterURI = (clusterURL == null) ? null : new URI(clusterURL);
+      serverURI = (serverURL == null) ? null : new URI(serverURL);
     } catch (URISyntaxException e) {
       throw new SyncConfigurationException();
     }
@@ -168,7 +168,7 @@ public class GlobalSession implements CredentialsSource {
 
     config = new SyncConfiguration();
     config.userAPI       = userAPI;
-    config.clusterURL    = clusterURI;
+    config.serverURL     = serverURI;
     config.username      = username;
     config.password      = password;
     config.syncKeyBundle = syncKeyBundle;

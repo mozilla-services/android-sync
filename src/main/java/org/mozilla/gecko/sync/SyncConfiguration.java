@@ -42,11 +42,16 @@ import java.net.URISyntaxException;
 
 import org.mozilla.android.sync.crypto.KeyBundle;
 
+import android.util.Log;
+
 public class SyncConfiguration implements CredentialsSource {
   public static final String DEFAULT_USER_API = "https://auth.services.mozilla.com/user/1.0/";
 
+  private static final String LOG_TAG = "SyncConfiguration";
+
   // These must be set in GlobalSession's constructor.
   public String          userAPI;
+  public URI             serverURL;
   public URI             clusterURL;
   public String          username;
   public KeyBundle       syncKeyBundle;
@@ -56,6 +61,7 @@ public class SyncConfiguration implements CredentialsSource {
   public MetaGlobal      metaGlobal;
   public String          password;
   public String          syncID;
+
 
   public SyncConfiguration() {
   }
@@ -80,7 +86,18 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   public String nodeWeaveURL() {
-    return userAPI + username + "/node/weave";
+    return this.nodeWeaveURL((this.serverURL == null) ? null : this.serverURL.toASCIIString());
+  }
+
+  public String nodeWeaveURL(String serverURL) {
+    String userPart = username + "/node/weave";
+    if (serverURL == null) {
+      return DEFAULT_USER_API + userPart;
+    }
+    if (!serverURL.endsWith("/")) {
+      serverURL = serverURL + "/";
+    }
+    return serverURL + "user/1.0/" + userPart;
   }
 
   public String infoURL() {
@@ -117,5 +134,23 @@ public class SyncConfiguration implements CredentialsSource {
 
   public URI keysURI() throws URISyntaxException {
     return wboURI("crypto", "keys");
+  }
+
+  public void setClusterURL(URI u) {
+    if (u == null) {
+      Log.w(LOG_TAG, "Refusing to set cluster URL to null.");
+      return;
+    }
+    URI uri = u.normalize();
+    if (uri.toASCIIString().endsWith("/")) {
+      this.clusterURL = u;
+      return;
+    }
+    this.clusterURL = uri.resolve("/");
+    Log.i(LOG_TAG, "Set cluster URL to " + this.clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
+  }
+
+  public void setClusterURL(String url) throws URISyntaxException {
+    this.setClusterURL(new URI(url));
   }
 }
