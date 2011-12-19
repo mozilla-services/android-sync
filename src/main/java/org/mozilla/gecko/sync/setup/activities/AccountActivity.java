@@ -59,6 +59,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private String username;
   private String password;
   private String key;
+  private String server;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -88,6 +89,11 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     username = ((EditText) findViewById(R.id.username)).getText().toString();
     password = ((EditText) findViewById(R.id.password)).getText().toString();
     key = ((EditText) findViewById(R.id.key)).getText().toString();
+    CheckBox serverCheckbox = (CheckBox) findViewById(R.id.checkbox_server);
+    EditText serverField = (EditText) findViewById(R.id.server);
+    if (serverCheckbox.isChecked()) {
+      server = serverField.getText().toString();
+    }
 
     // TODO : Authenticate with Sync Service, once implemented, with
     // onAuthSuccess as callback
