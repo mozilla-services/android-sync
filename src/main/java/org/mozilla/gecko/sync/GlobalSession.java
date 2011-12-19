@@ -220,12 +220,18 @@ public class GlobalSession implements CredentialsSource {
    *        The next stage.
    * @throws NoSuchStageException if the stage does not exist.
    */
-  public void advance() throws NoSuchStageException {
+  public void advance() {
     this.callback.handleStageCompleted(this.currentState, this);
     Stage next = nextStage(this.currentState);
-    GlobalSyncStage nextStage = this.getStageByName(next);
+    GlobalSyncStage nextStage;
+    try {
+      nextStage = this.getStageByName(next);
+    } catch (NoSuchStageException e) {
+      this.abort(e, "No such stage " + next);
+      return;
+    }
     this.currentState = next;
-    Log.i(LOG_TAG, "Running next stage " + next);
+    Log.i(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
     try {
       nextStage.execute(this);
     } catch (Exception ex) {
@@ -263,13 +269,7 @@ public class GlobalSession implements CredentialsSource {
     if (this.currentState != GlobalSyncStage.Stage.idle) {
       throw new AlreadySyncingException(this.currentState);
     }
-    try {
-      this.advance();
-    } catch (NoSuchStageException ex) {
-      // This should not occur.
-      // TODO: log.
-      this.callback.handleError(this, ex);
-    }
+    this.advance();
   }
 
   /**
@@ -398,11 +398,7 @@ public class GlobalSession implements CredentialsSource {
       config.syncID = remoteSyncID;
       // TODO TODO TODO
     }
-    try {
-      advance();
-    } catch (NoSuchStageException e) {
-      // TODO: shouldn't happen.
-    }
+    advance();
   }
 
   public void processMissingMetaGlobal(MetaGlobal global) {

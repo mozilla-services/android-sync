@@ -147,11 +147,7 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
     Log.d(LOG_TAG, "onSynchronized.");
-    try {
-      session.advance();
-    } catch (NoSuchStageException e) {
-      // TODO
-    }
+    session.advance();
   }
 
   @Override

@@ -113,11 +113,7 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
 
     Log.i("rnewman", "Setting keys. Yay!");
     session.setCollectionKeys(k);
-    try {
-      session.advance();
-    } catch (NoSuchStageException e) {
-      session.abort(e, "No stage.");
-    }
+    session.advance();
   }
 
   @Override
