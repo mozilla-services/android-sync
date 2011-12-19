@@ -167,10 +167,10 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     Log.d(LOG_TAG, "Account: " + account.toString());
 
     // Set components to sync (default: all).
+    ContentResolver.setMasterSyncAutomatically(true);
     ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
     // TODO: add other ContentProviders as needed (e.g. passwords)
     // TODO: for each, also add to res/xml to make visible in account settings
-    ContentResolver.setMasterSyncAutomatically(true);
     Log.d(LOG_TAG, "Finished setting syncables.");
 
     final Intent intent = new Intent();
