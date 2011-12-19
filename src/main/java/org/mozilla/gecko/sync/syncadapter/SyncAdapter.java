@@ -155,6 +155,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           String username    = bundle.getString(Constants.OPTION_USERNAME);
           String syncKey     = bundle.getString(Constants.OPTION_SYNCKEY);
           String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+          String serverURL   = bundle.getString(Constants.JSON_KEY_SERVER);
+          Log.d(LOG_TAG, "Username: " + username);
+          Log.d(LOG_TAG, "Server:   " + serverURL);
+          Log.d(LOG_TAG, "Password: " + password);  // TODO: remove
+          Log.d(LOG_TAG, "Key:      " + syncKey);   // TODO: remove
           if (password == null) {
             Log.e(LOG_TAG, "No password: aborting sync.");
             return;
