@@ -166,6 +166,7 @@ public class GlobalSession implements CredentialsSource {
       throw new SyncConfigurationException();
     }
 
+    // TODO: use persisted.
     config = new SyncConfiguration();
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;

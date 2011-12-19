@@ -139,7 +139,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
 
-    Log.i(LOG_TAG, "Got onPerformSync:");
+    // TODO: don't clear the auth token unless we have a sync error.
+    Log.i(LOG_TAG, "Got onPerformSync. Extras bundle is " + extras);
+    Log.d(LOG_TAG, "Extras clusterURL: " + extras.getString("clusterURL"));
     Log.i(LOG_TAG, "Account name: " + account.name);
     Log.i(LOG_TAG, "XXX CLEARING AUTH TOKEN XXX");
     invalidateAuthToken(account);
