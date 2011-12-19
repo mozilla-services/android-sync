@@ -40,13 +40,11 @@ package org.mozilla.gecko.sync.setup.activities;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
-import org.mozilla.gecko.sync.repositories.android.Authorities;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -202,30 +200,11 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    */
   public void onComplete(JSONObject jCreds) {
     String accountName = (String) jCreds.get(Constants.JSON_KEY_ACCOUNT);
-    String password = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
-    String synckey = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
-    String serverUrl = (String) jCreds.get(Constants.JSON_KEY_SERVER);
+    String password    = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
+    String syncKey     = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
+    String serverURL   = (String) jCreds.get(Constants.JSON_KEY_SERVER);
 
-    final Account account = new Account(accountName, Constants.ACCOUNTTYPE_SYNC);
-    final Bundle userbundle = new Bundle();
-
-    // Add sync key and serverUrl.
-    userbundle.putString(Constants.OPTION_SYNCKEY, synckey);
-    userbundle.putString(Constants.OPTION_SERVER, serverUrl);
-    mAccountManager.addAccountExplicitly(account, password, userbundle);
-
-    Log.d(LOG_TAG, "account: " + account.toString());
-    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
-    // TODO: add other ContentProviders as needed (e.g. passwords)
-    // TODO: for each, also add to res/xml to make visible in account settings
-
-    ContentResolver.setMasterSyncAutomatically(true);
-    Log.d(LOG_TAG, "finished setting syncables");
-
-    final Intent intent = new Intent();
-    intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, accountName);
-    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
-    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+    final Intent intent = AccountActivity.createAccount(mAccountManager, accountName, syncKey, password, serverURL);
     setAccountAuthenticatorResult(intent.getExtras());
 
     setResult(RESULT_OK, intent);

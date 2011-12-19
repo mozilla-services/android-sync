@@ -132,24 +132,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private void authCallback() {
     // Create and add account to AccountManager
     // TODO: only allow one account to be added?
-    final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
-    final Bundle userbundle = new Bundle();
-    // Add sync key
-    userbundle.putString(Constants.OPTION_SYNCKEY, key);
-    mAccountManager.addAccountExplicitly(account, password, userbundle);
-
-    Log.d(LOG_TAG, "account: " + account.toString());
-    // Set components to sync (default: all).
-    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
-    // TODO: add other ContentProviders as needed (e.g. passwords)
-    // TODO: for each, also add to res/xml to make visible in account settings
-    ContentResolver.setMasterSyncAutomatically(true);
-    Log.d(LOG_TAG, "finished setting syncables");
-
-    final Intent intent = new Intent();
-    intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
-    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
-    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+    final Intent intent = createAccount(mAccountManager, username, key, password, server);
     setAccountAuthenticatorResult(intent.getExtras());
 
     // Testing out the authFailure case
@@ -159,7 +142,42 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
     // Successful authentication result
     setResult(RESULT_OK, intent);
-    authSuccess();
+
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        authSuccess();
+      }
+    });
+  }
+
+  // TODO: lift this out.
+  public static Intent createAccount(AccountManager accountManager, String username, String syncKey, String password, String serverURL) {
+    final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
+    final Bundle userbundle = new Bundle();
+
+    // Add sync key and server URL.
+    userbundle.putString(Constants.OPTION_SYNCKEY, syncKey);
+    if (serverURL != null) {
+      Log.i(LOG_TAG, "Setting explicit server URL: " + serverURL);
+      userbundle.putString(Constants.OPTION_SERVER, serverURL);
+    }
+    accountManager.addAccountExplicitly(account, password, userbundle);
+
+    Log.d(LOG_TAG, "Account: " + account.toString());
+
+    // Set components to sync (default: all).
+    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
+    // TODO: add other ContentProviders as needed (e.g. passwords)
+    // TODO: for each, also add to res/xml to make visible in account settings
+    ContentResolver.setMasterSyncAutomatically(true);
+    Log.d(LOG_TAG, "Finished setting syncables.");
+
+    final Intent intent = new Intent();
+    intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
+    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+    return intent;
   }
 
   private void authFailure() {
