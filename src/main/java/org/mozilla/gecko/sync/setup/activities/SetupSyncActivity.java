@@ -20,6 +20,7 @@
  *
  * Contributor(s):
  *  Chenxia Liu <liuche@mozilla.com>
+ *  Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -111,7 +112,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       // 1. enable setting up multiple accounts.
       // 2. enable pair with PIN (entering pin, rather than displaying)
     } else {
-      // Start J-Pake for pairing if no accounts present.
+      // Start J-PAKE for pairing if no accounts present.
       jClient = new JPakeClient(this);
       jClient.receiveNoPin();
     }
@@ -156,7 +157,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   public void displayAbort(String error) {
-    // Start new JPakeClient for restarting JPake.
+    // Start new JPakeClient for restarting J-PAKE.
     jClient = new JPakeClient(this);
 
     runOnUiThread(new Runnable() {
@@ -190,7 +191,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   /**
-   * On JPake completion, store the Sync Account credentials sent by other
+   * On J-PAKE completion, store the Sync Account credentials sent by other
    * device. Display progress to user.
    *
    * @param jCreds
@@ -222,7 +223,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   /**
-   * JPake pairing has started, but when this device has generated the PIN for
+   * J-PAKE pairing has started, but when this device has generated the PIN for
    * pairing, does not require UI feedback to user.
    */
   public void onPairingStart() {
