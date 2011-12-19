@@ -364,15 +364,15 @@ public class JPakeClient implements JPakeRequestDelegate {
    * @throws CryptoException
    * @throws UnsupportedEncodingException
    */
-  public byte[] decryptPayload(ExtendedJSONObject payload,
-      KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
-    byte[] ciphertext = Base64.decodeBase64(((String) payload
-        .get(Constants.JSON_KEY_CIPHERTEXT)).getBytes("UTF-8"));
-    byte[] iv = Base64.decodeBase64(((String) payload
-        .get(Constants.JSON_KEY_IV)).getBytes("UTF-8"));
+  public byte[] decryptPayload(ExtendedJSONObject payload, KeyBundle keybundle)
+                                                                               throws CryptoException,
+                                                                               UnsupportedEncodingException {
+    byte[] ciphertext = Utils.decodeBase64((String) payload
+        .get(Constants.JSON_KEY_CIPHERTEXT));
+    byte[] iv = Utils.decodeBase64((String) payload.get(Constants.JSON_KEY_IV));
     byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.JSON_KEY_HMAC));
-    byte[] plainbytes = Cryptographer
-        .decrypt(new CryptoInfo(ciphertext, iv, hmac, keybundle));
+    byte[] plainbytes = Cryptographer.decrypt(new CryptoInfo(ciphertext, iv,
+        hmac, keybundle));
     return plainbytes;
   }
 
