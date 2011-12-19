@@ -32,6 +32,8 @@ public class TestMetaGlobal {
   public void setUp() {
     Log.i("TestMetaGlobal", "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
+    Log.i("TestResource", "Disabling URI rewriting.");
+    BaseResource.rewriteLocalhost = false;
   }
 
   @Test

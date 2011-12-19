@@ -80,6 +80,8 @@ import ch.boye.httpclientandroidlib.protocol.HttpContext;
  * Exposes simple get/post/put/delete methods.
  */
 public class BaseResource implements Resource {
+  public static boolean rewriteLocalhost = true;
+
   private static final String LOG_TAG = "BaseResource";
   protected URI uri;
   protected BasicHttpContext context;
@@ -88,10 +90,33 @@ public class BaseResource implements Resource {
   protected HttpRequestBase request;
 
   public BaseResource(String uri) throws URISyntaxException {
-	  this(new URI(uri));
+    this(uri, rewriteLocalhost);
   }
+
   public BaseResource(URI uri) {
-    this.uri = uri;
+    this(uri, rewriteLocalhost);
+  }
+
+  public BaseResource(String uri, boolean rewrite) throws URISyntaxException {
+	  this(new URI(uri), rewrite);
+  }
+
+  public BaseResource(URI uri, boolean rewrite) {
+    if (rewrite && uri.getHost().equals("localhost")) {
+      // Rewrite localhost URIs to refer to the special Android emulator loopback passthrough interface.
+      Log.d(LOG_TAG, "Rewriting " + uri + " to point to 10.0.2.2.");
+      try {
+        this.uri = new URI(uri.getScheme(), uri.getUserInfo(), "10.0.2.2", uri.getPort(), uri.getPath(), uri.getQuery(), uri.getFragment());
+      } catch (URISyntaxException e) {
+        Log.e(LOG_TAG, "Got error rewriting URI for Android emulator.", e);
+      }
+    } else {
+      this.uri = uri;
+    }
+  }
+
+  public URI getURI() {
+    return this.uri;
   }
 
   /**
