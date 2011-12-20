@@ -146,6 +146,7 @@ public class BaseResource implements Resource {
       return cm;
     }
   }
+
   public static ClientConnectionManager enableTLSConnectionManager() throws KeyManagementException, NoSuchAlgorithmException  {
     SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(null, null, new SecureRandom());
