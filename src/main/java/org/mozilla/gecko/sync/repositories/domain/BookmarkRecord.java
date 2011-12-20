@@ -105,13 +105,13 @@ public class BookmarkRecord extends Record {
     this.parentName    = (String) p.get("parentName");
 
     // Bookmark.
-    if (this.type == "bookmark") {
+    if (isBookmark()) {
       this.bookmarkURI   = (String) p.get("bmkUri");
       this.keyword       = (String) p.get("keyword");
       this.tags          = (JSONArray) p.get("tags");
     }
     // Folder.
-    if (this.type == "folder") {
+    if (isFolder()) {
       this.children      = (JSONArray) p.get("children");
     }
 
@@ -128,6 +128,14 @@ public class BookmarkRecord extends Record {
      */
   }
 
+  public boolean isBookmark() {
+    return "bookmark".equals(this.type);
+  }
+
+  public boolean isFolder() {
+    return "folder".equals(this.type);
+  }
+
   @Override
   public CryptoRecord getPayload() {
     CryptoRecord rec = new CryptoRecord(this);
@@ -137,12 +145,12 @@ public class BookmarkRecord extends Record {
     rec.payload.put("description", this.description);
     rec.payload.put("parentid", this.parentID);
     rec.payload.put("parentName", this.parentName);
-    if (this.type == "bookmark") {
+    if (isBookmark()) {
       rec.payload.put("bmkUri", bookmarkURI);
       rec.payload.put("keyword", keyword);
       rec.payload.put("tags", this.tags);
     }
-    if (this.type == "folder") {
+    if (isFolder()) {
       rec.payload.put("children", this.children);
     }
     return rec;
@@ -150,25 +158,42 @@ public class BookmarkRecord extends Record {
 
   @Override
   public boolean equals(Object o) {
-    if (!o.getClass().equals(BookmarkRecord.class)) return false;
+    if (!(o instanceof BookmarkRecord)) {
+      return false;
+    }
+
     BookmarkRecord other = (BookmarkRecord) o;
     
-    if (!super.equals(other)) return false;
-    
-    // Check children
-    if (this.type.equals("folder")) {
-      // Check if they are both null
-      if (this.children == other.children) return true;
-      else if (this.children == null && other.children!= null) return false;
-      else if (this.children!= null && other.children== null) return false;
-      
-      if (this.children.size() != other.children.size()) return false;
+    if (!super.equals(other)) {
+      return false;
+    }
+
+    // Check children.
+    if (isFolder()) {
+      // Check if they are both null.
+      if (this.children == other.children) {
+        return true;
+      }
+      if (this.children  == null &&
+          other.children != null) {
+        return false;
+      }
+      if (this.children  != null &&
+          other.children == null) {
+        return false;
+      }
+      if (this.children.size() != other.children.size()) {
+        return false;
+      }
+
       for (int i = 0; i < this.children.size(); i++) {
         String child = (String) this.children.get(i);
-        if (!other.children.contains(child)) return false;
+        if (!other.children.contains(child)) {
+          return false;
+        }
       }
     }
-    
+
     return RepoUtils.stringsEqual(this.title, other.title)
         && RepoUtils.stringsEqual(this.bookmarkURI, other.bookmarkURI)
         && RepoUtils.stringsEqual(this.parentID, other.parentID)
