@@ -1,6 +1,6 @@
 package org.mozilla.gecko.sync;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 public interface CredentialsSource {
 

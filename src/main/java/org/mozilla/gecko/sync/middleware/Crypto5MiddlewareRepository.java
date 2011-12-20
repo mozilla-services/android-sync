@@ -37,7 +37,7 @@
 
 package org.mozilla.gecko.sync.middleware;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.repositories.IdentityRecordFactory;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;

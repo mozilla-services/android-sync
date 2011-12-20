@@ -40,7 +40,7 @@ package org.mozilla.gecko.sync;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 import android.util.Log;
 

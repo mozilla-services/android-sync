@@ -39,8 +39,8 @@ package org.mozilla.gecko.sync.middleware;
 
 import java.io.UnsupportedEncodingException;
 
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.RepositorySession;

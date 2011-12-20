@@ -50,11 +50,11 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.CryptoInfo;
-import org.mozilla.android.sync.crypto.Cryptographer;
-import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.crypto.Utils;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.CryptoInfo;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.cryptographer.CryptoStatusBundle.CryptoStatus;
 

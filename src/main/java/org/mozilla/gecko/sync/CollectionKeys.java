@@ -46,9 +46,9 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.JSONException;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.Cryptographer;
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 import android.util.Log;
 

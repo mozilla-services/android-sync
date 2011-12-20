@@ -40,20 +40,11 @@
       <artifactId>httpclientandroidlib</artifactId>
       <version>1.0.1</version>
     </dependency>
-
-    <dependency>
-      <groupId>org.mozilla.android.sync</groupId>
-      <artifactId>android-sync-crypto</artifactId>
-      <version>1.6-libs</version>
-    </dependency>
-    <!--  To match Android. *sigh* -->
-    <!--
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.2</version>
+      <version>1.5</version>
     </dependency>
-    -->
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>
