@@ -36,11 +36,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.googlecode.json-simple</groupId>
-      <artifactId>json-simple</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>4.1.2</version>
@@ -142,6 +137,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -149,6 +145,7 @@
             <configuration>
               <sources>
                 <source>external/httpclientandroidlib/httpclientandroidlib/src/</source>
+                <source>external/json-simple-1.1/src/</source>
               </sources>
             </configuration>
           </execution>

@@ -63,10 +63,15 @@ echo "Copying preprocessed sync_syncadapter.xml."
 cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
 
 echo "Copying external dependency sources."
+JSONLIB=external/json-simple-1.1/src/org/json/simple
+JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB/,json-simple/,")
 HTTPLIB=external/httpclientandroidlib/httpclientandroidlib/src/ch/boye/httpclientandroidlib
 HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,httpclientandroidlib/,")
 echo "httpclientandroidlib files: \n  $HTTPLIBFILES"
 rsync --include "*.java" -a $HTTPLIB $ANDROID/base/
+echo "json-simple files: \n  $JSONLIBFILES"
+mkdir -p $ANDROID/base/json-simple/
+rsync --include "*.java" -a $JSONLIB/ $ANDROID/base/json-simple/
 
 # These seem to get copied anyway.
 rm $ANDROID/base/sync/repositories/android/Authorities.java
