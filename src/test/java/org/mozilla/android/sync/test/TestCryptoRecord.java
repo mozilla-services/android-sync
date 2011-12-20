@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
-import org.apache.commons.codec.binary.Base64;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.crypto.CryptoException;

@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
-import org.apache.commons.codec.binary.Base32;
+import org.mozilla.apache.commons.codec.binary.Base32;
 import org.junit.Test;
 import org.mozilla.gecko.sync.crypto.Utils;
 

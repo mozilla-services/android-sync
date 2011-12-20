@@ -42,7 +42,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import org.apache.commons.codec.binary.Base64;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.JSONException;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;

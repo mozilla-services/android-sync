@@ -11,7 +11,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.commons.codec.binary.Base64;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;

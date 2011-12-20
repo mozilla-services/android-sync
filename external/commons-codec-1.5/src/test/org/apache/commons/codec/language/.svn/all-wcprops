@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language
+END
+ColognePhoneticTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 139
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/ColognePhoneticTest.java
+END
+MetaphoneTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 133
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/MetaphoneTest.java
+END
+RefinedSoundexTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 138
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/RefinedSoundexTest.java
+END
+SoundexTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 131
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/SoundexTest.java
+END
+CaverphoneTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 134
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/CaverphoneTest.java
+END
+Caverphone1Test.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/Caverphone1Test.java
+END
+DoubleMetaphoneTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 139
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/DoubleMetaphoneTest.java
+END
+Caverphone2Test.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/Caverphone2Test.java
+END
+DoubleMetaphone2Test.java
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/language/DoubleMetaphone2Test.java
+END

@@ -40,7 +40,7 @@ package org.mozilla.gecko.sync;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import org.apache.commons.codec.binary.Base64;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;

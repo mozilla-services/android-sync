@@ -40,8 +40,8 @@ package org.mozilla.gecko.sync.crypto;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
-import org.apache.commons.codec.binary.Base32;
-import org.apache.commons.codec.binary.Base64;
+import org.mozilla.apache.commons.codec.binary.Base32;
+import org.mozilla.apache.commons.codec.binary.Base64;
 
 public class Utils {
 

@@ -1,0 +1,22 @@
+K 10
+svn:ignore
+V 193
+.classpath
+.clover
+.project
+CODEC_1_*.xml
+HEAD.xml
+dist
+junit*.properties
+maven.log
+pub
+target
+velocity.log
+cobertura.ser
+.settings
+bin
+build.properties
+.externalToolBuilders
+maven-eclipse.xml
+
+END

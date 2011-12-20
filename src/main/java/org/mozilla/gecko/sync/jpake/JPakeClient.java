@@ -48,7 +48,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.apache.commons.codec.binary.Base64;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;

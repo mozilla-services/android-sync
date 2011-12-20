@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net
+END
+BCodec.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net/BCodec.java
+END
+QuotedPrintableCodec.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net/QuotedPrintableCodec.java
+END
+URLCodec.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net/URLCodec.java
+END
+Utils.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net/Utils.java
+END
+RFC1522Codec.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net/RFC1522Codec.java
+END
+QCodec.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net/QCodec.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/net/package.html
+END
