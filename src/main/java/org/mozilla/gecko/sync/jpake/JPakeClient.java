@@ -240,7 +240,6 @@ public class JPakeClient implements JPakeRequestDelegate {
       reportFailure(error);
     }
     ssActivity.displayAbort(error);
-    finished = true;
   }
 
   /*
@@ -800,7 +799,9 @@ public class JPakeClient implements JPakeRequestDelegate {
           return;
         }
         pollTries += 1;
-        scheduleGetRequest(jpakePollInterval);
+        if (!finished) {
+          scheduleGetRequest(jpakePollInterval);
+        }
         return;
       case 404:
         Log.e(LOG_TAG, "No data found in channel.");
