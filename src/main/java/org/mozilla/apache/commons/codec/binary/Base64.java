@@ -1,3 +1,14 @@
+/**
+ * This file has been automatically modified on behalf of the Mozilla
+ * Foundation to alter its package for import into the Mozilla codebase.
+ *
+ * This statement has been added pursuant to section 4.2 of the Apache License
+ * 2.0:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0.html
+ *
+ */
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
