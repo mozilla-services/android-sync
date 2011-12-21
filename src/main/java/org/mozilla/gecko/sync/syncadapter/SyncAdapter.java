@@ -42,7 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -139,7 +139,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
 
-    Log.i(LOG_TAG, "Got onPerformSync:");
+    // TODO: don't clear the auth token unless we have a sync error.
+    Log.i(LOG_TAG, "Got onPerformSync. Extras bundle is " + extras);
+    Log.d(LOG_TAG, "Extras clusterURL: " + extras.getString("clusterURL"));
     Log.i(LOG_TAG, "Account name: " + account.name);
     Log.i(LOG_TAG, "XXX CLEARING AUTH TOKEN XXX");
     invalidateAuthToken(account);
@@ -154,7 +156,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           Bundle bundle      = future.getResult(60L, TimeUnit.SECONDS);
           String username    = bundle.getString(Constants.OPTION_USERNAME);
           String syncKey     = bundle.getString(Constants.OPTION_SYNCKEY);
+          String serverURL   = bundle.getString(Constants.OPTION_SERVER);
           String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+          Log.d(LOG_TAG, "Username: " + username);
+          Log.d(LOG_TAG, "Server:   " + serverURL);
+          Log.d(LOG_TAG, "Password: " + password);  // TODO: remove
+          Log.d(LOG_TAG, "Key:      " + syncKey);   // TODO: remove
           if (password == null) {
             Log.e(LOG_TAG, "No password: aborting sync.");
             return;
@@ -164,8 +171,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
             return;
           }
           KeyBundle keyBundle = new KeyBundle(username, syncKey);
-          self.performSync(account, extras, authority, provider,
-                           syncResult, username, password, keyBundle);
+          self.performSync(account, extras, authority, provider, syncResult,
+              username, password, serverURL, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
           return;
@@ -199,6 +206,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              ContentProviderClient provider,
                              SyncResult syncResult,
                              String username, String password,
+                             String serverURL,
                              KeyBundle keyBundle)
                                  throws NoSuchAlgorithmException,
                                         SyncConfigurationException,
@@ -208,11 +216,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                                         NonObjectJSONException {
     Log.i(LOG_TAG, "Performing sync.");
     this.syncResult = syncResult;
-    // TODO: remove clusterURL!
-    String clusterURL = "https://phx-sync545.services.mozilla.com/";
-    clusterURL = null;
+    // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
-                                                    clusterURL, username, password, keyBundle,
+                                                    serverURL, username, password, keyBundle,
                                                     this, this.mContext, null);
 
     globalSession.start();

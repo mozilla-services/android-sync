@@ -60,6 +60,7 @@ import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
 import ch.boye.httpclientandroidlib.conn.ClientConnectionManager;
+import ch.boye.httpclientandroidlib.conn.scheme.PlainSocketFactory;
 import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
 import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
@@ -145,12 +146,14 @@ public class BaseResource implements Resource {
       return cm;
     }
   }
+
   public static ClientConnectionManager enableTLSConnectionManager() throws KeyManagementException, NoSuchAlgorithmException  {
     SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(null, null, new SecureRandom());
     SSLSocketFactory sf = new TLSSocketFactory(sslContext);
     SchemeRegistry schemeRegistry = new SchemeRegistry();
     schemeRegistry.register(new Scheme("https", 443, sf));
+    schemeRegistry.register(new Scheme("http", 80, new PlainSocketFactory()));
     ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager(
         schemeRegistry);
     connManager = cm;

@@ -36,30 +36,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>ch.boye.httpclientandroidlib</groupId>
-      <artifactId>httpclientandroidlib</artifactId>
-      <version>1.0.1</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.mozilla.android.sync</groupId>
-      <artifactId>android-sync-crypto</artifactId>
-      <version>1.5-libs</version>
-    </dependency>
-    <!--  To match Android. *sigh* -->
-    <!--
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-      <version>1.2</version>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>com.googlecode.json-simple</groupId>
-      <artifactId>json-simple</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>4.1.2</version>
@@ -157,6 +133,23 @@
             <descriptor>src/main/assembly/deps.xml</descriptor>
           </descriptors>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals><goal>add-source</goal></goals>
+            <configuration>
+              <sources>
+                <source>external/httpclientandroidlib/httpclientandroidlib/src/</source>
+                <source>external/json-simple-1.1/src/</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

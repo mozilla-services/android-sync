@@ -1,0 +1,89 @@
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary
+END
+Base32Test.java
+K 25
+svn:wc:ra_dav:version-url
+V 128
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base32Test.java
+END
+Base64InputStreamTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 139
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base64InputStreamTest.java
+END
+Base64OutputStreamTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base64OutputStreamTest.java
+END
+BinaryCodecTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 133
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/BinaryCodecTest.java
+END
+Base64Test.java
+K 25
+svn:wc:ra_dav:version-url
+V 128
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base64Test.java
+END
+HexTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/HexTest.java
+END
+Base64Codec13Test.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base64Codec13Test.java
+END
+BaseNCodecTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 132
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/BaseNCodecTest.java
+END
+StringUtilsTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 133
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/StringUtilsTest.java
+END
+Base32TestData.java
+K 25
+svn:wc:ra_dav:version-url
+V 132
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base32TestData.java
+END
+Codec105ErrorInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 142
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Codec105ErrorInputStream.java
+END
+Base32InputStreamTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 139
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base32InputStreamTest.java
+END
+Base32OutputStreamTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base32OutputStreamTest.java
+END
+Base64TestData.java
+K 25
+svn:wc:ra_dav:version-url
+V 132
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/binary/Base64TestData.java
+END

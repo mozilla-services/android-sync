@@ -50,7 +50,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class AccountActivity extends AccountAuthenticatorActivity {
   private final static String LOG_TAG = "AccountActivity";
@@ -59,6 +63,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private String username;
   private String password;
   private String key;
+  private String server;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -68,11 +73,32 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     mAccountManager = AccountManager.get(getApplicationContext());
   }
 
+  protected void toggleServerField(boolean enabled) {
+    TextView serverField = (TextView) findViewById(R.id.server);
+    Log.i(LOG_TAG, "Toggling checkbox: " + enabled);
+    serverField.setFocusable(enabled);
+    serverField.setClickable(enabled);
+  }
+
   @Override
   public void onStart() {
     super.onStart();
     // Start with an empty form
     setContentView(R.layout.sync_account);
+    CheckBox serverCheckbox = (CheckBox) findViewById(R.id.checkbox_server);
+
+    Log.i(LOG_TAG, "Setting onCheckedChangeListener.");
+    OnCheckedChangeListener listener = new OnCheckedChangeListener() {
+
+      @Override
+      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        Log.i(LOG_TAG, "Toggling checkbox: " + isChecked);
+        toggleServerField(isChecked);
+      }
+    };
+    serverCheckbox.setOnCheckedChangeListener(listener);
+    // Enable or disable accordingly.
+    listener.onCheckedChanged(serverCheckbox, serverCheckbox.isChecked());
   }
 
   public void cancelClickHandler(View target) {
@@ -88,6 +114,11 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     username = ((EditText) findViewById(R.id.username)).getText().toString();
     password = ((EditText) findViewById(R.id.password)).getText().toString();
     key = ((EditText) findViewById(R.id.key)).getText().toString();
+    CheckBox serverCheckbox = (CheckBox) findViewById(R.id.checkbox_server);
+    EditText serverField = (EditText) findViewById(R.id.server);
+    if (serverCheckbox.isChecked()) {
+      server = serverField.getText().toString();
+    }
 
     // TODO : Authenticate with Sync Service, once implemented, with
     // onAuthSuccess as callback
@@ -101,24 +132,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private void authCallback() {
     // Create and add account to AccountManager
     // TODO: only allow one account to be added?
-    final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
-    final Bundle userbundle = new Bundle();
-    // Add sync key
-    userbundle.putString(Constants.OPTION_SYNCKEY, key);
-    mAccountManager.addAccountExplicitly(account, password, userbundle);
-
-    Log.d(LOG_TAG, "account: " + account.toString());
-    // Set components to sync (default: all).
-    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
-    // TODO: add other ContentProviders as needed (e.g. passwords)
-    // TODO: for each, also add to res/xml to make visible in account settings
-    ContentResolver.setMasterSyncAutomatically(true);
-    Log.d(LOG_TAG, "finished setting syncables");
-
-    final Intent intent = new Intent();
-    intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
-    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
-    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+    final Intent intent = createAccount(mAccountManager, username, key, password, server);
     setAccountAuthenticatorResult(intent.getExtras());
 
     // Testing out the authFailure case
@@ -128,7 +142,42 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
     // Successful authentication result
     setResult(RESULT_OK, intent);
-    authSuccess();
+
+    runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        authSuccess();
+      }
+    });
+  }
+
+  // TODO: lift this out.
+  public static Intent createAccount(AccountManager accountManager, String username, String syncKey, String password, String serverURL) {
+    final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
+    final Bundle userbundle = new Bundle();
+
+    // Add sync key and server URL.
+    userbundle.putString(Constants.OPTION_SYNCKEY, syncKey);
+    if (serverURL != null) {
+      Log.i(LOG_TAG, "Setting explicit server URL: " + serverURL);
+      userbundle.putString(Constants.OPTION_SERVER, serverURL);
+    }
+    accountManager.addAccountExplicitly(account, password, userbundle);
+
+    Log.d(LOG_TAG, "Account: " + account.toString());
+
+    // Set components to sync (default: all).
+    ContentResolver.setMasterSyncAutomatically(true);
+    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
+    // TODO: add other ContentProviders as needed (e.g. passwords)
+    // TODO: for each, also add to res/xml to make visible in account settings
+    Log.d(LOG_TAG, "Finished setting syncables.");
+
+    final Intent intent = new Intent();
+    intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
+    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+    return intent;
   }
 
   private void authFailure() {

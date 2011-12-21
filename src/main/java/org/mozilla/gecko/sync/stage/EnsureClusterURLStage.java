@@ -64,10 +64,14 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
 
   protected static final String LOG_TAG = "EnsureClusterURLStage";
 
-  public static void fetchClusterURL(final String serverURL,
-                                     final GlobalSession session,
+  // TODO: if cluster URL has changed since last time, we need to ensure that we do
+  // a fresh start. This takes place at the GlobalSession level. Verify!
+  public static void fetchClusterURL(final GlobalSession session,
                                      final ClusterURLFetchDelegate delegate) throws URISyntaxException {
+    Log.i(LOG_TAG, "In fetchClusterURL. Server URL is " + session.config.serverURL);
     String nodeWeaveURL = session.config.nodeWeaveURL();
+    Log.d(LOG_TAG, "node/weave is " + nodeWeaveURL);
+
     BaseResource resource = new BaseResource(nodeWeaveURL);
     resource.delegate = new SyncResourceDelegate(resource) {
 
@@ -102,13 +106,9 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
           delegate.handleSuccess(output);
           break;
         case 400:
-          Log.i(LOG_TAG, "Got 400 for cluster URL request.");
-          delegate.handleFailure(response);
-          SyncResourceDelegate.consumeEntity(response.getEntity());
-          break;
         case 404:
-          Log.i(LOG_TAG, "Server doesn't support user API. Using serverURL as clusterURL.");
-          delegate.handleSuccess(serverURL);
+          Log.i(LOG_TAG, "Got " + status + " for cluster URL request.");
+          delegate.handleFailure(response);
           SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         default:
@@ -133,43 +133,59 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
         delegate.handleError(e);
       }
     };
+
+    resource.get();
   }
 
   public void execute(final GlobalSession session) throws NoSuchStageException {
+
     if (session.config.clusterURL != null) {
+      Log.i(LOG_TAG, "Cluster URL already set. Continuing with sync.");
       session.advance();
       return;
     }
-    // TODO: support serverURL.
 
-    ClusterURLFetchDelegate delegate = new ClusterURLFetchDelegate() {
+    Log.i(LOG_TAG, "Fetching cluster URL.");
+    final ClusterURLFetchDelegate delegate = new ClusterURLFetchDelegate() {
 
       @Override
       public void handleSuccess(final String url) {
-        try {
-          session.config.clusterURL = new URI(url);
-        } catch (URISyntaxException ex) {
-        }
-        ThreadPool.run(new Runnable() {
+        Log.i(LOG_TAG, "Node assignment pointed us to " + url);
 
-          @Override
-          public void run() {
-            if (session.config.clusterURL == null) {
-              session.abort(new URISyntaxException(url, "Invalid URL"), "Invalid cluster URL.");
-              return;
-            }
-            try {
+        try {
+          session.config.setClusterURL(url);
+          ThreadPool.run(new Runnable() {
+            @Override
+            public void run() {
               session.advance();
-            } catch (NoSuchStageException e) {
-              session.abort(e, "No such stage.");
             }
-          }
-        });
+          });
+          return;
+        } catch (URISyntaxException e) {
+          final URISyntaxException uriException = e;
+          ThreadPool.run(new Runnable() {
+            @Override
+            public void run() {
+              session.abort(uriException, "Invalid cluster URL.");
+            }
+          });
+        }
       }
 
       @Override
       public void handleFailure(HttpResponse response) {
-        session.abort(new Exception("HTTP failure."), "Got failure fetching cluster URL.");
+        int statusCode = response.getStatusLine().getStatusCode();
+        Log.w(LOG_TAG, "Got HTTP failure fetching node assignment: " + statusCode);
+        if (statusCode == 404) {
+          URI serverURL = session.config.serverURL;
+          if (serverURL == null) {
+            Log.w(LOG_TAG, "No serverURL set to use as fallback cluster URL. Aborting sync.");
+            session.abort(new Exception("HTTP failure."), "Got failure fetching cluster URL.");
+            return;
+          }
+          Log.i(LOG_TAG, "Using serverURL <" + serverURL.toASCIIString() + "> as clusterURL.");
+          session.config.clusterURL = serverURL;
+        }
       }
 
       @Override
@@ -177,11 +193,15 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
         session.abort(e, "Got exception fetching cluster URL.");
       }
     };
-    try {
-      fetchClusterURL(null, session, delegate);
-    } catch (URISyntaxException e) {
-      session.abort(e, "Invalid URL for node/weave.");
-    }
-  }
 
+    ThreadPool.run(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          fetchClusterURL(session, delegate);
+        } catch (URISyntaxException e) {
+          session.abort(e, "Invalid URL for node/weave.");
+        }
+      }});
+  }
 }

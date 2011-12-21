@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/net
+END
+BCodecTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/net/BCodecTest.java
+END
+QuotedPrintableCodecTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 139
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/net/QuotedPrintableCodecTest.java
+END
+URLCodecTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/net/URLCodecTest.java
+END
+UtilsTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/net/UtilsTest.java
+END
+RFC1522CodecTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 131
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/net/RFC1522CodecTest.java
+END
+QCodecTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/test/org/apache/commons/codec/net/QCodecTest.java
+END

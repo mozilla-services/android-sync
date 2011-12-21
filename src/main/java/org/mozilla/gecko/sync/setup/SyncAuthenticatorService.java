@@ -40,7 +40,7 @@ package org.mozilla.gecko.sync.setup;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 
 import android.accounts.AbstractAccountAuthenticator;
@@ -140,6 +140,10 @@ public class SyncAuthenticatorService extends Service {
 
         // This is a Sync account.
         result.putString(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+
+        // Server.
+        String serverURL = am.getUserData(account, Constants.OPTION_SERVER);
+        result.putString(Constants.OPTION_SERVER, serverURL);
 
         // Full username, before hashing.
         result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);

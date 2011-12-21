@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/95/tags/tag_release_1_1/src/org/json/simple/parser
+END
+Yytoken.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/95/tags/tag_release_1_1/src/org/json/simple/parser/Yytoken.java
+END
+JSONParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/95/tags/tag_release_1_1/src/org/json/simple/parser/JSONParser.java
+END
+ContentHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/95/tags/tag_release_1_1/src/org/json/simple/parser/ContentHandler.java
+END
+ParseException.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/95/tags/tag_release_1_1/src/org/json/simple/parser/ParseException.java
+END
+ContainerFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/95/tags/tag_release_1_1/src/org/json/simple/parser/ContainerFactory.java
+END
+Yylex.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/95/tags/tag_release_1_1/src/org/json/simple/parser/Yylex.java
+END

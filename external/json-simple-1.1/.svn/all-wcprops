@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/95/tags/tag_release_1_1
+END
+LICENSE.txt
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/95/tags/tag_release_1_1/LICENSE.txt
+END
+.classpath
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/95/tags/tag_release_1_1/.classpath
+END
+AUTHORS.txt
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/95/tags/tag_release_1_1/AUTHORS.txt
+END
+VERSION.txt
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/95/tags/tag_release_1_1/VERSION.txt
+END
+.project
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/95/tags/tag_release_1_1/.project
+END
+ChangeLog.txt
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/95/tags/tag_release_1_1/ChangeLog.txt
+END
+README.txt
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/95/tags/tag_release_1_1/README.txt
+END
+build.xml
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/95/tags/tag_release_1_1/build.xml
+END
+test.xml
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/95/tags/tag_release_1_1/test.xml
+END

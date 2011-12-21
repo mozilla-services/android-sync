@@ -58,14 +58,10 @@ public class FetchInfoCollectionsStage implements GlobalSyncStage {
 
     @Override
     public void handleSuccess(InfoCollections global) {
-      try {
-        Log.i(LOG_TAG, "Got timestamps: ");
+      Log.i(LOG_TAG, "Got timestamps: ");
 
-        // TODO: decide whether more work needs to be done?
-        session.advance();
-      } catch (NoSuchStageException e) {
-        session.abort(e, "No such stage.");
-      }
+      // TODO: decide whether more work needs to be done?
+      session.advance();
     }
 
     @Override

@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language
+END
+ColognePhonetic.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/ColognePhonetic.java
+END
+Metaphone.java
+K 25
+svn:wc:ra_dav:version-url
+V 129
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/Metaphone.java
+END
+RefinedSoundex.java
+K 25
+svn:wc:ra_dav:version-url
+V 134
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/RefinedSoundex.java
+END
+Soundex.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/Soundex.java
+END
+SoundexUtils.java
+K 25
+svn:wc:ra_dav:version-url
+V 132
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/SoundexUtils.java
+END
+Caverphone.java
+K 25
+svn:wc:ra_dav:version-url
+V 130
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/Caverphone.java
+END
+Caverphone1.java
+K 25
+svn:wc:ra_dav:version-url
+V 131
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/Caverphone1.java
+END
+DoubleMetaphone.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/DoubleMetaphone.java
+END
+Caverphone2.java
+K 25
+svn:wc:ra_dav:version-url
+V 131
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/Caverphone2.java
+END
+AbstractCaverphone.java
+K 25
+svn:wc:ra_dav:version-url
+V 138
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/AbstractCaverphone.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/language/package.html
+END

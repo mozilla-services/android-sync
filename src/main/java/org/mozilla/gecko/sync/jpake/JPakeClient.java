@@ -48,16 +48,16 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.apache.commons.codec.binary.Base64;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.CryptoInfo;
-import org.mozilla.android.sync.crypto.Cryptographer;
-import org.mozilla.android.sync.crypto.KeyBundle;
-import org.mozilla.android.sync.crypto.NoKeyBundleException;
-import org.mozilla.android.sync.crypto.Utils;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.CryptoInfo;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.NoKeyBundleException;
+import org.mozilla.gecko.sync.crypto.Utils;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -364,15 +364,15 @@ public class JPakeClient implements JPakeRequestDelegate {
    * @throws CryptoException
    * @throws UnsupportedEncodingException
    */
-  public byte[] decryptPayload(ExtendedJSONObject payload,
-      KeyBundle keybundle) throws CryptoException, UnsupportedEncodingException {
-    byte[] ciphertext = Base64.decodeBase64(((String) payload
-        .get(Constants.JSON_KEY_CIPHERTEXT)).getBytes("UTF-8"));
-    byte[] iv = Base64.decodeBase64(((String) payload
-        .get(Constants.JSON_KEY_IV)).getBytes("UTF-8"));
+  public byte[] decryptPayload(ExtendedJSONObject payload, KeyBundle keybundle)
+                                                                               throws CryptoException,
+                                                                               UnsupportedEncodingException {
+    byte[] ciphertext = Utils.decodeBase64((String) payload
+        .get(Constants.JSON_KEY_CIPHERTEXT));
+    byte[] iv = Utils.decodeBase64((String) payload.get(Constants.JSON_KEY_IV));
     byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.JSON_KEY_HMAC));
-    byte[] plainbytes = Cryptographer
-        .decrypt(new CryptoInfo(ciphertext, iv, hmac, keybundle));
+    byte[] plainbytes = Cryptographer.decrypt(new CryptoInfo(ciphertext, iv,
+        hmac, keybundle));
     return plainbytes;
   }
 
@@ -963,7 +963,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       request.setHeader(new BasicHeader("X-KeyExchange-Id", clientId));
-      Log.d(LOG_TAG, "setting ID header: " + clientId);
 
       switch (state) {
       case REPORT_FAILURE:

@@ -46,8 +46,8 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.mozilla.android.sync.crypto.HKDF;
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.HKDF;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 import android.util.Log;
 

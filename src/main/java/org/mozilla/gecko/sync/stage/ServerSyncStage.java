@@ -37,7 +37,7 @@
 
 package org.mozilla.gecko.sync.stage;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
@@ -147,11 +147,7 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
     Log.d(LOG_TAG, "onSynchronized.");
-    try {
-      session.advance();
-    } catch (NoSuchStageException e) {
-      // TODO
-    }
+    session.advance();
   }
 
   @Override

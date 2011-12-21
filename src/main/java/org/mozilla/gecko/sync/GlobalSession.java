@@ -46,8 +46,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
@@ -136,7 +136,7 @@ public class GlobalSession implements CredentialsSource {
   }
 
   public GlobalSession(String userAPI,
-                       String clusterURL,
+                       String serverURL,
                        String username,
                        String password,
                        KeyBundle syncKeyBundle,
@@ -153,9 +153,9 @@ public class GlobalSession implements CredentialsSource {
     }
 
     Log.i(LOG_TAG, "GlobalSession initialized with bundle " + persisted);
-    URI clusterURI;
+    URI serverURI;
     try {
-      clusterURI = (clusterURL == null) ? null : new URI(clusterURL);
+      serverURI = (serverURL == null) ? null : new URI(serverURL);
     } catch (URISyntaxException e) {
       throw new SyncConfigurationException();
     }
@@ -166,9 +166,10 @@ public class GlobalSession implements CredentialsSource {
       throw new SyncConfigurationException();
     }
 
+    // TODO: use persisted.
     config = new SyncConfiguration();
     config.userAPI       = userAPI;
-    config.clusterURL    = clusterURI;
+    config.serverURL     = serverURI;
     config.username      = username;
     config.password      = password;
     config.syncKeyBundle = syncKeyBundle;
@@ -220,12 +221,18 @@ public class GlobalSession implements CredentialsSource {
    *        The next stage.
    * @throws NoSuchStageException if the stage does not exist.
    */
-  public void advance() throws NoSuchStageException {
+  public void advance() {
     this.callback.handleStageCompleted(this.currentState, this);
     Stage next = nextStage(this.currentState);
-    GlobalSyncStage nextStage = this.getStageByName(next);
+    GlobalSyncStage nextStage;
+    try {
+      nextStage = this.getStageByName(next);
+    } catch (NoSuchStageException e) {
+      this.abort(e, "No such stage " + next);
+      return;
+    }
     this.currentState = next;
-    Log.i(LOG_TAG, "Running next stage " + next);
+    Log.i(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
     try {
       nextStage.execute(this);
     } catch (Exception ex) {
@@ -263,13 +270,7 @@ public class GlobalSession implements CredentialsSource {
     if (this.currentState != GlobalSyncStage.Stage.idle) {
       throw new AlreadySyncingException(this.currentState);
     }
-    try {
-      this.advance();
-    } catch (NoSuchStageException ex) {
-      // This should not occur.
-      // TODO: log.
-      this.callback.handleError(this, ex);
-    }
+    this.advance();
   }
 
   /**
@@ -387,6 +388,7 @@ public class GlobalSession implements CredentialsSource {
     if (remoteSyncID == null) {
       // Corrupt meta/global.
       freshStart();
+      return;
     }
     String localSyncID = this.getSyncID();
     if (!remoteSyncID.equals(localSyncID)) {
@@ -398,11 +400,7 @@ public class GlobalSession implements CredentialsSource {
       config.syncID = remoteSyncID;
       // TODO TODO TODO
     }
-    try {
-      advance();
-    } catch (NoSuchStageException e) {
-      // TODO: shouldn't happen.
-    }
+    advance();
   }
 
   public void processMissingMetaGlobal(MetaGlobal global) {

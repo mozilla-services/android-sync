@@ -41,7 +41,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.DelayedWorkTracker;
 import org.mozilla.gecko.sync.HTTPFailureException;
