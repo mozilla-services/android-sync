@@ -1,0 +1,86 @@
+#!/bin/bash
+if [ $# -ne 2 ]
+then
+  echo "Usage: `basename $0` httpclient.tar.gz httpcore.tar.gz"
+  exit 0
+fi
+
+if [ ! -f $1 ]
+then
+  echo "File $1 does not exist!"
+  exit 0
+fi
+
+if [ ! -f $2 ]
+then
+  echo "File $2 does not exist!"
+  exit 0
+fi
+
+PROJECTNAME=httpclientandroidlib
+PACKAGENAME=ch.boye.httpclientandroidlib
+ROOTDIR=`pwd`
+PACKAGEDIR=${ROOTDIR}/${PROJECTNAME}/src/${PACKAGENAME//./\/}
+ANDROIDPROJECTPATH=${ROOTDIR}/${PROJECTNAME}
+
+# Create Android library project (target 7 = SDK 8)
+rm -Rf ${ANDROIDPROJECTPATH}
+android create lib-project --name ${PROJECTNAME} \
+--target 7 \
+--path ${ANDROIDPROJECTPATH} \
+--package ${PACKAGENAME}
+
+# Create package directory
+mkdir -p ${PACKAGEDIR}
+
+# Extract httpcore and httpclient
+tar xvfz $1
+tar xvfz $2
+
+# Copy all source files to new package directory
+CLIENTDIR=`find . -type d | grep '/httpclient/src/main/java/org/apache/http$'`
+COREDIR=`find . -type d | grep '/httpcore/src/main/java/org/apache/http$'`
+cd ${ROOTDIR}/${COREDIR}
+cp -R * ${PACKAGEDIR}
+cd ${ROOTDIR}/${CLIENTDIR}
+cp -R * ${PACKAGEDIR}
+
+cd ${PACKAGEDIR}
+
+# Add androidextra.HttpClientAndroidLog to the package
+mkdir androidextra
+cp ${ROOTDIR}/androidextra/* androidextra
+find . -name "HttpClientAndroidLog.java" -exec sed -i "s/sedpackagename/${PACKAGENAME}/g" {} +
+
+# Delete classes dependent on org.ietf
+rm impl/auth/NegotiateScheme.java
+rm impl/auth/NegotiateSchemeFactory.java
+find . -name "*.java" -exec sed -i "/impl\.auth\.NegotiateSchemeFactory;/c \/\* NegotiateSchemeFactory removed by HttpClient for Android script. \*\/" {} +
+find . -name "AbstractHttpClient.java" -exec sed -i -n '1h;1!H;${;g;s/registry.register([^)]*NegotiateSchemeFactory());/\/\* NegotiateSchemeFactory removed by HttpClient for Android script. \*\//g;p;}' {} +
+
+# Replace Base64 encoding with android.util.Base64 (This way it's only compatible with API 8+)
+find . -name "*.java" -exec sed -i "/commons\.codec\.binary\.Base64;/c import android\.util\.Base64;" {} +
+find . -name "BasicScheme.java" -exec sed -i -n '1h;1!H;${;g;s/Base64.encodeBase64(\([^;]*\));/Base64.encode(\1, Base64.NO_WRAP);/g;p;}' {} +
+find . -name "NTLMEngineImpl.java" -exec sed -i -n '1h;1!H;${;g;s/Base64.encodeBase64(resp)/Base64.encode(resp, Base64.NO_WRAP)/g;p;}' {} +
+find . -name "*.java" -exec sed -i -n '1h;1!H;${;g;s/Base64.decodeBase64(\([^;]*\));/Base64.decode(\1, Base64.NO_WRAP);/g;p;}' {} +
+
+# Replace logging stuff
+find . -name "*.java" -exec sed -i "/commons\.logging\.Log;/c import ${PACKAGENAME}\.androidextra\.HttpClientAndroidLog;" {} +
+find . -name "*.java" -exec sed -i "/commons\.logging\.LogFactory;/c \/\* LogFactory removed by HttpClient for Android script. \*\/" {} +
+find . -name "*.java" -exec sed -i 's/Log log/HttpClientAndroidLog log/g' {} +
+find . -name "*.java" -exec sed -i 's/private final HttpClientAndroidLog \(.*\) = LogFactory.getLog(\(.*\));/public HttpClientAndroidLog \1 = new HttpClientAndroidLog(\2);/g' {} +
+find . -name "*.java" -exec sed -i 's/private final Log \(.*\) = LogFactory.getLog(\(.*\));/public HttpClientAndroidLog \1 = new HttpClientAndroidLog(\2);/g' {} +
+find . -name "*.java" -exec sed -i 's/private final HttpClientAndroidLog log/public HttpClientAndroidLog log/g' {} +
+find . -name "*.java" -exec sed -i 's/LogFactory.getLog(\(.*\))/new HttpClientAndroidLog(\1)/g' {} +
+
+# Rename package
+find . -name "*.java" -exec sed -i "s/org\.apache\.http/${PACKAGENAME}/g" {} +
+
+cd ${ANDROIDPROJECTPATH}
+sed -i "s/ACTIVITY_ENTRY_NAME/${PROJECTNAME}/g" AndroidManifest.xml
+sed -i '/<\/project>/ i <path id="android\.libraries\.src"><path refid="project\.libraries\.src" \/><\/path><path id="android\.libraries\.jars"><path refid="project\.libraries\.jars" \/><\/path>' build.xml
+ant compile
+cd bin/classes
+zip -r ${PROJECTNAME}.jar *
+mv ${PROJECTNAME}.jar ${ROOTDIR}
+cd ${ROOTDIR}

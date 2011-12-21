@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary
+END
+Base32.java
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/Base32.java
+END
+Base64InputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/Base64InputStream.java
+END
+Base64OutputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 136
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/Base64OutputStream.java
+END
+BaseNCodecInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 139
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/BaseNCodecInputStream.java
+END
+BinaryCodec.java
+K 25
+svn:wc:ra_dav:version-url
+V 129
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/BinaryCodec.java
+END
+BaseNCodecOutputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/BaseNCodecOutputStream.java
+END
+Base64.java
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/Base64.java
+END
+Hex.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/Hex.java
+END
+BaseNCodec.java
+K 25
+svn:wc:ra_dav:version-url
+V 128
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/BaseNCodec.java
+END
+StringUtils.java
+K 25
+svn:wc:ra_dav:version-url
+V 129
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/StringUtils.java
+END
+Base32InputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/Base32InputStream.java
+END
+Base32OutputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 136
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/Base32OutputStream.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/repos/asf/!svn/ver/1086786/commons/proper/codec/tags/commons-codec-1.5/src/java/org/apache/commons/codec/binary/package.html
+END

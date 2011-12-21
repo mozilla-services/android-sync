@@ -10,3 +10,7 @@
 * To merge to mozilla-central:
 
   ./fennec-merge-jar.sh ~/moz/hg/mozilla-central
+
+* You'll need subgit to work with external dependency clones.
+
+http://rustyklophaus.com/articles/20100124-SubmodulesAndSubreposDoneRight.html

@@ -43,17 +43,11 @@ echo $WARNING > $SYNC/README.txt
 echo "Copying manifests..."
 rsync -a manifests $SYNC/
 
-echo "Copying dependencies..."
-DEPSDIR=$DESTDIR/other-licenses/android-sync-deps
-rm -r $DEPSDIR
-mkdir $DEPSDIR
-rsync -a target/android-sync-android-sync.jar $DEPSDIR/android-sync-deps.jar
-
 echo "Copying sources. All use of R must be compiled with Fennec."
 SOURCEDIR="src/main/java/org/mozilla/gecko/sync"
 SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' -not -name 'Authorities.java' | sed "s,$SOURCEDIR/,sync/,")
 echo "Source files: \n  $SOURCEFILES"
-rsync --include "*.java" --exclude 'Authorities.java' -a $SOURCEDIR $ANDROID/base/
+rsync --include "*.java" -C --exclude 'Authorities.java' -a $SOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessor Authorities file."
 PREPROCESS_FILES="sync/repositories/android/Authorities.java"
@@ -62,10 +56,29 @@ cp $SOURCEDIR/repositories/android/Authorities.java.in $ANDROID/base/sync/reposi
 echo "Copying preprocessed sync_syncadapter.xml."
 cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
 
+echo "Copying internal dependency sources."
+APACHEDIR="src/main/java/org/mozilla/apache"
+APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,apache/,")
+echo "Source files: \n  $APACHEFILES"
+rsync --include "*.java" -C -a $APACHEDIR $ANDROID/base/
+
+echo "Copying external dependency sources."
+JSONLIB=external/json-simple-1.1/src/org/json/simple
+HTTPLIB=external/httpclientandroidlib/httpclientandroidlib/src/ch/boye/httpclientandroidlib
+JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB/,json-simple/,")
+HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,httpclientandroidlib/,")
+echo "httpclientandroidlib files: \n  $HTTPLIBFILES"
+echo "json-simple files: \n  $JSONLIBFILES"
+mkdir -p $ANDROID/base/json-simple/
+rsync --include "*.java" -C -a $HTTPLIB $ANDROID/base/
+rsync --include "*.java" -C -a $JSONLIB/ $ANDROID/base/json-simple/
+
 # These seem to get copied anyway.
 rm $ANDROID/base/sync/repositories/android/Authorities.java
 rm $ANDROID/base/resources/xml/sync_syncadapter.xml
 
 echo $PREPROCESS_FILES > $SYNC/preprocess-sources.mn
 echo $WARNING > $ANDROID/base/sync/README.txt
+echo $WARNING > $ANDROID/base/httpclientandroidlib/README.txt
 echo $SOURCEFILES > $SYNC/java-sources.mn
+echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES >> $SYNC/java-sources.mn

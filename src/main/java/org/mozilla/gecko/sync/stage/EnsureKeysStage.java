@@ -42,7 +42,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;

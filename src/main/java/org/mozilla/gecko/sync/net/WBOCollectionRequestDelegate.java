@@ -37,7 +37,7 @@
 
 package org.mozilla.gecko.sync.net;
 
-import org.mozilla.android.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.CryptoRecord;
 
 /**
