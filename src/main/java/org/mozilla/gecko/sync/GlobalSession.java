@@ -472,7 +472,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
         mg.upload(new MetaGlobalDelegate() {
 
           @Override
-          public void handleSuccess(MetaGlobal global) {
+          public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
             session.config.metaGlobal = global;
             Log.i(LOG_TAG, "New meta/global uploaded with sync ID " + newSyncID);
 
@@ -501,7 +501,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
           }
 
           @Override
-          public void handleMissing(MetaGlobal global) {
+          public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
             // Shouldn't happen.
             Log.w(LOG_TAG, "Got 'missing' response uploading new meta/global.");
             freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing"));
@@ -526,20 +526,20 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
             return new MetaGlobalDelegate() {
 
               @Override
-              public void handleSuccess(final MetaGlobal global) {
+              public void handleSuccess(final MetaGlobal global, final SyncStorageResponse response) {
                 ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
-                    self.handleSuccess(global);
+                    self.handleSuccess(global, response);
                   }});
               }
 
               @Override
-              public void handleMissing(final MetaGlobal global) {
+              public void handleMissing(final MetaGlobal global, final SyncStorageResponse response) {
                 ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
-                    self.handleMissing(global);
+                    self.handleMissing(global, response);
                   }});
               }
 

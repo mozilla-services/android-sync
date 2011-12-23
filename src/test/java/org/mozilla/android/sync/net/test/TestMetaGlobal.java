@@ -51,7 +51,7 @@ public class TestMetaGlobal {
       global = g;
     }
 
-    public void handleSuccess(MetaGlobal global) {
+    public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
       fail("Fetch should 404, not succeed.");
     }
 
@@ -64,8 +64,8 @@ public class TestMetaGlobal {
       fail("Fetch should 404, not error.");
     }
 
-    public void handleMissing(MetaGlobal global) {
-      assertEquals(global.getResponse().getStatusCode(), 404);
+    public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+      assertEquals(response.getStatusCode(), 404);
       assertTrue(global.isModified);
       assertEquals(global.getSyncID(), "foobar");
       data.stopHTTPServer();
@@ -86,8 +86,8 @@ public class TestMetaGlobal {
       global = g;
     }
 
-    public void handleSuccess(MetaGlobal global) {
-      assertEquals(global.getResponse().getStatusCode(), 200);
+    public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
+      assertEquals(response.getStatusCode(), 200);
       assertFalse(global.isModified);
       assertEquals(global.getSyncID(), "zPSQTm7WBVWB");
       assertTrue(global.getEngines() instanceof ExtendedJSONObject);
@@ -107,7 +107,8 @@ public class TestMetaGlobal {
       fail("Fetch should succeed.");
     }
 
-    public void handleMissing(MetaGlobal global) {
+    public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+      fail("Fetch should not result in missing.");
     }
 
     @Override
