@@ -351,6 +351,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           // and bookmarks, all other types are ignored and thrown away
           if (!checkRecordType(record)) {
             Log.d(LOG_TAG, "Ignoring record " + record.guid + " due to unknown record type.");
+
+            // Don't throw: we don't want to abort the entire sync when we get a livemark!
             // delegate.onRecordStoreFailed(new InvalidBookmarkTypeException(null));
             return;
           }
