@@ -277,7 +277,50 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     this.fetchSince(0, delegate);
   }
 
-  // Store method and thread
+  /**
+   * There are two ways in which onStoreCompleted can be called:
+   * * We set storesAreDone, then a store finishes.
+   *   -- doneStoring, called from the store itself.
+   *
+   * * A store finishes, then we get storeDone.
+   *   -- outstandingStores, checked inside the storeDone call.
+   */
+  protected Object storeCountMonitor   = new Object();
+  protected long outstandingStoreCount = 0;
+  protected boolean storesAreDone      = false;
+
+  /**
+   * Record that a new store has begun. Call this within the
+   * synchronous invocation of store()!
+   */
+  protected void incrementStoreCount() {
+    synchronized(storeCountMonitor) {
+      outstandingStoreCount++;
+    }
+  }
+
+  /**
+   * Decrement the counter. If the counter drops to 0,
+   * and storesAreDone is true, return true.
+   */
+  protected boolean doneStoring() {
+    synchronized(storeCountMonitor) {
+      if (--outstandingStoreCount > 0) {
+        return false;
+      }
+      return storesAreDone;
+    }
+  }
+
+  /**
+   * Return true if there are any outstanding stores.
+   */
+  protected boolean outstandingStores() {
+    synchronized(storeCountMonitor) {
+      return (outstandingStoreCount <= 0);
+    }
+  }
+
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
     if (delegate == null) {
@@ -287,65 +330,81 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       Log.e(LOG_TAG, "Record sent to store was null");
       throw new IllegalArgumentException("Null record passed to AndroidBrowserRepositorySession.store().");
     }
+
+    // Before we return from this method, make sure the store count has
+    // been incremented. This prevents us from returning onStoreCompleted
+    // prematurely.
+    incrementStoreCount();
+
     ThreadPool.run(new Runnable() {
 
       @Override
       public void run() {
-        if (!isActive()) {
-          delegate.onRecordStoreFailed(new InactiveSessionException(null));
-          return;
-        }
-
-        // Check that the record is a valid type
-        // TODO Currently for bookmarks we only take care of folders
-        // and bookmarks, all other types are ignored and thrown away
-        if (!checkRecordType(record)) {
-          delegate.onRecordStoreFailed(new InvalidBookmarkTypeException(null));
-          return;
-        }
-
-        Record existingRecord;
         try {
-          existingRecord = findExistingRecord(record);
-
-          // If the record is new and not deleted, store it
-          if (existingRecord == null && !record.deleted) {
-            record.androidID = insert(record);
-          } else if (existingRecord != null) {
-
-            dbHelper.delete(existingRecord);
-            // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
-            // and our existing record has a newer timestamp, we will restore the existing record
-            if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
-              // Record exists already, need to figure out what to store
-              Record store = reconcileRecords(existingRecord, record);
-              record.androidID = insert(store);
-            }
+          if (!isActive()) {
+            delegate.onRecordStoreFailed(new InactiveSessionException(null));
+            return;
           }
-        } catch (MultipleRecordsForGuidException e) {
-          Log.e(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
-          delegate.onRecordStoreFailed(e);
-          return;
-        } catch (NoGuidForIdException e) {
-          delegate.onRecordStoreFailed(e);
-          return;
-        } catch (NullCursorException e) {
-          delegate.onRecordStoreFailed(e);
-          return;
-        } catch (Exception e) {
-          delegate.onRecordStoreFailed(e);
-          return;
-        }
 
-        // Invoke callback with result.
-        delegate.onRecordStoreSucceeded(record);
+          // Check that the record is a valid type
+          // TODO Currently for bookmarks we only take care of folders
+          // and bookmarks, all other types are ignored and thrown away
+          if (!checkRecordType(record)) {
+            Log.d(LOG_TAG, "Ignoring record " + record.guid + " due to unknown record type.");
+            // delegate.onRecordStoreFailed(new InvalidBookmarkTypeException(null));
+            return;
+          }
+
+          Record existingRecord;
+          try {
+            existingRecord = findExistingRecord(record);
+
+            // If the record is new and not deleted, store it
+            if (existingRecord == null && !record.deleted) {
+              record.androidID = insert(record);
+            } else if (existingRecord != null) {
+
+              dbHelper.delete(existingRecord);
+              // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
+              // and our existing record has a newer timestamp, we will restore the existing record
+              if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
+                // Record exists already, need to figure out what to store
+                Record store = reconcileRecords(existingRecord, record);
+                record.androidID = insert(store);
+              }
+            }
+          } catch (MultipleRecordsForGuidException e) {
+            Log.e(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
+            delegate.onRecordStoreFailed(e);
+            return;
+          } catch (NoGuidForIdException e) {
+            delegate.onRecordStoreFailed(e);
+            return;
+          } catch (NullCursorException e) {
+            delegate.onRecordStoreFailed(e);
+            return;
+          } catch (Exception e) {
+            delegate.onRecordStoreFailed(e);
+            return;
+          }
+
+          // Invoke callback with result.
+          delegate.onRecordStoreSucceeded(record);
+        } finally {
+          if (doneStoring()) {
+            // Hurrah!
+            delegate.onStoreCompleted();
+          }
+        }
       }
     });
   }
 
   @Override
   public void storeDone() {
-    // TODO: wait for the store threads to finish.
+    if (outstandingStores()) {
+      return;
+    }
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
