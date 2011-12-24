@@ -35,26 +35,10 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.gecko.sync.synchronizer;
+package org.mozilla.gecko.sync.repositories;
 
-public abstract class RecordConsumer implements Runnable {
+import org.mozilla.gecko.sync.SyncException;
 
-  public abstract void stored();
-
-  /**
-   * There are no more store items to arrive at the delegate.
-   * When you're done, take care of finishing up.
-   */
-  public abstract void queueFilled();
-  public abstract void halt();
-
-  public abstract void doNotify();
-
-  protected boolean stopImmediately = false;
-  protected RecordsConsumerDelegate delegate;
-
-  public RecordConsumer() {
-    super();
-  }
-
+public class NoStoreDelegateException extends SyncException {
+  private static final long serialVersionUID = 6631689468978422074L;
 }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import org.mozilla.gecko.sync.ThreadPool;
+import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -13,7 +14,6 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDe
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -89,10 +89,12 @@ public class WBORepository extends Repository {
     }
 
     @Override
-    public void store(final Record record,
-                      final RepositorySessionStoreDelegate delegate) {
+    public void store(final Record record) throws NoStoreDelegateException {
+      if (delegate == null) {
+        throw new NoStoreDelegateException();
+      }
       wbos.put(record.guid, record);
-      delegate.deferredStoreDelegate().onStoreSucceeded(record);
+      delegate.deferredStoreDelegate().onRecordStoreSucceeded(record);
     }
 
     @Override
@@ -113,6 +115,17 @@ public class WBORepository extends Repository {
     public void begin(RepositorySessionBeginDelegate delegate) {
       this.wbos = ((WBORepository) repository).cloneWBOs();
       super.begin(delegate);
+    }
+
+    @Override
+    public void storeDone() {
+      // TODO: this is not guaranteed to be called after all of the record store callbacks have completed!
+      new ThreadRunnable() {
+        @Override
+        public void run() {
+          delegate.onStoreCompleted();
+        }
+      }.runOnThread();
     }
   }
 

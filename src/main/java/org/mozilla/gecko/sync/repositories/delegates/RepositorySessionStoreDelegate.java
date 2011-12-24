@@ -47,7 +47,8 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
  *
  */
 public interface RepositorySessionStoreDelegate {
-  public void onStoreFailed(Exception ex);
-  public void onStoreSucceeded(Record record);
+  public void onRecordStoreFailed(Exception ex);
+  public void onRecordStoreSucceeded(Record record);
+  public void onStoreCompleted();
   public RepositorySessionStoreDelegate deferredStoreDelegate();
 }

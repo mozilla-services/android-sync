@@ -73,6 +73,7 @@ public abstract class RepositorySession {
   private static final String LOG_TAG = "RepositorySession";
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
+  protected RepositorySessionStoreDelegate delegate;
 
   // The time that the last sync on this collection completed, in milliseconds since epoch.
   public long lastSyncTimestamp;
@@ -89,7 +90,25 @@ public abstract class RepositorySession {
   public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
   public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate);
   public abstract void fetchAll(RepositorySessionFetchRecordsDelegate delegate);
-  public abstract void store(Record record, RepositorySessionStoreDelegate delegate);
+
+  /*
+   * Store operations proceed thusly:
+   *
+   * * Set a delegate
+   * * Store an arbitrary number of records. At any time the delegate can be
+   *   notified of an error.
+   * * Call storeDone to notify the session that no more items are forthcoming.
+   * * The store delegate will be notified of error or completion.
+   *
+   * This arrangement of calls allows for batching at the session level.
+   *
+   * Store success calls are not guaranteed.
+   */
+  public void setStoreDelegate(RepositorySessionStoreDelegate delegate) {
+    this.delegate = delegate;
+  }
+  public abstract void store(Record record) throws NoStoreDelegateException;
+  public abstract void storeDone();
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
 
   public void unbundle(RepositorySessionBundle bundle) {

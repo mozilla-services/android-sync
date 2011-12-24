@@ -40,6 +40,7 @@ package org.mozilla.gecko.sync.synchronizer;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.mozilla.gecko.sync.ThreadPool;
+import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -52,10 +53,48 @@ import android.util.Log;
  * Pulls records from `source`, applying them to `sink`.
  * Notifies its delegate of errors and completion.
  *
+ * All stores (initiated by a fetch) must have been completed before storeDone
+ * is invoked on the sink. This is to avoid the existing stored items being
+ * considered as the total set, with onStoreCompleted being called when they're
+ * done:
+ *
+ *   store(A) store(B)
+ *   store(C) storeDone()
+ *   store(A) finishes. Store job begins.
+ *   store(C) finishes. Store job begins.
+ *   storeDone() finishes.
+ *   Storing of A complete.
+ *   Storing of C complete.
+ *   We're done! Call onStoreCompleted.
+ *   store(B) finishes... uh oh.
+ *
+ * In other words, storeDone must be gated on the synchronous invocation of every store.
+ *
+ * Similarly, we require that every store callback have returned before onStoreCompleted is invoked.
+ *
+ * This whole set of guarantees should be achievable thusly:
+ *
+ * * The fetch process must run in a single thread, and invoke store()
+ *   synchronously. After processing every incoming record, storeDone is called,
+ *   setting a flag.
+ *   If the fetch cannot be implicitly queued, it must be explicitly queued.
+ *   In this implementation, we assume that fetch callbacks are strictly ordered in this way.
+ *
+ * * The store process must be (implicitly or explicitly) queued. When the
+ *   queue empties, the consumer checks the storeDone flag. If it's set, and the
+ *   queue is exhausted, invoke onStoreCompleted.
+ *
+ * RecordsChannel exists to enforce this ordering of operations.
+ *
  * @author rnewman
  *
  */
-class RecordsChannel implements RepositorySessionFetchRecordsDelegate, RepositorySessionStoreDelegate, RecordsConsumerDelegate, RepositorySessionBeginDelegate {
+class RecordsChannel implements
+  RepositorySessionFetchRecordsDelegate,
+  RepositorySessionStoreDelegate,
+  RecordsConsumerDelegate,
+  RepositorySessionBeginDelegate {
+
   private static final String LOG_TAG = "RecordsChannel";
   public RepositorySession source;
   public RepositorySession sink;
@@ -64,42 +103,53 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
   private long end = -1;                     // Oo er, missus.
 
   public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate) {
-    this.source = source;
-    this.sink   = sink;
-    this.delegate = delegate;
+    this.source    = source;
+    this.sink      = sink;
+    this.delegate  = delegate;
     this.timestamp = source.lastSyncTimestamp;
   }
 
   /*
    * We push fetched records into a queue.
    * A separate thread is waiting for us to notify it of work to do.
-   * When we tell it to stop, it'll stop.
-   * When it stops, we notify our delegate of completion.
+   * When we tell it to stop, it'll stop. We do that when the fetch
+   * is completed.
+   * When it stops, we tell the sink that there are no more records,
+   * and wait for the sink to tell us that storing is done.
+   * Then we notify our delegate of completion.
    */
-  private boolean waitingForQueueDone = false;
-  ConcurrentLinkedQueue<Record> toProcess = new ConcurrentLinkedQueue<Record>();
   private RecordConsumer consumer;
-
-  private void enqueue(Record record) {
-    toProcess.add(record);
-  }
+  private boolean waitingForQueueDone = false;
+  private ConcurrentLinkedQueue<Record> toProcess = new ConcurrentLinkedQueue<Record>();
 
   @Override
   public ConcurrentLinkedQueue<Record> getQueue() {
     return toProcess;
   }
 
-  @Override
-  public void consumerIsDone() {
-    Log.d(LOG_TAG, "Consumer is done. Are we waiting for it? " + waitingForQueueDone);
-    if (waitingForQueueDone) {
-      waitingForQueueDone = false;
-      delegate.onFlowCompleted(this, end);
-    }
-  }
-
   protected boolean isReady() {
     return source.isActive() && sink.isActive();
+  }
+
+
+  private static void info(String message) {
+    System.out.println(LOG_TAG + "::INFO: " + message);
+    Log.i(LOG_TAG, message);
+  }
+
+  private static void debug(String message) {
+    System.out.println(LOG_TAG + "::DEBUG: " + message);
+    Log.d(LOG_TAG, message);
+  }
+
+  private static void error(String message, Exception e) {
+    System.out.println(LOG_TAG + "::ERROR: " + message);
+    Log.e(LOG_TAG, message, e);
+  }
+
+  private static void warn(String message, Exception e) {
+    System.out.println(LOG_TAG + "::WARN: " + message);
+    Log.w(LOG_TAG, message, e);
   }
 
   /**
@@ -125,8 +175,9 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
       }
       this.delegate.onFlowBeginFailed(this, new SessionNotBegunException(failed));
     }
+    sink.setStoreDelegate(this);
     // Start a consumer thread.
-    this.consumer = new RecordConsumer(this);
+    this.consumer = new ConcurrentRecordConsumer(this);
     ThreadPool.run(this.consumer);
     waitingForQueueDone = true;
     source.fetchSince(timestamp, this);
@@ -141,38 +192,23 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
 
   @Override
   public void store(Record record) {
-    sink.store(record, this);
+    try {
+      sink.store(record);
+    } catch (NoStoreDelegateException e) {
+      error("Got NoStoreDelegateException in RecordsChannel.store(). This should not occur.", e);
+    }
   }
 
   @Override
   public void onFetchFailed(Exception ex, Record record) {
-    Log.w(LOG_TAG, "onFetchFailed. Calling for immediate stop.", ex);
-    this.consumer.stop(true);
+    warn("onFetchFailed. Calling for immediate stop.", ex);
+    this.consumer.halt();
   }
 
   @Override
   public void onFetchedRecord(Record record) {
-    this.enqueue(record);
+    this.toProcess.add(record);
     this.consumer.doNotify();
-  }
-
-  @Override
-  public void onFetchCompleted(long end) {
-    Log.i(LOG_TAG, "onFetchCompleted. Stopping consumer once stores are done.");
-    this.end = end;
-    this.consumer.stop(false);
-  }
-
-  @Override
-  public void onStoreFailed(Exception ex) {
-    this.consumer.stored();
-    delegate.onFlowStoreFailed(this, ex);
-    // TODO: abort?
-  }
-
-  @Override
-  public void onStoreSucceeded(Record record) {
-    this.consumer.stored();
   }
 
   @Override
@@ -181,6 +217,42 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
       this.toProcess.add(record);
     }
     this.consumer.doNotify();
+    this.onFetchCompleted(end);
+  }
+
+  @Override
+  public void onRecordStoreFailed(Exception ex) {
+    this.consumer.stored();
+    delegate.onFlowStoreFailed(this, ex);
+    // TODO: abort?
+  }
+
+  @Override
+  public void onRecordStoreSucceeded(Record record) {
+    this.consumer.stored();
+  }
+
+  @Override
+  public void onFetchCompleted(long end) {
+    info("onFetchCompleted. Stopping consumer once stores are done.");
+    this.end = end;
+    this.consumer.queueFilled();
+  }
+
+  @Override
+  public void consumerIsDone(boolean allRecordsQueued) {
+    debug("Consumer is done. Are we waiting for it? " + waitingForQueueDone);
+    if (waitingForQueueDone) {
+      waitingForQueueDone = false;
+      this.sink.storeDone();                 // Now we'll be waiting for onStoreCompleted.
+    }
+  }
+
+  @Override
+  public void onStoreCompleted() {
+    info("onStoreCompleted. Notifying delegate of onFlowCompleted. End is " + end);
+    // TODO: synchronize on consumer callback?
+    delegate.onFlowCompleted(this, end);
   }
 
   @Override
@@ -206,21 +278,21 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
     final RepositorySessionStoreDelegate self = this;
     return new RepositorySessionStoreDelegate() {
       @Override
-      public void onStoreSucceeded(final Record record) {
+      public void onRecordStoreSucceeded(final Record record) {
         ThreadPool.run(new Runnable() {
           @Override
           public void run() {
-            self.onStoreSucceeded(record);
+            self.onRecordStoreSucceeded(record);
           }
         });
       }
 
       @Override
-      public void onStoreFailed(final Exception ex) {
+      public void onRecordStoreFailed(final Exception ex) {
         ThreadPool.run(new Runnable() {
           @Override
           public void run() {
-            self.onStoreFailed(ex);
+            self.onRecordStoreFailed(ex);
           }
         });
       }
@@ -228,6 +300,16 @@ class RecordsChannel implements RepositorySessionFetchRecordsDelegate, Repositor
       @Override
       public RepositorySessionStoreDelegate deferredStoreDelegate() {
         return this;
+      }
+
+      @Override
+      public void onStoreCompleted() {
+        ThreadPool.run(new Runnable() {
+          @Override
+          public void run() {
+            self.onStoreCompleted();
+          }
+        });
       }
     };
   }

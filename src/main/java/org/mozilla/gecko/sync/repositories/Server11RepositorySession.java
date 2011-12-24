@@ -222,12 +222,22 @@ public class Server11RepositorySession extends RepositorySession {
   }
 
   @Override
-  public void store(Record record, RepositorySessionStoreDelegate delegate) {
+  public void store(Record record) throws NoStoreDelegateException {
+    if (delegate == null) {
+      throw new NoStoreDelegateException();
+    }
     // TODO: implement store.
   }
 
   @Override
   public void wipe(RepositorySessionWipeDelegate delegate) {
     // TODO: implement wipe.
+  }
+
+  @Override
+  public void storeDone() {
+    // TODO: wait for all POST/PUT to complete, call back.
+    // TODO
+    // TODO
   }
 }
