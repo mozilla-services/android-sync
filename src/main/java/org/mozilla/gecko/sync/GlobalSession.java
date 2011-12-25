@@ -168,6 +168,9 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
       throw new SyncConfigurationException();
     }
 
+    this.callback        = callback;
+    this.context         = context;
+
     config = new SyncConfiguration(prefsPath, this);
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;
@@ -175,9 +178,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     config.password      = password;
     config.syncKeyBundle = syncKeyBundle;
     // clusterURL and syncID are set through `persisted`, or fetched from the server.
-
-    this.callback        = callback;
-    this.context         = context;
 
     // TODO: populate saved configurations. We'll amend these after processing meta/global.
     this.synchronizerConfigurations = new SynchronizerConfigurations(persisted);
