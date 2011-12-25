@@ -13,6 +13,8 @@ import java.util.HashMap;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.util.Log;
+
 public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   private String[] expected;
   private long earliest;

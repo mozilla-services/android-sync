@@ -17,6 +17,7 @@ import android.util.Log;
 
 public class DefaultFetchDelegate extends DefaultDelegate implements RepositorySessionFetchRecordsDelegate {
 
+  private static final String LOG_TAG = "DefaultFetchDelegate";
   public ArrayList<Record> records = new ArrayList<Record>();
   
   @Override
@@ -26,39 +27,59 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
 
   @Override
   public void onFetchSucceeded(Record[] records, long end) {
-    sharedFail("Hit default delegate");
+    Log.d(LOG_TAG, "onFetchSucceeded");
+    for (Record record : records) {
+      this.records.add(record);
+    }
+    this.onFetchCompleted(end);
   }
 
   protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected, long end) {
-    Log.i("rnewman", "onDone. Test Waiter is " + testWaiter());
-    Log.i("rnewman", "End timestamp is " + end);
+    Log.i(LOG_TAG, "onDone. Test Waiter is " + testWaiter());
+    Log.i(LOG_TAG, "End timestamp is " + end);
+    Log.i(LOG_TAG, "Expected is " + expected);
+    Log.i(LOG_TAG, "Records is " + records);
     try {
-      
       int expectedCount = 0;
+      Log.d(LOG_TAG, "Counting expected keys.");
       for (String key : expected.keySet()) {
-        if (RepoUtils.SPECIAL_GUIDS_MAP == null || !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(key)) {
+        if (RepoUtils.SPECIAL_GUIDS_MAP == null ||
+            !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(key)) {
           expectedCount++;
         }
       }
+      Log.d(LOG_TAG, "Expected keys: " + expectedCount);
       for (Record record : records) {
+        Log.d(LOG_TAG, "Record.");
+        Log.d(LOG_TAG, record.guid);
+
         // Ignore special guids for bookmarks
-        if (RepoUtils.SPECIAL_GUIDS_MAP == null || !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
+        if (RepoUtils.SPECIAL_GUIDS_MAP == null ||
+            !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
           Record expect = expected.get(record.guid);
           if (expect == null) {
+            Log.d(LOG_TAG, "Failing.");
             fail("Do not expect to get back a record with guid: " + record.guid);
             testWaiter().performNotify();
           }
-          assertEquals(record, expected.get(record.guid));
+          Log.d(LOG_TAG, "Checking equality.");
+          try {
+            record.equals(expect);
+          } catch (Exception e) {
+            Log.e(LOG_TAG, "ONOZ!", e);
+          }
+          assertEquals(record, expect);
+          Log.d(LOG_TAG, "Checked equality.");
         }
       }
       assertEquals(expected.size(), expectedCount);
-      Log.i("rnewman", "Notifying success.");
+      Log.i(LOG_TAG, "Notifying success.");
       testWaiter().performNotify();
     } catch (AssertionError e) {
-      Log.e("rnewman", "Notifying assertion failure.");
+      Log.e(LOG_TAG, "Notifying assertion failure.");
       testWaiter().performNotify(e);
     } catch (Exception e) {
-      Log.e("rnewman", "Fucking no.");
+      Log.e(LOG_TAG, "Fucking no.");
       testWaiter().performNotify();
     }
   }

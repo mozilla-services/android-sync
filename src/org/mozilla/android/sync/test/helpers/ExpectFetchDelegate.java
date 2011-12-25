@@ -22,18 +22,21 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
 
   @Override
   public void onFetchSucceeded(Record[] records, long end) {
-    Log.i("rnewman", "fetchCallback: " + ((records == null) ? "null" : "" + records.length) + " records.");
+    Log.i("ExpectFetchDelegate", "onFetchSucceeded: " + ((records == null) ? "null" : "" + records.length) + " records.");
     this.records.addAll(Arrays.asList(records));
     this.onFetchCompleted(end);
   }
 
   @Override
   public void onFetchedRecord(Record record) {
+    Log.i("ExpectFetchDelegate", "onFetchedRecord: " + record.guid);
     this.records.add(record);
   }
 
   @Override
   public void onFetchCompleted(long end) {
+    Log.i("ExpectFetchDelegate", "onFetchCompleted: " + end);
+    Log.i("ExpectFetchDelegate", "Records: " + this.recordCount());
     super.onDone(this.records, this.expect, end);
   }
 
