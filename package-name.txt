@@ -1,0 +1,1 @@
+org.mozilla.fennec_rnewman
