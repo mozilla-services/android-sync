@@ -3,19 +3,16 @@
 
 package org.mozilla.android.sync.stage.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
-
-import android.test.AndroidTestCase;
-
-import org.mozilla.android.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
-public class TestGlobalSession extends AndroidTestCase {
+import android.content.Context;
+import android.test.AndroidTestCase;
 
+public class TestGlobalSession extends AndroidTestCase {
   public void testStageAdvance() {
     assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
     assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
@@ -42,16 +39,17 @@ public class TestGlobalSession extends AndroidTestCase {
   }
 
   public void testCallbacks() {
+    BaseResource.rewriteLocalhost = false;
     String clusterURL = "http://localhost:8080/";
     String username   = "johndoe";
     String password   = "password";
     String syncKey    = "abcdeabcdeabcdeabcdeabcdea";
     KeyBundle syncKeyBundle = new KeyBundle(username, syncKey);
     HappyCallback callback = new HappyCallback();
-    GlobalSession session;
     try {
-      // TODO: context?
-      session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, null);
+      Context context = getContext();
+      System.out.println("Using context " + context);
+      GlobalSession session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
       session.start();
       assertTrue(callback.calledSuccess);
     } catch (Exception e) {
