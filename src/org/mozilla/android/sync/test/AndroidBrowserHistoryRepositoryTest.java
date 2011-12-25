@@ -204,6 +204,8 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     expectedVisit.put("type", 1L);
     record0.visits.add(expectedVisit);
     
-    performWait(fetchRunnable(session, new String[] { record0.guid }, new ExpectFetchDelegate(new Record[] { record0 })));
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(new Record[] { record0 });
+    performWait(fetchRunnable(session, new String[] { record0.guid }, delegate));
+    assertTrue(record0.equalsIncludingVisits(delegate.records.get(0)));
   }
 }
