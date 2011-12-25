@@ -103,7 +103,13 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   protected Runnable getStoreRunnable(final Record record, final ExpectStoredDelegate delegate) {
     return new Runnable() {
       public void run() {
-        getSession().store(record, delegate);
+        AndroidBrowserRepositorySession session = getSession();
+        session.setStoreDelegate(delegate);
+        try {
+          session.store(record);
+        } catch (NoStoreDelegateException e) {
+          fail("NoStoreDelegateException should not occur.");
+        }
       }
     };
   }
@@ -120,7 +126,12 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return new Runnable() {
       @Override
       public void run() {
-        session.store(record, delegate);
+        session.setStoreDelegate(delegate);
+        try {
+          session.store(record);
+        } catch (NoStoreDelegateException e) {
+          fail("NoStoreDelegateException should not occur.");
+        }
       }
     };
   }
@@ -594,7 +605,8 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     prepSession();
     try {
       AndroidBrowserRepositorySession session = getSession();
-      session.store(null, new DefaultStoreDelegate());
+      session.setStoreDelegate(new DefaultStoreDelegate());
+      session.store(null);
       fail("Should throw.");
     } catch (Exception ex) {
       assertNotNull(ex);
