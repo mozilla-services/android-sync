@@ -69,11 +69,12 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
 
   @Override
   public void onFetchedRecord(Record record) {
-    sharedFail("Hit default delegate.");
+    Log.d(LOG_TAG, "onFetchedRecord(" + record.guid + ")");
+    records.add(record);
   }
 
   @Override
   public void onFetchCompleted(long end) {
-    sharedFail("Hit default delegate");
+    Log.d(LOG_TAG, "onFetchCompleted. Doing nothing.");
   }
 }

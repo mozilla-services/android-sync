@@ -24,7 +24,8 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records, long end) {
+  public void onFetchCompleted(long end) {
+    Log.i("ExpectFetchSinceDelegate", "onFetchCompleted.");
     AssertionError err = null;
     try {
 
@@ -38,7 +39,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
         }
         assertTrue(record.lastModified >= this.earliest);
       }
-      assertEquals(this.expected.length, records.length - countSpecials);
+      assertEquals(this.expected.length, records.size() - countSpecials);
     } catch (AssertionError e) {
       err = e;
     }

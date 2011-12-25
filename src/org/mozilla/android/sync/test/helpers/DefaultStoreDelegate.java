@@ -9,12 +9,17 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 public class DefaultStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   
   @Override
-  public void onStoreFailed(Exception ex) {
+  public void onRecordStoreFailed(Exception ex) {
     sharedFail("Store failed");
   }
 
   @Override
-  public void onStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(Record record) {
+    sharedFail("DefaultStoreDelegate used");
+  }
+
+  @Override
+  public void onStoreCompleted() {
     sharedFail("DefaultStoreDelegate used");
   }
 
@@ -24,21 +29,21 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
     return new RepositorySessionStoreDelegate() {
 
       @Override
-      public void onStoreSucceeded(final Record record) {
+      public void onRecordStoreSucceeded(final Record record) {
         new Thread(new Runnable() {
           @Override
           public void run() {
-            self.onStoreSucceeded(record);
+            self.onRecordStoreSucceeded(record);
           }
         }).start();
       }
 
       @Override
-      public void onStoreFailed(final Exception ex) {
+      public void onRecordStoreFailed(final Exception ex) {
         new Thread(new Runnable() {
           @Override
           public void run() {
-            self.onStoreFailed(ex);
+            self.onRecordStoreFailed(ex);
           }
         }).start();
       }
@@ -47,6 +52,16 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
       public RepositorySessionStoreDelegate deferredStoreDelegate() {
         return this;
       }
+
+      @Override
+      public void onStoreCompleted() {
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            self.onStoreCompleted();
+          }
+        }).start();
+      }
     };
-  }   
+  }
 }

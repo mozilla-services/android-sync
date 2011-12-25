@@ -15,7 +15,6 @@ import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -127,7 +126,7 @@ public class Crypto5MiddlewareRepositorySessionTest extends AndroidTestCase {
     }
 
     @Override
-    public void store(Record record, RepositorySessionStoreDelegate delegate) {
+    public void store(Record record) {
       // TODO Auto-generated method stub
       
     }
@@ -136,6 +135,12 @@ public class Crypto5MiddlewareRepositorySessionTest extends AndroidTestCase {
     public void wipe(RepositorySessionWipeDelegate delegate) {
       // TODO Auto-generated method stub
       
+    }
+
+    @Override
+    public void storeDone() {
+      // TODO Auto-generated method stub
+
     }
     
   }
