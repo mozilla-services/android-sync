@@ -18,6 +18,8 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySessi
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.util.Log;
+
 public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
   
   @Override
@@ -100,21 +102,27 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     basicStoreTest(BookmarkHelpers.createBookmark1());
   }
 
+
+  public void testStoreFolder() {
+    basicStoreTest(BookmarkHelpers.createFolder1());
+  }
+
+  /**
+   * TODO: 2011-12-24, tests disabled because we no longer fail
+   * a store call if we get an unknown record type.
+   */
   /*
    * Test storing each different type of Bookmark record.
    * We expect any records with type other than "bookmark"
    * or "folder" to fail. For now we throw these away.
    */
+  /*
   public void testStoreMicrosummary() {
     basicStoreFailTest(BookmarkHelpers.createMicrosummary());
   }
 
   public void testStoreQuery() {
     basicStoreFailTest(BookmarkHelpers.createQuery());
-  }
-
-  public void testStoreFolder() {
-    basicStoreTest(BookmarkHelpers.createFolder1());
   }
 
   public void testStoreLivemark() {
@@ -124,6 +132,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   public void testStoreSeparator() {
     basicStoreFailTest(BookmarkHelpers.createSeparator());
   }
+  */
   
   protected void basicStoreFailTest(Record record) {
     prepSession();    
@@ -222,7 +231,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    */
   @Override
   public void testStoreIdenticalExceptGuid() {
+    Log.i("testStoreIdenticalExceptGuid", "Started.");
     storeIdenticalExceptGuid(BookmarkHelpers.createBookmarkInMobileFolder1());
+    Log.i("testStoreIdenticalExceptGuid", "Done.");
   }
   
   /*
