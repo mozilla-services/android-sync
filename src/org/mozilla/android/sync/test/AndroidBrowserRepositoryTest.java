@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test;
 
-import java.util.Arrays;
-
 import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
@@ -21,6 +19,7 @@ import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
@@ -75,8 +74,8 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       // error shouldn't occur in the future, but results from
       // trying to access content providers before Fennec has
       // been run at least once.
-      Log.e(tag, "ProfileDatabaseException seen in wipe, begin shoud fail");
-      
+      Log.e(tag, "ProfileDatabaseException seen in wipe. Begin should fail");
+      fail("NullPointerException in wipe.");
     }
   }
 
