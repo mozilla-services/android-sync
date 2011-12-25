@@ -185,20 +185,28 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
 
     protected void fetchFromCursor(Cursor cursor, long end) {
+      Log.d(LOG_TAG, "Fetch from cursor:");
       try {
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-          Record r = recordFromMirrorCursor(cursor);
-          delegate.onFetchedRecord(transformRecord(r));
-          cursor.moveToNext();
+        try {
+          cursor.moveToFirst();
+          while (!cursor.isAfterLast()) {
+            Log.d(LOG_TAG, "... one more record.");
+            Record r = recordFromMirrorCursor(cursor);
+            delegate.onFetchedRecord(transformRecord(r));
+            cursor.moveToNext();
+          }
+          delegate.onFetchCompleted(end);
+        } catch (NoGuidForIdException e) {
+          Log.w(LOG_TAG, "No GUID for ID.", e);
+          delegate.onFetchFailed(e, null);
+        } catch (Exception e) {
+          Log.w(LOG_TAG, "Exception in fetchFromCursor.", e);
+          delegate.onFetchFailed(e, null);
+          return;
         }
+      } finally {
+        Log.d(LOG_TAG, "Closing cursor.");
         cursor.close();
-        delegate.onFetchCompleted(end);
-      } catch (NoGuidForIdException e) {
-        delegate.onFetchFailed(e, null);
-      } catch (Exception e) {
-        delegate.onFetchFailed(e, null);
-        return;
       }
     }
   }
@@ -240,6 +248,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   @Override
   public void fetchSince(long timestamp,
                          RepositorySessionFetchRecordsDelegate delegate) {
+    Log.i(LOG_TAG, "Running fetchSince(" + timestamp + ") in thread pool.");
     ThreadPool.run(new FetchSinceRunnable(timestamp, now(), delegate));
   }
 
