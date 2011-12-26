@@ -230,4 +230,9 @@ public class CryptoRecord extends Record {
     o.put(KEY_ID,      this.guid);
     return o.object;
   }
+
+  @Override
+  public String toJSONString() {
+    return toJSONObject().toJSONString();
+  }
 }
