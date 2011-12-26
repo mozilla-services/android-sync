@@ -140,6 +140,9 @@ public class ExtendedJSONObject {
 
   public ExtendedJSONObject getObject(String key) throws NonObjectJSONException {
     Object o = this.object.get(key);
+    if (o == null) {
+      return null;
+    }
     if (o instanceof ExtendedJSONObject) {
       return (ExtendedJSONObject) o;
     }
