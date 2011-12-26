@@ -41,7 +41,6 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -70,6 +69,19 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   public AndroidBrowserRepositorySession(Repository repository) {
     super(repository);
+  }
+
+  // Override these.
+  protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
+
+  // Must be overriden by AndroidBookmarkRepositorySession.
+  protected boolean checkRecordType(Record record) {
+    return true;
+  }
+
+  // Override in subclass to implement record extension.
+  protected Record transformRecord(Record record) throws NullCursorException {
+    return record;
   }
 
   @Override
@@ -103,6 +115,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected abstract String buildRecordString(Record record);
 
   protected void checkDatabase() throws ProfileDatabaseException, NullCursorException {
+    Log.i(LOG_TAG, "Checking database.");
     try {
       dbHelper.fetch(new String[] { "none" });
     } catch (NullPointerException e) {
@@ -112,7 +125,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   @Override
   public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
-    ThreadPool.run(new GuidsSinceRunnable(timestamp, delegate));
+    GuidsSinceRunnable command = new GuidsSinceRunnable(timestamp, delegate);
+    storeWorkQueue.execute(command);
   }
 
   class GuidsSinceRunnable implements Runnable {
@@ -158,23 +172,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
-
-  // Must be overrriden by AndroidBookmarkRepositorySession
-  protected boolean checkRecordType(Record record) {
-    return true;
-  }
-
-  // Override in subclass to implement record extension.
-  protected Record transformRecord(Record record) throws NullCursorException {
-    return record;
-  }
-
-  // Fetch method and thread
   @Override
   public void fetch(String[] guids,
                     RepositorySessionFetchRecordsDelegate delegate) {
-    ThreadPool.run(new FetchRunnable(guids, now(), delegate));
+    FetchRunnable command = new FetchRunnable(guids, now(), delegate);
+    storeWorkQueue.execute(command);
   }
 
   abstract class FetchingRunnable implements Runnable {
@@ -248,8 +250,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   @Override
   public void fetchSince(long timestamp,
                          RepositorySessionFetchRecordsDelegate delegate) {
-    Log.i(LOG_TAG, "Running fetchSince(" + timestamp + ") in thread pool.");
-    ThreadPool.run(new FetchSinceRunnable(timestamp, now(), delegate));
+    Log.i(LOG_TAG, "Running fetchSince(" + timestamp + ").");
+    FetchSinceRunnable command = new FetchSinceRunnable(timestamp, now(), delegate);
+    storeWorkQueue.execute(command);
   }
 
   class FetchSinceRunnable extends FetchingRunnable {
@@ -308,28 +311,6 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  /**
-   * Decrement the counter. If the counter drops to 0,
-   * and storesAreDone is true, return true.
-   */
-  protected boolean doneStoring() {
-    synchronized(storeCountMonitor) {
-      if (--outstandingStoreCount > 0) {
-        return false;
-      }
-      return storesAreDone;
-    }
-  }
-
-  /**
-   * Return true if there are any outstanding stores.
-   */
-  protected boolean outstandingStores() {
-    synchronized(storeCountMonitor) {
-      return (outstandingStoreCount <= 0);
-    }
-  }
-
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
     if (delegate == null) {
@@ -345,83 +326,64 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     // prematurely.
     incrementStoreCount();
 
-    ThreadPool.run(new Runnable() {
+    Runnable command = new Runnable() {
 
       @Override
       public void run() {
-        try {
-          if (!isActive()) {
-            delegate.onRecordStoreFailed(new InactiveSessionException(null));
-            return;
-          }
-
-          // Check that the record is a valid type
-          // TODO Currently for bookmarks we only take care of folders
-          // and bookmarks, all other types are ignored and thrown away
-          if (!checkRecordType(record)) {
-            Log.d(LOG_TAG, "Ignoring record " + record.guid + " due to unknown record type.");
-
-            // Don't throw: we don't want to abort the entire sync when we get a livemark!
-            // delegate.onRecordStoreFailed(new InvalidBookmarkTypeException(null));
-            return;
-          }
-
-          Record existingRecord;
-          try {
-            existingRecord = findExistingRecord(record);
-
-            // If the record is new and not deleted, store it
-            if (existingRecord == null && !record.deleted) {
-              record.androidID = insert(record);
-            } else if (existingRecord != null) {
-
-              dbHelper.delete(existingRecord);
-              // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
-              // and our existing record has a newer timestamp, we will restore the existing record
-              if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
-                // Record exists already, need to figure out what to store
-                Record store = reconcileRecords(existingRecord, record);
-                record.androidID = insert(store);
-              }
-            }
-          } catch (MultipleRecordsForGuidException e) {
-            Log.e(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
-            delegate.onRecordStoreFailed(e);
-            return;
-          } catch (NoGuidForIdException e) {
-            delegate.onRecordStoreFailed(e);
-            return;
-          } catch (NullCursorException e) {
-            delegate.onRecordStoreFailed(e);
-            return;
-          } catch (Exception e) {
-            delegate.onRecordStoreFailed(e);
-            return;
-          }
-
-          // Invoke callback with result.
-          delegate.onRecordStoreSucceeded(record);
-        } finally {
-          if (doneStoring()) {
-            // Hurrah!
-            delegate.onStoreCompleted();
-          }
+        if (!isActive()) {
+          delegate.onRecordStoreFailed(new InactiveSessionException(null));
+          return;
         }
-      }
-    });
-  }
 
-  @Override
-  public void storeDone() {
-    if (outstandingStores()) {
-      return;
-    }
-    ThreadPool.run(new Runnable() {
-      @Override
-      public void run() {
-        delegate.onStoreCompleted();
+        // Check that the record is a valid type
+        // TODO Currently for bookmarks we only take care of folders
+        // and bookmarks, all other types are ignored and thrown away
+        if (!checkRecordType(record)) {
+          Log.d(LOG_TAG, "Ignoring record " + record.guid + " due to unknown record type.");
+
+          // Don't throw: we don't want to abort the entire sync when we get a livemark!
+          // delegate.onRecordStoreFailed(new InvalidBookmarkTypeException(null));
+          return;
+        }
+
+        Record existingRecord;
+        try {
+          existingRecord = findExistingRecord(record);
+
+          // If the record is new and not deleted, store it
+          if (existingRecord == null && !record.deleted) {
+            record.androidID = insert(record);
+          } else if (existingRecord != null) {
+
+            dbHelper.delete(existingRecord);
+            // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
+            // and our existing record has a newer timestamp, we will restore the existing record
+            if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
+              // Record exists already, need to figure out what to store
+              Record store = reconcileRecords(existingRecord, record);
+              record.androidID = insert(store);
+            }
+          }
+        } catch (MultipleRecordsForGuidException e) {
+          Log.e(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
+          delegate.onRecordStoreFailed(e);
+          return;
+        } catch (NoGuidForIdException e) {
+          delegate.onRecordStoreFailed(e);
+          return;
+        } catch (NullCursorException e) {
+          delegate.onRecordStoreFailed(e);
+          return;
+        } catch (Exception e) {
+          delegate.onRecordStoreFailed(e);
+          return;
+        }
+
+        // Invoke callback with result.
+        delegate.onRecordStoreSucceeded(record);
       }
-    });
+    };
+    storeWorkQueue.execute(command);
   }
   
   protected long insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
@@ -527,14 +489,14 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   // Wipe method and thread.
   @Override
   public void wipe(RepositorySessionWipeDelegate delegate) {
-    WipeThread thread = new WipeThread(delegate);
-    thread.start();
+    Runnable command = new WipeRunnable(delegate);
+    storeWorkQueue.execute(command);
   }
 
-  class WipeThread extends Thread {
+  class WipeRunnable implements Runnable {
     private RepositorySessionWipeDelegate delegate;
 
-    public WipeThread(RepositorySessionWipeDelegate delegate) {
+    public WipeRunnable(RepositorySessionWipeDelegate delegate) {
       this.delegate = delegate;
     }
 
