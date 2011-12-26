@@ -55,6 +55,11 @@ public class Crypto5MiddlewareRepositorySessionTest extends AndroidTestCase {
              rec.deleted == this.deleted &&
              rec.value == this.value;
     }
+
+    @Override
+    public String toJSONString() {
+      throw new RuntimeException("Can't JSONify MockRecord.");
+    }
   }
 
   public class CryptoTestRepository extends Repository {
