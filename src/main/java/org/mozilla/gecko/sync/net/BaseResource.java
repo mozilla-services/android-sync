@@ -70,6 +70,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.impl.conn.tsccm.ThreadSafeClientConnManager;
 import ch.boye.httpclientandroidlib.params.HttpConnectionParams;
 import ch.boye.httpclientandroidlib.params.HttpParams;
+import ch.boye.httpclientandroidlib.params.HttpProtocolParams;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 import ch.boye.httpclientandroidlib.protocol.HttpContext;
 
@@ -88,6 +89,7 @@ public class BaseResource implements Resource {
   protected DefaultHttpClient client;
   public    ResourceDelegate delegate;
   protected HttpRequestBase request;
+  public String charset = "utf-8";
 
   public BaseResource(String uri) throws URISyntaxException {
     this(uri, rewriteLocalhost);
@@ -154,6 +156,7 @@ public class BaseResource implements Resource {
     HttpParams params = client.getParams();
     HttpConnectionParams.setConnectionTimeout(params, delegate.connectionTimeout());
     HttpConnectionParams.setSoTimeout(params, delegate.socketTimeout());
+    HttpProtocolParams.setContentCharset(params, charset);
     delegate.addHeaders(request, client);
   }
 
