@@ -45,6 +45,7 @@ import java.io.StringReader;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -173,5 +174,16 @@ public class ExtendedJSONObject {
   @SuppressWarnings("unchecked")
   public Iterable<Entry<String, Object>> entryIterable() {
     return this.object.entrySet();
+  }
+
+  public org.json.simple.JSONArray getArray(String key) throws NonArrayJSONException {
+    Object o = this.object.get(key);
+    if (o == null) {
+      return null;
+    }
+    if (o instanceof JSONArray) {
+      return (JSONArray) o;
+    }
+    throw new NonArrayJSONException(o);
   }
 }
