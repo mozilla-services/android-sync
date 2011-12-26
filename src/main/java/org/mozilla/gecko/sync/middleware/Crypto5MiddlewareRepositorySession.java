@@ -197,6 +197,7 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   public void setStoreDelegate(RepositorySessionStoreDelegate delegate) {
     // TODO: it remains to be seen how this will work.
     inner.setStoreDelegate(delegate);
+    this.delegate = delegate;             // So we can handle errors without involving inner.
   }
 
   @Override
@@ -215,6 +216,7 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
       delegate.onRecordStoreFailed(e);
       return;
     }
+    // Allow the inner session to do delegate handling.
     inner.store(rec);
   }
 
