@@ -43,6 +43,9 @@ import android.util.Log;
 
 /**
  * Consume records from a queue inside a RecordsChannel, as fast as we can.
+ * TODO: rewrite this in terms of an ExecutorService and a CompletionService.
+ * See Bug 713483.
+ *
  * @author rnewman
  *
  */
