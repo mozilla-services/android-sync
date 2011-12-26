@@ -196,7 +196,9 @@ class RecordsChannel implements
     try {
       sink.store(record);
     } catch (NoStoreDelegateException e) {
-      error("Got NoStoreDelegateException in RecordsChannel.store(). This should not occur.", e);
+      error("Got NoStoreDelegateException in RecordsChannel.store(). This should not occur. Aborting.", e);
+      delegate.onFlowStoreFailed(this, e);
+      this.abort();
     }
   }
 
