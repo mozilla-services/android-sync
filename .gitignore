@@ -1,4 +1,9 @@
+AndroidManifest.xml
+src/main/java/org/mozilla/gecko/sync/repositories/android/Authorities.java
+res/xml/sync_syncadapter.xml
+res/values/strings.xml
 .metadata
+*.pyc
 *~
 .*.sw?
 .sw?
@@ -8,7 +13,6 @@ target
 .project
 .classpath
 local.properties
-AndroidManifest.xml
 bin
 gen
 .settings
