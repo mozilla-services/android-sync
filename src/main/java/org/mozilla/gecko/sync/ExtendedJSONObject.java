@@ -120,6 +120,31 @@ public class ExtendedJSONObject {
     return (Long) this.get(key);
   }
 
+  /**
+   * Return a server timestamp value as milliseconds since epoch.
+   * @param string
+   * @return A Long, or null if the value is non-numeric or doesn't exist.
+   */
+  public Long getTimestamp(String key) {
+    Object val = this.object.get(key);
+
+    // This is absurd.
+    if (val instanceof Double) {
+      double millis = ((Double) val).doubleValue() * 1000;
+      return new Double(millis).longValue();
+    }
+    if (val instanceof Float) {
+      double millis = ((Float) val).doubleValue() * 1000;
+      return new Double(millis).longValue();
+    }
+    if (val instanceof Number) {
+      // Must be an integral number.
+      return ((Number) val).longValue() * 1000;
+    }
+
+    return null;
+  }
+
   public boolean containsKey(String key) {
     return this.object.containsKey(key);
   }
