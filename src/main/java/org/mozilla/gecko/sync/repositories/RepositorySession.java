@@ -148,7 +148,6 @@ public abstract class RepositorySession {
     try {
       sharedBegin();
       delegate.deferredBeginDelegate().onBeginSucceeded(this);
-
     } catch (Exception e) {
       delegate.deferredBeginDelegate().onBeginFailed(e);
     }
