@@ -38,6 +38,9 @@
 
 package org.mozilla.gecko.sync.repositories;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -74,6 +77,7 @@ public abstract class RepositorySession {
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
   protected RepositorySessionStoreDelegate delegate;
+  protected ExecutorService storeWorkQueue = Executors.newSingleThreadExecutor();
 
   // The time that the last sync on this collection completed, in milliseconds since epoch.
   public long lastSyncTimestamp;
@@ -109,7 +113,19 @@ public abstract class RepositorySession {
     this.delegate = delegate;
   }
   public abstract void store(Record record) throws NoStoreDelegateException;
-  public abstract void storeDone();
+
+  public void storeDone() {
+    Log.d(LOG_TAG, "Scheduling onStoreCompleted for after storing is done.");
+    Runnable command = new Runnable() {
+      @Override
+      public void run() {
+        delegate.onStoreCompleted();
+      }
+    };
+    storeWorkQueue.execute(command);
+    storeWorkQueue.shutdown();
+  }
+
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
 
   public void unbundle(RepositorySessionBundle bundle) {

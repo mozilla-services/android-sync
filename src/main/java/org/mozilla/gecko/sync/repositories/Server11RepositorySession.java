@@ -44,8 +44,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
@@ -258,9 +256,6 @@ public class Server11RepositorySession extends RepositorySession {
     // TODO: implement wipe.
   }
 
-
-  protected ExecutorService storeWorkQueue = Executors.newSingleThreadExecutor();
-
   protected Object recordsBufferMonitor = new Object();
   protected ArrayList<byte[]> recordsBuffer = new ArrayList<byte[]>();
   protected int byteCount = PER_BATCH_OVERHEAD;
@@ -316,14 +311,7 @@ public class Server11RepositorySession extends RepositorySession {
   public void storeDone() {
     synchronized (recordsBufferMonitor) {
       flush(takeItems());
-      storeWorkQueue.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.onStoreCompleted();
-        }
-      });
-      // Don't accept any more tasks.
-      storeWorkQueue.shutdown();
+      super.storeDone();
     }
   }
 
