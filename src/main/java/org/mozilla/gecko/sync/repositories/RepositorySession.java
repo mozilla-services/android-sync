@@ -105,6 +105,7 @@ public abstract class RepositorySession {
    * Store success calls are not guaranteed.
    */
   public void setStoreDelegate(RepositorySessionStoreDelegate delegate) {
+    Log.d(LOG_TAG, "Setting store delegate to " + delegate);
     this.delegate = delegate;
   }
   public abstract void store(Record record) throws NoStoreDelegateException;

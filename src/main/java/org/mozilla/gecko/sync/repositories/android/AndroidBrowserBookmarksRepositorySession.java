@@ -150,8 +150,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // and insert them if they don't exist.
     Cursor cur;
     try {
+      Log.d(LOG_TAG, "Check and build special GUIDs.");
       dataAccessor.checkAndBuildSpecialGuids();
       cur = dataAccessor.getGuidsIDsForFolders();
+      Log.d(LOG_TAG, "Got GUIDs for folders.");
     } catch (NullCursorException e) {
       delegate.onBeginFailed(e);
       return;
@@ -171,7 +173,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       cur.moveToNext();
     }
     cur.close();
-    
+    Log.d(LOG_TAG, "Done with initial setup of bookmarks session.");
     super.begin(delegate);
   }
 

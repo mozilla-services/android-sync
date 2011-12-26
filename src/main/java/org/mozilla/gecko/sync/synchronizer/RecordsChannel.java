@@ -187,6 +187,7 @@ class RecordsChannel implements
    * Begin both sessions, invoking flow() when done.
    */
   public void beginAndFlow() {
+    info("Beginning source.");
     source.begin(this);
   }
 
@@ -263,9 +264,11 @@ class RecordsChannel implements
   @Override
   public void onBeginSucceeded(RepositorySession session) {
     if (session == source) {
+      info("Source session began. Beginning sink session.");
       sink.begin(this);
     }
     if (session == sink) {
+      info("Sink session began. Beginning flow.");
       this.flow();
       return;
     }
