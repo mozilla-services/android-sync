@@ -1,9 +1,10 @@
 #!/bin/sh
 
 # Or use the one in mozilla-central.
+USERNAME=$(whoami)
 PREPROCESSOR="python tools/Preprocessor.py"
 
-ANDROID_PACKAGE_NAME=$(cat package-name.txt)
+ANDROID_PACKAGE_NAME=$($PREPROCESSOR -Fsubstitution -DUSERNAME=$USERNAME package-name.txt)
 
 echo "Using ANDROID_PACKAGE_NAME $ANDROID_PACKAGE_NAME."
 
