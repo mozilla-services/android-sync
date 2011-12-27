@@ -72,73 +72,92 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     dataAccessor = (AndroidBrowserBookmarksDataAccessor) dbHelper;
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    long androidParentId = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
-    String guid = idToGuid.get(androidParentId);
+  private long getParentID(Cursor cur) {
+    return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
+  }
 
-    if (guid == null) {
-      // if the parent has been stored and somehow has a null guid, throw an error
-      if (idToGuid.containsKey(androidParentId)) {
-        Log.e(LOG_TAG, "Have the parent android id for the record but the parent's guid wasn't found");
-        throw new NoGuidForIdException(null);
-      } else {
-        return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
-      }
+  private String getParentName(String parentGUID) throws ParentNotFoundException, NullCursorException {
+    if (RepoUtils.SPECIAL_GUIDS_MAP.containsKey(parentGUID)) {
+      return RepoUtils.SPECIAL_GUIDS_MAP.get(parentGUID);
     }
-    
-    // Get parent name
+
+    // Get parent name from database.
     String parentName = "";
-    Cursor name = dataAccessor.fetch(new String[] { guid });
+    Cursor name = dataAccessor.fetch(new String[] { parentGUID });
     try {
       name.moveToFirst();
       if (!name.isAfterLast()) {
         parentName = RepoUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
       }
       else {
-        Log.e(LOG_TAG, "Couldn't find record with guid " + guid + " while looking for parent name");
+        Log.e(LOG_TAG, "Couldn't find record with guid '" + parentGUID + "' when looking for parent name.");
         throw new ParentNotFoundException(null);
       }
     } finally {
       name.close();
     }
+    return parentName;
+  }
+
+  @SuppressWarnings("unchecked")
+  private JSONArray getChildren(long androidID) throws NullCursorException {
+    JSONArray childArray = null;
+    Cursor children = dataAccessor.getChildren(androidID);
+    try {
+      children.moveToFirst();
+      int count = 0;
+
+      // Get children into array in correct order.
+      while(!children.isAfterLast()) {
+        count++;
+        children.moveToNext();
+      }
+      children.moveToFirst();
+      String[] kids = new String[count];
+      while (!children.isAfterLast()) {
+        if (childArray == null) {
+          childArray = new JSONArray();
+        }
+        String childGuid = RepoUtils.getStringFromCursor(children, "guid");
+        int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
+        kids[childPosition] = childGuid;
+        children.moveToNext();
+      }
+      children.close();
+      for (int i = 0; i < count; ++i) {
+        childArray.add(kids[i]);
+      }
+    } finally {
+      children.close();
+    }
+    return childArray;
+  }
+
+  @Override
+  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    long androidParentID = getParentID(cur);
+    String androidParentGUID = idToGuid.get(androidParentID);
+
+    if (androidParentGUID == null) {
+      // if the parent has been stored and somehow has a null GUID, throw an error.
+      if (idToGuid.containsKey(androidParentID)) {
+        Log.e(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
+        throw new NoGuidForIdException(null);
+      } else {
+        return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
+      }
+    }
+
+    String parentName = getParentName(androidParentGUID);
 
     // If record is a folder, build out the children array
     long isFolder = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
     JSONArray childArray = null;
     if (isFolder == 1) {
       long androidID = guidToID.get(RepoUtils.getStringFromCursor(cur, "guid"));
-      Cursor children = dataAccessor.getChildren(androidID);
-      try {
-        children.moveToFirst();
-        int count = 0;
-
-        // Get children into array in correct order
-        while(!children.isAfterLast()) {
-          count++;
-          children.moveToNext();
-        }
-        children.moveToFirst();
-        String[] kids = new String[count];
-        while (!children.isAfterLast()) {
-          if (childArray == null) {
-            childArray = new JSONArray();
-          }
-          String childGuid = RepoUtils.getStringFromCursor(children, "guid");
-          int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
-          kids[childPosition] = childGuid;
-          children.moveToNext();
-        }
-        children.close();
-        for (int i = 0; i < count; ++i) {
-          childArray.add(kids[i]);
-        }
-      } finally {
-        children.close();
-      }
+      childArray = getChildren(androidID);
     }
-    return RepoUtils.bookmarkFromMirrorCursor(cur, guid, parentName, childArray);
+    return RepoUtils.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
   }
 
   @Override
