@@ -159,12 +159,16 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
 
       ArrayList<String> guids = new ArrayList<String>();
-      cur.moveToFirst();
-      while (!cur.isAfterLast()) {
-        guids.add(RepoUtils.getStringFromCursor(cur, "guid"));
-        cur.moveToNext();
+      try {
+        cur.moveToFirst();
+        while (!cur.isAfterLast()) {
+          guids.add(RepoUtils.getStringFromCursor(cur, "guid"));
+          cur.moveToNext();
+        }
+      } finally {
+        Log.d(LOG_TAG, "Closing cursor after guidsSince.");
+        cur.close();
       }
-      cur.close();
 
       String guidsArray[] = new String[guids.size()];
       guids.toArray(guidsArray);
@@ -207,7 +211,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           return;
         }
       } finally {
-        Log.d(LOG_TAG, "Closing cursor.");
+        Log.d(LOG_TAG, "Closing cursor after fetch.");
         cursor.close();
       }
     }

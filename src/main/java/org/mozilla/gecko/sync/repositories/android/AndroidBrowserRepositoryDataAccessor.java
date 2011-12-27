@@ -78,12 +78,15 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
       Log.e(LOG_TAG, "Got back a null cursor in AndroidBrowserRepositoryDataAccessor.purgeDeleted");
       throw new NullCursorException(null);
     }
-    cur.moveToFirst();
-    while (!cur.isAfterLast()) {
-      delete(RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID));
-      cur.moveToNext();
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        delete(RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID));
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
     }
-    cur.close();
   }
   
   protected void delete(String guid) {

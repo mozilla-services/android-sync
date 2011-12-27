@@ -86,28 +86,31 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    */
   public void checkAndBuildSpecialGuids() throws NullCursorException {
     Cursor cur = fetch(RepoUtils.SPECIAL_GUIDS);
-    cur.moveToFirst();
     int count = 0;
-    boolean containsMobileFolder = false;
     long mobileRoot = 0;
-    while (!cur.isAfterLast()) {
-      String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-      if (guid.equals("mobile")) {
-        containsMobileFolder = true;
-        mobileRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+    boolean containsMobileFolder = false;
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        if (guid.equals("mobile")) {
+          containsMobileFolder = true;
+          mobileRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+        }
+        count++;
+
+        // Make sure none of these folders are marked as deleted
+        if (RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1) {
+          ContentValues cv = new ContentValues();
+          cv.put(BrowserContract.SyncColumns.IS_DELETED, 0);
+          updateByGuid(guid, cv);
+        }
+        cur.moveToNext();
       }
-      count++;
-      
-      // Make sure none of these folders are marked as deleted
-      if (RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1) {
-        ContentValues cv = new ContentValues();
-        cv.put(BrowserContract.SyncColumns.IS_DELETED, 0);
-        updateByGuid(guid, cv);
-      }
-      cur.moveToNext();
+    } finally {
+      cur.close();
     }
-    cur.close();
-    
+
     // Insert them if missing
     if (count != RepoUtils.SPECIAL_GUIDS.length) {
       if (!containsMobileFolder) {

@@ -91,44 +91,52 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // Get parent name
     String parentName = "";
     Cursor name = dataAccessor.fetch(new String[] { guid });
-    name.moveToFirst();
-    if (!name.isAfterLast()) {
-      parentName = RepoUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
+    try {
+      name.moveToFirst();
+      if (!name.isAfterLast()) {
+        parentName = RepoUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
+      }
+      else {
+        Log.e(LOG_TAG, "Couldn't find record with guid " + guid + " while looking for parent name");
+        throw new ParentNotFoundException(null);
+      }
+    } finally {
+      name.close();
     }
-    else {
-      Log.e(LOG_TAG, "Couldn't find record with guid " + guid + " while looking for parent name");
-      throw new ParentNotFoundException(null);
-    }
-    name.close();
-    
+
     // If record is a folder, build out the children array
     long isFolder = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
     JSONArray childArray = null;
     if (isFolder == 1) {
       long androidID = guidToID.get(RepoUtils.getStringFromCursor(cur, "guid"));
       Cursor children = dataAccessor.getChildren(androidID);
-      children.moveToFirst();
-      int count = 0;
-      
-      // Get children into array in correct order
-      while(!children.isAfterLast()) {
-        count++;
-        children.moveToNext();
+      try {
+        children.moveToFirst();
+        int count = 0;
+
+        // Get children into array in correct order
+        while(!children.isAfterLast()) {
+          count++;
+          children.moveToNext();
+        }
+        children.moveToFirst();
+        String[] kids = new String[count];
+        while (!children.isAfterLast()) {
+          if (childArray == null) {
+            childArray = new JSONArray();
+          }
+          String childGuid = RepoUtils.getStringFromCursor(children, "guid");
+          int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
+          kids[childPosition] = childGuid;
+          children.moveToNext();
+        }
+        children.close();
+        for (int i = 0; i < count; ++i) {
+          childArray.add(kids[i]);
+        }
+      } finally {
+        children.close();
       }
-      children.moveToFirst();
-      String[] kids = new String[count];
-      while(!children.isAfterLast()) {
-        if (childArray == null) childArray = new JSONArray();
-        String childGuid = RepoUtils.getStringFromCursor(children, "guid");
-        int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
-        kids[childPosition] = childGuid;
-        children.moveToNext();
-      }
-      children.close();
-      for(int i = 0; i < kids.length; i++) {
-        childArray.add(kids[i]);
-      }
-      
     }
     return RepoUtils.bookmarkFromMirrorCursor(cur, guid, parentName, childArray);
   }
@@ -163,16 +171,19 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
     
     // To deal with parent mapping of bookmarks we have to do some
-    // hairy stuff, here's the setup for it
-    cur.moveToFirst();
-    while(!cur.isAfterLast()) {
-      String guid = RepoUtils.getStringFromCursor(cur, "guid");
-      long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
-      guidToID.put(guid, id);
-      idToGuid.put(id, guid);
-      cur.moveToNext();
+    // hairy stuff. Here's the setup for it.
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, "guid");
+        long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
+        guidToID.put(guid, id);
+        idToGuid.put(id, guid);
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
     }
-    cur.close();
     Log.d(LOG_TAG, "Done with initial setup of bookmarks session.");
     super.begin(delegate);
   }
