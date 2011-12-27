@@ -61,6 +61,28 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.database.Cursor;
 import android.util.Log;
 
+/**
+ * You'll notice that all delegate calls *either*:
+ *
+ * - request a deferred delegate with the appropriate work queue, then
+ *   make the appropriate call, or
+ * - create a Runnable which makes the appropriate call, and pushes it
+ *   directly into the appropriate work queue.
+ *
+ * This is to ensure that all delegate callbacks happen off the current
+ * thread. This provides lock safety (we don't enter another method that
+ * might try to take a lock already taken in our caller), and ensures
+ * that operations take place off the main thread.
+ *
+ * Don't do both -- the two approaches are equivalent -- and certainly
+ * don't do neither unless you know what you're doing!
+ *
+ * Similarly, all store calls go through the appropriate store queue. This
+ * ensures that store() and storeDone() consequences occur before-after.
+ *
+ * @author rnewman
+ *
+ */
 public abstract class AndroidBrowserRepositorySession extends RepositorySession {
 
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
@@ -86,10 +108,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   @Override
   public void begin(RepositorySessionBeginDelegate delegate) {
+    RepositorySessionBeginDelegate deferredDelegate = delegate.deferredBeginDelegate(delegateQueue);
     try {
       super.sharedBegin();
     } catch (InvalidSessionTransitionException e) {
-      delegate.onBeginFailed(e);
+      deferredDelegate.onBeginFailed(e);
       return;
     }
 
@@ -100,16 +123,16 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       checkDatabase();
     } catch (ProfileDatabaseException e) {
       Log.e(LOG_TAG, "ProfileDatabaseException from begin. Fennec must be launched once until this error is fixed");
-      delegate.onBeginFailed(e);
+      deferredDelegate.onBeginFailed(e);
       return;
     } catch (NullCursorException e) {
-      delegate.onBeginFailed(e);
+      deferredDelegate.onBeginFailed(e);
       return;
     } catch (Exception e) {
-      delegate.onBeginFailed(e);
+      deferredDelegate.onBeginFailed(e);
       return;
     }
-    delegate.onBeginSucceeded(this);
+    deferredDelegate.onBeginSucceeded(this);
   }
 
   protected abstract String buildRecordString(Record record);
@@ -126,7 +149,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   @Override
   public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
     GuidsSinceRunnable command = new GuidsSinceRunnable(timestamp, delegate);
-    storeWorkQueue.execute(command);
+    delegateQueue.execute(command);
   }
 
   class GuidsSinceRunnable implements Runnable {
@@ -180,7 +203,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   public void fetch(String[] guids,
                     RepositorySessionFetchRecordsDelegate delegate) {
     FetchRunnable command = new FetchRunnable(guids, now(), delegate);
-    storeWorkQueue.execute(command);
+    delegateQueue.execute(command);
   }
 
   abstract class FetchingRunnable implements Runnable {
@@ -256,7 +279,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
                          RepositorySessionFetchRecordsDelegate delegate) {
     Log.i(LOG_TAG, "Running fetchSince(" + timestamp + ").");
     FetchSinceRunnable command = new FetchSinceRunnable(timestamp, now(), delegate);
-    storeWorkQueue.execute(command);
+    delegateQueue.execute(command);
   }
 
   class FetchSinceRunnable extends FetchingRunnable {
@@ -293,28 +316,6 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     this.fetchSince(0, delegate);
   }
 
-  /**
-   * There are two ways in which onStoreCompleted can be called:
-   * * We set storesAreDone, then a store finishes.
-   *   -- doneStoring, called from the store itself.
-   *
-   * * A store finishes, then we get storeDone.
-   *   -- outstandingStores, checked inside the storeDone call.
-   */
-  protected Object storeCountMonitor   = new Object();
-  protected long outstandingStoreCount = 0;
-  protected boolean storesAreDone      = false;
-
-  /**
-   * Record that a new store has begun. Call this within the
-   * synchronous invocation of store()!
-   */
-  protected void incrementStoreCount() {
-    synchronized(storeCountMonitor) {
-      outstandingStoreCount++;
-    }
-  }
-
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
     if (delegate == null) {
@@ -325,11 +326,8 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       throw new IllegalArgumentException("Null record passed to AndroidBrowserRepositorySession.store().");
     }
 
-    // Before we return from this method, make sure the store count has
-    // been incremented. This prevents us from returning onStoreCompleted
-    // prematurely.
-    incrementStoreCount();
-
+    // Store Runnables *must* complete synchronously. It's OK, they
+    // run on a background thread.
     Runnable command = new Runnable() {
 
       @Override

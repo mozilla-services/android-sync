@@ -77,6 +77,17 @@ public abstract class RepositorySession {
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
   protected RepositorySessionStoreDelegate delegate;
+
+  /**
+   * A queue of Runnables which call out into delegates.
+   */
+  protected ExecutorService delegateQueue  = Executors.newSingleThreadExecutor();
+
+  /**
+   * A queue of Runnables which effect storing.
+   * This includes actual store work, and also the consequences of storeDone.
+   * This provides strict ordering.
+   */
   protected ExecutorService storeWorkQueue = Executors.newSingleThreadExecutor();
 
   // The time that the last sync on this collection completed, in milliseconds since epoch.
@@ -123,7 +134,6 @@ public abstract class RepositorySession {
       }
     };
     storeWorkQueue.execute(command);
-    storeWorkQueue.shutdown();
   }
 
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
@@ -164,9 +174,9 @@ public abstract class RepositorySession {
   public void begin(RepositorySessionBeginDelegate delegate) {
     try {
       sharedBegin();
-      delegate.deferredBeginDelegate().onBeginSucceeded(this);
+      delegate.deferredBeginDelegate(delegateQueue).onBeginSucceeded(this);
     } catch (Exception e) {
-      delegate.deferredBeginDelegate().onBeginFailed(e);
+      delegate.deferredBeginDelegate(delegateQueue).onBeginFailed(e);
     }
   }
 
@@ -203,17 +213,21 @@ public abstract class RepositorySession {
    */
   public void abort(RepositorySessionFinishDelegate delegate) {
     this.status = SessionStatus.DONE;    // TODO: ABORTED?
-    delegate.deferredFinishDelegate().onFinishSucceeded(this, this.getBundle(null));
+    delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
   }
 
-  public void finish(RepositorySessionFinishDelegate delegate) {
+  public void finish(final RepositorySessionFinishDelegate delegate) {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
-      delegate.deferredFinishDelegate().onFinishSucceeded(this, this.getBundle(null));
+      delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
     } else {
       Log.e(LOG_TAG, "Tried to finish() an unstarted or already finished session");
-      delegate.deferredFinishDelegate().onFinishFailed(new InvalidSessionTransitionException(null));
+      Exception e = new InvalidSessionTransitionException(null);
+      delegate.deferredFinishDelegate(delegateQueue).onFinishFailed(e);
     }
+    Log.i(LOG_TAG, "Shutting down work queues.");
+ //   storeWorkQueue.shutdown();
+ //   delegateQueue.shutdown();
   }
 
   public boolean isActive() {
@@ -223,5 +237,7 @@ public abstract class RepositorySession {
   public void abort() {
     // TODO: do something here.
     status = SessionStatus.ABORTED;
+    storeWorkQueue.shutdown();
+    delegateQueue.shutdown();
   }
 }

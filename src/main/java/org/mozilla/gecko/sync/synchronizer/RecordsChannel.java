@@ -38,10 +38,13 @@
 package org.mozilla.gecko.sync.synchronizer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionBeginDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -224,6 +227,13 @@ class RecordsChannel implements
   }
 
   @Override
+  public void onFetchCompleted(long end) {
+    info("onFetchCompleted. Stopping consumer once stores are done.");
+    this.end = end;
+    this.consumer.queueFilled();
+  }
+
+  @Override
   public void onRecordStoreFailed(Exception ex) {
     this.consumer.stored();
     delegate.onFlowStoreFailed(this, ex);
@@ -235,12 +245,6 @@ class RecordsChannel implements
     this.consumer.stored();
   }
 
-  @Override
-  public void onFetchCompleted(long end) {
-    info("onFetchCompleted. Stopping consumer once stores are done.");
-    this.end = end;
-    this.consumer.queueFilled();
-  }
 
   @Override
   public void consumerIsDone(boolean allRecordsQueued) {
@@ -279,75 +283,18 @@ class RecordsChannel implements
   }
 
   @Override
-  public RepositorySessionStoreDelegate deferredStoreDelegate() {
-    final RepositorySessionStoreDelegate self = this;
-    return new RepositorySessionStoreDelegate() {
-      @Override
-      public void onRecordStoreSucceeded(final Record record) {
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            self.onRecordStoreSucceeded(record);
-          }
-        });
-      }
-
-      @Override
-      public void onRecordStoreFailed(final Exception ex) {
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            self.onRecordStoreFailed(ex);
-          }
-        });
-      }
-
-      @Override
-      public RepositorySessionStoreDelegate deferredStoreDelegate() {
-        return this;
-      }
-
-      @Override
-      public void onStoreCompleted() {
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            self.onStoreCompleted();
-          }
-        });
-      }
-    };
+  public RepositorySessionStoreDelegate deferredStoreDelegate(final ExecutorService executor) {
+    return new DeferredRepositorySessionStoreDelegate(this, executor);
   }
 
   @Override
-  public RepositorySessionBeginDelegate deferredBeginDelegate() {
-    final RepositorySessionBeginDelegate self = this;
-    return new RepositorySessionBeginDelegate() {
+  public RepositorySessionBeginDelegate deferredBeginDelegate(final ExecutorService executor) {
+    return new DeferredRepositorySessionBeginDelegate(this, executor);
+  }
 
-      @Override
-      public void onBeginSucceeded(final RepositorySession session) {
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            self.onBeginSucceeded(session);
-          }
-        });
-      }
-
-      @Override
-      public void onBeginFailed(final Exception ex) {
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            self.onBeginFailed(ex);
-          }
-        });
-      }
-
-      @Override
-      public RepositorySessionBeginDelegate deferredBeginDelegate() {
-        return this;
-      }
-    };
+  @Override
+  public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(ExecutorService executor) {
+    // Lie outright. We know that all of our fetch methods are safe.
+    return this;
   }
 }

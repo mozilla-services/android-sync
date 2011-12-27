@@ -38,6 +38,7 @@
 package org.mozilla.gecko.sync.middleware;
 
 import java.io.UnsupportedEncodingException;
+import java.util.concurrent.ExecutorService;
 
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -159,6 +160,13 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
     @Override
     public void onFetchCompleted(long end) {
       next.onFetchCompleted(end);
+    }
+
+    @Override
+    public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(ExecutorService executor) {
+      // Synchronously perform *our* work, passing through appropriately.
+      RepositorySessionFetchRecordsDelegate deferredNext = next.deferredFetchDelegate(executor);
+      return new DecryptingTransformingFetchDelegate(deferredNext, keyBundle, recordFactory);
     }
   }
 

@@ -38,10 +38,12 @@
 package org.mozilla.gecko.sync.synchronizer;
 
 
-import org.mozilla.gecko.sync.ThreadPool;
+import java.util.concurrent.ExecutorService;
+
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.DeferrableRepositorySessionCreationDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 
 import android.content.Context;
@@ -291,34 +293,7 @@ implements RecordsChannelDelegate,
   }
 
   @Override
-  public RepositorySessionFinishDelegate deferredFinishDelegate() {
-    final SynchronizerSession self = this;
-    return new RepositorySessionFinishDelegate() {
-      @Override
-      public void onFinishSucceeded(final RepositorySession session,
-                                    final RepositorySessionBundle bundle) {
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            self.onFinishSucceeded(session, bundle);
-          }
-        });
-      }
-
-      @Override
-      public void onFinishFailed(final Exception ex) {
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            self.onFinishFailed(ex);
-          }
-        });
-      }
-
-      @Override
-      public RepositorySessionFinishDelegate deferredFinishDelegate() {
-        return this;
-      }
-    };
+  public RepositorySessionFinishDelegate deferredFinishDelegate(final ExecutorService executor) {
+    return new DeferredRepositorySessionFinishDelegate(this, executor);
   }
 }
