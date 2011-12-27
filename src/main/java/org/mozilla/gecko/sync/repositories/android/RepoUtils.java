@@ -78,6 +78,8 @@ public class RepoUtils {
   }
 
   public static String getStringFromCursor(Cursor cur, String colId) {
+    // TODO: getColumnIndexOrThrow?
+    // TODO: don't look up columns by name!
     return cur.getString(cur.getColumnIndex(colId));
   }
 
