@@ -135,21 +135,21 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
     BookmarkRecord rec = (BookmarkRecord) record;
-    cv.put("guid",          rec.guid);
+    cv.put("guid",                                rec.guid);
     cv.put(BrowserContract.Bookmarks.TITLE,       rec.title);
     cv.put(BrowserContract.Bookmarks.URL,         rec.bookmarkURI);
-    cv.put(BrowserContract.Bookmarks.DESCRIPTION,         rec.description);
+    cv.put(BrowserContract.Bookmarks.DESCRIPTION, rec.description);
     if (rec.tags == null) {
       rec.tags = new JSONArray();
     }
-    cv.put(BrowserContract.Bookmarks.TAGS,            rec.tags.toJSONString());
-    cv.put(BrowserContract.Bookmarks.KEYWORD,         rec.keyword);
-    cv.put(BrowserContract.Bookmarks.PARENT,          rec.androidParentID);
-    cv.put(BrowserContract.Bookmarks.POSITION, rec.androidPosition);
+    cv.put(BrowserContract.Bookmarks.TAGS,        rec.tags.toJSONString());
+    cv.put(BrowserContract.Bookmarks.KEYWORD,     rec.keyword);
+    cv.put(BrowserContract.Bookmarks.PARENT,      rec.androidParentID);
+    cv.put(BrowserContract.Bookmarks.POSITION,    rec.androidPosition);
 
     // NOTE: Only bookmark and folder types should make it this far,
     // other types should be filtered out and droppped
-    cv.put(BrowserContract.Bookmarks.IS_FOLDER, rec.type.equalsIgnoreCase(TYPE_FOLDER) ? 1 : 0);
+    cv.put(BrowserContract.Bookmarks.IS_FOLDER,   rec.type.equalsIgnoreCase(TYPE_FOLDER) ? 1 : 0);
 
     cv.put("modified", rec.lastModified);
     return cv;

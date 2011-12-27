@@ -171,7 +171,6 @@ implements RecordsChannelDelegate,
   @Override
   public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO Auto-generated method stub
-
     warn("Second RecordsChannel flow failed.");
   }
 

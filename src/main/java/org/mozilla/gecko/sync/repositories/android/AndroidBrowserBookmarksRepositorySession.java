@@ -247,12 +247,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       if(missingParentToChildren.containsKey(bmk.guid)) {
         for (String child : missingParentToChildren.get(bmk.guid)) {
           long position;
-          if (bmk.children.contains(child)) {
-            position = childArray.indexOf(child);
-          } else {
+          if (!bmk.children.contains(child)) {
             childArray.add(child);
-            position = childArray.indexOf(child);
           }
+          position = childArray.indexOf(child);
           dataAccessor.updateParentAndPosition(child, id, position);
           needsReparenting--;
         }

@@ -373,12 +373,15 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           delegate.onRecordStoreFailed(e);
           return;
         } catch (NoGuidForIdException e) {
+          Log.e(LOG_TAG, "Store failed for " + record.guid, e);
           delegate.onRecordStoreFailed(e);
           return;
         } catch (NullCursorException e) {
+          Log.e(LOG_TAG, "Store failed for " + record.guid, e);
           delegate.onRecordStoreFailed(e);
           return;
         } catch (Exception e) {
+          Log.e(LOG_TAG, "Store failed for " + record.guid, e);
           delegate.onRecordStoreFailed(e);
           return;
         }
