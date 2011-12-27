@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import java.util.concurrent.ExecutorService;
+
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -24,43 +26,46 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public RepositorySessionStoreDelegate deferredStoreDelegate() {
+  public RepositorySessionStoreDelegate deferredStoreDelegate(final ExecutorService executor) {
     final RepositorySessionStoreDelegate self = this;
     return new RepositorySessionStoreDelegate() {
 
       @Override
       public void onRecordStoreSucceeded(final Record record) {
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
           @Override
           public void run() {
             self.onRecordStoreSucceeded(record);
           }
-        }).start();
+        });
       }
 
       @Override
       public void onRecordStoreFailed(final Exception ex) {
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
           @Override
           public void run() {
             self.onRecordStoreFailed(ex);
           }
-        }).start();
-      }
-
-      @Override
-      public RepositorySessionStoreDelegate deferredStoreDelegate() {
-        return this;
+        });
       }
 
       @Override
       public void onStoreCompleted() {
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
           @Override
           public void run() {
             self.onStoreCompleted();
           }
-        }).start();
+        });
+      }
+
+      @Override
+      public RepositorySessionStoreDelegate deferredStoreDelegate(ExecutorService newExecutor) {
+        if (newExecutor == executor) {
+          return this;
+        }
+        throw new IllegalArgumentException("Can't re-defer this delegate.");
       }
     };
   }

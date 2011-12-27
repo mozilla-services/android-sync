@@ -8,8 +8,10 @@ import static junit.framework.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
 
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
+import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -97,5 +99,10 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   @Override
   public void onFetchCompleted(long end) {
     Log.d(LOG_TAG, "onFetchCompleted. Doing nothing.");
+  }
+
+  @Override
+  public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(final ExecutorService executor) {
+    return new DeferredRepositorySessionFetchRecordsDelegate(this, executor);
   }
 }

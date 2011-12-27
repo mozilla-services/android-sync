@@ -3,10 +3,16 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import java.util.concurrent.ExecutorService;
+
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 
+import android.util.Log;
+
 public class DefaultBeginDelegate extends DefaultDelegate implements RepositorySessionBeginDelegate {
+
+  private static final String LOG_TAG = "DefaultBeginDelegate";
 
   @Override
   public void onBeginFailed(Exception ex) {
@@ -19,32 +25,15 @@ public class DefaultBeginDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public RepositorySessionBeginDelegate deferredBeginDelegate() {
-    final RepositorySessionBeginDelegate self = this;
-    return new RepositorySessionBeginDelegate() {
-
-      @Override
-      public void onBeginSucceeded(final RepositorySession session) {
-        new Thread(new Runnable() {
-          @Override
-          public void run() {
-            self.onBeginSucceeded(session);
-          }}).start();
-      }
-
-      @Override
-      public void onBeginFailed(final Exception ex) {
-        new Thread(new Runnable() {
-          @Override
-          public void run() {
-            self.onBeginFailed(ex);
-          }}).start();
-      }
-
-      @Override
-      public RepositorySessionBeginDelegate deferredBeginDelegate() {
-        return this;
-      }
-    };
+  public RepositorySessionBeginDelegate deferredBeginDelegate(ExecutorService executor) {
+    DefaultBeginDelegate copy;
+    try {
+      copy = (DefaultBeginDelegate) this.clone();
+      copy.executor = executor;
+      return copy;
+    } catch (CloneNotSupportedException e) {
+      Log.d(LOG_TAG, "Clone not supported; returning self.");
+      return this;
+    }
   }
 }

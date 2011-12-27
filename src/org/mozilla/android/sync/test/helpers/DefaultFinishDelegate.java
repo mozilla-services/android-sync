@@ -1,5 +1,7 @@
 package org.mozilla.android.sync.test.helpers;
 
+import java.util.concurrent.ExecutorService;
+
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -17,31 +19,34 @@ public class DefaultFinishDelegate extends DefaultDelegate implements Repository
   }
 
   @Override
-  public RepositorySessionFinishDelegate deferredFinishDelegate() {
+  public RepositorySessionFinishDelegate deferredFinishDelegate(final ExecutorService executor) {
     return new RepositorySessionFinishDelegate() {
       final RepositorySessionFinishDelegate self = this;
       @Override
       public void onFinishSucceeded(final RepositorySession session,
                                     final RepositorySessionBundle bundle) {
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
           @Override
           public void run() {
             self.onFinishSucceeded(session, bundle);
-          }}).start();
+          }});
       }
 
       @Override
       public void onFinishFailed(final Exception ex) {
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
           @Override
           public void run() {
             self.onFinishFailed(ex);
-          }}).start();
+          }});
       }
 
       @Override
-      public RepositorySessionFinishDelegate deferredFinishDelegate() {
-        return this;
+      public RepositorySessionFinishDelegate deferredFinishDelegate(ExecutorService newExecutor) {
+        if (newExecutor == executor) {
+          return this;
+        }
+        throw new IllegalArgumentException("Can't re-defer this delegate.");
       }
     };
   }

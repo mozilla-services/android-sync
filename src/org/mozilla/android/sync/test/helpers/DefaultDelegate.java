@@ -5,7 +5,12 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.fail;
 
+import java.util.concurrent.ExecutorService;
+
 public abstract class DefaultDelegate {
+
+  protected ExecutorService executor;
+
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }

@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.concurrent.ExecutorService;
+
 import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
@@ -375,18 +377,10 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   /*
    * Test wipe
    */
-  protected void doWipe(Record record0, Record record1) {
+  protected void doWipe(final Record record0, final Record record1) {
     prepEmptySession();
     final AndroidBrowserRepositorySession session = getSession();
-    
-    // Store 2 records.
-    performWait(storeRunnable(session, record0));
-    performWait(storeRunnable(session, record1));
-    performWait(fetchAllRunnable(session, 
-        new Record[] { record0, record1 }));
-
-    // Wipe
-    Runnable run = new Runnable() {
+    final Runnable run = new Runnable() {
       @Override
       public void run() {
         session.wipe(new RepositorySessionWipeDelegate() {
@@ -398,7 +392,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
             performNotify();
           }
           @Override
-          public RepositorySessionWipeDelegate deferredWipeDelegate() {
+          public RepositorySessionWipeDelegate deferredWipeDelegate(final ExecutorService executor) {
             final RepositorySessionWipeDelegate self = this;
             return new RepositorySessionWipeDelegate() {
 
@@ -421,14 +415,25 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
               }
 
               @Override
-              public RepositorySessionWipeDelegate deferredWipeDelegate() {
-                return this;
+              public RepositorySessionWipeDelegate deferredWipeDelegate(ExecutorService newExecutor) {
+                if (newExecutor == executor) {
+                  return this;
+                }
+                throw new IllegalArgumentException("Can't re-defer this delegate.");
               }
             };
           }
         });
       }
     };
+
+    // Store 2 records.
+    performWait(storeRunnable(session, record0));
+    performWait(storeRunnable(session, record1));
+    performWait(fetchAllRunnable(session,
+        new Record[] { record0, record1 }));
+
+    // Wipe.
     performWait(run);
   }
   
@@ -703,6 +708,11 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
               public void onFetchCompleted(long end) {
                 fail("Session inactive, should fail");
                 performNotify();
+              }
+
+              @Override
+              public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(ExecutorService executor) {
+                return this;
               }
             });
       }
