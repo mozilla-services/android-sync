@@ -60,13 +60,21 @@ public class ExtendedJSONObject {
 
   public JSONObject object;
 
-  public static Object parse(InputStreamReader reader) throws IOException, ParseException {
-    Object parseOutput = new JSONParser().parse(reader);
+  private static Object processParseOutput(Object parseOutput) {
     if (parseOutput instanceof JSONObject) {
       return new ExtendedJSONObject((JSONObject) parseOutput);
     } else {
       return parseOutput;
     }
+  }
+
+  public static Object parse(String string) throws IOException, ParseException {
+    return processParseOutput(new JSONParser().parse(string));
+  }
+
+  public static Object parse(InputStreamReader reader) throws IOException, ParseException {
+    return processParseOutput(new JSONParser().parse(reader));
+
   }
 
   public static Object parse(InputStream stream) throws IOException, ParseException {
