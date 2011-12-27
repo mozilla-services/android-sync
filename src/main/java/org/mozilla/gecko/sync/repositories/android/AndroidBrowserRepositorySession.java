@@ -455,13 +455,16 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   private void createRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     recordToGuid = new HashMap<String, String>();
     Cursor cur = dbHelper.fetchAll();
-    cur.moveToFirst();
-    while (!cur.isAfterLast()) {
-      Record record = recordFromMirrorCursor(cur);
-      recordToGuid.put(buildRecordString(record), record.guid);
-      cur.moveToNext();
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        Record record = recordFromMirrorCursor(cur);
+        recordToGuid.put(buildRecordString(record), record.guid);
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
     }
-    cur.close();
   }
 
   public void putRecordToGuidMap(String guid, String recordString) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
