@@ -68,7 +68,6 @@ public class TestSyncStorageRequest {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
-      assertEquals(res.reason(), SyncStorageResponse.Reason.SUCCESS);
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
       data.stopHTTPServer();
     }
@@ -80,7 +79,6 @@ public class TestSyncStorageRequest {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
-      assertEquals(res.reason(), SyncStorageResponse.Reason.SUCCESS);
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
       try {
         System.out.println(res.httpResponse().getEntity().getContent()

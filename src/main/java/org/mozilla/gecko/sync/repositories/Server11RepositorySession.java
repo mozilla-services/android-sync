@@ -331,6 +331,9 @@ public class Server11RepositorySession extends RepositorySession {
     public RecordUploadRunnable(RepositorySessionStoreDelegate storeDelegate,
                                 ArrayList<byte[]> outgoing,
                                 long byteCount) {
+      Log.i(LOG_TAG, "Preparing RecordUploadRunnable for " +
+                     outgoing.size() + " records (" +
+                     byteCount + " bytes).");
       this.outgoing  = outgoing;
       this.byteCount = byteCount;
     }
@@ -382,13 +385,14 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      // TODO: handle backoff etc.
       // TODO: ensure that delegate methods don't get called more than once.
       this.handleRequestError(new HTTPFailureException(response));
     }
 
     @Override
     public void handleRequestError(final Exception ex) {
-      Log.i(LOG_TAG, "Got request error.", ex);
+      Log.i(LOG_TAG, "Got request error: " + ex, ex);
       delegate.onRecordStoreFailed(ex);
     }
 
