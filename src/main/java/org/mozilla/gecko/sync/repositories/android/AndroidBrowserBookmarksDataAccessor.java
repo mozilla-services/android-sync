@@ -20,6 +20,7 @@
  *
  * Contributor(s):
  *   Jason Voll <jvoll@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -37,6 +38,8 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import java.util.HashMap;
+
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
@@ -46,6 +49,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
@@ -81,45 +85,57 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   } 
   
   /*
-   * Verify that all special guids are present and that they aren't set to deleted.
-   * Inser them if they aren't there.
+   * Verify that all special GUIDs are present and that they aren't marked as deleted.
+   * Insert them if they aren't there.
    */
   public void checkAndBuildSpecialGuids() throws NullCursorException {
     Cursor cur = fetch(RepoUtils.SPECIAL_GUIDS);
-    int count = 0;
-    long mobileRoot = 0;
-    boolean containsMobileFolder = false;
+    long mobileRoot  = 0;
+    long desktopRoot = 0;
+
+    // Map from GUID to whether deleted. Non-presence implies just that.
+    HashMap<String, Boolean> statuses = new HashMap<String, Boolean>(RepoUtils.SPECIAL_GUIDS.length);
     try {
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
         String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
         if (guid.equals("mobile")) {
-          containsMobileFolder = true;
           mobileRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
         }
-        count++;
-
-        // Make sure none of these folders are marked as deleted
-        if (RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1) {
-          ContentValues cv = new ContentValues();
-          cv.put(BrowserContract.SyncColumns.IS_DELETED, 0);
-          updateByGuid(guid, cv);
+        if (guid.equals("desktop")) {
+          desktopRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
         }
+        // Make sure none of these folders are marked as deleted.
+        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+        statuses.put(guid, deleted);
         cur.moveToNext();
       }
     } finally {
       cur.close();
     }
 
-    // Insert them if missing
-    if (count != RepoUtils.SPECIAL_GUIDS.length) {
-      if (!containsMobileFolder) {
-        mobileRoot = insertSpecialFolder("mobile", 0);
+    // Insert or undelete them if missing.
+    for (String guid : RepoUtils.SPECIAL_GUIDS) {
+      if (statuses.containsKey(guid)) {
+        if (statuses.get(guid)) {
+          // Undelete.
+          Log.i(LOG_TAG, "Undeleting special GUID " + guid);
+          ContentValues cv = new ContentValues();
+          cv.put(BrowserContract.SyncColumns.IS_DELETED, 0);
+          updateByGuid(guid, cv);
+        }
+      } else {
+        // Insert.
+        if (guid.equals("mobile")) {
+          Log.i(LOG_TAG, "No mobile folder. Inserting one.");
+          mobileRoot = insertSpecialFolder("mobile", 0);
+        } else if (guid.equals("places")) {
+          desktopRoot = insertSpecialFolder("places", mobileRoot);
+        } else {
+          // unfiled, menu, toolbar.
+          insertSpecialFolder(guid, desktopRoot);
+        }
       }
-      long desktop = insertSpecialFolder("places", mobileRoot);
-      insertSpecialFolder("unfiled", desktop);
-      insertSpecialFolder("menu", desktop);
-      insertSpecialFolder("toolbar", desktop);
     }
   }
 
