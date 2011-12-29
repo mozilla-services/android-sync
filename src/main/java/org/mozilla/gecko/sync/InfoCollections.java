@@ -98,9 +98,15 @@ public class InfoCollections implements SyncStorageRequestDelegate {
 
   private void doFetch() {
     try {
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL);
+      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL);
       r.delegate = this;
-      r.get();
+      // TODO: it might be nice to make Resource include its
+      // own thread pool, and automatically run asynchronously.
+      ThreadPool.run(new Runnable() {
+        @Override
+        public void run() {
+          r.get();
+        }});
     } catch (URISyntaxException e) {
       callback.handleError(e);
     }
