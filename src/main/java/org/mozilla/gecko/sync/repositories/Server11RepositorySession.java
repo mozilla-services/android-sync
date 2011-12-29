@@ -213,10 +213,10 @@ public class Server11RepositorySession extends RepositorySession {
 
   }
 
-  private void fetchWithParameters(long newer,
-                                   boolean full,
-                                   String ids,
-                                   SyncStorageRequestDelegate delegate) throws URISyntaxException {
+  protected void fetchWithParameters(long newer,
+                                     boolean full,
+                                     String ids,
+                                     SyncStorageRequestDelegate delegate) throws URISyntaxException {
 
     URI collectionURI = serverRepository.collectionURI(full, newer, ids);
     SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
