@@ -64,6 +64,8 @@ import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.SyncResult;
+import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -81,26 +83,37 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   private void handleException(Exception e, SyncResult syncResult) {
-    if (e instanceof OperationCanceledException) {
-      Log.e(LOG_TAG, "Operation canceled. Aborting sync.");
-      e.printStackTrace();
-      return;
-    }
-    if (e instanceof AuthenticatorException) {
-      syncResult.stats.numParseExceptions++;
-      Log.e(LOG_TAG, "AuthenticatorException. Aborting sync.");
-      e.printStackTrace();
-      return;
-    }
-    if (e instanceof IOException) {
+    try {
+      if (e instanceof SQLiteConstraintException) {
+        Log.e(LOG_TAG, "Constraint exception. Aborting sync.", e);
+        syncResult.stats.numParseExceptions++;       // This is as good as we can do.
+        return;
+      }
+      if (e instanceof SQLiteDatabaseLockedException) {
+        Log.e(LOG_TAG, "Couldn't open locked database. Aborting sync.", e);
+        syncResult.stats.numIoExceptions++;
+        return;
+      }
+      if (e instanceof OperationCanceledException) {
+        Log.e(LOG_TAG, "Operation canceled. Aborting sync.", e);
+        return;
+      }
+      if (e instanceof AuthenticatorException) {
+        syncResult.stats.numParseExceptions++;
+        Log.e(LOG_TAG, "AuthenticatorException. Aborting sync.", e);
+        return;
+      }
+      if (e instanceof IOException) {
+        syncResult.stats.numIoExceptions++;
+        Log.e(LOG_TAG, "IOException. Aborting sync.", e);
+        e.printStackTrace();
+        return;
+      }
       syncResult.stats.numIoExceptions++;
-      Log.e(LOG_TAG, "IOException. Aborting sync.");
-      e.printStackTrace();
-      return;
+      Log.e(LOG_TAG, "Unknown exception. Aborting sync.", e);
+    } finally {
+      notifyMonitor();
     }
-    syncResult.stats.numIoExceptions++;
-    Log.e(LOG_TAG, "Unknown exception. Aborting sync.", e);
-    notifyMonitor();
   }
 
   private AccountManagerFuture<Bundle> getAuthToken(final Account account,

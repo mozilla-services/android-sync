@@ -181,6 +181,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       dataAccessor.checkAndBuildSpecialGuids();
       cur = dataAccessor.getGuidsIDsForFolders();
       Log.d(LOG_TAG, "Got GUIDs for folders.");
+    } catch (android.database.sqlite.SQLiteConstraintException e) {
+      Log.e(LOG_TAG, "Got sqlite constraint exception working with Fennec bookmark DB.", e);
+      delegate.onBeginFailed(e);
+      return;
     } catch (NullCursorException e) {
       delegate.onBeginFailed(e);
       return;
