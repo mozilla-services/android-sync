@@ -99,8 +99,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       return;
     }
     syncResult.stats.numIoExceptions++;
-    Log.e(LOG_TAG, "Unknown exception. Aborting sync.");
-    e.printStackTrace();
+    Log.e(LOG_TAG, "Unknown exception. Aborting sync.", e);
+    notifyMonitor();
   }
 
   private AccountManagerFuture<Bundle> getAuthToken(final Account account,
@@ -161,14 +161,18 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
           Log.d(LOG_TAG, "Username: " + username);
           Log.d(LOG_TAG, "Server:   " + serverURL);
-          Log.d(LOG_TAG, "Password: " + password);  // TODO: remove
-          Log.d(LOG_TAG, "Key:      " + syncKey);   // TODO: remove
+          Log.d(LOG_TAG, "Password? " + (password != null));
+          Log.d(LOG_TAG, "Key?      " + (syncKey != null));
           if (password == null) {
             Log.e(LOG_TAG, "No password: aborting sync.");
+            syncResult.stats.numAuthExceptions++;
+            notifyMonitor();
             return;
           }
           if (syncKey == null) {
             Log.e(LOG_TAG, "No Sync Key: aborting sync.");
+            syncResult.stats.numAuthExceptions++;
+            notifyMonitor();
             return;
           }
           KeyBundle keyBundle = new KeyBundle(username, syncKey);
@@ -234,7 +238,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   private void notifyMonitor() {
     synchronized (syncMonitor) {
       Log.i(LOG_TAG, "Notifying sync monitor.");
-      syncMonitor.notify();
+      syncMonitor.notifyAll();
     }
   }
 
