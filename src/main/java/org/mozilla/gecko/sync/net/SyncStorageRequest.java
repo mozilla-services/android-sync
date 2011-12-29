@@ -114,7 +114,7 @@ public class SyncStorageRequest implements Resource {
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
   public class SyncStorageResourceDelegate extends SyncResourceDelegate {
-    private static final String LOG_TAG = "SyncStorageRequest";
+    private static final String LOG_TAG = "SyncStorageResourceDelegate";
     protected SyncStorageRequest request;
 
     SyncStorageResourceDelegate(SyncStorageRequest request) {
@@ -129,12 +129,13 @@ public class SyncStorageRequest implements Resource {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
+      Log.d(LOG_TAG, "SyncStorageResourceDelegate handling response: " + response.getStatusLine() + ".");
       SyncStorageRequestDelegate d = this.request.delegate;
       SyncStorageResponse res = new SyncStorageResponse(response);
       if (res.wasSuccessful()) {
         d.handleRequestSuccess(res);
       } else {
-        Log.w(LOG_TAG, "HTTP request failed: " + response.getStatusLine() + ".");
+        Log.w(LOG_TAG, "HTTP request failed.");
         try {
           Log.w(LOG_TAG, "HTTP response body: " + res.getErrorMessage());
         } catch (Exception e) {
