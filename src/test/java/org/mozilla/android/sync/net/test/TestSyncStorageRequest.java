@@ -17,7 +17,6 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -38,38 +37,6 @@ public class TestSyncStorageRequest {
   static final String EXPECT_BASIC = "Basic YzZvN2R2bXIyYzR1ZDJmeXY2d296MnU0emkyMmJjeWQ6cGFzc3dvcmQ=";
 
   private HTTPServerTestHelper data = new HTTPServerTestHelper();
-
-  public class BaseTestStorageRequestDelegate implements
-      SyncStorageRequestDelegate {
-    public String _credentials;
-
-    @Override
-    public String credentials() {
-      return _credentials;
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      return null;
-    }
-
-    @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
-      fail("Should not be called.");
-    }
-
-    @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
-      System.out.println("Response: "
-          + response.httpResponse().getStatusLine().getStatusCode());
-      fail("Should not be called.");
-    }
-
-    @Override
-    public void handleRequestError(Exception e) {
-      fail("Should not be called.");
-    }
-  }
 
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
