@@ -217,11 +217,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // needing re-parenting have been re-parented.
     if (needsReparenting != 0) {
       Log.e(LOG_TAG, "Finish called but " + needsReparenting +
-          " bookmark(s) have been placed in unsorted bookmarks and not been reparented.");
-      delegate.onFinishFailed(new BookmarkNeedsReparentingException(null));
-    } else {
-      super.finish(delegate);
+            " bookmark(s) have been placed in unsorted bookmarks and not been reparented.");
+
+      // TODO: handling of failed reparenting.
+      // E.g., delegate.onFinishFailed(new BookmarkNeedsReparentingException(null));
     }
+    super.finish(delegate);
   };
 
   // TODO this code is yucky, cleanup or comment or something
