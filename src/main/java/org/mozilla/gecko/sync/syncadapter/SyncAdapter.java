@@ -42,6 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -63,6 +64,8 @@ import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.SyncResult;
+import android.database.sqlite.SQLiteConstraintException;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -80,26 +83,37 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   private void handleException(Exception e, SyncResult syncResult) {
-    if (e instanceof OperationCanceledException) {
-      Log.e(LOG_TAG, "Operation canceled. Aborting sync.");
-      e.printStackTrace();
-      return;
-    }
-    if (e instanceof AuthenticatorException) {
-      syncResult.stats.numParseExceptions++;
-      Log.e(LOG_TAG, "AuthenticatorException. Aborting sync.");
-      e.printStackTrace();
-      return;
-    }
-    if (e instanceof IOException) {
+    try {
+      if (e instanceof SQLiteConstraintException) {
+        Log.e(LOG_TAG, "Constraint exception. Aborting sync.", e);
+        syncResult.stats.numParseExceptions++;       // This is as good as we can do.
+        return;
+      }
+      if (e instanceof SQLiteDatabaseLockedException) {
+        Log.e(LOG_TAG, "Couldn't open locked database. Aborting sync.", e);
+        syncResult.stats.numIoExceptions++;
+        return;
+      }
+      if (e instanceof OperationCanceledException) {
+        Log.e(LOG_TAG, "Operation canceled. Aborting sync.", e);
+        return;
+      }
+      if (e instanceof AuthenticatorException) {
+        syncResult.stats.numParseExceptions++;
+        Log.e(LOG_TAG, "AuthenticatorException. Aborting sync.", e);
+        return;
+      }
+      if (e instanceof IOException) {
+        syncResult.stats.numIoExceptions++;
+        Log.e(LOG_TAG, "IOException. Aborting sync.", e);
+        e.printStackTrace();
+        return;
+      }
       syncResult.stats.numIoExceptions++;
-      Log.e(LOG_TAG, "IOException. Aborting sync.");
-      e.printStackTrace();
-      return;
+      Log.e(LOG_TAG, "Unknown exception. Aborting sync.", e);
+    } finally {
+      notifyMonitor();
     }
-    syncResult.stats.numIoExceptions++;
-    Log.e(LOG_TAG, "Unknown exception. Aborting sync.");
-    e.printStackTrace();
   }
 
   private AccountManagerFuture<Bundle> getAuthToken(final Account account,
@@ -160,19 +174,27 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
           Log.d(LOG_TAG, "Username: " + username);
           Log.d(LOG_TAG, "Server:   " + serverURL);
-          Log.d(LOG_TAG, "Password: " + password);  // TODO: remove
-          Log.d(LOG_TAG, "Key:      " + syncKey);   // TODO: remove
+          Log.d(LOG_TAG, "Password? " + (password != null));
+          Log.d(LOG_TAG, "Key?      " + (syncKey != null));
           if (password == null) {
             Log.e(LOG_TAG, "No password: aborting sync.");
+            syncResult.stats.numAuthExceptions++;
+            notifyMonitor();
             return;
           }
           if (syncKey == null) {
             Log.e(LOG_TAG, "No Sync Key: aborting sync.");
+            syncResult.stats.numAuthExceptions++;
+            notifyMonitor();
             return;
           }
           KeyBundle keyBundle = new KeyBundle(username, syncKey);
+
+          // Support multiple accounts by mapping each server/account pair to a branch of the
+          // shared preferences space.
+          String prefsPath = "sync.prefs." + Cryptographer.sha1Base32(serverURL + ":" + username);
           self.performSync(account, extras, authority, provider, syncResult,
-              username, password, serverURL, keyBundle);
+              username, password, prefsPath, serverURL, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
           return;
@@ -194,6 +216,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   /**
    * Now that we have a sync key and password, go ahead and do the work.
+   * @param prefsPath TODO
    * @throws NoSuchAlgorithmException
    * @throws IllegalArgumentException
    * @throws SyncConfigurationException
@@ -206,8 +229,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                              ContentProviderClient provider,
                              SyncResult syncResult,
                              String username, String password,
-                             String serverURL,
-                             KeyBundle keyBundle)
+                             String prefsPath,
+                             String serverURL, KeyBundle keyBundle)
                                  throws NoSuchAlgorithmException,
                                         SyncConfigurationException,
                                         IllegalArgumentException,
@@ -218,8 +241,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     this.syncResult = syncResult;
     // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
-                                                    serverURL, username, password, keyBundle,
-                                                    this, this.mContext, null);
+                                                    serverURL, username, password, prefsPath,
+                                                    keyBundle, this, this.mContext, extras);
 
     globalSession.start();
 
@@ -228,7 +251,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   private void notifyMonitor() {
     synchronized (syncMonitor) {
       Log.i(LOG_TAG, "Notifying sync monitor.");
-      syncMonitor.notify();
+      syncMonitor.notifyAll();
     }
   }
 
@@ -259,6 +282,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   @Override
   public void handleSuccess(GlobalSession globalSession) {
     Log.i(LOG_TAG, "GlobalSession indicated success.");
+    Log.i(LOG_TAG, "Prefs target: " + globalSession.config.prefsPath);
+    globalSession.config.persistToPrefs();
     notifyMonitor();
   }
 

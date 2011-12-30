@@ -67,7 +67,6 @@ public class TestLineByLineHandling {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
-      assertEquals(res.reason(), SyncStorageResponse.Reason.SUCCESS);
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
       assertEquals(lines.size(), 4);

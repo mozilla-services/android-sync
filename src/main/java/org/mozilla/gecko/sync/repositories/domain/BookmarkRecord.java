@@ -85,14 +85,6 @@ public class BookmarkRecord extends Record {
   public JSONArray children;
   public JSONArray tags;
 
-  private static boolean getBooleanProperty(ExtendedJSONObject object, String property, boolean defaultValue) {
-    Object val = object.get(property);
-    if (val instanceof Boolean) {
-      return ((Boolean) val).booleanValue();
-    }
-    return defaultValue;
-  }
-
   @Override
   public void initFromPayload(CryptoRecord payload) {
     ExtendedJSONObject p = payload.payload;

@@ -40,17 +40,16 @@ package org.mozilla.gecko.sync;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.CryptoInfo;
 import org.mozilla.gecko.sync.crypto.Cryptographer;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.MissingCryptoInputException;
 import org.mozilla.gecko.sync.crypto.NoKeyBundleException;
-import org.mozilla.gecko.sync.crypto.Utils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 /**
@@ -229,5 +228,10 @@ public class CryptoRecord extends Record {
     o.put(KEY_PAYLOAD, payload.toJSONString());
     o.put(KEY_ID,      this.guid);
     return o.object;
+  }
+
+  @Override
+  public String toJSONString() {
+    return toJSONObject().toJSONString();
   }
 }

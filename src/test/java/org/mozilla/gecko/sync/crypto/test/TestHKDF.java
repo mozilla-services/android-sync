@@ -7,11 +7,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.mozilla.apache.commons.codec.binary.Base64;
 import org.junit.Test;
+import org.mozilla.apache.commons.codec.binary.Base64;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.HKDF;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.crypto.Utils;
 
 
 /*

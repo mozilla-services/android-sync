@@ -37,6 +37,8 @@
 
 package org.mozilla.gecko.sync.stage;
 
+import java.net.URISyntaxException;
+
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
@@ -87,11 +89,12 @@ public abstract class ServerSyncStage implements
    * @param collection
    * @return
    * @throws NoCollectionKeysSetException
+   * @throws URISyntaxException
    */
-  protected Repository wrappedServerRepo() throws NoCollectionKeysSetException {
+  protected Repository wrappedServerRepo() throws NoCollectionKeysSetException, URISyntaxException {
     String collection = this.getCollection();
     KeyBundle collectionKey = session.keyForCollection(collection);
-    Server11Repository serverRepo = new Server11Repository(session.config.clusterURL.toASCIIString(),
+    Server11Repository serverRepo = new Server11Repository(session.config.getClusterURLString(),
                                                            session.config.username,
                                                            collection,
                                                            session);
@@ -100,7 +103,7 @@ public abstract class ServerSyncStage implements
     return cryptoRepo;
   }
 
-  public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException {
+  public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException, URISyntaxException {
     Repository remote = wrappedServerRepo();
 
     Synchronizer synchronizer = new Synchronizer();
@@ -137,6 +140,9 @@ public abstract class ServerSyncStage implements
       synchronizer = this.getConfiguredSynchronizer(session);
     } catch (NoCollectionKeysSetException e) {
       session.abort(e, "No CollectionKeys.");
+      return;
+    } catch (URISyntaxException e) {
+      session.abort(e, "Invalid URI syntax for server repository.");
       return;
     }
     Log.d(LOG_TAG, "Invoking synchronizer.");

@@ -42,6 +42,8 @@ import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 public class SyncConfiguration implements CredentialsSource {
@@ -49,10 +51,13 @@ public class SyncConfiguration implements CredentialsSource {
 
   private static final String LOG_TAG = "SyncConfiguration";
 
+  // See <http://developer.android.com/reference/android/content/Context.html#getSharedPreferences%28java.lang.String,%20int%29>
+  private static final int SHARED_PREFERENCES_MODE = 0;
+
   // These must be set in GlobalSession's constructor.
   public String          userAPI;
   public URI             serverURL;
-  public URI             clusterURL;
+  protected URI          clusterURL;
   public String          username;
   public KeyBundle       syncKeyBundle;
 
@@ -62,8 +67,63 @@ public class SyncConfiguration implements CredentialsSource {
   public String          password;
   public String          syncID;
 
+  // Fields that maintain a reference to a SharedPreferences instance, used for
+  // persistence.
+  // Behavior is undefined if the PrefsSource is switched out in flight.
+  public String          prefsPath;
+  public PrefsSource    prefsSource;
 
-  public SyncConfiguration() {
+  /**
+   * Create a new SyncConfiguration instance. Pass in a PrefsSource to
+   * provide access to preferences.
+   *
+   * @param prefsPath
+   * @param context
+   */
+  public SyncConfiguration(String prefsPath, PrefsSource prefsSource) {
+    this.prefsPath   = prefsPath;
+    this.prefsSource = prefsSource;
+    this.loadFromPrefs(getPrefs());
+  }
+
+  protected SharedPreferences getPrefs() {
+    return prefsSource.getPrefs(prefsPath, SHARED_PREFERENCES_MODE);
+  }
+
+  public void loadFromPrefs(SharedPreferences prefs) {
+
+    if (prefs.contains("clusterURL")) {
+      String u = prefs.getString("clusterURL", null);
+      try {
+        clusterURL = new URI(u);
+        Log.i(LOG_TAG, "Set clusterURL from bundle: " + u);
+      } catch (URISyntaxException e) {
+        Log.w(LOG_TAG, "Ignoring bundle clusterURL (" + u + "): invalid URI.", e);
+      }
+    }
+    if (prefs.contains("syncID")) {
+      syncID = prefs.getString("syncID", null);
+      Log.i(LOG_TAG, "Set syncID from bundle: " + syncID);
+    }
+    // TODO: MetaGlobal, password, infoCollections, collectionKeys.
+  }
+
+  public void persistToPrefs() {
+    this.persistToPrefs(this.getPrefs());
+  }
+
+  public void persistToPrefs(SharedPreferences prefs) {
+    Editor edit = prefs.edit();
+    if (clusterURL == null) {
+      edit.remove("clusterURL");
+    } else {
+      edit.putString("clusterURL", clusterURL.toASCIIString());
+    }
+    if (syncID != null) {
+      edit.putString("syncID", syncID);
+    }
+    edit.commit();
+    // TODO: keys.
   }
 
   @Override
@@ -136,18 +196,46 @@ public class SyncConfiguration implements CredentialsSource {
     return wboURI("crypto", "keys");
   }
 
+  public URI getClusterURL() {
+    return clusterURL;
+  }
+
+  public String getClusterURLString() {
+    if (clusterURL == null) {
+      return null;
+    }
+    return clusterURL.toASCIIString();
+  }
+
+  public void setAndPersistClusterURL(URI u, SharedPreferences prefs) {
+    boolean shouldPersist = (prefs != null) && (clusterURL == null);
+
+    Log.d(LOG_TAG, "Setting cluster URL to " + u.toASCIIString() +
+                   (shouldPersist ? ". Persisting." : ". Not persisting."));
+    clusterURL = u;
+    if (shouldPersist) {
+      Editor edit = prefs.edit();
+      edit.putString("clusterURL", clusterURL.toASCIIString());
+      edit.commit();
+    }
+  }
+
   public void setClusterURL(URI u) {
+    setClusterURL(u, this.getPrefs());
+  }
+
+  public void setClusterURL(URI u, SharedPreferences prefs) {
     if (u == null) {
       Log.w(LOG_TAG, "Refusing to set cluster URL to null.");
       return;
     }
     URI uri = u.normalize();
     if (uri.toASCIIString().endsWith("/")) {
-      this.clusterURL = u;
+      setAndPersistClusterURL(u, prefs);
       return;
     }
-    this.clusterURL = uri.resolve("/");
-    Log.i(LOG_TAG, "Set cluster URL to " + this.clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
+    setAndPersistClusterURL(uri.resolve("/"), prefs);
+    Log.i(LOG_TAG, "Set cluster URL to " + clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
   }
 
   public void setClusterURL(String url) throws URISyntaxException {

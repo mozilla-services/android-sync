@@ -45,7 +45,9 @@ import org.mozilla.gecko.sync.repositories.domain.HistoryRecordFactory;
 public class AndroidBrowserHistoryServerSyncStage extends ServerSyncStage {
   @Override
   public void execute(org.mozilla.gecko.sync.GlobalSession session) throws NoSuchStageException {
-    super.execute(session);
+    // super.execute(session);
+    // TODO: re-enable me.
+    session.advance();
   }
 
   @Override

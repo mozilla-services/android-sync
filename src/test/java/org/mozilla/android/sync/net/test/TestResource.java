@@ -67,8 +67,16 @@ public class TestResource {
 
   @Before
   public void setUp() {
-    Log.i("TestMetaGlobal", "Faking SSL context.");
+    Log.i("TestResource", "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
+    Log.i("TestResource", "Disabling URI rewriting.");
+    BaseResource.rewriteLocalhost = false;
+  }
+
+  @Test
+  public void testLocalhostRewriting() throws URISyntaxException {
+    BaseResource r = new BaseResource("http://localhost:5000/foo/bar", true);
+    assertEquals("http://10.0.2.2:5000/foo/bar", r.getURI().toASCIIString());
   }
 
   @Test

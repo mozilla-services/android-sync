@@ -72,10 +72,11 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
-public class GlobalSession implements CredentialsSource {
+public class GlobalSession implements CredentialsSource, PrefsSource {
   public static final String API_VERSION   = "1.1";
   public static final long STORAGE_VERSION = 5;
   private static final String LOG_TAG = "GlobalSession";
@@ -139,6 +140,7 @@ public class GlobalSession implements CredentialsSource {
                        String serverURL,
                        String username,
                        String password,
+                       String prefsPath,
                        KeyBundle syncKeyBundle,
                        GlobalSessionCallback callback,
                        Context context,
@@ -166,16 +168,16 @@ public class GlobalSession implements CredentialsSource {
       throw new SyncConfigurationException();
     }
 
-    // TODO: use persisted.
-    config = new SyncConfiguration();
+    this.callback        = callback;
+    this.context         = context;
+
+    config = new SyncConfiguration(prefsPath, this);
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;
     config.username      = username;
     config.password      = password;
     config.syncKeyBundle = syncKeyBundle;
-
-    this.callback        = callback;
-    this.context         = context;
+    // clusterURL and syncID are set through `persisted`, or fetched from the server.
 
     // TODO: populate saved configurations. We'll amend these after processing meta/global.
     this.synchronizerConfigurations = new SynchronizerConfigurations(persisted);
@@ -250,6 +252,15 @@ public class GlobalSession implements CredentialsSource {
     return config.syncID;
   }
 
+  /*
+   * PrefsSource methods.
+   */
+  @Override
+  public SharedPreferences getPrefs(String name, int mode) {
+    return this.getContext().getSharedPreferences(name, mode);
+  }
+
+  @Override
   public Context getContext() {
     return this.context;
   }
@@ -400,6 +411,7 @@ public class GlobalSession implements CredentialsSource {
       config.syncID = remoteSyncID;
       // TODO TODO TODO
     }
+    config.persistToPrefs();
     advance();
   }
 
@@ -422,6 +434,7 @@ public class GlobalSession implements CredentialsSource {
       @Override
       public void onFreshStart() {
         try {
+          globalSession.config.persistToPrefs();
           globalSession.restart();
         } catch (Exception e) {
           Log.w(LOG_TAG, "Got exception when restarting sync after freshStart.", e);
@@ -446,6 +459,7 @@ public class GlobalSession implements CredentialsSource {
       public void onWiped(long timestamp) {
         session.resetClient();
         session.config.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
+        session.config.persistToPrefs();
 
         MetaGlobal mg = new MetaGlobal(metaURL, credentials);
         mg.setSyncID(newSyncID);
@@ -458,7 +472,7 @@ public class GlobalSession implements CredentialsSource {
         mg.upload(new MetaGlobalDelegate() {
 
           @Override
-          public void handleSuccess(MetaGlobal global) {
+          public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
             session.config.metaGlobal = global;
             Log.i(LOG_TAG, "New meta/global uploaded with sync ID " + newSyncID);
 
@@ -487,7 +501,7 @@ public class GlobalSession implements CredentialsSource {
           }
 
           @Override
-          public void handleMissing(MetaGlobal global) {
+          public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
             // Shouldn't happen.
             Log.w(LOG_TAG, "Got 'missing' response uploading new meta/global.");
             freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing"));
@@ -512,20 +526,20 @@ public class GlobalSession implements CredentialsSource {
             return new MetaGlobalDelegate() {
 
               @Override
-              public void handleSuccess(final MetaGlobal global) {
+              public void handleSuccess(final MetaGlobal global, final SyncStorageResponse response) {
                 ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
-                    self.handleSuccess(global);
+                    self.handleSuccess(global, response);
                   }});
               }
 
               @Override
-              public void handleMissing(final MetaGlobal global) {
+              public void handleMissing(final MetaGlobal global, final SyncStorageResponse response) {
                 ThreadPool.run(new Runnable() {
                   @Override
                   public void run() {
-                    self.handleMissing(global);
+                    self.handleMissing(global, response);
                   }});
               }
 

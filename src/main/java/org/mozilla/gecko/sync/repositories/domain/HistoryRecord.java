@@ -78,43 +78,74 @@ public class HistoryRecord extends Record {
     this.title       = (String) payload.payload.get("title");
     // TODO add missing fields
   }
+
   @Override
   public CryptoRecord getPayload() {
     // TODO Auto-generated method stub
     return null;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (!o.getClass().equals(HistoryRecord.class)) return false;
+  public boolean equalsExceptVisits(Object o) {
+    if (!(o instanceof HistoryRecord)) {
+      return false;
+    }
     HistoryRecord other = (HistoryRecord) o;
-    return
-        super.equals(other) &&
-        RepoUtils.stringsEqual(this.title, other.title) &&
-        RepoUtils.stringsEqual(this.histURI, other.histURI) &&
-        this.checkVisitsEquals(other);
+    return super.equals(other) &&
+           RepoUtils.stringsEqual(this.title, other.title) &&
+           RepoUtils.stringsEqual(this.histURI, other.histURI);
   }
-  
+
+  public boolean equalsIncludingVisits(Object o) {
+    HistoryRecord other = (HistoryRecord) o;
+    return equalsExceptVisits(other) && this.checkVisitsEquals(other);
+  }
+
+  @Override
+  /**
+   * We consider two history records to be equal if they represent the
+   * same history record regardless of visits.
+   */
+  public boolean equals(Object o) {
+    return equalsExceptVisits(o);
+  }
+
   private boolean checkVisitsEquals(HistoryRecord other) {
     
-    // Handle nulls
-    if (this.visits == other.visits) return true;
-    else if ((this.visits == null || this.visits.size() == 0) && (other.visits != null && other.visits.size() !=0)) return false;
-    else if ((this.visits != null && this.visits.size() != 0) && (other.visits == null || other.visits.size() == 0)) return false;
+    // Handle nulls.
+    if (this.visits == other.visits) {
+      return true;
+    }
+
+    // Now they can't both be null.
+    int aSize = this.visits == null ? 0 : this.visits.size();
+    int bSize = other.visits == null ? 0 : other.visits.size();
     
-    // Check size
-    if (this.visits.size() != other.visits.size()) return false;
-    
+    if (aSize != bSize) {
+      return false;
+    }
+
+    // Now neither of them can be null.
+
+    // TODO: do this by maintaining visits as a sorted array.
     HashMap<Long, Long> otherVisits = new HashMap<Long, Long>();
-    for (int i = 0; i < other.visits.size(); i++) {
+    for (int i = 0; i < bSize; i++) {
       JSONObject visit = (JSONObject) other.visits.get(i);
-      otherVisits.put((Long)visit.get("date"), (Long)visit.get("type"));
+      otherVisits.put((Long) visit.get("date"), (Long) visit.get("type"));
     }
     
-    for (int i = 0; i < this.visits.size(); i++) {
+    for (int i = 0; i < aSize; i++) {
       JSONObject visit = (JSONObject) this.visits.get(i);
-      if (!otherVisits.containsKey(visit.get("date"))) return false;
-      if (otherVisits.get(visit.get("date")) != (Long) visit.get("type")) return false;
+      if (!otherVisits.containsKey(visit.get("date"))) {
+        return false;
+      }
+      Long otherDate = (Long) visit.get("date");
+      Long otherType = otherVisits.get(otherDate);
+      if (otherType == null) {
+        return false;
+      }
+      if (!otherType.equals((Long) visit.get("type"))) {
+        return false;
+      }
     }
     
     return true;

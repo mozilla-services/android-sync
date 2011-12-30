@@ -75,10 +75,15 @@ public class SyncResponse {
     return this.getStatusCode() == 200;
   }
 
+  private String body = null;
   public String body() throws IllegalStateException, IOException {
+    if (body != null) {
+      return body;
+    }
     InputStreamReader is = new InputStreamReader(this.response.getEntity().getContent());
     // Oh, Java, you are so evil.
-    return new Scanner(is).useDelimiter("\\A").next();
+    body = new Scanner(is).useDelimiter("\\A").next();
+    return body;
   }
 
   /**
@@ -92,6 +97,10 @@ public class SyncResponse {
    */
   public Object jsonBody() throws IllegalStateException, IOException,
                           ParseException {
+    if (body != null) {
+      // Do it from the cached String.
+      ExtendedJSONObject.parse(body);
+    }
     HttpEntity entity = this.response.getEntity();
     if (entity == null) {
       return null;

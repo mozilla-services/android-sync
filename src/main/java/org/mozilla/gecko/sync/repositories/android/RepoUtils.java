@@ -57,11 +57,12 @@ public class RepoUtils {
 
   private static final String LOG_TAG = "DBUtils";
   public static String[] SPECIAL_GUIDS = new String[] {
-    "menu",
+    // Mobile and desktop places roots have to come first.
+    "mobile",
     "places",
     "toolbar",
-    "unfiled",
-    "mobile"
+    "menu",
+    "unfiled"
   };
   
   // Map of guids to their localized name strings
@@ -78,6 +79,8 @@ public class RepoUtils {
   }
 
   public static String getStringFromCursor(Cursor cur, String colId) {
+    // TODO: getColumnIndexOrThrow?
+    // TODO: don't look up columns by name!
     return cur.getString(cur.getColumnIndex(colId));
   }
 

@@ -1,0 +1,121 @@
+package org.mozilla.gecko.sync.repositories.test;
+
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import org.junit.Test;
+import org.mozilla.android.sync.net.test.BaseTestStorageRequestDelegate;
+import org.mozilla.android.sync.net.test.HTTPServerTestHelper;
+import org.mozilla.android.sync.net.test.MockServer;
+import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.Server11RepositorySession;
+import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.simpleframework.http.ContentType;
+import org.simpleframework.http.Request;
+import org.simpleframework.http.Response;
+
+import ch.boye.httpclientandroidlib.HttpEntity;
+
+public class Server11RepositorySessionTest {
+
+  public class POSTMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      try {
+        String content = request.getContent();
+        System.out.println("Content:" + content);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      ContentType contentType = request.getContentType();
+      System.out.println("Content-Type:" + contentType);
+      super.handle(request, response, 200, "{success:[]}");
+    }
+  }
+
+  static final String          LOCAL_REQUEST_URL = "http://localhost:8080/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
+
+  // Corresponds to rnewman+atest1@mozilla.com, local.
+  static final String          USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
+  static final String          USER_PASS         = "n6ec3u5bee3tixzp2asys7bs6fve4jfw:password";
+  static final String          SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
+
+  private HTTPServerTestHelper data              = new HTTPServerTestHelper();
+
+  public class MockRecord extends Record {
+    public MockRecord(String guid, String collection, long lastModified,
+        boolean deleted) {
+      super(guid, collection, lastModified, deleted);
+    }
+
+    @Override
+    public void initFromPayload(CryptoRecord payload) {
+    }
+
+    @Override
+    public CryptoRecord getPayload() {
+      return null;
+    }
+
+    @Override
+    public String toJSONString() {
+      return "{\"id\":\"" + guid + "\", \"payload\": \"foo\"}";
+    }
+  }
+
+  public class MockServer11RepositorySession extends Server11RepositorySession {
+    public MockServer11RepositorySession(Repository repository) {
+      super(repository);
+    }
+
+    public RecordUploadRunnable getRecordUploadRunnable() {
+      // TODO: implement upload delegate in the class, too!
+      return new RecordUploadRunnable(null, recordsBuffer, byteCount);
+    }
+
+    public void enqueueRecord(Record r) {
+      super.enqueue(r);
+    }
+
+    public HttpEntity getEntity() {
+      return this.getRecordUploadRunnable().getBodyEntity();
+    }
+  }
+
+  public class TestSyncStorageRequestDelegate extends
+      BaseTestStorageRequestDelegate {
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse res) {
+      assertTrue(res.wasSuccessful());
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
+      data.stopHTTPServer();
+    }
+  }
+
+  @Test
+  public void test() throws URISyntaxException {
+
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new POSTMockServer());
+
+    MockServer11RepositorySession session = new MockServer11RepositorySession(
+        null);
+    session.enqueueRecord(new MockRecord(Utils.generateGuid(), null, 0, false));
+    session.enqueueRecord(new MockRecord(Utils.generateGuid(), null, 0, false));
+
+    URI uri = new URI(LOCAL_REQUEST_URL);
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(uri);
+    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
+    delegate._credentials = USER_PASS;
+    r.delegate = delegate;
+    r.post(session.getEntity());
+  }
+}

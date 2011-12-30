@@ -72,65 +72,92 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     dataAccessor = (AndroidBrowserBookmarksDataAccessor) dbHelper;
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    long androidParentId = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
-    String guid = idToGuid.get(androidParentId);
+  private long getParentID(Cursor cur) {
+    return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
+  }
 
-    if (guid == null) {
-      // if the parent has been stored and somehow has a null guid, throw an error
-      if (idToGuid.containsKey(androidParentId)) {
-        Log.e(LOG_TAG, "Have the parent android id for the record but the parent's guid wasn't found");
-        throw new NoGuidForIdException(null);
-      } else {
-        return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
-      }
+  private String getParentName(String parentGUID) throws ParentNotFoundException, NullCursorException {
+    if (RepoUtils.SPECIAL_GUIDS_MAP.containsKey(parentGUID)) {
+      return RepoUtils.SPECIAL_GUIDS_MAP.get(parentGUID);
     }
-    
-    // Get parent name
+
+    // Get parent name from database.
     String parentName = "";
-    Cursor name = dataAccessor.fetch(new String[] { guid });
-    name.moveToFirst();
-    if (!name.isAfterLast()) {
-      parentName = RepoUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
+    Cursor name = dataAccessor.fetch(new String[] { parentGUID });
+    try {
+      name.moveToFirst();
+      if (!name.isAfterLast()) {
+        parentName = RepoUtils.getStringFromCursor(name, BrowserContract.Bookmarks.TITLE);
+      }
+      else {
+        Log.e(LOG_TAG, "Couldn't find record with guid '" + parentGUID + "' when looking for parent name.");
+        throw new ParentNotFoundException(null);
+      }
+    } finally {
+      name.close();
     }
-    else {
-      Log.e(LOG_TAG, "Couldn't find record with guid " + guid + " while looking for parent name");
-      throw new ParentNotFoundException(null);
-    }
-    name.close();
-    
-    // If record is a folder, build out the children array
-    long isFolder = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
+    return parentName;
+  }
+
+  @SuppressWarnings("unchecked")
+  private JSONArray getChildren(long androidID) throws NullCursorException {
     JSONArray childArray = null;
-    if (isFolder == 1) {
-      long androidID = guidToID.get(RepoUtils.getStringFromCursor(cur, "guid"));
-      Cursor children = dataAccessor.getChildren(androidID);
+    Cursor children = dataAccessor.getChildren(androidID);
+    try {
       children.moveToFirst();
       int count = 0;
-      
-      // Get children into array in correct order
+
+      // Get children into array in correct order.
       while(!children.isAfterLast()) {
         count++;
         children.moveToNext();
       }
       children.moveToFirst();
       String[] kids = new String[count];
-      while(!children.isAfterLast()) {
-        if (childArray == null) childArray = new JSONArray();
+      while (!children.isAfterLast()) {
+        if (childArray == null) {
+          childArray = new JSONArray();
+        }
         String childGuid = RepoUtils.getStringFromCursor(children, "guid");
         int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
         kids[childPosition] = childGuid;
         children.moveToNext();
       }
       children.close();
-      for(int i = 0; i < kids.length; i++) {
+      for (int i = 0; i < count; ++i) {
         childArray.add(kids[i]);
       }
-      
+    } finally {
+      children.close();
     }
-    return RepoUtils.bookmarkFromMirrorCursor(cur, guid, parentName, childArray);
+    return childArray;
+  }
+
+  @Override
+  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    long androidParentID = getParentID(cur);
+    String androidParentGUID = idToGuid.get(androidParentID);
+
+    if (androidParentGUID == null) {
+      // if the parent has been stored and somehow has a null GUID, throw an error.
+      if (idToGuid.containsKey(androidParentID)) {
+        Log.e(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
+        throw new NoGuidForIdException(null);
+      } else {
+        return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
+      }
+    }
+
+    String parentName = getParentName(androidParentGUID);
+
+    // If record is a folder, build out the children array
+    long isFolder = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
+    JSONArray childArray = null;
+    if (isFolder == 1) {
+      long androidID = guidToID.get(RepoUtils.getStringFromCursor(cur, "guid"));
+      childArray = getChildren(androidID);
+    }
+    return RepoUtils.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
   }
 
   @Override
@@ -150,8 +177,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // and insert them if they don't exist.
     Cursor cur;
     try {
+      Log.d(LOG_TAG, "Check and build special GUIDs.");
       dataAccessor.checkAndBuildSpecialGuids();
       cur = dataAccessor.getGuidsIDsForFolders();
+      Log.d(LOG_TAG, "Got GUIDs for folders.");
+    } catch (android.database.sqlite.SQLiteConstraintException e) {
+      Log.e(LOG_TAG, "Got sqlite constraint exception working with Fennec bookmark DB.", e);
+      delegate.onBeginFailed(e);
+      return;
     } catch (NullCursorException e) {
       delegate.onBeginFailed(e);
       return;
@@ -161,17 +194,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
     
     // To deal with parent mapping of bookmarks we have to do some
-    // hairy stuff, here's the setup for it
-    cur.moveToFirst();
-    while(!cur.isAfterLast()) {
-      String guid = RepoUtils.getStringFromCursor(cur, "guid");
-      long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
-      guidToID.put(guid, id);
-      idToGuid.put(id, guid);
-      cur.moveToNext();
+    // hairy stuff. Here's the setup for it.
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, "guid");
+        long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
+        guidToID.put(guid, id);
+        idToGuid.put(id, guid);
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
     }
-    cur.close();
-    
+    Log.d(LOG_TAG, "Done with initial setup of bookmarks session.");
     super.begin(delegate);
   }
 
@@ -181,11 +217,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // needing re-parenting have been re-parented.
     if (needsReparenting != 0) {
       Log.e(LOG_TAG, "Finish called but " + needsReparenting +
-          " bookmark(s) have been placed in unsorted bookmarks and not been reparented.");
-      delegate.onFinishFailed(new BookmarkNeedsReparentingException(null));
-    } else {
-      super.finish(delegate);
+            " bookmark(s) have been placed in unsorted bookmarks and not been reparented.");
+
+      // TODO: handling of failed reparenting.
+      // E.g., delegate.onFinishFailed(new BookmarkNeedsReparentingException(null));
     }
+    super.finish(delegate);
   };
 
   // TODO this code is yucky, cleanup or comment or something
@@ -234,12 +271,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       if(missingParentToChildren.containsKey(bmk.guid)) {
         for (String child : missingParentToChildren.get(bmk.guid)) {
           long position;
-          if (bmk.children.contains(child)) {
-            position = childArray.indexOf(child);
-          } else {
+          if (!bmk.children.contains(child)) {
             childArray.add(child);
-            position = childArray.indexOf(child);
           }
+          position = childArray.indexOf(child);
           dataAccessor.updateParentAndPosition(child, id, position);
           needsReparenting--;
         }
