@@ -47,6 +47,22 @@ import org.mozilla.apache.commons.codec.binary.Base64;
 
 public class Utils {
 
+  // We don't really have a trace logger, so use this to toggle
+  // some debug logging.
+  // This is awful. I'm so sorry.
+  public static boolean ENABLE_TRACE_LOGGING = false;
+
+  // If true, log to System.out as well as using Android's Log.* calls.
+  public static boolean LOG_TO_STDOUT = false;
+  public static void logToStdout(String... s) {
+    if (LOG_TO_STDOUT) {
+      for (String string : s) {
+        System.out.print(string);
+      }
+      System.out.println("");
+    }
+  }
+
   public static String generateGuid() {
     byte[] encodedBytes = Base64.encodeBase64(generateRandomBytes(9), false);
     return new String(encodedBytes).replace("+", "-").replace("/", "_");

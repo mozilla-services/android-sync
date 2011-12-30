@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
 import org.mozilla.gecko.sync.ThreadPool;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionBeginDelegate;
@@ -136,22 +137,25 @@ class RecordsChannel implements
 
 
   private static void info(String message) {
-    System.out.println(LOG_TAG + "::INFO: " + message);
+    Utils.logToStdout(LOG_TAG, "::INFO: ", message);
     Log.i(LOG_TAG, message);
   }
 
-  private static void debug(String message) {
-    System.out.println(LOG_TAG + "::DEBUG: " + message);
+  private static void trace(String message) {
+    if (!Utils.ENABLE_TRACE_LOGGING) {
+      return;
+    }
+    Utils.logToStdout(LOG_TAG, "::TRACE: ", message);
     Log.d(LOG_TAG, message);
   }
 
   private static void error(String message, Exception e) {
-    System.out.println(LOG_TAG + "::ERROR: " + message);
+    Utils.logToStdout(LOG_TAG, "::ERROR: ", message);
     Log.e(LOG_TAG, message, e);
   }
 
   private static void warn(String message, Exception e) {
-    System.out.println(LOG_TAG + "::WARN: " + message);
+    Utils.logToStdout(LOG_TAG, "::WARN: ", message);
     Log.w(LOG_TAG, message, e);
   }
 
@@ -248,7 +252,7 @@ class RecordsChannel implements
 
   @Override
   public void consumerIsDone(boolean allRecordsQueued) {
-    debug("Consumer is done. Are we waiting for it? " + waitingForQueueDone);
+    trace("Consumer is done. Are we waiting for it? " + waitingForQueueDone);
     if (waitingForQueueDone) {
       waitingForQueueDone = false;
       this.sink.storeDone();                 // Now we'll be waiting for onStoreCompleted.

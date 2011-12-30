@@ -37,6 +37,7 @@
 
 package org.mozilla.gecko.sync.synchronizer;
 
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.util.Log;
@@ -64,12 +65,20 @@ class ConcurrentRecordConsumer extends RecordConsumer {
   }
 
   private static void info(String message) {
-    System.out.println(LOG_TAG + "::INFO: " + message);
+    Utils.logToStdout(LOG_TAG, "::INFO: ", message);
     Log.i(LOG_TAG, message);
   }
 
   private static void debug(String message) {
-    System.out.println(LOG_TAG + ":: DEBUG: " + message);
+    Utils.logToStdout(LOG_TAG, ":: DEBUG: ", message);
+    Log.d(LOG_TAG, message);
+  }
+
+  private static void trace(String message) {
+    if (!Utils.ENABLE_TRACE_LOGGING) {
+      return;
+    }
+    Utils.logToStdout(LOG_TAG, ":: TRACE: ", message);
     Log.d(LOG_TAG, message);
   }
 
@@ -116,7 +125,7 @@ class ConcurrentRecordConsumer extends RecordConsumer {
   public void run() {
     while (true) {
       synchronized (monitor) {
-        debug("run() took monitor.");
+        trace("run() took monitor.");
         if (stopImmediately) {
           debug("Stopping immediately. Clearing queue.");
           delegate.getQueue().clear();
@@ -128,13 +137,13 @@ class ConcurrentRecordConsumer extends RecordConsumer {
       }
       // The queue is concurrent-safe.
       while (!delegate.getQueue().isEmpty()) {
-        debug("Grabbing record...");
+        trace("Grabbing record...");
         Record record = delegate.getQueue().remove();
         delegate.store(record);
-        debug("Done with record.");
+        trace("Done with record.");
       }
       synchronized (monitor) {
-        debug("run() took monitor.");
+        trace("run() took monitor.");
 
         if (allRecordsQueued) {
           debug("Done with records and no more to come. Notifying consumerIsDone.");
@@ -152,7 +161,7 @@ class ConcurrentRecordConsumer extends RecordConsumer {
         } catch (InterruptedException e) {
           // TODO
         }
-        debug("run() dropped monitor.");
+        trace("run() dropped monitor.");
       }
     }
   }
