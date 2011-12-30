@@ -434,11 +434,11 @@ public class Server11RepositorySession extends RepositorySession {
       public boolean isRepeatable() {
         return true;
       }
+    }
 
-      @Override
-      public boolean isStreaming() {
-        return false;      // TODO: revisit this?
-      }
+    public ByteArraysEntity getBodyEntity() {
+      ByteArraysEntity body = new ByteArraysEntity(outgoing, byteCount);
+      return body;
     }
 
     @Override
@@ -449,7 +449,6 @@ public class Server11RepositorySession extends RepositorySession {
         return;
       }
 
-      HttpEntity body = new ByteArraysEntity(outgoing, byteCount);
       URI u = serverRepository.collectionURI();
       SyncStorageRequest request = new SyncStorageRequest(u);
 
@@ -458,6 +457,7 @@ public class Server11RepositorySession extends RepositorySession {
       // We don't want the task queue to proceed until this request completes.
       // Fortunately, BaseResource is currently synchronous.
       // If that ever changes, you'll need to block here.
+      ByteArraysEntity body = getBodyEntity();
       request.post(body);
     }
   }
