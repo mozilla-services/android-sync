@@ -157,7 +157,7 @@ implements RecordsChannelDelegate,
 
   @Override
   public void onFlowCompleted(RecordsChannel channel, long end) {
-    info("Second RecordsChannel (" + channel + ") flow completed. Notifying onSynchronized.");
+    info("Second RecordsChannel (" + channel + ") flow completed. Finishing.");
     pendingBTimestamp = end;
     flowBToACompleted = true;
 
@@ -257,7 +257,8 @@ implements RecordsChannelDelegate,
       warn("Got exception cleaning up first after second session creation failed.", ex);
       return;
     }
-    // TODO
+    String session = (this.sessionA == null) ? "B" : "A";
+    this.delegate.onSynchronizeFailed(this, ex, "Finish of session " + session + " failed.");
   }
 
   @Override
@@ -273,6 +274,7 @@ implements RecordsChannelDelegate,
         this.synchronizer.bundleA = bundle;
       }
       if (this.sessionB != null) {
+        info("Finishing session B.");
         // On to the next.
         this.sessionB.finish(this);
       }
@@ -281,6 +283,7 @@ implements RecordsChannelDelegate,
         info("onFinishSucceeded: bumping session B's timestamp to " + pendingBTimestamp);
         bundle.bumpTimestamp(pendingBTimestamp);
         this.synchronizer.bundleB = bundle;
+        info("Notifying delegate.onSynchronized.");
         this.delegate.onSynchronized(this);
       }
     } else {
