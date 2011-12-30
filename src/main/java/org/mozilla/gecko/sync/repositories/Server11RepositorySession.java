@@ -283,7 +283,7 @@ public class Server11RepositorySession extends RepositorySession {
           (recordsBuffer.size() > UPLOAD_ITEM_THRESHOLD)) {
 
         // POST the existing contents, then enqueue.
-        flush(takeItems());
+        flush();
       }
       recordsBuffer.add(json);
       byteCount += PER_RECORD_OVERHEAD + delta;
@@ -291,26 +291,19 @@ public class Server11RepositorySession extends RepositorySession {
   }
 
   // Asynchronously upload records.
-  protected void flush(final ArrayList<byte[]> outgoing) {
+  protected void flush() {
+    final ArrayList<byte[]> outgoing = recordsBuffer;
     RepositorySessionStoreDelegate uploadDelegate = null;    // TODO
     storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, byteCount));
-  }
 
-  /**
-   * Return the existing queued items, starting a new collection.
-   * @return The existing items.
-   */
-  protected ArrayList<byte[]> takeItems() {
-    ArrayList<byte[]> outgoing = recordsBuffer;
     recordsBuffer = new ArrayList<byte[]>();
     byteCount = PER_BATCH_OVERHEAD;
-    return outgoing;
   }
 
   @Override
   public void storeDone() {
     synchronized (recordsBufferMonitor) {
-      flush(takeItems());
+      flush();
       super.storeDone();
     }
   }
