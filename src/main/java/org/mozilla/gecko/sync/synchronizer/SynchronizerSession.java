@@ -125,7 +125,7 @@ implements RecordsChannelDelegate,
     final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this);
     RecordsChannelDelegate channelDelegate = new RecordsChannelDelegate() {
       public void onFlowCompleted(RecordsChannel recordsChannel, long end) {
-        info("First RecordsChannel flow completed. Starting next.");
+        info("First RecordsChannel flow completed. End is " + end + ". Starting next.");
         pendingATimestamp = end;
         flowAToBCompleted = true;
         channelBToA.flow();
@@ -157,7 +157,7 @@ implements RecordsChannelDelegate,
 
   @Override
   public void onFlowCompleted(RecordsChannel channel, long end) {
-    info("Second RecordsChannel (" + channel + ") flow completed. Finishing.");
+    info("Second RecordsChannel flow completed. End is " + end + ". Finishing.");
     pendingBTimestamp = end;
     flowBToACompleted = true;
 

@@ -233,6 +233,7 @@ class RecordsChannel implements
   @Override
   public void onFetchCompleted(long end) {
     info("onFetchCompleted. Stopping consumer once stores are done.");
+    info("Fetch timestamp is " + end);
     this.end = end;
     this.consumer.queueFilled();
   }
