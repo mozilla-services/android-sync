@@ -279,8 +279,8 @@ public class Server11RepositorySession extends RepositorySession {
     byte[] json = record.toJSONBytes();
     int delta   = json.length;
     synchronized (recordsBufferMonitor) {
-      if ((delta + byteCount    > UPLOAD_BYTE_THRESHOLD) ||
-          (recordsBuffer.size() > UPLOAD_ITEM_THRESHOLD)) {
+      if ((delta + byteCount     > UPLOAD_BYTE_THRESHOLD) ||
+          (recordsBuffer.size() >= UPLOAD_ITEM_THRESHOLD)) {
 
         // POST the existing contents, then enqueue.
         flush();
@@ -293,12 +293,14 @@ public class Server11RepositorySession extends RepositorySession {
   // Asynchronously upload records.
   // Must be locked!
   protected void flush() {
-    final ArrayList<byte[]> outgoing = recordsBuffer;
-    RepositorySessionStoreDelegate uploadDelegate = this.delegate;
-    storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, byteCount));
+    if (recordsBuffer.size() > 0) {
+      final ArrayList<byte[]> outgoing = recordsBuffer;
+      RepositorySessionStoreDelegate uploadDelegate = this.delegate;
+      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, byteCount));
 
-    recordsBuffer = new ArrayList<byte[]>();
-    byteCount = PER_BATCH_OVERHEAD;
+      recordsBuffer = new ArrayList<byte[]>();
+      byteCount = PER_BATCH_OVERHEAD;
+    }
   }
 
   @Override

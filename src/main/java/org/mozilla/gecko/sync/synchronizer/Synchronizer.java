@@ -37,6 +37,7 @@
 
 package org.mozilla.gecko.sync.synchronizer;
 
+import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 
@@ -122,5 +123,17 @@ public class Synchronizer {
     SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);
     SynchronizerSession session = new SynchronizerSession(this, sessionDelegate);
     session.init(context, bundleA, bundleB);
+  }
+
+  public SynchronizerConfiguration save() {
+    String syncID = null;      // TODO: syncID.
+    return new SynchronizerConfiguration(syncID, bundleA, bundleB);
+  }
+
+  // Not thread-safe.
+  public void load(SynchronizerConfiguration config) {
+    bundleA = config.remoteBundle;
+    bundleB = config.localBundle;
+    // TODO: syncID.
   }
 }

@@ -86,7 +86,7 @@ public class SyncConfiguration implements CredentialsSource {
     this.loadFromPrefs(getPrefs());
   }
 
-  protected SharedPreferences getPrefs() {
+  public SharedPreferences getPrefs() {
     return prefsSource.getPrefs(prefsPath, SHARED_PREFERENCES_MODE);
   }
 
@@ -240,5 +240,13 @@ public class SyncConfiguration implements CredentialsSource {
 
   public void setClusterURL(String url) throws URISyntaxException {
     this.setClusterURL(new URI(url));
+  }
+
+  /**
+   * Used for direct management of related prefs.
+   * @return
+   */
+  public Editor getEditor() {
+    return this.getPrefs().edit();
   }
 }

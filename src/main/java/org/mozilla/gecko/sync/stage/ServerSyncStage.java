@@ -37,12 +37,15 @@
 
 package org.mozilla.gecko.sync.stage;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 
+import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
@@ -103,18 +106,22 @@ public abstract class ServerSyncStage implements
     return cryptoRepo;
   }
 
-  public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException, URISyntaxException {
+  protected String bundlePrefix() {
+    return this.getCollection();
+  }
+
+  public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException, URISyntaxException, NonObjectJSONException, IOException, ParseException {
     Repository remote = wrappedServerRepo();
 
     Synchronizer synchronizer = new Synchronizer();
     synchronizer.repositoryA = remote;
     synchronizer.repositoryB = this.getLocalRepository();
 
-    SynchronizerConfiguration config = session.configForEngine(this.getEngineName());
-    synchronizer.bundleA = config.remoteBundle;
-    synchronizer.bundleB = config.localBundle;
+    SynchronizerConfiguration config = new SynchronizerConfiguration(bundlePrefix(), session.config);
+    synchronizer.load(config);
 
     // TODO: should wipe in either direction?
+    // TODO: syncID?!
     return synchronizer;
   }
 
@@ -144,6 +151,15 @@ public abstract class ServerSyncStage implements
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI syntax for server repository.");
       return;
+    } catch (NonObjectJSONException e) {
+      session.abort(e, "Invalid persisted JSON for config.");
+      return;
+    } catch (IOException e) {
+      session.abort(e, "Invalid persisted JSON for config.");
+      return;
+    } catch (ParseException e) {
+      session.abort(e, "Invalid persisted JSON for config.");
+      return;
     }
     Log.d(LOG_TAG, "Invoking synchronizer.");
     synchronizer.synchronize(session.getContext(), this);
@@ -153,6 +169,7 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
     Log.d(LOG_TAG, "onSynchronized.");
+    synchronizer.save().persist(bundlePrefix(), session.config);
     session.advance();
   }
 
