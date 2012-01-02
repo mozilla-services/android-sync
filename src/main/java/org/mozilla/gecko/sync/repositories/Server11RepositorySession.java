@@ -279,8 +279,8 @@ public class Server11RepositorySession extends RepositorySession {
     byte[] json = record.toJSONBytes();
     int delta   = json.length;
     synchronized (recordsBufferMonitor) {
-      if ((delta + byteCount    > UPLOAD_BYTE_THRESHOLD) ||
-          (recordsBuffer.size() > UPLOAD_ITEM_THRESHOLD)) {
+      if ((delta + byteCount     > UPLOAD_BYTE_THRESHOLD) ||
+          (recordsBuffer.size() >= UPLOAD_ITEM_THRESHOLD)) {
 
         // POST the existing contents, then enqueue.
         flush();
