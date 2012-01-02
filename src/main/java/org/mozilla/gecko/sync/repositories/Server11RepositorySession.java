@@ -293,12 +293,14 @@ public class Server11RepositorySession extends RepositorySession {
   // Asynchronously upload records.
   // Must be locked!
   protected void flush() {
-    final ArrayList<byte[]> outgoing = recordsBuffer;
-    RepositorySessionStoreDelegate uploadDelegate = this.delegate;
-    storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, byteCount));
+    if (recordsBuffer.size() > 0) {
+      final ArrayList<byte[]> outgoing = recordsBuffer;
+      RepositorySessionStoreDelegate uploadDelegate = this.delegate;
+      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, byteCount));
 
-    recordsBuffer = new ArrayList<byte[]>();
-    byteCount = PER_BATCH_OVERHEAD;
+      recordsBuffer = new ArrayList<byte[]>();
+      byteCount = PER_BATCH_OVERHEAD;
+    }
   }
 
   @Override
