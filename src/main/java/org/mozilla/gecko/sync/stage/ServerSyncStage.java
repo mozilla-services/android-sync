@@ -41,12 +41,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -107,7 +107,7 @@ public abstract class ServerSyncStage implements
   }
 
   protected String bundlePrefix() {
-    return this.getCollection();
+    return this.getCollection() + ".";
   }
 
   public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException, URISyntaxException, NonObjectJSONException, IOException, ParseException {
@@ -117,7 +117,7 @@ public abstract class ServerSyncStage implements
     synchronizer.repositoryA = remote;
     synchronizer.repositoryB = this.getLocalRepository();
 
-    SynchronizerConfiguration config = new SynchronizerConfiguration(bundlePrefix(), session.config);
+    SynchronizerConfiguration config = new SynchronizerConfiguration(session.config.getBranch(bundlePrefix()));
     synchronizer.load(config);
 
     // TODO: should wipe in either direction?
@@ -169,7 +169,7 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
     Log.d(LOG_TAG, "onSynchronized.");
-    synchronizer.save().persist(bundlePrefix(), session.config);
+    synchronizer.save().persist(session.config.getBranch(bundlePrefix()));
     session.advance();
   }
 

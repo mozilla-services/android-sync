@@ -40,9 +40,9 @@ package org.mozilla.gecko.sync;
 import java.io.IOException;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.SyncConfiguration.ConfigurationBranch;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 
-import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
 public class SynchronizerConfiguration {
@@ -51,8 +51,8 @@ public class SynchronizerConfiguration {
   public RepositorySessionBundle remoteBundle;
   public RepositorySessionBundle localBundle;
 
-  public SynchronizerConfiguration(String prefix, SyncConfiguration config) throws NonObjectJSONException, IOException, ParseException {
-    this.load(prefix, config);
+  public SynchronizerConfiguration(ConfigurationBranch config) throws NonObjectJSONException, IOException, ParseException {
+    this.load(config);
   }
 
   public SynchronizerConfiguration(String syncID, RepositorySessionBundle remoteBundle, RepositorySessionBundle localBundle) {
@@ -70,16 +70,12 @@ public class SynchronizerConfiguration {
   }
 
   // This should get partly shuffled back into SyncConfiguration, I think.
-  public void load(String prefix, SyncConfiguration config) throws NonObjectJSONException, IOException, ParseException {
-    if (prefix == null) {
-      throw new IllegalArgumentException("prefix cannot be null.");
-    }
+  public void load(ConfigurationBranch config) throws NonObjectJSONException, IOException, ParseException {
     if (config == null) {
       throw new IllegalArgumentException("config cannot be null.");
     }
-    SharedPreferences prefs = config.getPrefs();
-    String remoteJSON = prefs.getString(prefix + ".remote", null);
-    String localJSON  = prefs.getString(prefix + ".local",  null);
+    String remoteJSON = config.getString("remote", null);
+    String localJSON  = config.getString("local",  null);
     RepositorySessionBundle rB = new RepositorySessionBundle(remoteJSON);
     RepositorySessionBundle lB = new RepositorySessionBundle(localJSON);
     if (remoteJSON == null) {
@@ -88,24 +84,21 @@ public class SynchronizerConfiguration {
     if (localJSON == null) {
       lB.setTimestamp(0);
     }
-    syncID = prefs.getString(prefix + ".syncID", null);
+    syncID = config.getString("syncID", null);
     remoteBundle = rB;
     localBundle  = lB;
   }
 
-  public void persist(String prefix, SyncConfiguration config) {
-    if (prefix == null) {
-      throw new IllegalArgumentException("prefix cannot be null.");
-    }
+  public void persist(ConfigurationBranch config) {
     if (config == null) {
       throw new IllegalArgumentException("config cannot be null.");
     }
     String jsonRemote = remoteBundle.toJSONString();
     String jsonLocal  = localBundle.toJSONString();
-    Editor editor = config.getEditor();
-    editor.putString(prefix + ".remote", jsonRemote);
-    editor.putString(prefix + ".local",  jsonLocal);
-    editor.putString(prefix + ".syncID", syncID);
+    Editor editor = config.edit();
+    editor.putString("remote", jsonRemote);
+    editor.putString("local",  jsonLocal);
+    editor.putString("syncID", syncID);
 
     // Synchronous.
     editor.commit();
