@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.android.sync.net.test;
+package org.mozilla.android.sync.test.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
