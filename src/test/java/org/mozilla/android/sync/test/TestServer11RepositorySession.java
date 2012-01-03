@@ -1,4 +1,7 @@
-package org.mozilla.gecko.sync.repositories.test;
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
+package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertTrue;
 
@@ -24,7 +27,7 @@ import org.simpleframework.http.Response;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 
-public class Server11RepositorySessionTest {
+public class TestServer11RepositorySession {
 
   public class POSTMockServer extends MockServer {
     @Override
@@ -41,14 +44,14 @@ public class Server11RepositorySessionTest {
     }
   }
 
-  static final String          LOCAL_REQUEST_URL = "http://localhost:8080/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
+  static final String LOCAL_REQUEST_URL = "http://localhost:8080/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
 
   // Corresponds to rnewman+atest1@mozilla.com, local.
-  static final String          USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
-  static final String          USER_PASS         = "n6ec3u5bee3tixzp2asys7bs6fve4jfw:password";
-  static final String          SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
+  static final String USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
+  static final String USER_PASS         = "n6ec3u5bee3tixzp2asys7bs6fve4jfw:password";
+  static final String SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
 
-  private HTTPServerTestHelper data              = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
 
   public class MockRecord extends Record {
     public MockRecord(String guid, String collection, long lastModified,

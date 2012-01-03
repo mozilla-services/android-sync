@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.mozilla.gecko.sync.net.SyncResponse;
 
-public class HeaderParsingTest {
+public class TestHeaderParsing {
 
   @Test
   public void testDecimalSecondsToMilliseconds() {

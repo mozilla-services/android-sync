@@ -1,4 +1,4 @@
-package org.mozilla.android.sync.synchronizer.test;
+package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,7 +9,6 @@ import static org.junit.Assert.fail;
 import java.util.Date;
 
 import org.junit.Test;
-import org.mozilla.android.sync.test.WBORepository;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
@@ -19,7 +18,7 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerSessionDelegate;
 
 import android.content.Context;
 
-public class SynchronizerTest {
+public class TestSynchronizer {
 
   public static void assertInRangeInclusive(long earliest, long value, long latest) {
     assertTrue(earliest <= value);
