@@ -44,8 +44,10 @@ import org.mozilla.gecko.sync.SyncConfiguration.ConfigurationBranch;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 
 import android.content.SharedPreferences.Editor;
+import android.util.Log;
 
 public class SynchronizerConfiguration {
+  private static final String LOG_TAG = "SynchronizerConfiguration";
 
   public String syncID;
   public RepositorySessionBundle remoteBundle;
@@ -87,6 +89,7 @@ public class SynchronizerConfiguration {
     syncID = config.getString("syncID", null);
     remoteBundle = rB;
     localBundle  = lB;
+    Log.i(LOG_TAG, "Initialized SynchronizerConfiguration. syncID: " + syncID + ", remoteBundle: " + remoteBundle + ", localBundle: " + localBundle);
   }
 
   public void persist(ConfigurationBranch config) {
