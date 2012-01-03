@@ -13,6 +13,9 @@ import java.security.GeneralSecurityException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.android.sync.test.helpers.BaseResourceDelegate;
+import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
 
 import android.util.Log;

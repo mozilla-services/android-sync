@@ -10,9 +10,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.junit.Test;
-import org.mozilla.android.sync.net.test.BaseTestStorageRequestDelegate;
-import org.mozilla.android.sync.net.test.HTTPServerTestHelper;
-import org.mozilla.android.sync.net.test.MockServer;
+import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
+import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.BaseResource;

@@ -9,6 +9,7 @@ import static org.junit.Assert.fail;
 import java.util.Date;
 
 import org.junit.Test;
+import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;

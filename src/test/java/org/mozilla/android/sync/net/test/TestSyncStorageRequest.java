@@ -13,6 +13,9 @@ import java.net.URISyntaxException;
 
 import org.json.simple.JSONObject;
 import org.junit.Test;
+import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
+import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;

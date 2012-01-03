@@ -1,4 +1,4 @@
-package org.mozilla.android.sync.net.test;
+package org.mozilla.android.sync.test.helpers;
 
 import java.util.HashMap;
 
