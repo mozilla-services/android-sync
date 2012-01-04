@@ -39,6 +39,7 @@
 package org.mozilla.gecko.sync;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -166,5 +167,26 @@ public class Utils {
               .parseInt(str.substring(2 * i, 2 * i + 2), 16);
       }
       return bytes;
+  }
+
+  // This lives until Bug 708956 lands, and we don't have to do it any more.
+  public static long decimalSecondsToMilliseconds(String decimal) {
+    try {
+      return new BigDecimal(decimal).movePointRight(3).longValue();
+    } catch (Exception e) {
+      return -1;
+    }
+  }
+
+  // Oh, Java.
+  public static long decimalSecondsToMilliseconds(Double decimal) {
+    // Truncates towards 0.
+    return (long)(decimal * 1000);
+  }
+  public static long decimalSecondsToMilliseconds(Long decimal) {
+    return (long)(decimal * 1000);
+  }
+  public static long decimalSecondsToMilliseconds(Integer decimal) {
+    return (long)(decimal * 1000);
   }
 }
