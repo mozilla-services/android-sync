@@ -81,4 +81,4 @@ echo $PREPROCESS_FILES > $SYNC/preprocess-sources.mn
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $WARNING > $ANDROID/base/httpclientandroidlib/README.txt
 echo $SOURCEFILES > $SYNC/java-sources.mn
-echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES >> $SYNC/java-sources.mn
+echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES > $SYNC/java-third-party-sources.mn
