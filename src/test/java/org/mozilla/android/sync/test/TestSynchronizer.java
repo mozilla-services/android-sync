@@ -106,6 +106,11 @@ public class TestSynchronizer {
       public void onSynchronizeAborted(SynchronizerSession synchronizerSession) {
         fail("Sync should not be aborted.");
       }
+
+      @Override
+      public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
+        fail("Sync should not be skipped.");
+      }
     });
     synchronized (monitor) {
       syncSession.init(context, new RepositorySessionBundle(0), new RepositorySessionBundle(0));

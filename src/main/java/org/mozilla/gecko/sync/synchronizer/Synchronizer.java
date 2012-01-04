@@ -78,10 +78,17 @@ public class Synchronizer {
     }
 
     @Override
-    public void onSynchronized(SynchronizerSession session) {
+    public void onSynchronized(SynchronizerSession synchronizerSession) {
       Log.d(LOG_TAG, "Got onSynchronized.");
       Log.d(LOG_TAG, "Notifying SynchronizerDelegate.");
-      this.synchronizerDelegate.onSynchronized(session.getSynchronizer());
+      this.synchronizerDelegate.onSynchronized(synchronizerSession.getSynchronizer());
+    }
+
+    @Override
+    public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
+      Log.d(LOG_TAG, "Got onSynchronizeSkipped.");
+      Log.d(LOG_TAG, "Notifying SynchronizerDelegate as if on success.");
+      this.synchronizerDelegate.onSynchronized(synchronizerSession.getSynchronizer());
     }
 
     @Override

@@ -106,6 +106,17 @@ public abstract class RepositorySession {
   public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate);
   public abstract void fetchAll(RepositorySessionFetchRecordsDelegate delegate);
 
+  /**
+   * Override this if you wish to short-circuit a sync when you know --
+   * e.g., by inspecting the database or info/collections -- that no new
+   * data are available.
+   *
+   * @return true if a sync should proceed.
+   */
+  public boolean dataAvailable() {
+    return true;
+  }
+
   /*
    * Store operations proceed thusly:
    *
