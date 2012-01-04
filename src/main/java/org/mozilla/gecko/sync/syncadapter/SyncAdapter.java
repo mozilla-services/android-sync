@@ -42,14 +42,14 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.gecko.sync.crypto.Cryptographer;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncException;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
@@ -65,7 +65,7 @@ import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.SyncResult;
 import android.database.sqlite.SQLiteConstraintException;
-import android.database.sqlite.SQLiteDatabaseLockedException;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -89,8 +89,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         syncResult.stats.numParseExceptions++;       // This is as good as we can do.
         return;
       }
-      if (e instanceof SQLiteDatabaseLockedException) {
-        Log.e(LOG_TAG, "Couldn't open locked database. Aborting sync.", e);
+      if (e instanceof SQLiteException) {
+        Log.e(LOG_TAG, "Couldn't open database (locked?). Aborting sync.", e);
         syncResult.stats.numIoExceptions++;
         return;
       }
