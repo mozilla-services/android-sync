@@ -63,6 +63,8 @@ import android.accounts.OperationCanceledException;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.SyncResult;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
@@ -71,7 +73,8 @@ import android.os.Handler;
 import android.util.Log;
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback {
-
+  private static final int     SHARED_PREFERENCES_MODE = 0;
+  private static final int     BACKOFF_PAD_SECONDS = 5;
   private static final String  LOG_TAG = "SyncAdapter";
   private final AccountManager mAccountManager;
   private final Context        mContext;
@@ -80,6 +83,20 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     super(context, autoInitialize);
     mContext = context;
     mAccountManager = AccountManager.get(context);
+  }
+
+  /**
+   * Backoff.
+   */
+  public long getEarliestNextSync() {
+    SharedPreferences sharedPreferences = mContext.getSharedPreferences("sync.prefs.global", SHARED_PREFERENCES_MODE);
+    return sharedPreferences.getLong("earliestnextsync", 0);
+  }
+  public void setEarliestNextSync(long next) {
+    SharedPreferences sharedPreferences = mContext.getSharedPreferences("sync.prefs.global", SHARED_PREFERENCES_MODE);
+    Editor edit = sharedPreferences.edit();
+    edit.putLong("earliestnextsync", next);
+    edit.commit();
   }
 
   private void handleException(Exception e, SyncResult syncResult) {
@@ -152,6 +169,18 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final String authority,
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
+
+    long earliestNextSync = getEarliestNextSync();
+    if (earliestNextSync > 0) {
+      long now = System.currentTimeMillis();
+      if (earliestNextSync > now) {
+        Log.i(LOG_TAG, "Not syncing: earliest next sync time (" +
+            earliestNextSync + ") not yet reached.");
+        long remainingSeconds = (earliestNextSync - now) / 1000;
+        syncResult.delayUntil = remainingSeconds + BACKOFF_PAD_SECONDS;
+        return;
+      }
+    }
 
     // TODO: don't clear the auth token unless we have a sync error.
     Log.i(LOG_TAG, "Got onPerformSync. Extras bundle is " + extras);
