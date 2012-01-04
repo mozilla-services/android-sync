@@ -47,6 +47,7 @@ public class Constants {
 
   // Constants for Activities.
   public static final String INTENT_EXTRA_IS_SETUP = "isSetup";
+  public static final String INTENT_EXTRA_IS_PAIR = "isPair";
 
   // Constants for JSON payload
   public static final String JSON_KEY_PAYLOAD = "payload";

@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.setup.activities;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
+import org.mozilla.gecko.sync.jpake.JPakeNoActivePairingException;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.accounts.Account;
@@ -49,17 +50,35 @@ import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class SetupSyncActivity extends AccountAuthenticatorActivity {
-  private final static String LOG_TAG = "SetupSync";
+  private final static String LOG_TAG     = "SetupSync";
+
+  private boolean             pairWithPin = false;
+
+  // UI elements for pairing through PIN entry.
+  private EditText            row1;
+  private EditText            row2;
+  private EditText            row3;
+  private Button              connectButton;
+  private LinearLayout        pinError;
+
+  // UI elements for pairing through PIN generation.
   private TextView            setupTitleView;
   private TextView            setupNoDeviceLinkTitleView;
   private TextView            setupSubtitleView;
   private TextView            pinTextView;
   private JPakeClient         jClient;
+
+  // Android context.
   private AccountManager      mAccountManager;
   private Context             mContext;
 
@@ -73,28 +92,22 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   public void onCreate(Bundle savedInstanceState) {
     Log.i(LOG_TAG, "Called SetupSyncActivity.onCreate.");
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.sync_setup);
-
-    // Set up UI.
-    setupTitleView = ((TextView) findViewById(R.id.setup_title));
-    setupSubtitleView = (TextView) findViewById(R.id.setup_subtitle);
-    setupNoDeviceLinkTitleView = (TextView) findViewById(R.id.link_nodevice);
-    pinTextView = ((TextView) findViewById(R.id.text_pin));
-
-    // UI checks.
-    if (setupTitleView == null) {
-      Log.e(LOG_TAG, "No title view.");
-    }
-    if (setupSubtitleView == null) {
-      Log.e(LOG_TAG, "No subtitle view.");
-    }
-    if (setupNoDeviceLinkTitleView == null) {
-      Log.e(LOG_TAG, "No 'no device' link view.");
-    }
 
     // Set Activity variables.
     mAccountManager = AccountManager.get(getApplicationContext());
     mContext = getApplicationContext();
+
+    // Set layout based on starting Intent.
+    Bundle extras = this.getIntent().getExtras();
+    if (extras != null) {
+      boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
+      if (!isSetup) {
+        pairWithPin = true;
+        displayPairWithPin();
+        return;
+      }
+    }
+    displayReceiveNoPin();
   }
 
   @Override
@@ -107,14 +120,27 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     Account[] accts = mAccountManager
         .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
     if (accts.length > 0) {
-      authSuccess(false);
-      // TODO: Change when:
-      // 1. enable setting up multiple accounts.
-      // 2. enable pair with PIN (entering pin, rather than displaying)
+      // Go to Settings screen for Sync management.
+      if (!pairWithPin)
+        authSuccess(false);
     } else {
       // Start J-PAKE for pairing if no accounts present.
       jClient = new JPakeClient(this);
       jClient.receiveNoPin();
+    }
+  }
+
+  public void onPause() {
+    super.onPause();
+    
+    if (jClient != null) {
+      jClient.abort(Constants.JPAKE_ERROR_USERABORT);
+    }
+  }
+
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (resultCode == RESULT_CANCELED) {
+      displayAbort(Constants.JPAKE_ERROR_USERABORT);
     }
   }
 
@@ -130,7 +156,23 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     finish();
   }
 
-  // Controller methods
+  public void connectClickHandler(View target) {
+    // Set UI feedback.
+    pinError.setVisibility(View.INVISIBLE);
+    enablePinEntry(false);
+    connectButton.requestFocus();
+    activateButton(connectButton, false);
+
+    // Extract PIN.
+    String pin = row1.getText().toString();
+    pin += row2.getText().toString() + row3.getText().toString();
+
+    // Start J-Pake.
+    jClient = new JPakeClient(this);
+    jClient.pairWithPin(pin, false);
+  }
+
+  /* Controller methods */
   public void displayPin(String pin) {
     if (pin == null) {
       Log.w(LOG_TAG, "Asked to display null pin.");
@@ -157,16 +199,33 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   public void displayAbort(String error) {
-    // Start new JPakeClient for restarting J-PAKE.
-    jClient = new JPakeClient(this);
+    if (pairWithPin) {
+      runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          enablePinEntry(true);
+          row1.setText("");
+          row2.setText("");
+          row3.setText("");
+          row1.requestFocus();
 
-    runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        // Restart pairing process.
-        jClient.receiveNoPin();
+          // Display error.
+          pinError.setVisibility(View.VISIBLE);
+        }
+      });
+    } else { // Start new JPakeClient for restarting J-PAKE.
+      Log.d(LOG_TAG, "abort reason: " + error);
+      if (!Constants.JPAKE_ERROR_USERABORT.equals(error)) {
+        jClient = new JPakeClient(this);
+        runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            // Restart pairing process.
+            jClient.receiveNoPin();
+          }
+        });
       }
-    });
+    }
   }
 
   /**
@@ -174,45 +233,97 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * link to a Sync account. Display "waiting for other device" dialog.
    */
   public void onPaired() {
-    runOnUiThread(new Runnable() {
-      @Override
-      public void run() {
-        Intent intent = new Intent(mContext, SetupWaitingActivity.class);
-        // TODO: respond with abort if canceled.
-        startActivityForResult(intent, 0);
+    if (!pairWithPin) {
+      runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          Intent intent = new Intent(mContext, SetupWaitingActivity.class);
+          // TODO: respond with abort if canceled.
+          startActivityForResult(intent, 0);
+        }
+      });
+    } else { // Extract Sync account data.
+      AccountManager mAccountManager = AccountManager.get(this);
+      Account[] accts = mAccountManager
+          .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+      if (accts.length > 0) {
+        Account account = accts[0]; // TODO: Single account supported. Create
+                                    // account selection if spec changes.
+        String synckey = mAccountManager.getUserData(account,
+            Constants.OPTION_SYNCKEY);
+        String password = mAccountManager.getPassword(account);
+        String serverUrl = mAccountManager.getUserData(account,
+            Constants.OPTION_SERVER);
+        String username = account.name;
+
+        JSONObject jAccount = new JSONObject();
+        jAccount.put(Constants.JSON_KEY_SYNCKEY, synckey);
+        jAccount.put(Constants.JSON_KEY_ACCOUNT, username);
+        jAccount.put(Constants.JSON_KEY_PASSWORD, password);
+        jAccount.put(Constants.JSON_KEY_SERVER, serverUrl);
+        Log.d(LOG_TAG, "extracted account data: " + jAccount.toJSONString());
+        try {
+          jClient.sendAndComplete(jAccount);
+        } catch (JPakeNoActivePairingException e) {
+          e.printStackTrace();
+        }
+      } else { // Error, no account present.
+        displayAbort(Constants.JPAKE_ERROR_INVALID);
       }
-    });
+    }
   }
 
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (resultCode == RESULT_CANCELED) {
-      displayAbort(Constants.JPAKE_ERROR_USERABORT);
+  /**
+   * J-PAKE pairing has started, but when this device has generated the PIN for
+   * pairing, does not require UI feedback to user.
+   */
+  public void onPairingStart() {
+    if (pairWithPin) {
+      // TODO: add in functionality if/when adding pairWithPIN.
     }
   }
 
   /**
    * On J-PAKE completion, store the Sync Account credentials sent by other
    * device. Display progress to user.
-   *
+   * 
    * @param jCreds
    */
   public void onComplete(JSONObject jCreds) {
-    String accountName = (String) jCreds.get(Constants.JSON_KEY_ACCOUNT);
-    String password    = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
-    String syncKey     = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
-    String serverURL   = (String) jCreds.get(Constants.JSON_KEY_SERVER);
+    if (!pairWithPin) {
+      String accountName = (String) jCreds.get(Constants.JSON_KEY_ACCOUNT);
+      String password = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
+      String syncKey = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
+      String serverURL = (String) jCreds.get(Constants.JSON_KEY_SERVER);
 
-    final Intent intent = AccountActivity.createAccount(mAccountManager, accountName, syncKey, password, serverURL);
-    setAccountAuthenticatorResult(intent.getExtras());
+      final Intent intent = AccountActivity.createAccount(mAccountManager,
+          accountName, syncKey, password, serverURL);
+      setAccountAuthenticatorResult(intent.getExtras());
 
-    setResult(RESULT_OK, intent);
-
+      setResult(RESULT_OK, intent);
+    }
+    // TODO: change success message depending on pairWithPin
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
         authSuccess(true);
       }
     });
+  }
+
+  /*
+   * Helper functions
+   */
+
+  private void activateButton(Button button, boolean toActivate) {
+    button.setEnabled(toActivate);
+    button.setClickable(toActivate);
+  }
+
+  private void enablePinEntry(boolean toEnable) {
+    row1.setEnabled(toEnable);
+    row2.setEnabled(toEnable);
+    row3.setEnabled(toEnable);
   }
 
   private void authSuccess(boolean isSetup) {
@@ -222,12 +333,104 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     finish();
   }
 
-  /**
-   * J-PAKE pairing has started, but when this device has generated the PIN for
-   * pairing, does not require UI feedback to user.
-   */
-  public void onPairingStart() {
-    // Do nothing.
-    // TODO: add in functionality if/when adding pairWithPIN.
+  private void displayPairWithPin() {
+    setContentView(R.layout.sync_setup_pair);
+    connectButton = (Button) findViewById(R.id.pair_button_connect);
+    pinError = (LinearLayout) findViewById(R.id.pair_error);
+
+    row1 = (EditText) findViewById(R.id.pair_row1);
+    row2 = (EditText) findViewById(R.id.pair_row2);
+    row3 = (EditText) findViewById(R.id.pair_row3);
+
+    row1.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void afterTextChanged(Editable s) {
+        if (s.length() == 4) {
+          row2.requestFocus();
+          if (row2.length() == 4 && row3.length() == 4) {
+            activateButton(connectButton, true);
+          }
+        } else {
+          activateButton(connectButton, false);
+        }
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count,
+          int after) {
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+
+    });
+    row2.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void afterTextChanged(Editable s) {
+        if (s.length() == 4) {
+          row3.requestFocus();
+          if (row1.length() == 4 && row3.length() == 4) {
+            activateButton(connectButton, true);
+          }
+        } else {
+          activateButton(connectButton, false);
+        }
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count,
+          int after) {
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+
+    });
+
+    row3.addTextChangedListener(new TextWatcher() {
+      @Override
+      public void afterTextChanged(Editable s) {
+        if (s.length() == 4 && row1.getText().length() == 4
+            && row2.getText().length() == 4) {
+          // Activate Connect button.
+          activateButton(connectButton, true);
+        } else {
+          activateButton(connectButton, false);
+        }
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count,
+          int after) {
+      }
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+
+    });
+  }
+
+  private void displayReceiveNoPin() {
+    setContentView(R.layout.sync_setup);
+
+    // Set up UI.
+    setupTitleView = ((TextView) findViewById(R.id.setup_title));
+    setupSubtitleView = (TextView) findViewById(R.id.setup_subtitle);
+    setupNoDeviceLinkTitleView = (TextView) findViewById(R.id.link_nodevice);
+    pinTextView = ((TextView) findViewById(R.id.text_pin));
+
+    // UI checks.
+    if (setupTitleView == null) {
+      Log.e(LOG_TAG, "No title view.");
+    }
+    if (setupSubtitleView == null) {
+      Log.e(LOG_TAG, "No subtitle view.");
+    }
+    if (setupNoDeviceLinkTitleView == null) {
+      Log.e(LOG_TAG, "No 'no device' link view.");
+    }
   }
 }

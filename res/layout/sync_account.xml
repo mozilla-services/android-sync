@@ -32,6 +32,8 @@
 
   <EditText android:id="@+id/server"
     style="@style/SyncEditItem"
+    android:enabled="false"
+    android:clickable="false"
     android:hint="@string/sync_input_server" />
 
   <LinearLayout
@@ -47,6 +49,8 @@
     <Button
       style="@style/SyncButtonCommon"
       android:onClick="connectClickHandler"
+      android:clickable="false"
+      android:enabled="false"
       android:text="@string/sync_button_connect" />
 
   </LinearLayout>
