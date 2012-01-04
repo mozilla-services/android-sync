@@ -109,10 +109,10 @@ public class SyncConfiguration implements CredentialsSource {
       return this;
     }
 
-    @Override
+    // Not marking as Override, because Android <= 10 doesn't have
+    // putStringSet. Neither can we implement it.
     public Editor putStringSet(String key, Set<String> value) {
-      this.editor = this.editor.putStringSet(prefix + key, value);
-      return this;
+      throw new RuntimeException("putStringSet not available.");
     }
 
     @Override
@@ -184,9 +184,10 @@ public class SyncConfiguration implements CredentialsSource {
       return config.getPrefs().getString(prefix + key, defValue);
     }
 
-    @Override
+    // Not marking as Override, because Android <= 10 doesn't have
+    // getStringSet. Neither can we implement it.
     public Set<String> getStringSet(String key, Set<String> defValue) {
-      return config.getPrefs().getStringSet(prefix + key, defValue);
+      throw new RuntimeException("getStringSet not available.");
     }
 
     @Override
