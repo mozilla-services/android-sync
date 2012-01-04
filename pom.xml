@@ -103,8 +103,7 @@
         <version>3.0.0</version>
         <configuration>
           <sdk>
-            <!-- platform or api level (api level 11)-->
-            <platform>11</platform>
+            <platform>10</platform>
           </sdk>
           <emulator>
             <!-- the name of the avd device to use for starting the emulator -->
