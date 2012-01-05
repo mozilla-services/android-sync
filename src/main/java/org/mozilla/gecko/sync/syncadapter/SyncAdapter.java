@@ -194,6 +194,24 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public Object syncMonitor = new Object();
   private SyncResult syncResult;
 
+  /**
+   * Return the number of milliseconds until we're allowed to sync again,
+   * or 0 if now is fine.
+   */
+  public long delayMilliseconds() {
+    long earliestNextSync = getEarliestNextSync();
+    if (earliestNextSync <= 0) {
+      return 0;
+    }
+    long now = System.currentTimeMillis();
+    return Math.max(0, earliestNextSync - now);
+  }
+
+  @Override
+  public boolean shouldBackOff() {
+    return delayMilliseconds() > 0;
+  }
+
   @Override
   public void onPerformSync(final Account account,
                             final Bundle extras,
@@ -201,16 +219,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
 
-    long earliestNextSync = getEarliestNextSync();
-    if (earliestNextSync > 0) {
-      long now = System.currentTimeMillis();
-      if (earliestNextSync > now) {
-        Log.i(LOG_TAG, "Not syncing: earliest next sync time (" +
-            earliestNextSync + ") not yet reached.");
-        long remainingSeconds = (earliestNextSync - now) / 1000;
-        syncResult.delayUntil = remainingSeconds + BACKOFF_PAD_SECONDS;
-        return;
-      }
+    long delay = delayMilliseconds();
+    if (delay > 0) {
+      Log.i(LOG_TAG, "Not syncing: must wait another " + delay + "ms.");
+      long remainingSeconds = delay / 1000;
+      syncResult.delayUntil = remainingSeconds + BACKOFF_PAD_SECONDS;
+      return;
     }
 
     // TODO: don't clear the auth token unless we have a sync error.
@@ -323,6 +337,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     Log.i(LOG_TAG, "GlobalSession indicated error. Flagging auth token as invalid, just in case.");
     setShouldInvalidateAuthToken();
     this.updateStats(globalSession, ex);
+    notifyMonitor();
+  }
+
+  @Override
+  public void handleAborted(GlobalSession globalSession, String reason) {
+    Log.w(LOG_TAG, "Sync aborted: " + reason);
     notifyMonitor();
   }
 
