@@ -296,7 +296,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
    */
   protected void restart() throws AlreadySyncingException {
     this.currentState = GlobalSyncStage.Stage.idle;
-    // TODO: respect backoff.
+    if (callback.shouldBackOff()) {
+      this.callback.handleAborted(this, "Told to back off.");
+      return;
+    }
     this.start();
   }
 
@@ -322,6 +325,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
    * Perform appropriate backoff etc. extraction.
    */
   public void interpretHTTPFailure(HttpResponse response) {
+    // TODO: handle permanent rejection.
     long retryAfter = 0;
     long weaveBackoff = 0;
     if (response.containsHeader(HEADER_RETRY_AFTER)) {
