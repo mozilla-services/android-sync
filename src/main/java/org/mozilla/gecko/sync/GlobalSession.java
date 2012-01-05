@@ -659,8 +659,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     request.delete();
   }
 
+  /**
+   * Reset our state. Clear our sync ID, reset each engine, drop any
+   * cached records.
+   */
   private void resetClient() {
-    // TODO Auto-generated method stub
+    // TODO: futz with config?!
+    // TODO: engines?!
 
   }
 
