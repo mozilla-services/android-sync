@@ -178,14 +178,18 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
         Log.w(LOG_TAG, "Got HTTP failure fetching node assignment: " + statusCode);
         if (statusCode == 404) {
           URI serverURL = session.config.serverURL;
-          if (serverURL == null) {
-            Log.w(LOG_TAG, "No serverURL set to use as fallback cluster URL. Aborting sync.");
-            session.abort(new Exception("HTTP failure."), "Got failure fetching cluster URL.");
+          if (serverURL != null) {
+            Log.i(LOG_TAG, "Using serverURL <" + serverURL.toASCIIString() + "> as clusterURL.");
+            session.config.setClusterURL(serverURL);
+            session.advance();
             return;
           }
-          Log.i(LOG_TAG, "Using serverURL <" + serverURL.toASCIIString() + "> as clusterURL.");
-          session.config.setClusterURL(serverURL);
+          Log.w(LOG_TAG, "No serverURL set to use as fallback cluster URL. Aborting sync.");
+          // Fallthrough to abort.
+        } else {
+          session.interpretHTTPFailure(response);
         }
+        session.abort(new Exception("HTTP failure."), "Got failure fetching cluster URL.");
       }
 
       @Override
