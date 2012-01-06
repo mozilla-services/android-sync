@@ -140,7 +140,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (resultCode == RESULT_CANCELED) {
-      displayAbort(Constants.JPAKE_ERROR_USERABORT);
+      if (jClient != null) {
+        jClient.abort(Constants.JPAKE_ERROR_USERABORT);
+      }
     }
   }
 
