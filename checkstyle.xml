@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<!--
+This file contains a Checkstyle configuration that checks for compliance with
+Mozilla's Java style conventions.
+
+The file defines the modules and properties in alpabetical order. Each property
+should be documented with what it does.
+-->
+
+<module name="Checker">
+  <module name="TreeWalker">
+    <!-- Cache to make checkstyle run faster. -->
+    <property name="cacheFile" value="${checkstyle.cache.file}"/>
+
+    <!-- Annotations. http://checkstyle.sourceforge.net/config_annotation.html -->
+    <module name="MissingDeprecated"/>
+
+    <!-- Block checks. See http://checkstyle.sourceforge.net/config_blocks.html -->
+    <module name="AvoidNestedBlocks"/>
+    <module name="EmptyBlock"/>
+    <module name="LeftCurly"/>
+    <module name="NeedBraces"/>
+    <module name="RightCurly"/>
+
+    <!-- Class Deisgn. http://checkstyle.sourceforge.net/config_design.html -->
+    <module name="DesignForExtension"/>
+    <module name="FinalClass"/>
+    <module name="HideUtilityClassConstructor"/>
+    <module name="InterfaceIsType"/>
+    <module name="VisibilityModifier"/>
+
+    <!-- Common coding problems. See http://checkstyle.sf.net/config_coding.html -->
+    <module name="ArrayTrailingComma"/>
+    <module name="AvoidInlineConditionals"/>
+    <module name="DoubleCheckedLocking"/>
+    <module name="EmptyStatement"/>
+    <module name="EqualsHashCode"/>
+    <module name="HiddenField"/>
+    <module name="IllegalInstantiation"/>
+    <module name="InnerAssignment"/>
+    <module name="MagicNumber"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="RedundantThrows"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+
+    <!-- Duplicate code. http://checkstyle.sourceforge.net/config_duplicates.html -->
+
+    <!-- Header. See http://checkstyle.sourceforge.net/config_header.html -->
+    <!-- TODO detect MPL 2.0 in all files. -->
+
+    <!-- Imports. See http://checkstyle.sf.net/config_import.html -->
+    <module name="AvoidStarImport"/>
+    <module name="IllegalImport"/>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports"/>
+
+    <!-- Javadoc. See http://checkstyle.sourceforge.net/config_javadoc.html -->
+    <module name="JavadocMethod"/>
+    <module name="JavadocStyle"/>
+    <module name="JavadocType"/>
+    <module name="JavadocVariable"/>
+
+    <!-- Metrics. See http://checkstyle.sourceforge.net/config_metrics.html -->
+
+    <!-- Miscellaneous. See http://checkstyle.sourceforge.net/config_misc.html -->
+    <module name="ArrayTypeStyle"/>
+    <module name="FinalParameters"/>
+    <module name="TodoComment"/>
+    <module name="UpperEll"/>
+
+    <!-- Modifiers. See http://checkstyle.sourceforge.net/config_modifier.html -->
+    <module name="ModifierOrder"/>
+    <module name="RedundantModifier"/>
+
+    <!-- Naming Conventions. See http://checkstyle.sourceforge.net/config_naming.html -->
+    <module name="ConstantName"/>
+    <module name="LocalFinalVariableName"/>
+    <module name="LocalVariableName"/>
+    <module name="MemberName"/>
+    <module name="MethodName"/>
+    <module name="PackageName"/>
+    <module name="ParameterName"/>
+    <module name="StaticVariableName"/>
+    <module name="TypeName"/>
+
+    <!-- Regular expressions. See http://checkstyle.sourceforge.net/config_regexp.html -->
+
+    <!-- Size violations. See http://checkstyle.sourceforge.net/config_sizes.html -->
+    <module name="LineLength">
+      <property name="max" value="100" />
+    </module>
+    <module name="MethodLength"/>
+    <module name="ParameterNumber"/>
+
+    <!-- Whitespace. See http://checkstyle.sourceforge.net/config_whitespace.html -->
+    <module name="EmptyForIteratorPad"/>
+    <module name="MethodParamPad"/>
+    <module name="NoWhitespaceAfter"/>
+    <module name="NoWhitespaceBefore"/>
+    <module name="OperatorWrap"/>
+    <module name="ParenPad"/>
+    <module name="TypecastParenPad"/>
+    <module name="WhitespaceAfter"/>
+    <module name="WhitespaceAround"/>
+
+  </module>
+
+  <module name="FileLength"/>
+
+  <module name="FileTabCharacter">
+    <property name="eachLine" value="true"/>
+  </module>
+
+  <module name="NewlineAtEndOfFile"/>
+
+  <module name="RegexpSingleline">
+    <!-- Check for trailing whitespace. -->
+    <property name="format" value="\s+$"/>
+      <property name="message" value="Line has trailing spaces."/>
+  </module>
+
+</module>
