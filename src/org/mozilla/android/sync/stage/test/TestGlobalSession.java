@@ -36,6 +36,21 @@ public class TestGlobalSession extends AndroidTestCase {
                                      GlobalSession globalSession) {
       stageCounter--;
     }
+
+    @Override
+    public void requestBackoff(long backoff) {
+      fail("No requestBackoff.");
+    }
+
+    @Override
+    public void handleAborted(GlobalSession globalSession, String reason) {
+      fail("Not expecting abort.");
+    }
+
+    @Override
+    public boolean shouldBackOff() {
+      return false;
+    }
   }
 
   public void testCallbacks() {
