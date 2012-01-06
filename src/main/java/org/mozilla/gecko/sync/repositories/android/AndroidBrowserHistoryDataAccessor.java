@@ -45,6 +45,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 
 public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
@@ -95,12 +96,15 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
   @Override
   public Uri insert(Record record) {
     HistoryRecord rec = (HistoryRecord) record;
+    Log.d(LOG_TAG, "Storing visits for " + record.guid);
     dataExtender.store(record.guid, rec.visits);
+    Log.d(LOG_TAG, "Storing record " + record.guid);
     return super.insert(record);
   }  
   
   @Override
   protected void delete(String guid) {
+    Log.d(LOG_TAG, "Deleting record " + guid);
     context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
     dataExtender.delete(guid);
   }
