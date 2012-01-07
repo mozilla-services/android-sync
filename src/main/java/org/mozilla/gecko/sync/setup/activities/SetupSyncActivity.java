@@ -97,17 +97,34 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     mAccountManager = AccountManager.get(getApplicationContext());
     mContext = getApplicationContext();
 
-    // Set layout based on starting Intent.
-    Bundle extras = this.getIntent().getExtras();
-    if (extras != null) {
-      boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
-      if (!isSetup) {
-        pairWithPin = true;
-        displayPairWithPin();
-        return;
+  }
+
+  @Override
+  public void onResume() {
+    Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
+    super.onResume();
+    
+    // Check whether Sync accounts exist; if not, display J-PAKE PIN.
+    AccountManager mAccountManager = AccountManager.get(this);
+    Account[] accts = mAccountManager
+        .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    if (accts.length == 0) { // Start J-PAKE for pairing if no accounts present.
+      displayReceiveNoPin();
+      jClient = new JPakeClient(this);
+      jClient.receiveNoPin();
+    } else { // Set layout based on starting Intent.
+      Bundle extras = this.getIntent().getExtras();
+      if (extras != null) {
+        boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
+        if (!isSetup) {
+          pairWithPin = true;
+          displayPairWithPin();
+          return;
+        }
       }
+      // Go to Settings screen for Sync management.
+      displayAccount(false);
     }
-    displayReceiveNoPin();
   }
 
   @Override
@@ -120,31 +137,10 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   @Override
-  public void onResume() {
-    Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
-    super.onResume();
-
-    // Check whether Sync accounts exist; if so, display Pair text.
-    AccountManager mAccountManager = AccountManager.get(this);
-    Account[] accts = mAccountManager
-        .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
-    if (accts.length > 0) {
-      // Go to Settings screen for Sync management.
-      if (!pairWithPin) {
-        authSuccess(false);
-      }
-    } else {
-      // Start J-PAKE for pairing if no accounts present.
-      jClient = new JPakeClient(this);
-      jClient.receiveNoPin();
-    }
+  public void onNewIntent(Intent intent) {
+    setIntent(intent);
   }
 
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (resultCode == RESULT_CANCELED) {
-      displayAbort(Constants.JPAKE_ERROR_USERABORT);
-    }
-  }
 
   /* Click Handlers */
   public void manualClickHandler(View target) {
@@ -306,7 +302,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        authSuccess(true);
+        displayAccount(true);
       }
     });
   }
@@ -326,7 +322,14 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     row3.setEnabled(toEnable);
   }
 
-  private void authSuccess(boolean isSetup) {
+  /**
+   * Displays Sync account setup completed feedback to user.
+   *
+   * @param isSetup
+   *          boolean for whether success screen is reached during setup
+   *          completion, or otherwise.
+   */
+  private void displayAccount(boolean isSetup) {
     Intent intent = new Intent(mContext, SetupSuccessActivity.class);
     intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, isSetup);
     startActivity(intent);
