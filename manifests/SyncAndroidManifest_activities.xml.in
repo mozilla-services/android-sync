@@ -16,10 +16,9 @@
             android:clearTaskOnLaunch="true"
             android:launchMode="singleTask"
             android:name="org.mozilla.gecko.sync.setup.activities.AccountActivity"
-            android:windowSoftInputMode="adjustResize"/>
+            android:windowSoftInputMode="stateVisible|adjustResize"/>
         <activity
             android:name="org.mozilla.gecko.sync.setup.activities.SetupFailureActivity" />
         <activity
-            android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />
-        <activity
-            android:name="org.mozilla.gecko.sync.setup.activities.SetupWaitingActivity" />
+            android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity"
+            android:launchMode="singleTask" />

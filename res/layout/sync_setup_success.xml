@@ -22,4 +22,11 @@
         android:layout_gravity="center"
         android:onClick="settingsClickHandler"
         android:text="@string/sync_settings" />
+
+    <TextView android:id="@+id/link_pair"
+    style="@style/SyncTextItem"
+    android:clickable="true"
+    android:onClick="pairClickHandler"
+    android:text="@string/sync_title_pair" />
+
 </TableLayout>

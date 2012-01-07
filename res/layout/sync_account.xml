@@ -14,24 +14,26 @@
     style="@style/SyncTextItem"
     android:text="@string/sync_subtitle_account" />
 
-  <EditText android:id="@+id/username"
+  <EditText android:id="@+id/usernameInput"
     style="@style/SyncEditItem"
     android:hint="@string/sync_input_username" />
 
-  <EditText android:id="@+id/password"
+  <EditText android:id="@+id/passwordInput"
     style="@style/SyncEditItem"
     android:password="true"
     android:hint="@string/sync_input_password" />
 
-  <EditText android:id="@+id/key"
+  <EditText android:id="@+id/keyInput"
     style="@style/SyncEditItem"
     android:hint="@string/sync_input_key" />
 
   <CheckBox android:id="@+id/checkbox_server"
     android:text="@string/sync_checkbox_server" />
 
-  <EditText android:id="@+id/server"
+  <EditText android:id="@+id/serverInput"
     style="@style/SyncEditItem"
+    android:enabled="false"
+    android:clickable="false"
     android:hint="@string/sync_input_server" />
 
   <LinearLayout
@@ -45,8 +47,11 @@
       android:text="@string/sync_button_cancel" />
 
     <Button
+      android:id="@+id/accountConnectButton"
       style="@style/SyncButtonCommon"
       android:onClick="connectClickHandler"
+      android:clickable="false"
+      android:enabled="false"
       android:text="@string/sync_button_connect" />
 
   </LinearLayout>
