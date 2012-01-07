@@ -22,5 +22,3 @@
         <activity
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity"
             android:launchMode="singleTask" />
-        <activity
-            android:name="org.mozilla.gecko.sync.setup.activities.SetupWaitingActivity" />

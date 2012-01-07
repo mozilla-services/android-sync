@@ -111,6 +111,15 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   @Override
+  public void onPause() {
+    super.onPause();
+
+    if (jClient != null) {
+      jClient.abort(Constants.JPAKE_ERROR_USERABORT);
+    }
+  }
+
+  @Override
   public void onResume() {
     Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
     super.onResume();
@@ -229,9 +238,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          Intent intent = new Intent(mContext, SetupWaitingActivity.class);
-          // TODO: respond with abort if canceled.
-          startActivityForResult(intent, 0);
+          setContentView(R.layout.sync_setup_jpake_waiting);
         }
       });
     } else { // Extract Sync account data.
@@ -294,7 +301,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
       setResult(RESULT_OK, intent);
     }
-    // TODO: change success message depending on pairWithPin
+    jClient = null; // Sync is set up, kill reference to JPakeClient object.
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
