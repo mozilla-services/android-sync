@@ -184,7 +184,7 @@ public class Utils {
     return (long)(decimal * 1000);
   }
   public static long decimalSecondsToMilliseconds(Long decimal) {
-    return (decimal * 1000);
+    return decimal * 1000;
   }
   public static long decimalSecondsToMilliseconds(Integer decimal) {
     return (long)(decimal * 1000);
