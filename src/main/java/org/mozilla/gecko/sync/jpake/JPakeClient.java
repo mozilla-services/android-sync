@@ -676,7 +676,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       case 304:
         Log.d(LOG_TAG, "Channel hasn't been updated yet. Will try again later");
         if (pollTries >= jpakeMaxTries) {
-          Log.e(LOG_TAG, "Tried for " + pollTries + " times, aborting");
+          Log.e(LOG_TAG, "Tried for " + pollTries + " times, maxTries " + jpakeMaxTries + ", aborting");
           abort(Constants.JPAKE_ERROR_TIMEOUT);
           return;
         }
@@ -807,7 +807,6 @@ public class JPakeClient implements JPakeRequestDelegate {
       } else if (this.state == State.RCVR_STEP_TWO) {
         computeFinal();
       } else if (this.state == State.VERIFY_KEY) {
-        jpakeMaxTries = MAX_TRIES_LAST_MSG;
         decryptData(myKeyBundle);
       } else if (this.state == State.VERIFY_PAIRING) {
         try {
@@ -835,6 +834,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
       state = stateContext;
       if (state == State.VERIFY_KEY) {
+        jpakeMaxTries = MAX_TRIES_LAST_MSG;
         ssActivity.onPaired();
       }
       if (state == State.SNDR_STEP_ONE) {
