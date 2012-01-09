@@ -1060,7 +1060,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     byte[] rBytes = generateRandomBytes(JPAKE_LENGTH_SECRET);
     StringBuilder secret = new StringBuilder();
     for (byte b : rBytes) {
-      secret.append(key.charAt((int) (Math.abs(b) * keylen / 256)));
+      secret.append(key.charAt(Math.abs(b) * keylen / 256));
     }
     this.secret = secret.toString();
   }

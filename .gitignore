@@ -1,4 +1,5 @@
 AndroidManifest.xml
+R.java
 src/main/java/org/mozilla/gecko/sync/repositories/android/Authorities.java
 res/xml/sync_syncadapter.xml
 res/values/strings.xml
