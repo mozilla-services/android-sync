@@ -93,7 +93,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
 
           // Set fake visit timestamp to be just previous to
           // the real one we are about to add.
-          fake.put(KEY_DATE, (long) hist.fennecDateVisited - (1 + j));
+          fake.put(KEY_DATE, hist.fennecDateVisited - (1 + j));
           fake.put(KEY_TYPE, DEFAULT_VISIT_TYPE);
           visitsArray.add(fake);
         }

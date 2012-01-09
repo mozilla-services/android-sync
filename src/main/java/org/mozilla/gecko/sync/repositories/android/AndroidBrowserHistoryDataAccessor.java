@@ -74,7 +74,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
     cv.put(BrowserContract.History.TITLE,           rec.title);
     cv.put(BrowserContract.History.URL,        rec.histURI);
     if (rec.visits != null) {
-      JSONArray visits = (JSONArray) rec.visits;
+      JSONArray visits = rec.visits;
       long mostRecent = 0;
       for (int i = 0; i < visits.size(); i++) {
         JSONObject visit = (JSONObject) visits.get(i);
