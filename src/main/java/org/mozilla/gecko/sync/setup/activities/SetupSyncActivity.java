@@ -333,8 +333,16 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     finish();
   }
 
-  private boolean validatePinEntry() {
-    if (row1.length() == 4 && row2.length() == 4 && row3.length() == 4) {
+  /**
+   * Validate PIN entry fields to check if the three PIN entry fields are all
+   * filled in.
+   *
+   * @return true, if all PIN fields have 4 characters, false otherwise
+   */
+  private boolean pinEntryCompleted() {
+    if (row1.length() == 4 &&
+        row2.length() == 4 &&
+        row3.length() == 4) {
       return true;
     }
     return false;
@@ -355,7 +363,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
         if (s.length() == 4) {
           row2.requestFocus();
         }
-        activateButton(connectButton, validatePinEntry());
+        activateButton(connectButton, pinEntryCompleted());
       }
 
       @Override
@@ -374,7 +382,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
         if (s.length() == 4) {
           row3.requestFocus();
         }
-        activateButton(connectButton, validatePinEntry());
+        activateButton(connectButton, pinEntryCompleted());
       }
 
       @Override
@@ -391,7 +399,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     row3.addTextChangedListener(new TextWatcher() {
       @Override
       public void afterTextChanged(Editable s) {
-        activateButton(connectButton, validatePinEntry());
+        activateButton(connectButton, pinEntryCompleted());
       }
 
       @Override
