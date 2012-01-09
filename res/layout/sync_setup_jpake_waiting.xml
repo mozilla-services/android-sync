@@ -9,9 +9,9 @@
         android:layout_height="2dp"
         android:background="#FFFFFF" />
     <ProgressBar
+        style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@android:style/Widget.ProgressBar.Horizontal"
         android:indeterminateOnly="true"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp" />

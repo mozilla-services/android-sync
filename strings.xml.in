@@ -34,7 +34,7 @@
   <string name="sync_subtitle_manage">&sync.subtitle.manage.label;</string>
   
   <!-- Pair Device -->
-  <string name="sync_pair_error">&sync.pair.error.label;</string>
+  <string name="sync_pair_tryagain">&sync.pair.tryagain.label;</string>
 
   <!-- Common text -->
   <string name="sync_button_cancel">&sync.button.cancel.label;</string>

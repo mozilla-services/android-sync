@@ -39,7 +39,7 @@
 <!ENTITY sync.subtitle.manage.label 'Your &syncBrand.fullName.label; account is already set up. Go to Settings to manage your account.'>
 
 <!-- Pair Device -->
-<!ENTITY sync.pair.error.label 'Please try again.'>
+<!ENTITY sync.pair.tryagain.label 'Please try again.'>
 
 <!-- Common text -->
 <!ENTITY sync.button.cancel.label 'Cancel'>

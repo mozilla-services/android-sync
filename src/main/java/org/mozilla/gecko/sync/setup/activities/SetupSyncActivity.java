@@ -130,8 +130,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
         .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
     if (accts.length > 0) {
       // Go to Settings screen for Sync management.
-      if (!pairWithPin)
+      if (!pairWithPin) {
         authSuccess(false);
+      }
     } else {
       // Start J-PAKE for pairing if no accounts present.
       jClient = new JPakeClient(this);
@@ -168,7 +169,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     String pin = row1.getText().toString();
     pin += row2.getText().toString() + row3.getText().toString();
 
-    // Start J-Pake.
+    // Start J-PAKE.
     jClient = new JPakeClient(this);
     jClient.pairWithPin(pin, false);
   }
@@ -290,10 +291,10 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    */
   public void onComplete(JSONObject jCreds) {
     if (!pairWithPin) {
-      String accountName = (String) jCreds.get(Constants.JSON_KEY_ACCOUNT);
-      String password = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
-      String syncKey = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
-      String serverURL = (String) jCreds.get(Constants.JSON_KEY_SERVER);
+      String accountName  = (String) jCreds.get(Constants.JSON_KEY_ACCOUNT);
+      String password     = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
+      String syncKey      = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
+      String serverURL    = (String) jCreds.get(Constants.JSON_KEY_SERVER);
 
       final Intent intent = AccountActivity.createAccount(mAccountManager,
           accountName, syncKey, password, serverURL);
@@ -332,6 +333,13 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     finish();
   }
 
+  private boolean validatePinEntry() {
+    if (row1.length() == 4 && row2.length() == 4 && row3.length() == 4) {
+      return true;
+    }
+    return false;
+  }
+
   private void displayPairWithPin() {
     setContentView(R.layout.sync_setup_pair);
     connectButton = (Button) findViewById(R.id.pair_button_connect);
@@ -346,12 +354,8 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       public void afterTextChanged(Editable s) {
         if (s.length() == 4) {
           row2.requestFocus();
-          if (row2.length() == 4 && row3.length() == 4) {
-            activateButton(connectButton, true);
-          }
-        } else {
-          activateButton(connectButton, false);
         }
+        activateButton(connectButton, validatePinEntry());
       }
 
       @Override
@@ -369,12 +373,8 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       public void afterTextChanged(Editable s) {
         if (s.length() == 4) {
           row3.requestFocus();
-          if (row1.length() == 4 && row3.length() == 4) {
-            activateButton(connectButton, true);
-          }
-        } else {
-          activateButton(connectButton, false);
         }
+        activateButton(connectButton, validatePinEntry());
       }
 
       @Override
@@ -391,13 +391,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     row3.addTextChangedListener(new TextWatcher() {
       @Override
       public void afterTextChanged(Editable s) {
-        if (s.length() == 4 && row1.getText().length() == 4
-            && row2.getText().length() == 4) {
-          // Activate Connect button.
-          activateButton(connectButton, true);
-        } else {
-          activateButton(connectButton, false);
-        }
+        activateButton(connectButton, validatePinEntry());
       }
 
       @Override

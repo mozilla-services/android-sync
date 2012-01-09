@@ -78,7 +78,7 @@ import ch.boye.httpclientandroidlib.message.BasicHeader;
 public class JPakeClient implements JPakeRequestDelegate {
   private static String       LOG_TAG                 = "JPakeClient";
 
-  // J-Pake constants.
+  // J-PAKE constants.
   private final static int    REQUEST_TIMEOUT         = 60 * 1000;         // 1
                                                                             // minute
   private final static int    SOCKET_TIMEOUT          = 5 * 60 * 1000;     // 5
@@ -98,7 +98,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   // UI Controller.
   private SetupSyncActivity   ssActivity;
 
-  // J-Pake session values.
+  // J-PAKE session values.
   private String              clientId;
   private String              secret;
 
@@ -108,7 +108,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   private String              theirSignerId;
   private String              jpakeServer;
 
-  // J-Pake state.
+  // J-PAKE state.
   private boolean             pairWithPin;
   private boolean             paired                  = false;
   private boolean             finished                = false;
@@ -117,16 +117,16 @@ public class JPakeClient implements JPakeRequestDelegate {
   private String              error;
   private int                 pollTries               = 0;
 
-  // J-Pake values.
+  // J-PAKE values.
   private int                 jpakePollInterval;
   private int                 jpakeMaxTries;
   private String              channel;
   private String              channelUrl;
 
-  // J-Pake delayed-task scheduler. Used for timing.
+  // J-PAKE delayed-task scheduler. Used for timing.
   private Timer               timerScheduler;
 
-  // J-Pake session data.
+  // J-PAKE session data.
   private KeyBundle           myKeyBundle;
 
   private ExtendedJSONObject  jOutgoing;
@@ -144,7 +144,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     jpakePollInterval = 1 * 1000; // 1 second
     jpakeMaxTries = MAX_TRIES;
 
-    if (jpakeServer.charAt(jpakeServer.length() - 1) != '/') {
+    if (jpakeServer.endsWith("/")) {
       jpakeServer += "/";
     }
 
@@ -231,7 +231,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   /* Main functionality Steps */
 
   /*
-   * (Receiver Only) Request channel for J-Pake from server.
+   * (Receiver Only) Request channel for J-PAKE from server.
    */
   private void getChannel() {
     Log.d(LOG_TAG, "Getting channel.");
@@ -279,7 +279,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   }
 
   /*
-   * Step One of J-Pake protocol.
+   * Step One of J-PAKE protocol.
    */
   private void computeStepOne() {
     Log.d(LOG_TAG, "Computing round 1.");
@@ -314,7 +314,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   }
 
   /*
-   * Step Two of J-Pake protocol.
+   * Step Two of J-PAKE protocol.
    *
    * Verifies message computed by other party in their Step One. Creates Step
    * Two message to be sent.
@@ -419,7 +419,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   }
 
   /*
-   * Final Step of J-Pake protocol.
+   * Final Step of J-PAKE protocol.
    *
    * Verifies message computed by other party in Step Two. Creates or fetches
    * encrypted message for verification of successful key exchange.
@@ -579,7 +579,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    *
    * Encrypt payload and package into jOutgoing for sending with a PUT request.
    *
-   * @param keyBundle Encryption keys derived during J-Pake.
+   * @param keyBundle Encryption keys derived during J-PAKE.
    * @param payload   Credentials data to be encrypted.
    */
   private void encryptData(KeyBundle keyBundle, String payload) {
@@ -637,7 +637,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     try {
       jCreds = getJSONObject(cleartext);
     } catch (Exception e) {
-      e.printStackTrace();
       Log.e(LOG_TAG, "Invalid data: " + cleartext);
       abort(Constants.JPAKE_ERROR_INVALID);
       return;

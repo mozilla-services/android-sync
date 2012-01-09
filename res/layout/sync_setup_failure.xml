@@ -24,8 +24,8 @@
 
             <Button
                 style="@style/SyncButtonCommon"
-                android:text="@string/sync_button_tryagain"
-                android:onClick="tryAgainClickHandler" />
+                android:onClick="tryAgainClickHandler"
+                android:text="@string/sync_button_tryagain" />
 
             <Button
                 style="@style/SyncButtonCommon"
