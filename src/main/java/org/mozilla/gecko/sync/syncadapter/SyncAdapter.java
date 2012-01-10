@@ -88,6 +88,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public SyncAdapter(Context context, boolean autoInitialize) {
     super(context, autoInitialize);
     mContext = context;
+    Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(context);
   }
 
