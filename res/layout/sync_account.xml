@@ -7,8 +7,7 @@
     android:text="@string/sync_title_connect" />
 
   <View
-    android:layout_height="2dp"
-    android:background="#FFFFFF" />
+    style="@style/SyncViewLine" />
 
   <TextView
     style="@style/SyncTextItem"

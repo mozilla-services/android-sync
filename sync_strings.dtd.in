@@ -31,6 +31,7 @@
 <!ENTITY sync.subtitle.fail.label '&syncBrand.fullName.label; could not connect to the server. Would you like to try again?'>
 <!ENTITY sync.button.tryagain.label 'Try again'>
 <!ENTITY sync.button.manual.label 'Manual Setup'>
+<!ENTITY sync.subtitle.nointernet.label 'No internet connection available.'>
   
 <!-- Setup Success -->
 <!ENTITY sync.title.success.label 'Setup Complete'>
@@ -44,6 +45,7 @@
 <!-- Common text -->
 <!ENTITY sync.button.cancel.label 'Cancel'>
 <!ENTITY sync.button.connect.label 'Connect'>
+<!ENTITY sync.button.ok.label 'OK'>
   
 <!-- Account strings -->
 <!ENTITY sync.account.label.label '&syncBrand.fullName.label;'>

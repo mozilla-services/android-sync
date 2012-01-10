@@ -5,9 +5,7 @@
         style="@style/SyncTextTitle"
         android:text="@string/sync_title_connect" />
     <View
-        android:layout_width="fill_parent"
-        android:layout_height="2dp"
-        android:background="#FFFFFF" />
+        style="@style/SyncViewLine" />
     <ProgressBar
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="wrap_content"

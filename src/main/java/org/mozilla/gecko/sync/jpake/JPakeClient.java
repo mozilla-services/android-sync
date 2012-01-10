@@ -386,7 +386,8 @@ public class JPakeClient implements JPakeRequestDelegate {
     try {
       JPakeCrypto.round2(secret, jParty, numGen);
     } catch (Gx4IsOneException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "gx4 cannot equal 1.");
+      abort(Constants.JPAKE_ERROR_INTERNAL);
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
@@ -498,9 +499,11 @@ public class JPakeClient implements JPakeRequestDelegate {
     try {
       jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "Failed to encrypt key verification value.", e);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
     } catch (CryptoException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "Failed to encrypt key verification value.", e);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
     }
     Log.d(
         LOG_TAG,
@@ -561,8 +564,6 @@ public class JPakeClient implements JPakeRequestDelegate {
    */
   public void sendAndComplete(JSONObject jObj)
       throws JPakeNoActivePairingException {
-    Log.d(LOG_TAG, "paired = " + paired);
-    Log.d(LOG_TAG, "finished = " + finished);
     if (paired && !finished) {
       String outData = jObj.toJSONString();
       state = State.ENCRYPT_PUT;
@@ -588,9 +589,11 @@ public class JPakeClient implements JPakeRequestDelegate {
     try {
       jPayload = encryptPayload(payload, keyBundle);
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "Failed to encrypt data.", e);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
     } catch (CryptoException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "Failed to encrypt data.", e);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
     }
     jOutgoing = new ExtendedJSONObject();
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
@@ -622,16 +625,19 @@ public class JPakeClient implements JPakeRequestDelegate {
     try {
       iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
     } catch (NonObjectJSONException e1) {
-      e1.printStackTrace();
+      Log.e(LOG_TAG, "Invalid round 3 data.", e1);
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
     }
     Log.d(LOG_TAG, "Decrypting data.");
     String cleartext = null;
     try {
       cleartext = new String(decryptPayload(iPayload, keyBundle), "UTF-8");
     } catch (UnsupportedEncodingException e1) {
-      e1.printStackTrace();
+      Log.e(LOG_TAG, "Failed to decrypt data.", e1);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
     } catch (CryptoException e1) {
-      e1.printStackTrace();
+      Log.e(LOG_TAG, "Failed to decrypt data.", e1);
+      abort(Constants.JPAKE_ERROR_KEYMISMATCH);
     }
     JSONObject jCreds = null;
     try {
@@ -720,7 +726,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   @Override
   public void onRequestError(Exception e) {
-    // TODO add no internet connection check.
+    abort(Constants.JPAKE_ERROR_NETWORK);
   }
 
   @Override
@@ -739,11 +745,11 @@ public class JPakeClient implements JPakeRequestDelegate {
       } catch (IOException e1) {
         e1.printStackTrace();
       } catch (ParseException e1) {
-        e1.printStackTrace();
+        abort(Constants.JPAKE_ERROR_CHANNEL);
       }
       String channel = body instanceof String ? (String) body : null;
       if (channel == null) { // should be string
-        abort(Constants.JPAKE_ERROR_INVALID);
+        abort(Constants.JPAKE_ERROR_CHANNEL);
         return;
       }
       channelUrl = jpakeServer + channel;
@@ -789,9 +795,11 @@ public class JPakeClient implements JPakeRequestDelegate {
       } catch (IOException e) {
         e.printStackTrace();
       } catch (ParseException e) {
-        e.printStackTrace();
+        abort(Constants.JPAKE_ERROR_INVALID);
+        return;
       } catch (NonObjectJSONException e) {
-        e.printStackTrace();
+        abort(Constants.JPAKE_ERROR_INVALID);
+        return;
       }
       Log.d(LOG_TAG, "incoming message: " + jIncoming.toJSONString());
 
@@ -944,17 +952,19 @@ public class JPakeClient implements JPakeRequestDelegate {
 
       case RCVR_STEP_ONE:
       case RCVR_STEP_TWO:
+        Log.e(LOG_TAG, "Failed on GET", e);
         break;
       case PUT:
+        Log.e(LOG_TAG, "Failed on PUT.", e);
         break;
 
       case REPORT_FAILURE:
         Log.e(LOG_TAG, "Report failed: " + error);
         break;
-
       default:
         Log.e(LOG_TAG, "Unhandled HTTP I/O exception.", e);
       }
+      abort(Constants.JPAKE_ERROR_NETWORK);
     }
 
     @Override
