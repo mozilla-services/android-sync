@@ -95,6 +95,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
     // Set Activity variables.
     mContext = getApplicationContext();
+    Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(mContext);
 
   }
@@ -105,9 +106,8 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     super.onResume();
     
     // Check whether Sync accounts exist; if not, display J-PAKE PIN.
-    AccountManager mAccountManager = AccountManager.get(mContext);
-    Account[] accts = mAccountManager
-        .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+
     if (accts.length == 0) { // Start J-PAKE for pairing if no accounts present.
       displayReceiveNoPin();
       jClient = new JPakeClient(this);
@@ -241,9 +241,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       });
     } else {
       // Extract Sync account data.
-      AccountManager mAccountManager = AccountManager.get(mContext);
-      Account[] accts = mAccountManager
-          .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
       if (accts.length > 0) {
         Account account = accts[0]; // TODO: Single account supported. Create
                                     // account selection if spec changes.

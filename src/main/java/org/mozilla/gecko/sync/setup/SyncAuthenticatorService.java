@@ -135,6 +135,7 @@ public class SyncAuthenticatorService extends Service {
 
       // Extract the username and password from the Account Manager, and ask
       // the server for an appropriate AuthToken.
+      Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
       final AccountManager am = AccountManager.get(mContext);
       final String password = am.getPassword(account);
       if (password != null) {
