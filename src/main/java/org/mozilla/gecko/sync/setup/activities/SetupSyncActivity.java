@@ -94,8 +94,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     super.onCreate(savedInstanceState);
 
     // Set Activity variables.
-    mAccountManager = AccountManager.get(getApplicationContext());
     mContext = getApplicationContext();
+    Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
+    mAccountManager = AccountManager.get(mContext);
 
   }
 
@@ -105,26 +106,27 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     super.onResume();
     
     // Check whether Sync accounts exist; if not, display J-PAKE PIN.
-    AccountManager mAccountManager = AccountManager.get(this);
-    Account[] accts = mAccountManager
-        .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+
     if (accts.length == 0) { // Start J-PAKE for pairing if no accounts present.
       displayReceiveNoPin();
       jClient = new JPakeClient(this);
       jClient.receiveNoPin();
-    } else { // Set layout based on starting Intent.
-      Bundle extras = this.getIntent().getExtras();
-      if (extras != null) {
-        boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
-        if (!isSetup) {
-          pairWithPin = true;
-          displayPairWithPin();
-          return;
-        }
-      }
-      // Go to Settings screen for Sync management.
-      displayAccount(false);
+      return;
     }
+
+    // Set layout based on starting Intent.
+    Bundle extras = this.getIntent().getExtras();
+    if (extras != null) {
+      boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
+      if (!isSetup) {
+        pairWithPin = true;
+        displayPairWithPin();
+        return;
+      }
+    }
+    // Go to Settings screen for Sync management.
+    displayAccount(false);
   }
 
   @Override
@@ -211,18 +213,20 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
           pinError.setVisibility(View.VISIBLE);
         }
       });
-    } else { // Start new JPakeClient for restarting J-PAKE.
-      Log.d(LOG_TAG, "abort reason: " + error);
-      if (!Constants.JPAKE_ERROR_USERABORT.equals(error)) {
-        jClient = new JPakeClient(this);
-        runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            // Restart pairing process.
-            jClient.receiveNoPin();
-          }
-        });
-      }
+      return;
+    }
+
+    // Start new JPakeClient for restarting J-PAKE.
+    Log.d(LOG_TAG, "abort reason: " + error);
+    if (!Constants.JPAKE_ERROR_USERABORT.equals(error)) {
+      jClient = new JPakeClient(this);
+      runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          // Restart pairing process.
+          jClient.receiveNoPin();
+        }
+      });
     }
   }
 
@@ -239,34 +243,37 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
           setContentView(R.layout.sync_setup_jpake_waiting);
         }
       });
-    } else { // Extract Sync account data.
-      AccountManager mAccountManager = AccountManager.get(this);
-      Account[] accts = mAccountManager
-          .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
-      if (accts.length > 0) {
-        Account account = accts[0]; // TODO: Single account supported. Create
-                                    // account selection if spec changes.
-        String synckey = mAccountManager.getUserData(account,
-            Constants.OPTION_SYNCKEY);
-        String password = mAccountManager.getPassword(account);
-        String serverUrl = mAccountManager.getUserData(account,
-            Constants.OPTION_SERVER);
-        String username = account.name;
+      return;
+    }
 
-        JSONObject jAccount = new JSONObject();
-        jAccount.put(Constants.JSON_KEY_SYNCKEY, synckey);
-        jAccount.put(Constants.JSON_KEY_ACCOUNT, username);
-        jAccount.put(Constants.JSON_KEY_PASSWORD, password);
-        jAccount.put(Constants.JSON_KEY_SERVER, serverUrl);
-        Log.d(LOG_TAG, "extracted account data: " + jAccount.toJSONString());
-        try {
-          jClient.sendAndComplete(jAccount);
-        } catch (JPakeNoActivePairingException e) {
-          e.printStackTrace();
-        }
-      } else { // Error, no account present.
-        displayAbort(Constants.JPAKE_ERROR_INVALID);
-      }
+    // Extract Sync account data.
+    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    if (accts.length == 0) {
+      // Error, no account present.
+      Log.e(LOG_TAG, "No accounts present.");
+      displayAbort(Constants.JPAKE_ERROR_INVALID);
+      return;
+    }
+
+    // TODO: Single account supported. Create account selection if spec changes.
+    Account account = accts[0];
+    String username  = account.name;
+    String password  = mAccountManager.getPassword(account);
+    String syncKey   = mAccountManager.getUserData(account, Constants.OPTION_SYNCKEY);
+    String serverURL = mAccountManager.getUserData(account, Constants.OPTION_SERVER);
+
+    JSONObject jAccount = new JSONObject();
+    jAccount.put(Constants.JSON_KEY_SYNCKEY,  syncKey);
+    jAccount.put(Constants.JSON_KEY_ACCOUNT,  username);
+    jAccount.put(Constants.JSON_KEY_PASSWORD, password);
+    jAccount.put(Constants.JSON_KEY_SERVER,   serverURL);
+
+    Log.d(LOG_TAG, "Extracted account data: " + jAccount.toJSONString());
+    try {
+      jClient.sendAndComplete(jAccount);
+    } catch (JPakeNoActivePairingException e) {
+      Log.e(LOG_TAG, "No active J-PAKE pairing.", e);
+      // TODO: some user-visible action!
     }
   }
 
@@ -293,13 +300,15 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       String syncKey      = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
       String serverURL    = (String) jCreds.get(Constants.JSON_KEY_SERVER);
 
+      Log.d(LOG_TAG, "Using account manager " + mAccountManager);
       final Intent intent = AccountActivity.createAccount(mAccountManager,
           accountName, syncKey, password, serverURL);
       setAccountAuthenticatorResult(intent.getExtras());
 
       setResult(RESULT_OK, intent);
     }
-    jClient = null; // Sync is set up, kill reference to JPakeClient object.
+
+    jClient = null; // Sync is set up. Kill reference to JPakeClient object.
     runOnUiThread(new Runnable() {
       @Override
       public void run() {

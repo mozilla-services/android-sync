@@ -19,7 +19,8 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Chenxia Liu <liuche@mozilla.com>
+ *   Chenxia Liu <liuche@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -83,7 +84,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.sync_account);
     mContext = getApplicationContext();
-    mAccountManager = AccountManager.get(getApplicationContext());
+    Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
+    mAccountManager = AccountManager.get(mContext);
 
     // Find UI elements.
     usernameInput = (EditText) findViewById(R.id.usernameInput);
@@ -195,6 +197,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private void authCallback() {
     // Create and add account to AccountManager
     // TODO: only allow one account to be added?
+    Log.d(LOG_TAG, "Using account manager " + mAccountManager);
     final Intent intent = createAccount(mAccountManager, username, key,
         password, server);
     setAccountAuthenticatorResult(intent.getExtras());
@@ -219,6 +222,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   // TODO: lift this out.
   public static Intent createAccount(AccountManager accountManager,
       String username, String syncKey, String password, String serverURL) {
+
     final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
     final Bundle userbundle = new Bundle();
 
@@ -230,6 +234,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     } else {
       userbundle.putString(Constants.OPTION_SERVER, DEFAULT_SERVER);
     }
+    Log.d(LOG_TAG, "Adding account for " + Constants.ACCOUNTTYPE_SYNC);
     accountManager.addAccountExplicitly(account, password, userbundle);
 
     Log.d(LOG_TAG, "Account: " + account.toString());
@@ -244,8 +249,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
     final Intent intent = new Intent();
     intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
-    intent
-        .putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
     intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
     return intent;
   }

@@ -19,7 +19,8 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Chenxia Liu <liuche@mozilla.com>
+ *   Chenxia Liu <liuche@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -134,6 +135,7 @@ public class SyncAuthenticatorService extends Service {
 
       // Extract the username and password from the Account Manager, and ask
       // the server for an appropriate AuthToken.
+      Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
       final AccountManager am = AccountManager.get(mContext);
       final String password = am.getPassword(account);
       if (password != null) {

@@ -19,7 +19,8 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Chenxia Liu <liuche@mozilla.com>
+ *   Chenxia Liu <liuche@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -87,6 +88,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public SyncAdapter(Context context, boolean autoInitialize) {
     super(context, autoInitialize);
     mContext = context;
+    Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(context);
   }
 
