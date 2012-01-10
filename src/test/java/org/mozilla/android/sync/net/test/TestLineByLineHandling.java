@@ -26,6 +26,7 @@ import org.simpleframework.http.Response;
 import android.util.Log;
 
 public class TestLineByLineHandling {
+  private static final String  LOG_TAG     = "TestLineByLineHandling";
   static String                STORAGE_URL = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/lines";
   private HTTPServerTestHelper data        = new HTTPServerTestHelper();
 
@@ -68,6 +69,7 @@ public class TestLineByLineHandling {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
+      Log.i(LOG_TAG, "Request success.");
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
@@ -81,24 +83,27 @@ public class TestLineByLineHandling {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      Log.i(LOG_TAG, "Got request failure: " + response);
       fail("Should not be called.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
+      Log.e(LOG_TAG, "Got request error: ", ex);
       fail("Should not be called.");
     }
   }
 
   @Before
   public void setUp() {
-    Log.i("TestMetaGlobal", "Faking SSL context.");
+    Log.i(LOG_TAG, "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
   }
 
   @Test
   public void testLineByLine() throws URISyntaxException {
     data.startHTTPServer(new LineByLineMockServer());
+    Log.i(LOG_TAG, "Server started.");
     SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
     SyncStorageCollectionRequestDelegate delegate = new BaseLineByLineDelegate();
     r.delegate = delegate;
