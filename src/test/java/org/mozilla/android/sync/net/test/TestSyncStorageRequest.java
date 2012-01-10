@@ -40,6 +40,14 @@ public class TestSyncStorageRequest {
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
+
+      // Make sure we consume the rest of the body, so we can reuse the
+      // connection. Even test code has to be correct in this regard!
+      try {
+        System.out.println("Success body: " + res.body());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       data.stopHTTPServer();
     }
   }

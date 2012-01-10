@@ -42,6 +42,7 @@ public class HTTPServerTestHelper {
       connection.close();
       server = null;
       connection = null;
+      System.out.println("Done stopping.");
     } catch (IOException ex) {
       System.err.println("Error stopping test HTTP server.");
       fail(ex.toString());
