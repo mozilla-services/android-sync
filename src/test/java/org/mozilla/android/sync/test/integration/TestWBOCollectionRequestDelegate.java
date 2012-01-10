@@ -43,7 +43,7 @@ public class TestWBOCollectionRequestDelegate {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       System.out.println("WBOs: " + this.wbos.size());
-      assertEquals(wbos.size(), 13);
+      assertEquals(13, wbos.size());
       for (CryptoRecord record : this.wbos) {
         try {
           // TODO: make this an actual test. Return data locally.
