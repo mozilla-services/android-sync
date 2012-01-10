@@ -19,7 +19,8 @@
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
- *  Chenxia Liu <liuche@mozilla.com>
+ *   Chenxia Liu <liuche@mozilla.com>
+ *   Richard Newman <rnewman@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -83,7 +84,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.sync_account);
     mContext = getApplicationContext();
-    mAccountManager = AccountManager.get(getApplicationContext());
+    mAccountManager = AccountManager.get(mContext);
 
     // Find UI elements.
     usernameInput = (EditText) findViewById(R.id.usernameInput);

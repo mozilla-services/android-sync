@@ -94,8 +94,8 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     super.onCreate(savedInstanceState);
 
     // Set Activity variables.
-    mAccountManager = AccountManager.get(getApplicationContext());
     mContext = getApplicationContext();
+    mAccountManager = AccountManager.get(mContext);
 
   }
 
@@ -105,7 +105,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     super.onResume();
     
     // Check whether Sync accounts exist; if not, display J-PAKE PIN.
-    AccountManager mAccountManager = AccountManager.get(this);
+    AccountManager mAccountManager = AccountManager.get(mContext);
     Account[] accts = mAccountManager
         .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
     if (accts.length == 0) { // Start J-PAKE for pairing if no accounts present.
@@ -239,8 +239,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
           setContentView(R.layout.sync_setup_jpake_waiting);
         }
       });
-    } else { // Extract Sync account data.
-      AccountManager mAccountManager = AccountManager.get(this);
+    } else {
+      // Extract Sync account data.
+      AccountManager mAccountManager = AccountManager.get(mContext);
       Account[] accts = mAccountManager
           .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
       if (accts.length > 0) {
