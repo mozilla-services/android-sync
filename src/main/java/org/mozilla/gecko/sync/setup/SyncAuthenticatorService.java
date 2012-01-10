@@ -98,6 +98,7 @@ public class SyncAuthenticatorService extends Service {
       intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE,
           response);
       intent.putExtra("accountType", Constants.ACCOUNTTYPE_SYNC);
+      intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, true);
 
       final Bundle result = new Bundle();
       result.putParcelable(AccountManager.KEY_INTENT, intent);
