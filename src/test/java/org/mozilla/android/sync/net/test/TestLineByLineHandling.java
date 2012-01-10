@@ -102,6 +102,8 @@ public class TestLineByLineHandling {
 
   @Test
   public void testLineByLine() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+
     data.startHTTPServer(new LineByLineMockServer());
     Log.i(LOG_TAG, "Server started.");
     SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
