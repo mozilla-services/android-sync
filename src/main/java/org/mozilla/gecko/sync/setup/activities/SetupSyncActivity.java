@@ -97,17 +97,34 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     mAccountManager = AccountManager.get(getApplicationContext());
     mContext = getApplicationContext();
 
-    // Set layout based on starting Intent.
-    Bundle extras = this.getIntent().getExtras();
-    if (extras != null) {
-      boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
-      if (!isSetup) {
-        pairWithPin = true;
-        displayPairWithPin();
-        return;
+  }
+
+  @Override
+  public void onResume() {
+    Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
+    super.onResume();
+    
+    // Check whether Sync accounts exist; if not, display J-PAKE PIN.
+    AccountManager mAccountManager = AccountManager.get(this);
+    Account[] accts = mAccountManager
+        .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    if (accts.length == 0) { // Start J-PAKE for pairing if no accounts present.
+      displayReceiveNoPin();
+      jClient = new JPakeClient(this);
+      jClient.receiveNoPin();
+    } else { // Set layout based on starting Intent.
+      Bundle extras = this.getIntent().getExtras();
+      if (extras != null) {
+        boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
+        if (!isSetup) {
+          pairWithPin = true;
+          displayPairWithPin();
+          return;
+        }
       }
+      // Go to Settings screen for Sync management.
+      displayAccount(false);
     }
-    displayReceiveNoPin();
   }
 
   @Override
@@ -120,31 +137,10 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   @Override
-  public void onResume() {
-    Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
-    super.onResume();
-
-    // Check whether Sync accounts exist; if so, display Pair text.
-    AccountManager mAccountManager = AccountManager.get(this);
-    Account[] accts = mAccountManager
-        .getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
-    if (accts.length > 0) {
-      // Go to Settings screen for Sync management.
-      if (!pairWithPin) {
-        authSuccess(false);
-      }
-    } else {
-      // Start J-PAKE for pairing if no accounts present.
-      jClient = new JPakeClient(this);
-      jClient.receiveNoPin();
-    }
+  public void onNewIntent(Intent intent) {
+    setIntent(intent);
   }
 
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (resultCode == RESULT_CANCELED) {
-      displayAbort(Constants.JPAKE_ERROR_USERABORT);
-    }
-  }
 
   /* Click Handlers */
   public void manualClickHandler(View target) {
@@ -307,7 +303,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        authSuccess(true);
+        displayAccount(true);
       }
     });
   }
@@ -327,15 +323,30 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     row3.setEnabled(toEnable);
   }
 
-  private void authSuccess(boolean isSetup) {
+  /**
+   * Displays Sync account setup completed feedback to user.
+   *
+   * @param isSetup
+   *          boolean for whether success screen is reached during setup
+   *          completion, or otherwise.
+   */
+  private void displayAccount(boolean isSetup) {
     Intent intent = new Intent(mContext, SetupSuccessActivity.class);
     intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, isSetup);
     startActivity(intent);
     finish();
   }
 
-  private boolean validatePinEntry() {
-    if (row1.length() == 4 && row2.length() == 4 && row3.length() == 4) {
+  /**
+   * Validate PIN entry fields to check if the three PIN entry fields are all
+   * filled in.
+   *
+   * @return true, if all PIN fields have 4 characters, false otherwise
+   */
+  private boolean pinEntryCompleted() {
+    if (row1.length() == 4 &&
+        row2.length() == 4 &&
+        row3.length() == 4) {
       return true;
     }
     return false;
@@ -356,7 +367,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
         if (s.length() == 4) {
           row2.requestFocus();
         }
-        activateButton(connectButton, validatePinEntry());
+        activateButton(connectButton, pinEntryCompleted());
       }
 
       @Override
@@ -375,7 +386,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
         if (s.length() == 4) {
           row3.requestFocus();
         }
-        activateButton(connectButton, validatePinEntry());
+        activateButton(connectButton, pinEntryCompleted());
       }
 
       @Override
@@ -392,7 +403,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     row3.addTextChangedListener(new TextWatcher() {
       @Override
       public void afterTextChanged(Editable s) {
-        activateButton(connectButton, validatePinEntry());
+        activateButton(connectButton, pinEntryCompleted());
       }
 
       @Override
