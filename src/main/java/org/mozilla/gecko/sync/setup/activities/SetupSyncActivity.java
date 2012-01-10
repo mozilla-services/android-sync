@@ -234,6 +234,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * Device has finished key exchange, waiting for remote device to set up or
    * link to a Sync account. Display "waiting for other device" dialog.
    */
+  @SuppressWarnings("unchecked")
   public void onPaired() {
     if (!pairWithPin) {
       runOnUiThread(new Runnable() {
