@@ -245,8 +245,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
     final Intent intent = new Intent();
     intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
-    intent
-        .putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
     intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
     return intent;
   }
