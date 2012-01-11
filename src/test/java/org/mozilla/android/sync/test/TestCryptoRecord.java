@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -29,12 +30,18 @@ public class TestCryptoRecord {
 
     CryptoRecord record = new CryptoRecord();
     record.payload = clearPayload;
-    record.guid = "5qRsgXWRJZXr";
+    String expectedGUID = "5qRsgXWRJZXr";
+    record.guid = expectedGUID;
     record.keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
     record.encrypt();
     assertTrue(record.payload.get("title") == null);
     assertTrue(record.payload.get("ciphertext") != null);
+    assertEquals(expectedGUID, record.guid);
+    assertEquals(expectedGUID, record.toJSONObject().get("id"));
+    System.out.println("Encrypted JSON: " + record.toJSONString());
     record.decrypt();
+    System.out.println("Decrypted JSON: " + record.toJSONString());
+    assertEquals(expectedGUID, record.toJSONObject().get("id"));
    // assertEquals(record.payload, clearPayload);
   }
 
