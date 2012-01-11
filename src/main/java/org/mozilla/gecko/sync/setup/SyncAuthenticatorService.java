@@ -171,6 +171,7 @@ public class SyncAuthenticatorService extends Service {
         result.putString(AccountManager.KEY_AUTHTOKEN, password);
         return result;
       }
+      Log.w(LOG_TAG, "Returning null bundle for getAuthToken.");
       return null;
     }
 

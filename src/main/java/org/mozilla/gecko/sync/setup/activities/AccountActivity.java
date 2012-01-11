@@ -235,9 +235,12 @@ public class AccountActivity extends AccountAuthenticatorActivity {
       userbundle.putString(Constants.OPTION_SERVER, DEFAULT_SERVER);
     }
     Log.d(LOG_TAG, "Adding account for " + Constants.ACCOUNTTYPE_SYNC);
-    accountManager.addAccountExplicitly(account, password, userbundle);
+    boolean result = accountManager.addAccountExplicitly(account, password, userbundle);
 
-    Log.d(LOG_TAG, "Account: " + account.toString());
+    Log.d(LOG_TAG, "Account: " + account.toString() + " added successfully? " + result);
+    if (!result) {
+      Log.e(LOG_TAG, "Error adding account!");
+    }
 
     // Set components to sync (default: all).
     ContentResolver.setMasterSyncAutomatically(true);
