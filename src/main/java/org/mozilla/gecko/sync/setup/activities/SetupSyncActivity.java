@@ -51,6 +51,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -177,6 +178,17 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     // Start J-PAKE.
     jClient = new JPakeClient(this);
     jClient.pairWithPin(pin, false);
+  }
+
+  public void showClickHandler(View target) {
+    Uri uri = null;
+    // TODO: fetch these from fennec
+    if (pairWithPin) {
+      uri = Uri.parse(Constants.LINK_FIND_CODE);
+    } else {
+      uri = Uri.parse(Constants.LINK_FIND_ADD_DEVICE);
+    }
+    startActivity(new Intent(Intent.ACTION_VIEW, uri));
   }
 
   /* Controller methods */

@@ -20,9 +20,8 @@
         android:text="@string/sync_subtitle_pair" />
 
     <TextView
-        style="@style/SyncTextItem"
-        android:autoLink="web"
-        android:clickable="true"
+        style="@style/SyncLinkItem"
+        android:onClick="showClickHandler"
         android:text="@string/sync_link_show" />
 
     <LinearLayout
@@ -38,8 +37,7 @@
 
     <TextView
         android:id="@+id/link_nodevice"
-        style="@style/SyncTextItem"
-        android:clickable="true"
+        style="@style/SyncLinkItem"
         android:onClick="manualClickHandler"
         android:text="@string/sync_link_nodevice" />
 
