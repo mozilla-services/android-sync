@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
+import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -42,7 +43,29 @@ public class TestCryptoRecord {
     record.decrypt();
     System.out.println("Decrypted JSON: " + record.toJSONString());
     assertEquals(expectedGUID, record.toJSONObject().get("id"));
-   // assertEquals(record.payload, clearPayload);
+  }
+
+  @Test
+  public void testEntireRecord() throws NonObjectJSONException, ParseException, IOException, CryptoException {
+    // Check a raw JSON blob from a real Sync account.
+    String inputString = "{\"sortindex\": 131, \"payload\": \"{\\\"ciphertext\\\":\\\"YJB4dr0vZEIWPirfU2FCJvfzeSLiOP5QWasol2R6ILUxdHsJWuUuvTZVhxYQfTVNou6hVV67jfAvi5Cs+bqhhQsv7icZTiZhPTiTdVGt+uuMotxauVA5OryNGVEZgCCTvT3upzhDFdDbJzVd9O3/gU/b7r/CmAHykX8bTlthlbWeZ8oz6gwHJB5tPRU15nM/m/qW1vyKIw5pw/ZwtAy630AieRehGIGDk+33PWqsfyuT4EUFY9/Ly+8JlnqzxfiBCunIfuXGdLuqTjJOxgrK8mI4wccRFEdFEnmHvh5x7fjl1ID52qumFNQl8zkB75C8XK25alXqwvRR6/AQSP+BgQ==\\\",\\\"IV\\\":\\\"v/0BFgicqYQsd70T39rraA==\\\",\\\"hmac\\\":\\\"59605ed696f6e0e6e062a03510cff742bf6b50d695c042e8372a93f4c2d37dac\\\"}\", \"id\": \"0-P9fabp9vJD\", \"modified\": 1326254123.65}";
+    CryptoRecord record = CryptoRecord.fromJSONRecord(inputString);
+    assertEquals("0-P9fabp9vJD", record.guid);
+    assertEquals(1326254123650L, record.lastModified);
+    assertEquals(131,            record.sortIndex);
+
+    String b64E = "0A7mU5SZ/tu7ZqwXW1og4qHVHN+zgEi4Xwfwjw+vEJw=";
+    String b64H = "11GN34O9QWXkjR06g8t0gWE1sGgQeWL0qxxWwl8Dmxs=";
+    record.keyBundle = KeyBundle.decodeKeyStrings(b64E, b64H);
+    record.decrypt();
+
+    assertEquals("0-P9fabp9vJD", record.guid);
+    assertEquals(1326254123650L, record.lastModified);
+    assertEquals(131,            record.sortIndex);
+
+    assertEquals("Customize Firefox", record.payload.get("title"));
+    assertEquals("0-P9fabp9vJD",      record.payload.get("id"));
+    assertTrue(record.payload.get("tags") instanceof JSONArray);
   }
 
   @Test
