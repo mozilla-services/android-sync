@@ -87,36 +87,46 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
     addVisit(visits, date, DEFAULT_VISIT_TYPE);
   }
 
-  private Record addVisitsToRecord(Record record) throws NullCursorException {
-    AndroidBrowserHistoryDataExtender dataExtender = ((AndroidBrowserHistoryDataAccessor) dbHelper).getHistoryDataExtender();
-    HistoryRecord hist = (HistoryRecord) record;
+  private AndroidBrowserHistoryDataExtender getDataExtender() {
+    return ((AndroidBrowserHistoryDataAccessor) dbHelper).getHistoryDataExtender();
+  }
 
-    Cursor visits = dataExtender.fetch(hist.guid);
+  private JSONArray visitsForGUID(String guid) throws NullCursorException {
+    Cursor visits = getDataExtender().fetch(guid);
     try {
-      visits.moveToFirst();
-
-      JSONArray visitsArray = RepoUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
-      long missingRecords = hist.fennecVisitCount - visitsArray.size();
-        
-      // Add (missingRecords - 1) fake visits, and one real visit.
-      if (missingRecords > 0) {
-        long fakes = missingRecords - 1;
-        for (int j = 0; j < fakes; j++) {
-          // Set fake visit timestamp to be just previous to
-          // the real one we are about to add.
-          // TODO: make these equidistant?
-          long fakeDate = hist.fennecDateVisited - (1 + j);
-          addVisit(visitsArray, fakeDate);
-        }
-
-        // Add the 1 actual record we have.
-        // We still have to fake the visit type: Fennec doesn't track that.
-        addVisit(visitsArray, hist.fennecDateVisited);
+      if (!visits.moveToFirst()) {
+        // Cursor is empty.
+        return new JSONArray();
+      } else {
+        return RepoUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
       }
-      hist.visits = visitsArray;
-      return hist;
     } finally {
       visits.close();
     }
+  }
+
+  private Record addVisitsToRecord(Record record) throws NullCursorException {
+    HistoryRecord hist = (HistoryRecord) record;
+    JSONArray visitsArray = visitsForGUID(hist.guid);
+    long missingRecords = hist.fennecVisitCount - visitsArray.size();
+
+    // Add (missingRecords - 1) fake visits...
+    if (missingRecords > 0) {
+      long fakes = missingRecords - 1;
+      for (int j = 0; j < fakes; j++) {
+        // Set fake visit timestamp to be just previous to
+        // the real one we are about to add.
+        // TODO: make these equidistant?
+        long fakeDate = hist.fennecDateVisited - (1 + j);
+        addVisit(visitsArray, fakeDate);
+      }
+
+      // ... and the 1 actual record we have.
+      // We still have to fake the visit type: Fennec doesn't track that.
+      addVisit(visitsArray, hist.fennecDateVisited);
+    }
+
+    hist.visits = visitsArray;
+    return hist;
   }
 }
