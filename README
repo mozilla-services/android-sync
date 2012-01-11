@@ -1,16 +1,35 @@
 * You need Maven 3. `brew update; brew install maven`.
 
-* You need to prepare the repo before you can use it:
+* You need to prepare the repo before you can use it.
+  * Use preprocess.sh to build manifests etc. to keep Eclipse happy. The output is ignored by Git, and the Fennec merge script skips them, too.
+
+* To make changes to generated files.
   * strings.xml doesn't exist. Modify strings.xml.in.
   * AndroidManifest.xml doesn't exist. Modify the file fragments in manifests/.
   * The same goes for other files that are produced by preprocess.sh.
   * If you want to alter a value _to affect our build only_, put it in AndroidManifest.xml.in.
-  * Use preprocess.sh to build the real files to keep Eclipse happy. The output is ignored by Git, and the Fennec merge script skips them, too.
 
 * To merge to mozilla-central:
 
-  ./fennec-merge-jar.sh ~/moz/hg/mozilla-central
+  MC=~/moz/hg/mozilla-central
+  pushd $MC
+  hg qpop --all
+  hg pull -u
+  hg qnew -m "Android Sync code drop." code-drop
+  popd
+  ./fennec-merge-jar.sh $MC
+  pushd $MC
+  # hg qadd any files that have been added. Removing files that have been
+  # removed is an exercise for the reader.
+  hg qref
+
+* To build:
+
+  # You can do a partial build if you know what you're doing.
+  make -f client.mk
+  make -C objdir-fennec package
+  adb install -r objdir-fennec/dist/fennec*.apk
 
 * You'll need subgit to work with external dependency clones.
 
-http://rustyklophaus.com/articles/20100124-SubmodulesAndSubreposDoneRight.html
+  http://rustyklophaus.com/articles/20100124-SubmodulesAndSubreposDoneRight.html
