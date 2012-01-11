@@ -90,14 +90,28 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
   
   protected void delete(String guid) {
-    context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
+    String[] args = new String[] { guid };
+    String where  = BrowserContract.SyncColumns.GUID + " = ?";
+
+    int deleted = context.getContentResolver().delete(getUri(), where, args);
+    if (deleted == 1) {
+      return;
+    }
+    Log.w(LOG_TAG, "Unexpectedly deleted " + deleted + " rows for guid " + guid);
   }
 
   public Uri insert(Record record) {
     ContentValues cv = getContentValues(record);
     return context.getContentResolver().insert(getUri(), cv);
   }
-  
+
+  /**
+   * Fetch all records.
+   * The caller is responsible for closing the cursor.
+   *
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor fetchAll() throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
@@ -112,6 +126,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     return cur;
   }
   
+  /**
+   * Fetch GUIDs for records modified since the provided timestamp.
+   * The caller is responsible for closing the cursor.
+   *
+   * @param timestamp
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor getGUIDsSince(long timestamp) throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
@@ -127,6 +149,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     return cur;
   }
 
+  /**
+   * Fetch records modified since the provided timestamp.
+   * The caller is responsible for closing the cursor.
+   *
+   * @param timestamp
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor fetchSince(long timestamp) throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
@@ -142,6 +172,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     return cur;
   }
 
+  /**
+   * Fetch records for the provided GUIDs.
+   * The caller is responsible for closing the cursor.
+   *
+   * @param guids
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor fetch(String guids[]) throws NullCursorException {
     String where = "guid" + " in (";
     for (String guid : guids) {

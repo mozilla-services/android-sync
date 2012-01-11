@@ -74,39 +74,49 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
   protected Record transformRecord(Record record) throws NullCursorException {
     return addVisitsToRecord(record);
   }
-  
+
   @SuppressWarnings("unchecked")
+  private void addVisit(JSONArray visits, long date, long visitType) {
+    JSONObject visit = new JSONObject();
+    visit.put(KEY_DATE, date);
+    visit.put(KEY_TYPE, visitType);
+    visits.add(visit);
+  }
+
+  private void addVisit(JSONArray visits, long date) {
+    addVisit(visits, date, DEFAULT_VISIT_TYPE);
+  }
+
   private Record addVisitsToRecord(Record record) throws NullCursorException {
     AndroidBrowserHistoryDataExtender dataExtender = ((AndroidBrowserHistoryDataAccessor) dbHelper).getHistoryDataExtender();
     HistoryRecord hist = (HistoryRecord) record;
-    Cursor visits = dataExtender.fetch(hist.guid);
-    visits.moveToFirst();
-    JSONArray visitsArray = RepoUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
-    long missingRecords = hist.fennecVisitCount - visitsArray.size();
-      
-    // Add missingRecords -1 fake visits.
-    if (missingRecords >= 1) {
-        
-      if (missingRecords > 1) {
-        for (int j = 0; j < missingRecords -1; j++) {
-          JSONObject fake = new JSONObject();
 
+    Cursor visits = dataExtender.fetch(hist.guid);
+    try {
+      visits.moveToFirst();
+
+      JSONArray visitsArray = RepoUtils.getJSONArrayFromCursor(visits, AndroidBrowserHistoryDataExtender.COL_VISITS);
+      long missingRecords = hist.fennecVisitCount - visitsArray.size();
+        
+      // Add (missingRecords - 1) fake visits, and one real visit.
+      if (missingRecords > 0) {
+        long fakes = missingRecords - 1;
+        for (int j = 0; j < fakes; j++) {
           // Set fake visit timestamp to be just previous to
           // the real one we are about to add.
-          fake.put(KEY_DATE, hist.fennecDateVisited - (1 + j));
-          fake.put(KEY_TYPE, DEFAULT_VISIT_TYPE);
-          visitsArray.add(fake);
+          // TODO: make these equidistant?
+          long fakeDate = hist.fennecDateVisited - (1 + j);
+          addVisit(visitsArray, fakeDate);
         }
-      }
 
-      // Add the 1 actual record we have.
-      // We still have to fake the visit type: Fennec doesn't track that/
-      JSONObject real = new JSONObject();
-      real.put(KEY_DATE, hist.fennecDateVisited);
-      real.put(KEY_TYPE, DEFAULT_VISIT_TYPE);
-      visitsArray.add(real);
+        // Add the 1 actual record we have.
+        // We still have to fake the visit type: Fennec doesn't track that.
+        addVisit(visitsArray, hist.fennecDateVisited);
+      }
+      hist.visits = visitsArray;
+      return hist;
+    } finally {
+      visits.close();
     }
-    hist.visits = visitsArray;
-    return hist;
   }
 }

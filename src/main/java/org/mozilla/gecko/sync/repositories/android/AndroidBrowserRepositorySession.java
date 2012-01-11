@@ -140,7 +140,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   protected void checkDatabase() throws ProfileDatabaseException, NullCursorException {
     Log.i(LOG_TAG, "Checking database.");
     try {
-      dbHelper.fetch(new String[] { "none" });
+      dbHelper.fetch(new String[] { "none" }).close();
     } catch (NullPointerException e) {
       throw new ProfileDatabaseException(e);
     }
