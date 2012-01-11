@@ -720,7 +720,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   @Override
   public void onRequestError(Exception e) {
-    // TODO add no internet connection check.
+    abort(Constants.JPAKE_ERROR_NETWORK);
   }
 
   @Override
