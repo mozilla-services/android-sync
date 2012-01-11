@@ -144,7 +144,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     jpakePollInterval = 1 * 1000; // 1 second
     jpakeMaxTries = MAX_TRIES;
 
-    if (jpakeServer.endsWith("/")) {
+    if (!jpakeServer.endsWith("/")) {
       jpakeServer += "/";
     }
 
