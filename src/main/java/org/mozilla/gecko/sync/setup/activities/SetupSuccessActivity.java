@@ -69,15 +69,15 @@ public class SetupSuccessActivity extends Activity {
   /* Click Handlers */
   public void settingsClickHandler(View target) {
     Intent intent = new Intent("android.settings.SYNC_SETTINGS");
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
-    overridePendingTransition(0, 0);
     finish();
   }
 
   public void pairClickHandler(View target) {
     Intent intent = new Intent(mContext, SetupSyncActivity.class);
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, false);
-    overridePendingTransition(0, 0);
     startActivity(intent);
   }
 }

@@ -5,9 +5,8 @@
       style="@style/SyncTextTitle"
       android:text="@string/sync_title_fail" />
     <View 
-      android:layout_width="fill_parent"
-      android:layout_height="2dp"
-      android:background="#FFFFFF"/>
+      style="@style/SyncViewLine" />
+
     <TextView
       style="@style/SyncTextItem"
       android:text="@string/sync_subtitle_fail" />

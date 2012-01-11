@@ -8,21 +8,17 @@
         android:text="@string/sync_title_pair" />
 
     <View
-        android:layout_width="wrap_content"
-        android:layout_height="2dp"
-        android:background="#FFFFFF" />
+       style="@style/SyncViewLine" />
 
     <TextView
         android:id="@+id/setup_subtitle"
         style="@style/SyncTextItem"
-        android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:text="@string/sync_subtitle_connect" />
 
     <TextView
-        style="@style/SyncTextItem"
-        android:autoLink="web"
-        android:clickable="true"
+        style="@style/SyncLinkItem"
+        android:onClick="showClickHandler"
         android:text="@string/sync_link_show" />
 
     <LinearLayout

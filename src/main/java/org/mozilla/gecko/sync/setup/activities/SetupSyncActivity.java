@@ -49,6 +49,9 @@ import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -104,6 +107,11 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   public void onResume() {
     Log.i(LOG_TAG, "Called SetupSyncActivity.onResume.");
     super.onResume();
+
+    if (!hasInternet()) {
+      setContentView(R.layout.sync_setup_nointernet);
+      return;
+    }
     
     // Check whether Sync accounts exist; if not, display J-PAKE PIN.
     Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
@@ -172,6 +180,17 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     jClient.pairWithPin(pin, false);
   }
 
+  public void showClickHandler(View target) {
+    Uri uri = null;
+    // TODO: fetch these from fennec
+    if (pairWithPin) {
+      uri = Uri.parse(Constants.LINK_FIND_CODE);
+    } else {
+      uri = Uri.parse(Constants.LINK_FIND_ADD_DEVICE);
+    }
+    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+  }
+
   /* Controller methods */
   public void displayPin(String pin) {
     if (pin == null) {
@@ -199,6 +218,10 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   public void displayAbort(String error) {
+    if (!Constants.JPAKE_ERROR_USERABORT.equals(error) && !hasInternet()) {
+      setContentView(R.layout.sync_setup_nointernet);
+      return;
+    }
     if (pairWithPin) {
       runOnUiThread(new Runnable() {
         @Override
@@ -223,8 +246,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          // Restart pairing process.
-          jClient.receiveNoPin();
+          Intent intent = new Intent(mContext, SetupFailureActivity.class);
+          intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
+          startActivity(intent);
         }
       });
     }
@@ -341,6 +365,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    */
   private void displayAccount(boolean isSetup) {
     Intent intent = new Intent(mContext, SetupSuccessActivity.class);
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, isSetup);
     startActivity(intent);
     finish();
@@ -356,6 +381,19 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     if (row1.length() == 4 &&
         row2.length() == 4 &&
         row3.length() == 4) {
+      return true;
+    }
+    return false;
+  }
+
+  private boolean hasInternet() {
+    Log.d(LOG_TAG, "Checking internet connectivity.");
+    ConnectivityManager connManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo wifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+    NetworkInfo mobile = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+
+    if (wifi.isConnected() || mobile.isConnected()) {
+      Log.d(LOG_TAG, "Internet connected.");
       return true;
     }
     return false;

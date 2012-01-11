@@ -257,11 +257,13 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private void authFailure() {
     enableCredEntry(true);
     Intent intent = new Intent(mContext, SetupFailureActivity.class);
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
   }
 
   private void authSuccess() {
     Intent intent = new Intent(mContext, SetupSuccessActivity.class);
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
     finish();
   }
