@@ -71,23 +71,34 @@ public class HistoryRecord extends Record {
     super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
 
-  public String     title;
-  public String     histURI;
-  public JSONArray  visits;
-  public long       fennecDateVisited;
-  public long       fennecVisitCount;
+  public String    title;
+  public String    histURI;
+  public JSONArray visits;
+  public long      fennecDateVisited;
+  public long      fennecVisitCount;
 
   @Override
   public void initFromPayload(CryptoRecord payload) {
+    // TODO: defensive coding?!
     this.histURI = (String) payload.payload.get("histUri");
-    this.title       = (String) payload.payload.get("title");
-    // TODO add missing fields
+    this.title   = (String) payload.payload.get("title");
+    try {
+      this.visits = payload.payload.getArray("visits");
+    } catch (NonArrayJSONException e) {
+      Log.e(LOG_TAG, "Got non-array visits in history record " + this.guid, e);
+      this.visits = new JSONArray();
+    }
   }
 
   @Override
   public CryptoRecord getPayload() {
-    // TODO Auto-generated method stub
-    return null;
+    CryptoRecord rec = new CryptoRecord(this);
+    rec.payload = new ExtendedJSONObject();
+    rec.payload.put("id",      this.guid);
+    rec.payload.put("title",   this.title);
+    rec.payload.put("histUri", this.histURI);             // TODO: encoding?
+    rec.payload.put("visits",  this.visits);
+    return rec;
   }
 
   public boolean equalsExceptVisits(Object o) {
