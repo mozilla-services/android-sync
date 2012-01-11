@@ -246,11 +246,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         Log.i(LOG_TAG, "AccountManagerCallback invoked.");
         // TODO: N.B.: Future must not be used on the main thread.
         try {
-          Bundle bundle      = future.getResult(60L, TimeUnit.SECONDS);
-          String username    = bundle.getString(Constants.OPTION_USERNAME);
-          String syncKey     = bundle.getString(Constants.OPTION_SYNCKEY);
-          String serverURL   = bundle.getString(Constants.OPTION_SERVER);
-          String password    = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+          Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
+          if (bundle.containsKey("KEY_INTENT")) {
+            Log.w(LOG_TAG, "KEY_INTENT included in AccountManagerFuture bundle. Problem?");
+          }
+          String username  = bundle.getString(Constants.OPTION_USERNAME);
+          String syncKey   = bundle.getString(Constants.OPTION_SYNCKEY);
+          String serverURL = bundle.getString(Constants.OPTION_SERVER);
+          String password  = bundle.getString(AccountManager.KEY_AUTHTOKEN);
           Log.d(LOG_TAG, "Username: " + username);
           Log.d(LOG_TAG, "Server:   " + serverURL);
           Log.d(LOG_TAG, "Password? " + (password != null));
