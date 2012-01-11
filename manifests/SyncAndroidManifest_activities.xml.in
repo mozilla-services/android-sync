@@ -2,7 +2,9 @@
             android:icon="@drawable/sync_ic_launcher"
             android:label="@string/sync_app_name"
             android:launchMode="singleTask"
+            android:configChanges="orientation"
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSyncActivity" >
+            <!-- android:configChanges: SetupSyncActivity will handle orientation changes; no longer restarts activity (default) -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

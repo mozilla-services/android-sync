@@ -12,8 +12,8 @@
 <!ENTITY sync.subtitle.connect.label 'To activate your new device, select “Set up &syncBrand.shortName.label;” on the device.'>
 <!ENTITY sync.subtitle.pair.label 'To activate, select “Pair a device” on your other device.'>
 <!ENTITY sync.pin.default.label '...\n...\n...\n'>
-<!ENTITY sync.link.show.label '<a href="https://support.mozilla.com/kb/add-a-device-to-firefox-sync">Show me how</a>'>
-<!ENTITY sync.link.nodevice.label '<a href="#">I don\&apos;t have the device with me…</a>'>
+<!ENTITY sync.link.show.label 'Show me how.'>
+<!ENTITY sync.link.nodevice.label 'I don\&apos;t have the device with me…'>
 
 <!-- J-PAKE Waiting Screen -->
 <!ENTITY sync.jpake.subtitle.waiting.label 'Waiting for other device…'>

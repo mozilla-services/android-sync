@@ -56,6 +56,10 @@ public class Constants {
     Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
     Intent.FLAG_ACTIVITY_NO_ANIMATION;
 
+  // Links for J-PAKE setup help pages.
+  public static final String LINK_FIND_CODE       = "https://support.mozilla.org/kb/find-code-to-add-device-to-firefox-sync";
+  public static final String LINK_FIND_ADD_DEVICE = "https://support.mozilla.org/kb/add-a-device-to-firefox-sync";
+
   // Constants for JSON payload.
   public static final String JSON_KEY_PAYLOAD    = "payload";
   public static final String JSON_KEY_CIPHERTEXT = "ciphertext";
