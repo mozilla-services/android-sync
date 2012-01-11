@@ -42,10 +42,15 @@ import java.util.HashMap;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
+import android.util.Log;
+
 public class HistoryRecord extends Record {
+  private static final String LOG_TAG = "HistoryRecord";
 
   public static final String COLLECTION_NAME = "history";
 

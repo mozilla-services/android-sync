@@ -148,6 +148,7 @@ public class BookmarkRecord extends Record {
   public CryptoRecord getPayload() {
     CryptoRecord rec = new CryptoRecord(this);
     rec.payload = new ExtendedJSONObject();
+    rec.payload.put("id", this.guid);
     rec.payload.put("type", this.type);
     rec.payload.put("title", this.title);
     rec.payload.put("description", this.description);
