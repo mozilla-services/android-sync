@@ -233,10 +233,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     Log.i(LOG_TAG, "Got onPerformSync. Extras bundle is " + extras);
     Log.d(LOG_TAG, "Extras clusterURL: " + extras.getString("clusterURL"));
     Log.i(LOG_TAG, "Account name: " + account.name);
-    if (getShouldInvalidateAuthToken()) {
-      Log.d(LOG_TAG, "Invalidating auth token.");
-      invalidateAuthToken(account);
-    }
+
+    // TODO: don't always invalidate; use getShouldInvalidateAuthToken.
+    // However, this fixes Bug 716815, so it'll do for now.
+    Log.d(LOG_TAG, "Invalidating auth token.");
+    invalidateAuthToken(account);
 
     final SyncAdapter self = this;
     AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
