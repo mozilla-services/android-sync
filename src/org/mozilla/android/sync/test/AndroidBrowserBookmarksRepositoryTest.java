@@ -10,14 +10,20 @@ import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
+import org.mozilla.gecko.sync.repositories.android.BrowserContract;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
 import android.util.Log;
 
 public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
@@ -358,4 +364,170 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     
   }
   
+  public void testSqlInjectPurgeDeleteAndUpdateByGuid() {
+    // Some setup.
+    prepSession();
+    AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
+    
+    ContentValues cv = new ContentValues();
+    cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
+    
+    // Create and insert 2 bookmarks, 2nd one is evil (attempts injection).
+    BookmarkRecord bmk1 = BookmarkHelpers.createBookmark1();
+    BookmarkRecord bmk2 = BookmarkHelpers.createBookmark2();
+    bmk2.guid = "' or '1'='1";
+
+    db.insert(bmk1);
+    db.insert(bmk2);
+
+    // Test 1 - updateByGuid() handles evil bookmarks correctly.
+    db.updateByGuid(bmk2.guid, cv);
+
+    // Query bookmarks table.
+    Cursor cur = getAllBookmarks();
+    int numBookmarks = cur.getCount();
+
+    // Ensure only the evil bookmark is marked for deletion.
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+
+        if (guid.equals(bmk2.guid)) {
+          assertTrue(deleted);
+        } else {
+          assertFalse(deleted);
+        }
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
+    }
+
+    // Test 2 - Ensure purgeDelete()'s call to delete() deletes only 1 record.
+    try {
+      db.purgeDeleted();
+    } catch (NullCursorException e) {
+      e.printStackTrace();
+    }
+
+    cur = getAllBookmarks();
+    int numBookmarksAfterDeletion = cur.getCount();
+
+    // Ensure we have only 1 deleted row.
+    assertEquals(numBookmarksAfterDeletion, numBookmarks - 1);
+
+    // Ensure only the evil bookmark is deleted.
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+
+        if (guid.equals(bmk2.guid)) {
+          fail("Evil guid was not deleted!");
+        } else {
+          assertFalse(deleted);
+        }
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
+    }
+  }
+  
+  protected Cursor getAllBookmarks() {
+    Context context = getApplicationContext();
+    Cursor cur = context.getContentResolver().query(BrowserContract.Bookmarks.CONTENT_URI,
+        BrowserContract.Bookmarks.BookmarkColumns, null, null, null);
+    return cur;
+  }
+
+  public void testSqlInjectFetch() {
+    // Some setup.
+    prepSession();
+    AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
+
+    // Create and insert 4 bookmarks, last one is evil (attempts injection).
+    BookmarkRecord bmk1 = BookmarkHelpers.createBookmark1();
+    BookmarkRecord bmk2 = BookmarkHelpers.createBookmark2();
+    BookmarkRecord bmk3 = BookmarkHelpers.createBookmark3();
+    BookmarkRecord bmk4 = BookmarkHelpers.createBookmark4();
+    bmk4.guid = "' or '1'='1";
+
+    db.insert(bmk1);
+    db.insert(bmk2);
+    db.insert(bmk3);
+    db.insert(bmk4);
+
+    // Perform a fetch.
+    Cursor cur = null;
+    try {
+      cur = db.fetch(new String[] { bmk3.guid, bmk4.guid });
+    } catch (NullCursorException e1) {
+      e1.printStackTrace();
+    }
+
+    // Ensure the correct number (2) of records were fetched and with the correct guids.
+    if (cur == null) {
+      fail("No records were fetched.");
+    }
+
+    try {
+      if (cur.getCount() != 2) {
+        fail("Wrong number of guids fetched!");
+      }
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        if (!guid.equals(bmk3.guid) && !guid.equals(bmk4.guid)) {
+          fail("Wrong guids were fetched!");
+        }
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
+    }
+  }
+
+  public void testSqlInjectDelete() {
+    // Some setup.
+    prepSession();
+    AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
+
+    // Create and insert 2 bookmarks, 2nd one is evil (attempts injection).
+    BookmarkRecord bmk1 = BookmarkHelpers.createBookmark1();
+    BookmarkRecord bmk2 = BookmarkHelpers.createBookmark2();
+    bmk2.guid = "' or '1'='1";
+
+    db.insert(bmk1);
+    db.insert(bmk2);
+
+    // Note size of table before delete.
+    Cursor cur = getAllBookmarks();
+    int numBookmarks = cur.getCount();
+
+    db.delete(bmk2);
+
+    // Note size of table after delete.
+    cur = getAllBookmarks();
+    int numBookmarksAfterDelete = cur.getCount();
+
+    // Ensure size of table after delete is *only* 1 less.
+    assertEquals(numBookmarksAfterDelete, numBookmarks - 1);
+
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        if (guid.equals(bmk2.guid)) {
+          fail("Guid was not deleted!");
+        }
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
+    }
+  }
 }

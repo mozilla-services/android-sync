@@ -6,16 +6,20 @@ package org.mozilla.android.sync.test;
 import org.json.simple.JSONObject;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContract;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
 
 public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
   
@@ -207,5 +211,85 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(new Record[] { record0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, delegate));
     assertTrue(record0.equalsIncludingVisits(delegate.records.get(0)));
+  }
+
+  public void testSqlInjectPurgeDelete() {
+    // Some setup.
+    prepSession();
+    AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
+
+    ContentValues cv = new ContentValues();
+    cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
+
+    // Create and insert 2 history entries, 2nd one is evil (attempts injection).
+    HistoryRecord h1 = HistoryHelpers.createHistory1();
+    HistoryRecord h2 = HistoryHelpers.createHistory2();
+    h2.guid = "' or '1'='1";
+
+    db.insert(h1);
+    db.insert(h2);
+
+    // Test 1 - updateByGuid() handles evil history entries correctly.
+    db.updateByGuid(h2.guid, cv);
+
+    // Query history table.
+    Cursor cur = getAllHistory();
+    int numHistory = cur.getCount();
+
+    // Ensure only the evil history entry is marked for deletion.
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+
+        if (guid.equals(h2.guid)) {
+          assertTrue(deleted);
+        } else {
+          assertFalse(deleted);
+        }
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
+    }
+
+    // Test 2 - Ensure purgeDelete()'s call to delete() deletes only 1 record.
+    try {
+      db.purgeDeleted();
+    } catch (NullCursorException e) {
+      e.printStackTrace();
+    }
+
+    cur = getAllHistory();
+    int numHistoryAfterDeletion = cur.getCount();
+
+    // Ensure we have only 1 deleted row.
+    assertEquals(numHistoryAfterDeletion, numHistory - 1);
+
+    // Ensure only the evil history is deleted.
+    try {
+      cur.moveToFirst();
+      while (!cur.isAfterLast()) {
+        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+
+        if (guid.equals(h2.guid)) {
+          fail("Evil guid was not deleted!");
+        } else {
+          assertFalse(deleted);
+        }
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
+    }
+  }
+
+  protected Cursor getAllHistory() {
+    Context context = getApplicationContext();
+    Cursor cur = context.getContentResolver().query(BrowserContract.History.CONTENT_URI,
+        BrowserContract.History.HistoryColumns, null, null, null);
+    return cur;
   }
 }
