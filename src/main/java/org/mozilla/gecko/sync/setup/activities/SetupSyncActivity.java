@@ -234,8 +234,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          // Restart pairing process.
-          jClient.receiveNoPin();
+          Intent intent = new Intent(mContext, SetupFailureActivity.class);
+          intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
+          startActivity(intent);
         }
       });
     }
