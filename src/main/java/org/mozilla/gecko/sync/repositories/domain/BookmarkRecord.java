@@ -41,8 +41,11 @@ package org.mozilla.gecko.sync.repositories.domain;
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
+
+import android.util.Log;
 
 /**
  * Covers the fields used by all bookmark objects.
@@ -50,6 +53,7 @@ import org.mozilla.gecko.sync.repositories.android.RepoUtils;
  *
  */
 public class BookmarkRecord extends Record {
+  private static final String LOG_TAG = "BookmarkRecord";
 
   public static final String COLLECTION_NAME = "bookmarks";
 
@@ -98,13 +102,25 @@ public class BookmarkRecord extends Record {
 
     // Bookmark.
     if (isBookmark()) {
-      this.bookmarkURI   = (String) p.get("bmkUri");
-      this.keyword       = (String) p.get("keyword");
-      this.tags          = (JSONArray) p.get("tags");
+      this.bookmarkURI = (String) p.get("bmkUri");
+      this.keyword     = (String) p.get("keyword");
+      try {
+        this.tags = p.getArray("tags");
+      } catch (NonArrayJSONException e) {
+        Log.e(LOG_TAG, "Got non-array tags in bookmark record " + this.guid, e);
+        this.tags = new JSONArray();
+      }
     }
+
     // Folder.
     if (isFolder()) {
-      this.children      = (JSONArray) p.get("children");
+      try {
+        this.children = p.getArray("children");
+      } catch (NonArrayJSONException e) {
+        Log.e(LOG_TAG, "Got non-array children in bookmark record " + this.guid, e);
+        // Let's see if we can recover later by using the parentid pointers.
+        this.children = new JSONArray();
+      }
     }
 
     // TODO: predecessor ID?
@@ -132,6 +148,7 @@ public class BookmarkRecord extends Record {
   public CryptoRecord getPayload() {
     CryptoRecord rec = new CryptoRecord(this);
     rec.payload = new ExtendedJSONObject();
+    rec.payload.put("id", this.guid);
     rec.payload.put("type", this.type);
     rec.payload.put("title", this.title);
     rec.payload.put("description", this.description);
