@@ -38,6 +38,8 @@
 
 package org.mozilla.gecko.sync.setup;
 
+import android.content.Intent;
+
 public class Constants {
   // Constants for Firefox Sync SyncAdapter Accounts.
   public static final String ACCOUNTTYPE_SYNC     = "org.mozilla.firefox_sync";
@@ -49,6 +51,10 @@ public class Constants {
   // Constants for Activities.
   public static final String INTENT_EXTRA_IS_SETUP = "isSetup";
   public static final String INTENT_EXTRA_IS_PAIR  = "isPair";
+
+  public static final int FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION =
+    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+    Intent.FLAG_ACTIVITY_NO_ANIMATION;
 
   // Constants for JSON payload.
   public static final String JSON_KEY_PAYLOAD    = "payload";
