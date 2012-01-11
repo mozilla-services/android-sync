@@ -90,7 +90,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
   
   protected void delete(String guid) {
-    context.getContentResolver().delete(getUri(), BrowserContract.SyncColumns.GUID + " = '" + guid + "'", null);
+    String[] args = new String[] { guid };
+    String where  = BrowserContract.SyncColumns.GUID + " = ?";
+
+    int deleted = context.getContentResolver().delete(getUri(), where, args);
+    if (deleted == 1) {
+      return;
+    }
+    Log.w(LOG_TAG, "Unexpectedly deleted " + deleted + " rows for guid " + guid);
   }
 
   public Uri insert(Record record) {
