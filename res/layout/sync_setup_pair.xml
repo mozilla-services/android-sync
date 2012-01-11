@@ -17,9 +17,8 @@
         android:text="@string/sync_subtitle_connect" />
 
     <TextView
-        style="@style/SyncTextItem"
-        android:autoLink="web"
-        android:clickable="true"
+        style="@style/SyncLinkItem"
+        android:onClick="showClickHandler"
         android:text="@string/sync_link_show" />
 
     <LinearLayout
