@@ -240,7 +240,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     invalidateAuthToken(account);
 
     final SyncAdapter self = this;
-    AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+    final AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
       @Override
       public void run(AccountManagerFuture<Bundle> future) {
         Log.i(LOG_TAG, "AccountManagerCallback invoked.");
@@ -283,11 +283,22 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         }
       }
     };
-    Handler handler = null;
-    getAuthToken(account, callback, handler);
+
+    final Handler handler = null;
+    final Runnable fetchAuthToken = new Runnable() {
+      @Override
+      public void run() {
+        getAuthToken(account, callback, handler);
+      }
+    };
     synchronized (syncMonitor) {
+      // Perform the work in a new thread from within this synchronized block,
+      // which allows us to be waiting on the monitor before the callback can
+      // notify us in a failure case. Oh, concurrent programming.
+      new Thread(fetchAuthToken).start();
+
+      Log.i(LOG_TAG, "Waiting on sync monitor.");
       try {
-        Log.i(LOG_TAG, "Waiting on sync monitor.");
         syncMonitor.wait();
       } catch (InterruptedException e) {
         Log.i(LOG_TAG, "Waiting on sync monitor interrupted.", e);
