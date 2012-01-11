@@ -97,7 +97,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     ContentValues cv = getContentValues(record);
     return context.getContentResolver().insert(getUri(), cv);
   }
-  
+
+  /**
+   * Fetch all records.
+   * The caller is responsible for closing the cursor.
+   *
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor fetchAll() throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
@@ -112,6 +119,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     return cur;
   }
   
+  /**
+   * Fetch GUIDs for records modified since the provided timestamp.
+   * The caller is responsible for closing the cursor.
+   *
+   * @param timestamp
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor getGUIDsSince(long timestamp) throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
@@ -127,6 +142,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     return cur;
   }
 
+  /**
+   * Fetch records modified since the provided timestamp.
+   * The caller is responsible for closing the cursor.
+   *
+   * @param timestamp
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor fetchSince(long timestamp) throws NullCursorException {
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(),
@@ -142,6 +165,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     return cur;
   }
 
+  /**
+   * Fetch records for the provided GUIDs.
+   * The caller is responsible for closing the cursor.
+   *
+   * @param guids
+   * @return A cursor. You *must* close this when you're done with it.
+   * @throws NullCursorException
+   */
   public Cursor fetch(String guids[]) throws NullCursorException {
     String where = "guid" + " in (";
     for (String guid : guids) {
