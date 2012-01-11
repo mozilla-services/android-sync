@@ -341,6 +341,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    */
   private void displayAccount(boolean isSetup) {
     Intent intent = new Intent(mContext, SetupSuccessActivity.class);
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, isSetup);
     startActivity(intent);
     finish();
