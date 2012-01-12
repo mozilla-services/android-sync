@@ -218,6 +218,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     
     // To deal with parent mapping of bookmarks we have to do some
     // hairy stuff. Here's the setup for it.
+
+    Log.d(LOG_TAG, "Preparing folder ID mappings.");
+    idToGuid.put(0L, "places");       // Fake our root.
     try {
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
