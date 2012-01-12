@@ -40,13 +40,18 @@ package org.mozilla.gecko.sync;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Random;
 
 import org.mozilla.apache.commons.codec.binary.Base32;
 import org.mozilla.apache.commons.codec.binary.Base64;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
 
 public class Utils {
+
+  // See <http://developer.android.com/reference/android/content/Context.html#getSharedPreferences%28java.lang.String,%20int%29>
+  public static final int SHARED_PREFERENCES_MODE = 0;
 
   // We don't really have a trace logger, so use this to toggle
   // some debug logging.
@@ -188,5 +193,11 @@ public class Utils {
   }
   public static long decimalSecondsToMilliseconds(Integer decimal) {
     return (long)(decimal * 1000);
+  }
+
+
+  public static String getPrefsPath(String username, String serverURL)
+    throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    return "sync.prefs." + Cryptographer.sha1Base32(serverURL + ":" + username);
   }
 }

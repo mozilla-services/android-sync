@@ -39,6 +39,7 @@
 package org.mozilla.gecko.sync.syncadapter;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
@@ -49,6 +50,7 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncException;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.Cryptographer;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -274,7 +276,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
           // Support multiple accounts by mapping each server/account pair to a branch of the
           // shared preferences space.
-          String prefsPath = "sync.prefs." + Cryptographer.sha1Base32(serverURL + ":" + username);
+          String prefsPath = Utils.getPrefsPath(username, serverURL);
           self.performSync(account, extras, authority, provider, syncResult,
               username, password, prefsPath, serverURL, keyBundle);
         } catch (Exception e) {

@@ -205,9 +205,6 @@ public class SyncConfiguration implements CredentialsSource {
 
   private static final String LOG_TAG = "SyncConfiguration";
 
-  // See <http://developer.android.com/reference/android/content/Context.html#getSharedPreferences%28java.lang.String,%20int%29>
-  private static final int SHARED_PREFERENCES_MODE = 0;
-
   // These must be set in GlobalSession's constructor.
   public String          userAPI;
   public URI             serverURL;
@@ -241,7 +238,7 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   public SharedPreferences getPrefs() {
-    return prefsSource.getPrefs(prefsPath, SHARED_PREFERENCES_MODE);
+    return prefsSource.getPrefs(prefsPath, Utils.SHARED_PREFERENCES_MODE);
   }
 
   /**
