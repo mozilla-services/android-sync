@@ -133,7 +133,7 @@ public class RepoUtils {
     // Need to restore the parentId since it isn't stored in content provider
     rec.parentID = parentId;
     // Set parent name
-    // Always set the parent name for special folders back to default so stuff doesn't go crazy
+    // Always set the parent name for special folders back to default.
     if (SPECIAL_GUIDS_MAP.containsKey(rec.parentID)) {
       rec.parentName = SPECIAL_GUIDS_MAP.get(rec.parentID);
     } else {

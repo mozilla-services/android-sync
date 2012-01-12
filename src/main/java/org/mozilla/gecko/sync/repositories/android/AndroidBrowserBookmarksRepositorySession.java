@@ -134,27 +134,29 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return childArray;
   }
 
+  private boolean rowIsFolder(Cursor cur) {
+    return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER) == 1;
+  }
+
   @Override
   protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     long androidParentID = getParentID(cur);
     String androidParentGUID = idToGuid.get(androidParentID);
 
     if (androidParentGUID == null) {
-      // if the parent has been stored and somehow has a null GUID, throw an error.
+      // If the parent has been stored and somehow has a null GUID, throw an error.
       if (idToGuid.containsKey(androidParentID)) {
         Log.e(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
         throw new NoGuidForIdException(null);
-      } else {
-        return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
       }
+      return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
     }
 
     String parentName = getParentName(androidParentGUID);
 
-    // If record is a folder, build out the children array
-    long isFolder = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER);
+    // If record is a folder, build out the children array.
     JSONArray childArray = null;
-    if (isFolder == 1) {
+    if (rowIsFolder(cur)) {
       long androidID = guidToID.get(RepoUtils.getStringFromCursor(cur, "guid"));
       childArray = getChildren(androidID);
     }
@@ -203,6 +205,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
         guidToID.put(guid, id);
         idToGuid.put(id, guid);
+        Log.d(LOG_TAG, "GUID " + guid + " maps to " + id);
         cur.moveToNext();
       }
     } finally {
