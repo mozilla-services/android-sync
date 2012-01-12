@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.json.simple.JSONArray;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
 import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
@@ -58,6 +59,7 @@ import android.util.Log;
 
 public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
 
+  // TODO: synchronization for these.
   private HashMap<String, Long> guidToID = new HashMap<String, Long>();
   private HashMap<Long, String> idToGuid = new HashMap<Long, String>();
 
@@ -66,11 +68,31 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   private AndroidBrowserBookmarksDataAccessor dataAccessor;
   private int needsReparenting = 0;
 
+  private static void trace(String string) {
+    if (Utils.ENABLE_TRACE_LOGGING) {
+      Log.d(LOG_TAG, string);
+    }
+  }
+
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
     RepoUtils.initialize(context);
     dbHelper = new AndroidBrowserBookmarksDataAccessor(context);
     dataAccessor = (AndroidBrowserBookmarksDataAccessor) dbHelper;
+  }
+
+  private boolean rowIsFolder(Cursor cur) {
+    return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER) == 1;
+  }
+
+  private String getGUIDForID(long androidID) {
+    String guid = idToGuid.get(androidID);
+    trace("  " + androidID + " => " + guid);
+    return guid;
+  }
+
+  private String getGUID(Cursor cur) {
+    return RepoUtils.getStringFromCursor(cur, "guid");
   }
 
   private long getParentID(Cursor cur) {
@@ -119,7 +141,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         if (childArray == null) {
           childArray = new JSONArray();
         }
-        String childGuid = RepoUtils.getStringFromCursor(children, "guid");
+        String childGuid = getGUID(children);
         int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
         kids[childPosition] = childGuid;
         children.moveToNext();
@@ -134,16 +156,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return childArray;
   }
 
-  private boolean rowIsFolder(Cursor cur) {
-    return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER) == 1;
-  }
-
   @Override
   protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    long androidParentID = getParentID(cur);
-    String androidParentGUID = idToGuid.get(androidParentID);
+    long androidParentID     = getParentID(cur);
+    String recordGUID        = getGUID(cur);
+    String androidParentGUID = getGUIDForID(androidParentID);
 
     if (androidParentGUID == null) {
+      Log.d(LOG_TAG, "No parent GUID for record " + recordGUID + " with parent " + androidParentID);
       // If the parent has been stored and somehow has a null GUID, throw an error.
       if (idToGuid.containsKey(androidParentID)) {
         Log.e(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
@@ -157,7 +177,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // If record is a folder, build out the children array.
     JSONArray childArray = null;
     if (rowIsFolder(cur)) {
-      long androidID = guidToID.get(RepoUtils.getStringFromCursor(cur, "guid"));
+      long androidID = guidToID.get(recordGUID);
       childArray = getChildren(androidID);
     }
     return RepoUtils.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
@@ -201,7 +221,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     try {
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
-        String guid = RepoUtils.getStringFromCursor(cur, "guid");
+        String guid = getGUID(cur);
         long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
         guidToID.put(guid, id);
         idToGuid.put(id, guid);
