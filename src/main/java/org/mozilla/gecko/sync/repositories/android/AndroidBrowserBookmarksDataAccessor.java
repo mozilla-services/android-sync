@@ -151,7 +151,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
     BookmarkRecord rec = (BookmarkRecord) record;
-    cv.put("guid",                                rec.guid);
+    cv.put(BrowserContract.SyncColumns.GUID,      rec.guid);
     cv.put(BrowserContract.Bookmarks.TITLE,       rec.title);
     cv.put(BrowserContract.Bookmarks.URL,         rec.bookmarkURI);
     cv.put(BrowserContract.Bookmarks.DESCRIPTION, rec.description);
