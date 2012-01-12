@@ -39,6 +39,7 @@
 package org.mozilla.gecko.sync.setup.activities;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.Authorities;
 import org.mozilla.gecko.sync.setup.Constants;
 
@@ -198,8 +199,9 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     // Create and add account to AccountManager
     // TODO: only allow one account to be added?
     Log.d(LOG_TAG, "Using account manager " + mAccountManager);
-    final Intent intent = createAccount(mAccountManager, username, key,
-        password, server);
+    final Intent intent = createAccount(mContext, mAccountManager,
+                                        username,
+                                        key, password, server);
     setAccountAuthenticatorResult(intent.getExtras());
 
     // Testing out the authFailure case
@@ -220,8 +222,11 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   }
 
   // TODO: lift this out.
-  public static Intent createAccount(AccountManager accountManager,
-      String username, String syncKey, String password, String serverURL) {
+  public static Intent createAccount(Context context,
+                                     AccountManager accountManager,
+                                     String username,
+                                     String syncKey,
+                                     String password, String serverURL) {
 
     final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
     final Bundle userbundle = new Bundle();
@@ -244,11 +249,19 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
     // Set components to sync (default: all).
     ContentResolver.setMasterSyncAutomatically(true);
-    ContentResolver.setSyncAutomatically(account,
-        Authorities.BROWSER_AUTHORITY, true);
+    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
+
     // TODO: add other ContentProviders as needed (e.g. passwords)
     // TODO: for each, also add to res/xml to make visible in account settings
     Log.d(LOG_TAG, "Finished setting syncables.");
+
+    // TODO: correctly implement Sync Options.
+    Log.i(LOG_TAG, "Clearing preferences for this account.");
+    try {
+      Utils.getSharedPreferences(context, username, serverURL).edit().clear().commit();
+    } catch (Exception e) {
+      Log.e(LOG_TAG, "Could not clear prefs path!", e);
+    }
 
     final Intent intent = new Intent();
     intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);

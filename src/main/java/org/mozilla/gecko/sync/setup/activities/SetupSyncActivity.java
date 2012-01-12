@@ -325,8 +325,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       String serverURL    = (String) jCreds.get(Constants.JSON_KEY_SERVER);
 
       Log.d(LOG_TAG, "Using account manager " + mAccountManager);
-      final Intent intent = AccountActivity.createAccount(mAccountManager,
-          accountName, syncKey, password, serverURL);
+      final Intent intent = AccountActivity.createAccount(mContext, mAccountManager,
+                                                          accountName,
+                                                          syncKey, password, serverURL);
       setAccountAuthenticatorResult(intent.getExtras());
 
       setResult(RESULT_OK, intent);
