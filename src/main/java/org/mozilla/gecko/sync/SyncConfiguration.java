@@ -222,7 +222,7 @@ public class SyncConfiguration implements CredentialsSource {
   // persistence.
   // Behavior is undefined if the PrefsSource is switched out in flight.
   public String          prefsPath;
-  public PrefsSource    prefsSource;
+  public PrefsSource     prefsSource;
 
   /**
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
@@ -238,6 +238,7 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   public SharedPreferences getPrefs() {
+    Log.d(LOG_TAG, "Returning prefs for " + prefsPath);
     return prefsSource.getPrefs(prefsPath, Utils.SHARED_PREFERENCES_MODE);
   }
 
