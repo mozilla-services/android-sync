@@ -2,6 +2,11 @@
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
   style="@style/SyncTextFrame" >
 
+  <ScrollView
+    style="@style/SyncLayout" >
+  <LinearLayout
+    style="@style/SyncLayout" >
+
   <TextView
     style="@style/SyncTextTitle"
     android:text="@string/sync_title_connect" />
@@ -27,12 +32,14 @@
     android:hint="@string/sync_input_key" />
 
   <CheckBox android:id="@+id/checkbox_server"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="left"
     android:text="@string/sync_checkbox_server" />
 
   <EditText android:id="@+id/serverInput"
     style="@style/SyncEditItem"
-    android:enabled="false"
-    android:clickable="false"
+    android:visibility="gone"
     android:hint="@string/sync_input_server" />
 
   <LinearLayout
@@ -54,5 +61,6 @@
       android:text="@string/sync_button_connect" />
 
   </LinearLayout>
-
+  </LinearLayout>
+</ScrollView>
 </TableLayout>

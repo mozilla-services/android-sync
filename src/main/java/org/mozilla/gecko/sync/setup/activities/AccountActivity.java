@@ -108,9 +108,12 @@ public class AccountActivity extends AccountAuthenticatorActivity {
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         Log.i(LOG_TAG, "Toggling checkbox: " + isChecked);
-        activateView(serverInput, isChecked);
+        // Hack for pre-3.0 Android: can enter text into disabled EditText.
         if (!isChecked) { // Clear server input.
+          serverInput.setVisibility(View.GONE);
           serverInput.setText("");
+        } else {
+          serverInput.setVisibility(View.VISIBLE);
         }
         // Activate connectButton if necessary.
         activateView(connectButton, validateInputs());
