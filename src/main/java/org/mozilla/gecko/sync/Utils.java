@@ -51,7 +51,7 @@ public class Utils {
   // We don't really have a trace logger, so use this to toggle
   // some debug logging.
   // This is awful. I'm so sorry.
-  public static boolean ENABLE_TRACE_LOGGING = false;
+  public static boolean ENABLE_TRACE_LOGGING = true;
 
   // If true, log to System.out as well as using Android's Log.* calls.
   public static boolean LOG_TO_STDOUT = false;
