@@ -63,7 +63,7 @@ import android.widget.EditText;
 public class AccountActivity extends AccountAuthenticatorActivity {
   private final static String LOG_TAG        = "AccountActivity";
 
-  private final static String DEFAULT_SERVER = "https://setup.services.mozilla.com/";
+  private final static String DEFAULT_SERVER = "https://auth.services.mozilla.com/";
 
   private AccountManager      mAccountManager;
   private Context             mContext;
