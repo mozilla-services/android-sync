@@ -66,7 +66,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   }
 
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
-    String where = BrowserContract.Bookmarks.IS_FOLDER + "=1";
+    String where = BrowserContract.Bookmarks.IS_FOLDER + " = 1";
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
     queryEnd = System.currentTimeMillis();
@@ -140,11 +140,11 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   }
 
   private long insertSpecialFolder(String guid, long parentId) {
-      BookmarkRecord record = new BookmarkRecord(guid);
-      record.title = RepoUtils.SPECIAL_GUIDS_MAP.get(guid);
-      record.type = "folder";
-      record.androidParentID = parentId;
-      return(RepoUtils.getAndroidIdFromUri(insert(record)));
+    BookmarkRecord record = new BookmarkRecord(guid);
+    record.title = RepoUtils.SPECIAL_GUIDS_MAP.get(guid);
+    record.type = "folder";
+    record.androidParentID = parentId;
+    return(RepoUtils.getAndroidIdFromUri(insert(record)));
   }
 
   @Override
@@ -173,7 +173,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   
   // Returns a cursor with any records that list the given androidID as a parent
   public Cursor getChildren(long androidID) throws NullCursorException {
-    String where = BrowserContract.Bookmarks.PARENT + "=" + androidID;
+    String where = BrowserContract.Bookmarks.PARENT + " = " + androidID;
     queryStart = System.currentTimeMillis();
     Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, null, null);
     queryEnd = System.currentTimeMillis();

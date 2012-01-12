@@ -60,6 +60,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   private HashMap<String, Long> guidToID = new HashMap<String, Long>();
   private HashMap<Long, String> idToGuid = new HashMap<Long, String>();
+
   private HashMap<String, ArrayList<String>> missingParentToChildren = new HashMap<String, ArrayList<String>>();
   private HashMap<String, JSONArray> parentToChildArray = new HashMap<String, JSONArray>();
   private AndroidBrowserBookmarksDataAccessor dataAccessor;
@@ -261,14 +262,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     bmk.androidID = id;
 
     // If record is folder, update maps and re-parent children if necessary
-    if(bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+    if (bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
       guidToID.put(bmk.guid, id);
       idToGuid.put(id, bmk.guid);
 
       JSONArray childArray = bmk.children;
 
       // Re-parent.
-      if(missingParentToChildren.containsKey(bmk.guid)) {
+      if (missingParentToChildren.containsKey(bmk.guid)) {
         for (String child : missingParentToChildren.get(bmk.guid)) {
           long position;
           if (!bmk.children.contains(child)) {
