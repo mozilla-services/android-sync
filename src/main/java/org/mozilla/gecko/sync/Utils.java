@@ -50,11 +50,15 @@ import org.mozilla.gecko.sync.crypto.Cryptographer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 public class Utils {
 
+  private static final String LOG_TAG = "Utils";
+
   // See <http://developer.android.com/reference/android/content/Context.html#getSharedPreferences%28java.lang.String,%20int%29>
   public static final int SHARED_PREFERENCES_MODE = 0;
+
 
   // We don't really have a trace logger, so use this to toggle
   // some debug logging.
@@ -205,6 +209,8 @@ public class Utils {
   }
 
   public static SharedPreferences getSharedPreferences(Context context, String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    return context.getSharedPreferences(getPrefsPath(username, serverURL), SHARED_PREFERENCES_MODE);
+    String prefsPath = getPrefsPath(username, serverURL);
+    Log.d(LOG_TAG, "Shared preferences: " + prefsPath);
+    return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
   }
 }
