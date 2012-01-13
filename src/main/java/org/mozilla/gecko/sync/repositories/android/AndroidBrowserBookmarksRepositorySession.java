@@ -333,9 +333,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
                      ", " + bmk.pos + ")");
     } else {
       Log.d(LOG_TAG, "Inserting bookmark " + bmk.guid + ", " + bmk.title + ", " +
-          bmk.bookmarkURI + " with parent " + bmk.androidParentID +
-          " (" + bmk.parentID + ", " + bmk.parentName +
-          ", " + bmk.pos + ")");
+                     bmk.bookmarkURI + " with parent " + bmk.androidParentID +
+                     " (" + bmk.parentID + ", " + bmk.parentName +
+                     ", " + bmk.pos + ")");
     }
     long id = RepoUtils.getAndroidIdFromUri(dbHelper.insert(bmk));
     Log.d(LOG_TAG, "Inserted as " + id);

@@ -278,7 +278,18 @@ public class RepoUtils {
     // Need to restore the parentId since it isn't stored in content provider.
     // We also take this opportunity to fix up parents for special folders,
     // allowing us to map between the hierarchies used by Fennec and Places.
-    return computeParentFields(rec, parentId, parentName);
+    return logBookmark(computeParentFields(rec, parentId, parentName));
+  }
+
+  private static BookmarkRecord logBookmark(BookmarkRecord rec) {
+    Log.d(LOG_TAG, "Returning bookmark record " + rec.guid + " (" + rec.androidID +
+                   ", " + rec.parentName + ":" + rec.parentID + ")");
+    Log.d(LOG_TAG, "> Title:            " + rec.title);
+    Log.d(LOG_TAG, "> Type:             " + rec.type);
+    Log.d(LOG_TAG, "> URI:              " + rec.bookmarkURI);
+    Log.d(LOG_TAG, "> Android position: " + rec.androidPosition);
+    Log.d(LOG_TAG, "> Position:         " + rec.pos);
+    return rec;
   }
 
   //Create a HistoryRecord object from a cursor on a row with a Moz History record in it
