@@ -69,10 +69,10 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
     HistoryRecord rec = (HistoryRecord) record;
-    cv.put(BrowserContract.History.GUID,            rec.guid);
-    cv.put(BrowserContract.History.DATE_MODIFIED,        rec.lastModified);
-    cv.put(BrowserContract.History.TITLE,           rec.title);
-    cv.put(BrowserContract.History.URL,        rec.histURI);
+    cv.put(BrowserContract.History.GUID,          rec.guid);
+    cv.put(BrowserContract.History.DATE_MODIFIED, rec.lastModified);
+    cv.put(BrowserContract.History.TITLE,         rec.title);
+    cv.put(BrowserContract.History.URL,           rec.histURI);
     if (rec.visits != null) {
       JSONArray visits = rec.visits;
       long mostRecent = 0;
@@ -83,7 +83,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
           mostRecent = visitDate;
         }
       }
-      cv.put(BrowserContract.History.DATE_LAST_VISITED,    mostRecent);
+      cv.put(BrowserContract.History.DATE_LAST_VISITED, mostRecent);
     }
     return cv;
   }
