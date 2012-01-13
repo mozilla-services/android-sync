@@ -44,6 +44,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
@@ -75,6 +76,47 @@ public class RepoUtils {
       SPECIAL_GUIDS_MAP.put("toolbar", context.getString(R.string.bookmarks_folder_toolbar));
       SPECIAL_GUIDS_MAP.put("unfiled", context.getString(R.string.bookmarks_folder_unfiled));
       SPECIAL_GUIDS_MAP.put("mobile",  context.getString(R.string.bookmarks_folder_mobile));
+    }
+  }
+
+  /**
+   * A helper class for monotonous SQL querying. Does timing and logging,
+   * offers a utility to throw on a null cursor.
+   *
+   * @author rnewman
+   *
+   */
+  public static class QueryHelper {
+    private final Context context;
+    private final Uri     uri;
+    private final String  tag;
+
+    public QueryHelper(Context context, Uri uri, String tag) {
+      this.context = context;
+      this.uri     = uri;
+      this.tag     = tag;
+    }
+
+    public Cursor query(String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+      return this.query(null, projection, selection, selectionArgs, sortOrder);
+    }
+
+    public Cursor query(String label, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+      String logLabel = (label == null) ? this.tag : this.tag + label;
+      long queryStart = android.os.SystemClock.uptimeMillis();
+      Cursor c = context.getContentResolver().query(uri, projection, selection, selectionArgs, sortOrder);
+      long queryEnd   = android.os.SystemClock.uptimeMillis();
+      RepoUtils.queryTimeLogger(logLabel, queryStart, queryEnd);
+      return c;
+    }
+
+    public Cursor safeQuery(String label, String[] projection, String selection, String[] selectionArgs, String sortOrder) throws NullCursorException {
+      Cursor c = this.query(label, projection, selection, selectionArgs, sortOrder);
+      if (c == null) {
+        Log.e(tag, "Got null cursor exception in " + tag + ((label == null) ? "" : label));
+        throw new NullCursorException(null);
+      }
+      return c;
     }
   }
 
