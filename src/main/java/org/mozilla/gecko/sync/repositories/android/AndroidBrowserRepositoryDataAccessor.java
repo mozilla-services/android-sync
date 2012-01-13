@@ -156,21 +156,20 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
    * @throws NullCursorException
    */
   public Cursor fetch(String guids[]) throws NullCursorException {
-    String where = computeSQLInClause(guids, "guid");
-    Cursor cur = queryHelper.safeQuery(".fetch", getAllColumns(), where, null, null);
-    if (cur.getCount() != guids.length) {
-      Log.w(LOG_TAG, "Unexpectedly found " + cur.getCount() + " rows instead of one for each of " + guids.length + " guids.");
-    }
-    return cur;
+    String where = computeSQLInClause(guids.length, "guid");
+    return queryHelper.safeQuery(".fetch", getAllColumns(), where, guids, null);
   }
 
-  protected String computeSQLInClause(String[] args, String field) {
+  protected String computeSQLInClause(int items, String field) {
     StringBuilder builder = new StringBuilder(field);
-    builder.append(" in (");
-    for (String arg : args) {
+    builder.append(" IN (");
+    int i = 0;
+    for (; i < items - 1; ++i) {
       builder.append("?, ");
     }
-    builder.replace(builder.length() - 2, builder.length() - 1, "");
+    if (i < items) {
+      builder.append("?");
+    }
     builder.append(")");
     return builder.toString();
   }
