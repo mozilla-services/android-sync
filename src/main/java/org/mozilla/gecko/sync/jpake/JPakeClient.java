@@ -909,6 +909,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         }
         // fall through
       case VERIFY_KEY:
+      case VERIFY_PAIRING:
       case RCVR_STEP_ONE:
       case RCVR_STEP_TWO:
         if (myEtag != null) {
