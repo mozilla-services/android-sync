@@ -74,6 +74,19 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
   }
 
+  /**
+   * Return true if the provided record GUID should be skipped
+   * in child lists or fetch results.
+   *
+   * @param recordGUID
+   * @return
+   */
+  public static boolean forbiddenGUID(String recordGUID) {
+    return recordGUID == null ||
+           "places".equals(recordGUID) ||
+           "tags".equals(recordGUID);
+  }
+
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
     RepoUtils.initialize(context);
@@ -168,7 +181,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       // Collect into a more friendly data structure.
       for (int i = 0; i < count; ++i) {
         String kid = kids[i];
-        if (kid == null) {
+        if (forbiddenGUID(kid)) {
           continue;
         }
         childArray.add(kid);
@@ -184,8 +197,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     String recordGUID = getGUID(cur);
     Log.d(LOG_TAG, "Record from mirror cursor: " + recordGUID);
 
-    if ("places".equals(recordGUID) ||
-        "tags".equals(recordGUID)) {
+    if (forbiddenGUID(recordGUID)) {
       Log.d(LOG_TAG, "Ignoring " + recordGUID + " record in recordFromMirrorCursor.");
       return null;
     }
