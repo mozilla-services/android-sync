@@ -94,6 +94,7 @@ public class HistoryRecord extends Record {
   public CryptoRecord getPayload() {
     CryptoRecord rec = new CryptoRecord(this);
     rec.payload = new ExtendedJSONObject();
+    Log.d(LOG_TAG, "Getting payload for history record " + this.guid + " (" + this.guid.length() + ").");
     rec.payload.put("id",      this.guid);
     rec.payload.put("title",   this.title);
     rec.payload.put("histUri", this.histURI);             // TODO: encoding?

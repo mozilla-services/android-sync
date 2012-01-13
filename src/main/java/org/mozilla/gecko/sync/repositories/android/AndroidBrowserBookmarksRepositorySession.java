@@ -181,7 +181,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   @Override
   protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    String recordGUID        = getGUID(cur);
+    String recordGUID = getGUID(cur);
+    Log.d(LOG_TAG, "Record from mirror cursor: " + recordGUID);
+
     if ("places".equals(recordGUID) ||
         "tags".equals(recordGUID)) {
       Log.d(LOG_TAG, "Ignoring " + recordGUID + " record in recordFromMirrorCursor.");
