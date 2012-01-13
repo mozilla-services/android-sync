@@ -182,6 +182,10 @@ public class Utils {
       return bytes;
   }
 
+  public static String millisecondsToDecimalSecondsString(long ms) {
+    return new BigDecimal(ms).movePointLeft(3).toString();
+  }
+
   // This lives until Bug 708956 lands, and we don't have to do it any more.
   public static long decimalSecondsToMilliseconds(String decimal) {
     try {

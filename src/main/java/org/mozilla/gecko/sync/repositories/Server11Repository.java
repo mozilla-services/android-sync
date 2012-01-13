@@ -41,6 +41,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.CredentialsSource;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;
@@ -103,7 +104,9 @@ public class Server11Repository extends Repository {
         params.append("full=1");
       }
       if (newer >= 0) {
-        params.append((full ? "&newer=" : "newer=") + newer);
+        // Translate local millisecond timestamps into server decimal seconds.
+        String newerString = Utils.millisecondsToDecimalSecondsString(newer);
+        params.append((full ? "&newer=" : "newer=") + newerString);
       }
       if (ids != null) {
         params.append(((full || newer >= 0) ? "&ids=" : "ids=") + ids);

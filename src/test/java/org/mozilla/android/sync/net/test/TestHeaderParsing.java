@@ -17,5 +17,9 @@ public class TestHeaderParsing {
     assertEquals(Utils.decimalSecondsToMilliseconds("1234"),     1234000);
     assertEquals(Utils.decimalSecondsToMilliseconds("1234.123"), 1234123);
     assertEquals(Utils.decimalSecondsToMilliseconds("1234.12"),  1234120);
+
+    assertEquals("1234.000", Utils.millisecondsToDecimalSecondsString(1234000));
+    assertEquals("1234.123", Utils.millisecondsToDecimalSecondsString(1234123));
+    assertEquals("1234.120", Utils.millisecondsToDecimalSecondsString(1234120));
   }
 }
