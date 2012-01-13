@@ -194,6 +194,10 @@ public class RepoUtils {
     return cur.getLong(cur.getColumnIndex(colId));
   }
 
+  public static long getIntFromCursor(Cursor cur, String colId) {
+    return cur.getInt(cur.getColumnIndex(colId));
+  }
+
   public static JSONArray getJSONArrayFromCursor(Cursor cur, String colId) {
     String jsonArrayAsString = getStringFromCursor(cur, colId);
     if (jsonArrayAsString == null) {
@@ -255,7 +259,8 @@ public class RepoUtils {
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "bookmarks";
     long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
-    boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
+    boolean deleted   = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
+    boolean isFolder  = getIntFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER) == 1;
     BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified, deleted);
 
     rec.title = getStringFromCursor(cur, BrowserContract.Bookmarks.TITLE);
@@ -263,8 +268,8 @@ public class RepoUtils {
     rec.description = getStringFromCursor(cur, BrowserContract.Bookmarks.DESCRIPTION);
     rec.tags = getJSONArrayFromCursor(cur, BrowserContract.Bookmarks.TAGS);
     rec.keyword = getStringFromCursor(cur, BrowserContract.Bookmarks.KEYWORD);
-    rec.type = cur.getInt(cur.getColumnIndex(BrowserContract.Bookmarks.IS_FOLDER)) == 0 ?
-      AndroidBrowserBookmarksDataAccessor.TYPE_BOOKMARK : AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER;
+    rec.type = isFolder ? AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER :
+                          AndroidBrowserBookmarksDataAccessor.TYPE_BOOKMARK;
 
     rec.androidID = getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
     rec.androidPosition = getLongFromCursor(cur, BrowserContract.Bookmarks.POSITION);
