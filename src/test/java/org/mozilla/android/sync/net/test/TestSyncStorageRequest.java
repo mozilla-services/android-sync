@@ -176,4 +176,46 @@ public class TestSyncStorageRequest {
     r.post(new JSONObject());
     // Server is stopped in the callback.
   }
+
+  // Test that the X-Weave-{Quota-Remaining, Alert, Records} headers are correctly parsed and
+  // that handleRequestSuccess is still being called.
+  public class TestHeadersSyncStorageRequestDelegate extends
+  TestSyncStorageRequestDelegate {
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse res) {
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Quota-Remaining"));
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Alert"));
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Records"));
+      assertEquals(65536, res.weaveQuotaRemaining());
+      assertEquals("First weave alert string", res.weaveAlert());
+      assertEquals(50, res.weaveRecords());
+
+      super.handleRequestSuccess(res);
+    }
+  }
+
+  public class HeadersMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      response.set("X-Weave-Quota-Remaining", "65536");
+      response.set("X-Weave-Alert", "First weave alert string");
+      response.add("X-Weave-Alert", "Second weave alert string");
+      response.set("X-Weave-Records", "50");
+
+      super.handle(request, response);
+    }
+  }
+
+  @Test
+  public void testHeadersResponse() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new HeadersMockServer());
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    TestHeadersSyncStorageRequestDelegate delegate = new TestHeadersSyncStorageRequestDelegate();
+    delegate._credentials = USER_PASS;
+    r.delegate = delegate;
+    r.post(new JSONObject());
+    // Server is stopped in the callback.
+  }
 }
