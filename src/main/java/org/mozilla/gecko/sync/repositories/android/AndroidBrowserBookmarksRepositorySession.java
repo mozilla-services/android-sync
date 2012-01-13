@@ -326,7 +326,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       missingParentToChildren.put(bmk.parentID, children);
     }
 
+    if (bmk.isFolder()) {
+      Log.d(LOG_TAG, "Inserting folder " + bmk.guid + ", " + bmk.title +
+                     " with parent " + bmk.androidParentID +
+                     " (" + bmk.parentID + ", " + bmk.parentName +
+                     ", " + bmk.pos + ")");
+    } else {
+      Log.d(LOG_TAG, "Inserting bookmark " + bmk.guid + ", " + bmk.title + ", " +
+          bmk.bookmarkURI + " with parent " + bmk.androidParentID +
+          " (" + bmk.parentID + ", " + bmk.parentName +
+          ", " + bmk.pos + ")");
+    }
     long id = RepoUtils.getAndroidIdFromUri(dbHelper.insert(bmk));
+    Log.d(LOG_TAG, "Inserted as " + id);
+
     putRecordToGuidMap(buildRecordString(bmk), bmk.guid);
     bmk.androidID = id;
 
