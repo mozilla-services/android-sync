@@ -127,28 +127,51 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     JSONArray childArray = null;
     Cursor children = dataAccessor.getChildren(androidID);
     try {
-      children.moveToFirst();
-      int count = 0;
+      if (!children.moveToFirst()) {
+        return new JSONArray();
+      }
+
+      int count = children.getCount();
+      String[] kids = new String[count];
+      childArray = new JSONArray();
+
+      // Track badly positioned records.
+      HashMap<String, Long> broken = new HashMap<String, Long>();
 
       // Get children into array in correct order.
-      while(!children.isAfterLast()) {
-        count++;
-        children.moveToNext();
-      }
-      children.moveToFirst();
-      String[] kids = new String[count];
       while (!children.isAfterLast()) {
-        if (childArray == null) {
-          childArray = new JSONArray();
-        }
         String childGuid = getGUID(children);
         int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
-        kids[childPosition] = childGuid;
+        if (childPosition >= count) {
+          Log.w(LOG_TAG, "Child position " + childPosition + " greater than expected children " + count);
+          broken.put(childGuid, 0L);
+        } else {
+          String existing = kids[childPosition];
+          if (existing != null) {
+            Log.w(LOG_TAG, "Child position " + childPosition + " already occupied! (" +
+                childGuid + ", " + existing + ")");
+            broken.put(childGuid, 0L);
+          } else {
+            kids[childPosition] = childGuid;
+          }
+        }
         children.moveToNext();
       }
-      children.close();
+
+      try {
+        Utils.fillArraySpaces(kids, broken);
+      } catch (Exception e) {
+        Log.e(LOG_TAG, "Unable to reposition children to yield a valid sequence. Data loss may result.", e);
+      }
+      // TODO: now use 'broken' to edit the records on disk.
+
+      // Collect into a more friendly data structure.
       for (int i = 0; i < count; ++i) {
-        childArray.add(kids[i]);
+        String kid = kids[i];
+        if (kid == null) {
+          continue;
+        }
+        childArray.add(kid);
       }
     } finally {
       children.close();

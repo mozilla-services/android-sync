@@ -42,6 +42,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Random;
 
 import org.mozilla.apache.commons.codec.binary.Base32;
@@ -212,5 +213,39 @@ public class Utils {
     String prefsPath = getPrefsPath(username, serverURL);
     Log.d(LOG_TAG, "Shared preferences: " + prefsPath);
     return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
+  }
+
+  /**
+   * Populate null slots in the provided array from keys in the provided Map.
+   * Set values in the map to be the new indices.
+   *
+   * @param dest
+   * @param source
+   * @throws Exception
+   */
+  public static void fillArraySpaces(String[] dest, HashMap<String, Long> source) throws Exception {
+    int i = 0;
+    int c = dest.length;
+    int needed = source.size();
+    if (needed == 0) {
+      return;
+    }
+    if (needed > c) {
+      throw new Exception("Need " + needed + " array spaces, have no more than " + c);
+    }
+    for (String key : source.keySet()) {
+      while (i < c) {
+        if (dest[i] == null) {
+          // Great!
+          dest[i] = key;
+          source.put(key, (long) i);
+          break;
+        }
+        ++i;
+      }
+    }
+    if (i >= c) {
+      throw new Exception("Could not fill array spaces.");
+    }
   }
 }
