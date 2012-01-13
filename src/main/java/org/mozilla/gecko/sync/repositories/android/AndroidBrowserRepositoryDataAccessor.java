@@ -79,7 +79,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
       throw new NullCursorException(null);
     }
     try {
-      cur.moveToFirst();
+      if (!cur.moveToFirst()) {
+        return;
+      }
       while (!cur.isAfterLast()) {
         delete(RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID));
         cur.moveToNext();
