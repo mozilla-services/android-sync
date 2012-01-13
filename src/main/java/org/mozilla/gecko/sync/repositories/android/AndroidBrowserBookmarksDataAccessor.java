@@ -101,19 +101,20 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     // Map from GUID to whether deleted. Non-presence implies just that.
     HashMap<String, Boolean> statuses = new HashMap<String, Boolean>(RepoUtils.SPECIAL_GUIDS.length);
     try {
-      cur.moveToFirst();
-      while (!cur.isAfterLast()) {
-        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-        if (guid.equals("mobile")) {
-          mobileRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+      if (cur.moveToFirst()) {
+        while (!cur.isAfterLast()) {
+          String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+          if (guid.equals("mobile")) {
+            mobileRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+          }
+          if (guid.equals("desktop")) {
+            desktopRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+          }
+          // Make sure none of these folders are marked as deleted.
+          boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+          statuses.put(guid, deleted);
+          cur.moveToNext();
         }
-        if (guid.equals("desktop")) {
-          desktopRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
-        }
-        // Make sure none of these folders are marked as deleted.
-        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
-        statuses.put(guid, deleted);
-        cur.moveToNext();
       }
     } finally {
       cur.close();
