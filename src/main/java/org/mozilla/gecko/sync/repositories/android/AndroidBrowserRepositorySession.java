@@ -93,7 +93,16 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     super(repository);
   }
 
-  // Override these.
+  /**
+   * Override this.
+   * Return null if this record should not be processed.
+   *
+   * @param cur
+   * @return
+   * @throws NoGuidForIdException
+   * @throws NullCursorException
+   * @throws ParentNotFoundException
+   */
   protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
 
   // Must be overriden by AndroidBookmarkRepositorySession.
@@ -101,7 +110,15 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     return true;
   }
 
-  // Override in subclass to implement record extension.
+  /**
+   * Override in subclass to implement record extension.
+   * Return null if this record should not be processed.
+   *
+   * @param record
+   *        The record to transform. Can be null.
+   * @return The transformed record. Can be null.
+   * @throws NullCursorException
+   */
   protected Record transformRecord(Record record) throws NullCursorException {
     return record;
   }
@@ -227,8 +244,10 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           }
           while (!cursor.isAfterLast()) {
             Log.d(LOG_TAG, "... one more record.");
-            Record r = recordFromMirrorCursor(cursor);
-            delegate.onFetchedRecord(transformRecord(r));
+            Record r = transformRecord(recordFromMirrorCursor(cursor));
+            if (r != null) {
+              delegate.onFetchedRecord(r);
+            }
             cursor.moveToNext();
           }
           delegate.onFetchCompleted(end);
@@ -465,7 +484,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       }
       while (!cur.isAfterLast()) {
         Record record = recordFromMirrorCursor(cur);
-        recordToGuid.put(buildRecordString(record), record.guid);
+        if (record != null) {
+          recordToGuid.put(buildRecordString(record), record.guid);
+        }
         cur.moveToNext();
       }
     } finally {
