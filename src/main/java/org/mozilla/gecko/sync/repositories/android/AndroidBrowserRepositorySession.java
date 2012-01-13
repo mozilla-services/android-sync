@@ -181,9 +181,13 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
         return;
       }
 
-      ArrayList<String> guids = new ArrayList<String>();
+      ArrayList<String> guids;
       try {
-        cur.moveToFirst();
+        if (!cur.moveToFirst()) {
+          delegate.onGuidsSinceSucceeded(new String[] {});
+          return;
+        }
+        guids = new ArrayList<String>();
         while (!cur.isAfterLast()) {
           guids.add(RepoUtils.getStringFromCursor(cur, "guid"));
           cur.moveToNext();
@@ -217,7 +221,10 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
       Log.d(LOG_TAG, "Fetch from cursor:");
       try {
         try {
-          cursor.moveToFirst();
+          if (!cursor.moveToFirst()) {
+            delegate.onFetchCompleted(end);
+            return;
+          }
           while (!cursor.isAfterLast()) {
             Log.d(LOG_TAG, "... one more record.");
             Record r = recordFromMirrorCursor(cursor);
@@ -403,10 +410,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
                                              MultipleRecordsForGuidException {
     Cursor cursor = dbHelper.fetch(new String[] { guid });
     try {
-      cursor.moveToFirst();
-
-      // Empty result.
-      if (cursor.isAfterLast()) {
+      if (!cursor.moveToFirst()) {
         return null;
       }
 
@@ -456,7 +460,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     recordToGuid = new HashMap<String, String>();
     Cursor cur = dbHelper.fetchAll();
     try {
-      cur.moveToFirst();
+      if (!cur.moveToFirst()) {
+        return;
+      }
       while (!cur.isAfterLast()) {
         Record record = recordFromMirrorCursor(cur);
         recordToGuid.put(buildRecordString(record), record.guid);
