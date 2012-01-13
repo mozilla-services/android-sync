@@ -80,6 +80,17 @@ public class HistoryRecord extends Record {
   @Override
   public void initFromPayload(CryptoRecord payload) {
     // TODO: defensive coding?!
+    if (payload.guid == null) {
+      throw new RuntimeException("Can't init HistoryRecord: null guid!");
+    }
+    String envelopeGUID = payload.guid;
+    String payloadGUID = (String) payload.payload.get("id");
+    if (!envelopeGUID.equals(payloadGUID)) {
+      throw new RuntimeException("Can't init HistoryRecord: guids don't match! " +
+                                 payloadGUID + ", " + envelopeGUID);
+    }
+
+    this.guid    = payload.guid;
     this.histURI = (String) payload.payload.get("histUri");
     this.title   = (String) payload.payload.get("title");
     try {
