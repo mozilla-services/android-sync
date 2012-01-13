@@ -173,9 +173,11 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   
   // Returns a cursor with any records that list the given androidID as a parent
   public Cursor getChildren(long androidID) throws NullCursorException {
-    String where = BrowserContract.Bookmarks.PARENT + " = " + androidID;
+    String where = BrowserContract.Bookmarks.PARENT + " = ?";
+    String[] args = new String[] { String.valueOf(androidID) };
+
     queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, null, null);
+    Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, args, null);
     queryEnd = System.currentTimeMillis();
     RepoUtils.queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getChildren", queryStart, queryEnd);
     if (cur == null) {
