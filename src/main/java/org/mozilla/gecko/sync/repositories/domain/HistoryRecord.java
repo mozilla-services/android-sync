@@ -80,6 +80,17 @@ public class HistoryRecord extends Record {
   @Override
   public void initFromPayload(CryptoRecord payload) {
     // TODO: defensive coding?!
+    if (payload.guid == null) {
+      throw new RuntimeException("Can't init HistoryRecord: null guid!");
+    }
+    String envelopeGUID = payload.guid;
+    String payloadGUID = (String) payload.payload.get("id");
+    if (!envelopeGUID.equals(payloadGUID)) {
+      throw new RuntimeException("Can't init HistoryRecord: guids don't match! " +
+                                 payloadGUID + ", " + envelopeGUID);
+    }
+
+    this.guid    = payload.guid;
     this.histURI = (String) payload.payload.get("histUri");
     this.title   = (String) payload.payload.get("title");
     try {
@@ -94,6 +105,7 @@ public class HistoryRecord extends Record {
   public CryptoRecord getPayload() {
     CryptoRecord rec = new CryptoRecord(this);
     rec.payload = new ExtendedJSONObject();
+    Log.d(LOG_TAG, "Getting payload for history record " + this.guid + " (" + this.guid.length() + ").");
     rec.payload.put("id",      this.guid);
     rec.payload.put("title",   this.title);
     rec.payload.put("histUri", this.histURI);             // TODO: encoding?

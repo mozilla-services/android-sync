@@ -74,6 +74,19 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
   }
 
+  /**
+   * Return true if the provided record GUID should be skipped
+   * in child lists or fetch results.
+   *
+   * @param recordGUID
+   * @return
+   */
+  public static boolean forbiddenGUID(String recordGUID) {
+    return recordGUID == null ||
+           "places".equals(recordGUID) ||
+           "tags".equals(recordGUID);
+  }
+
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
     RepoUtils.initialize(context);
@@ -127,28 +140,51 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     JSONArray childArray = null;
     Cursor children = dataAccessor.getChildren(androidID);
     try {
-      children.moveToFirst();
-      int count = 0;
+      if (!children.moveToFirst()) {
+        return new JSONArray();
+      }
+
+      int count = children.getCount();
+      String[] kids = new String[count];
+      childArray = new JSONArray();
+
+      // Track badly positioned records.
+      HashMap<String, Long> broken = new HashMap<String, Long>();
 
       // Get children into array in correct order.
-      while(!children.isAfterLast()) {
-        count++;
-        children.moveToNext();
-      }
-      children.moveToFirst();
-      String[] kids = new String[count];
       while (!children.isAfterLast()) {
-        if (childArray == null) {
-          childArray = new JSONArray();
-        }
         String childGuid = getGUID(children);
         int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
-        kids[childPosition] = childGuid;
+        if (childPosition >= count) {
+          Log.w(LOG_TAG, "Child position " + childPosition + " greater than expected children " + count);
+          broken.put(childGuid, 0L);
+        } else {
+          String existing = kids[childPosition];
+          if (existing != null) {
+            Log.w(LOG_TAG, "Child position " + childPosition + " already occupied! (" +
+                childGuid + ", " + existing + ")");
+            broken.put(childGuid, 0L);
+          } else {
+            kids[childPosition] = childGuid;
+          }
+        }
         children.moveToNext();
       }
-      children.close();
+
+      try {
+        Utils.fillArraySpaces(kids, broken);
+      } catch (Exception e) {
+        Log.e(LOG_TAG, "Unable to reposition children to yield a valid sequence. Data loss may result.", e);
+      }
+      // TODO: now use 'broken' to edit the records on disk.
+
+      // Collect into a more friendly data structure.
       for (int i = 0; i < count; ++i) {
-        childArray.add(kids[i]);
+        String kid = kids[i];
+        if (forbiddenGUID(kid)) {
+          continue;
+        }
+        childArray.add(kid);
       }
     } finally {
       children.close();
@@ -158,8 +194,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   @Override
   protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    String recordGUID = getGUID(cur);
+    Log.d(LOG_TAG, "Record from mirror cursor: " + recordGUID);
+
+    if (forbiddenGUID(recordGUID)) {
+      Log.d(LOG_TAG, "Ignoring " + recordGUID + " record in recordFromMirrorCursor.");
+      return null;
+    }
+
     long androidParentID     = getParentID(cur);
-    String recordGUID        = getGUID(cur);
     String androidParentGUID = getGUIDForID(androidParentID);
 
     if (androidParentGUID == null) {
@@ -169,7 +212,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Log.e(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
         throw new NoGuidForIdException(null);
       }
-      return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
+      return RepoUtils.bookmarkFromMirrorCursor(cur, null, "", null);
     }
 
     String parentName = getParentName(androidParentGUID);
