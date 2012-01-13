@@ -3,4 +3,5 @@
     android:accountType="org.mozilla.firefox_sync"
     android:icon="@drawable/sync_icon"
     android:smallIcon="@drawable/sync_icon"
-    android:label="@string/sync_account_label" />
+    android:label="@string/sync_account_label"
+    android:accountPreferences="@xml/sync_options" />
