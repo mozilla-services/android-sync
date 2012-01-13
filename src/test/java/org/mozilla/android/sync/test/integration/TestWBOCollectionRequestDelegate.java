@@ -3,7 +3,7 @@
 
 package org.mozilla.android.sync.test.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.UnsupportedEncodingException;
@@ -12,8 +12,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.junit.Test;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
@@ -43,7 +43,7 @@ public class TestWBOCollectionRequestDelegate {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       System.out.println("WBOs: " + this.wbos.size());
-      assertEquals(13, wbos.size());
+      assertTrue(13 < wbos.size());
       for (CryptoRecord record : this.wbos) {
         try {
           // TODO: make this an actual test. Return data locally.
