@@ -26,8 +26,11 @@ import android.util.Log;
 public class TestMetaGlobal {
   public static Object monitor = new Object();
 
+  private static final int    TEST_PORT   = 15325;
+  private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
+
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
-  public static final String META_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
+  public static final String META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
   private HTTPServerTestHelper data    = new HTTPServerTestHelper();
 
   @Before

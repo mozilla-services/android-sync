@@ -44,7 +44,9 @@ public class TestServer11RepositorySession {
     }
   }
 
-  static final String LOCAL_REQUEST_URL = "http://localhost:8080/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
+  private static final int    TEST_PORT   = 15325;
+  private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
+  static final String LOCAL_REQUEST_URL   = TEST_SERVER + "/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
 
   // Corresponds to rnewman+atest1@mozilla.com, local.
   static final String USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";

@@ -13,6 +13,8 @@ import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
 
 public class HTTPServerTestHelper {
+  private static final int TEST_PORT = 15325;
+
   public Connection connection;
   public MockServer server;
 
@@ -21,7 +23,7 @@ public class HTTPServerTestHelper {
       System.out.println("Starting HTTP server...");
       this.server = server;
       connection = new SocketConnection(server);
-      SocketAddress address = new InetSocketAddress(8080);
+      SocketAddress address = new InetSocketAddress(TEST_PORT);
       connection.connect(address);
       System.out.println("Done starting.");
     } catch (IOException ex) {

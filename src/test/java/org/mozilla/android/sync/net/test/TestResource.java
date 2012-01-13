@@ -23,6 +23,8 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class TestResource {
+  private static final int    TEST_PORT   = 15325;
+  private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
   static String            USER_PASS    = "john:password";
   static String            EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
@@ -86,7 +88,7 @@ public class TestResource {
   public void testTrivialFetch() throws URISyntaxException {
     MockServer server = data.startHTTPServer();
     server.expectedBasicAuthHeader = EXPECT_BASIC;
-    BaseResource r = new BaseResource("http://localhost:8080/foo/bar");
+    BaseResource r = new BaseResource(TEST_SERVER + "/foo/bar");
     // Truism!
     assertNotNull(r);
     r.delegate = new TrivialTestResourceDelegate();
