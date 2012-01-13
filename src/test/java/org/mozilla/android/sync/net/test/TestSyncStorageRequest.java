@@ -28,6 +28,7 @@ public class TestSyncStorageRequest {
   private static final String LOCAL_BAD_REQUEST_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bad";
 
   private static final String EXPECTED_ERROR_CODE = "12";
+  private static final String EXPECTED_RETRY_AFTER_ERROR_MESSAGE = "{error:'informative error message'}";
 
   // Corresponds to rnewman+testandroid@mozilla.com.
   private static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
@@ -96,6 +97,80 @@ public class TestSyncStorageRequest {
     data.startHTTPServer(new ErrorMockServer());
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL));
     TestBadSyncStorageRequestDelegate delegate = new TestBadSyncStorageRequestDelegate();
+    delegate._credentials = USER_PASS;
+    r.delegate = delegate;
+    r.post(new JSONObject());
+    // Server is stopped in the callback.
+  }
+
+  // Test that the Retry-After header is correctly parsed and that handleRequestFailure
+  // is being called.
+  public class TestRetryAfterSyncStorageRequestDelegate extends
+  BaseTestStorageRequestDelegate {
+
+    @Override
+    public void handleRequestFailure(SyncStorageResponse res) {
+      assertTrue(!res.wasSuccessful());
+      assertTrue(res.httpResponse().containsHeader("Retry-After"));
+      assertEquals(res.retryAfter(), 3001);
+      try {
+        String responseMessage = res.getErrorMessage();
+        String expectedMessage = EXPECTED_RETRY_AFTER_ERROR_MESSAGE;
+        assertEquals(expectedMessage, responseMessage);
+      } catch (Exception e) {
+        fail("Got exception fetching error message.");
+      }
+      data.stopHTTPServer();
+    }
+  }
+  
+  public class RetryAfterMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      String errorBody = EXPECTED_RETRY_AFTER_ERROR_MESSAGE;
+      response.set("Retry-After", "3001");
+      super.handle(request, response, 503, errorBody);
+    }
+  }
+
+  @Test
+  public void testRetryAfterResponse() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new RetryAfterMockServer());
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL)); // URL not used -- we 503 every response
+    TestRetryAfterSyncStorageRequestDelegate delegate = new TestRetryAfterSyncStorageRequestDelegate();
+    r.delegate = delegate;
+    r.post(new JSONObject());
+    // Server is stopped in the callback.
+  }
+  
+  // Test that the X-Weave-Backoff header is correctly parsed and that handleRequestSuccess
+  // is still being called.
+  public class TestWeaveBackoffSyncStorageRequestDelegate extends
+  TestSyncStorageRequestDelegate {
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse res) {
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Backoff"));
+      assertEquals(res.weaveBackoff(), 1801);
+      super.handleRequestSuccess(res);
+    }
+  }
+  
+  public class WeaveBackoffMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      response.set("X-Weave-Backoff", "1801");
+      super.handle(request, response);
+    }
+  }
+
+  @Test
+  public void testWeaveBackoffResponse() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new WeaveBackoffMockServer());
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    TestWeaveBackoffSyncStorageRequestDelegate delegate = new TestWeaveBackoffSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
     r.post(new JSONObject());
