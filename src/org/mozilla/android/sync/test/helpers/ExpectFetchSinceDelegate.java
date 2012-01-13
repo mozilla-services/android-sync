@@ -8,7 +8,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Map;
 
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -31,7 +31,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
     AssertionError err = null;
     try {
 
-      HashMap<String, String> specialGuids = RepoUtils.SPECIAL_GUIDS_MAP;
+      Map<String, String> specialGuids = RepoUtils.SPECIAL_GUIDS_MAP;
       int countSpecials = 0;
       for (Record record : records) {
         if (specialGuids == null || !specialGuids.containsKey(record.guid)) {
