@@ -40,6 +40,7 @@ public class Crypto5MiddlewareRepositorySessionTest extends AndroidTestCase {
     public CryptoRecord getPayload() {
       ExtendedJSONObject payload = new ExtendedJSONObject();
       payload.put("myValue", this.value);
+      payload.put("id",      this.guid);
       return new CryptoRecord(payload);
     }
 
