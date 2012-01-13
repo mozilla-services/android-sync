@@ -53,11 +53,22 @@ import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
+  /*
+   * Fragments of SQL to make our lives easier.
+   */
+  private static final String BOOKMARK_IS_FOLDER = BrowserContract.Bookmarks.IS_FOLDER + " = 1";
+  private static final String GUID_NOT_TAGS_OR_PLACES = BrowserContract.SyncColumns.GUID + " NOT IN ('" +
+                     BrowserContract.Bookmarks.TAGS_FOLDER_GUID + "', '" +
+                     BrowserContract.Bookmarks.PLACES_FOLDER_GUID + "')";
+
   public static final String TYPE_FOLDER = "folder";
   public static final String TYPE_BOOKMARK = "bookmark";
 
+  private final RepoUtils.QueryHelper queryHelper;
+
   public AndroidBrowserBookmarksDataAccessor(Context context) {
     super(context);
+    this.queryHelper = new RepoUtils.QueryHelper(context, getUri(), LOG_TAG);
   }
 
   @Override
@@ -66,15 +77,9 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   }
 
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
-    String where = BrowserContract.Bookmarks.IS_FOLDER + " = 1";
-    queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
-    queryEnd = System.currentTimeMillis();
-    RepoUtils.queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders", queryStart, queryEnd);
-    if (cur == null) {
-      throw new NullCursorException(null);
-    }
-    return cur;
+    // Exclude "places" and "tags", in case they've ended up in the DB.
+    String where = BOOKMARK_IS_FOLDER + " AND " + GUID_NOT_TAGS_OR_PLACES;
+    return queryHelper.safeQuery(".getGuidsIDsForFolders", null, where, null, null);
   }
 
   protected void updateParentAndPosition(String guid, long newParentId, long position) {
@@ -175,20 +180,11 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   public Cursor getChildren(long androidID) throws NullCursorException {
     String where = BrowserContract.Bookmarks.PARENT + " = ?";
     String[] args = new String[] { String.valueOf(androidID) };
-
-    queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, args, null);
-    queryEnd = System.currentTimeMillis();
-    RepoUtils.queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getChildren", queryStart, queryEnd);
-    if (cur == null) {
-      throw new NullCursorException(null);
-    }
-    return cur;
+    return queryHelper.safeQuery(".getChildren", getAllColumns(), where, null, null);
   }
   
   @Override
   protected String[] getAllColumns() {
     return BrowserContract.Bookmarks.BookmarkColumns;
   }
-
 }
