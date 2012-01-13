@@ -38,7 +38,9 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
@@ -57,6 +59,10 @@ import android.util.Log;
 public class RepoUtils {
 
   private static final String LOG_TAG = "DBUtils";
+
+  /**
+   * An array of known-special GUIDs.
+   */
   public static String[] SPECIAL_GUIDS = new String[] {
     // Mobile and desktop places roots have to come first.
     "mobile",
@@ -65,17 +71,75 @@ public class RepoUtils {
     "menu",
     "unfiled"
   };
-  
-  // Map of guids to their localized name strings
-  public static HashMap<String, String> SPECIAL_GUIDS_MAP;
+
+  /**
+   * = A note about folder mapping =
+   *
+   * Note that _none_ of Places's folders actually have a special GUID. They're all
+   * randomly generated. Special folders are indicated by membership in the
+   * moz_bookmarks_roots table, and by having the parent `1`.
+   *
+   * Additionally, the mobile root is annotated. In Firefox Sync, PlacesUtils is
+   * used to find the IDs of these special folders.
+   *
+   * Sync skips over `places` and `tags` when finding IDs.
+   *
+   * We need to consume records with these various guids, producing a local
+   * representation which we are able to stably map upstream.
+   *
+   * That is:
+   *
+   * * We should not upload a `places` record or a `tags` record.
+   * * We can stably _store_ menu/toolbar/unfiled/mobile as special GUIDs, and set
+     * their parent ID as appropriate on upload.
+   *
+   *
+   * = Places folders =
+   *
+   * guid        root_name   folder_id   parent
+   * ----------  ----------  ----------  ----------
+   * ?           places      1           0
+   * ?           menu        2           1
+   * ?           toolbar     3           1
+   * ?           tags        4           1
+   * ?           unfiled     5           1
+   *
+   * ?           mobile*     474         1
+   *
+   *
+   * = Fennec folders =
+   *
+   * guid        folder_id   parent
+   * ----------  ----------  ----------
+   * mobile      ?           0
+   *
+  */
+  public static final Map<String, String> SPECIAL_GUID_PARENTS;
+  static {
+    HashMap<String, String> m = new HashMap<String, String>();
+    m.put("places",  null);
+    m.put("menu",    "places");
+    m.put("toolbar", "places");
+    m.put("tags",    "places");
+    m.put("unfiled", "places");
+    m.put("mobile",  "places");
+    SPECIAL_GUID_PARENTS = Collections.unmodifiableMap(m);
+  }
+
+  /**
+   * A map of guids to their localized name strings.
+   */
+  // Oh, if only we could make this final and initialize it in the static initializer.
+  public static Map<String, String> SPECIAL_GUIDS_MAP;
   public static void initialize(Context context) {
     if (SPECIAL_GUIDS_MAP == null) {
-      SPECIAL_GUIDS_MAP = new HashMap<String, String>();
-      SPECIAL_GUIDS_MAP.put("menu",    context.getString(R.string.bookmarks_folder_menu));
-      SPECIAL_GUIDS_MAP.put("places",  context.getString(R.string.bookmarks_folder_places));
-      SPECIAL_GUIDS_MAP.put("toolbar", context.getString(R.string.bookmarks_folder_toolbar));
-      SPECIAL_GUIDS_MAP.put("unfiled", context.getString(R.string.bookmarks_folder_unfiled));
-      SPECIAL_GUIDS_MAP.put("mobile",  context.getString(R.string.bookmarks_folder_mobile));
+      HashMap<String, String> m = new HashMap<String, String>();
+      m.put("menu",    context.getString(R.string.bookmarks_folder_menu));
+      m.put("places",  context.getString(R.string.bookmarks_folder_places));
+      m.put("toolbar", context.getString(R.string.bookmarks_folder_toolbar));
+      m.put("unfiled", context.getString(R.string.bookmarks_folder_unfiled));
+      m.put("mobile",  context.getString(R.string.bookmarks_folder_mobile));
+      SPECIAL_GUIDS_MAP = Collections.unmodifiableMap(m);
     }
   }
 
@@ -151,7 +215,41 @@ public class RepoUtils {
     return Long.parseLong(path.substring(lastSlash + 1));
   }
 
-  //Create a BookmarkRecord object from a cursor on a row with a Moz Bookmark in it
+  public static BookmarkRecord computeParentFields(BookmarkRecord rec, String suggestedParentID, String suggestedParentName) {
+    final String guid = rec.guid;
+    if (guid == null) {
+      // Oh dear.
+      Log.e(LOG_TAG, "No guid in computeParentFields!");
+      return null;
+    }
+
+    String realParent = SPECIAL_GUID_PARENTS.get(guid);
+    if (realParent == null) {
+      // No magic parent. Use whatever the caller suggests.
+      realParent = suggestedParentID;
+    } else {
+      Log.d(LOG_TAG, "Ignoring suggested parent ID " + suggestedParentID +
+                       " for " + guid + "; using " + realParent);
+    }
+
+    if (realParent == null) {
+      // Oh dear.
+      Log.e(LOG_TAG, "No parent for record " + guid);
+      return null;
+    }
+
+    // Always set the parent name for special folders back to default.
+    String parentName = SPECIAL_GUIDS_MAP.get(realParent);
+    if (parentName == null) {
+      parentName = suggestedParentName;
+    }
+
+    rec.parentID = realParent;
+    rec.parentName = parentName;
+    return rec;
+  }
+
+  // Create a BookmarkRecord object from a cursor on a row containing a Fennec bookmark.
   public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur, String parentId, String parentName, JSONArray children) {
 
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
@@ -172,16 +270,10 @@ public class RepoUtils {
     rec.androidPosition = getLongFromCursor(cur, BrowserContract.Bookmarks.POSITION);
     rec.children = children;
 
-    // Need to restore the parentId since it isn't stored in content provider
-    rec.parentID = parentId;
-    // Set parent name
-    // Always set the parent name for special folders back to default.
-    if (SPECIAL_GUIDS_MAP.containsKey(rec.parentID)) {
-      rec.parentName = SPECIAL_GUIDS_MAP.get(rec.parentID);
-    } else {
-      rec.parentName = parentName;
-    }
-    return rec;
+    // Need to restore the parentId since it isn't stored in content provider.
+    // We also take this opportunity to fix up parents for special folders,
+    // allowing us to map between the hierarchies used by Fennec and Places.
+    return computeParentFields(rec, parentId, parentName);
   }
 
   //Create a HistoryRecord object from a cursor on a row with a Moz History record in it

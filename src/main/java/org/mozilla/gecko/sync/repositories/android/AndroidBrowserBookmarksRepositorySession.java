@@ -169,7 +169,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Log.e(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
         throw new NoGuidForIdException(null);
       }
-      return RepoUtils.bookmarkFromMirrorCursor(cur, "", "", null);
+      return RepoUtils.bookmarkFromMirrorCursor(cur, null, "", null);
     }
 
     String parentName = getParentName(androidParentGUID);
