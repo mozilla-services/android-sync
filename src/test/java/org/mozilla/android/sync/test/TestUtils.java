@@ -31,4 +31,10 @@ public class TestUtils {
     Utils.fillArraySpaces(new String[] {}, new HashMap<String, Long>());
   }
 
+  @Test
+  public void testGenerateGUID() {
+    for (int i = 0; i < 1000; ++i) {
+      assertEquals(12, Utils.generateGuid().length());
+    }
+  }
 }
