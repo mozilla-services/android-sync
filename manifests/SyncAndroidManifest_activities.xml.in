@@ -4,7 +4,7 @@
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:configChanges="orientation"
-            android:windowSoftInputMode="adjustResize"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSyncActivity" >
             <!-- android:configChanges: SetupSyncActivity will handle orientation changes; no longer restarts activity (default) -->
             <intent-filter>
@@ -20,7 +20,7 @@
             android:clearTaskOnLaunch="true"
             android:launchMode="singleTask"
             android:name="org.mozilla.gecko.sync.setup.activities.AccountActivity"
-            android:windowSoftInputMode="adjustPan"/>
+            android:windowSoftInputMode="adjustPan|stateHidden"/>
         <activity
             android:name="org.mozilla.gecko.sync.setup.activities.SetupFailureActivity" />
         <activity
