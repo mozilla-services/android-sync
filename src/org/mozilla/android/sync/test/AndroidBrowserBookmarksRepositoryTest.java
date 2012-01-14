@@ -45,7 +45,26 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   // aren't able to find the parent name/guid when we do a fetch. If you don't want
   // to store a folder first, store your record in "mobile" or one of the folders
   // that always exists.
-  
+
+  public void testFetchOneWithChildren() {
+    BookmarkRecord folder = BookmarkHelpers.createFolder1();
+    BookmarkRecord bookmark1 = BookmarkHelpers.createBookmark1();
+    BookmarkRecord bookmark2 = BookmarkHelpers.createBookmark2();
+
+    AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
+        new SetupDelegate(), true, getRepository());
+    Log.i("rnewman", "Prepared.");
+
+    AndroidBrowserRepositorySession session = getSession();
+    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    performWait(storeRunnable(session, folder));
+    performWait(storeRunnable(session, bookmark1));
+    performWait(storeRunnable(session, bookmark2));
+    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    performWait(fetchRunnable(session, new String[] { folder.guid }, new Record[] { folder }));
+
+  }
+
   @Override
   public void testFetchAll() {
     Record[] expected = new Record[3];
@@ -335,7 +354,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
         BookmarkHelpers.createBookmark2(),
         BookmarkHelpers.createFolder1());
   }
-  
+
   public void testBasicPositioning() {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
