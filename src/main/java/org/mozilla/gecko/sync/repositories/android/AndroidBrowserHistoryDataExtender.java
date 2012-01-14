@@ -113,7 +113,7 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
 
   @Override
   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    // For now we'll just drop and recreate the tables
+    // For now we'll just drop and recreate the tables.
     db.execSQL("DROP TABLE IF EXISTS " + TBL_HISTORY_EXT);
     onCreate(db);
   }
@@ -123,8 +123,8 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
     onUpgrade(db, SCHEMA_VERSION, SCHEMA_VERSION);
   }
 
-  // If a record with given guid exists, we'll delete it
-  // and store the updated version
+  // If a record with given GUID exists, we'll delete it
+  // and store the updated version.
   public long store(String guid, JSONArray visits) {
     SQLiteDatabase db = this.getCachedReadableDatabase();
     

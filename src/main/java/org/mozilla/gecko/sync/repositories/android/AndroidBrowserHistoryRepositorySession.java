@@ -47,6 +47,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 
 public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserRepositorySession {
   
@@ -92,6 +93,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
   }
 
   private JSONArray visitsForGUID(String guid) throws NullCursorException {
+    Log.d(LOG_TAG, "Fetching visits for GUID " + guid);
     Cursor visits = getDataExtender().fetch(guid);
     try {
       if (!visits.moveToFirst()) {
@@ -106,6 +108,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
   }
 
   private Record addVisitsToRecord(Record record) throws NullCursorException {
+    Log.d(LOG_TAG, "Adding visits for GUID " + record.guid);
     HistoryRecord hist = (HistoryRecord) record;
     JSONArray visitsArray = visitsForGUID(hist.guid);
     long missingRecords = hist.fennecVisitCount - visitsArray.size();

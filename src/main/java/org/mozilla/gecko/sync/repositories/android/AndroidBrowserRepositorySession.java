@@ -374,6 +374,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           return;
         }
 
+        // TODO:
+        // TODO: rnewman 2012-01-13: read and improve this code.
+        // TODO:
         Record existingRecord;
         try {
           existingRecord = findExistingRecord(record);

@@ -297,7 +297,7 @@ public class RepoUtils {
 
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "history";
-    long lastModified = getLongFromCursor(cur,BrowserContract.SyncColumns.DATE_MODIFIED);
+    long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
     boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
     HistoryRecord rec = new HistoryRecord(guid, collection, lastModified, deleted);
 
@@ -307,9 +307,18 @@ public class RepoUtils {
     rec.fennecDateVisited = getLongFromCursor(cur, BrowserContract.History.DATE_LAST_VISITED);
     rec.fennecVisitCount = getLongFromCursor(cur, BrowserContract.History.VISITS);
 
+    return logHistory(rec);
+  }
+
+  private static HistoryRecord logHistory(HistoryRecord rec) {
+    Log.d(LOG_TAG, "Returning history record " + rec.guid + " (" + rec.androidID + ")");
+    Log.d(LOG_TAG, "> Title:            " + rec.title);
+    Log.d(LOG_TAG, "> URI:              " + rec.histURI);
+    Log.d(LOG_TAG, "> Visited:          " + rec.fennecDateVisited);
+    Log.d(LOG_TAG, "> Visits:           " + rec.fennecVisitCount);
     return rec;
   }
-  
+
   public static PasswordRecord passwordFromMirrorCursor(Cursor cur) {
     
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
