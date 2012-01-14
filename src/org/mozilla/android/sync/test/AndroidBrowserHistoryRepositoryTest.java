@@ -193,18 +193,21 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     cv.put(BrowserContract.History.VISITS, visits);
     cv.put(BrowserContract.History.DATE_LAST_VISITED, newVisitTime);
     getDataAccessor().updateByGuid(record0.guid, cv);
+
+    // Now shift to microsecond timing for visits.
+    long newMicroVisitTime = newVisitTime * 1000;
     
     // Add expected visits to record for verification
     JSONObject expectedVisit = new JSONObject();
-    expectedVisit.put("date", newVisitTime);
+    expectedVisit.put("date", newMicroVisitTime);
     expectedVisit.put("type", 1L);
     record0.visits.add(expectedVisit);
     expectedVisit = new JSONObject();
-    expectedVisit.put("date", newVisitTime-1);
+    expectedVisit.put("date", newMicroVisitTime - 1000);
     expectedVisit.put("type", 1L);
     record0.visits.add(expectedVisit);
     expectedVisit = new JSONObject();
-    expectedVisit.put("date", newVisitTime-2);
+    expectedVisit.put("date", newMicroVisitTime - 2000);
     expectedVisit.put("type", 1L);
     record0.visits.add(expectedVisit);
     
