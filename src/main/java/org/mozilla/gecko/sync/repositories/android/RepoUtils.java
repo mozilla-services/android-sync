@@ -282,13 +282,20 @@ public class RepoUtils {
   }
 
   private static BookmarkRecord logBookmark(BookmarkRecord rec) {
-    Log.d(LOG_TAG, "Returning bookmark record " + rec.guid + " (" + rec.androidID +
-                   ", " + rec.parentName + ":" + rec.parentID + ")");
-    Log.d(LOG_TAG, "> Title:            " + rec.title);
-    Log.d(LOG_TAG, "> Type:             " + rec.type);
-    Log.d(LOG_TAG, "> URI:              " + rec.bookmarkURI);
-    Log.d(LOG_TAG, "> Android position: " + rec.androidPosition);
-    Log.d(LOG_TAG, "> Position:         " + rec.pos);
+    try {
+      Log.d(LOG_TAG, "Returning bookmark record " + rec.guid + " (" + rec.androidID +
+          ", " + rec.parentName + ":" + rec.parentID + ")");
+      Log.d(LOG_TAG, "> Title:            " + rec.title);
+      Log.d(LOG_TAG, "> Type:             " + rec.type);
+      Log.d(LOG_TAG, "> URI:              " + rec.bookmarkURI);
+      Log.d(LOG_TAG, "> Android position: " + rec.androidPosition);
+      Log.d(LOG_TAG, "> Position:         " + rec.pos);
+      if (rec.isFolder()) {
+        Log.d(LOG_TAG, "FOLDER: Children are " + (rec.children == null ? "null" : rec.children.toJSONString()));
+      }
+    } catch (Exception e) {
+      Log.d(LOG_TAG, "Exception logging bookmark record " + rec, e);
+    }
     return rec;
   }
 
@@ -311,11 +318,15 @@ public class RepoUtils {
   }
 
   private static HistoryRecord logHistory(HistoryRecord rec) {
-    Log.d(LOG_TAG, "Returning history record " + rec.guid + " (" + rec.androidID + ")");
-    Log.d(LOG_TAG, "> Title:            " + rec.title);
-    Log.d(LOG_TAG, "> URI:              " + rec.histURI);
-    Log.d(LOG_TAG, "> Visited:          " + rec.fennecDateVisited);
-    Log.d(LOG_TAG, "> Visits:           " + rec.fennecVisitCount);
+    try {
+      Log.d(LOG_TAG, "Returning history record " + rec.guid + " (" + rec.androidID + ")");
+      Log.d(LOG_TAG, "> Title:            " + rec.title);
+      Log.d(LOG_TAG, "> URI:              " + rec.histURI);
+      Log.d(LOG_TAG, "> Visited:          " + rec.fennecDateVisited);
+      Log.d(LOG_TAG, "> Visits:           " + rec.fennecVisitCount);
+    } catch (Exception e) {
+      Log.d(LOG_TAG, "Exception logging bookmark record " + rec, e);
+    }
     return rec;
   }
 
