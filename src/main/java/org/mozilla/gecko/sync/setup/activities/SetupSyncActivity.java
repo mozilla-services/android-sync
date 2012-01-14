@@ -61,6 +61,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class SetupSyncActivity extends AccountAuthenticatorActivity {
   private final static String LOG_TAG     = "SetupSync";
@@ -133,8 +134,10 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
         return;
       }
     }
-    // Go to Settings screen for Sync management.
-    displayAccount(false);
+    // Display toast for "Only one account supported."
+    Toast toast = Toast.makeText(mContext, R.string.sync_notification_oneaccount, Toast.LENGTH_LONG);
+    toast.show();
+    finish();
   }
 
   @Override
