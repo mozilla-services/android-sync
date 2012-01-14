@@ -181,7 +181,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   public Cursor getChildren(long androidID) throws NullCursorException {
     String where = BrowserContract.Bookmarks.PARENT + " = ?";
     String[] args = new String[] { String.valueOf(androidID) };
-    return queryHelper.safeQuery(".getChildren", getAllColumns(), where, null, null);
+    return queryHelper.safeQuery(".getChildren", getAllColumns(), where, args, null);
   }
   
   @Override
