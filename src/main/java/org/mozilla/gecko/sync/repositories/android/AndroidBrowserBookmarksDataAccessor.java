@@ -53,6 +53,8 @@ import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
+  private static final String LOG_TAG = "AndroidBrowserBookmarksDataAccessor";
+
   /*
    * Fragments of SQL to make our lives easier.
    */

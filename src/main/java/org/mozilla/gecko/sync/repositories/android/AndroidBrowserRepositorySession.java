@@ -454,20 +454,26 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   // Check if record already exists locally.
   protected Record findExistingRecord(Record record) throws MultipleRecordsForGuidException,
     NoGuidForIdException, NullCursorException, ParentNotFoundException {
+
+    Log.d(LOG_TAG, "Finding existing record for GUID " + record.guid);
     Record r = recordForGUID(record.guid);
 
     // One result. (Multiple throws an exception.)
     if (r != null) {
+      Log.d(LOG_TAG, "Found one by GUID.");
       return r;
     }
 
     // Empty result.
     // Check to see if record exists but with a different guid.
     String recordString = buildRecordString(record);
+    Log.d(LOG_TAG, "Searching with record string " + recordString);
     String guid = getRecordToGuidMap().get(recordString);
     if (guid != null) {
+      Log.d(LOG_TAG, "Found one. Returning computed record.");
       return recordForGUID(guid);
     }
+    Log.d(LOG_TAG, "findExistingRecord failed to find one for " + record.guid);
     return null;
   }
 

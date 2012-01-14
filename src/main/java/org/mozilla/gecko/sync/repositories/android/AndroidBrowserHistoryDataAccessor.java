@@ -83,7 +83,9 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
           mostRecent = visitDate;
         }
       }
-      cv.put(BrowserContract.History.DATE_LAST_VISITED, mostRecent);
+      // Fennec stores milliseconds. The rest of Sync works in microseconds.
+      cv.put(BrowserContract.History.DATE_LAST_VISITED, mostRecent / 1000);
+      cv.put(BrowserContract.History.VISITS, Long.toString(visits.size()));
     }
     return cv;
   }
