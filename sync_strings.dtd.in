@@ -5,15 +5,16 @@
 
 <!-- Main titles. -->
 <!ENTITY sync.app.name.label '&syncBrand.fullName.label;'>
-<!ENTITY sync.title.connect.label 'Connect to &syncBrand.shortName.label;'>
+<!ENTITY sync.title.connect.label 'Add a &syncBrand.fullName.label; Account'>
 <!ENTITY sync.title.pair.label 'Pair a Device'>
 
 <!-- J-PAKE Key Screen -->
-<!ENTITY sync.subtitle.connect.label 'To activate your new device, select “Set up &syncBrand.shortName.label;” on the device.'>
+<!ENTITY sync.subtitle.header.label 'Enter this code on your desktop'>
+<!ENTITY sync.subtitle.connect.label 'Select “&sync.title.pair.label;” in the &syncBrand.shortName.label; section of your desktop Firefox options.'>
 <!ENTITY sync.subtitle.pair.label 'To activate, select “Pair a device” on your other device.'>
 <!ENTITY sync.pin.default.label '...\n...\n...\n'>
 <!ENTITY sync.link.show.label 'Show me how.'>
-<!ENTITY sync.link.nodevice.label 'I don\&apos;t have the device with me…'>
+<!ENTITY sync.link.advancedsetup.label 'Advanced setup...'>
 
 <!-- J-PAKE Waiting Screen -->
 <!ENTITY sync.jpake.subtitle.waiting.label 'Waiting for other device…'>
