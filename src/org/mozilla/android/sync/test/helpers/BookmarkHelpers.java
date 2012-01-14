@@ -5,7 +5,12 @@ package org.mozilla.android.sync.test.helpers;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+
+import android.content.Context;
+import android.database.Cursor;
 
 public class BookmarkHelpers {
 
@@ -214,4 +219,61 @@ public class BookmarkHelpers {
     return record;
   }
 
+  private static String fixedWidth(int width, String s) {
+    if (s == null) {
+      return spaces(width);
+    }
+    int length = s.length();
+    if (width == length) {
+      return s;
+    }
+    if (width > length) {
+      return s + spaces(width - length);
+    }
+    return s.substring(0, width);
+  }
+
+  private static String spaces(int i) {
+    return "                                     ".substring(0, i);
+  }
+
+  public static void dumpBookmarksDB(Context context) {
+    Cursor cur;
+    try {
+      cur = new AndroidBrowserBookmarksDataAccessor(context).fetchAll();
+    } catch (NullCursorException e) {
+      e.printStackTrace();
+      return;
+    }
+    try {
+      String[] columnNames = cur.getColumnNames();
+      int columnCount      = cur.getColumnCount();
+
+      // 12 chars each column.
+      for (int i = 0; i < columnCount; ++i) {
+        System.out.print(fixedWidth(12, columnNames[i]) + " | ");
+      }
+      System.out.println("");
+      for (int i = 0; i < columnCount; ++i) {
+        System.out.print("------------" + " | ");
+      }
+      System.out.println("");
+      if (!cur.moveToFirst()) {
+        System.out.println("EMPTY");
+        return;
+      }
+      while (cur.moveToNext()) {
+        for (int i = 0; i < columnCount; ++i) {
+          System.out.print(fixedWidth(12, cur.getString(i)) + " | ");
+        }
+        System.out.println("");
+      }
+      for (int i = 0; i < columnCount; ++i) {
+        System.out.print("---------------");
+      }
+      System.out.println("");
+    } finally {
+      cur.close();
+    }
+  }
 }

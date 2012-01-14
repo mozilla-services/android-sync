@@ -5,6 +5,7 @@ package org.mozilla.android.sync.test;
 
 import java.util.concurrent.ExecutorService;
 
+import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
@@ -236,9 +237,11 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Log.i("rnewman", "Prepared.");
 
     AndroidBrowserRepositorySession session = getSession();
+    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     for (Record record : expected) {
       performWait(storeRunnable(session, record)); 
     }
+    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     performWait(fetchAllRunnable(session, expected));
   }
   
