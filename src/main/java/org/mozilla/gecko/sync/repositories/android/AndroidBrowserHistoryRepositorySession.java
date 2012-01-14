@@ -79,7 +79,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
   @SuppressWarnings("unchecked")
   private void addVisit(JSONArray visits, long date, long visitType) {
     JSONObject visit = new JSONObject();
-    visit.put(KEY_DATE, date);
+    visit.put(KEY_DATE, date);               // Microseconds since epoch.
     visit.put(KEY_TYPE, visitType);
     visits.add(visit);
   }
@@ -113,6 +113,9 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
     JSONArray visitsArray = visitsForGUID(hist.guid);
     long missingRecords = hist.fennecVisitCount - visitsArray.size();
 
+    // Note that Fennec visit times are milliseconds, and we are working
+    // in microseconds. This is the point at which we translate.
+
     // Add (missingRecords - 1) fake visits...
     if (missingRecords > 0) {
       long fakes = missingRecords - 1;
@@ -120,13 +123,13 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
         // Set fake visit timestamp to be just previous to
         // the real one we are about to add.
         // TODO: make these equidistant?
-        long fakeDate = hist.fennecDateVisited - (1 + j);
+        long fakeDate = (hist.fennecDateVisited - (1 + j)) * 1000;
         addVisit(visitsArray, fakeDate);
       }
 
       // ... and the 1 actual record we have.
       // We still have to fake the visit type: Fennec doesn't track that.
-      addVisit(visitsArray, hist.fennecDateVisited);
+      addVisit(visitsArray, hist.fennecDateVisited * 1000);
     }
 
     hist.visits = visitsArray;

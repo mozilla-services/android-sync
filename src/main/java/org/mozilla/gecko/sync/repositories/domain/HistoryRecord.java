@@ -49,6 +49,12 @@ import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 import android.util.Log;
 
+/**
+ * Visits are in microsecond precision.
+ *
+ * @author rnewman
+ *
+ */
 public class HistoryRecord extends Record {
   private static final String LOG_TAG = "HistoryRecord";
 
@@ -180,7 +186,7 @@ public class HistoryRecord extends Record {
   }
   
 //  
-//  Example record:
+//  Example record (note microsecond resolution):
 //
 //  {id:"--DUvUomABNq",
 //   histUri:"https://bugzilla.mozilla.org/show_bug.cgi?id=697634",
