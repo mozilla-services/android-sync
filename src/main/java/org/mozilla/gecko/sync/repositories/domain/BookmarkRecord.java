@@ -90,6 +90,12 @@ public class BookmarkRecord extends Record {
   public JSONArray tags;
 
   @Override
+  public String toString() {
+    return "#<Bookmark " + guid + " (" + androidID + "), parent " +
+           parentID + "/" + androidParentID + "/" + parentName + ">";
+  }
+
+  @Override
   public void initFromPayload(CryptoRecord payload) {
     ExtendedJSONObject p = payload.payload;
 
