@@ -222,10 +222,7 @@
               <version>2.8</version>
               <configuration>
                 <configLocation>${basedir}/checkstyle.xml</configLocation>
-                <excludeRoots>
-                  <excludeRoot>${basedir}/src/main/java/org/mozilla/apache</excludeRoot>
-                  <excludeRoot>${basedir}/external</excludeRoot>
-                </excludeRoots>
+                <includes>**/org/mozilla/gecko/**</includes>
               </configuration>
             </plugin>
             <plugin>
@@ -234,6 +231,11 @@
               <version>2.6</version>
               <configuration>
                 <targetJdk>1.6</targetJdk>
+                <excludes>
+                  <exclude>**/org/mozilla/apache/**</exclude>
+                  <exclude>**/ch/boye/**</exclude>
+                  <exclude>**/org/json/**</exclude>
+                </excludes>
               </configuration>
             </plugin>
           </reportPlugins>
