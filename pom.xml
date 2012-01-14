@@ -231,6 +231,11 @@
               <version>2.6</version>
               <configuration>
                 <targetJdk>1.6</targetJdk>
+                <excludes>
+                  <exclude>**/org/mozilla/apache/**</exclude>
+                  <exclude>**/ch/boye/**</exclude>
+                  <exclude>**/org/json/**</exclude>
+                </excludes>
               </configuration>
             </plugin>
           </reportPlugins>
