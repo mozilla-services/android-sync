@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import org.json.simple.JSONArray;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
@@ -273,16 +274,18 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
     Record record0 = BookmarkHelpers.createFolder1();
-    performWait(storeRunnable(session, record0));
-    
-    // Get timestamp so that the conflicting folder that we store below is newer
-    // Children won't come back on this fetch since tehy haven't been stored, so remove them
-    // so that our delegate doesn't throw a failure
+
+    // Get timestamp so that the conflicting folder that we store below is newer.
+    // Children won't come back on this fetch since they haven't been stored, so remove them
+    // before our delegate throws a failure.
     BookmarkRecord rec0 = (BookmarkRecord) record0;
-    rec0.children = null;
+    rec0.children = new JSONArray();
+    performWait(storeRunnable(session, record0));
+
     ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { rec0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
-    
+
+    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     Record record1 = BookmarkHelpers.createBookmark1();
     Record record2 = BookmarkHelpers.createBookmark2();
     Record record3 = BookmarkHelpers.createFolder1();
@@ -290,14 +293,14 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     record3.guid = Utils.generateGuid();
     record3.lastModified = timestampDelegate.records.get(0).lastModified + 3000;
     assert(!record0.guid.equals(record3.guid));
-    
-    // Store an additional record after duplicate folder inserted
-    // with new guid and make sure it comes back as well 
+
+    // Store an additional record after inserting the duplicate folder
+    // with new GUID. Make sure it comes back as well.
     Record record4 = BookmarkHelpers.createBookmark3();
     BookmarkRecord bmk4 = (BookmarkRecord) record4;
     bmk4.parentID = bmk3.guid;
     bmk4.parentName = bmk3.parentName;
-    
+
     doStore(session, new Record[] {
       record1, record2, record3, bmk4
     });
