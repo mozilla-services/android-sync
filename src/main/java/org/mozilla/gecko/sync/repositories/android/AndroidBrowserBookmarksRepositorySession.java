@@ -137,16 +137,18 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   @SuppressWarnings("unchecked")
   private JSONArray getChildren(long androidID) throws NullCursorException {
-    JSONArray childArray = null;
+    trace("Calling getChildren for androidID " + androidID);
+    JSONArray childArray = new JSONArray();
     Cursor children = dataAccessor.getChildren(androidID);
     try {
       if (!children.moveToFirst()) {
-        return new JSONArray();
+        trace("No children: empty cursor.");
+        return childArray;
       }
 
       int count = children.getCount();
       String[] kids = new String[count];
-      childArray = new JSONArray();
+      trace("Expecting " + count + " children.");
 
       // Track badly positioned records.
       HashMap<String, Long> broken = new HashMap<String, Long>();
@@ -154,7 +156,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       // Get children into array in correct order.
       while (!children.isAfterLast()) {
         String childGuid = getGUID(children);
+        trace("  Child GUID: " + childGuid);
         int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
+        trace("  Child position: " + childPosition);
         if (childPosition >= count) {
           Log.w(LOG_TAG, "Child position " + childPosition + " greater than expected children " + count);
           broken.put(childGuid, 0L);
@@ -185,6 +189,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
           continue;
         }
         childArray.add(kid);
+      }
+      if (Utils.ENABLE_TRACE_LOGGING) {
+        Log.d(LOG_TAG, "Output child array: " + childArray.toJSONString());
       }
     } finally {
       children.close();
@@ -219,9 +226,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     // If record is a folder, build out the children array.
     JSONArray childArray = null;
-    if (rowIsFolder(cur)) {
+    boolean isFolder = rowIsFolder(cur);
+    Log.d(LOG_TAG, "Record " + recordGUID + " is a " + (isFolder ? "folder." : "bookmark."));
+    if (isFolder) {
       long androidID = guidToID.get(recordGUID);
       childArray = getChildren(androidID);
+    }
+    if (childArray != null) {
+      Log.d(LOG_TAG, "Fetched " + childArray.size() + " children for " + recordGUID);
     }
     return RepoUtils.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
   }
