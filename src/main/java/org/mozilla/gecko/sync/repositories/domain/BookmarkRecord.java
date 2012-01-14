@@ -90,6 +90,12 @@ public class BookmarkRecord extends Record {
   public JSONArray tags;
 
   @Override
+  public String toString() {
+    return "#<Bookmark " + guid + " (" + androidID + "), parent " +
+           parentID + "/" + androidParentID + "/" + parentName + ">";
+  }
+
+  @Override
   public void initFromPayload(CryptoRecord payload) {
     ExtendedJSONObject p = payload.payload;
 
@@ -165,8 +171,15 @@ public class BookmarkRecord extends Record {
     return rec;
   }
 
+  private void trace(String s) {
+    if (Utils.ENABLE_TRACE_LOGGING) {
+      Log.d(LOG_TAG, s);
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
+    trace("Calling BookmarkRecord.equals.");
     if (!(o instanceof BookmarkRecord)) {
       return false;
     }
@@ -178,31 +191,35 @@ public class BookmarkRecord extends Record {
     }
 
     // Check children.
-    if (isFolder()) {
-      // Check if they are both null.
-      if (this.children == other.children) {
-        return true;
-      }
+    if (isFolder() && (this.children != other.children)) {
+      trace("BookmarkRecord.equals: this folder: " + this.title + ", " + this.guid);
+      trace("BookmarkRecord.equals: other: " + other.title + ", " + other.guid);
       if (this.children  == null &&
           other.children != null) {
+        trace("Records differ: one children array is null.");
         return false;
       }
       if (this.children  != null &&
           other.children == null) {
+        trace("Records differ: one children array is null.");
         return false;
       }
       if (this.children.size() != other.children.size()) {
+        trace("Records differ: children arrays differ in size (" +
+              this.children.size() + " vs. " + other.children.size() + ").");
         return false;
       }
 
       for (int i = 0; i < this.children.size(); i++) {
         String child = (String) this.children.get(i);
         if (!other.children.contains(child)) {
+          trace("Records differ: child " + child + " not found.");
           return false;
         }
       }
     }
 
+    trace("Checking strings.");
     return RepoUtils.stringsEqual(this.title, other.title)
         && RepoUtils.stringsEqual(this.bookmarkURI, other.bookmarkURI)
         && RepoUtils.stringsEqual(this.parentID, other.parentID)
