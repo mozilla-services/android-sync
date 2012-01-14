@@ -163,6 +163,7 @@
               <version>2.4</version>
               <reports>
                 <report>index</report>
+                <report>dependencies</report>
               </reports>
             </plugin>
             <plugin>
