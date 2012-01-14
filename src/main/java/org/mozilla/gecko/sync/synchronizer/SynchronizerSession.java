@@ -118,7 +118,16 @@ implements RecordsChannelDelegate,
    * Please don't call this until you've been notified with onInitialized.
    */
   public void synchronize() {
-    // TODO: pull timestamps from somewhere...
+    // First thing: decide whether we should.
+    if (!sessionA.dataAvailable() &&
+        !sessionB.dataAvailable()) {
+      info("Neither session reports data available. Short-circuiting sync.");
+      sessionA.abort();
+      sessionB.abort();
+      this.delegate.onSynchronizeSkipped(this);
+      return;
+    }
+
     final SynchronizerSession session = this;
 
     // TODO: failed record handling.

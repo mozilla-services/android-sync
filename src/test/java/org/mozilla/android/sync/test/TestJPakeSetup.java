@@ -31,7 +31,7 @@ public class TestJPakeSetup {
 
   /*
    * Tests encryption key and hmac generation from a derived key, using values
-   * taken from a successful run of J-Pake.
+   * taken from a successful run of J-PAKE.
    */
   @Test
   public void testKeyDerivation() throws UnsupportedEncodingException {
@@ -79,9 +79,9 @@ public class TestJPakeSetup {
   }
 
   /*
-   * Helper simulation of a J-Pake key derivation between two parties, with
+   * Helper simulation of a J-PAKE key derivation between two parties, with
    * secret1 and secret2. Both parties are assumed to be communicating on the
-   * same channel; otherwise, J-Pake would have failed immediately.
+   * same channel; otherwise, J-PAKE would have failed immediately.
    */
   public boolean jPakeDeriveSameKey(JPakeNumGenerator gen1,
       JPakeNumGenerator gen2, String secret1, String secret2)

@@ -74,6 +74,8 @@ public class CryptoRecord extends Record {
   private static final String KEY_ID         = "id";
   private static final String KEY_COLLECTION = "collection";
   private static final String KEY_PAYLOAD    = "payload";
+  private static final String KEY_MODIFIED   = "modified";
+  private static final String KEY_SORTINDEX  = "sortindex";
   private static final String KEY_CIPHERTEXT = "ciphertext";
   private static final String KEY_HMAC       = "hmac";
   private static final String KEY_IV         = "IV";
@@ -141,20 +143,29 @@ public class CryptoRecord extends Record {
    * @throws ParseException
    * @throws IOException
    */
-  public static CryptoRecord fromJSONRecord(String jsonRecord) throws ParseException, NonObjectJSONException, IOException {
-    return CryptoRecord.fromJSONRecord(CryptoRecord.parseUTF8AsJSONObject(jsonRecord.getBytes("UTF-8")));
+  public static CryptoRecord fromJSONRecord(String jsonRecord)
+      throws ParseException, NonObjectJSONException, IOException {
+    byte[] bytes = jsonRecord.getBytes("UTF-8");
+    ExtendedJSONObject object = CryptoRecord.parseUTF8AsJSONObject(bytes);
+
+    return CryptoRecord.fromJSONRecord(object);
   }
 
   // TODO: defensive programming.
-  public static CryptoRecord fromJSONRecord(ExtendedJSONObject jsonRecord) throws IOException, ParseException, NonObjectJSONException {
-    String id = (String) jsonRecord.get(KEY_ID);
-    String collection = (String) jsonRecord.get(KEY_COLLECTION);
+  public static CryptoRecord fromJSONRecord(ExtendedJSONObject jsonRecord)
+      throws IOException, ParseException, NonObjectJSONException {
+    String id                  = (String) jsonRecord.get(KEY_ID);
+    String collection          = (String) jsonRecord.get(KEY_COLLECTION);
     ExtendedJSONObject payload = jsonRecord.getJSONObject(KEY_PAYLOAD);
     CryptoRecord record = new CryptoRecord(payload);
-    record.guid = id;
-    record.collection = collection;
-
-    // TODO: lastModified?
+    record.guid         = id;
+    record.collection   = collection;
+    if (jsonRecord.containsKey(KEY_MODIFIED)) {
+      record.lastModified = jsonRecord.getTimestamp(KEY_MODIFIED);
+    }
+    if (jsonRecord.containsKey(KEY_SORTINDEX )) {
+      record.sortIndex = jsonRecord.getLong(KEY_SORTINDEX);
+    }
     // TODO: deleted?
     return record;
   }

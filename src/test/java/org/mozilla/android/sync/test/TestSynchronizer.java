@@ -1,4 +1,7 @@
-package org.mozilla.android.sync.synchronizer.test;
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
+package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,7 +12,7 @@ import static org.junit.Assert.fail;
 import java.util.Date;
 
 import org.junit.Test;
-import org.mozilla.android.sync.test.WBORepository;
+import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
@@ -19,7 +22,7 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerSessionDelegate;
 
 import android.content.Context;
 
-public class SynchronizerTest {
+public class TestSynchronizer {
 
   public static void assertInRangeInclusive(long earliest, long value, long latest) {
     assertTrue(earliest <= value);
@@ -105,6 +108,11 @@ public class SynchronizerTest {
       @Override
       public void onSynchronizeAborted(SynchronizerSession synchronizerSession) {
         fail("Sync should not be aborted.");
+      }
+
+      @Override
+      public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
+        fail("Sync should not be skipped.");
       }
     });
     synchronized (monitor) {

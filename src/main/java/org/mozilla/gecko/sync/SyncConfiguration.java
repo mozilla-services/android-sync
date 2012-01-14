@@ -39,6 +39,8 @@ package org.mozilla.gecko.sync;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.Set;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 
@@ -47,12 +49,161 @@ import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
 public class SyncConfiguration implements CredentialsSource {
+
+  public class EditorBranch implements Editor {
+
+    private String prefix;
+    private Editor editor;
+
+    public EditorBranch(SyncConfiguration config, String prefix) {
+      if (!prefix.endsWith(".")) {
+        throw new IllegalArgumentException("No trailing period in prefix.");
+      }
+      this.prefix = prefix;
+      this.editor = config.getEditor();
+    }
+
+    @Override
+    public void apply() {
+      this.editor.apply();
+    }
+
+    @Override
+    public Editor clear() {
+      this.editor = this.editor.clear();
+      return this;
+    }
+
+    @Override
+    public boolean commit() {
+      return this.editor.commit();
+    }
+
+    @Override
+    public Editor putBoolean(String key, boolean value) {
+      this.editor = this.editor.putBoolean(prefix + key, value);
+      return this;
+    }
+
+    @Override
+    public Editor putFloat(String key, float value) {
+      this.editor = this.editor.putFloat(prefix + key, value);
+      return this;
+    }
+
+    @Override
+    public Editor putInt(String key, int value) {
+      this.editor = this.editor.putInt(prefix + key, value);
+      return this;
+    }
+
+    @Override
+    public Editor putLong(String key, long value) {
+      this.editor = this.editor.putLong(prefix + key, value);
+      return this;
+    }
+
+    @Override
+    public Editor putString(String key, String value) {
+      this.editor = this.editor.putString(prefix + key, value);
+      return this;
+    }
+
+    // Not marking as Override, because Android <= 10 doesn't have
+    // putStringSet. Neither can we implement it.
+    public Editor putStringSet(String key, Set<String> value) {
+      throw new RuntimeException("putStringSet not available.");
+    }
+
+    @Override
+    public Editor remove(String key) {
+      this.editor = this.editor.remove(prefix + key);
+      return this;
+    }
+
+  }
+
+  /**
+   * A wrapper around a portion of the SharedPreferences space.
+   *
+   * @author rnewman
+   *
+   */
+  public class ConfigurationBranch implements SharedPreferences {
+
+    private SyncConfiguration config;
+    private String prefix;                // Including trailing period.
+
+    public ConfigurationBranch(SyncConfiguration syncConfiguration,
+        String prefix) {
+      if (!prefix.endsWith(".")) {
+        throw new IllegalArgumentException("No trailing period in prefix.");
+      }
+      this.config = syncConfiguration;
+      this.prefix = prefix;
+    }
+
+    @Override
+    public boolean contains(String key) {
+      return config.getPrefs().contains(prefix + key);
+    }
+
+    @Override
+    public Editor edit() {
+      return new EditorBranch(config, prefix);
+    }
+
+    @Override
+    public Map<String, ?> getAll() {
+      // Not implemented. TODO
+      return null;
+    }
+
+    @Override
+    public boolean getBoolean(String key, boolean defValue) {
+      return config.getPrefs().getBoolean(prefix + key, defValue);
+    }
+
+    @Override
+    public float getFloat(String key, float defValue) {
+      return config.getPrefs().getFloat(prefix + key, defValue);
+    }
+
+    @Override
+    public int getInt(String key, int defValue) {
+      return config.getPrefs().getInt(prefix + key, defValue);
+    }
+
+    @Override
+    public long getLong(String key, long defValue) {
+      return config.getPrefs().getLong(prefix + key, defValue);
+    }
+
+    @Override
+    public String getString(String key, String defValue) {
+      return config.getPrefs().getString(prefix + key, defValue);
+    }
+
+    // Not marking as Override, because Android <= 10 doesn't have
+    // getStringSet. Neither can we implement it.
+    public Set<String> getStringSet(String key, Set<String> defValue) {
+      throw new RuntimeException("getStringSet not available.");
+    }
+
+    @Override
+    public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+      config.getPrefs().registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    @Override
+    public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+      config.getPrefs().unregisterOnSharedPreferenceChangeListener(listener);
+    }
+  }
+
   public static final String DEFAULT_USER_API = "https://auth.services.mozilla.com/user/1.0/";
 
   private static final String LOG_TAG = "SyncConfiguration";
-
-  // See <http://developer.android.com/reference/android/content/Context.html#getSharedPreferences%28java.lang.String,%20int%29>
-  private static final int SHARED_PREFERENCES_MODE = 0;
 
   // These must be set in GlobalSession's constructor.
   public String          userAPI;
@@ -71,7 +222,7 @@ public class SyncConfiguration implements CredentialsSource {
   // persistence.
   // Behavior is undefined if the PrefsSource is switched out in flight.
   public String          prefsPath;
-  public PrefsSource    prefsSource;
+  public PrefsSource     prefsSource;
 
   /**
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
@@ -87,7 +238,17 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   public SharedPreferences getPrefs() {
-    return prefsSource.getPrefs(prefsPath, SHARED_PREFERENCES_MODE);
+    Log.d(LOG_TAG, "Returning prefs for " + prefsPath);
+    return prefsSource.getPrefs(prefsPath, Utils.SHARED_PREFERENCES_MODE);
+  }
+
+  /**
+   * Return a convenient accessor for part of prefs.
+   * @param prefix
+   * @return
+   */
+  public ConfigurationBranch getBranch(String prefix) {
+    return new ConfigurationBranch(this, prefix);
   }
 
   public void loadFromPrefs(SharedPreferences prefs) {

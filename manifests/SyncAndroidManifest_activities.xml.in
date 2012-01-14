@@ -2,7 +2,11 @@
             android:icon="@drawable/sync_ic_launcher"
             android:label="@string/sync_app_name"
             android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSyncActivity" >
+            <!-- android:configChanges: SetupSyncActivity will handle orientation changes; no longer restarts activity (default) -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -16,10 +20,9 @@
             android:clearTaskOnLaunch="true"
             android:launchMode="singleTask"
             android:name="org.mozilla.gecko.sync.setup.activities.AccountActivity"
-            android:windowSoftInputMode="adjustResize"/>
+            android:windowSoftInputMode="adjustPan|stateHidden"/>
         <activity
             android:name="org.mozilla.gecko.sync.setup.activities.SetupFailureActivity" />
         <activity
-            android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />
-        <activity
-            android:name="org.mozilla.gecko.sync.setup.activities.SetupWaitingActivity" />
+            android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity"
+            android:launchMode="singleTask" />

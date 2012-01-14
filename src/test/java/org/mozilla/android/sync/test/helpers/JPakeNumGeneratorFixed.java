@@ -1,4 +1,4 @@
-package org.mozilla.android.sync.test;
+package org.mozilla.android.sync.test.helpers;
 
 import java.math.BigInteger;
 

@@ -13,8 +13,9 @@ import java.net.URISyntaxException;
 
 import org.json.simple.JSONObject;
 import org.junit.Test;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
+import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -22,19 +23,17 @@ import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
 public class TestSyncStorageRequest {
+  private static final int    TEST_PORT   = 15325;
+  private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
-  static final String REMOTE_META_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  static final String REMOTE_KEYS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/crypto/keys";
-  static final String LOCAL_META_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  static final String LOCAL_BAD_REQUEST_URL  = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bad";
+  private static final String LOCAL_META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
+  private static final String LOCAL_BAD_REQUEST_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bad";
 
-  static final String EXPECTED_ERROR_CODE = "12";
+  private static final String EXPECTED_ERROR_CODE = "12";
+  private static final String EXPECTED_RETRY_AFTER_ERROR_MESSAGE = "{error:'informative error message'}";
 
   // Corresponds to rnewman+testandroid@mozilla.com.
-  static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
-  static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
-  static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
-  static final String EXPECT_BASIC = "Basic YzZvN2R2bXIyYzR1ZDJmeXY2d296MnU0emkyMmJjeWQ6cGFzc3dvcmQ=";
+  private static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
 
   private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
@@ -44,6 +43,14 @@ public class TestSyncStorageRequest {
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
+
+      // Make sure we consume the rest of the body, so we can reuse the
+      // connection. Even test code has to be correct in this regard!
+      try {
+        System.out.println("Success body: " + res.body());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       data.stopHTTPServer();
     }
   }
@@ -66,57 +73,6 @@ public class TestSyncStorageRequest {
     }
   }
 
-  public class LiveDelegate extends BaseTestStorageRequestDelegate {
-    public boolean shouldDecrypt = false;
-
-    @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
-      assertTrue(res.wasSuccessful());
-      assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
-      try {
-        System.out.println(res.httpResponse().getEntity().getContent()
-            .toString());
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-
-      if (shouldDecrypt) {
-        try {
-          System.out.println("Attempting decrypt.");
-          CryptoRecord rec;
-          rec = CryptoRecord.fromJSONRecord(res.jsonObjectBody());
-          rec.keyBundle = new KeyBundle(USERNAME, SYNC_KEY);
-          rec.decrypt();
-          System.out.println(rec.payload.toJSONString());
-        } catch (Exception e) {
-          e.printStackTrace();
-          fail("Should receive no exception when decrypting.");
-        }
-      }
-    }
-  }
-
-  @Test
-  public void testRealLiveMetaGlobal() throws URISyntaxException {
-    URI u = new URI(
-        REMOTE_META_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
-    LiveDelegate delegate = new LiveDelegate();
-    delegate._credentials = USER_PASS;
-    r.delegate = delegate;
-    r.get();
-  }
-
-  @Test
-  public void testRealLiveCryptoKeys() throws URISyntaxException {
-    URI u = new URI(REMOTE_KEYS_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
-    LiveDelegate delegate = new LiveDelegate();
-    delegate.shouldDecrypt = true;
-    delegate._credentials = USER_PASS;
-    r.delegate = delegate;
-    r.get();
-  }
 
   @Test
   public void testSyncStorageRequest() throws URISyntaxException, IOException {
@@ -143,6 +99,122 @@ public class TestSyncStorageRequest {
     data.startHTTPServer(new ErrorMockServer());
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL));
     TestBadSyncStorageRequestDelegate delegate = new TestBadSyncStorageRequestDelegate();
+    delegate._credentials = USER_PASS;
+    r.delegate = delegate;
+    r.post(new JSONObject());
+    // Server is stopped in the callback.
+  }
+
+  // Test that the Retry-After header is correctly parsed and that handleRequestFailure
+  // is being called.
+  public class TestRetryAfterSyncStorageRequestDelegate extends
+  BaseTestStorageRequestDelegate {
+
+    @Override
+    public void handleRequestFailure(SyncStorageResponse res) {
+      assertTrue(!res.wasSuccessful());
+      assertTrue(res.httpResponse().containsHeader("Retry-After"));
+      assertEquals(res.retryAfter(), 3001);
+      try {
+        String responseMessage = res.getErrorMessage();
+        String expectedMessage = EXPECTED_RETRY_AFTER_ERROR_MESSAGE;
+        assertEquals(expectedMessage, responseMessage);
+      } catch (Exception e) {
+        fail("Got exception fetching error message.");
+      }
+      data.stopHTTPServer();
+    }
+  }
+  
+  public class RetryAfterMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      String errorBody = EXPECTED_RETRY_AFTER_ERROR_MESSAGE;
+      response.set("Retry-After", "3001");
+      super.handle(request, response, 503, errorBody);
+    }
+  }
+
+  @Test
+  public void testRetryAfterResponse() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new RetryAfterMockServer());
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL)); // URL not used -- we 503 every response
+    TestRetryAfterSyncStorageRequestDelegate delegate = new TestRetryAfterSyncStorageRequestDelegate();
+    r.delegate = delegate;
+    r.post(new JSONObject());
+    // Server is stopped in the callback.
+  }
+  
+  // Test that the X-Weave-Backoff header is correctly parsed and that handleRequestSuccess
+  // is still being called.
+  public class TestWeaveBackoffSyncStorageRequestDelegate extends
+  TestSyncStorageRequestDelegate {
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse res) {
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Backoff"));
+      assertEquals(res.weaveBackoff(), 1801);
+      super.handleRequestSuccess(res);
+    }
+  }
+  
+  public class WeaveBackoffMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      response.set("X-Weave-Backoff", "1801");
+      super.handle(request, response);
+    }
+  }
+
+  @Test
+  public void testWeaveBackoffResponse() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new WeaveBackoffMockServer());
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    TestWeaveBackoffSyncStorageRequestDelegate delegate = new TestWeaveBackoffSyncStorageRequestDelegate();
+    delegate._credentials = USER_PASS;
+    r.delegate = delegate;
+    r.post(new JSONObject());
+    // Server is stopped in the callback.
+  }
+
+  // Test that the X-Weave-{Quota-Remaining, Alert, Records} headers are correctly parsed and
+  // that handleRequestSuccess is still being called.
+  public class TestHeadersSyncStorageRequestDelegate extends
+  TestSyncStorageRequestDelegate {
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse res) {
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Quota-Remaining"));
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Alert"));
+      assertTrue(res.httpResponse().containsHeader("X-Weave-Records"));
+      assertEquals(65536, res.weaveQuotaRemaining());
+      assertEquals("First weave alert string", res.weaveAlert());
+      assertEquals(50, res.weaveRecords());
+
+      super.handleRequestSuccess(res);
+    }
+  }
+
+  public class HeadersMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      response.set("X-Weave-Quota-Remaining", "65536");
+      response.set("X-Weave-Alert", "First weave alert string");
+      response.add("X-Weave-Alert", "Second weave alert string");
+      response.set("X-Weave-Records", "50");
+
+      super.handle(request, response);
+    }
+  }
+
+  @Test
+  public void testHeadersResponse() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new HeadersMockServer());
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    TestHeadersSyncStorageRequestDelegate delegate = new TestHeadersSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
     r.post(new JSONObject());

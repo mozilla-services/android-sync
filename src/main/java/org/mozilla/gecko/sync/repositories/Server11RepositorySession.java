@@ -381,8 +381,8 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      // TODO: handle backoff etc.
       // TODO: ensure that delegate methods don't get called more than once.
+      // TODO: call session.interpretHTTPFailure.
       this.handleRequestError(new HTTPFailureException(response));
     }
 

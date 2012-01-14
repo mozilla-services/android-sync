@@ -14,6 +14,8 @@ import java.util.ArrayList;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
@@ -24,7 +26,10 @@ import org.simpleframework.http.Response;
 import android.util.Log;
 
 public class TestLineByLineHandling {
-  static String                STORAGE_URL = "http://localhost:8080/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/lines";
+  private static final int     TEST_PORT   = 15325;
+  private static final String  TEST_SERVER = "http://localhost:" + TEST_PORT;
+  private static final String  LOG_TAG     = "TestLineByLineHandling";
+  static String                STORAGE_URL = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/lines";
   private HTTPServerTestHelper data        = new HTTPServerTestHelper();
 
   public ArrayList<String>     lines       = new ArrayList<String>();
@@ -66,6 +71,7 @@ public class TestLineByLineHandling {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
+      Log.i(LOG_TAG, "Request success.");
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
@@ -79,24 +85,29 @@ public class TestLineByLineHandling {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      Log.i(LOG_TAG, "Got request failure: " + response);
       fail("Should not be called.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
+      Log.e(LOG_TAG, "Got request error: ", ex);
       fail("Should not be called.");
     }
   }
 
   @Before
   public void setUp() {
-    Log.i("TestMetaGlobal", "Faking SSL context.");
+    Log.i(LOG_TAG, "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
   }
 
   @Test
   public void testLineByLine() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+
     data.startHTTPServer(new LineByLineMockServer());
+    Log.i(LOG_TAG, "Server started.");
     SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
     SyncStorageCollectionRequestDelegate delegate = new BaseLineByLineDelegate();
     r.delegate = delegate;

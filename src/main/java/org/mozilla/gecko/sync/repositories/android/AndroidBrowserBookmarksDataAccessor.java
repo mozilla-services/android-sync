@@ -53,11 +53,24 @@ import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
+  private static final String LOG_TAG = "AndroidBrowserBookmarksDataAccessor";
+
+  /*
+   * Fragments of SQL to make our lives easier.
+   */
+  private static final String BOOKMARK_IS_FOLDER = BrowserContract.Bookmarks.IS_FOLDER + " = 1";
+  private static final String GUID_NOT_TAGS_OR_PLACES = BrowserContract.SyncColumns.GUID + " NOT IN ('" +
+                     BrowserContract.Bookmarks.TAGS_FOLDER_GUID + "', '" +
+                     BrowserContract.Bookmarks.PLACES_FOLDER_GUID + "')";
+
   public static final String TYPE_FOLDER = "folder";
   public static final String TYPE_BOOKMARK = "bookmark";
 
+  private final RepoUtils.QueryHelper queryHelper;
+
   public AndroidBrowserBookmarksDataAccessor(Context context) {
     super(context);
+    this.queryHelper = new RepoUtils.QueryHelper(context, getUri(), LOG_TAG);
   }
 
   @Override
@@ -66,15 +79,9 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   }
 
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
-    String where = BrowserContract.Bookmarks.IS_FOLDER + "=1";
-    queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), null, where, null, null);
-    queryEnd = System.currentTimeMillis();
-    RepoUtils.queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getGuidsIDsForFolders", queryStart, queryEnd);
-    if (cur == null) {
-      throw new NullCursorException(null);
-    }
-    return cur;
+    // Exclude "places" and "tags", in case they've ended up in the DB.
+    String where = BOOKMARK_IS_FOLDER + " AND " + GUID_NOT_TAGS_OR_PLACES;
+    return queryHelper.safeQuery(".getGuidsIDsForFolders", null, where, null, null);
   }
 
   protected void updateParentAndPosition(String guid, long newParentId, long position) {
@@ -96,19 +103,20 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     // Map from GUID to whether deleted. Non-presence implies just that.
     HashMap<String, Boolean> statuses = new HashMap<String, Boolean>(RepoUtils.SPECIAL_GUIDS.length);
     try {
-      cur.moveToFirst();
-      while (!cur.isAfterLast()) {
-        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-        if (guid.equals("mobile")) {
-          mobileRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+      if (cur.moveToFirst()) {
+        while (!cur.isAfterLast()) {
+          String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+          if (guid.equals("mobile")) {
+            mobileRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+          }
+          if (guid.equals("desktop")) {
+            desktopRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
+          }
+          // Make sure none of these folders are marked as deleted.
+          boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+          statuses.put(guid, deleted);
+          cur.moveToNext();
         }
-        if (guid.equals("desktop")) {
-          desktopRoot = RepoUtils.getLongFromCursor(cur, BrowserContract.CommonColumns._ID);
-        }
-        // Make sure none of these folders are marked as deleted.
-        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
-        statuses.put(guid, deleted);
-        cur.moveToNext();
       }
     } finally {
       cur.close();
@@ -140,18 +148,18 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   }
 
   private long insertSpecialFolder(String guid, long parentId) {
-      BookmarkRecord record = new BookmarkRecord(guid);
-      record.title = RepoUtils.SPECIAL_GUIDS_MAP.get(guid);
-      record.type = "folder";
-      record.androidParentID = parentId;
-      return(RepoUtils.getAndroidIdFromUri(insert(record)));
+    BookmarkRecord record = new BookmarkRecord(guid);
+    record.title = RepoUtils.SPECIAL_GUIDS_MAP.get(guid);
+    record.type = "folder";
+    record.androidParentID = parentId;
+    return(RepoUtils.getAndroidIdFromUri(insert(record)));
   }
 
   @Override
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
     BookmarkRecord rec = (BookmarkRecord) record;
-    cv.put("guid",                                rec.guid);
+    cv.put(BrowserContract.SyncColumns.GUID,      rec.guid);
     cv.put(BrowserContract.Bookmarks.TITLE,       rec.title);
     cv.put(BrowserContract.Bookmarks.URL,         rec.bookmarkURI);
     cv.put(BrowserContract.Bookmarks.DESCRIPTION, rec.description);
@@ -173,20 +181,13 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   
   // Returns a cursor with any records that list the given androidID as a parent
   public Cursor getChildren(long androidID) throws NullCursorException {
-    String where = BrowserContract.Bookmarks.PARENT + "=" + androidID;
-    queryStart = System.currentTimeMillis();
-    Cursor cur = context.getContentResolver().query(getUri(), getAllColumns(), where, null, null);
-    queryEnd = System.currentTimeMillis();
-    RepoUtils.queryTimeLogger("AndroidBrowserBookmarksDataAccessor.getChildren", queryStart, queryEnd);
-    if (cur == null) {
-      throw new NullCursorException(null);
-    }
-    return cur;
+    String where = BrowserContract.Bookmarks.PARENT + " = ?";
+    String[] args = new String[] { String.valueOf(androidID) };
+    return queryHelper.safeQuery(".getChildren", getAllColumns(), where, args, null);
   }
   
   @Override
   protected String[] getAllColumns() {
     return BrowserContract.Bookmarks.BookmarkColumns;
   }
-
 }

@@ -41,19 +41,23 @@ package org.mozilla.gecko.sync.repositories.domain;
 import java.io.UnsupportedEncodingException;
 
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 public abstract class Record {
+  // TODO: consider immutability, effective immutability, and thread-safety.
   public String guid;
   public String collection;
   public long lastModified;
   public boolean deleted;
   public long androidID;
+  public long sortIndex;
 
   public Record(String guid, String collection, long lastModified, boolean deleted) {
     this.guid         = guid;
     this.collection   = collection;
     this.lastModified = lastModified;
-    this.deleted = deleted;
+    this.deleted      = deleted;
+    this.sortIndex    = 0;
   }
 
   @Override
@@ -103,6 +107,19 @@ public abstract class Record {
     } catch (UnsupportedEncodingException e) {
       // Can't happen.
       return null;
+    }
+  }
+
+  protected void checkGUIDs(ExtendedJSONObject payload) {
+    String payloadGUID = (String) payload.get("id");
+    if (this.guid == null ||
+        payloadGUID == null) {
+      String detailMessage = "Inconsistency: either envelope or payload GUID missing.";
+      throw new IllegalStateException(detailMessage);
+    }
+    if (!this.guid.equals(payloadGUID)) {
+      String detailMessage = "Inconsistency: record has envelope ID " + this.guid + ", payload ID " + payloadGUID;
+      throw new IllegalStateException(detailMessage);
     }
   }
 }
