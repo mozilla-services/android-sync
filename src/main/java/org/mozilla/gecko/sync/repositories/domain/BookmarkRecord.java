@@ -100,6 +100,13 @@ public class BookmarkRecord extends Record {
     ExtendedJSONObject p = payload.payload;
 
     // All.
+    this.guid = payload.guid;
+    checkGUIDs(p);
+
+    this.collection    = payload.collection;
+    this.lastModified  = payload.lastModified;
+    this.deleted       = payload.deleted;
+
     this.type          = (String) p.get("type");
     this.title         = (String) p.get("title");
     this.description   = (String) p.get("description");

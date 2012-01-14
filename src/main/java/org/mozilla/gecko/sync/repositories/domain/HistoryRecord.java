@@ -85,22 +85,18 @@ public class HistoryRecord extends Record {
 
   @Override
   public void initFromPayload(CryptoRecord payload) {
-    // TODO: defensive coding?!
-    if (payload.guid == null) {
-      throw new RuntimeException("Can't init HistoryRecord: null guid!");
-    }
-    String envelopeGUID = payload.guid;
-    String payloadGUID = (String) payload.payload.get("id");
-    if (!envelopeGUID.equals(payloadGUID)) {
-      throw new RuntimeException("Can't init HistoryRecord: guids don't match! " +
-                                 payloadGUID + ", " + envelopeGUID);
-    }
+    ExtendedJSONObject p = payload.payload;
 
-    this.guid    = payload.guid;
-    this.histURI = (String) payload.payload.get("histUri");
-    this.title   = (String) payload.payload.get("title");
+    this.guid = payload.guid;
+    this.checkGUIDs(p);
+
+    this.lastModified  = payload.lastModified;
+    this.deleted       = payload.deleted;
+
+    this.histURI = (String) p.get("histUri");
+    this.title   = (String) p.get("title");
     try {
-      this.visits = payload.payload.getArray("visits");
+      this.visits = p.getArray("visits");
     } catch (NonArrayJSONException e) {
       Log.e(LOG_TAG, "Got non-array visits in history record " + this.guid, e);
       this.visits = new JSONArray();

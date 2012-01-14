@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.repositories.domain;
 import java.io.UnsupportedEncodingException;
 
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 public abstract class Record {
   // TODO: consider immutability, effective immutability, and thread-safety.
@@ -106,6 +107,19 @@ public abstract class Record {
     } catch (UnsupportedEncodingException e) {
       // Can't happen.
       return null;
+    }
+  }
+
+  protected void checkGUIDs(ExtendedJSONObject payload) {
+    String payloadGUID = (String) payload.get("id");
+    if (this.guid == null ||
+        payloadGUID == null) {
+      String detailMessage = "Inconsistency: either envelope or payload GUID missing.";
+      throw new IllegalStateException(detailMessage);
+    }
+    if (!this.guid.equals(payloadGUID)) {
+      String detailMessage = "Inconsistency: record has envelope ID " + this.guid + ", payload ID " + payloadGUID;
+      throw new IllegalStateException(detailMessage);
     }
   }
 }
