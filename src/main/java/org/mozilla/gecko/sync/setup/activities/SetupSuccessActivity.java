@@ -44,10 +44,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.TextView;
 
 public class SetupSuccessActivity extends Activity {
+  private final static String LOG_TAG = "SetupSuccessActivity";
   private TextView setupSubtitle;
   private Context mContext;
 
@@ -68,7 +70,7 @@ public class SetupSuccessActivity extends Activity {
 
   /* Click Handlers */
   public void settingsClickHandler(View target) {
-    Intent intent = new Intent("android.settings.SYNC_SETTINGS");
+    Intent intent = new Intent(Settings.ACTION_SYNC_SETTINGS);
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
     finish();
