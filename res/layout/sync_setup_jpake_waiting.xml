@@ -4,8 +4,6 @@
     <TextView
         style="@style/SyncTextTitle"
         android:text="@string/sync_title_connect" />
-    <View
-        style="@style/SyncViewLine" />
     <ProgressBar
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="wrap_content"
@@ -17,7 +15,7 @@
         style="@style/SyncTextItem"
         android:text="@string/sync_jpake_subtitle_waiting" />
     <Button
-        style="@style/SyncButtonCommon"
+        style="buttonStyle"
         android:onClick="cancelClickHandler"
         android:text="@string/sync_button_cancel" />
 </TableLayout>

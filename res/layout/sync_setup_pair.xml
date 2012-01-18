@@ -12,9 +12,6 @@
         style="@style/SyncTextTitle"
         android:text="@string/sync_title_pair" />
 
-      <View
-        style="@style/SyncViewLine" />
-
       <TextView
         android:id="@+id/setup_subtitle"
         style="@style/SyncTextItem"
@@ -67,13 +64,13 @@
         android:orientation="horizontal" >
 
         <Button
-          style="@style/SyncButtonCommon"
+          style="buttonStyle"
           android:onClick="cancelClickHandler"
           android:text="@string/sync_button_cancel" />
 
         <Button
           android:id="@+id/pair_button_connect"
-          style="@style/SyncButtonCommon"
+          style="buttonStyle"
           android:onClick="connectClickHandler"
           android:clickable="false"
           android:enabled="false"

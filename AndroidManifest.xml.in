@@ -19,6 +19,7 @@
     <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
 
     <application android:debuggable="true"
+                 android:theme="@style/SyncTheme"
                  android:label="@string/sync_app_name">
 
 #include manifests/SyncAndroidManifest_activities.xml.in
