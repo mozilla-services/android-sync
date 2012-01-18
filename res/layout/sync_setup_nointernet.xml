@@ -4,13 +4,11 @@
     <TextView
         style="@style/SyncTextTitle"
         android:text="@string/sync_title_fail" />
-    <View
-        style="@style/SyncViewLine"/>
     <TextView
         style="@style/SyncTextItem"
         android:text="@string/sync_subtitle_nointernet" />
     <Button
-        style="@style/SyncButtonCommon"
+        style="buttonStyle"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:onClick="cancelClickHandler"
