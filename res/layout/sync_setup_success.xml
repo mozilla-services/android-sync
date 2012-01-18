@@ -6,8 +6,6 @@
         style="@style/SyncTextTitle"
         android:text="@string/sync_title_success" />
 
-    <View style="@style/SyncViewLine" />
-
     <TextView
         android:id="@+id/setup_success_subtitle"
         android:layout_width="fill_parent"
@@ -17,9 +15,7 @@
         android:text="@string/sync_subtitle_success" />
 
     <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        style="SyncTheme.buttonStyle"
         android:onClick="settingsClickHandler"
         android:text="@string/sync_settings" />
 

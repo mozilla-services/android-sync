@@ -4,8 +4,6 @@
     <TextView
       style="@style/SyncTextTitle"
       android:text="@string/sync_title_fail" />
-    <View 
-      style="@style/SyncViewLine" />
 
     <TextView
       style="@style/SyncTextItem"
@@ -22,18 +20,18 @@
             android:orientation="horizontal" >
 
             <Button
-                style="@style/SyncButtonCommon"
+                style="buttonStyle"
                 android:onClick="tryAgainClickHandler"
                 android:text="@string/sync_button_tryagain" />
 
             <Button
-                style="@style/SyncButtonCommon"
+                style="buttonStyle"
                 android:onClick="manualClickHandler"
                 android:text="@string/sync_button_manual" />
         </LinearLayout>
 
         <Button
-            style="@style/SyncButtonCommon"
+            style="buttonStyle"
             android:onClick="cancelClickHandler"
             android:text="@string/sync_button_cancel" />
     </LinearLayout>

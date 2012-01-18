@@ -12,9 +12,6 @@
 	    style="@style/SyncTextTitle"
 	    android:text="@string/sync_title_connect" />
 	
-	  <View
-	    style="@style/SyncViewLine" />
-	
 	  <TextView
 	    style="@style/SyncTextItem"
 	    android:text="@string/sync_subtitle_account" />
@@ -50,13 +47,15 @@
 	    android:orientation="horizontal" >
 	
 	    <Button
-	      style="@style/SyncButtonCommon"
+	      android:layout_width="wrap_content"
+	      android:layout_height="wrap_content"
 	      android:onClick="cancelClickHandler"
 	      android:text="@string/sync_button_cancel" />
 	
 	    <Button
 	      android:id="@+id/accountConnectButton"
-	      style="@style/SyncButtonCommon"
+	      android:layout_width="wrap_content"
+	      android:layout_height="wrap_content"
 	      android:onClick="connectClickHandler"
 	      android:clickable="false"
 	      android:enabled="false"
