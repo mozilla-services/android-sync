@@ -53,6 +53,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -134,9 +135,14 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
         return;
       }
     }
-    // Display toast for "Only one account supported."
+    // Display toast for "Only one account supported." and redirect to account management.
     Toast toast = Toast.makeText(mContext, R.string.sync_notification_oneaccount, Toast.LENGTH_LONG);
     toast.show();
+
+    Intent intent = new Intent(Settings.ACTION_SYNC_SETTINGS);
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
+    startActivity(intent);
+
     finish();
   }
 
