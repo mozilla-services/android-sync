@@ -11,7 +11,7 @@
 
 <!-- J-PAKE Key Screen -->
 <!ENTITY sync.subtitle.connect.label 'To activate your new device, select “Set up &syncBrand.shortName.label;” on the device.'>
-<!ENTITY sync.subtitle.header.label 'Enter this code on your desktop'>
+<!ENTITY sync.subtitle.header.label 'Enter this code on your computer'>
 <!ENTITY sync.subtitle.connectlocation.label 'Select “&sync.title.pair.label;” in the &syncBrand.shortName.label; section of your desktop Firefox options.'>
 <!ENTITY sync.subtitle.pair.label 'To activate, select “Pair a device” on your other device.'>
 <!ENTITY sync.pin.default.label '...\n...\n...\n'>
