@@ -245,8 +245,13 @@ public class JPakeCrypto {
     if (gx.compareTo(BigInteger.ZERO) < 1) {// g^x > 1
       Log.e(LOG_TAG, "g^x > 1 fails.");
       throw new IncorrectZkpException();
-    } else if (gx.compareTo(P.subtract(BigInteger.ONE)) > -1) { // g^x < p-1
-      Log.e(LOG_TAG, "g^x < p-1 fails");
+    }
+    if (gx.compareTo(P.subtract(BigInteger.ONE)) > -1) { // g^x < p-1
+      Log.e(LOG_TAG, "g^x < p-1 fails.");
+      throw new IncorrectZkpException();
+    }
+    if (gx.modPow(Q, P).compareTo(BigInteger.ONE) != 0) {
+      Log.e(LOG_TAG, "g^x^q % p = 1 fails.");
       throw new IncorrectZkpException();
     }
     if (zkp.gr.compareTo(g.modPow(zkp.b, P).multiply(gx.modPow(h, P)).mod(P)) != 0) {
