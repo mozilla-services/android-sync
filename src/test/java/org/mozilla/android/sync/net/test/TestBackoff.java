@@ -6,28 +6,15 @@ package org.mozilla.android.sync.net.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
-
-import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
-import org.mozilla.gecko.sync.repositories.RecordFactory;
-import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 

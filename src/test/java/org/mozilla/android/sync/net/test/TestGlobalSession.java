@@ -12,14 +12,13 @@ import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
-import org.mozilla.gecko.sync.repositories.RecordFactory;
-import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
-import org.mozilla.gecko.sync.stage.ServerSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
@@ -28,8 +27,7 @@ import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
@@ -90,12 +88,12 @@ public class TestGlobalSession {
     public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
       @Override
       public void execute(GlobalSession session) {
-	HttpResponse response;
-	response = new BasicHttpResponse(
-	  new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));       
-        
-	response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.        
-	session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
+        HttpResponse response;
+        response = new BasicHttpResponse(
+            new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));       
+
+        response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.        
+        session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
       }
     }
 
@@ -142,7 +140,18 @@ public class TestGlobalSession {
       GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
-      session.start();
+      this.performWait(new Runnable() {
+          @Override
+          public void run() {
+            session.start();
+            /*session.setStoreDelegate(delegate);
+            try {
+              session.store(record);
+            } catch (NoStoreDelegateException e) {
+              fail("NoStoreDelegateException should not occur.");
+            }*/
+          }
+        });
     } catch (Exception e) {
       e.printStackTrace();
       fail("Got exception.");

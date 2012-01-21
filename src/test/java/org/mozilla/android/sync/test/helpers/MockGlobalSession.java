@@ -12,20 +12,7 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
-import org.mozilla.gecko.sync.repositories.RecordFactory;
-import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
-import org.mozilla.gecko.sync.stage.EnsureKeysStage;
-import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
-import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
-import org.mozilla.gecko.sync.stage.ServerSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
-
-import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.ProtocolVersion;
-import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
-import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
 import android.content.Context;
 import android.content.SharedPreferences;
