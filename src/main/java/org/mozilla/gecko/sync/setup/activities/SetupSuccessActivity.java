@@ -55,6 +55,7 @@ public class SetupSuccessActivity extends Activity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    setTheme(R.style.SyncTheme);
     super.onCreate(savedInstanceState);
     mContext = getApplicationContext();
     Bundle extras = this.getIntent().getExtras();
