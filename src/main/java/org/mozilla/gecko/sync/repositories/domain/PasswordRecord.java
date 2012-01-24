@@ -110,10 +110,33 @@ public class PasswordRecord extends Record {
   }
   
   @Override
-  public boolean equals(Object o) {
-    if (!o.getClass().equals(PasswordRecord.class)) return false;
+  public boolean congruentWith(Object o) {
+    if (o == null || !(o instanceof PasswordRecord)) {
+      return false;
+    }
     PasswordRecord other = (PasswordRecord) o;
-    if (!super.equals(other)) return false;
+    if (!super.congruentWith(other)) {
+      return false;
+    }
+    return RepoUtils.stringsEqual(this.hostname, other.hostname)
+        && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
+        && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
+        && RepoUtils.stringsEqual(this.username, other.username)
+        && RepoUtils.stringsEqual(this.password, other.password)
+        && RepoUtils.stringsEqual(this.usernameField, other.usernameField)
+        && RepoUtils.stringsEqual(this.passwordField, other.passwordField)
+        && RepoUtils.stringsEqual(this.encType, other.encType);
+  }
+
+  @Override
+  public boolean equalPayloads(Object o) {
+    if (o == null || !(o instanceof PasswordRecord)) {
+      return false;
+    }
+    PasswordRecord other = (PasswordRecord) o;
+    if (!super.equalPayloads(other)) {
+      return false;
+    }
     return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
         && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)

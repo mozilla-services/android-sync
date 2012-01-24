@@ -141,32 +141,45 @@ public class HistoryRecord extends Record {
     return rec;
   }
 
-  public boolean equalsExceptVisits(Object o) {
-    if (!(o instanceof HistoryRecord)) {
+
+  /**
+   * We consider two history records to be congruent if they represent the
+   * same history record regardless of visits.
+   */
+  @Override
+  public boolean congruentWith(Object o) {
+    if (o == null || !(o instanceof HistoryRecord)) {
       return false;
     }
     HistoryRecord other = (HistoryRecord) o;
-    return super.equals(other) &&
-           RepoUtils.stringsEqual(this.title, other.title) &&
+    if (!super.congruentWith(other)) {
+      return false;
+    }
+    return RepoUtils.stringsEqual(this.title, other.title) &&
            RepoUtils.stringsEqual(this.histURI, other.histURI);
   }
 
-  public boolean equalsIncludingVisits(Object o) {
-    HistoryRecord other = (HistoryRecord) o;
-    return equalsExceptVisits(other) && this.checkVisitsEquals(other);
-  }
-
   @Override
-  /**
-   * We consider two history records to be equal if they represent the
-   * same history record regardless of visits.
-   */
-  public boolean equals(Object o) {
-    return equalsExceptVisits(o);
+  public boolean equalPayloads(Object o) {
+    if (o == null || !(o instanceof HistoryRecord)) {
+      Log.d(LOG_TAG, "Not a HistoryRecord: " + o);
+      return false;
+    }
+    HistoryRecord other = (HistoryRecord) o;
+    if (!super.equalPayloads(other)) {
+      Log.d(LOG_TAG, "super.equalPayloads returned false.");
+      return false;
+    }
+    return RepoUtils.stringsEqual(this.title, other.title) &&
+           RepoUtils.stringsEqual(this.histURI, other.histURI) &&
+           checkVisitsEquals(other);
   }
 
   private boolean checkVisitsEquals(HistoryRecord other) {
-    
+    Log.d(LOG_TAG, "Checking visits.");
+    Log.d(LOG_TAG, ">> Mine:   " + this.visits == null ? "null" : this.visits.toJSONString());
+    Log.d(LOG_TAG, ">> Theirs: " + other.visits == null ? "null" : other.visits.toJSONString());
+
     // Handle nulls.
     if (this.visits == other.visits) {
       return true;

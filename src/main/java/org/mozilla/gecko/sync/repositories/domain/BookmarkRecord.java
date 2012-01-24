@@ -230,15 +230,14 @@ public class BookmarkRecord extends Record {
   }
 
   @Override
-  public boolean equals(Object o) {
-    trace("Calling BookmarkRecord.equals.");
-    if (!(o instanceof BookmarkRecord)) {
+  public boolean equalPayloads(Object o) {
+    trace("Calling BookmarkRecord.equalPayloads.");
+    if (o == null || !(o instanceof BookmarkRecord)) {
       return false;
     }
 
     BookmarkRecord other = (BookmarkRecord) o;
-    
-    if (!super.equals(other)) {
+    if (!super.equalPayloads(other)) {
       return false;
     }
 
@@ -281,8 +280,15 @@ public class BookmarkRecord extends Record {
         && RepoUtils.stringsEqual(this.keyword, other.keyword)
         && jsonArrayStringsEqual(this.tags, other.tags);
   }
-  
-  // Converts to JSONArrays to strings and checks if they are the same.
+
+  // TODO: two records can be congruent if their child lists are different.
+  @Override
+  public boolean congruentWith(Object o) {
+    return this.equalPayloads(o) &&
+           super.congruentWith(o);
+  }
+
+  // Converts two JSONArrays to strings and checks if they are the same.
   // This is only useful for stuff like tags where we aren't actually
   // touching the data there (and therefore ordering won't change)
   private boolean jsonArrayStringsEqual(JSONArray a, JSONArray b) {
@@ -292,7 +298,6 @@ public class BookmarkRecord extends Record {
     if (a != null && b == null) return false;
     return RepoUtils.stringsEqual(a.toJSONString(), b.toJSONString());
   }
-
 }
 
 
