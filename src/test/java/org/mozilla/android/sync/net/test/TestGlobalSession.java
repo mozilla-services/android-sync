@@ -57,7 +57,7 @@ public class TestGlobalSession {
       @Override
       public void execute(GlobalSession session) {
         final HttpResponse response = new BasicHttpResponse(
-            new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
+          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
         response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
         session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
@@ -82,7 +82,7 @@ public class TestGlobalSession {
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
+        new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
       WaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
@@ -94,7 +94,7 @@ public class TestGlobalSession {
       assertEquals(false, callback.calledSuccess);
       assertEquals(true,  callback.calledError);
       assertEquals(false, callback.calledAborted);
-      assertEquals(true, callback.calledRequestBackoff);
+      assertEquals(true,  callback.calledRequestBackoff);
       assertEquals(TEST_BACKOFF_IN_SECONDS * 1000, callback.weaveBackoff); // Backoff returned in milliseconds.
     } catch (Exception e) {
       e.printStackTrace();

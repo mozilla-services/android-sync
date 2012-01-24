@@ -37,13 +37,13 @@ public class TestBackoff {
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+        new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
       response.addHeader("X-Weave-Backoff", Integer.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
       session.interpretHTTPFailure(response); // This is synchronous...
 
       assertEquals(false, callback.calledSuccess); // ... so we can test immediately.
-      assertEquals(false,  callback.calledError);
+      assertEquals(false, callback.calledError);
       assertEquals(false, callback.calledAborted);
       assertEquals(true,  callback.calledRequestBackoff);
       assertEquals(TEST_BACKOFF_IN_SECONDS * 1000, callback.weaveBackoff); // Backoff returned in milliseconds.
@@ -65,9 +65,9 @@ public class TestBackoff {
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+	new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
 
-      session.interpretHTTPFailure(response);
+      session.interpretHTTPFailure(response); // This is synchronous...
 
       assertEquals(false, callback.calledSuccess); // ... so we can test immediately.
       assertEquals(false, callback.calledError);
@@ -92,7 +92,7 @@ public class TestBackoff {
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+        new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
       response.addHeader("Retry-After", Integer.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
       response.addHeader("X-Weave-Backoff", Integer.toString(TEST_BACKOFF_IN_SECONDS + 1)); // If we now add a second header, the larger should be returned.
 
