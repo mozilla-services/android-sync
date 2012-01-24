@@ -51,6 +51,7 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
@@ -73,7 +74,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 
-public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback {
+public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback, ClientsDataDelegate {
   private static final String  LOG_TAG = "SyncAdapter";
 
   private static final String  PREFS_EARLIEST_NEXT_SYNC = "earliestnextsync";
@@ -195,6 +196,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   public Object syncMonitor = new Object();
   private SyncResult syncResult;
+
+  private Account localAccount;
 
   /**
    * Return the number of milliseconds until we're allowed to sync again,
@@ -332,11 +335,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                                         IOException, ParseException,
                                         NonObjectJSONException {
     Log.i(LOG_TAG, "Performing sync.");
-    this.syncResult = syncResult;
+    this.syncResult   = syncResult;
+    this.localAccount = account;
     // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
                                                     serverURL, username, password, prefsPath,
-                                                    keyBundle, this, this.mContext, extras);
+                                                    keyBundle, this, this.mContext, extras, this);
 
     globalSession.start();
 
@@ -399,5 +403,25 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     if (backoff > 0) {
       this.extendEarliestNextSync(System.currentTimeMillis() + backoff);
     }
+  }
+
+  @Override
+  public String getPersistedAccountGUID() {
+    return mAccountManager.getUserData(localAccount, Constants.ACCOUNT_GUID);
+  }
+
+  @Override
+  public void setPersistedAccountGUID(String guid) {
+    mAccountManager.setUserData(localAccount, Constants.ACCOUNT_GUID, guid);
+  }
+
+  @Override
+  public String getPersistedClientName() {
+    return mAccountManager.getUserData(localAccount, Constants.CLIENT_NAME);
+  }
+
+  @Override
+  public void setPersistedClientName(String clientName) {
+    mAccountManager.setUserData(localAccount, Constants.CLIENT_NAME, clientName);
   }
 }

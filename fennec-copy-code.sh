@@ -15,12 +15,14 @@ rsync -a manifests $SYNC/
 
 echo "Copying sources. All use of R must be compiled with Fennec."
 SOURCEDIR="src/main/java/org/mozilla/gecko/sync"
-SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' -not -name 'Authorities.java' | sed "s,$SOURCEDIR/,sync/,")
-rsync --include "*.java" -C --exclude 'Authorities.java' -a $SOURCEDIR $ANDROID/base/
+SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' -not -name 'Authorities.java' -not -name 'ClientName.java' | sed "s,$SOURCEDIR/,sync/,")
+rsync --include "*.java" -C --exclude 'Authorities.java' -C --exclude 'ClientName.java' -a $SOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessor Authorities file."
-PREPROCESS_FILES="sync/repositories/android/Authorities.java"
+echo "Copying preprocessor ClientName file."
+PREPROCESS_FILES="sync/repositories/android/Authorities.java sync/setup/ClientName.java"
 cp $SOURCEDIR/repositories/android/Authorities.java.in $ANDROID/base/sync/repositories/android/
+cp $SOURCEDIR/setup/ClientName.java.in $ANDROID/base/sync/setup/
 
 echo "Copying preprocessed sync_syncadapter.xml."
 cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
@@ -71,6 +73,7 @@ find res/drawable-hdpi  -name '*.xml' -or -name '*.png' | sed "s,res/,mobile/and
 
 # These seem to get copied anyway.
 rm $ANDROID/base/sync/repositories/android/Authorities.java
+rm $ANDROID/base/sync/setup/ClientName.java
 rm $ANDROID/base/resources/xml/sync_syncadapter.xml
 rm $ANDROID/base/resources/xml/sync_options.xml
 

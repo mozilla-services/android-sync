@@ -43,6 +43,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
+import org.mozilla.gecko.sync.setup.ClientName;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -218,6 +220,8 @@ public class SyncConfiguration implements CredentialsSource {
   public String          password;
   public String          syncID;
 
+  private ClientsDataDelegate clientsDelegate;
+
   // Fields that maintain a reference to a SharedPreferences instance, used for
   // persistence.
   // Behavior is undefined if the PrefsSource is switched out in flight.
@@ -231,10 +235,11 @@ public class SyncConfiguration implements CredentialsSource {
    * @param prefsPath
    * @param context
    */
-  public SyncConfiguration(String prefsPath, PrefsSource prefsSource) {
+  public SyncConfiguration(String prefsPath, PrefsSource prefsSource, ClientsDataDelegate clientsDelegate) {
     this.prefsPath   = prefsPath;
     this.prefsSource = prefsSource;
     this.loadFromPrefs(getPrefs());
+    this.clientsDelegate = clientsDelegate;
   }
 
   public SharedPreferences getPrefs() {
@@ -409,5 +414,23 @@ public class SyncConfiguration implements CredentialsSource {
    */
   public Editor getEditor() {
     return this.getPrefs().edit();
+  }
+
+  public String getAccountGUID() {
+    String accountGUID = clientsDelegate.getPersistedAccountGUID();
+    if (accountGUID == null) {
+      accountGUID = Utils.generateGuid();
+      clientsDelegate.setPersistedAccountGUID(accountGUID);
+    }
+    return accountGUID;
+  }
+
+  public String getClientName() {
+    String clientName = clientsDelegate.getPersistedClientName();
+    if (clientName == null) {
+      clientName = ClientName.getClientName();
+      clientsDelegate.setPersistedClientName(clientName);
+    }
+    return clientName;
   }
 }

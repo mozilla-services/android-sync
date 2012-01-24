@@ -48,6 +48,7 @@ import java.util.Map;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
@@ -69,6 +70,7 @@ import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
+import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -148,7 +150,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
                        KeyBundle syncKeyBundle,
                        GlobalSessionCallback callback,
                        Context context,
-                       Bundle persisted)
+                       Bundle persisted,
+                       ClientsDataDelegate clientsDelegate)
                            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
     if (callback == null) {
       throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
@@ -175,12 +178,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     this.callback        = callback;
     this.context         = context;
 
-    config = new SyncConfiguration(prefsPath, this);
+    config = new SyncConfiguration(prefsPath, this, clientsDelegate);
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;
     config.username      = username;
     config.password      = password;
     config.syncKeyBundle = syncKeyBundle;
+
     // clusterURL and syncID are set through `persisted`, or fetched from the server.
 
     assert(null == persisted);
@@ -194,6 +198,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
     stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
+    stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
 
     // TODO: more stages.
     stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
@@ -692,5 +697,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
       throw new MetaGlobalMissingEnginesException();
     }
     return this.config.metaGlobal.engines.get(engineName) != null;
+  }
+
+  public String getAccountGUID() {
+    return config.getAccountGUID();
+  }
+
+  public String getClientName() {
+    return config.getClientName();
   }
 }

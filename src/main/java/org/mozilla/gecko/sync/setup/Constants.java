@@ -47,6 +47,12 @@ public class Constants {
   public static final String OPTION_USERNAME      = "option.username";
   public static final String AUTHTOKEN_TYPE_PLAIN = "auth.plain";
   public static final String OPTION_SERVER        = "option.serverUrl";
+  public static final String ACCOUNT_GUID         = "account.guid";
+  public static final String CLIENT_NAME          = "account.clientName";
+
+  // Constants for client records.
+  public static final String PROFILE_ID  = "default";     // Generic profile id for now, until multiple profiles are implemented.
+  public static final String CLIENT_TYPE = "mobile";
 
   // Constants for Activities.
   public static final String INTENT_EXTRA_IS_SETUP = "isSetup";
