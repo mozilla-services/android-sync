@@ -6,7 +6,7 @@
     android:id="@+id/setup_top"
     style="@style/SyncTop" >
     <ImageView
-      android:src="@drawable/sync_icon"
+      android:src="@drawable/sync_ic_launcher"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content" />
     <TextView
@@ -20,46 +20,51 @@
     android:layout_below="@id/setup_top"
     android:layout_above="@+id/setup_bottom" >
     <LinearLayout
-      style="@style/SyncLayout.Vertical" >
+      style="@style/SyncLayout.Vertical"
+      android:layout_margin="10dp"
+      android:paddingLeft="10dp" >
+
       <TextView
         android:id="@+id/setup_header"
         style="@style/SyncTextItem"
-        android:layout_margin="10dp"
-        android:paddingLeft="10dp"
         android:gravity="left"
+        android:layout_margin="15dp"
         android:text="@string/sync_subtitle_header"
         android:textStyle="bold" />
       <TextView
         android:id="@+id/setup_subtitle"
         style="@style/SyncTextItem"
-        android:layout_margin="10dp"
-        android:paddingLeft="10dp"
         android:gravity="left"
+        android:layout_marginTop="10dp"
         android:text="@string/sync_subtitle_connect" />
 
       <TextView
         style="@style/SyncLinkItem"
         android:layout_margin="10dp"
-        android:paddingLeft="10dp"
-        android:gravity="left"
         android:onClick="showClickHandler"
         android:text="@string/sync_link_show" />
 
+
       <LinearLayout
-        style="@style/SyncTextItem"
+        style="@style/SyncLayout"
+        android:padding="10dp"
         android:orientation="vertical" >
         <TextView
-          android:id="@+id/text_pin"
-          style="@style/SyncTextItem"
-          android:gravity="center"
-          android:text="@string/sync_pin_default"
-          android:textSize="40dp" />
+          android:id="@+id/text_pin1"
+          style="@style/SyncPinText" />
+        <TextView
+          android:id="@+id/text_pin2"
+          style="@style/SyncPinText" />
+        <TextView
+          android:id="@+id/text_pin3"
+          style="@style/SyncPinText" />
       </LinearLayout>
 
       <TextView
         android:id="@+id/link_nodevice"
         style="@style/SyncLinkItem"
         android:gravity="center"
+        android:paddingTop="20dp"
         android:onClick="manualClickHandler"
         android:text="@string/sync_link_advancedsetup" />
 
