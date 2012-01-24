@@ -28,7 +28,8 @@
         android:id="@+id/setup_header"
         style="@style/SyncTextItem"
         android:gravity="left"
-        android:layout_margin="15dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
         android:text="@string/sync_subtitle_header"
         android:textStyle="bold" />
       <TextView
@@ -36,11 +37,13 @@
         style="@style/SyncTextItem"
         android:gravity="left"
         android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
         android:text="@string/sync_subtitle_connect" />
 
       <TextView
         style="@style/SyncLinkItem"
-        android:layout_margin="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
         android:onClick="showClickHandler"
         android:text="@string/sync_link_show" />
 
