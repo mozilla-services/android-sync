@@ -30,11 +30,11 @@ import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 
 public class TestGlobalSession {
-  private final String TEST_CLUSTER_URL		= "http://localhost:8080/";
-  private final String TEST_USERNAME		= "johndoe";
-  private final String TEST_PASSWORD		= "password";
-  private final String TEST_SYNC_KEY		= "abcdeabcdeabcdeabcdeabcdea";
-  private final long   TEST_BACKOFF_IN_SECONDS	= 2401;
+  private final String TEST_CLUSTER_URL         = "http://localhost:8080/";
+  private final String TEST_USERNAME            = "johndoe";
+  private final String TEST_PASSWORD            = "password";
+  private final String TEST_SYNC_KEY            = "abcdeabcdeabcdeabcdeabcdea";
+  private final long   TEST_BACKOFF_IN_SECONDS  = 2401;
 
   /**
    * A mock GlobalSession that fakes a 503 on info/collections and

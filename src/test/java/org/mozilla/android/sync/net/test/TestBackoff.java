@@ -19,11 +19,11 @@ import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 
 public class TestBackoff {
-  private final String TEST_CLUSTER_URL		= "http://localhost:8080/";
-  private final String TEST_USERNAME		= "johndoe";
-  private final String TEST_PASSWORD		= "password";
-  private final String TEST_SYNC_KEY		= "abcdeabcdeabcdeabcdeabcdea";
-  private final int    TEST_BACKOFF_IN_SECONDS	= 1201;
+  private final String TEST_CLUSTER_URL         = "http://localhost:8080/";
+  private final String TEST_USERNAME            = "johndoe";
+  private final String TEST_PASSWORD            = "password";
+  private final String TEST_SYNC_KEY            = "abcdeabcdeabcdeabcdeabcdea";
+  private final long   TEST_BACKOFF_IN_SECONDS  = 1201;
 
   /**
    * Test that interpretHTTPFailure calls requestBackoff if
@@ -38,7 +38,7 @@ public class TestBackoff {
 
       final HttpResponse response = new BasicHttpResponse(
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
-      response.addHeader("X-Weave-Backoff", Integer.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
+      response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
       session.interpretHTTPFailure(response); // This is synchronous...
 
@@ -93,8 +93,8 @@ public class TestBackoff {
 
       final HttpResponse response = new BasicHttpResponse(
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
-      response.addHeader("Retry-After", Integer.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
-      response.addHeader("X-Weave-Backoff", Integer.toString(TEST_BACKOFF_IN_SECONDS + 1)); // If we now add a second header, the larger should be returned.
+      response.addHeader("Retry-After", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
+      response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS + 1)); // If we now add a second header, the larger should be returned.
 
       session.interpretHTTPFailure(response); // This is synchronous...
 
