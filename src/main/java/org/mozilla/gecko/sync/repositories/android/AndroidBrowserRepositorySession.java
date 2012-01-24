@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -340,6 +341,15 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
     this.fetchSince(0, delegate);
+  }
+
+  private void trace(String m) {
+    if (Utils.ENABLE_TRACE_LOGGING) {
+      if (Utils.LOG_TO_STDOUT) {
+        System.out.println(LOG_TAG + "::TRACE " + m);
+      }
+      Log.d(LOG_TAG, m);
+    }
   }
 
   @Override
