@@ -6,7 +6,7 @@
   <string name="sync_subtitle_header">&sync.subtitle.header.label;</string>
   <string name="sync_subtitle_connect">&sync.subtitle.connectlocation.label;</string>
   <string name="sync_subtitle_pair">&sync.subtitle.pair.label;</string>
-  <string name="sync_pin_default">&sync.pin.default.label;</string>
+  <string name="sync_pin_default">&sync.pin.oneline.label;</string>
   <string name="sync_link_show">&sync.link.show.label;</string>
   <string name="sync_link_advancedsetup">&sync.link.advancedsetup.label;</string>
 

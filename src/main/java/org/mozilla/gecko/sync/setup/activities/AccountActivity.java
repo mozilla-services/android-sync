@@ -133,7 +133,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   }
 
   public void cancelClickHandler(View target) {
-    moveTaskToBack(true);
+    finish();
   }
 
   /*
