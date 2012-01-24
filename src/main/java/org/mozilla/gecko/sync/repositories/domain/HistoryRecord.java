@@ -83,6 +83,32 @@ public class HistoryRecord extends Record {
   public long      fennecDateVisited;
   public long      fennecVisitCount;
 
+  @SuppressWarnings("unchecked")
+  private JSONArray copyVisits() {
+    if (this.visits == null) {
+      return null;
+    }
+    JSONArray out = new JSONArray();
+    out.addAll(this.visits);
+    return out;
+  }
+
+  @Override
+  public Record copyWithIDs(String guid, long androidID) {
+    HistoryRecord out = new HistoryRecord(guid, this.collection, this.lastModified, this.deleted);
+    out.androidID = androidID;
+    out.sortIndex = this.sortIndex;
+
+    // Copy HistoryRecord fields.
+    out.title             = this.title;
+    out.histURI           = this.histURI;
+    out.fennecDateVisited = this.fennecDateVisited;
+    out.fennecVisitCount  = this.fennecVisitCount;
+    out.visits            = this.copyVisits();
+
+    return out;
+  }
+
   @Override
   public void initFromPayload(CryptoRecord payload) {
     ExtendedJSONObject p = payload.payload;

@@ -122,4 +122,15 @@ public abstract class Record {
       throw new IllegalStateException(detailMessage);
     }
   }
+
+  /**
+   * Return an identical copy of this record with the provided two values.
+   *
+   * Oh for persistent data structures.
+   *
+   * @param guid
+   * @param androidID
+   * @return
+   */
+  public abstract Record copyWithIDs(String guid, long androidID);
 }

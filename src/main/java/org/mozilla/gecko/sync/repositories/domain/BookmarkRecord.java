@@ -95,6 +95,51 @@ public class BookmarkRecord extends Record {
            parentID + "/" + androidParentID + "/" + parentName + ">";
   }
 
+  // Oh God, this is terribly thread-unsafe. These record objects should be immutable.
+  @SuppressWarnings("unchecked")
+  protected JSONArray copyChildren() {
+    if (this.children == null) {
+      return null;
+    }
+    JSONArray children = new JSONArray();
+    children.addAll(this.children);
+    return children;
+  }
+
+  @SuppressWarnings("unchecked")
+  protected JSONArray copyTags() {
+    if (this.tags == null) {
+      return null;
+    }
+    JSONArray tags = new JSONArray();
+    tags.addAll(this.tags);
+    return tags;
+  }
+
+  @Override
+  public Record copyWithIDs(String guid, long androidID) {
+    BookmarkRecord out = new BookmarkRecord(guid, this.collection, this.lastModified, this.deleted);
+    out.androidID = androidID;
+    out.sortIndex = this.sortIndex;
+
+    // Copy BookmarkRecord fields.
+    out.title           = this.title;
+    out.bookmarkURI     = this.bookmarkURI;
+    out.description     = this.description;
+    out.keyword         = this.keyword;
+    out.parentID        = this.parentID;
+    out.parentName      = this.parentName;
+    out.androidParentID = this.androidParentID;
+    out.type            = this.type;
+    out.pos             = this.pos;
+    out.androidPosition = this.androidPosition;
+
+    out.children        = this.copyChildren();
+    out.tags            = this.copyTags();
+
+    return out;
+  }
+
   @Override
   public void initFromPayload(CryptoRecord payload) {
     ExtendedJSONObject p = payload.payload;

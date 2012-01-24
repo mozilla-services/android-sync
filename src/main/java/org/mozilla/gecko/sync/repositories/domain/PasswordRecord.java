@@ -75,6 +75,28 @@ public class PasswordRecord extends Record {
   public long   timeLastUsed;
   public long   timesUsed;
 
+
+  @Override
+  public Record copyWithIDs(String guid, long androidID) {
+    PasswordRecord out = new PasswordRecord(guid, this.collection, this.lastModified, this.deleted);
+    out.androidID = androidID;
+    out.sortIndex = this.sortIndex;
+
+    // Copy HistoryRecord fields.
+    out.hostname      = this.hostname;
+    out.formSubmitURL = this.formSubmitURL;
+    out.httpRealm     = this.httpRealm;
+    out.username      = this.username;
+    out.password      = this.password;
+    out.usernameField = this.usernameField;
+    out.passwordField = this.passwordField;
+    out.encType       = this.encType;
+    out.timeLastUsed  = this.timeLastUsed;
+    out.timesUsed     = this.timesUsed;
+
+    return out;
+  }
+
   @Override
   public void initFromPayload(CryptoRecord payload) {
     // TODO Auto-generated method stub
