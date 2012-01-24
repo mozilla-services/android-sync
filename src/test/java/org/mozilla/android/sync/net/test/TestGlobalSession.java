@@ -56,8 +56,7 @@ public class TestGlobalSession {
     public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
       @Override
       public void execute(GlobalSession session) {
-        HttpResponse response;
-        response = new BasicHttpResponse(
+        final HttpResponse response = new BasicHttpResponse(
             new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
         response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
@@ -82,8 +81,7 @@ public class TestGlobalSession {
       final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
-      final HttpResponse response;
-      response = new BasicHttpResponse(
+      final HttpResponse response = new BasicHttpResponse(
           new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
