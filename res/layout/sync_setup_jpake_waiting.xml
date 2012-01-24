@@ -5,9 +5,7 @@
     android:id="@+id/waiting_top"
     style="@style/SyncTop" >
   <ImageView
-    android:src="@drawable/sync_ic_launcher"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content" />
+    style="@style/SyncTopIcon" />
   <TextView
     style="@style/SyncTextTitle"
     android:text="@string/sync_title_connect" />
@@ -20,7 +18,10 @@
     android:layout_height="wrap_content"
     android:layout_below="@id/waiting_top"
     android:indeterminateOnly="true"
-    android:layout_margin="10dp" />
+    android:layout_marginTop="40dp"
+    android:layout_marginLeft="15dp"
+    android:layout_marginRight="15dp"
+    android:layout_marginBottom="15dp"/>
   <TextView
     style="@style/SyncTextItem"
     android:gravity="center"

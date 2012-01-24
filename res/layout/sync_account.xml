@@ -6,9 +6,7 @@
     style="@style/SyncTop">
 
     <ImageView
-      android:src="@drawable/sync_ic_launcher"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" />
+      style="@style/SyncTopIcon" />
     <TextView
       style="@style/SyncTextTitle"
       android:text="@string/sync_title_connect" />
@@ -16,8 +14,7 @@
 
   <ScrollView
     android:id="@+id/account_content"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    style="@style/SyncLayout"
     android:layout_below="@id/account_top"
     android:layout_above="@+id/account_bottom">
 

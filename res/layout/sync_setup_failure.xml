@@ -5,9 +5,7 @@
     android:id="@+id/failure_top"
     style="@style/SyncTop" >
   <ImageView
-    android:src="@drawable/sync_ic_launcher"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content" />
+    style="@style/SyncTopIcon" />
   <TextView
     style="@style/SyncTextTitle"
     android:text="@string/sync_title_fail" />

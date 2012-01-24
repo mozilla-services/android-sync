@@ -6,31 +6,19 @@
     android:id="@+id/success_top"
     style="@style/SyncTop" >
     <ImageView
-      android:src="@drawable/sync_ic_launcher"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" />
+      style="@style/SyncTopIcon"/>
     <TextView
       style="@style/SyncTextTitle"
       android:text="@string/sync_title_success" />
   </LinearLayout>
-  <LinearLayout
-    style="@style/SyncLayout.Vertical"
+  <TextView
+    android:id="@+id/setup_success_subtitle"
+	style="@style/SyncTextItem"
+	android:gravity="left"
     android:padding="20dp"
-    android:layout_below="@id/success_top" >
-	<TextView
-	  android:id="@+id/setup_success_subtitle"
-	  style="@style/SyncTextItem"
-	  android:gravity="left"
-	  android:text="@string/sync_subtitle_success" />
+    android:layout_below="@id/success_top"
+	android:text="@string/sync_subtitle_success" />
 
-	<TextView
-	  android:id="@+id/link_pair"
-	  style="@style/SyncLinkItem"
-      android:layout_marginTop="10dp"
-      android:gravity="left"
-      android:onClick="pairClickHandler"
-      android:text="@string/sync_title_pair" />
-  </LinearLayout>
   <LinearLayout
     style="@style/SyncBottom" >
     <Button
