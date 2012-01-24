@@ -373,9 +373,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           return;
         }
 
-        // Check that the record is a valid type
-        // TODO Currently for bookmarks we only take care of folders
-        // and bookmarks, all other types are ignored and thrown away
+        // Check that the record is a valid type.
+        // Fennec only supports bookmarks and folders. All other types of records,
+        // including livemarks and queries, are simply ignored.
+        // See Bug 708149. This might be resolved by Fennec changing its database
+        // schema, or by Sync storing non-applied records in its own private database.
         if (!checkRecordType(record)) {
           Log.d(LOG_TAG, "Ignoring record " + record.guid + " due to unknown record type.");
 
