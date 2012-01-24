@@ -6,9 +6,7 @@
     android:id="@+id/setup_top"
     style="@style/SyncTop" >
     <ImageView
-      android:src="@drawable/sync_ic_launcher"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" />
+      style="@style/SyncTopIcon" />
     <TextView
       android:id="@+id/setup_title"
       style="@style/SyncTextTitle"
@@ -17,40 +15,43 @@
 
   <ScrollView
     style="@style/SyncLayout"
+    android:fillViewport="true"
     android:layout_below="@id/setup_top"
     android:layout_above="@+id/setup_bottom" >
-    <LinearLayout
-      style="@style/SyncLayout.Vertical"
-      android:layout_margin="10dp"
-      android:paddingLeft="10dp" >
+
+    <RelativeLayout
+        style="@style/SyncLayout.Vertical"
+        android:layout_height="fill_parent"
+        android:padding="15dp" >
 
       <TextView
         android:id="@+id/setup_header"
         style="@style/SyncTextItem"
         android:gravity="left"
         android:layout_marginTop="15dp"
-        android:layout_marginBottom="15dp"
         android:text="@string/sync_subtitle_header"
         android:textStyle="bold" />
       <TextView
         android:id="@+id/setup_subtitle"
         style="@style/SyncTextItem"
+        android:layout_below="@id/setup_header"
         android:gravity="left"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginTop="2dp"
         android:text="@string/sync_subtitle_connect" />
 
       <TextView
+        android:id="@+id/setup_showme"
         style="@style/SyncLinkItem"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
+        android:layout_below="@id/setup_subtitle"
+        android:layout_marginTop="2dp"
         android:onClick="showClickHandler"
         android:text="@string/sync_link_show" />
 
-
       <LinearLayout
         style="@style/SyncLayout"
-        android:padding="10dp"
+        android:layout_below="@id/setup_showme"
+        android:paddingTop="30dp"
+        android:paddingLeft="-15dp"
         android:orientation="vertical" >
         <TextView
           android:id="@+id/text_pin1"
@@ -66,12 +67,12 @@
       <TextView
         android:id="@+id/link_nodevice"
         style="@style/SyncLinkItem"
+        android:layout_alignParentBottom="true"
         android:gravity="center"
-        android:paddingTop="20dp"
+        android:paddingBottom="5dp"
         android:onClick="manualClickHandler"
         android:text="@string/sync_link_advancedsetup" />
-
-    </LinearLayout>
+    </RelativeLayout>
   </ScrollView>
   <LinearLayout
     android:id="@id/setup_bottom"

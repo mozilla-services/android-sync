@@ -5,9 +5,7 @@
     android:id="@+id/pair_top"
     style="@style/SyncTop" >
     <ImageView
-      android:src="@drawable/sync_ic_launcher"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" />
+      style="@style/SyncTopIcon" />
     <TextView
       android:id="@+id/setup_title"
       style="@style/SyncTextTitle"
