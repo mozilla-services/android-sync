@@ -22,58 +22,57 @@
     <LinearLayout
       style="@style/SyncLayout.Vertical" >
       <TextView
-          android:id="@+id/setup_header"
-          style="@style/SyncTextItem"
-          android:layout_margin="10dp"
-          android:paddingLeft="10dp"
-          android:gravity="left"
-          android:text="@string/sync_subtitle_header"
-          android:textStyle="bold" />
+        android:id="@+id/setup_header"
+        style="@style/SyncTextItem"
+        android:layout_margin="10dp"
+        android:paddingLeft="10dp"
+        android:gravity="left"
+        android:text="@string/sync_subtitle_header"
+        android:textStyle="bold" />
       <TextView
-          android:id="@+id/setup_subtitle"
-          style="@style/SyncTextItem"
-          android:layout_margin="10dp"
-          android:paddingLeft="10dp"
-          android:gravity="left"
-          android:text="@string/sync_subtitle_connect" />
+        android:id="@+id/setup_subtitle"
+        style="@style/SyncTextItem"
+        android:layout_margin="10dp"
+        android:paddingLeft="10dp"
+        android:gravity="left"
+        android:text="@string/sync_subtitle_connect" />
 
       <TextView
-          style="@style/SyncLinkItem"
-          android:layout_margin="10dp"
-          android:paddingLeft="10dp"
-          android:gravity="left"
-          android:onClick="showClickHandler"
-          android:text="@string/sync_link_show" />
+        style="@style/SyncLinkItem"
+        android:layout_margin="10dp"
+        android:paddingLeft="10dp"
+        android:gravity="left"
+        android:onClick="showClickHandler"
+        android:text="@string/sync_link_show" />
 
       <LinearLayout
+        style="@style/SyncTextItem"
+        android:orientation="vertical" >
+        <TextView
+          android:id="@+id/text_pin"
           style="@style/SyncTextItem"
-          android:orientation="vertical" >
-
-          <TextView
-              android:id="@+id/text_pin"
-              style="@style/SyncTextItem"
-              android:gravity="center"
-              android:text="@string/sync_pin_default"
-              android:textSize="40dp" />
-      </LinearLayout>
-
-      <TextView
-          android:id="@+id/link_nodevice"
-          style="@style/SyncLinkItem"
           android:gravity="center"
-          android:onClick="manualClickHandler"
-          android:text="@string/sync_link_advancedsetup" />
-
+          android:text="@string/sync_pin_default"
+          android:textSize="40dp" />
       </LinearLayout>
+
+      <TextView
+        android:id="@+id/link_nodevice"
+        style="@style/SyncLinkItem"
+        android:gravity="center"
+        android:onClick="manualClickHandler"
+        android:text="@string/sync_link_advancedsetup" />
+
+    </LinearLayout>
   </ScrollView>
-      <LinearLayout
-          android:id="@id/setup_bottom"
-          style="@style/SyncBottom"
-          android:orientation="horizontal" >
-          <Button
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:onClick="cancelClickHandler"
-              android:text="@string/sync_button_cancel" />
+  <LinearLayout
+    android:id="@id/setup_bottom"
+    style="@style/SyncBottom"
+    android:orientation="horizontal" >
+    <Button
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:onClick="cancelClickHandler"
+      android:text="@string/sync_button_cancel" />
   </LinearLayout>
 </RelativeLayout>
