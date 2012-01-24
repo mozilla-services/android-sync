@@ -13,24 +13,24 @@
       style="@style/SyncTextTitle"
       android:text="@string/sync_title_success" />
   </LinearLayout>
-  <TextView
-    android:id="@+id/setup_success_subtitle"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:layout_below="@id/success_top"
-    android:gravity="center"
+  <LinearLayout
+    style="@style/SyncLayout.Vertical"
     android:padding="20dp"
-    android:text="@string/sync_subtitle_success" />
+    android:layout_below="@id/success_top" >
+	<TextView
+	  android:id="@+id/setup_success_subtitle"
+	  style="@style/SyncTextItem"
+	  android:gravity="left"
+	  android:text="@string/sync_subtitle_success" />
 
-  <TextView
-    android:id="@+id/link_pair"
-    style="@style/SyncLinkItem"
-    android:gravity="center"
-    android:layout_below="@id/setup_success_subtitle"
-    android:layout_gravity="center|bottom"
-    android:onClick="pairClickHandler"
-    android:text="@string/sync_title_pair" />
-
+	<TextView
+	  android:id="@+id/link_pair"
+	  style="@style/SyncLinkItem"
+      android:layout_marginTop="10dp"
+      android:gravity="left"
+      android:onClick="pairClickHandler"
+      android:text="@string/sync_title_pair" />
+  </LinearLayout>
   <LinearLayout
     style="@style/SyncBottom" >
     <Button
