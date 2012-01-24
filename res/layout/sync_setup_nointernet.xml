@@ -1,18 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/SyncTextFrame" >
-    <TextView
-        style="@style/SyncTextTitle"
-        android:text="@string/sync_title_fail" />
-    <View
-        style="@style/SyncViewLine"/>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/SyncLayout" >
+    <LinearLayout
+        android:id="@+id/internet_top"
+        style="@style/SyncTop">
+        <ImageView
+          android:src="@drawable/sync_icon"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content" />
+        <TextView
+          style="@style/SyncTextTitle"
+          android:text="@string/sync_title_fail" />
+    </LinearLayout>
     <TextView
         style="@style/SyncTextItem"
+        android:layout_below="@id/internet_top"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
         android:text="@string/sync_subtitle_nointernet" />
+    <LinearLayout
+        style="@style/SyncBottom" >
     <Button
-        style="@style/SyncButtonCommon"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
+        style="@style/SyncButton"
         android:onClick="cancelClickHandler"
         android:text="@string/sync_button_ok" />
-</TableLayout>
+    </LinearLayout>
+</RelativeLayout>

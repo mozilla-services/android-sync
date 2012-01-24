@@ -1,22 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  style="@style/SyncTextFrame" >
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  style="@style/SyncLayout" >
+  <LinearLayout
+    android:id="@+id/account_top"
+    style="@style/SyncTop">
+
+    <ImageView
+      android:src="@drawable/sync_icon"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" />
+    <TextView
+      style="@style/SyncTextTitle"
+      android:text="@string/sync_title_connect" />
+  </LinearLayout>
 
   <ScrollView
-    style="@style/SyncLayout" >
-    
+    android:id="@+id/account_content"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_below="@id/account_top"
+    android:layout_above="@+id/account_bottom">
+
 	<LinearLayout
-	    style="@style/SyncLayout" >
-	
-	  <TextView
-	    style="@style/SyncTextTitle"
-	    android:text="@string/sync_title_connect" />
-	
-	  <View
-	    style="@style/SyncViewLine" />
-	
+        style="@style/SyncLayout.Vertical" >
+
 	  <TextView
 	    style="@style/SyncTextItem"
+	    android:padding="10dp"
 	    android:text="@string/sync_subtitle_account" />
 	
 	  <EditText android:id="@+id/usernameInput"
@@ -43,26 +53,26 @@
 	    style="@style/SyncEditItem"
 	    android:visibility="gone"
 	    android:hint="@string/sync_input_server" />
-	
+
+	  </LinearLayout>
+	  </ScrollView>
+
 	  <LinearLayout
-	    android:layout_width="fill_parent"
-	    android:layout_height="fill_parent"
+	    android:id="@id/account_bottom"
+	    style="@style/SyncBottom"
 	    android:orientation="horizontal" >
 	
 	    <Button
-	      style="@style/SyncButtonCommon"
+	      style="@style/SyncButton"
 	      android:onClick="cancelClickHandler"
 	      android:text="@string/sync_button_cancel" />
 	
 	    <Button
+	      style="@style/SyncButton"
 	      android:id="@+id/accountConnectButton"
-	      style="@style/SyncButtonCommon"
 	      android:onClick="connectClickHandler"
 	      android:clickable="false"
 	      android:enabled="false"
 	      android:text="@string/sync_button_connect" />
-	
 	  </LinearLayout>
-	</LinearLayout>
-  </ScrollView>
-</TableLayout>
+</RelativeLayout>
