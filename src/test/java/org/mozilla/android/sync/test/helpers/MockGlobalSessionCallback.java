@@ -4,43 +4,56 @@
 package org.mozilla.android.sync.test.helpers;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 
 /**
- * A callback for use with a GlobalSession that ensures that
- * handleSuccess is called after the final stage is completed.
+ * A callback for use with a GlobalSession that records what happens for later
+ * inspection.
+ * 
+ * This callback is expected to be used from within the friendly confines of a
+ * WaitHelper performWait.
  */
-public class MockGlobalSessionCallback implements GlobalSessionCallback {
-  int stageCounter = Stage.values().length - 1; // Exclude starting state.
+public class MockGlobalSessionCallback extends DefaultDelegate implements GlobalSessionCallback {
+  public int stageCounter = Stage.values().length - 1; // Exclude starting state.
   public boolean calledSuccess = false;
-    
-  public void handleError(GlobalSession globalSession, Exception ex) {
-    ex.printStackTrace();
-    fail("No error should occur.");
-  }
+  public boolean calledError = false;
+  public boolean calledAborted = false;
+  public boolean calledRequestBackoff = false;
+  public long weaveBackoff = -1; 
 
+  @Override
   public void handleSuccess(GlobalSession globalSession) {
-    assertEquals(0, stageCounter);
-    calledSuccess = true;
+    this.calledSuccess = true;
+    assertEquals(0, this.stageCounter);
+    this.testWaiter().performNotify();
   }
 
+  @Override
+  public void handleAborted(GlobalSession globalSession, String reason) {
+    this.calledAborted = true;
+    this.testWaiter().performNotify();
+  }
+
+  @Override
+  public void handleError(GlobalSession globalSession, Exception ex) {
+    this.calledError = true;
+    this.testWaiter().performNotify();
+  }
+
+  @Override
   public void handleStageCompleted(Stage currentState,
-				   GlobalSession globalSession) {
+           GlobalSession globalSession) {
     stageCounter--;
   }
 
   @Override
   public void requestBackoff(long backoff) {
-    fail("Not expecting backoff.");
-  }
-
-  @Override
-  public void handleAborted(GlobalSession globalSession, String reason) {
-    fail("Not expecting abort.");
+    this.calledRequestBackoff = true;
+    this.weaveBackoff = backoff;
   }
 
   @Override
