@@ -35,10 +35,10 @@ public class TestBackoff {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
       final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
-      
+
       final HttpResponse response;
       response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));       
+          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
       response.addHeader("X-Weave-Backoff", Integer.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
       session.interpretHTTPFailure(response); // This is synchronous...
@@ -53,7 +53,7 @@ public class TestBackoff {
       fail("Got exception.");
     }
   }
-  
+
   /**
    * Test that interpretHTTPFailure does not call requestBackoff if
    * X-Weave-Backoff is not present.
@@ -67,10 +67,10 @@ public class TestBackoff {
 
       final HttpResponse response;
       response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));       
+          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
 
       session.interpretHTTPFailure(response);
-      
+
       assertEquals(false, callback.calledSuccess); // ... so we can test immediately.
       assertEquals(false, callback.calledError);
       assertEquals(false, callback.calledAborted);
@@ -80,7 +80,7 @@ public class TestBackoff {
       fail("Got exception.");
     }
   }
-  
+
   /**
    * Test that interpretHTTPFailure calls requestBackoff with the
    * largest specified value if X-Weave-Backoff and Retry-After are
@@ -92,13 +92,13 @@ public class TestBackoff {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
       final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
-      
+
       final HttpResponse response;
       response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));       
+          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
       response.addHeader("Retry-After", Integer.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
       response.addHeader("X-Weave-Backoff", Integer.toString(TEST_BACKOFF_IN_SECONDS + 1)); // If we now add a second header, the larger should be returned.
-      
+
       session.interpretHTTPFailure(response); // This is synchronous...
 
       assertEquals(false, callback.calledSuccess); // ... so we can test immediately.

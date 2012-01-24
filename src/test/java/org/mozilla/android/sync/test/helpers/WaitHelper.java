@@ -56,7 +56,7 @@ public class WaitHelper {
    * Some things need to be tested asynchronously, and in order to wait
    * properly, a separate thread must be spawned -- see the class comment. This
    * helper function spawns that separate thread.
-   * 
+   *
    * @param runnable
    *          A Runnable to be executed in it's own thread.
    */
@@ -69,7 +69,7 @@ public class WaitHelper {
         }
       });
   }
-  
+
   public synchronized void performNotify(AssertionError e) {
     if (e != null) {
       Log.i("WaitHelper", "performNotify called with AssertionError " + e);

@@ -35,7 +35,7 @@ public class TestGlobalSession {
   private final String TEST_PASSWORD		= "password";
   private final String TEST_SYNC_KEY		= "abcdeabcdeabcdeabcdeabcdea";
   private final long   TEST_BACKOFF_IN_SECONDS	= 2401;
-  
+
   /**
    * A mock GlobalSession that fakes a 503 on info/collections and
    * sets X-Weave-Backoff header to the specified number of seconds.
@@ -44,7 +44,7 @@ public class TestGlobalSession {
 
     public MockSharedPreferences prefs;
     public long backoffInSeconds = -1;
-    
+
     public MockBackoffGlobalSession(long backoffInSeconds,
 				    String clusterURL, String username, String password,
 				    KeyBundle syncKeyBundle, GlobalSessionCallback callback)
@@ -58,9 +58,9 @@ public class TestGlobalSession {
       public void execute(GlobalSession session) {
         HttpResponse response;
         response = new BasicHttpResponse(
-            new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));       
+            new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
-        response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.        
+        response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
         session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
       }
     }
@@ -71,7 +71,7 @@ public class TestGlobalSession {
       stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage());
     }
   }
-  
+
   /**
    * Test that handleHTTPError does in fact backoff.
    */
@@ -81,18 +81,18 @@ public class TestGlobalSession {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
       final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
-      
+
       final HttpResponse response;
       response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));             
+          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
-      
+
       WaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
         public void run() {
           session.handleHTTPError(new SyncStorageResponse(response), "Illegal method/protocol");
         }
       });
-      
+
       assertEquals(false, callback.calledSuccess);
       assertEquals(true,  callback.calledError);
       assertEquals(false, callback.calledAborted);
@@ -103,7 +103,7 @@ public class TestGlobalSession {
       fail("Got exception.");
     }
   }
-  
+
 
   /**
    * Test that a trivially successful GlobalSession does not fail or backoff.
@@ -123,8 +123,8 @@ public class TestGlobalSession {
             WaitHelper.getTestWaiter().performNotify(new AssertionError(e));
           }
         }
-      });      
-      
+      });
+
       assertEquals(true,  callback.calledSuccess);
       assertEquals(false, callback.calledError);
       assertEquals(false, callback.calledAborted);
@@ -134,7 +134,7 @@ public class TestGlobalSession {
       fail("Got exception.");
     }
   }
-  
+
   /**
    * Test that a failing GlobalSession does in fact fail and back off.
    */
@@ -154,7 +154,7 @@ public class TestGlobalSession {
           }
         }
       });
-      
+
       assertEquals(false, callback.calledSuccess);
       assertEquals(true,  callback.calledError);
       assertEquals(false, callback.calledAborted);

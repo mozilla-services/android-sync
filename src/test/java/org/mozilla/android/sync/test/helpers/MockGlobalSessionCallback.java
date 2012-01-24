@@ -13,7 +13,7 @@ import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 /**
  * A callback for use with a GlobalSession that records what happens for later
  * inspection.
- * 
+ *
  * This callback is expected to be used from within the friendly confines of a
  * WaitHelper performWait.
  */
@@ -23,7 +23,7 @@ public class MockGlobalSessionCallback extends DefaultDelegate implements Global
   public boolean calledError = false;
   public boolean calledAborted = false;
   public boolean calledRequestBackoff = false;
-  public long weaveBackoff = -1; 
+  public long weaveBackoff = -1;
 
   @Override
   public void handleSuccess(GlobalSession globalSession) {

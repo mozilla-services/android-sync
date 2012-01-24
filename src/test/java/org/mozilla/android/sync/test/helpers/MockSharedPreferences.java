@@ -33,7 +33,7 @@ public class MockSharedPreferences implements SharedPreferences, SharedPreferenc
     mValues = new HashMap<String, Object>();
     mTempValues = new HashMap<String, Object>();
   }
-  
+
   public Editor edit() {
     return this;
   }

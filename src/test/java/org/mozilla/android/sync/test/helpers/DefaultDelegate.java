@@ -14,7 +14,7 @@ public abstract class DefaultDelegate {
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
-  
+
   protected void sharedFail(String message) {
     try {
       fail(message);
@@ -22,5 +22,5 @@ public abstract class DefaultDelegate {
       testWaiter().performNotify(e);
     }
   }
-  
+
 }
