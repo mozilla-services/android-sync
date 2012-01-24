@@ -40,6 +40,7 @@ package org.mozilla.gecko.sync.net;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Date;
 import java.util.Scanner;
 
 import org.json.simple.parser.ParseException;
@@ -50,6 +51,8 @@ import org.mozilla.gecko.sync.Utils;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.impl.cookie.DateParseException;
+import ch.boye.httpclientandroidlib.impl.cookie.DateUtils;
 
 public class SyncResponse {
 
@@ -135,7 +138,25 @@ public class SyncResponse {
    * @return A number of seconds, or -1 if the header was not present.
    */
   public int retryAfter() throws NumberFormatException {
-    return this.getIntegerHeader("retry-after");
+    if (!this.hasHeader("retry-after")) {
+      return -1;
+    }
+
+    Header header = this.response.getFirstHeader("retry-after");
+
+    try {
+      return Integer.parseInt(header.getValue(), 10);
+    } catch (NumberFormatException e) {
+    }
+
+    try {
+      final Date date = DateUtils.parseDate(header.getValue());
+      final Date now  = new Date();
+      return (int)((date.getTime() - now.getTime()) / 1000); // Convert milliseconds to seconds.
+    } catch (DateParseException e) {
+    }
+
+    return -1;
   }
 
   public int weaveBackoff() throws NumberFormatException {
