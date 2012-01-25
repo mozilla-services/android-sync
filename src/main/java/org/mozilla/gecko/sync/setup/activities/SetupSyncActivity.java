@@ -80,7 +80,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   private TextView            setupTitleView;
   private TextView            setupNoDeviceLinkTitleView;
   private TextView            setupSubtitleView;
-  private TextView            pinTextView;
+  private TextView            pinTextView1;
+  private TextView            pinTextView2;
+  private TextView            pinTextView3;
   private JPakeClient         jClient;
 
   // Android context.
@@ -95,6 +97,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    setTheme(R.style.SyncTheme);
     Log.i(LOG_TAG, "Called SetupSyncActivity.onCreate.");
     super.onCreate(savedInstanceState);
 
@@ -208,20 +211,23 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     }
     // Format PIN for display.
     int charPerLine = pin.length() / 3;
-    String prettyPin = pin.substring(0, charPerLine) + "\n";
-    prettyPin += pin.substring(charPerLine, 2 * charPerLine) + "\n";
-    prettyPin += pin.substring(2 * charPerLine, pin.length());
+    final String pin1 = pin.substring(0, charPerLine);
+    final String pin2 = pin.substring(charPerLine, 2 * charPerLine);
+    final String pin3 = pin.substring(2 * charPerLine, pin.length());
 
-    final String toDisplay = prettyPin;
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        TextView view = pinTextView;
-        if (view == null) {
+        TextView view1 = pinTextView1;
+        TextView view2 = pinTextView2;
+        TextView view3 = pinTextView3;
+        if (view1 == null || view2 == null || view3 == null) {
           Log.w(LOG_TAG, "Couldn't find view to display PIN.");
           return;
         }
-        view.setText(toDisplay);
+        view1.setText(pin1);
+        view2.setText(pin2);
+        view3.setText(pin3);
       }
     });
   }
@@ -481,7 +487,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     setupTitleView = ((TextView) findViewById(R.id.setup_title));
     setupSubtitleView = (TextView) findViewById(R.id.setup_subtitle);
     setupNoDeviceLinkTitleView = (TextView) findViewById(R.id.link_nodevice);
-    pinTextView = ((TextView) findViewById(R.id.text_pin));
+    pinTextView1 = ((TextView) findViewById(R.id.text_pin1));
+    pinTextView2 = ((TextView) findViewById(R.id.text_pin2));
+    pinTextView3 = ((TextView) findViewById(R.id.text_pin3));
 
     // UI checks.
     if (setupTitleView == null) {
