@@ -3,6 +3,7 @@ package org.mozilla.android.sync.test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -28,6 +29,30 @@ public class TestJPakeSetup {
   // Note: will throw NullPointerException if aborts. Only use stateless public
   // methods.
   JPakeClient jClientStateless = new JPakeClient(null);
+
+  @Test
+  public void testGx4IsOneThrowsException() {
+    JPakeNumGeneratorRandom gen = new JPakeNumGeneratorRandom();
+    JPakeParty p = new JPakeParty("foobar");
+    p.gx4 = new BigInteger("1");
+    try {
+      JPakeCrypto.round2("secret", p, gen);
+      fail("round2 should fail if gx4 == 1");
+    } catch (Gx4IsOneException e) {
+      // Hurrah.
+    } catch (Exception e) {
+      fail("Unexpected exception " + e);
+    }
+
+    p.gx4 = new BigInteger("3");
+    try {
+      JPakeCrypto.round2("secret", p, gen);
+    } catch (Gx4IsOneException e) {
+      fail("Unexpected exception " + e);
+    } catch (Exception e) {
+      // There are plenty of other reasons this should fail.
+    }
+  }
 
   /*
    * Tests encryption key and hmac generation from a derived key, using values
@@ -179,6 +204,5 @@ public class TestJPakeSetup {
     boolean isSuccess = jClientStateless.verifyCiphertext(ciphertext1, iv1,
         keyBundle2);
     return isSuccess;
-
   }
 }
