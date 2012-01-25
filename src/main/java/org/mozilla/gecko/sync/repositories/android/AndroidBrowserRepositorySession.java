@@ -60,6 +60,7 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelega
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.database.Cursor;
+import android.net.Uri;
 import android.util.Log;
 
 /**
@@ -386,34 +387,106 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           return;
         }
 
-        // TODO:
-        // TODO: rnewman 2012-01-13: read and improve this code.
-        // TODO:
+
+        // TODO: lift these into the session.
+        // Temporary: this matches prior syncing semantics, in which only
+        // the relationship between the local and remote record is considered.
+        // In the future we'll track these two timestamps and use them to
+        // determine which records have changed, and thus process incoming
+        // records more efficiently.
+        long lastLocalRetrieval  = 0;      // lastSyncTimestamp?
+        long lastRemoteRetrieval = 0;
+        boolean remotelyModified = record.lastModified > lastRemoteRetrieval;
+
         Record existingRecord;
         try {
-          existingRecord = findExistingRecord(record);
-
-          // If the record is new and not deleted, store it
-          if (existingRecord == null && !record.deleted) {
-            record.androidID = insert(record);
-          } else if (existingRecord != null) {
-
-            // If the incoming record is marked deleted and
-            // our existing record has a newer timestamp, then
-            // discard the incoming record.
-            if (record.deleted && existingRecord.lastModified > record.lastModified) {
-              delegate.onRecordStoreSucceeded(record);
+          // GUID matching only: deleted records don't have a payload with which to search.
+          existingRecord = recordForGUID(record.guid);
+          if (record.deleted) {
+            if (existingRecord == null) {
+              // We're done. Don't bother with a callback. That can change later
+              // if we want it to.
+              trace("Incoming record " + record.guid + " is deleted, and no local version. Bye!");
               return;
             }
-            // Now's a great time to do expensive additions.
-            existingRecord = transformRecord(existingRecord);
-            dbHelper.delete(existingRecord);
-            if (!record.deleted) {
-              // Record exists already, need to figure out what to store.
-              Record store = reconcileRecords(existingRecord, record);
-              record.androidID = insert(store);
+
+            if (existingRecord.deleted) {
+              trace("Local record already deleted. Bye!");
+              return;
             }
+
+            // Which one wins?
+            if (!remotelyModified) {
+              trace("Ignoring deleted record from the past.");
+              return;
+            }
+
+            boolean locallyModified = existingRecord.lastModified > lastLocalRetrieval;
+            if (!locallyModified) {
+              trace("Remote modified, local not. Deleting.");
+              storeRecordDeletion(record);
+              return;
+            }
+
+            trace("Both local and remote records have been modified.");
+            if (record.lastModified > existingRecord.lastModified) {
+              trace("Remote is newer, and deleted. Deleting local.");
+              storeRecordDeletion(record);
+              return;
+            }
+
+            trace("Remote is older, local is not deleted. Ignoring.");
+            if (!locallyModified) {
+              Log.w(LOG_TAG, "Inconsistency: old remote record is deleted, but local record not modified!");
+              // Ensure that this is tracked for upload.
+            }
+            return;
           }
+          // End deletion logic.
+
+          // Now we're processing a non-deleted incoming record.
+          if (existingRecord == null) {
+            trace("Looking up match for record " + record.guid);
+            existingRecord = findExistingRecord(record);
+          }
+
+          if (existingRecord == null) {
+            // The record is new.
+            trace("No match. Inserting.");
+            delegate.onRecordStoreSucceeded(insert(record));
+            return;
+          }
+
+          // We found a local dupe.
+          trace("Incoming record " + record.guid + " dupes to local record " + existingRecord.guid);
+
+          // Decide what to do based on:
+          // * Which of the two records is modified
+          // * Whether they are equal
+          // * The modified times of each record (interpreted through the lens of clock skew)
+          // * ...
+          // WORKING
+
+          // Modify the local record to match the remote record's GUID and values.
+          // Preserve the local Android ID, and merge data where possible.
+          // TODO: adjust lastRemoteRetrieval for clock skew.
+
+          // Populate more expensive fields prior to reconciling.
+          existingRecord = transformRecord(existingRecord);
+          Record toStore = reconcileRecords(record, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);
+
+          if (toStore == null) {
+            Log.d(LOG_TAG, "Reconciling returned null. Not inserting a record.");
+          }
+
+          // TODO
+          // TODO: pass in timestamps.
+          Log.d(LOG_TAG, "Replacing " + existingRecord.guid + " with record " + toStore.guid);
+          Record replaced = replace(toStore, existingRecord);
+          Log.d(LOG_TAG, "Calling delegate callback with guid " + replaced.guid + "(" + replaced.androidID + ")");
+          delegate.onRecordStoreSucceeded(replaced);
+          return;
+
         } catch (MultipleRecordsForGuidException e) {
           Log.e(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
           delegate.onRecordStoreFailed(e);
@@ -431,17 +504,100 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
           delegate.onRecordStoreFailed(e);
           return;
         }
-
-        // Invoke callback with result.
-        delegate.onRecordStoreSucceeded(record);
       }
     };
     storeWorkQueue.execute(command);
   }
-  
-  protected long insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    putRecordToGuidMap(buildRecordString(record), record.guid);
-    return RepoUtils.getAndroidIdFromUri(dbHelper.insert(record));
+
+  protected void storeRecordDeletion(final Record record) {
+    // TODO: we ought to mark the record as deleted rather than deleting it,
+    // in order to support syncing to multiple destinations.
+    dbHelper.delete(record);      // TODO: mm?
+    delegate.onRecordStoreSucceeded(record);
+  }
+
+  /**
+   * Produce a record that is some combination of the remote and local records
+   * provided.
+   *
+   * The returned record must be produced without mutating either remoteRecord
+   * or localRecord. It is acceptable to return either remoteRecord or localRecord
+   * if no modifications are to be propagated.
+   *
+   * The returned record *should* have the local androidID and the remote GUID,
+   * and some optional merge of data from the two records.
+   *
+   * This method can be called with records that are identical, or differ in
+   * any regard.
+   *
+   * This method will not be called if:
+   *
+   * * either record is marked as deleted, or
+   * * there is no local mapping for a new remote record.
+   *
+   * Otherwise, it will be called precisely once.
+   *
+   * Side-effects (e.g., for transactional storage) can be hooked in here.
+   *
+   * @param remoteRecord
+   *        The record retrieved from upstream, already adjusted for clock skew.
+   * @param localRecord
+   *        The record retrieved from local storage.
+   * @param lastRemoteRetrieval
+   *        The timestamp of the last retrieved set of remote records, adjusted for
+   *        clock skew.
+   * @param lastLocalRetrieval
+   *        The timestamp of the last retrieved set of local records.
+   * @return
+   *        A Record instance to apply, or null to apply nothing.
+   */
+  protected Record reconcileRecords(final Record remoteRecord,
+                                    final Record localRecord,
+                                    final long lastRemoteRetrieval,
+                                    final long lastLocalRetrieval) {
+    Log.d(LOG_TAG, "Reconciling remote " + remoteRecord.guid + " against local " + localRecord.guid);
+
+    if (localRecord.equalPayloads(remoteRecord)) {
+      // TODO: check that equals is strong enough (e.g., for history visits).
+      if (remoteRecord.lastModified > localRecord.lastModified) {
+        // TODO: bump local timestamp, track to not upload.
+        Log.d(LOG_TAG, "Records are equal. No record application needed.");
+        return null;
+      }
+
+      // Local wins.
+      return null;
+    }
+
+    // Not equal.
+    // TEMPORARY LOGIC:
+    Record donor = (localRecord.lastModified > remoteRecord.lastModified) ? localRecord : remoteRecord;
+
+    // It sure would be nice if copyWithIDs didn't give a shit about androidID, mm?
+    Record out = donor.copyWithIDs(remoteRecord.guid, localRecord.androidID);
+    return out;
+  }
+
+  protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    Record toStore = prepareRecord(record);
+    Uri recordURI = dbHelper.insert(toStore);
+    long id = RepoUtils.getAndroidIdFromUri(recordURI);
+    Log.d(LOG_TAG, "Inserted as " + id);
+
+    toStore.androidID = id;
+    updateBookkeeping(toStore);
+    Log.d(LOG_TAG, "insert() returning record " + toStore.guid);
+    return toStore;
+  }
+
+  protected Record replace(Record newRecord, Record existingRecord) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    Record toStore = prepareRecord(newRecord);
+
+    // newRecord should already have suitable androidID and guid.
+    dbHelper.update(existingRecord.guid, toStore);
+    updateBookkeeping(toStore);
+    Log.d(LOG_TAG, "replace() returning record " + toStore.guid);
+    return toStore;
   }
 
   protected Record recordForGUID(String guid) throws
@@ -470,21 +626,23 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  // Check if record already exists locally.
+  /**
+   * Attempt to find an equivalent record through some means other than GUID.
+   *
+   * @param record
+   *        The record for which to search.
+   * @return
+   *        An equivalent Record object, or null if none is found.
+   *
+   * @throws MultipleRecordsForGuidException
+   * @throws NoGuidForIdException
+   * @throws NullCursorException
+   * @throws ParentNotFoundException
+   */
   protected Record findExistingRecord(Record record) throws MultipleRecordsForGuidException,
     NoGuidForIdException, NullCursorException, ParentNotFoundException {
 
-    Log.d(LOG_TAG, "Finding existing record for GUID " + record.guid);
-    Record r = recordForGUID(record.guid);
-
-    // One result. (Multiple throws an exception.)
-    if (r != null) {
-      Log.d(LOG_TAG, "Found one by GUID.");
-      return r;
-    }
-
-    // Empty result.
-    // Check to see if record exists but with a different guid.
+    Log.d(LOG_TAG, "Finding existing record for incoming record with GUID " + record.guid);
     String recordString = buildRecordString(record);
     Log.d(LOG_TAG, "Searching with record string " + recordString);
     String guid = getRecordToGuidMap().get(recordString);
@@ -522,31 +680,18 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     }
   }
 
-  public void putRecordToGuidMap(String guid, String recordString) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  public void putRecordToGuidMap(String recordString, String guid) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     if (recordToGuid == null) {
       createRecordToGuidMap();
     }
-    recordToGuid.put(guid, recordString);
+    recordToGuid.put(recordString, guid);
   }
 
-  protected Record reconcileRecords(Record local, Record remote) {
-    Log.i(LOG_TAG, "Reconciling " + local.guid + " against " + remote.guid);
-
-    // Determine which record is newer since this is the one we will take in case of conflict.
-    // Yes, clock drift. *sigh*
-    Record newer;
-    if (local.lastModified > remote.lastModified) {
-      newer = local;
-    } else {
-      newer = remote;
-    }
-
-    if (newer.guid != remote.guid) {
-      newer.guid = remote.guid;
-    }
-    newer.androidID = local.androidID;
-
-    return newer;
+  protected abstract Record prepareRecord(Record record);
+  protected void updateBookkeeping(Record record) throws NoGuidForIdException,
+                                                 NullCursorException,
+                                                 ParentNotFoundException {
+    putRecordToGuidMap(buildRecordString(record), record.guid);
   }
 
   // Wipe method and thread.
