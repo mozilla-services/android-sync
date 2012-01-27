@@ -192,8 +192,10 @@ public class HistoryRecord extends Record {
 
   private boolean checkVisitsEquals(HistoryRecord other) {
     Log.d(LOG_TAG, "Checking visits.");
-    Log.d(LOG_TAG, ">> Mine:   " + this.visits == null ? "null" : this.visits.toJSONString());
-    Log.d(LOG_TAG, ">> Theirs: " + other.visits == null ? "null" : other.visits.toJSONString());
+    if (Utils.ENABLE_TRACE_LOGGING) {
+      Log.d(LOG_TAG, ">> Mine:   " + ((this.visits == null) ? "null" : this.visits.toJSONString()));
+      Log.d(LOG_TAG, ">> Theirs: " + ((other.visits == null) ? "null" : other.visits.toJSONString()));
+    }
 
     // Handle nulls.
     if (this.visits == other.visits) {
