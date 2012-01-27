@@ -28,7 +28,7 @@ import android.database.Cursor;
 import android.util.Log;
 
 public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
-  
+
   @Override
   protected AndroidBrowserRepository getRepository() {
     return new AndroidBrowserBookmarksRepository();
