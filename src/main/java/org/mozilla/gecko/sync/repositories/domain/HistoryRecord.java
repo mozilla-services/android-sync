@@ -175,6 +175,21 @@ public class HistoryRecord extends Record {
            checkVisitsEquals(other);
   }
 
+  @Override
+  public boolean equalAndroidIDs(Record other) {
+    return super.equalAndroidIDs(other) &&
+           this.equalFennecVisits(other);
+  }
+
+  private boolean equalFennecVisits(Record other) {
+    if (!(other instanceof HistoryRecord)) {
+      return false;
+    }
+    HistoryRecord h = (HistoryRecord) other;
+    return this.fennecDateVisited == h.fennecDateVisited &&
+           this.fennecVisitCount  == h.fennecVisitCount;
+  }
+
   private boolean checkVisitsEquals(HistoryRecord other) {
     Log.d(LOG_TAG, "Checking visits.");
     Log.d(LOG_TAG, ">> Mine:   " + this.visits == null ? "null" : this.visits.toJSONString());
