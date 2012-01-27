@@ -398,11 +398,18 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
             record.androidID = insert(record);
           } else if (existingRecord != null) {
 
+            // If the incoming record is marked deleted and
+            // our existing record has a newer timestamp, then
+            // discard the incoming record.
+            if (record.deleted && existingRecord.lastModified > record.lastModified) {
+              delegate.onRecordStoreSucceeded(record);
+              return;
+            }
+            // Now's a great time to do expensive additions.
+            existingRecord = transformRecord(existingRecord);
             dbHelper.delete(existingRecord);
-            // Or clause: We won't store a remotely deleted record ever, but if it is marked deleted
-            // and our existing record has a newer timestamp, we will restore the existing record
-            if (!record.deleted || (record.deleted && existingRecord.lastModified > record.lastModified)) {
-              // Record exists already, need to figure out what to store
+            if (!record.deleted) {
+              // Record exists already, need to figure out what to store.
               Record store = reconcileRecords(existingRecord, record);
               record.androidID = insert(store);
             }
