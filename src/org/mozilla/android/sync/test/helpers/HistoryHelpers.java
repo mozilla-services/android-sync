@@ -13,19 +13,19 @@ public class HistoryHelpers {
   private static JSONArray getVisits1() {
     JSONArray json = new JSONArray();
     JSONObject obj = new JSONObject();
-    obj.put("date", 1320087601465600L);
+    obj.put("date", 1320087601465600000L);
     obj.put("type", 2L);
     json.add(obj);
     obj = new JSONObject();
-    obj.put("date", 1320084970724990L);
+    obj.put("date", 1320084970724990000L);
     obj.put("type", 1L);
     json.add(obj);
     obj = new JSONObject();
-    obj.put("date", 1319764134412287L);
+    obj.put("date", 1319764134412287000L);
     obj.put("type", 1L);
     json.add(obj);
     obj = new JSONObject();
-    obj.put("date", 1319681306455594L);
+    obj.put("date", 1319681306455594000L);
     obj.put("type", 2L);
     json.add(obj);
     return json;
@@ -36,11 +36,11 @@ public class HistoryHelpers {
     JSONArray json = new JSONArray();
     JSONObject obj = new JSONObject();
     obj = new JSONObject();
-    obj.put("date", 1319764134412345L);
+    obj.put("date", 1319764134412345000L);
     obj.put("type", 4L);
     json.add(obj);
     obj = new JSONObject();
-    obj.put("date", 1319681306454321L);
+    obj.put("date", 1319681306454321000L);
     obj.put("type", 3L);
     json.add(obj);
     return json;

@@ -168,9 +168,9 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     cv.put(BrowserContract.History.DATE_LAST_VISITED, newVisitTime);
     getDataAccessor().updateByGuid(record0.guid, cv);
     
-    // Add expected visit to record for verification
+    // Add expected visit to record for verification.
     JSONObject expectedVisit = new JSONObject();
-    expectedVisit.put("date", newVisitTime);
+    expectedVisit.put("date", newVisitTime * 1000);    // Microseconds.
     expectedVisit.put("type", 1L);
     record0.visits.add(expectedVisit);
     
@@ -213,7 +213,9 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(new Record[] { record0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, delegate));
-    assertTrue(record0.equalsIncludingVisits(delegate.records.get(0)));
+
+    Record fetched = delegate.records.get(0);
+    assertTrue(record0.equalPayloads(fetched));
   }
 
   public void testSqlInjectPurgeDelete() {
