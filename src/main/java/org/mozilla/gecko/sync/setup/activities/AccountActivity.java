@@ -40,7 +40,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private String              username;
   private String              password;
   private String              key;
-  private String              server;
+  private String              server = Constants.AUTH_NODE_DEFAULT;
 
   // UI elements.
   private EditText            serverInput;
