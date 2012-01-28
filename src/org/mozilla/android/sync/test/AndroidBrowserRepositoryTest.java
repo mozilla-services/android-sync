@@ -18,6 +18,8 @@ import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectManyStoredDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectStoreCompletedDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.Utils;
@@ -123,7 +125,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       }
     };
   }
-  
+
   public static Runnable storeRunnable(final RepositorySession session, final Record record, final DefaultStoreDelegate delegate) {
     return new Runnable() {
       @Override
@@ -131,15 +133,48 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
         session.setStoreDelegate(delegate);
         try {
           session.store(record);
+          session.storeDone();
         } catch (NoStoreDelegateException e) {
           fail("NoStoreDelegateException should not occur.");
         }
       }
     };
   }
-  
+
   public static Runnable storeRunnable(final RepositorySession session, final Record record) {
     return storeRunnable(session, record, new ExpectStoredDelegate(record.guid));
+  }
+
+  public static Runnable storeManyRunnable(final RepositorySession session, final Record[] records, final DefaultStoreDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.setStoreDelegate(delegate);
+        try {
+          for (Record record : records) {
+            session.store(record);
+          }
+          session.storeDone();
+        } catch (NoStoreDelegateException e) {
+          fail("NoStoreDelegateException should not occur.");
+        }
+      }
+    };
+  }
+
+  public static Runnable storeManyRunnable(final RepositorySession session, final Record[] records) {
+    return storeManyRunnable(session, records, new ExpectManyStoredDelegate(records));
+  }
+
+  /**
+   * Store a record and don't expect a store callback until we're done.
+   *
+   * @param session
+   * @param record
+   * @return
+   */
+  public static Runnable quietStoreRunnable(final RepositorySession session, final Record record) {
+    return storeRunnable(session, record, new ExpectStoreCompletedDelegate());
   }
 
   public static Runnable fetchAllRunnable(final RepositorySession session, final ExpectFetchDelegate delegate) {
@@ -197,9 +232,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   protected abstract AndroidBrowserRepositoryDataAccessor getDataAccessor();
   
   protected void doStore(RepositorySession session, Record[] records) {
-    for (int i = 0; i < records.length; i++) {
-      performWait(storeRunnable(session, records[i]));
-    }
+    performWait(storeManyRunnable(session, records));
   }
   
   // Tests to implement
@@ -238,9 +271,8 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     AndroidBrowserRepositorySession session = getSession();
     BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
-    for (Record record : expected) {
-      performWait(storeRunnable(session, record)); 
-    }
+    performWait(storeManyRunnable(session, expected));
+
     BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     performWait(fetchAllRunnable(session, expected));
   }
@@ -284,8 +316,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     expected[0] = record0.guid;
     expected[1] = record1.guid;
 
-    performWait(storeRunnable(session, record0));
-    performWait(storeRunnable(session, record1));
+    performWait(storeManyRunnable(session, new Record[] { record0, record1 }));
     performWait(guidsSinceRunnable(session, timestamp, expected));
   }
   
@@ -346,11 +377,12 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     prepEmptySession();
     AndroidBrowserRepositorySession session = getSession();
     
-    performWait(storeRunnable(session, record0));
-    performWait(storeRunnable(session, record1));
-    
-    performWait(fetchRunnable(session, new String[] { record0.guid }, 
-        new Record[] { record0 }));
+    Record[] store = new Record[] { record0, record1 };
+    performWait(storeManyRunnable(session, store));
+
+    String[] guids = new String[] { record0.guid };
+    Record[] expected = new Record[] { record0 };
+    performWait(fetchRunnable(session, guids, expected));
   }
   
   protected void fetchMultipleRecordsByGuids(Record record0,
@@ -358,9 +390,8 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     prepEmptySession();
     AndroidBrowserRepositorySession session = getSession();
 
-    performWait(storeRunnable(session, record0));
-    performWait(storeRunnable(session, record1));
-    performWait(storeRunnable(session, record2));
+    Record[] store = new Record[] { record0, record1, record2 };
+    performWait(storeManyRunnable(session, store));
     
     String[] guids = new String[] { record0.guid, record2.guid };
     Record[] expected = new Record[] { record0, record2 };
@@ -431,10 +462,9 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     };
 
     // Store 2 records.
-    performWait(storeRunnable(session, record0));
-    performWait(storeRunnable(session, record1));
-    performWait(fetchAllRunnable(session,
-        new Record[] { record0, record1 }));
+    Record[] records = new Record[] { record0, record1 };
+    performWait(storeManyRunnable(session, records));
+    performWait(fetchAllRunnable(session, records));
 
     // Wipe.
     performWait(run);
@@ -587,7 +617,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Log.d("deleteLocalNewer", "Last modified is " + remote.lastModified);
     remote.deleted = true;
     Log.d("deleteLocalNewer", "Storing deleted...");
-    performWait(storeRunnable(session, remote));      // This appears to do a lot of work...?!
+    performWait(quietStoreRunnable(session, remote));      // This appears to do a lot of work...?!
     Log.d("deleteLocalNewer", "Stored deleted.");
 
     // Do a fetch and make sure that we get back the first (local) record.
@@ -607,7 +637,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     // Pass a record marked deleted to store, doesn't exist locally
     remote.lastModified = timestamp;
     remote.deleted = true;
-    performWait(storeRunnable(session, remote));
+    performWait(quietStoreRunnable(session, remote));
 
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(new Record[]{});
     performWait(fetchAllRunnable(session, delegate));
