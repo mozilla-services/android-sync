@@ -33,7 +33,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private String              username;
   private String              password;
   private String              key;
-  private String              server;
+  private String              server = Constants.AUTH_NODE_DEFAULT;
 
   // UI elements.
   private EditText            serverInput;
@@ -169,12 +169,9 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     // TODO: only allow one account to be added?
     Log.d(LOG_TAG, "Using account manager " + mAccountManager);
     final Intent intent = SyncAccounts.createAccount(mContext, mAccountManager,
-                                        username,
+                                       username,
                                         key, password, server);
     setAccountAuthenticatorResult(intent.getExtras());
-
-    // Testing out the authFailure case
-    // authFailure();
 
     // TODO: Currently, we do not actually authenticate username/pass against
     // Moz sync server.
