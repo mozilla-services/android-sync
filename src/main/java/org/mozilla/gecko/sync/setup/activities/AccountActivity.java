@@ -39,14 +39,11 @@
 package org.mozilla.gecko.sync.setup.activities;
 
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.repositories.android.Authorities;
+import org.mozilla.gecko.sync.setup.AccountCreator;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -63,14 +60,12 @@ import android.widget.EditText;
 public class AccountActivity extends AccountAuthenticatorActivity {
   private final static String LOG_TAG        = "AccountActivity";
 
-  private final static String DEFAULT_SERVER = "https://auth.services.mozilla.com/";
-
   private AccountManager      mAccountManager;
   private Context             mContext;
   private String              username;
   private String              password;
   private String              key;
-  private String              server;
+  private String              server = Constants.AUTH_NODE_DEFAULT;
 
   // UI elements.
   private EditText            serverInput;
@@ -203,13 +198,10 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     // Create and add account to AccountManager
     // TODO: only allow one account to be added?
     Log.d(LOG_TAG, "Using account manager " + mAccountManager);
-    final Intent intent = createAccount(mContext, mAccountManager,
+    final Intent intent = AccountCreator.createAccount(mContext, mAccountManager,
                                         username,
                                         key, password, server);
     setAccountAuthenticatorResult(intent.getExtras());
-
-    // Testing out the authFailure case
-    // authFailure();
 
     // TODO: Currently, we do not actually authenticate username/pass against
     // Moz sync server.
@@ -225,56 +217,6 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     });
   }
 
-  // TODO: lift this out.
-  public static Intent createAccount(Context context,
-                                     AccountManager accountManager,
-                                     String username,
-                                     String syncKey,
-                                     String password, String serverURL) {
-
-    final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
-    final Bundle userbundle = new Bundle();
-
-    // Add sync key and server URL.
-    userbundle.putString(Constants.OPTION_SYNCKEY, syncKey);
-    if (serverURL != null) {
-      Log.i(LOG_TAG, "Setting explicit server URL: " + serverURL);
-      userbundle.putString(Constants.OPTION_SERVER, serverURL);
-    } else {
-      userbundle.putString(Constants.OPTION_SERVER, DEFAULT_SERVER);
-    }
-    Log.d(LOG_TAG, "Adding account for " + Constants.ACCOUNTTYPE_SYNC);
-    boolean result = accountManager.addAccountExplicitly(account, password, userbundle);
-
-    Log.d(LOG_TAG, "Account: " + account.toString() + " added successfully? " + result);
-    if (!result) {
-      Log.e(LOG_TAG, "Error adding account!");
-    }
-
-    // Set components to sync (default: all).
-    ContentResolver.setMasterSyncAutomatically(true);
-    ContentResolver.setSyncAutomatically(account, Authorities.BROWSER_AUTHORITY, true);
-
-    // TODO: add other ContentProviders as needed (e.g. passwords)
-    // TODO: for each, also add to res/xml to make visible in account settings
-    Log.d(LOG_TAG, "Finished setting syncables.");
-
-    // TODO: correctly implement Sync Options.
-    Log.i(LOG_TAG, "Clearing preferences for this account.");
-    try {
-      Utils.getSharedPreferences(context, username, serverURL).edit().clear().commit();
-    } catch (Exception e) {
-      Log.e(LOG_TAG, "Could not clear prefs path!", e);
-    }
-
-    final Intent intent = new Intent();
-    intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);
-    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
-    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
-    return intent;
-  }
-
-  @SuppressWarnings("unused")
   private void authFailure() {
     enableCredEntry(true);
     Intent intent = new Intent(mContext, SetupFailureActivity.class);
