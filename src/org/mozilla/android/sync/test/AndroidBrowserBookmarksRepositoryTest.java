@@ -366,12 +366,16 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
         BookmarkHelpers.createFolder1(),
         BookmarkHelpers.createBookmark2()
     };
+    System.out.println("TEST: Inserting " + expected[0].guid + ", "
+                                          + expected[1].guid + ", "
+                                          + expected[2].guid);
     doStore(session, expected);
     
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
     
     int found = 0;
+    boolean foundFolder = false;
     for (int i = 0; i < delegate.records.size(); i++) {
       BookmarkRecord rec = (BookmarkRecord) delegate.records.get(i);
       if (rec.guid.equals(expected[0].guid)) {
@@ -380,10 +384,14 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
       } else if (rec.guid.equals(expected[2].guid)) {
         assertEquals(1, ((BookmarkRecord) delegate.records.get(i)).androidPosition);
         found++;
+      } else if (rec.guid.equals(expected[1].guid)) {
+        foundFolder = true;
+      } else {
+        System.out.println("TEST: found " + rec.guid);
       }
     }
+    assertTrue(foundFolder);
     assertEquals(2, found);
-    
   }
   
   public void testSqlInjectPurgeDeleteAndUpdateByGuid() {

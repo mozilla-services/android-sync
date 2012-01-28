@@ -23,7 +23,7 @@ public class BookmarkHelpers {
   private static String middleFolderName = "My Middle Folder";
   private static String bottomFolderGuid = Utils.generateGuid();
   private static String bottomFolderName = "My Bottom Folder";
-  private static String bmk1Guid= Utils.generateGuid();
+  private static String bmk1Guid = Utils.generateGuid();
   private static String bmk2Guid = Utils.generateGuid();
   private static String bmk3Guid = Utils.generateGuid();
   private static String bmk4Guid = Utils.generateGuid();
