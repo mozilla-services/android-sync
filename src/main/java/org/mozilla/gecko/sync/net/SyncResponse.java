@@ -131,7 +131,7 @@ public class SyncResponse {
 
   private static boolean missingHeader(String value) {
     return value == null ||
-           value.isEmpty();
+           value.trim().length() == 0;
   }
 
   private int getIntegerHeader(String h) throws NumberFormatException {
