@@ -41,7 +41,6 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -507,69 +506,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     delegate.onRecordStoreSucceeded(record);
   }
 
-  /**
-   * Produce a record that is some combination of the remote and local records
-   * provided.
-   *
-   * The returned record must be produced without mutating either remoteRecord
-   * or localRecord. It is acceptable to return either remoteRecord or localRecord
-   * if no modifications are to be propagated.
-   *
-   * The returned record *should* have the local androidID and the remote GUID,
-   * and some optional merge of data from the two records.
-   *
-   * This method can be called with records that are identical, or differ in
-   * any regard.
-   *
-   * This method will not be called if:
-   *
-   * * either record is marked as deleted, or
-   * * there is no local mapping for a new remote record.
-   *
-   * Otherwise, it will be called precisely once.
-   *
-   * Side-effects (e.g., for transactional storage) can be hooked in here.
-   *
-   * @param remoteRecord
-   *        The record retrieved from upstream, already adjusted for clock skew.
-   * @param localRecord
-   *        The record retrieved from local storage.
-   * @param lastRemoteRetrieval
-   *        The timestamp of the last retrieved set of remote records, adjusted for
-   *        clock skew.
-   * @param lastLocalRetrieval
-   *        The timestamp of the last retrieved set of local records.
-   * @return
-   *        A Record instance to apply, or null to apply nothing.
-   */
-  protected Record reconcileRecords(final Record remoteRecord,
-                                    final Record localRecord,
-                                    final long lastRemoteRetrieval,
-                                    final long lastLocalRetrieval) {
-    Log.d(LOG_TAG, "Reconciling remote " + remoteRecord.guid + " against local " + localRecord.guid);
 
-    if (localRecord.equalPayloads(remoteRecord)) {
-      // TODO: check that equals is strong enough (e.g., for history visits).
-      if (remoteRecord.lastModified > localRecord.lastModified) {
-        // TODO: bump local timestamp, track to not upload.
-        Log.d(LOG_TAG, "Records are equal. No record application needed.");
-        return null;
-      }
-
-      // Local wins.
-      return null;
-    }
-
-    // Not equal.
-    // TEMPORARY LOGIC:
-    boolean localIsMoreRecent = localRecord.lastModified > remoteRecord.lastModified;
-    Log.d(LOG_TAG, "Local record is more recent? " + localIsMoreRecent);
-    Record donor = localIsMoreRecent ? localRecord : remoteRecord;
-
-    // It sure would be nice if copyWithIDs didn't give a shit about androidID, mm?
-    Record out = donor.copyWithIDs(remoteRecord.guid, localRecord.androidID);
-    return out;
-  }
 
   protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
