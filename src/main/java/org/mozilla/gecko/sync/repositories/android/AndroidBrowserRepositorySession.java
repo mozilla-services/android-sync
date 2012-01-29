@@ -40,6 +40,7 @@ package org.mozilla.gecko.sync.repositories.android;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidRequestException;
@@ -90,6 +91,11 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   public static final String LOG_TAG = "AndroidBrowserRepositorySession";
   private HashMap<String, String> recordToGuid;
 
+  // Guarded by "this". Used to store GUIDs that were not locally
+  // modified but have been modified by a call to `store`, and thus
+  // should not be returned by a subsequent fetch.
+  private HashSet<String> storedGUIDs;
+
   public AndroidBrowserRepositorySession(Repository repository) {
     super(repository);
   }
@@ -126,6 +132,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
   @Override
   public void begin(RepositorySessionBeginDelegate delegate) {
+    storedGUIDs = new HashSet<String>();
     RepositorySessionBeginDelegate deferredDelegate = delegate.deferredBeginDelegate(delegateQueue);
     try {
       super.sharedBegin();
@@ -506,7 +513,64 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     delegate.onRecordStoreSucceeded(record);
   }
 
+  /**
+   * Our hacky version of transactional semantics. The goal is to prevent
+   * the following situation:
+   *
+   * * AAA is not modified locally.
+   * * A modified AAA is downloaded during the storing phase. Its local
+   *   timestamp is advanced.
+   * * The direction of syncing changes, and AAA is now uploaded to the server.
+   *
+   * The following situation should still be supported:
+   *
+   * * AAA is not modified locally.
+   * * A modified AAA is downloaded and merged with the local AAA.
+   * * The merged AAA is uploaded to the server.
+   *
+   * As should:
+   *
+   * * AAA is modified locally.
+   * * A modified AAA is downloaded, and discarded or merged.
+   * * The current version of AAA is uploaded to the server.
+   *
+   * We achieve this by tracking GUIDs during the storing phase. If we
+   * apply a record such that the local copy is substantially the same
+   * as the record we just downloaded, we add it to a list of records
+   * to avoid uploading.
+   *
+   * Note that items are removed from this list when a fetch that
+   * considers them for upload completes successfully. The entire list
+   * is discarded when the session is completed.
+   *
+   * @param guid
+   *        The GUID of the item to track.
+   * @return
+   *        Whether the GUID was a newly tracked value.
+   */
+  protected synchronized boolean trackStoredForExclusion(String guid) {
+    if (guid == null) {
+      return false;
+    }
+    return storedGUIDs.add(guid);
+  }
 
+  protected synchronized boolean isTrackedForExclusion(String guid) {
+    return (guid != null) && storedGUIDs.contains(guid);
+  }
+
+  // TODO: if we untrack, we have to start specifying modified times.
+  /**
+   *
+   * @param guid
+   * @return true if the specified GUID was removed from the tracked set.
+   */
+  protected synchronized boolean untrackStoredForExclusion(String guid) {
+    if ((guid != null)) {
+      return storedGUIDs.remove(guid);
+    }
+    return false;
+  }
 
   protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
