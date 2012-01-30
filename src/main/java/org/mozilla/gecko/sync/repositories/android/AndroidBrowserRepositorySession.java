@@ -88,7 +88,7 @@ import android.util.Log;
 public abstract class AndroidBrowserRepositorySession extends RepositorySession {
 
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
-  protected static final String LOG_TAG = "AndroidBrowserRepositorySession";
+  public static final String LOG_TAG = "AndroidBrowserRepositorySession";
   private HashMap<String, String> recordToGuid;
 
   public AndroidBrowserRepositorySession(Repository repository) {
@@ -562,7 +562,9 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
 
     // Not equal.
     // TEMPORARY LOGIC:
-    Record donor = (localRecord.lastModified > remoteRecord.lastModified) ? localRecord : remoteRecord;
+    boolean localIsMoreRecent = localRecord.lastModified > remoteRecord.lastModified;
+    Log.d(LOG_TAG, "Local record is more recent? " + localIsMoreRecent);
+    Record donor = localIsMoreRecent ? localRecord : remoteRecord;
 
     // It sure would be nice if copyWithIDs didn't give a shit about androidID, mm?
     Record out = donor.copyWithIDs(remoteRecord.guid, localRecord.androidID);
@@ -653,6 +655,7 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
   }
 
   private void createRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    Log.i(LOG_TAG, "Creating record -> GUID map.");
     recordToGuid = new HashMap<String, String>();
     Cursor cur = dbHelper.fetchAll();
     try {

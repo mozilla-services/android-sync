@@ -113,6 +113,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public Uri insert(Record record) {
     ContentValues cv = getContentValues(record);
+    Log.d(LOG_TAG, "INSERTING: " + cv.getAsString("guid"));
     return context.getContentResolver().insert(getUri(), cv);
   }
 
