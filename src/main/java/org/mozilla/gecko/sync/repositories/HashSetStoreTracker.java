@@ -6,6 +6,8 @@ package org.mozilla.gecko.sync.repositories;
 
 import java.util.HashSet;
 
+import org.mozilla.gecko.sync.repositories.domain.Record;
+
 public class HashSetStoreTracker implements StoreTracker {
 
   // Guarded by `this`.
@@ -35,5 +37,18 @@ public class HashSetStoreTracker implements StoreTracker {
   @Override
   public synchronized boolean untrackStoredForExclusion(String guid) {
     return (guid != null) && guids.remove(guid);
+  }
+
+  @Override
+  public RecordFilter getFilter() {
+    if (guids.size() == 0) {
+      return null;
+    }
+    return new RecordFilter() {
+      @Override
+      public boolean excludeRecord(Record r) {
+        return isTrackedForExclusion(r.guid);
+      }
+    };
   }
 }

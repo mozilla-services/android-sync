@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.repositories;
 
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public abstract class StoreTrackingRepositorySession extends RepositorySession {
   protected StoreTracker storeTracker;
@@ -30,6 +31,16 @@ public abstract class StoreTrackingRepositorySession extends RepositorySession {
     // Or do this in your own subclass.
     storeTracker = createStoreTracker();
     deferredDelegate.onBeginSucceeded(this);
+  }
+
+  @Override
+  protected synchronized void trackRecord(Record record) {
+    if (this.storeTracker == null) {
+      throw new IllegalStateException("Store tracker not yet initialized!");
+    }
+
+    // Future: we care about the timestamp…
+    this.storeTracker.trackStoredForExclusion(record.guid);
   }
 
   @Override
