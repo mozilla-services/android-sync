@@ -4,6 +4,8 @@
   * Use preprocess.sh to build manifests etc. to keep Eclipse happy. The output
     is ignored by Git, and the Fennec merge script skips them, too.
   * The fennec-code-drop.sh script does this for you, as well as running tests.
+  * To run Android tests, you'll need to create .project and .classpath in `test,
+    too, and run ./preprocess.sh there.
 
 * To make changes to generated files.
   * strings.xml doesn't exist. Modify strings.xml.in.
@@ -40,3 +42,10 @@
 * You'll need subgit to work with external dependency clones.
 
   http://rustyklophaus.com/articles/20100124-SubmodulesAndSubreposDoneRight.html
+
+* If for some reason you need to work with the external test-android-sync repo:
+
+  git remote add -f android-sync-test ~/path/to/test-android-sync
+  git pull -s subtree android-sync-test develop
+
+  (It's a subtree.)
