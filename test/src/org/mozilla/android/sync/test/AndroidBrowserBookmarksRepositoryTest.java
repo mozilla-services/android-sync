@@ -14,11 +14,13 @@ import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContract;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -31,7 +33,24 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   @Override
   protected AndroidBrowserRepository getRepository() {
-    return new AndroidBrowserBookmarksRepository();
+
+    /**
+     * Override this chain in order to avoid our test code having to create two
+     * sessions all the time.
+     */
+    return new AndroidBrowserBookmarksRepository() {
+      @Override
+      protected void sessionCreator(RepositorySessionCreationDelegate delegate, Context context) {
+        AndroidBrowserBookmarksRepositorySession session;
+        session = new AndroidBrowserBookmarksRepositorySession(this, context) {
+          @Override
+          protected synchronized void trackRecord(Record record) {
+            System.out.println("Ignoring trackRecord call: this is a test!");
+          }
+        };
+        delegate.onSessionCreated(session);
+      }
+    };
   }
   
   @Override
