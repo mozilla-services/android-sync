@@ -58,12 +58,13 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
     AndroidBrowserRepositorySession session = getSession();
     BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
-    performWait(storeRunnable(session, folder));
-    performWait(storeRunnable(session, bookmark1));
-    performWait(storeRunnable(session, bookmark2));
+    Record[] records = new Record[] { folder, bookmark1, bookmark2 };
+    performWait(storeManyRunnable(session, records));
     BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
-    performWait(fetchRunnable(session, new String[] { folder.guid }, new Record[] { folder }));
 
+    String[] guids = new String[] { folder.guid };
+    Record[] expected = new Record[] { folder };
+    performWait(fetchRunnable(session, guids, expected));
   }
 
   @Override
