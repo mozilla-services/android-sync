@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.repositories;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -250,5 +251,14 @@ public abstract class RepositorySession {
     status = SessionStatus.ABORTED;
     storeWorkQueue.shutdown();
     delegateQueue.shutdown();
+  }
+
+  protected void trace(String m) {
+    if (Utils.ENABLE_TRACE_LOGGING) {
+      if (Utils.LOG_TO_STDOUT) {
+        System.out.println(LOG_TAG + "::TRACE " + m);
+      }
+      Log.d(LOG_TAG, m);
+    }
   }
 }

@@ -67,12 +67,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   private AndroidBrowserBookmarksDataAccessor dataAccessor;
   private int needsReparenting = 0;
 
-  private static void trace(String string) {
-    if (Utils.ENABLE_TRACE_LOGGING) {
-      Log.d(LOG_TAG, string);
-    }
-  }
-
   /**
    * Return true if the provided record GUID should be skipped
    * in child lists or fetch results.

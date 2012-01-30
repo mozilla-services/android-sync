@@ -344,15 +344,6 @@ public abstract class AndroidBrowserRepositorySession extends RepositorySession 
     this.fetchSince(0, delegate);
   }
 
-  private void trace(String m) {
-    if (Utils.ENABLE_TRACE_LOGGING) {
-      if (Utils.LOG_TO_STDOUT) {
-        System.out.println(LOG_TAG + "::TRACE " + m);
-      }
-      Log.d(LOG_TAG, m);
-    }
-  }
-
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
     if (delegate == null) {
