@@ -897,7 +897,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     @Override
     public String getCredentials() {
-      // Jpake setup has no credentials
+      // J-PAKE setup has no credentials.
       return null;
     }
 
