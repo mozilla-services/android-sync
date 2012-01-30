@@ -4,6 +4,7 @@
 package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 import java.util.ArrayList;
@@ -66,11 +67,10 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
           }
           Log.d(LOG_TAG, "Checking equality.");
           try {
-            record.equals(expect);
+            assertTrue(expect.equalPayloads(record));
           } catch (Exception e) {
             Log.e(LOG_TAG, "ONOZ!", e);
           }
-          assertEquals(record, expect);
           Log.d(LOG_TAG, "Checked equality.");
         }
       }

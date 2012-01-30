@@ -8,6 +8,7 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -22,7 +23,7 @@ public class BookmarkHelpers {
   private static String middleFolderName = "My Middle Folder";
   private static String bottomFolderGuid = Utils.generateGuid();
   private static String bottomFolderName = "My Bottom Folder";
-  private static String bmk1Guid= Utils.generateGuid();
+  private static String bmk1Guid = Utils.generateGuid();
   private static String bmk2Guid = Utils.generateGuid();
   private static String bmk3Guid = Utils.generateGuid();
   private static String bmk4Guid = Utils.generateGuid();

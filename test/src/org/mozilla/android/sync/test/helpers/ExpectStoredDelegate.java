@@ -16,12 +16,21 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   }
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public synchronized void onStoreCompleted() {
+    if (this.storedRecord == null) {
+      System.out.println("Notifying in onStoreCompleted.");
+      testWaiter().performNotify();
+    }
+  }
+
+  @Override
+  public synchronized void onRecordStoreSucceeded(Record record) {
     this.storedRecord = record;
     try {
       if (this.expectedGUID != null) {
         assertEquals(this.expectedGUID, record.guid);
       }
+      System.out.println("Notifying in onRecordStoreSucceeded.");
       testWaiter().performNotify();
     } catch (AssertionError e) {
       testWaiter().performNotify(e);

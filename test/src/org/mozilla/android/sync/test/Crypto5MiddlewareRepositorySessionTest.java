@@ -61,6 +61,14 @@ public class Crypto5MiddlewareRepositorySessionTest extends AndroidTestCase {
     public String toJSONString() {
       throw new RuntimeException("Can't JSONify MockRecord.");
     }
+
+    @Override
+    public Record copyWithIDs(String guid, long androidID) {
+      MockRecord out = new MockRecord(guid, this.collection, this.lastModified, this.deleted, this.value);
+      out.androidID = androidID;
+      out.sortIndex = this.sortIndex;
+      return out;
+    }
   }
 
   public class CryptoTestRepository extends Repository {
