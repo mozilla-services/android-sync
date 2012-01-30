@@ -326,6 +326,13 @@ public abstract class RepositorySession {
     // Preserve the local Android ID, and merge data where possible.
     // It sure would be nice if copyWithIDs didn't give a shit about androidID, mm?
     Record out = donor.copyWithIDs(remoteRecord.guid, localRecord.androidID);
+
+    // We don't want to upload the record if the remote record was
+    // applied without changes.
+    // This logic will become more complicated as reconciling becomes smarter.
+    if (!localIsMoreRecent) {
+      trackRecord(out);
+    }
     return out;
   }
 

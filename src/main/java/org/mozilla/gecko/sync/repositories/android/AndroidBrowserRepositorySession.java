@@ -247,11 +247,13 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           }
           while (!cursor.isAfterLast()) {
             Log.d(LOG_TAG, "... one more record.");
-            Record r = transformRecord(recordFromMirrorCursor(cursor));
-            if (r != null &&
-                (filter == null ||
-                 !filter.excludeRecord(r))) {
-              delegate.onFetchedRecord(r);
+            Record r = recordFromMirrorCursor(cursor);
+            if (r != null) {
+              if (filter == null || !filter.excludeRecord(r)) {
+                delegate.onFetchedRecord(transformRecord(r));
+              } else {
+                Log.d(LOG_TAG, "Filter says to skip record.");
+              }
             }
             cursor.moveToNext();
           }
@@ -457,7 +459,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           if (existingRecord == null) {
             // The record is new.
             trace("No match. Inserting.");
-            delegate.onRecordStoreSucceeded(insert(record));
+            Record inserted = insert(record);
+            trackRecord(inserted);
+            delegate.onRecordStoreSucceeded(inserted);
             return;
           }
 
@@ -481,12 +485,16 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
           if (toStore == null) {
             Log.d(LOG_TAG, "Reconciling returned null. Not inserting a record.");
+            return;
           }
 
           // TODO
           // TODO: pass in timestamps.
           Log.d(LOG_TAG, "Replacing " + existingRecord.guid + " with record " + toStore.guid);
           Record replaced = replace(toStore, existingRecord);
+
+          // Note that we don't track records here; deciding that is the job
+          // of reconcileRecords.
           Log.d(LOG_TAG, "Calling delegate callback with guid " + replaced.guid + "(" + replaced.androidID + ")");
           delegate.onRecordStoreSucceeded(replaced);
           return;
