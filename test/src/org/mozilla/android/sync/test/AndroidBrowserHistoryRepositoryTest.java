@@ -9,11 +9,13 @@ import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContract;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -25,7 +27,24 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   
   @Override
   protected AndroidBrowserRepository getRepository() {
-    return new AndroidBrowserHistoryRepository();
+
+    /**
+     * Override this chain in order to avoid our test code having to create two
+     * sessions all the time.
+     */
+    return new AndroidBrowserHistoryRepository() {
+      @Override
+      protected void sessionCreator(RepositorySessionCreationDelegate delegate, Context context) {
+        AndroidBrowserHistoryRepositorySession session;
+        session = new AndroidBrowserHistoryRepositorySession(this, context) {
+          @Override
+          protected synchronized void trackRecord(Record record) {
+            System.out.println("Ignoring trackRecord call: this is a test!");
+          }
+        };
+        delegate.onSessionCreated(session);
+      }
+    };
   }
 
   @Override
