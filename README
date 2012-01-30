@@ -5,7 +5,7 @@
     is ignored by Git, and the Fennec merge script skips them, too.
   * The fennec-code-drop.sh script does this for you, as well as running tests.
   * To run Android tests, you'll need to create .project and .classpath in `test,
-    too, and run ./preprocess.sh there.
+    too.
 
 * To make changes to generated files.
   * strings.xml doesn't exist. Modify strings.xml.in.
