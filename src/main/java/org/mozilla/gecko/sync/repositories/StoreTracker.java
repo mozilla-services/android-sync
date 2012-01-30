@@ -69,4 +69,6 @@ public interface StoreTracker {
   * @return true if the specified GUID was removed from the tracked set.
   */
   public boolean untrackStoredForExclusion(String guid);
+
+  public RecordFilter getFilter();
 }

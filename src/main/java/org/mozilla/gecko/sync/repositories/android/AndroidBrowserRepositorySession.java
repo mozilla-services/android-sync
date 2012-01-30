@@ -50,6 +50,7 @@ import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.ProfileDatabaseException;
+import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -225,7 +226,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   @Override
   public void fetch(String[] guids,
                     RepositorySessionFetchRecordsDelegate delegate) {
-    FetchRunnable command = new FetchRunnable(guids, now(), delegate);
+    FetchRunnable command = new FetchRunnable(guids, now(), null, delegate);
     delegateQueue.execute(command);
   }
 
@@ -236,7 +237,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       this.delegate = delegate;
     }
 
-    protected void fetchFromCursor(Cursor cursor, long end) {
+    protected void fetchFromCursor(Cursor cursor, RecordFilter filter, long end) {
       Log.d(LOG_TAG, "Fetch from cursor:");
       try {
         try {
@@ -247,7 +248,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           while (!cursor.isAfterLast()) {
             Log.d(LOG_TAG, "... one more record.");
             Record r = transformRecord(recordFromMirrorCursor(cursor));
-            if (r != null) {
+            if (r != null &&
+                (filter == null ||
+                 !filter.excludeRecord(r))) {
               delegate.onFetchedRecord(r);
             }
             cursor.moveToNext();
@@ -271,13 +274,16 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   class FetchRunnable extends FetchingRunnable {
     private String[] guids;
     private long     end;
+    private RecordFilter filter;
 
     public FetchRunnable(String[] guids,
                          long end,
+                         RecordFilter filter,
                          RepositorySessionFetchRecordsDelegate delegate) {
       super(delegate);
-      this.guids = guids;
-      this.end   = end;
+      this.guids  = guids;
+      this.end    = end;
+      this.filter = filter;
     }
 
     @Override
@@ -295,7 +301,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
       try {
         Cursor cursor = dbHelper.fetch(guids);
-        this.fetchFromCursor(cursor, end);
+        this.fetchFromCursor(cursor, filter, end);
       } catch (NullCursorException e) {
         delegate.onFetchFailed(e, null);
       }
@@ -305,21 +311,28 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   @Override
   public void fetchSince(long timestamp,
                          RepositorySessionFetchRecordsDelegate delegate) {
+    if (this.storeTracker == null) {
+      throw new IllegalStateException("Store tracker not yet initialized!");
+    }
+
     Log.i(LOG_TAG, "Running fetchSince(" + timestamp + ").");
-    FetchSinceRunnable command = new FetchSinceRunnable(timestamp, now(), delegate);
+    FetchSinceRunnable command = new FetchSinceRunnable(timestamp, now(), this.storeTracker.getFilter(), delegate);
     delegateQueue.execute(command);
   }
 
   class FetchSinceRunnable extends FetchingRunnable {
     private long since;
     private long end;
+    private RecordFilter filter;
 
     public FetchSinceRunnable(long since,
                               long end,
+                              RecordFilter filter,
                               RepositorySessionFetchRecordsDelegate delegate) {
       super(delegate);
-      this.since = since;
-      this.end   = end;
+      this.since  = since;
+      this.end    = end;
+      this.filter = filter;
     }
 
     @Override
@@ -331,7 +344,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
       try {
         Cursor cursor = dbHelper.fetchSince(since);
-        this.fetchFromCursor(cursor, end);
+        this.fetchFromCursor(cursor, filter, end);
       } catch (NullCursorException e) {
         delegate.onFetchFailed(e, null);
         return;

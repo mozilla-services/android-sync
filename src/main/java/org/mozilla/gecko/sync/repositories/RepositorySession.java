@@ -328,4 +328,17 @@ public abstract class RepositorySession {
     Record out = donor.copyWithIDs(remoteRecord.guid, localRecord.androidID);
     return out;
   }
+
+  /**
+   * Depending on the RepositorySession implementation, track
+   * that a record — most likely a brand-new record that has been
+   * applied unmodified — should be tracked so as to not be uploaded
+   * redundantly.
+   *
+   * The default implementation does nothing.
+   *
+   * @param record
+   */
+  protected synchronized void trackRecord(Record record) {
+  }
 }
