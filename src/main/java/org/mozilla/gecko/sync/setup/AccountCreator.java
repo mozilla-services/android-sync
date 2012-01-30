@@ -27,7 +27,7 @@ public class AccountCreator {
       Log.i(LOG_TAG, "Setting explicit server URL: " + serverURL);
       userbundle.putString(Constants.OPTION_SERVER, serverURL);
     } else {
-      userbundle.putString(Constants.OPTION_SERVER, Constants.AUTH_DEFAULT_SERVER);
+      userbundle.putString(Constants.OPTION_SERVER, Constants.AUTH_NODE_DEFAULT);
     }
     Log.d(LOG_TAG, "Adding account for " + Constants.ACCOUNTTYPE_SYNC);
     boolean result = accountManager.addAccountExplicitly(account, password,
