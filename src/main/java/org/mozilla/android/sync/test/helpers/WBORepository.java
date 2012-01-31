@@ -7,7 +7,7 @@ import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -20,7 +20,7 @@ import android.content.Context;
 
 public class WBORepository extends Repository {
 
-  public class WBORepositorySession extends RepositorySession {
+  public class WBORepositorySession extends StoreTrackingRepositorySession {
 
     private WBORepository wboRepository;
     private ExecutorService delegateExecutor = Executors.newSingleThreadExecutor();
@@ -30,6 +30,13 @@ public class WBORepository extends Repository {
       super(repository);
       wboRepository = repository;
       wbos = new HashMap<String, Record>();
+    }
+
+    @Override
+    protected synchronized void trackRecord(Record record) {
+      if (wboRepository.shouldTrack()) {
+        super.trackRecord(record);
+      }
     }
 
     @Override
@@ -79,6 +86,7 @@ public class WBORepository extends Repository {
         throw new NoStoreDelegateException();
       }
       wbos.put(record.guid, record);
+      trackRecord(record);
       delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
     }
 
@@ -115,6 +123,10 @@ public class WBORepository extends Repository {
   public WBORepository() {
     super();
     wbos = new HashMap<String, Record>();
+  }
+
+  public synchronized boolean shouldTrack() {
+    return false;
   }
 
   @Override
