@@ -24,11 +24,13 @@ public class WBORepository extends Repository {
 
   public class WBORepositorySession extends RepositorySession {
 
+    private WBORepository wboRepository;
     private ExecutorService delegateExecutor = Executors.newSingleThreadExecutor();
     public HashMap<String, Record> wbos;
 
     public WBORepositorySession(WBORepository repository) {
       super(repository);
+      wboRepository = repository;
       wbos = new HashMap<String, Record>();
     }
 
