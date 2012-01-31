@@ -4,6 +4,7 @@
 package org.mozilla.gecko.sync.crypto.test;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 
@@ -12,6 +13,8 @@ import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.HKDF;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 
 /*
@@ -101,7 +104,12 @@ public class TestHKDF {
         String base64EncryptionKey =    "069EnS3EtDK4y1tZ1AyKX+U7WEsWRp9bRIKLdW/7aoE=";
         String base64HmacKey =          "LF2YCS1QCgSNCf0BCQvQ06SGH8jqJDi9dKj0O+b0fwI=";
 
-        KeyBundle bundle = new KeyBundle(username, friendlyBase32SyncKey);
+        KeyBundle bundle = null;
+        try {
+          bundle = new KeyBundle(username, friendlyBase32SyncKey);
+        } catch (Exception e) {
+          fail("Unexpected exception " + e);
+        }
 
         byte[] expectedEncryptionKey = Base64.decodeBase64(base64EncryptionKey);
         byte[] expectedHMACKey       = Base64.decodeBase64(base64HmacKey);
@@ -113,17 +121,27 @@ public class TestHKDF {
      * Helper to do step 1 of RFC 5869.
      */
     private boolean doStep1(String IKM, String salt, String PRK) {
-        byte[] prkResult = HKDF.hkdfExtract(Utils.hex2Byte(salt), Utils.hex2Byte(IKM));
-        byte[] prkExpect = Utils.hex2Byte(PRK);
-        return Arrays.equals(prkResult, prkExpect);
+        try {
+            byte[] prkResult = HKDF.hkdfExtract(Utils.hex2Byte(salt), Utils.hex2Byte(IKM));
+            byte[] prkExpect = Utils.hex2Byte(PRK);
+            return Arrays.equals(prkResult, prkExpect);
+        } catch (Exception e) {
+            fail("Unexpected exception " + e);
+        }
+        return false;
     }
 
     /*
      * Helper to do step 2 of RFC 5869.
      */
     private boolean doStep2(String PRK, String info, int L, String OKM) {
-        byte[] okmResult = HKDF.hkdfExpand(Utils.hex2Byte(PRK), Utils.hex2Byte(info), L);
-        byte[] okmExpect = Utils.hex2Byte(OKM);
-        return Arrays.equals(okmResult, okmExpect);
+        try {
+            byte[] okmResult = HKDF.hkdfExpand(Utils.hex2Byte(PRK), Utils.hex2Byte(info), L);
+            byte[] okmExpect = Utils.hex2Byte(OKM);
+            return Arrays.equals(okmResult, okmExpect);
+        } catch (Exception e) {
+            fail("Unexpected exception " + e);
+        }
+        return false;
     }
 }
