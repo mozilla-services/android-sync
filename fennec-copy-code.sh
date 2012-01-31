@@ -47,6 +47,9 @@ cp $SOURCEDIR/repositories/android/Authorities.java.in $ANDROID/base/sync/reposi
 echo "Copying preprocessed sync_syncadapter.xml."
 cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
 
+echo "Copying preprocessed sync_options.xml."
+cp sync_options.xml.template $ANDROID/base/resources/xml/sync_options.xml.in
+
 echo "Copying internal dependency sources."
 APACHEDIR="src/main/java/org/mozilla/apache"
 APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,apache/,")
@@ -64,6 +67,7 @@ rsync --include "*.java" -C -a $JSONLIB/ $ANDROID/base/json-simple/
 # These seem to get copied anyway.
 rm $ANDROID/base/sync/repositories/android/Authorities.java
 rm $ANDROID/base/resources/xml/sync_syncadapter.xml
+rm $ANDROID/base/resources/xml/sync_options.xml
 
 echo $PREPROCESS_FILES > $SYNC/preprocess-sources.mn
 echo $WARNING > $ANDROID/base/sync/README.txt

@@ -24,7 +24,7 @@
   popd
   ./fennec-code-drop.sh $MC
   pushd $MC
-  # hg qadd any files that have been added. Removing files that have been
+  # hg add any files that have been added. Removing files that have been
   # removed is an exercise for the reader.
   hg qref
 
