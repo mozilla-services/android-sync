@@ -1,7 +1,7 @@
 package org.mozilla.android.sync.test.helpers;
 
-import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,12 +24,12 @@ public class WBORepository extends Repository {
 
     private WBORepository wboRepository;
     private ExecutorService delegateExecutor = Executors.newSingleThreadExecutor();
-    public HashMap<String, Record> wbos;
+    public ConcurrentHashMap<String, Record> wbos;
 
     public WBORepositorySession(WBORepository repository) {
       super(repository);
       wboRepository = repository;
-      wbos = new HashMap<String, Record>();
+      wbos = new ConcurrentHashMap<String, Record>();
     }
 
     @Override
@@ -92,9 +92,8 @@ public class WBORepository extends Repository {
 
     @Override
     public void wipe(final RepositorySessionWipeDelegate delegate) {
-
-      this.wbos = new HashMap<String, Record>();
-      ((WBORepository) this.repository).wbos = new HashMap<String, Record>();
+      this.wbos = new ConcurrentHashMap<String, Record>();
+      ((WBORepository) this.repository).wbos = new ConcurrentHashMap<String, Record>();
       delegate.deferredWipeDelegate(delegateExecutor).onWipeSucceeded();
     }
 
@@ -118,11 +117,11 @@ public class WBORepository extends Repository {
     }
   }
 
-  public HashMap<String, Record> wbos;
+  public ConcurrentHashMap<String, Record> wbos;
 
   public WBORepository() {
     super();
-    wbos = new HashMap<String, Record>();
+    wbos = new ConcurrentHashMap<String, Record>();
   }
 
   public synchronized boolean shouldTrack() {
@@ -135,8 +134,8 @@ public class WBORepository extends Repository {
     delegate.deferredCreationDelegate().onSessionCreated(new WBORepositorySession(this));
   }
 
-  public HashMap<String, Record> cloneWBOs() {
-    HashMap<String, Record> out = new HashMap<String, Record>();
+  public ConcurrentHashMap<String, Record> cloneWBOs() {
+    ConcurrentHashMap<String, Record> out = new ConcurrentHashMap<String, Record>();
     for (Entry<String, Record> entry : wbos.entrySet()) {
       out.put(entry.getKey(), entry.getValue()); // Assume that records are
                                                  // immutable.
