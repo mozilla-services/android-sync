@@ -139,7 +139,13 @@ class ConcurrentRecordConsumer extends RecordConsumer {
       while (!delegate.getQueue().isEmpty()) {
         trace("Grabbing record...");
         Record record = delegate.getQueue().remove();
-        delegate.store(record);
+        trace("Storing record... " + delegate);
+        try {
+          delegate.store(record);
+        } catch (Exception e) {
+          // TODO: Bug 709371: track records that failed to apply.
+          Log.e(LOG_TAG, "Caught error in store.", e);
+        }
         trace("Done with record.");
       }
       synchronized (monitor) {
