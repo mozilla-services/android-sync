@@ -39,7 +39,7 @@
   <string name="sync_pair_tryagain">&sync.pair.tryagain.label;</string>
 
   <!-- Firefox SyncAdapter Settings Screen -->
-  <string name="sync_settings_options">&sync.settings.options.label;</string>
+  <string name="sync_settings_preferences">&sync.settings.options.label;</string>
   <string name="sync_settings_summary_pair">&sync.summary.pair.label;</string>
   <!-- Common text -->
   <string name="sync_button_cancel">&sync.button.cancel.label;</string>
