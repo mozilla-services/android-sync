@@ -85,9 +85,21 @@ public class WBORepository extends Repository {
       if (delegate == null) {
         throw new NoStoreDelegateException();
       }
+      Record existing = wbos.get(record.guid);
+      Log.d(LOG_TAG, "Existing record is " + (existing == null ? "<null>" : (existing.guid + ", " + existing)));
+      if (existing != null &&
+          existing.lastModified > record.lastModified) {
+        Log.d(LOG_TAG, "Local record is newer. Not storing.");
+        delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
+        return;
+      }
+      if (existing != null) {
+        Log.d(LOG_TAG, "Replacing local record.");
+      }
       wbos.put(record.guid, record);
       trackRecord(record);
       delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
+      return;
     }
 
     @Override
