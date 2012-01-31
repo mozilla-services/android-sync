@@ -401,7 +401,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
         // determine which records have changed, and thus process incoming
         // records more efficiently.
         long lastLocalRetrieval  = 0;      // lastSyncTimestamp?
-        long lastRemoteRetrieval = 0;
+        long lastRemoteRetrieval = 0;      // TODO: adjust for clock skew.
         boolean remotelyModified = record.lastModified > lastRemoteRetrieval;
 
         Record existingRecord;
@@ -468,17 +468,6 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           // We found a local dupe.
           trace("Incoming record " + record.guid + " dupes to local record " + existingRecord.guid);
 
-          // Decide what to do based on:
-          // * Which of the two records is modified
-          // * Whether they are equal
-          // * The modified times of each record (interpreted through the lens of clock skew)
-          // * ...
-          // WORKING
-
-          // Modify the local record to match the remote record's GUID and values.
-          // Preserve the local Android ID, and merge data where possible.
-          // TODO: adjust lastRemoteRetrieval for clock skew.
-
           // Populate more expensive fields prior to reconciling.
           existingRecord = transformRecord(existingRecord);
           Record toStore = reconcileRecords(record, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);
@@ -488,14 +477,14 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
             return;
           }
 
-          // TODO
-          // TODO: pass in timestamps.
+          // TODO: pass in timestamps?
           Log.d(LOG_TAG, "Replacing " + existingRecord.guid + " with record " + toStore.guid);
           Record replaced = replace(toStore, existingRecord);
 
           // Note that we don't track records here; deciding that is the job
           // of reconcileRecords.
-          Log.d(LOG_TAG, "Calling delegate callback with guid " + replaced.guid + "(" + replaced.androidID + ")");
+          Log.d(LOG_TAG, "Calling delegate callback with guid " + replaced.guid +
+                         "(" + replaced.androidID + ")");
           delegate.onRecordStoreSucceeded(replaced);
           return;
 
@@ -523,7 +512,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
   protected void storeRecordDeletion(final Record record) {
     // TODO: we ought to mark the record as deleted rather than deleting it,
-    // in order to support syncing to multiple destinations.
+    // in order to support syncing to multiple destinations. Bug 722607.
     dbHelper.delete(record);      // TODO: mm?
     delegate.onRecordStoreSucceeded(record);
   }
