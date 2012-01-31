@@ -1,7 +1,5 @@
 package org.mozilla.android.sync.test.helpers;
 
-import static org.junit.Assert.fail;
-
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +35,7 @@ public class WBORepository extends Repository {
     @Override
     public void guidsSince(long timestamp,
                            RepositorySessionGuidsSinceDelegate delegate) {
-      fail("TODO");
+      throw new RuntimeException("guidsSince not implemented.");
     }
 
     @Override
