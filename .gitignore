@@ -2,6 +2,7 @@ AndroidManifest.xml
 R.java
 src/main/java/org/mozilla/gecko/sync/repositories/android/Authorities.java
 res/xml/sync_syncadapter.xml
+res/xml/sync_options.xml
 res/values/strings.xml
 .metadata
 *.pyc
