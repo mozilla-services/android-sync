@@ -21,6 +21,7 @@ fi
 
 echo "Preprocessing."
 ./preprocess.sh
+./preprocess-fennec.sh
 
 echo "Running tests."
 mvn clean test

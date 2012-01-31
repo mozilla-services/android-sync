@@ -4,4 +4,4 @@
     android:icon="@drawable/sync_ic_launcher"
     android:smallIcon="@drawable/sync_ic_launcher"
     android:label="@string/sync_account_label"
-    android:accountPreferences="@xml/sync_options" />
+    android:accountPreferences="@xml/sync_preferences" />
