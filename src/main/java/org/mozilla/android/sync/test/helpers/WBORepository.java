@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
+import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -17,8 +18,11 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelega
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
+import android.util.Log;
 
 public class WBORepository extends Repository {
+
+  public static final String LOG_TAG = "WBORepository";
 
   public class WBORepositorySession extends StoreTrackingRepositorySession {
 
@@ -49,9 +53,16 @@ public class WBORepository extends Repository {
     public void fetchSince(long timestamp,
                            RepositorySessionFetchRecordsDelegate delegate) {
       long fetchBegin = System.currentTimeMillis();
+      RecordFilter filter = storeTracker.getFilter();
+
       for (Entry<String, Record> entry : wbos.entrySet()) {
         Record record = entry.getValue();
         if (record.lastModified >= timestamp) {
+          if (filter != null &&
+              filter.excludeRecord(record)) {
+            Log.d(LOG_TAG, "Excluding record " + record.guid);
+            continue;
+          }
           delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(record);
         }
       }
