@@ -1,7 +1,6 @@
         <activity
             android:icon="@drawable/sync_ic_launcher"
             android:label="@string/sync_app_name"
-            android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:configChanges="orientation"
             android:windowSoftInputMode="adjustResize|stateHidden"
@@ -18,11 +17,9 @@
         </activity>
         <activity
             android:clearTaskOnLaunch="true"
-            android:launchMode="singleTask"
             android:name="org.mozilla.gecko.sync.setup.activities.AccountActivity"
             android:windowSoftInputMode="adjustPan|stateHidden"/>
         <activity
             android:name="org.mozilla.gecko.sync.setup.activities.SetupFailureActivity" />
         <activity
-            android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity"
-            android:launchMode="singleTask" />
+            android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />
