@@ -3,7 +3,14 @@
 
 package org.mozilla.android.sync.stage.test;
 
+import java.io.IOException;
+
+import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.SyncConfigurationException;
+import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -53,7 +60,7 @@ public class TestGlobalSession extends AndroidTestCase {
     }
   }
 
-  public void testCallbacks() {
+  public void testCallbacks() throws CryptoException, SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, AlreadySyncingException {
     BaseResource.rewriteLocalhost = false;
     String clusterURL = "http://localhost:8080/";
     String username   = "johndoe";
@@ -61,16 +68,10 @@ public class TestGlobalSession extends AndroidTestCase {
     String syncKey    = "abcdeabcdeabcdeabcdeabcdea";
     KeyBundle syncKeyBundle = new KeyBundle(username, syncKey);
     HappyCallback callback = new HappyCallback();
-    try {
-      Context context = getContext();
-      System.out.println("Using context " + context);
-      GlobalSession session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
-      session.start();
-      assertTrue(callback.calledSuccess);
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Got exception.");
-    }
-
+    Context context = getContext();
+    System.out.println("Using context " + context);
+    GlobalSession session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
+    session.start();
+    assertTrue(callback.calledSuccess);
   }
 }
