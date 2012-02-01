@@ -20,6 +20,8 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 public class TestCryptoRecord {
   String base64EncryptionKey = "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=";
@@ -110,7 +112,7 @@ public class TestCryptoRecord {
   }
 
   @Test
-  public void testBaseCryptoRecordSyncKeyBundle() throws UnsupportedEncodingException {
+  public void testBaseCryptoRecordSyncKeyBundle() throws UnsupportedEncodingException, CryptoException {
     // These values pulled straight out of Firefox.
     String key  = "6m8mv8ex2brqnrmsb9fjuvfg7y";
     String user = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";

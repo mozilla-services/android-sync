@@ -53,6 +53,7 @@ import org.mozilla.gecko.sync.Utils;
  * HMAC uses HMAC SHA256 standard.
  */
 public class HKDF {
+    public static String HMAC_ALGORITHM = "hmacSHA256";
 
     /**
      * Used for conversion in cases in which you *know* the encoding exists.
@@ -74,7 +75,7 @@ public class HKDF {
      * Input: salt (message), IKM (input keyring material)
      * Output: PRK (pseudorandom key)
      */
-    public static byte[] hkdfExtract(byte[] salt, byte[] IKM) {
+    public static byte[] hkdfExtract(byte[] salt, byte[] IKM) throws NoSuchAlgorithmException, InvalidKeyException {
         return digestBytes(IKM, makeHMACHasher(salt));
     }
 
@@ -83,7 +84,7 @@ public class HKDF {
      * Input: PRK from step 1, info, length.
      * Output: OKM (output keyring material).
      */
-    public static byte[] hkdfExpand(byte[] prk, byte[] info, int len) {
+    public static byte[] hkdfExpand(byte[] prk, byte[] info, int len) throws NoSuchAlgorithmException, InvalidKeyException {
 
         Mac hmacHasher = makeHMACHasher(prk);
 
@@ -111,7 +112,7 @@ public class HKDF {
         if (key.length == 0) {
             key = new byte[BLOCKSIZE];
         }
-        return new SecretKeySpec(key, "HmacSHA256");
+        return new SecretKeySpec(key, HMAC_ALGORITHM);
     }
 
     /*
@@ -119,19 +120,11 @@ public class HKDF {
      * Input: Key hmacKey
      * Ouput: An HMAC Hasher
      */
-    public static Mac makeHMACHasher(byte[] key) {
+    public static Mac makeHMACHasher(byte[] key) throws NoSuchAlgorithmException, InvalidKeyException {
         Mac hmacHasher = null;
-        try {
-            hmacHasher = Mac.getInstance("hmacSHA256");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            hmacHasher.init(makeHMACKey(key));
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        }
+        hmacHasher = Mac.getInstance(HMAC_ALGORITHM);
+        assert(hmacHasher != null); // If Mac.getInstance doesn't throw NoSuchAlgorithmException, hmacHasher is non-null.
+        hmacHasher.init(makeHMACKey(key));
 
         return hmacHasher;
     }
