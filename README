@@ -1,11 +1,17 @@
 * You need Maven 3. `brew update; brew install maven`.
 
 * You need to prepare the repo before you can use it.
-  * Use preprocess.sh to build manifests etc. to keep Eclipse happy. The output
-    is ignored by Git, and the Fennec merge script skips them, too.
-  * The fennec-code-drop.sh script does this for you, as well as running tests.
-  * To run Android tests, you'll need to create .project and .classpath in `test,
-    too.
+  * Use android-sync-app/preprocess.sh to build manifests etc. and to keep
+    Eclipse happy. The output is ignored by Git, and the Fennec merge script
+    skips them, too.
+  * The android-sync-app/fennec-code-drop.sh script does this for you, as well
+    as running tests.
+  * To run the Android integration tests in Eclipse, you'll need to create
+    .project and .classpath in `android-sync-instrumentation`, too.
+
+* To run the unit and integration test suites:
+  * `mvn test`
+  * `mvn integration-test` with an emulator running or a device connected.
 
 * To make changes to generated files.
   * strings.xml doesn't exist. Modify strings.xml.in.
@@ -16,6 +22,7 @@
 
 * To merge to mozilla-central:
 
+  cd android-sync-app
   MC=~/moz/hg/mozilla-central
   pushd $MC
   hg qpop --all
@@ -26,13 +33,13 @@
   pushd $MC
   # hg add any files that have been added. Removing files that have been
   # removed is an exercise for the reader.
-  hg qref
+  hg qrefresh
 
 * If you *know* all tests pass, or you're in an environment that prevents you
-  from running them, you can invoke fennec-copy-code.sh directly (with the
-  appropriate environment variables.)
+  from running them, you can invoke `android-sync-app/fennec-copy-code.sh`
+  directly (with the appropriate environment variables).
 
-* To build:
+* To build mozilla-central:
 
   # You can do a partial build if you know what you're doing.
   make -f client.mk
