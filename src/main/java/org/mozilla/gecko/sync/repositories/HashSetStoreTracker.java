@@ -20,6 +20,7 @@ public class HashSetStoreTracker implements StoreTracker {
     guids = new HashSet<String>();
   }
 
+  @Override
   public String toString() {
     return "#<Tracker: " + guids.size() + " guids tracked.>";
   }
