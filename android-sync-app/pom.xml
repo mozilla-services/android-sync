@@ -2,8 +2,14 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.mozilla.gecko</groupId>
+    <artifactId>android-sync-parent</artifactId>
+    <version>1</version>
+  </parent>
+
   <groupId>org.mozilla.gecko</groupId>
-  <artifactId>android-sync</artifactId>
+  <artifactId>android-sync-app</artifactId>
   <version>1</version>
   <packaging>apk</packaging>
   <name>sync</name>
@@ -43,6 +49,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <!-- This *must* come after the android.util stubs above;
+           otherwise, you will get Stub! exceptions because the Google
+           provided stubs will be found first by the class loader. -->
       <groupId>com.google.android</groupId>
       <artifactId>android</artifactId>
       <version>2.3.3</version>
@@ -61,6 +70,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <build>
     <finalName>${project.artifactId}</finalName>
     <plugins>
@@ -79,7 +89,7 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>org.mozilla.gecko</groupId>
-                  <artifactId>android-sync</artifactId>
+                  <artifactId>android-sync-app</artifactId>
                   <version>1</version>
                   <type>jar</type>
                   <overWrite>false</overWrite>
@@ -101,7 +111,6 @@
       <plugin>
         <groupId>com.jayway.maven.plugins.android.generation2</groupId>
         <artifactId>android-maven-plugin</artifactId>
-        <version>3.0.0</version>
         <configuration>
           <sdk>
             <platform>10</platform>
