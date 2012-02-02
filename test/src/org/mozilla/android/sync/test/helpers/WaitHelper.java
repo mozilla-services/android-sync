@@ -11,6 +11,7 @@ import android.util.Log;
  *
  */
 public class WaitHelper {
+  Object lastAssertionMonitor = new Object();
   AssertionError lastAssertion = null;
 
   /**
@@ -34,19 +35,24 @@ public class WaitHelper {
           throw new AssertionError(ex);
         }
       }
+      Log.d("WaitHelper", "Waiting.");
       WaitHelper.this.wait();
-      // Rethrow any assertion with which we were notified.
-      if (this.lastAssertion != null) {
-        AssertionError e = this.lastAssertion;
-        this.lastAssertion = null;
-        throw e;
+      synchronized (lastAssertionMonitor) {
+        Log.d("WaitHelper", "Done waiting. lastAssertion is " + this.lastAssertion);
+        // Rethrow any assertion with which we were notified.
+        if (this.lastAssertion != null) {
+          AssertionError e = this.lastAssertion;
+          this.lastAssertion = null;
+          Log.d("WaitHelper", "Rethrowing.", e);
+          throw e;
+        }
       }
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
   }
 
-  public synchronized void performWait() throws AssertionError {
+  public void performWait() throws AssertionError {
     this.performWait(null);
   }
 
@@ -54,20 +60,19 @@ public class WaitHelper {
     if (e != null) {
       Log.i("WaitHelper", "performNotify called with AssertionError " + e);
     }
-    this.lastAssertion = e;
+    synchronized (lastAssertionMonitor) {
+      this.lastAssertion = e;
+    }
     WaitHelper.this.notify();
   }
 
-  public void performNotify() {
+  public synchronized void performNotify() {
     Log.i("WaitHelper", "performNotify called.");
     this.performNotify(null);
   }
 
-  private static WaitHelper singleWaiter;
+  private static WaitHelper singleWaiter = new WaitHelper();
   public static WaitHelper getTestWaiter() {
-    if (singleWaiter == null) {
-      singleWaiter = new WaitHelper();
-    }
     return singleWaiter;
   }
 }
