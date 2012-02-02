@@ -75,6 +75,15 @@ public abstract class RepositorySession {
   }
 
   private static final String LOG_TAG = "RepositorySession";
+
+  private static void error(String message) {
+    Utils.error(LOG_TAG, message);
+  }
+
+  protected static void trace(String message) {
+    Utils.trace(LOG_TAG, message);
+  }
+
   protected SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
   protected RepositorySessionStoreDelegate delegate;
@@ -164,11 +173,6 @@ public abstract class RepositorySession {
     }
   }
 
-  private static void error(String msg) {
-    System.err.println("ERROR: " + msg);
-    Log.e(LOG_TAG, msg);
-  }
-
   /**
    * Synchronously perform the shared work of beginning. Throws on failure.
    * @throws InvalidSessionTransitionException
@@ -251,15 +255,6 @@ public abstract class RepositorySession {
     status = SessionStatus.ABORTED;
     storeWorkQueue.shutdown();
     delegateQueue.shutdown();
-  }
-
-  protected void trace(String m) {
-    if (Utils.ENABLE_TRACE_LOGGING) {
-      if (Utils.LOG_TO_STDOUT) {
-        System.out.println(LOG_TAG + "::TRACE " + m);
-      }
-      Log.d(LOG_TAG, m);
-    }
   }
 
   /**

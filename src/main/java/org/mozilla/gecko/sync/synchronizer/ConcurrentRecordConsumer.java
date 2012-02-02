@@ -65,21 +65,15 @@ class ConcurrentRecordConsumer extends RecordConsumer {
   }
 
   private static void info(String message) {
-    Utils.logToStdout(LOG_TAG, "::INFO: ", message);
-    Log.i(LOG_TAG, message);
+    Utils.info(LOG_TAG, message);
   }
 
   private static void debug(String message) {
-    Utils.logToStdout(LOG_TAG, ":: DEBUG: ", message);
-    Log.d(LOG_TAG, message);
+    Utils.debug(LOG_TAG, message);
   }
 
   private static void trace(String message) {
-    if (!Utils.ENABLE_TRACE_LOGGING) {
-      return;
-    }
-    Utils.logToStdout(LOG_TAG, ":: TRACE: ", message);
-    Log.d(LOG_TAG, message);
+    Utils.trace(LOG_TAG, message);
   }
 
   private Object monitor = new Object();
