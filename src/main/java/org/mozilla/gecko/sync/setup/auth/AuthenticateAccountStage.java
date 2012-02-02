@@ -16,11 +16,9 @@ import org.mozilla.gecko.sync.setup.Constants;
 
 import android.util.Base64;
 import android.util.Log;
-import ch.boye.httpclientandroidlib.HeaderIterator;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.conn.params.ConnConnectionPNames;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
