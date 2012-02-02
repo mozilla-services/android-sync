@@ -26,7 +26,7 @@ public class HashSetStoreTracker implements StoreTracker {
   }
 
   @Override
-  public synchronized boolean trackStoredForExclusion(String guid) {
+  public synchronized boolean trackRecordForExclusion(String guid) {
     return (guid != null) && guids.add(guid);
   }
 

@@ -45,7 +45,7 @@ public abstract class StoreTrackingRepositorySession extends RepositorySession {
     Log.d(LOG_TAG, "Tracking record " + record.guid +
                    " (" + record.lastModified + ") to avoid re-upload.");
     // Future: we care about the timestamp…
-    this.storeTracker.trackStoredForExclusion(record.guid);
+    this.storeTracker.trackRecordForExclusion(record.guid);
   }
 
   @Override

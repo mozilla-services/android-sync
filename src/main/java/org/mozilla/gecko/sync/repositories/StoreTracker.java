@@ -28,7 +28,9 @@ package org.mozilla.gecko.sync.repositories;
  * We achieve this by tracking GUIDs during the storing phase. If we
  * apply a record such that the local copy is substantially the same
  * as the record we just downloaded, we add it to a list of records
- * to avoid uploading.
+ * to avoid uploading. The definition of "substantially the same"
+ * depends on the particular repository. The only consideration is "do we
+ * want to upload this record in this sync?".
  *
  * Note that items are removed from this list when a fetch that
  * considers them for upload completes successfully. The entire list
@@ -42,6 +44,8 @@ package org.mozilla.gecko.sync.repositories;
  *
  * In the future this might also grow self-persistence.
  *
+ * See also RepositorySession.trackRecord.
+ *
  * @author rnewman
  *
  */
@@ -53,7 +57,7 @@ public interface StoreTracker {
    * @return
    *        Whether the GUID was a newly tracked value.
    */
-  public boolean trackStoredForExclusion(String guid);
+  public boolean trackRecordForExclusion(String guid);
 
   /**
    * @param guid
