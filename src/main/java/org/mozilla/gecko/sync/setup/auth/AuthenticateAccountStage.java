@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
@@ -15,12 +16,9 @@ import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.util.Base64;
-import android.util.Log;
-import ch.boye.httpclientandroidlib.HeaderIterator;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.conn.params.ConnConnectionPNames;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
@@ -45,24 +43,24 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
 
       @Override
       public void handleFailure(HttpResponse response) {
-        Log.d(LOG_TAG, "handleFailure");
+        Logger.debug(LOG_TAG, "handleFailure");
         aa.abort(response.toString(), new Exception(response.getStatusLine().getStatusCode() + " error."));
         try {
           BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-          Log.w(LOG_TAG, "content: " + reader.readLine());
+          Logger.warn(LOG_TAG, "content: " + reader.readLine());
           SyncResourceDelegate.consumeReader(reader);
           reader.close();
           SyncResourceDelegate.consumeEntity(response.getEntity());
         } catch (IllegalStateException e) {
-          Log.d(LOG_TAG, "Error reading content.", e);
+          Logger.debug(LOG_TAG, "Error reading content.", e);
         } catch (IOException e) {
-          Log.d(LOG_TAG, "Error reading content.", e);
+          Logger.debug(LOG_TAG, "Error reading content.", e);
         }
       }
 
       @Override
       public void handleError(Exception e) {
-        Log.d(LOG_TAG, "handleError");
+        Logger.debug(LOG_TAG, "handleError");
         aa.abort("HTTP failure.", e);
       }
     };
@@ -87,7 +85,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
           URI authServerUri = new URI(authRequestUrl);
           request.setHeader(new BasicHeader("Host", authServerUri.getHost()));
         } catch (URISyntaxException e) {
-          Log.e(LOG_TAG, "Malformed uri, will be caught elsewhere.", e);
+          Logger.error(LOG_TAG, "Malformed uri, will be caught elsewhere.", e);
         }
         request.setHeader(new BasicHeader("Authorization", "Basic " + authHeader));
       }
@@ -111,7 +109,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
 
       @Override
       public void handleHttpProtocolException(ClientProtocolException e) {
-        Log.e(LOG_TAG, "Client protocol error.");
+        Logger.error(LOG_TAG, "Client protocol error.");
         callbackDelegate.handleError(e);
       }
 
