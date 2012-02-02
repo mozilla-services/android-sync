@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -158,9 +159,10 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   protected abstract String buildRecordString(Record record);
 
   protected void checkDatabase() throws ProfileDatabaseException, NullCursorException {
-    Log.i(LOG_TAG, "Checking database.");
+    Utils.info(LOG_TAG, "BEGIN: checking database.");
     try {
       dbHelper.fetch(new String[] { "none" }).close();
+      Utils.info(LOG_TAG, "END: checking database.");
     } catch (NullPointerException e) {
       throw new ProfileDatabaseException(e);
     }
@@ -601,7 +603,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   }
 
   private void createRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    Log.i(LOG_TAG, "Creating record -> GUID map.");
+    Utils.info(LOG_TAG, "BEGIN: creating record -> GUID map.");
     recordToGuid = new HashMap<String, String>();
     Cursor cur = dbHelper.fetchAll();
     try {
@@ -618,6 +620,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     } finally {
       cur.close();
     }
+    Utils.info(LOG_TAG, "END: creating record -> GUID map.");
   }
 
   public void putRecordToGuidMap(String recordString, String guid) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
