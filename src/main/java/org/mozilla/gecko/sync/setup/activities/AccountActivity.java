@@ -52,6 +52,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -75,6 +76,9 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private EditText            synckeyInput;
   private CheckBox            serverCheckbox;
   private Button              connectButton;
+  private Button              cancelButton;
+
+  private AccountAuthenticator accountAuthenticator;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -99,6 +103,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     serverInput.addTextChangedListener(inputValidator);
 
     connectButton = (Button) findViewById(R.id.accountConnectButton);
+    cancelButton = (Button) findViewById(R.id.accountCancelButton);
     serverCheckbox = (CheckBox) findViewById(R.id.checkbox_server);
 
     serverCheckbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -119,17 +124,41 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   }
 
   @Override
-  public void onStart() {
-    super.onStart();
+  public void onResume() {
+    super.onResume();
+    clearCredentials();
+    usernameInput.requestFocus();
+    enableCredEntry(true);
+    cancelButton.setOnClickListener(new OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        cancelClickHandler(v);
+      }
+
+    });
+  }
+  public void cancelClickHandler(View target) {
+    finish();
+  }
+
+  public void cancelConnectHandler(View target) {
+    if (accountAuthenticator != null) {
+      accountAuthenticator.isCanceled = true;
+      accountAuthenticator = null;
+    }
+    enableCredEntry(true);
+    activateView(connectButton, true);
+    clearCredentials();
+    usernameInput.requestFocus();
+  }
+
+  private void clearCredentials() {
     // Start with an empty form
     usernameInput.setText("");
     passwordInput.setText("");
-    synckeyInput.setText("");
     passwordInput.setText("");
-  }
-
-  public void cancelClickHandler(View target) {
-    finish();
+    // Don't clear sync key until exiting.
   }
 
   /*
@@ -146,9 +175,16 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     }
     enableCredEntry(false);
     activateView(connectButton, false);
+    cancelButton.setOnClickListener(new OnClickListener() {
 
-    AccountAuthenticator accountAuth = new AccountAuthenticator(this);
-    accountAuth.authenticate(server, username, password);
+      @Override
+      public void onClick(View v) {
+        cancelConnectHandler(v);
+      }
+    });
+
+    accountAuthenticator = new AccountAuthenticator(this);
+    accountAuthenticator.authenticate(server, username, password);
   }
 
   /* Helper UI functions */
@@ -156,6 +192,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     usernameInput.setEnabled(toEnable);
     passwordInput.setEnabled(toEnable);
     synckeyInput.setEnabled(toEnable);
+    serverCheckbox.setEnabled(toEnable);
     if (!toEnable) {
       serverInput.setEnabled(toEnable);
     } else {
@@ -227,7 +264,6 @@ public class AccountActivity extends AccountAuthenticatorActivity {
    * Feedback to user of account setup failure.
    */
   public void authFailure() {
-    enableCredEntry(true);
     Intent intent = new Intent(mContext, SetupFailureActivity.class);
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);

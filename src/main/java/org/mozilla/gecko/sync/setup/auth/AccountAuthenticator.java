@@ -26,6 +26,7 @@ public class AccountAuthenticator {
   public String nodeServer;
 
   public boolean isSuccess = false;
+  public boolean isCanceled = false;
 
   public AccountAuthenticator(AccountActivity activity) {
     activityCallback = activity;
@@ -64,6 +65,9 @@ public class AccountAuthenticator {
    * Run next stage of authentication.
    */
   public void runNextStage() {
+    if (isCanceled) {
+      return;
+    }
     if (++stageIndex == stages.size()) {
       activityCallback.authCallback(isSuccess);
       return;
@@ -85,6 +89,9 @@ public class AccountAuthenticator {
    *    Reason for abort.
    */
   public void abort(String reason, Exception e) {
+    if (isCanceled) {
+      return;
+    }
     Log.w(LOG_TAG, reason, e);
     activityCallback.authCallback(false);
   }
