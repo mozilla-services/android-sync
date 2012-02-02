@@ -214,7 +214,7 @@ public class StoreTrackingTest extends
     final SuccessCreationDelegate createDelegate = new SuccessCreationDelegate() {
       @Override
       public void onSessionCreated(final RepositorySession session) {
-        System.out.println("Session created.");
+        Log.i(getName(), "Session created.");
         session.begin(new SuccessBeginDelegate() {
           @Override
           public void onBeginSucceeded(final RepositorySession session) {
@@ -261,7 +261,7 @@ public class StoreTrackingTest extends
    * Invokes doTestStoreRetrieveByGUID, doTestNewSessionRetrieveByTime.
    */
   public void testStoreRetrieveByGUID() {
-    System.out.println("Started.");
+    Log.i(getName(), "Started.");
     final WBORepository r = new TrackingWBORepository();
     final long now = System.currentTimeMillis();
     final String expectedGUID = "abcdefghijkl";
