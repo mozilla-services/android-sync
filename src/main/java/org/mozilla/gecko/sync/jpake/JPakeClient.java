@@ -321,7 +321,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Verifies message computed by other party in their Step One. Creates Step
    * Two message to be sent.
    */
-  private void computeStepTwo() {
+  private void computeStepTwo() throws NonObjectJSONException {
     Log.d(LOG_TAG, "Computing round 2.");
 
     // Check incoming message sender.
@@ -332,22 +332,17 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
     // Check incoming message fields.
-    ExtendedJSONObject iPayload = null;
-    try {
-      iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
-      if (iPayload == null
-          || iPayload.getObject(Constants.ZKP_KEY_ZKP_X1) == null
-          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X1)
-              .get(Constants.ZKP_KEY_ID))
-          || iPayload.getObject(Constants.ZKP_KEY_ZKP_X2) == null
-          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X2)
-              .get(Constants.ZKP_KEY_ID))) {
-        Log.e(LOG_TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
-        abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
-        return;
-      }
-    } catch (NonObjectJSONException e) {
-      e.printStackTrace();
+    ExtendedJSONObject iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
+    if (iPayload == null
+        || iPayload.getObject(Constants.ZKP_KEY_ZKP_X1) == null
+        || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X1)
+            .get(Constants.ZKP_KEY_ID))
+            || iPayload.getObject(Constants.ZKP_KEY_ZKP_X2) == null
+            || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X2)
+                .get(Constants.ZKP_KEY_ID))) {
+      Log.e(LOG_TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
     }
 
     // Extract message fields.
@@ -356,18 +351,12 @@ public class JPakeClient implements JPakeRequestDelegate {
     jParty.gx4 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2),
         16);
 
-    ExtendedJSONObject zkpPayload3 = null;
-    ExtendedJSONObject zkpPayload4 = null;
-    try {
-      zkpPayload3 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X1);
-      zkpPayload4 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X2);
-      if (zkpPayload3 == null || zkpPayload4 == null) {
-        Log.e(LOG_TAG, "Invalid round 1 zkpPayload message");
-        abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
-        return;
-      }
-    } catch (NonObjectJSONException e) {
-      e.printStackTrace();
+    ExtendedJSONObject zkpPayload3 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X1);
+    ExtendedJSONObject zkpPayload4 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X2);
+    if (zkpPayload3 == null || zkpPayload4 == null) {
+      Log.e(LOG_TAG, "Invalid round 1 zkpPayload message");
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
     }
 
     // Extract ZKPs.
@@ -433,7 +422,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Verifies message computed by other party in Step Two. Creates or fetches
    * encrypted message for verification of successful key exchange.
    */
-  private void computeFinal() {
+  private void computeFinal() throws NonObjectJSONException {
     Log.d(LOG_TAG, "Computing final round.");
     // Check incoming message type.
     if (!jIncoming.get(Constants.JSON_KEY_TYPE).equals(theirSignerId + "2")) {
@@ -443,30 +432,22 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
     // Check incoming message fields.
-    ExtendedJSONObject iPayload = null;
-    try {
-      iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
-      if (iPayload == null
-          || iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null
-          || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_A)
-              .get(Constants.ZKP_KEY_ID))) {
-        Log.e(LOG_TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
-        abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
-        return;
-      }
-    } catch (NonObjectJSONException e) {
-      e.printStackTrace();
+    ExtendedJSONObject iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
+    if (iPayload == null
+        || iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null
+        || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_A)
+            .get(Constants.ZKP_KEY_ID))) {
+      Log.e(LOG_TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
     }
+
     // Extract fields.
     jParty.otherA = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A),
         16);
 
-    ExtendedJSONObject zkpPayload = null;
-    try {
-      zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
-    } catch (NonObjectJSONException e) {
-      e.printStackTrace();
-    }
+    ExtendedJSONObject zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
+
     // Extract ZKP.
     String gr = (String) zkpPayload.get(Constants.ZKP_KEY_GR);
     String b = (String) zkpPayload.get(Constants.ZKP_KEY_B);
@@ -834,13 +815,23 @@ public class JPakeClient implements JPakeRequestDelegate {
         }
       } else if (this.state == State.RCVR_STEP_ONE
           || this.state == State.SNDR_STEP_ONE) {
-        computeStepTwo();
+        try {
+          computeStepTwo();
+        } catch (NonObjectJSONException e) {
+          abort(Constants.JPAKE_ERROR_INVALID);
+          return;
+        }
       } else if (this.state == State.SNDR_STEP_TWO) {
         stateContext = state;
         state = State.PUT;
         putStep();
       } else if (this.state == State.RCVR_STEP_TWO) {
-        computeFinal();
+        try {
+          computeFinal();
+        } catch (NonObjectJSONException e) {
+          abort(Constants.JPAKE_ERROR_INVALID);
+          return;
+        }
       } else if (this.state == State.VERIFY_KEY) {
         decryptData(myKeyBundle);
       } else if (this.state == State.VERIFY_PAIRING) {
@@ -873,11 +864,19 @@ public class JPakeClient implements JPakeRequestDelegate {
         ssActivity.onPaired();
       }
       if (state == State.SNDR_STEP_ONE) {
-        computeStepTwo();
+        try {
+          computeStepTwo();
+        } catch (NonObjectJSONException e) {
+          abort(Constants.JPAKE_ERROR_INVALID);
+        }
         return; // No need to wait for response from PUT request.
       }
       if (state == State.SNDR_STEP_TWO) {
-        computeFinal();
+        try {
+          computeFinal();
+        } catch (NonObjectJSONException e) {
+          abort(Constants.JPAKE_ERROR_INVALID);
+        }
         return; // No need to wait for response from PUT request.
       }
 
