@@ -134,7 +134,7 @@ public class JPakeCrypto {
    * @throws IncorrectZkpException
    */
   public static void round2(String secret, JPakeParty jp,
-      JPakeNumGenerator gen) throws IncorrectZkpException {
+      JPakeNumGenerator gen) throws IncorrectZkpException, Gx3OrGx4IsZeroOrOneException {
 
     Log.d(LOG_TAG, "round2 started.");
 

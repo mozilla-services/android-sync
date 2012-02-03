@@ -157,7 +157,7 @@ public class TestJPakeSetup {
    */
   public boolean jPakeDeriveSameKey(JPakeNumGenerator gen1,
       JPakeNumGenerator gen2, String secret1, String secret2)
-      throws IncorrectZkpException, IOException,
+      throws IncorrectZkpException, Gx3OrGx4IsZeroOrOneException, IOException,
       ParseException, NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
 
     // Communicating parties.
