@@ -5,7 +5,7 @@ package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectNoGUIDsSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectOnlySpecialFoldersDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
@@ -49,7 +49,7 @@ public class AndroidBrowserRepositoryTestHelper {
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        session.guidsSince(0, new ExpectNoGUIDsSinceDelegate());
+        session.guidsSince(0, new ExpectOnlySpecialFoldersDelegate());
       }
     };
     testWaiter.performWait(runnable);
