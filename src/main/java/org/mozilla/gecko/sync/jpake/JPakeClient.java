@@ -463,14 +463,17 @@ public class JPakeClient implements JPakeRequestDelegate {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       e.printStackTrace();
+      return;
     } catch (NoSuchAlgorithmException e) {
       Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
       e.printStackTrace();
+      return;
     } catch (InvalidKeyException e) {
       Log.e(LOG_TAG, "InvalidKeyException", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
       e.printStackTrace();
+      return;
     }
 
     if (pairWithPin) { // Wait for other device to send verification of keys.
