@@ -243,7 +243,7 @@ public class JPakeCrypto {
 
     // Check parameters of zkp, and compare to computed hash. These shouldn't
     // fail.
-    if (gx.compareTo(BigInteger.ZERO) < 1) {// g^x > 1
+    if (gx.compareTo(BigInteger.ONE) < 1) { // g^x > 1.
       Log.e(LOG_TAG, "g^x > 1 fails.");
       throw new IncorrectZkpException();
     }
