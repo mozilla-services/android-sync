@@ -150,13 +150,7 @@ public class JPakeCrypto {
 
     // Compute a = g^[(x1+x3+x4)*(x2*secret)].
     BigInteger y1 = jp.gx3.multiply(jp.gx4).mod(P).multiply(jp.gx1).mod(P);
-    BigInteger y2 = null;
-    try {
-      y2 = jp.x2.multiply(new BigInteger(secret.getBytes("US-ASCII"))).mod(P);
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    BigInteger y2 = jp.x2.multiply(secretValue).mod(P);
 
     BigInteger a  = y1.modPow(y2, P);
     jp.thisZkpA = createZkp(y1, y2, a, jp.signerId, gen);
@@ -175,7 +169,7 @@ public class JPakeCrypto {
    * @return KeyBundle
    * @throws IncorrectZkpException
    */
-  public static KeyBundle finalRound(String secret, JPakeParty jp)
+  public static KeyBundle finalRound(BigInteger secretValue, JPakeParty jp)
       throws IncorrectZkpException, NoSuchAlgorithmException, InvalidKeyException {
     Log.d(LOG_TAG, "Final round started.");
     BigInteger gb = jp.gx1.multiply(jp.gx2).mod(P).multiply(jp.gx3)
@@ -184,7 +178,7 @@ public class JPakeCrypto {
 
     // Calculate shared key g^(x1+x3)*x2*x4*secret, which is equivalent to
     // (B/g^(x2*x4*s))^x2 = (B*(g^x4)^x2^s^-1)^2.
-    BigInteger k = jp.gx4.modPow(jp.x2.multiply(new BigInteger(secret.getBytes())).negate().mod(Q), P).multiply(jp.otherA)
+    BigInteger k = jp.gx4.modPow(jp.x2.multiply(secretValue).negate().mod(Q), P).multiply(jp.otherA)
         .modPow(jp.x2, P);
 
     byte[] enc = new byte[32];

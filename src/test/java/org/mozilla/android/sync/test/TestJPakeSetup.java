@@ -36,6 +36,7 @@ public class TestJPakeSetup {
   public void testGx3OrGx4ZeroOrOneThrowsException() {
     JPakeNumGeneratorRandom gen = new JPakeNumGeneratorRandom();
     JPakeParty p = new JPakeParty("foobar");
+    BigInteger secret = JPakeClient.secretAsBigInteger("secret");
 
     p.gx4 = new BigInteger("2");
     p.gx3 = new BigInteger("0");
@@ -80,7 +81,7 @@ public class TestJPakeSetup {
 
     p.gx4 = new BigInteger("1");
     try {
-      JPakeCrypto.round2("secret", p, gen);
+      JPakeCrypto.round2(secret, p, gen);
       fail("round2 should fail if gx4 == 1");
     } catch (Gx3OrGx4IsZeroOrOneException e) {
       // Hurrah.
@@ -90,7 +91,7 @@ public class TestJPakeSetup {
 
     p.gx4 = new BigInteger("3");
     try {
-      JPakeCrypto.round2("secret", p, gen);
+      JPakeCrypto.round2(secret, p, gen);
     } catch (Gx3OrGx4IsZeroOrOneException e) {
       fail("Unexpected exception " + e);
     } catch (Exception e) {
@@ -130,7 +131,7 @@ public class TestJPakeSetup {
   public void testJPakeCorrectSecret() throws Gx3OrGx4IsZeroOrOneException,
       IncorrectZkpException, IOException, ParseException,
       NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
-    String secret = "byubd7u75qmq";
+    BigInteger secret = JPakeClient.secretAsBigInteger("byubd7u75qmq");
     JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
     // Keys derived should be the same.
     assertTrue(jPakeDeriveSameKey(gen, gen, secret, secret));
@@ -143,8 +144,8 @@ public class TestJPakeSetup {
   public void testJPakeIncorrectSecret() throws Gx3OrGx4IsZeroOrOneException,
       IncorrectZkpException, IOException, ParseException,
       NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
-    String secret1 = "shareSecret1";
-    String secret2 = "shareSecret2";
+    BigInteger secret1 = JPakeClient.secretAsBigInteger("shareSecret1");
+    BigInteger secret2 = JPakeClient.secretAsBigInteger("shareSecret2");
     JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
     // Unsuccessful key derivation.
     assertFalse(jPakeDeriveSameKey(gen, gen, secret1, secret2));
@@ -156,8 +157,8 @@ public class TestJPakeSetup {
    * same channel; otherwise, J-PAKE would have failed immediately.
    */
   public boolean jPakeDeriveSameKey(JPakeNumGenerator gen1,
-      JPakeNumGenerator gen2, String secret1, String secret2)
       throws IncorrectZkpException, Gx3OrGx4IsZeroOrOneException, IOException,
+      JPakeNumGenerator gen2, BigInteger secret1, BigInteger secret2)
       ParseException, NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
 
     // Communicating parties.

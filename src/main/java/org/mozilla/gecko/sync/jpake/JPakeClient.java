@@ -473,7 +473,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     myKeyBundle = null;
     try {
-      myKeyBundle = JPakeCrypto.finalRound(secret, jParty);
+      myKeyBundle = JPakeCrypto.finalRound(JPakeClient.secretAsBigInteger(secret), jParty);
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
@@ -1166,6 +1166,14 @@ public class JPakeClient implements JPakeRequestDelegate {
     random.nextBytes(bytes);
     return bytes;
   }
+
+  /*
+   * Helper for turning a string secret into a numeric secret.
+   */
+  public static BigInteger secretAsBigInteger(String secretString) {
+    return new BigInteger(secretString.getBytes());
+  }
+
 
   /*
    * Helper function to generate a JSON encoded ZKP.
