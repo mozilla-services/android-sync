@@ -527,13 +527,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     Log.d(LOG_TAG, "Encrypting key verification value.");
     // KeyBundle not null
     ExtendedJSONObject jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
-    Log.d(
-        LOG_TAG,
-        "enc key64: "
-            + new String(Base64.encodeBase64(keyBundle.getEncryptionKey())));
-    Log.e(LOG_TAG,
-        "hmac64: " + new String(Base64.encodeBase64(keyBundle.getHMACKey())));
-
     ExtendedJSONObject result = new ExtendedJSONObject();
     result.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
     result.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
