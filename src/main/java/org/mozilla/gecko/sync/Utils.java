@@ -42,7 +42,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Random;
+import java.security.SecureRandom;
 
 import org.mozilla.apache.commons.codec.binary.Base32;
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -104,9 +104,14 @@ public class Utils {
     return new String(encodedBytes).replace("+", "-").replace("/", "_");
   }
 
-  private static byte[] generateRandomBytes(int length) {
+  /*
+   * Helper to generate secure random bytes.
+   *
+   * @param length Number of bytes to generate.
+   */
+  public static byte[] generateRandomBytes(int length) {
     byte[] bytes = new byte[length];
-    Random random = new Random(System.nanoTime());
+    SecureRandom random = new SecureRandom();
     random.nextBytes(bytes);
     return bytes;
   }
