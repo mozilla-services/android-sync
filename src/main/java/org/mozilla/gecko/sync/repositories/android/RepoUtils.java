@@ -25,7 +25,7 @@ import android.net.Uri;
 
 public class RepoUtils {
 
-  private static final String LOG_TAG = "DBUtils";
+  private static final String LOG_TAG = "RepoUtils";
 
   /**
    * An array of known-special GUIDs.
