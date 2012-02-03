@@ -41,7 +41,7 @@ public class TestJPakeSetup {
     p.gx4 = new BigInteger("2");
     p.gx3 = new BigInteger("0");
     try {
-      JPakeCrypto.round2("secret", p, gen);
+      JPakeCrypto.round2(secret, p, gen);
       fail("round2 should fail if gx3 == 0");
     } catch (Gx3OrGx4IsZeroOrOneException e) {
       // Hurrah.
@@ -51,7 +51,7 @@ public class TestJPakeSetup {
 
     p.gx3 = new BigInteger("1");
     try {
-      JPakeCrypto.round2("secret", p, gen);
+      JPakeCrypto.round2(secret, p, gen);
       fail("round2 should fail if gx3 == 1");
     } catch (Gx3OrGx4IsZeroOrOneException e) {
       // Hurrah.
@@ -61,7 +61,7 @@ public class TestJPakeSetup {
 
     p.gx3 = new BigInteger("3");
     try {
-      JPakeCrypto.round2("secret", p, gen);
+      JPakeCrypto.round2(secret, p, gen);
     } catch (Gx3OrGx4IsZeroOrOneException e) {
       fail("Unexpected exception " + e);
     } catch (Exception e) {
@@ -71,7 +71,7 @@ public class TestJPakeSetup {
     p.gx3 = new BigInteger("2");
     p.gx4 = new BigInteger("0");
     try {
-      JPakeCrypto.round2("secret", p, gen);
+      JPakeCrypto.round2(secret, p, gen);
       fail("round2 should fail if gx4 == 0");
     } catch (Gx3OrGx4IsZeroOrOneException e) {
       // Hurrah.
@@ -157,8 +157,8 @@ public class TestJPakeSetup {
    * same channel; otherwise, J-PAKE would have failed immediately.
    */
   public boolean jPakeDeriveSameKey(JPakeNumGenerator gen1,
-      throws IncorrectZkpException, Gx3OrGx4IsZeroOrOneException, IOException,
       JPakeNumGenerator gen2, BigInteger secret1, BigInteger secret2)
+      throws IncorrectZkpException, Gx3OrGx4IsZeroOrOneException, IOException,
       ParseException, NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
 
     // Communicating parties.

@@ -283,7 +283,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   /*
    * Step One of J-PAKE protocol.
    */
-  private void computeStepOne() {
+  private void computeStepOne() throws NoSuchAlgorithmException {
     Log.d(LOG_TAG, "Computing round 1.");
 
     JPakeCrypto.round1(jParty, numGen);
@@ -386,7 +386,7 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     // Jpake round 2
     try {
-      JPakeCrypto.round2(secret, jParty, numGen);
+      JPakeCrypto.round2(JPakeClient.secretAsBigInteger(secret), jParty, numGen);
     } catch (Gx3OrGx4IsZeroOrOneException e) {
       Log.e(LOG_TAG, "gx3 and gx4 cannot equal 0 or 1.");
       abort(Constants.JPAKE_ERROR_INTERNAL);
@@ -394,6 +394,10 @@ public class JPakeClient implements JPakeRequestDelegate {
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
+    } catch (NoSuchAlgorithmException e) {
+      Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     }
 
@@ -777,7 +781,13 @@ public class JPakeClient implements JPakeRequestDelegate {
 
       // Set up next step.
       this.state = State.RCVR_STEP_ONE;
-      computeStepOne();
+      try {
+        computeStepOne();
+      } catch (NoSuchAlgorithmException e) {
+        Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
+        abort(Constants.JPAKE_ERROR_INTERNAL);
+        return;
+      }
       break;
 
     // Results from GET request. Continue flow depending on case.
@@ -822,7 +832,13 @@ public class JPakeClient implements JPakeRequestDelegate {
       Log.d(LOG_TAG, "incoming message: " + jIncoming.toJSONString());
 
       if (this.state == State.SNDR_STEP_ZERO) {
-        computeStepOne();
+        try {
+          computeStepOne();
+        } catch (NoSuchAlgorithmException e) {
+          Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
+          abort(Constants.JPAKE_ERROR_INTERNAL);
+          return;
+        }
       } else if (this.state == State.RCVR_STEP_ONE
           || this.state == State.SNDR_STEP_ONE) {
         computeStepTwo();

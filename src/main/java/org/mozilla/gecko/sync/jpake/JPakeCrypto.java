@@ -101,8 +101,9 @@ public class JPakeCrypto {
    *
    * @param mySignerId
    * @param valuesOut
+   * @throws NoSuchAlgorithmException 
    */
-  public static void round1(JPakeParty jp, JPakeNumGenerator gen) {
+  public static void round1(JPakeParty jp, JPakeNumGenerator gen) throws NoSuchAlgorithmException {
     // Randomly select x1 from [0,q), x2 from [1,q).
     BigInteger x1 = gen.generateFromRange(Q); // [0, q)
     BigInteger x2 = jp.x2 = BigInteger.ONE.add(gen.generateFromRange(Q
@@ -132,9 +133,10 @@ public class JPakeCrypto {
    * @param zkp3
    * @param zkp4
    * @throws IncorrectZkpException
+   * @throws NoSuchAlgorithmException
    */
-  public static void round2(String secret, JPakeParty jp,
-      JPakeNumGenerator gen) throws IncorrectZkpException, Gx3OrGx4IsZeroOrOneException {
+  public static void round2(BigInteger secretValue, JPakeParty jp,
+      JPakeNumGenerator gen) throws IncorrectZkpException, NoSuchAlgorithmException, Gx3OrGx4IsZeroOrOneException{
 
     Log.d(LOG_TAG, "round2 started.");
 
@@ -211,7 +213,7 @@ public class JPakeCrypto {
    * pass in gx to save on an exponentiation of g^x)
    */
   private static Zkp createZkp(BigInteger g, BigInteger x, BigInteger gx,
-      String id, JPakeNumGenerator gen) {
+      String id, JPakeNumGenerator gen) throws NoSuchAlgorithmException {
     // Generate random r for exponent.
     BigInteger r = gen.generateFromRange(Q);
 
@@ -232,7 +234,7 @@ public class JPakeCrypto {
    * Verify ZKP.
    */
   private static void checkZkp(BigInteger g, BigInteger gx, Zkp zkp)
-      throws IncorrectZkpException {
+      throws IncorrectZkpException, NoSuchAlgorithmException {
 
     BigInteger h = computeBHash(g, zkp.gr, gx, zkp.id);
 
@@ -272,33 +274,25 @@ public class JPakeCrypto {
    * form hash.
    */
   private static BigInteger computeBHash(BigInteger g, BigInteger gr, BigInteger gx,
-      String id) {
-    MessageDigest sha = null;
-    try {
-      sha = MessageDigest.getInstance("SHA-256");
-      sha.reset();
+      String id) throws NoSuchAlgorithmException {
+    MessageDigest sha = MessageDigest.getInstance("SHA-256");
+    sha.reset();
 
-      /*
-       * Note: you should ensure the items in H(...) have clear boundaries. It
-       * is simple if the other party knows sizes of g, gr, gx and signerID and
-       * hence the boundary is unambiguous. If not, you'd better prepend each
-       * item with its byte length, but I've omitted that here.
-       */
+    /*
+     * Note: you should ensure the items in H(...) have clear boundaries. It
+     * is simple if the other party knows sizes of g, gr, gx and signerID and
+     * hence the boundary is unambiguous. If not, you'd better prepend each
+     * item with its byte length, but I've omitted that here.
+     */
 
-      hashByteArrayWithLength(sha,
-          BigIntegerHelper.BigIntegerToByteArrayWithoutSign(g));
-      hashByteArrayWithLength(sha,
-          BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gr));
-      hashByteArrayWithLength(sha,
-          BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gx));
-      hashByteArrayWithLength(sha, id.getBytes("US-ASCII"));
+    hashByteArrayWithLength(sha,
+        BigIntegerHelper.BigIntegerToByteArrayWithoutSign(g));
+    hashByteArrayWithLength(sha,
+        BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gr));
+    hashByteArrayWithLength(sha,
+        BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gx));
+    hashByteArrayWithLength(sha, id.getBytes());
 
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-    } catch (UnsupportedEncodingException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
     byte[] hash = sha.digest();
 
     return BigIntegerHelper.ByteArrayToBigIntegerWithoutSign(hash);
