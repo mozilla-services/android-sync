@@ -38,7 +38,6 @@
 
 package org.mozilla.gecko.sync.jpake;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
