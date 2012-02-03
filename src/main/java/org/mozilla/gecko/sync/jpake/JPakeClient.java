@@ -1074,7 +1074,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Generates and sets a clientId for communications with JPAKE setup server.
    */
   private void setClientId() {
-    byte[] rBytes = generateRandomBytes(JPAKE_LENGTH_CLIENTID / 2);
+    byte[] rBytes = Utils.generateRandomBytes(JPAKE_LENGTH_CLIENTID / 2);
     StringBuilder id = new StringBuilder();
 
     for (byte b : rBytes) {
@@ -1096,7 +1096,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     String key = "23456789abcdefghijkmnpqrstuvwxyz";
     int keylen = key.length();
 
-    byte[] rBytes = generateRandomBytes(JPAKE_LENGTH_SECRET);
+    byte[] rBytes = Utils.generateRandomBytes(JPAKE_LENGTH_SECRET);
     StringBuilder secret = new StringBuilder();
     for (byte b : rBytes) {
       secret.append(key.charAt(Math.abs(b) * keylen / 256));
@@ -1164,18 +1164,6 @@ public class JPakeClient implements JPakeRequestDelegate {
     } catch (Exception e) {
       throw e;
     }
-  }
-
-  /*
-   * Helper to generate random bytes
-   *
-   * @param length Number of bytes to generate
-   */
-  private static byte[] generateRandomBytes(int length) {
-    byte[] bytes = new byte[length];
-    Random random = new Random(System.nanoTime());
-    random.nextBytes(bytes);
-    return bytes;
   }
 
   /*
