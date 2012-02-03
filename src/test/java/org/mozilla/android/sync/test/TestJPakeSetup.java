@@ -16,7 +16,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.jpake.Gx4IsOneException;
+import org.mozilla.gecko.sync.jpake.Gx3OrGx4IsZeroOrOneException;
 import org.mozilla.gecko.sync.jpake.IncorrectZkpException;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.jpake.JPakeCrypto;
@@ -33,14 +33,57 @@ public class TestJPakeSetup {
   JPakeClient jClientStateless = new JPakeClient(null);
 
   @Test
-  public void testGx4IsOneThrowsException() {
+  public void testGx3OrGx4ZeroOrOneThrowsException() {
     JPakeNumGeneratorRandom gen = new JPakeNumGeneratorRandom();
     JPakeParty p = new JPakeParty("foobar");
+    BigInteger secret = JPakeClient.secretAsBigInteger("secret");
+
+    p.gx4 = new BigInteger("2");
+    p.gx3 = new BigInteger("0");
+    try {
+      JPakeCrypto.round2(secret, p, gen);
+      fail("round2 should fail if gx3 == 0");
+    } catch (Gx3OrGx4IsZeroOrOneException e) {
+      // Hurrah.
+    } catch (Exception e) {
+      fail("Unexpected exception " + e);
+    }
+
+    p.gx3 = new BigInteger("1");
+    try {
+      JPakeCrypto.round2(secret, p, gen);
+      fail("round2 should fail if gx3 == 1");
+    } catch (Gx3OrGx4IsZeroOrOneException e) {
+      // Hurrah.
+    } catch (Exception e) {
+      fail("Unexpected exception " + e);
+    }
+
+    p.gx3 = new BigInteger("3");
+    try {
+      JPakeCrypto.round2(secret, p, gen);
+    } catch (Gx3OrGx4IsZeroOrOneException e) {
+      fail("Unexpected exception " + e);
+    } catch (Exception e) {
+      // There are plenty of other reasons this should fail.
+    }
+
+    p.gx3 = new BigInteger("2");
+    p.gx4 = new BigInteger("0");
+    try {
+      JPakeCrypto.round2(secret, p, gen);
+      fail("round2 should fail if gx4 == 0");
+    } catch (Gx3OrGx4IsZeroOrOneException e) {
+      // Hurrah.
+    } catch (Exception e) {
+      fail("Unexpected exception " + e);
+    }
+
     p.gx4 = new BigInteger("1");
     try {
-      JPakeCrypto.round2("secret", p, gen);
+      JPakeCrypto.round2(secret, p, gen);
       fail("round2 should fail if gx4 == 1");
-    } catch (Gx4IsOneException e) {
+    } catch (Gx3OrGx4IsZeroOrOneException e) {
       // Hurrah.
     } catch (Exception e) {
       fail("Unexpected exception " + e);
@@ -48,8 +91,8 @@ public class TestJPakeSetup {
 
     p.gx4 = new BigInteger("3");
     try {
-      JPakeCrypto.round2("secret", p, gen);
-    } catch (Gx4IsOneException e) {
+      JPakeCrypto.round2(secret, p, gen);
+    } catch (Gx3OrGx4IsZeroOrOneException e) {
       fail("Unexpected exception " + e);
     } catch (Exception e) {
       // There are plenty of other reasons this should fail.
@@ -85,10 +128,10 @@ public class TestJPakeSetup {
    * Test correct key derivation when both parties share a secret.
    */
   @Test
-  public void testJPakeCorrectSecret() throws Gx4IsOneException,
+  public void testJPakeCorrectSecret() throws Gx3OrGx4IsZeroOrOneException,
       IncorrectZkpException, IOException, ParseException,
       NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
-    String secret = "byubd7u75qmq";
+    BigInteger secret = JPakeClient.secretAsBigInteger("byubd7u75qmq");
     JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
     // Keys derived should be the same.
     assertTrue(jPakeDeriveSameKey(gen, gen, secret, secret));
@@ -98,11 +141,11 @@ public class TestJPakeSetup {
    * Test incorrect key derivation when parties do not share the same secret.
    */
   @Test
-  public void testJPakeIncorrectSecret() throws Gx4IsOneException,
+  public void testJPakeIncorrectSecret() throws Gx3OrGx4IsZeroOrOneException,
       IncorrectZkpException, IOException, ParseException,
       NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
-    String secret1 = "shareSecret1";
-    String secret2 = "shareSecret2";
+    BigInteger secret1 = JPakeClient.secretAsBigInteger("shareSecret1");
+    BigInteger secret2 = JPakeClient.secretAsBigInteger("shareSecret2");
     JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
     // Unsuccessful key derivation.
     assertFalse(jPakeDeriveSameKey(gen, gen, secret1, secret2));
@@ -114,8 +157,8 @@ public class TestJPakeSetup {
    * same channel; otherwise, J-PAKE would have failed immediately.
    */
   public boolean jPakeDeriveSameKey(JPakeNumGenerator gen1,
-      JPakeNumGenerator gen2, String secret1, String secret2)
-      throws Gx4IsOneException, IncorrectZkpException, IOException,
+      JPakeNumGenerator gen2, BigInteger secret1, BigInteger secret2)
+      throws IncorrectZkpException, Gx3OrGx4IsZeroOrOneException, IOException,
       ParseException, NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
 
     // Communicating parties.
