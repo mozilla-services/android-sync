@@ -74,6 +74,11 @@ public class TestServer11RepositorySession {
     public String toJSONString() {
       return "{\"id\":\"" + guid + "\", \"payload\": \"foo\"}";
     }
+
+    @Override
+    public Record copyWithIDs(String guid, long androidID) {
+      return new MockRecord(guid, this.collection, this.lastModified, this.deleted);
+    }
   }
 
   public class MockServer11RepositorySession extends Server11RepositorySession {

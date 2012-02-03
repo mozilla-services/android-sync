@@ -41,9 +41,9 @@ public class TestSyncCryptographer {
                                         "\", \"id\": \"hkZYpC-BH4Xi\", \"" +
                                         "modified\": 1320183464.21}";
         String base64EncryptionKey =    "K8fV6PHG8RgugfHexGesbzTeOs2o12cr" +
-        		                        "N/G3bz0Bx1M=";
+                                        "N/G3bz0Bx1M=";
         String base64HmacKey =          "nbceuI6w1RJbBzh+iCJHEs8p4lElsOma" +
-        		                        "yUhx+OztVgM=";
+                                        "yUhx+OztVgM=";
         String username =               "b6evr62dptbxz7fvebek7btljyu322wp";
         String friendlyBase32SyncKey =  "basuxv2426eqj7frhvpcwkavdi";
         String expectedDecryptedText =  "{\"id\":\"hkZYpC-BH4Xi\",\"histU" +
