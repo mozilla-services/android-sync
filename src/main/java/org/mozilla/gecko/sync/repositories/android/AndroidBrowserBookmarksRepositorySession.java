@@ -182,8 +182,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       return null;
     }
 
-    long androidParentID     = getParentID(cur);
-    String androidParentGUID = getGUIDForID(androidParentID);
+    long androidParentID = getParentID(cur);
+
+    // Ensure special folders stay in the right place.
+    String androidParentGUID = SPECIAL_GUID_PARENTS.get(recordGUID);
+    if (androidParentGUID == null) {
+      androidParentGUID = getGUIDForID(androidParentID);
+    }
+
+    boolean needsReparenting = false;
 
     if (androidParentGUID == null) {
       Logger.debug(LOG_TAG, "No parent GUID for record " + recordGUID + " with parent " + androidParentID);
@@ -192,12 +199,43 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Logger.error(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
         throw new NoGuidForIdException(null);
       }
+
+      // We have a parent ID but it's wrong. If the record is deleted,
+      // we'll just say that it was in the Unsorted Bookmarks folder.
+      // If not, we'll move it into Mobile Bookmarks.
+      needsReparenting = true;
     }
 
     // If record is a folder, build out the children array.
     JSONArray childArray = getChildArrayForCursor(cur, recordGUID);
     String parentName = getParentName(androidParentGUID);
-    return RepoUtils.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
+    BookmarkRecord bookmark = RepoUtils.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
+
+    if (needsReparenting) {
+      Logger.warn(LOG_TAG, "Bookmark record " + recordGUID + " has a bad parent pointer. Reparenting now.");
+
+      String destination = bookmark.deleted ? "unfiled" : "mobile";
+      bookmark.androidParentID = getIDForGUID(destination);
+      bookmark.androidPosition = 0;
+      bookmark.parentID        = destination;
+      bookmark.parentName      = getParentName(destination);
+      if (!bookmark.deleted) {
+        // Actually move it.
+        // TODO: compute position.
+        relocateBookmark(bookmark);
+      }
+    }
+    return bookmark;
+  }
+
+  /**
+   * Ensure that the local database row for the provided bookmark
+   * reflects this record's parent information.
+   *
+   * @param bookmark
+   */
+  private void relocateBookmark(BookmarkRecord bookmark) {
+    dataAccessor.updateParentAndPosition(bookmark.guid, bookmark.androidParentID, bookmark.androidPosition);
   }
 
   protected JSONArray getChildArrayForCursor(Cursor cur, String recordGUID) throws NullCursorException {
