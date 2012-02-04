@@ -17,3 +17,8 @@ $PREPROCESSOR $DEFINITIONS $MANIFEST.in > $MANIFEST
 
 $PREPROCESSOR $DEFINITIONS strings.xml.template > res/values/strings.xml
 $PREPROCESSOR $DEFINITIONS sync_syncadapter.xml.template > res/xml/sync_syncadapter.xml
+$PREPROCESSOR $DEFINITIONS sync_options.xml.template > res/xml/sync_options.xml
+
+# Now do the test project.
+TEST_MANIFEST=test/AndroidManifest.xml
+$PREPROCESSOR $DEFINITIONS $TEST_MANIFEST.in > $TEST_MANIFEST

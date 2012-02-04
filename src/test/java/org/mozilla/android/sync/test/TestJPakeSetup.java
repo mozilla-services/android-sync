@@ -3,6 +3,7 @@ package org.mozilla.android.sync.test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -23,11 +24,37 @@ import org.mozilla.gecko.sync.jpake.JPakeNumGenerator;
 import org.mozilla.gecko.sync.jpake.JPakeNumGeneratorRandom;
 import org.mozilla.gecko.sync.jpake.JPakeParty;
 import org.mozilla.gecko.sync.setup.Constants;
+import java.security.NoSuchAlgorithmException;
+import java.security.InvalidKeyException;
 
 public class TestJPakeSetup {
   // Note: will throw NullPointerException if aborts. Only use stateless public
   // methods.
   JPakeClient jClientStateless = new JPakeClient(null);
+
+  @Test
+  public void testGx4IsOneThrowsException() {
+    JPakeNumGeneratorRandom gen = new JPakeNumGeneratorRandom();
+    JPakeParty p = new JPakeParty("foobar");
+    p.gx4 = new BigInteger("1");
+    try {
+      JPakeCrypto.round2("secret", p, gen);
+      fail("round2 should fail if gx4 == 1");
+    } catch (Gx4IsOneException e) {
+      // Hurrah.
+    } catch (Exception e) {
+      fail("Unexpected exception " + e);
+    }
+
+    p.gx4 = new BigInteger("3");
+    try {
+      JPakeCrypto.round2("secret", p, gen);
+    } catch (Gx4IsOneException e) {
+      fail("Unexpected exception " + e);
+    } catch (Exception e) {
+      // There are plenty of other reasons this should fail.
+    }
+  }
 
   /*
    * Tests encryption key and hmac generation from a derived key, using values
@@ -42,8 +69,11 @@ public class TestJPakeSetup {
     byte[] encKeyBytes = new byte[32];
     byte[] hmacBytes = new byte[32];
 
-    JPakeCrypto.generateKeyAndHmac(new BigInteger(keyChars16, 16), encKeyBytes,
-        hmacBytes);
+    try {
+      JPakeCrypto.generateKeyAndHmac(new BigInteger(keyChars16, 16), encKeyBytes, hmacBytes);
+    } catch (Exception e) {
+      fail("Unexpected exception " + e);
+    }
     String encKey64 = new String(Base64.encodeBase64(encKeyBytes));
     String hmac64 = new String(Base64.encodeBase64(hmacBytes));
 
@@ -57,7 +87,7 @@ public class TestJPakeSetup {
   @Test
   public void testJPakeCorrectSecret() throws Gx4IsOneException,
       IncorrectZkpException, IOException, ParseException,
-      NonObjectJSONException, CryptoException {
+      NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
     String secret = "byubd7u75qmq";
     JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
     // Keys derived should be the same.
@@ -70,7 +100,7 @@ public class TestJPakeSetup {
   @Test
   public void testJPakeIncorrectSecret() throws Gx4IsOneException,
       IncorrectZkpException, IOException, ParseException,
-      NonObjectJSONException, CryptoException {
+      NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
     String secret1 = "shareSecret1";
     String secret2 = "shareSecret2";
     JPakeNumGenerator gen = new JPakeNumGeneratorRandom();
@@ -86,7 +116,7 @@ public class TestJPakeSetup {
   public boolean jPakeDeriveSameKey(JPakeNumGenerator gen1,
       JPakeNumGenerator gen2, String secret1, String secret2)
       throws Gx4IsOneException, IncorrectZkpException, IOException,
-      ParseException, NonObjectJSONException, CryptoException {
+      ParseException, NonObjectJSONException, CryptoException, NoSuchAlgorithmException, InvalidKeyException {
 
     // Communicating parties.
     JPakeParty party1 = new JPakeParty("party1");
@@ -179,6 +209,5 @@ public class TestJPakeSetup {
     boolean isSuccess = jClientStateless.verifyCiphertext(ciphertext1, iv1,
         keyBundle2);
     return isSuccess;
-
   }
 }
