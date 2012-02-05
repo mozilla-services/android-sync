@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import junit.framework.AssertionFailedError;
 
 import org.mozilla.android.sync.test.helpers.WaitHelper;
@@ -15,12 +13,51 @@ import org.mozilla.gecko.sync.ThreadPool;
 import android.test.ActivityInstrumentationTestCase2;
 
 public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivity> {
-  public static int NO_WAIT = 1; // Milliseconds.
-  public static int SHORT_WAIT = 100; // Milliseconds.
-  public static int LONG_WAIT = 3*SHORT_WAIT;
+  private static final String ERROR_UNIQUE_IDENTIFIER = "error unique identifier";
 
-  public AtomicBoolean performNotifyCalled = new AtomicBoolean(false);
-  public AtomicBoolean performNotifyErrorCalled = new AtomicBoolean(false);
+  public static int NO_WAIT    = 1;               // Milliseconds.
+  public static int SHORT_WAIT = 100;             // Milliseconds.
+  public static int LONG_WAIT  = 3 * SHORT_WAIT;
+
+  private Object notifyMonitor = new Object();
+  // Guarded by notifyMonitor.
+  private boolean performNotifyCalled      = false;
+  private boolean performNotifyErrorCalled = false;
+  private void setPerformNotifyCalled() {
+    synchronized (notifyMonitor) {
+      performNotifyCalled = true;
+    }
+  }
+  private void setPerformNotifyErrorCalled() {
+    synchronized (notifyMonitor) {
+      performNotifyErrorCalled = true;
+    }
+  }
+  private void resetNotifyCalled() {
+    synchronized (notifyMonitor) {
+      performNotifyCalled      = false;
+      performNotifyErrorCalled = false;
+    }
+  }
+  private void assertBothCalled() {
+    synchronized (notifyMonitor) {
+      assertTrue(performNotifyCalled);
+      assertTrue(performNotifyErrorCalled);
+    }
+  }
+  private void assertErrorCalled() {
+    synchronized (notifyMonitor) {
+      assertFalse(performNotifyCalled);
+      assertTrue(performNotifyErrorCalled);
+    }
+  }
+  private void assertCalled() {
+    synchronized (notifyMonitor) {
+      assertTrue(performNotifyCalled);
+      assertFalse(performNotifyErrorCalled);
+    }
+  }
+
   public WaitHelper waitHelper;
 
   public WaitHelperTest() {
@@ -30,9 +67,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   public void setUp() {
     WaitHelper.resetTestWaiter();
     waitHelper = WaitHelper.getTestWaiter();
-
-    performNotifyCalled.set(false);
-    performNotifyErrorCalled.set(false);
+    resetNotifyCalled();
   }
 
   public Runnable performNothingRunnable() {
@@ -45,7 +80,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   public Runnable performNotifyRunnable() {
     return new Runnable() {
       public void run() {
-        performNotifyCalled.set(true);
+        setPerformNotifyCalled();
         waitHelper.performNotify();
       }
     };
@@ -57,11 +92,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
         try {
           Thread.sleep(delayInMillis);
         } catch (InterruptedException e) {
-          e.printStackTrace();
-          assert(false);
+          fail("Interrupted.");
         }
 
-        performNotifyCalled.set(true);
+        setPerformNotifyCalled();
         waitHelper.performNotify();
       }
     };
@@ -70,8 +104,8 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   public Runnable performNotifyErrorRunnable() {
     return new Runnable() {
       public void run() {
-        performNotifyCalled.set(true);
-        waitHelper.performNotify(new AssertionError("error unique identifier"));
+        setPerformNotifyCalled();
+        waitHelper.performNotify(new AssertionError(ERROR_UNIQUE_IDENTIFIER));
       }
     };
   }
@@ -94,92 +128,86 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     };
   }
 
+  protected void expectAssertionError(Runnable runnable) {
+    try {
+      waitHelper.performWait(runnable);
+    } catch (AssertionError e) {
+      setPerformNotifyErrorCalled();
+      String message = e.getMessage();
+      assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
+                 message.contains(ERROR_UNIQUE_IDENTIFIER));
+    }
+  }
+
+  protected void expectAssertionErrorAfterDelay(int wait, Runnable runnable) {
+    try {
+      waitHelper.performWait(wait, runnable);
+    } catch (AssertionError e) {
+      setPerformNotifyErrorCalled();
+      String message = e.getMessage();
+      assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
+                 message.contains(ERROR_UNIQUE_IDENTIFIER));
+    }
+  }
+
   public void testPerformWait() {
     waitHelper.performWait(performNotifyRunnable());
-    assertTrue(performNotifyCalled.get());
+    assertCalled();
   }
 
   public void testPerformWaitInThread() {
     waitHelper.performWait(inThread(performNotifyRunnable()));
-    assertTrue(performNotifyCalled.get());
+    assertCalled();
   }
 
   public void testPerformWaitInThreadPool() {
     waitHelper.performWait(inThreadPool(performNotifyRunnable()));
-    assertTrue(performNotifyCalled.get());
+    assertCalled();
   }
 
   public void testPerformTimeoutWait() {
     waitHelper.performWait(SHORT_WAIT, performNotifyRunnable());
-    assertTrue(performNotifyCalled.get());
+    assertCalled();
   }
 
   public void testPerformTimeoutWaitInThread() {
     waitHelper.performWait(SHORT_WAIT, inThread(performNotifyRunnable()));
-    assertTrue(performNotifyCalled.get());
+    assertCalled();
   }
 
   public void testPerformTimeoutWaitInThreadPool() {
     waitHelper.performWait(SHORT_WAIT, inThreadPool(performNotifyRunnable()));
-    assertTrue(performNotifyCalled.get());
+    assertCalled();
   }
 
   public void testPerformErrorWaitInThread() {
-    try {
-      waitHelper.performWait(inThread(performNotifyErrorRunnable()));
-    } catch (AssertionError e) {
-      performNotifyErrorCalled.set(true);
-      assertTrue("Expected '" + e.getMessage() + "' to contain 'error unique identifer'",
-          e.getMessage().contains("error unique identifier"));
-    }
-    assertTrue(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    expectAssertionError(inThread(performNotifyErrorRunnable()));
+    assertBothCalled();
   }
 
   public void testPerformErrorWaitInThreadPool() {
-    try {
-      waitHelper.performWait(inThreadPool(performNotifyErrorRunnable()));
-    } catch (AssertionError e) {
-      performNotifyErrorCalled.set(true);
-      assertTrue("Expected '" + e.getMessage() + "' to contain 'error unique identifer'",
-          e.getMessage().contains("error unique identifier"));
-    }
-    assertTrue(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    expectAssertionError(inThreadPool(performNotifyErrorRunnable()));
+    assertBothCalled();
   }
 
   public void testPerformErrorTimeoutWaitInThread() {
-    try {
-      waitHelper.performWait(SHORT_WAIT, inThread(performNotifyErrorRunnable()));
-    } catch (AssertionError e) {
-      performNotifyErrorCalled.set(true);
-      assertTrue("Expected '" + e.getMessage() + "' to contain 'error unique identifer'",
-          e.getMessage().contains("error unique identifier"));
-    }
-    assertTrue(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    expectAssertionErrorAfterDelay(SHORT_WAIT, inThread(performNotifyErrorRunnable()));
+    assertBothCalled();
   }
 
   public void testPerformErrorTimeoutWaitInThreadPool() {
-    try {
-      waitHelper.performWait(SHORT_WAIT, inThreadPool(performNotifyErrorRunnable()));
-    } catch (AssertionError e) {
-      performNotifyErrorCalled.set(true);
-      assertTrue("Expected '" + e.getMessage() + "' to contain 'error unique identifer'",
-          e.getMessage().contains("error unique identifier"));
-    }
-    assertTrue(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    expectAssertionErrorAfterDelay(SHORT_WAIT, inThreadPool(performNotifyErrorRunnable()));
+    assertBothCalled();
   }
 
   public void testTimeout() {
     try {
       waitHelper.performWait(SHORT_WAIT, performNothingRunnable());
     } catch (TimeoutError e) {
-      performNotifyErrorCalled.set(true);
+      setPerformNotifyErrorCalled();
       assertEquals(SHORT_WAIT, e.waitTimeInMillis);
     }
-    assertTrue(performNotifyErrorCalled.get());
+    assertErrorCalled();
   }
 
   /**
@@ -192,18 +220,17 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     try {
       waitHelper.performWait(1, performNotifyAfterDelayRunnable(SHORT_WAIT));
     } catch (AssertionError e) {
-      performNotifyErrorCalled.set(true);
+      setPerformNotifyErrorCalled();
       assertTrue(e.getMessage(), e.getMessage().contains("TIMEOUT"));
     }
-    assertTrue(performNotifyCalled.get());
-    assertFalse(performNotifyErrorCalled.get());
+    assertCalled();
   }
 
   public Runnable performNotifyMultipleTimesRunnable() {
     return new Runnable() {
       public void run() {
         waitHelper.performNotify();
-        performNotifyCalled.set(true);
+        setPerformNotifyCalled();
         waitHelper.performNotify();
       }
     };
@@ -213,10 +240,9 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     try {
       waitHelper.performWait(NO_WAIT, performNotifyMultipleTimesRunnable());
     } catch (WaitHelper.MultipleNotificationsError e) {
-      performNotifyErrorCalled.set(true);
+      setPerformNotifyErrorCalled();
     }
-    assertTrue(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    assertBothCalled();
   }
 
   public void testAssertIsReported() {
@@ -228,11 +254,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
         }
       });
     } catch (AssertionFailedError e) {
-      performNotifyErrorCalled.set(true);
+      setPerformNotifyErrorCalled();
       assertTrue(e.getMessage(), e.getMessage().contains("unique identifier"));
     }
-    assertFalse(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    assertErrorCalled();
   }
 
   /**
@@ -248,11 +273,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     try {
       waitHelper.performWait(NO_WAIT, inThread(performNotifyAfterDelayRunnable(SHORT_WAIT)));
     } catch (WaitHelper.TimeoutError e) {
-      performNotifyErrorCalled.set(true);
+      setPerformNotifyErrorCalled();
       assertEquals(NO_WAIT, e.waitTimeInMillis);
     }
-    assertFalse(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    assertErrorCalled();
 
     // The spawned thread should have called performNotify() by now.
     Thread.sleep(LONG_WAIT);
@@ -276,11 +300,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     try {
       waitHelper.performWait(NO_WAIT, inThreadPool(performNotifyAfterDelayRunnable(SHORT_WAIT)));
     } catch (WaitHelper.TimeoutError e) {
-      performNotifyErrorCalled.set(true);
+      setPerformNotifyErrorCalled();
       assertEquals(NO_WAIT, e.waitTimeInMillis);
     }
-    assertFalse(performNotifyCalled.get());
-    assertTrue(performNotifyErrorCalled.get());
+    assertErrorCalled();
 
     // The spawned thread should have called performNotify() by now.
     Thread.sleep(LONG_WAIT);

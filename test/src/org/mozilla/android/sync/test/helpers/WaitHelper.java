@@ -36,9 +36,15 @@ public class WaitHelper {
     }
   }
 
+  /**
+   * Immutable.
+   *
+   * @author rnewman
+   *
+   */
   public class TimeoutError extends AssertionError {
     private static final long serialVersionUID = 8591672555848651736L;
-    public int waitTimeInMillis = -1;
+    public final int waitTimeInMillis;
 
     public TimeoutError(int waitTimeInMillis) {
       this.waitTimeInMillis = waitTimeInMillis;
