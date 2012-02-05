@@ -604,6 +604,10 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   private void createRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Logger.info(LOG_TAG, "BEGIN: creating record -> GUID map.");
     recordToGuid = new HashMap<String, String>();
+
+    // TODO: we should be able to do this entire thing with string concatenations within SQL.
+    // Also consider whether it's better to fetch and process every record in the DB into
+    // memory, or run a query per record to do the same thing.
     Cursor cur = dbHelper.fetchAll();
     try {
       if (!cur.moveToFirst()) {
