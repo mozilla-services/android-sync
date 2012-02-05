@@ -31,10 +31,55 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   private HashMap<String, Long> guidToID = new HashMap<String, Long>();
   private HashMap<Long, String> idToGuid = new HashMap<Long, String>();
 
+  /**
+   * Some notes on reparenting/reordering.
+   *
+   * Fennec stores new items with a high-negative position, because it doesn't care.
+   * On the other hand, it also doesn't give us any help managing positions.
+   *
+   * We can process records and folders in any order, though we'll usually see folders
+   * first because their sortindex is larger.
+   *
+   * We can also see folders that refer to children we haven't seen, and children we
+   * won't see (perhaps due to a TTL, perhaps due to a limit on our fetch).
+   *
+   * And of course folders can refer to local children (including ones that might
+   * be reconciled into oblivion!), or local children in other folders. And the local
+   * version of a folder -- which might be a reconciling target, or might not -- can
+   * have local additions or removals.
+   *
+   * We opt to leave records in a reasonable state as we go, applying reordering/
+   * reparenting operations whenever possible. Typically this is after all incoming
+   * records have been applied. As such, we need to track a bunch of stuff as we go:
+   *
+   * • For each downloaded folder, the array of children. These will be server GUIDs,
+   *   but not necessarily identical to the remote list: if we download a record and
+   *   it's been locally moved, it must be removed from this child array.
+   *
+   *   This mapping can be discarded when reordering has occurred.
+   *
+   * • A list of orphans: records whose parent folder does not yet exist. This can be
+   *   trimmed as orphans are reparented.
+   *
+   * • Mappings from folder GUIDs to folder IDs, so that we can parent items without
+   *   having to look in the DB. Of course, this must be kept up-to-date as we
+   *   reconcile.
+   *
+   * Do we also need a list of "adopters", parents that are still waiting for children?
+   * As items get picked out of the orphans list, we can do on-the-fly ordering, until
+   * we're left with lonely records at the end.
+   *
+   * As we modify local folders, perhaps by moving children out of their purview, we
+   * must bump their modification time so as to cause them to be uploaded on the next
+   * stage of syncing. The same applies to simple reordering.
+   */
+
+  // TODO: can we guarantee serial access to these?
   private HashMap<String, ArrayList<String>> missingParentToChildren = new HashMap<String, ArrayList<String>>();
-  private HashMap<String, JSONArray> parentToChildArray = new HashMap<String, JSONArray>();
-  private AndroidBrowserBookmarksDataAccessor dataAccessor;
+  private HashMap<String, JSONArray>         parentToChildArray      = new HashMap<String, JSONArray>();
   private int needsReparenting = 0;
+
+  private AndroidBrowserBookmarksDataAccessor dataAccessor;
 
   /**
    * An array of known-special GUIDs.
@@ -412,7 +457,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   protected Record prepareRecord(Record record) {
     BookmarkRecord bmk = (BookmarkRecord) record;
     
-    // Check if parent exists
+    // Check if parent exists.
+    // TODO: synchronization!
+    // TODO: you're modifying a child array in-place! Don't do that!
     if (guidToID.containsKey(bmk.parentID)) {
       bmk.androidParentID = guidToID.get(bmk.parentID);
       JSONArray children = parentToChildArray.get(bmk.parentID);
@@ -471,27 +518,33 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     super.updateBookkeeping(record);
     BookmarkRecord bmk = (BookmarkRecord) record;
 
-    // If record is folder, update maps and re-parent children if necessary
-    if (bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
-      guidToID.put(bmk.guid, bmk.androidID);
-      idToGuid.put(bmk.androidID, bmk.guid);
+    // If record is folder, update maps and re-parent children if necessary.
+    if (!bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+      return;
+    }
 
-      JSONArray childArray = bmk.children;
+    // Mappings between ID and GUID.
+    // TODO: update our persisted children arrays!
+    // TODO: if our Android ID just changed, replace parents for all of our children.
+    guidToID.put(bmk.guid,      bmk.androidID);
+    idToGuid.put(bmk.androidID, bmk.guid);
 
-      // Re-parent.
-      if (missingParentToChildren.containsKey(bmk.guid)) {
-        for (String child : missingParentToChildren.get(bmk.guid)) {
-          long position;
-          if (!bmk.children.contains(child)) {
-            childArray.add(child);
-          }
-          position = childArray.indexOf(child);
-          dataAccessor.updateParentAndPosition(child, bmk.androidID, position);
-          needsReparenting--;
+    JSONArray childArray = bmk.children;
+
+    parentToChildArray.put(bmk.guid, childArray);
+
+    // Re-parent.
+    if (missingParentToChildren.containsKey(bmk.guid)) {
+      for (String child : missingParentToChildren.get(bmk.guid)) {
+        long position;
+        if (!bmk.children.contains(child)) {
+          childArray.add(child);
         }
-        missingParentToChildren.remove(bmk.guid);
+        position = childArray.indexOf(child);
+        dataAccessor.updateParentAndPosition(child, bmk.androidID, position);
+        needsReparenting--;
       }
-      parentToChildArray.put(bmk.guid, childArray);
+      missingParentToChildren.remove(bmk.guid);
     }
   }
 
