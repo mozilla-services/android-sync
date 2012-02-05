@@ -96,12 +96,13 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    * Insert them if they aren't there.
    */
   public void checkAndBuildSpecialGuids() throws NullCursorException {
-    Cursor cur = fetch(RepoUtils.SPECIAL_GUIDS);
+    final String[] specialGUIDs = AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS;
+    Cursor cur = fetch(specialGUIDs);
     long mobileRoot  = 0;
     long desktopRoot = 0;
 
     // Map from GUID to whether deleted. Non-presence implies just that.
-    HashMap<String, Boolean> statuses = new HashMap<String, Boolean>(RepoUtils.SPECIAL_GUIDS.length);
+    HashMap<String, Boolean> statuses = new HashMap<String, Boolean>(specialGUIDs.length);
     try {
       if (cur.moveToFirst()) {
         while (!cur.isAfterLast()) {
@@ -123,7 +124,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     }
 
     // Insert or undelete them if missing.
-    for (String guid : RepoUtils.SPECIAL_GUIDS) {
+    for (String guid : specialGUIDs) {
       if (statuses.containsKey(guid)) {
         if (statuses.get(guid)) {
           // Undelete.
@@ -149,7 +150,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
 
   private long insertSpecialFolder(String guid, long parentId) {
     BookmarkRecord record = new BookmarkRecord(guid);
-    record.title = RepoUtils.SPECIAL_GUIDS_MAP.get(guid);
+    record.title = AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.get(guid);
     record.type = "folder";
     record.androidParentID = parentId;
     return(RepoUtils.getAndroidIdFromUri(insert(record)));

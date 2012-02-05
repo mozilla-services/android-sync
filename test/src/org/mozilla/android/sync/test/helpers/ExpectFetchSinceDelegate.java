@@ -8,9 +8,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import java.util.Arrays;
-import java.util.Map;
 
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import junit.framework.AssertionFailedError;
@@ -32,10 +30,9 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
     AssertionFailedError err = null;
     try {
 
-      Map<String, String> specialGuids = RepoUtils.SPECIAL_GUIDS_MAP;
       int countSpecials = 0;
       for (Record record : records) {
-        if (specialGuids == null || !specialGuids.containsKey(record.guid)) {
+        if (!ignore.contains(record.guid)) {
           assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
         } else {
           countSpecials++;
