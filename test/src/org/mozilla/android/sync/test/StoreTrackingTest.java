@@ -3,21 +3,23 @@
 
 package org.mozilla.android.sync.test;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import junit.framework.AssertionFailedError;
+
 import org.mozilla.android.sync.test.helpers.WBORepository;
+import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessBeginDelegate;
+import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessCreationDelegate;
+import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;
+import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
+import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
@@ -25,7 +27,6 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
-import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 public class StoreTrackingTest extends
@@ -66,88 +67,12 @@ public class StoreTrackingTest extends
     }
   }
 
-  public abstract class SuccessBeginDelegate implements RepositorySessionBeginDelegate {
-    @Override
-    public void onBeginFailed(Exception ex) {
-      performNotify(new AssertionFailedError("Begin failed: " + ex.getMessage()));
-    }
-
-    @Override
-    public RepositorySessionBeginDelegate deferredBeginDelegate(ExecutorService executor) {
-      return this;
-    }
-  }
-
-  public abstract class SuccessCreationDelegate implements
-      RepositorySessionCreationDelegate {
-    @Override
-    public void onSessionCreateFailed(Exception ex) {
-      Log.w("SuccessCreationDelegate", "Session creation failed.", ex);
-      performNotify(new AssertionFailedError("Session creation failed: "
-          + ex.getMessage()));
-    }
-
-    @Override
-    public RepositorySessionCreationDelegate deferredCreationDelegate() {
-      Log.d("SuccessCreationDelegate", "Getting deferred.");
-      return this;
-    }
-  }
-
-  public abstract class SuccessStoreDelegate implements
-      RepositorySessionStoreDelegate {
-    @Override
-    public void onRecordStoreFailed(Exception ex) {
-      Log.w("SuccessStoreDelegate", "Store failed.", ex);
-      performNotify(new AssertionFailedError("Store failed: " + ex.getMessage()));
-    }
-
-    @Override
-    public RepositorySessionStoreDelegate deferredStoreDelegate(ExecutorService executor) {
-      return this;
-    }
-  }
-
-  public abstract class SuccessFinishDelegate implements RepositorySessionFinishDelegate {
-    @Override
-    public void onFinishFailed(Exception ex) {
-      performNotify(new AssertionFailedError("Finish failed: " + ex.getMessage()));
-    }
-
-    @Override
-    public RepositorySessionFinishDelegate deferredFinishDelegate(ExecutorService executor) {
-      return this;
-    }
-  }
-
-  public abstract class SuccessFetchDelegate implements
-      RepositorySessionFetchRecordsDelegate {
-    @Override
-    public void onFetchFailed(Exception ex, Record record) {
-      performNotify(new AssertionFailedError("Fetch failed: " + ex.getMessage()));
-    }
-
-    @Override
-    public void onFetchSucceeded(Record[] records, final long fetchEnd) {
-      for (Record record : records) {
-        this.onFetchedRecord(record);
-      }
-      this.onFetchCompleted(fetchEnd);
-    }
-
-    @Override
-    public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(ExecutorService executor) {
-      return this;
-    }
-  }
-
-
   public void doTestStoreRetrieveByGUID(final WBORepository repository,
                                         final RepositorySession session,
                                         final String expectedGUID,
                                         final Record record) {
 
-    final SuccessStoreDelegate storeDelegate = new SuccessStoreDelegate() {
+    final SimpleSuccessStoreDelegate storeDelegate = new SimpleSuccessStoreDelegate() {
 
       @Override
       public void onRecordStoreSucceeded(Record record) {
@@ -158,8 +83,8 @@ public class StoreTrackingTest extends
       @Override
       public void onStoreCompleted(long storeEnd) {
         Log.d(getName(), "Store completed at " + storeEnd + ".");
-        session.fetch(new String[] { expectedGUID }, new SuccessFetchDelegate() {
-         @Override
+        session.fetch(new String[] { expectedGUID }, new SimpleSuccessFetchDelegate() {
+          @Override
           public void onFetchedRecord(Record record) {
             Log.d(getName(), "Hurrah! Fetched record " + record.guid);
             assertEq(expectedGUID, record.guid);
@@ -170,7 +95,7 @@ public class StoreTrackingTest extends
             Log.d(getName(), "Fetch completed at " + fetchEnd + ".");
 
             // But fetching by time returns nothing.
-            session.fetchSince(0, new SuccessFetchDelegate() {
+            session.fetchSince(0, new SimpleSuccessFetchDelegate() {
               private AtomicBoolean fetched = new AtomicBoolean(false);
 
               @Override
@@ -186,7 +111,7 @@ public class StoreTrackingTest extends
                   Log.d(getName(), "Not finishing session: record retrieved.");
                   return;
                 }
-                session.finish(new SuccessFinishDelegate() {
+                session.finish(new SimpleSuccessFinishDelegate() {
                   @Override
                   public void onFinishSucceeded(RepositorySession session,
                                                 RepositorySessionBundle bundle) {
@@ -212,15 +137,15 @@ public class StoreTrackingTest extends
 
   private void doTestNewSessionRetrieveByTime(final WBORepository repository,
                                               final String expectedGUID) {
-    final SuccessCreationDelegate createDelegate = new SuccessCreationDelegate() {
+    final SimpleSuccessCreationDelegate createDelegate = new SimpleSuccessCreationDelegate() {
       @Override
       public void onSessionCreated(final RepositorySession session) {
         Log.i(getName(), "Session created.");
-        session.begin(new SuccessBeginDelegate() {
+        session.begin(new SimpleSuccessBeginDelegate() {
           @Override
           public void onBeginSucceeded(final RepositorySession session) {
             // Now we get a result.
-            session.fetchSince(0, new SuccessFetchDelegate() {
+            session.fetchSince(0, new SimpleSuccessFetchDelegate() {
 
               @Override
               public void onFetchedRecord(Record record) {
@@ -229,7 +154,7 @@ public class StoreTrackingTest extends
 
               @Override
               public void onFetchCompleted(long end) {
-                session.finish(new SuccessFinishDelegate() {
+                session.finish(new SimpleSuccessFinishDelegate() {
                   @Override
                   public void onFinishSucceeded(RepositorySession session,
                                                 RepositorySessionBundle bundle) {
@@ -268,11 +193,11 @@ public class StoreTrackingTest extends
     final String expectedGUID = "abcdefghijkl";
     final Record record = new BookmarkRecord(expectedGUID, "bookmarks", now , false);
 
-    final RepositorySessionCreationDelegate createDelegate = new SuccessCreationDelegate() {
+    final RepositorySessionCreationDelegate createDelegate = new SimpleSuccessCreationDelegate() {
       @Override
       public void onSessionCreated(RepositorySession session) {
         Log.d(getName(), "Session created: " + session);
-        session.begin(new SuccessBeginDelegate() {
+        session.begin(new SimpleSuccessBeginDelegate() {
           @Override
           public void onBeginSucceeded(final RepositorySession session) {
             doTestStoreRetrieveByGUID(r, session, expectedGUID, record);
