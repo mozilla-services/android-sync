@@ -8,6 +8,8 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
+import junit.framework.AssertionFailedError;
+
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -27,7 +29,7 @@ import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.android.sync.test.helpers.UnitWaitHelper;
 
 public class TestGlobalSession {
   private final String TEST_CLUSTER_URL         = "http://localhost:8080/";
@@ -85,7 +87,7 @@ public class TestGlobalSession {
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
-      WaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
+      UnitWaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
         public void run() {
           session.handleHTTPError(new SyncStorageResponse(response), "Illegal method/protocol");
         }
@@ -113,12 +115,14 @@ public class TestGlobalSession {
       final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
-      WaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
+      UnitWaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
         public void run() {
           try {
             session.start();
-          } catch(Exception e) {
-            WaitHelper.getTestWaiter().performNotify(new AssertionError(e));
+          } catch (Exception e) {
+            final AssertionFailedError error = new AssertionFailedError();
+            error.initCause(e);
+            UnitWaitHelper.getTestWaiter().performNotify(error);
           }
         }
       });
@@ -143,12 +147,14 @@ public class TestGlobalSession {
       final GlobalSession session = new MockBackoffGlobalSession(TEST_BACKOFF_IN_SECONDS, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
-      WaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
+      UnitWaitHelper.getTestWaiter().performWaitAfterSpawningThread(new Runnable() {
         public void run() {
           try {
             session.start();
-          } catch(Exception e) {
-            WaitHelper.getTestWaiter().performNotify(new AssertionError(e));
+          } catch (Exception e) {
+            final AssertionFailedError error = new AssertionFailedError();
+            error.initCause(e);
+            UnitWaitHelper.getTestWaiter().performNotify(error);
           }
         }
       });

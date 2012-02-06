@@ -7,20 +7,21 @@ import static junit.framework.Assert.fail;
 
 import java.util.concurrent.ExecutorService;
 
+import junit.framework.AssertionFailedError;
+
 public abstract class DefaultDelegate {
 
   protected ExecutorService executor;
 
-  protected WaitHelper testWaiter() {
-    return WaitHelper.getTestWaiter();
+  protected UnitWaitHelper testWaiter() {
+    return UnitWaitHelper.getTestWaiter();
   }
 
   protected void sharedFail(String message) {
     try {
       fail(message);
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       testWaiter().performNotify(e);
     }
   }
-
 }

@@ -8,7 +8,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.AssertionFailedError;
-
 import android.util.Log;
 
 /**
@@ -26,12 +25,12 @@ import android.util.Log;
 public class WaitHelper {
 
   public class Result {
-    public AssertionError error;
+    public AssertionFailedError error;
     public Result() {
       error = null;
     }
 
-    public Result(AssertionError error) {
+    public Result(AssertionFailedError error) {
       this.error = error;
     }
   }
@@ -42,7 +41,7 @@ public class WaitHelper {
    * @author rnewman
    *
    */
-  public class TimeoutError extends AssertionError {
+  public class TimeoutError extends AssertionFailedError {
     private static final long serialVersionUID = 8591672555848651736L;
     public final int waitTimeInMillis;
 
@@ -51,7 +50,7 @@ public class WaitHelper {
     }
   }
 
-  public class MultipleNotificationsError extends AssertionError {
+  public class MultipleNotificationsError extends AssertionFailedError {
     private static final long serialVersionUID = -9072736521571635495L;
   }
 
@@ -69,11 +68,11 @@ public class WaitHelper {
     Log.i(LOG_TAG, message);
   }
 
-  public void performWait(Runnable action) throws AssertionError {
+  public void performWait(Runnable action) throws AssertionFailedError {
     this.performWait(defaultWaitTimeoutInMillis, action);
   }
 
-  public void performWait(int waitTimeoutInMillis, Runnable action) throws AssertionError {
+  public void performWait(int waitTimeoutInMillis, Runnable action) throws AssertionFailedError {
     trace("performWait called.");
 
     Result result = null;
@@ -83,7 +82,9 @@ public class WaitHelper {
         try {
           action.run();
         } catch (Exception ex) {
-          throw new AssertionError(ex);
+          final AssertionFailedError error = new AssertionFailedError(ex.getMessage());
+          error.initCause(ex);
+          throw error;
         }
       }
 
@@ -94,8 +95,8 @@ public class WaitHelper {
       }
     } catch (InterruptedException e) {
       // We were interrupted.
-      trace("performNotify interrupted with InterrupedException " + e);
-      throw new AssertionError("INTERRUPTED!");
+      trace("performNotify interrupted with InterruptedException " + e);
+      throw new AssertionFailedError("INTERRUPTED!");
     }
 
     if (result == null) {
@@ -103,15 +104,15 @@ public class WaitHelper {
       throw new TimeoutError(waitTimeoutInMillis);
     } else if (result.error != null) {
       // Rethrow any assertion with which we were notified.
-      throw new AssertionError(result.error);
+      throw result.error;
     } else {
       // Success!
     }
   }
 
-  public void performNotify(final AssertionError e) {
+  public void performNotify(final junit.framework.AssertionFailedError e) {
     if (e != null) {
-      trace("performNotify called with AssertionError " + e);
+      trace("performNotify called with AssertionFailedError " + e);
     } else {
       trace("performNotify called.");
     }
@@ -122,18 +123,19 @@ public class WaitHelper {
     }
   }
 
-  public void performNotify(final AssertionFailedError e) {
-    AssertionError ex = null;
+  public void performNotify(final android.test.AssertionFailedError e) {
+    junit.framework.AssertionFailedError ex = null;
 
     if (e != null) {
-      ex = new AssertionError(e);
+      ex = new junit.framework.AssertionFailedError(e.getMessage());
+      ex.initCause(e.getCause());
     }
 
     this.performNotify(ex);
   }
 
   public void performNotify() {
-    this.performNotify((AssertionError)null);
+    this.performNotify((AssertionFailedError) null);
   }
 
   private static WaitHelper singleWaiter = new WaitHelper();
@@ -144,4 +146,5 @@ public class WaitHelper {
   public static void resetTestWaiter() {
     singleWaiter = new WaitHelper();
   }
+
 }
