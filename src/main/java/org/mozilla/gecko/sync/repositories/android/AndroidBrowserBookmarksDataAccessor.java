@@ -139,6 +139,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
           Log.i(LOG_TAG, "No mobile folder. Inserting one.");
           mobileRoot = insertSpecialFolder("mobile", 0);
         } else if (guid.equals("places")) {
+          // This is awkward.
           desktopRoot = insertSpecialFolder("places", mobileRoot);
         } else {
           // unfiled, menu, toolbar.
@@ -181,10 +182,13 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return cv;
   }
   
-  // Returns a cursor with any records that list the given androidID as a parent
+  // Returns a cursor with any records that list the given androidID as a parent.
+  // Exclude "places", which is stored under "mobile" for convenience.
+  // Remember to manually reparent "places" if you change "mobile"!
   public Cursor getChildren(long androidID) throws NullCursorException {
-    String where = BrowserContract.Bookmarks.PARENT + " = ?";
-    String[] args = new String[] { String.valueOf(androidID) };
+    String where = BrowserContract.Bookmarks.PARENT + " = ? AND " +
+                   BrowserContract.SyncColumns.GUID + " <> ?" ;
+    String[] args = new String[] { String.valueOf(androidID), "places" };
     return queryHelper.safeQuery(".getChildren", getAllColumns(), where, args, null);
   }
   
