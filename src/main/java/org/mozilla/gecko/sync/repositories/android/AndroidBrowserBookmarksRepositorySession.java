@@ -520,8 +520,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     // If record is folder, update maps and re-parent children if necessary.
     if (!bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+      Logger.debug(LOG_TAG, "Not a folder. No bookkeeping.");
       return;
     }
+
+    Logger.debug(LOG_TAG, "Updating bookkeeping for folder " + record.guid);
 
     // Mappings between ID and GUID.
     // TODO: update our persisted children arrays!
@@ -531,6 +534,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     JSONArray childArray = bmk.children;
 
+    Logger.debug(LOG_TAG, record.guid + " has children " + childArray.toJSONString());
     parentToChildArray.put(bmk.guid, childArray);
 
     // Re-parent.
