@@ -7,6 +7,8 @@ import static junit.framework.Assert.assertEquals;
 
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import junit.framework.AssertionFailedError;
+
 public class ExpectStoredDelegate extends DefaultStoreDelegate {
   String expectedGUID;
   Record storedRecord;
@@ -32,7 +34,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
       }
       System.out.println("Notifying in onRecordStoreSucceeded.");
       testWaiter().performNotify();
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       testWaiter().performNotify(e);
     }
   }

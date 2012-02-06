@@ -7,11 +7,13 @@ import static junit.framework.Assert.assertEquals;
 
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
+import junit.framework.AssertionFailedError;
+
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
   
   @Override
   public void onGuidsSinceSucceeded(String[] guids) {
-    AssertionError err = null;
+    AssertionFailedError err = null;
     try {
       boolean bookmarks = false;
       for (int i = 0; i < guids.length; i++) {
@@ -20,7 +22,7 @@ public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
         }
       }
       assertEquals(0, bookmarks ? guids.length - 5 : guids.length);
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       err = e;
     }
     testWaiter().performNotify(err);

@@ -25,6 +25,7 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
+import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 public class StoreTrackingTest extends
@@ -38,11 +39,11 @@ public class StoreTrackingTest extends
     return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
 
-  protected void performWait(Runnable runnable) throws AssertionError {
+  protected void performWait(Runnable runnable) throws AssertionFailedError {
     AndroidBrowserRepositoryTestHelper.testWaiter.performWait(runnable);
   }
 
-  protected void performNotify(AssertionError e) {
+  protected void performNotify(AssertionFailedError e) {
     AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
   }
 
@@ -53,7 +54,7 @@ public class StoreTrackingTest extends
   public void assertEq(Object expected, Object actual) {
     try {
       assertEquals(expected, actual);
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       performNotify(e);
     }
   }
@@ -68,7 +69,7 @@ public class StoreTrackingTest extends
   public abstract class SuccessBeginDelegate implements RepositorySessionBeginDelegate {
     @Override
     public void onBeginFailed(Exception ex) {
-      performNotify(new AssertionError("Begin failed: " + ex.getMessage()));
+      performNotify(new AssertionFailedError("Begin failed: " + ex.getMessage()));
     }
 
     @Override
@@ -82,7 +83,7 @@ public class StoreTrackingTest extends
     @Override
     public void onSessionCreateFailed(Exception ex) {
       Log.w("SuccessCreationDelegate", "Session creation failed.", ex);
-      performNotify(new AssertionError("Session creation failed: "
+      performNotify(new AssertionFailedError("Session creation failed: "
           + ex.getMessage()));
     }
 
@@ -98,7 +99,7 @@ public class StoreTrackingTest extends
     @Override
     public void onRecordStoreFailed(Exception ex) {
       Log.w("SuccessStoreDelegate", "Store failed.", ex);
-      performNotify(new AssertionError("Store failed: " + ex.getMessage()));
+      performNotify(new AssertionFailedError("Store failed: " + ex.getMessage()));
     }
 
     @Override
@@ -110,7 +111,7 @@ public class StoreTrackingTest extends
   public abstract class SuccessFinishDelegate implements RepositorySessionFinishDelegate {
     @Override
     public void onFinishFailed(Exception ex) {
-      performNotify(new AssertionError("Finish failed: " + ex.getMessage()));
+      performNotify(new AssertionFailedError("Finish failed: " + ex.getMessage()));
     }
 
     @Override
@@ -123,7 +124,7 @@ public class StoreTrackingTest extends
       RepositorySessionFetchRecordsDelegate {
     @Override
     public void onFetchFailed(Exception ex, Record record) {
-      performNotify(new AssertionError("Fetch failed: " + ex.getMessage()));
+      performNotify(new AssertionFailedError("Fetch failed: " + ex.getMessage()));
     }
 
     @Override
@@ -176,7 +177,7 @@ public class StoreTrackingTest extends
               public void onFetchedRecord(Record record) {
                 Log.d(getName(), "Fetched record " + record.guid);
                 fetched.set(true);
-                performNotify(new AssertionError("Should have fetched no record!"));
+                performNotify(new AssertionFailedError("Should have fetched no record!"));
               }
 
               @Override
@@ -412,13 +413,13 @@ public class StoreTrackingTest extends
           public void onSynchronizeFailed(Synchronizer synchronizer,
                                           Exception lastException, String reason) {
             Log.d(getName(), "Failed.");
-            performNotify(new AssertionError("Should not fail."));
+            performNotify(new AssertionFailedError("Should not fail."));
           }
 
           @Override
           public void onSynchronizeAborted(Synchronizer synchronize) {
             Log.d(getName(), "Aborted.");
-            performNotify(new AssertionError("Should not abort."));
+            performNotify(new AssertionFailedError("Should not abort."));
           }
         });
       }

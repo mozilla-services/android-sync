@@ -16,6 +16,7 @@ import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionFe
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 public class DefaultFetchDelegate extends DefaultDelegate implements RepositorySessionFetchRecordsDelegate {
@@ -77,7 +78,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
       assertEquals(expected.size(), expectedCount);
       Log.i(LOG_TAG, "Notifying success.");
       testWaiter().performNotify();
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       Log.e(LOG_TAG, "Notifying assertion failure.");
       testWaiter().performNotify(e);
     } catch (Exception e) {

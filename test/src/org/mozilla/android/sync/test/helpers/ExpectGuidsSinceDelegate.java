@@ -8,6 +8,8 @@ import static junit.framework.Assert.assertFalse;
 
 import java.util.Arrays;
 
+import junit.framework.AssertionFailedError;
+
 public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
   private String[] expected;
 
@@ -18,14 +20,14 @@ public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
 
   @Override
   public void onGuidsSinceSucceeded(String[] guids) {
-    AssertionError err = null;
+    AssertionFailedError err = null;
     try {
       assertEquals(guids.length, this.expected.length);
 
       for (String string : guids) {
         assertFalse(-1 == Arrays.binarySearch(this.expected, string));
       }
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       err = e;
     }
     testWaiter().performNotify(err);

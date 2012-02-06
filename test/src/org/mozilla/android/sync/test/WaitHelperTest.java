@@ -105,7 +105,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     return new Runnable() {
       public void run() {
         setPerformNotifyCalled();
-        waitHelper.performNotify(new AssertionError(ERROR_UNIQUE_IDENTIFIER));
+        waitHelper.performNotify(new AssertionFailedError(ERROR_UNIQUE_IDENTIFIER));
       }
     };
   }
@@ -128,10 +128,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     };
   }
 
-  protected void expectAssertionError(Runnable runnable) {
+  protected void expectAssertionFailedError(Runnable runnable) {
     try {
       waitHelper.performWait(runnable);
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       setPerformNotifyErrorCalled();
       String message = e.getMessage();
       assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
@@ -139,10 +139,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     }
   }
 
-  protected void expectAssertionErrorAfterDelay(int wait, Runnable runnable) {
+  protected void expectAssertionFailedErrorAfterDelay(int wait, Runnable runnable) {
     try {
       waitHelper.performWait(wait, runnable);
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       setPerformNotifyErrorCalled();
       String message = e.getMessage();
       assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
@@ -181,22 +181,22 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   }
 
   public void testPerformErrorWaitInThread() {
-    expectAssertionError(inThread(performNotifyErrorRunnable()));
+    expectAssertionFailedError(inThread(performNotifyErrorRunnable()));
     assertBothCalled();
   }
 
   public void testPerformErrorWaitInThreadPool() {
-    expectAssertionError(inThreadPool(performNotifyErrorRunnable()));
+    expectAssertionFailedError(inThreadPool(performNotifyErrorRunnable()));
     assertBothCalled();
   }
 
   public void testPerformErrorTimeoutWaitInThread() {
-    expectAssertionErrorAfterDelay(SHORT_WAIT, inThread(performNotifyErrorRunnable()));
+    expectAssertionFailedErrorAfterDelay(SHORT_WAIT, inThread(performNotifyErrorRunnable()));
     assertBothCalled();
   }
 
   public void testPerformErrorTimeoutWaitInThreadPool() {
-    expectAssertionErrorAfterDelay(SHORT_WAIT, inThreadPool(performNotifyErrorRunnable()));
+    expectAssertionFailedErrorAfterDelay(SHORT_WAIT, inThreadPool(performNotifyErrorRunnable()));
     assertBothCalled();
   }
 
@@ -219,7 +219,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   public void testDelay() {
     try {
       waitHelper.performWait(1, performNotifyAfterDelayRunnable(SHORT_WAIT));
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       setPerformNotifyErrorCalled();
       assertTrue(e.getMessage(), e.getMessage().contains("TIMEOUT"));
     }
@@ -282,7 +282,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     Thread.sleep(LONG_WAIT);
     try {
       waitHelper.performWait(1, this.performNothingRunnable());
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       fail("Should not have thrown!");
     }
   }
@@ -309,7 +309,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     Thread.sleep(LONG_WAIT);
     try {
       waitHelper.performWait(NO_WAIT, this.performNothingRunnable());
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       fail("Should not have thrown!");
     }
   }

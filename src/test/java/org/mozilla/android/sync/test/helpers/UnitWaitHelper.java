@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import junit.framework.AssertionFailedError;
+
 import org.mozilla.gecko.sync.ThreadPool;
 
 import android.util.Log;
@@ -12,8 +14,8 @@ import android.util.Log;
  * @author rnewman
  *
  */
-public class WaitHelper {
-  AssertionError lastAssertion = null;
+public class UnitWaitHelper {
+  AssertionFailedError lastAssertion = null;
 
   /**
    * We take a Runnable as a parameter so that it'll be invoked inside the
@@ -27,7 +29,7 @@ public class WaitHelper {
    * @throws AssertionError
    */
   public synchronized void performWait(Runnable action) throws AssertionError {
-    Log.i("WaitHelper", "performWait called.");
+    Log.i("UnitWaitHelper", "performWait called.");
     try {
       if (action != null) {
         try {
@@ -36,10 +38,10 @@ public class WaitHelper {
           throw new AssertionError(ex);
         }
       }
-      WaitHelper.this.wait();
+      UnitWaitHelper.this.wait();
       // Rethrow any assertion with which we were notified.
       if (this.lastAssertion != null) {
-        AssertionError e = this.lastAssertion;
+        AssertionFailedError e = this.lastAssertion;
         this.lastAssertion = null;
         throw e;
       }
@@ -48,7 +50,7 @@ public class WaitHelper {
     }
   }
 
-  public synchronized void performWait() throws AssertionError {
+  public synchronized void performWait() throws AssertionFailedError {
     this.performWait(null);
   }
 
@@ -61,7 +63,7 @@ public class WaitHelper {
    *          A Runnable to be executed in it's own thread.
    */
   public void performWaitAfterSpawningThread(final Runnable runnable) {
-    Log.i("WaitHelper", "performWaitAfterSpawningThread called with Runnable " + runnable);
+    Log.i("UnitWaitHelper", "performWaitAfterSpawningThread called with Runnable " + runnable);
     this.performWait(
       new Runnable() {
         public void run() {
@@ -70,23 +72,23 @@ public class WaitHelper {
       });
   }
 
-  public synchronized void performNotify(AssertionError e) {
+  public synchronized void performNotify(AssertionFailedError e) {
     if (e != null) {
-      Log.i("WaitHelper", "performNotify called with AssertionError " + e);
+      Log.i("UnitWaitHelper", "performNotify called with AssertionFailedError " + e);
     }
     this.lastAssertion = e;
-    WaitHelper.this.notify();
+    UnitWaitHelper.this.notify();
   }
 
   public void performNotify() {
-    Log.i("WaitHelper", "performNotify called.");
+    Log.i("UnitWaitHelper", "performNotify called.");
     this.performNotify(null);
   }
 
-  private static WaitHelper singleWaiter;
-  public static WaitHelper getTestWaiter() {
+  private static UnitWaitHelper singleWaiter;
+  public static UnitWaitHelper getTestWaiter() {
     if (singleWaiter == null) {
-      singleWaiter = new WaitHelper();
+      singleWaiter = new UnitWaitHelper();
     }
     return singleWaiter;
   }
