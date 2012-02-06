@@ -53,7 +53,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
         aa.abort("HTTP failure.", e);
       }
     };
-    String nodeRequestUrl = "https://" + aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash + "/" + Constants.AUTH_NODE_SUFFIX;
+    String nodeRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash + "/" + Constants.AUTH_NODE_SUFFIX;
     Log.d(LOG_TAG, "nodeUrl: " + nodeRequestUrl);
     makeFetchNodeRequest(callbackDelegate, nodeRequestUrl);
   }
