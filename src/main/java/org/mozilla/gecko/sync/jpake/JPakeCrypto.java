@@ -286,12 +286,9 @@ public class JPakeCrypto {
      * item with its byte length, but I've omitted that here.
      */
 
-    hashByteArrayWithLength(sha,
-        BigIntegerHelper.BigIntegerToByteArrayWithoutSign(g));
-    hashByteArrayWithLength(sha,
-        BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gr));
-    hashByteArrayWithLength(sha,
-        BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gx));
+    hashByteArrayWithLength(sha, BigIntegerHelper.BigIntegerToByteArrayWithoutSign(g));
+    hashByteArrayWithLength(sha, BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gr));
+    hashByteArrayWithLength(sha, BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gx));
     hashByteArrayWithLength(sha, id.getBytes("UTF-8"));
 
     byte[] hash = sha.digest();

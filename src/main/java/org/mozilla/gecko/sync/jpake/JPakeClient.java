@@ -333,23 +333,11 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     // Check incoming message fields.
     ExtendedJSONObject iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
-    if (iPayload == null
-        || iPayload.getObject(Constants.ZKP_KEY_ZKP_X1) == null
-        || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X1)
-            .get(Constants.ZKP_KEY_ID))
-            || iPayload.getObject(Constants.ZKP_KEY_ZKP_X2) == null
-            || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_X2)
-                .get(Constants.ZKP_KEY_ID))) {
+    if (iPayload == null) {
       Log.e(LOG_TAG, "Invalid round 1 message: " + jIncoming.toJSONString());
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
-
-    // Extract message fields.
-    jParty.gx3 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX1),
-        16);
-    jParty.gx4 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2),
-        16);
 
     ExtendedJSONObject zkpPayload3 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X1);
     ExtendedJSONObject zkpPayload4 = iPayload.getObject(Constants.ZKP_KEY_ZKP_X2);
@@ -359,19 +347,28 @@ public class JPakeClient implements JPakeRequestDelegate {
       return;
     }
 
+    if (!theirSignerId.equals(zkpPayload3.get(Constants.ZKP_KEY_ID)) ||
+        !theirSignerId.equals(zkpPayload4.get(Constants.ZKP_KEY_ID))) {
+      Log.e(LOG_TAG, "Invalid round 1 zkpPayload message");
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
+    }
+
+    // Extract message fields.
+    jParty.gx3 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX1), 16);
+    jParty.gx4 = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_GX2), 16);
+
     // Extract ZKPs.
     String zkp3_gr = (String) zkpPayload3.get(Constants.ZKP_KEY_GR);
-    String zkp3_b = (String) zkpPayload3.get(Constants.ZKP_KEY_B);
+    String zkp3_b  = (String) zkpPayload3.get(Constants.ZKP_KEY_B);
     String zkp3_id = (String) zkpPayload3.get(Constants.ZKP_KEY_ID);
 
     String zkp4_gr = (String) zkpPayload4.get(Constants.ZKP_KEY_GR);
-    String zkp4_b = (String) zkpPayload4.get(Constants.ZKP_KEY_B);
+    String zkp4_b  = (String) zkpPayload4.get(Constants.ZKP_KEY_B);
     String zkp4_id = (String) zkpPayload4.get(Constants.ZKP_KEY_ID);
 
-    jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b,
-        16), zkp3_id);
-    jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b,
-        16), zkp4_id);
+    jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b, 16), zkp3_id);
+    jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b, 16), zkp4_id);
 
     // Jpake round 2
     try {
@@ -398,8 +395,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     Zkp zkpA = jParty.thisZkpA;
     ExtendedJSONObject oPayload = new ExtendedJSONObject();
     ExtendedJSONObject jZkpA = makeJZkp(zkpA.gr, zkpA.b, zkpA.id);
-    oPayload.put(Constants.ZKP_KEY_A,
-        BigIntegerHelper.toEvenLengthHex(jParty.thisA));
+    oPayload.put(Constants.ZKP_KEY_A, BigIntegerHelper.toEvenLengthHex(jParty.thisA));
     oPayload.put(Constants.ZKP_KEY_ZKP_A, jZkpA);
 
     // Make outgoing message.
@@ -437,28 +433,28 @@ public class JPakeClient implements JPakeRequestDelegate {
 
     // Check incoming message fields.
     ExtendedJSONObject iPayload = jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
-    if (iPayload == null
-        || iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null
-        || !theirSignerId.equals(iPayload.getObject(Constants.ZKP_KEY_ZKP_A)
-            .get(Constants.ZKP_KEY_ID))) {
+    if (iPayload == null ||
+        iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null) {
+      Log.e(LOG_TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
+      abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
+    }
+    ExtendedJSONObject zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
+    if (!theirSignerId.equals(zkpPayload.get(Constants.ZKP_KEY_ID))) {
       Log.e(LOG_TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
 
     // Extract fields.
-    jParty.otherA = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A),
-        16);
-
-    ExtendedJSONObject zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
+    jParty.otherA = new BigInteger((String) iPayload.get(Constants.ZKP_KEY_A), 16);
 
     // Extract ZKP.
     String gr = (String) zkpPayload.get(Constants.ZKP_KEY_GR);
-    String b = (String) zkpPayload.get(Constants.ZKP_KEY_B);
+    String b  = (String) zkpPayload.get(Constants.ZKP_KEY_B);
     String id = (String) zkpPayload.get(Constants.ZKP_KEY_ID);
 
-    jParty.otherZkpA = new Zkp(new BigInteger(gr, 16), new BigInteger(b, 16),
-        id);
+    jParty.otherZkpA = new Zkp(new BigInteger(gr, 16), new BigInteger(b, 16), id);
 
     myKeyBundle = null;
     try {
