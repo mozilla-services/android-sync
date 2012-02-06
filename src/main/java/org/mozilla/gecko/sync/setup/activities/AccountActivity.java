@@ -171,7 +171,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     password = passwordInput.getText().toString();
     key = synckeyInput.getText().toString();
     if (serverCheckbox.isChecked()) {
-      server = serverInput.getText().toString();
+      server = "https://" + serverInput.getText().toString();
     }
     enableCredEntry(false);
     activateView(connectButton, false);
