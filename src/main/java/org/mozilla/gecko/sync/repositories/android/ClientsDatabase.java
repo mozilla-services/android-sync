@@ -11,10 +11,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-public class ClientsDatabase extends SQLiteOpenHelper {
+public class ClientsDatabase extends CachedSQLiteOpenHelper {
 
   public static final String LOG_TAG = "ClientsDatabase";
 
@@ -45,43 +44,6 @@ public class ClientsDatabase extends SQLiteOpenHelper {
         + COL_TYPE + " TEXT, "
         + "PRIMARY KEY (" + COL_ACCOUNT_GUID + ", " + COL_PROFILE + "))";
     db.execSQL(createTableSql);
-  }
-
-  // Cache these so we don't have to track them across cursors. Call `close`
-  // when you're done.
-  private static SQLiteDatabase readableDatabase;
-  private static SQLiteDatabase writableDatabase;
-
-  protected SQLiteDatabase getCachedReadableDatabase() {
-    if (ClientsDatabase.readableDatabase == null) {
-      if (ClientsDatabase.writableDatabase == null) {
-        ClientsDatabase.readableDatabase = this.getReadableDatabase();
-        return ClientsDatabase.readableDatabase;
-      } else {
-        return ClientsDatabase.writableDatabase;
-      }
-    } else {
-      return ClientsDatabase.readableDatabase;
-    }
-  }
-
-  protected SQLiteDatabase getCachedWritableDatabase() {
-    if (ClientsDatabase.writableDatabase == null) {
-      ClientsDatabase.writableDatabase = this.getWritableDatabase();
-    }
-    return ClientsDatabase.writableDatabase;
-  }
-
-  public void close() {
-    if (ClientsDatabase.readableDatabase != null) {
-      ClientsDatabase.readableDatabase.close();
-      ClientsDatabase.readableDatabase = null;
-    }
-    if (ClientsDatabase.writableDatabase != null) {
-      ClientsDatabase.writableDatabase.close();
-      ClientsDatabase.writableDatabase = null;
-    }
-    super.close();
   }
 
   public void wipe() {
