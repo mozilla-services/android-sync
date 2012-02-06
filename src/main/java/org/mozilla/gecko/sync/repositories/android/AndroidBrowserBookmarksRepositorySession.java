@@ -549,6 +549,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
+  public void storeDone() {
+    // TODO: queue up a Runnable to do final reparenting/repositioning work.
+    super.storeDone();
+  }
+
+  @Override
   protected String buildRecordString(Record record) {
     BookmarkRecord bmk = (BookmarkRecord) record;
     return bmk.title + bmk.bookmarkURI + bmk.type + bmk.parentName;
