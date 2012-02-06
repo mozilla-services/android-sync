@@ -283,7 +283,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   /*
    * Step One of J-PAKE protocol.
    */
-  private void computeStepOne() throws NoSuchAlgorithmException {
+  private void computeStepOne() throws NoSuchAlgorithmException, UnsupportedEncodingException {
     Log.d(LOG_TAG, "Computing round 1.");
 
     JPakeCrypto.round1(jParty, numGen);
@@ -388,6 +388,10 @@ public class JPakeClient implements JPakeRequestDelegate {
       Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
+    } catch (UnsupportedEncodingException e) {
+      Log.e(LOG_TAG, "UnsupportedEncodingException", e);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
+      return;
     }
 
     // Make outgoing payload.
@@ -473,6 +477,10 @@ public class JPakeClient implements JPakeRequestDelegate {
       Log.e(LOG_TAG, "InvalidKeyException", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
       e.printStackTrace();
+      return;
+    } catch (UnsupportedEncodingException e) {
+      Log.e(LOG_TAG, "UnsupportedEncodingException", e);
+      abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     }
 
@@ -764,6 +772,10 @@ public class JPakeClient implements JPakeRequestDelegate {
         Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
         abort(Constants.JPAKE_ERROR_INTERNAL);
         return;
+      } catch (UnsupportedEncodingException e) {
+        Log.e(LOG_TAG, "UnsupportedEncodingException", e);
+        abort(Constants.JPAKE_ERROR_INTERNAL);
+        return;
       }
       break;
 
@@ -813,6 +825,10 @@ public class JPakeClient implements JPakeRequestDelegate {
           computeStepOne();
         } catch (NoSuchAlgorithmException e) {
           Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
+          abort(Constants.JPAKE_ERROR_INTERNAL);
+          return;
+        } catch (UnsupportedEncodingException e) {
+          Log.e(LOG_TAG, "UnsupportedEncodingException", e);
           abort(Constants.JPAKE_ERROR_INTERNAL);
           return;
         }
@@ -1169,8 +1185,8 @@ public class JPakeClient implements JPakeRequestDelegate {
   /*
    * Helper for turning a string secret into a numeric secret.
    */
-  public static BigInteger secretAsBigInteger(String secretString) {
-    return new BigInteger(secretString.getBytes());
+  public static BigInteger secretAsBigInteger(String secretString) throws UnsupportedEncodingException {
+    return new BigInteger(secretString.getBytes("UTF-8"));
   }
 
 

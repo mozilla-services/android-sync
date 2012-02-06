@@ -33,7 +33,9 @@ public class TestJPakeSetup {
   JPakeClient jClientStateless = new JPakeClient(null);
 
   @Test
-  public void testGx3OrGx4ZeroOrOneThrowsException() {
+  public void testGx3OrGx4ZeroOrOneThrowsException()
+      throws UnsupportedEncodingException
+  {
     JPakeNumGeneratorRandom gen = new JPakeNumGeneratorRandom();
     JPakeParty p = new JPakeParty("foobar");
     BigInteger secret = JPakeClient.secretAsBigInteger("secret");

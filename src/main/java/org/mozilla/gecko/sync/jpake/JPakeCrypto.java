@@ -38,6 +38,7 @@
 
 package org.mozilla.gecko.sync.jpake;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -102,7 +103,7 @@ public class JPakeCrypto {
    * @param valuesOut
    * @throws NoSuchAlgorithmException 
    */
-  public static void round1(JPakeParty jp, JPakeNumGenerator gen) throws NoSuchAlgorithmException {
+  public static void round1(JPakeParty jp, JPakeNumGenerator gen) throws NoSuchAlgorithmException, UnsupportedEncodingException {
     // Randomly select x1 from [0,q), x2 from [1,q).
     BigInteger x1 = gen.generateFromRange(Q); // [0, q)
     BigInteger x2 = jp.x2 = BigInteger.ONE.add(gen.generateFromRange(Q
@@ -134,8 +135,9 @@ public class JPakeCrypto {
    * @throws IncorrectZkpException
    * @throws NoSuchAlgorithmException
    */
-  public static void round2(BigInteger secretValue, JPakeParty jp,
-      JPakeNumGenerator gen) throws IncorrectZkpException, NoSuchAlgorithmException, Gx3OrGx4IsZeroOrOneException{
+  public static void round2(BigInteger secretValue, JPakeParty jp, JPakeNumGenerator gen)
+      throws IncorrectZkpException, NoSuchAlgorithmException,
+      Gx3OrGx4IsZeroOrOneException, UnsupportedEncodingException {
 
     Log.d(LOG_TAG, "round2 started.");
 
@@ -171,7 +173,7 @@ public class JPakeCrypto {
    * @throws IncorrectZkpException
    */
   public static KeyBundle finalRound(BigInteger secretValue, JPakeParty jp)
-      throws IncorrectZkpException, NoSuchAlgorithmException, InvalidKeyException {
+      throws IncorrectZkpException, NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
     Log.d(LOG_TAG, "Final round started.");
     BigInteger gb = jp.gx1.multiply(jp.gx2).mod(P).multiply(jp.gx3)
         .mod(P);
@@ -212,7 +214,7 @@ public class JPakeCrypto {
    * pass in gx to save on an exponentiation of g^x)
    */
   private static Zkp createZkp(BigInteger g, BigInteger x, BigInteger gx,
-      String id, JPakeNumGenerator gen) throws NoSuchAlgorithmException {
+      String id, JPakeNumGenerator gen) throws NoSuchAlgorithmException, UnsupportedEncodingException {
     // Generate random r for exponent.
     BigInteger r = gen.generateFromRange(Q);
 
@@ -233,7 +235,7 @@ public class JPakeCrypto {
    * Verify ZKP.
    */
   private static void checkZkp(BigInteger g, BigInteger gx, Zkp zkp)
-      throws IncorrectZkpException, NoSuchAlgorithmException {
+      throws IncorrectZkpException, NoSuchAlgorithmException, UnsupportedEncodingException {
 
     BigInteger h = computeBHash(g, zkp.gr, gx, zkp.id);
 
@@ -273,7 +275,7 @@ public class JPakeCrypto {
    * form hash.
    */
   private static BigInteger computeBHash(BigInteger g, BigInteger gr, BigInteger gx,
-      String id) throws NoSuchAlgorithmException {
+      String id) throws NoSuchAlgorithmException, UnsupportedEncodingException {
     MessageDigest sha = MessageDigest.getInstance("SHA-256");
     sha.reset();
 
@@ -290,7 +292,7 @@ public class JPakeCrypto {
         BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gr));
     hashByteArrayWithLength(sha,
         BigIntegerHelper.BigIntegerToByteArrayWithoutSign(gx));
-    hashByteArrayWithLength(sha, id.getBytes());
+    hashByteArrayWithLength(sha, id.getBytes("UTF-8"));
 
     byte[] hash = sha.digest();
 
