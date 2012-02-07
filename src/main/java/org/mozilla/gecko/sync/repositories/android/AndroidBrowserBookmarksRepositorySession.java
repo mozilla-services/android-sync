@@ -554,6 +554,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
+  protected void storeRecordDeletion(final Record record) {
+    if (SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
+      Logger.debug(LOG_TAG, "Told to delete record " + record.guid + ". Ignoring.");
+      return;
+    }
+    super.storeRecordDeletion(record);
+  }
+
+  @Override
   public void storeDone() {
     // TODO: queue up a Runnable to do final reparenting/repositioning work.
     super.storeDone();
