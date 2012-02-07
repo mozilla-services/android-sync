@@ -8,6 +8,7 @@ import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDiskIOException;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -29,14 +30,24 @@ public class AccountCreator {
     } else {
       userbundle.putString(Constants.OPTION_SERVER, Constants.AUTH_NODE_DEFAULT);
     }
+
     Log.d(LOG_TAG, "Adding account for " + Constants.ACCOUNTTYPE_SYNC);
-    boolean result = accountManager.addAccountExplicitly(account, password,
+    boolean result = false;
+    try { // Bug 709879: Handle error during creation of account.
+      accountManager.addAccountExplicitly(account, password,
         userbundle);
+    } catch (SQLiteDiskIOException e) {
+      Log.w(LOG_TAG, "Could not add account: SQLite error.", e);
+      return null;
+    } catch (Exception e) {
+      Log.w(LOG_TAG, "Could not add account.", e);
+      return null;
+    }
 
     Log.d(LOG_TAG, "Account: " + account.toString() + " added successfully? "
         + result);
     if (!result) {
-      Log.e(LOG_TAG, "Error adding account!");
+      Log.w(LOG_TAG, "Account is null or already exists, or some other error has occurred.");
     }
 
     // Set components to sync (default: all).

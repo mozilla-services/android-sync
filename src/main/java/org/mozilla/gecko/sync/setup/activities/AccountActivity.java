@@ -232,30 +232,37 @@ public class AccountActivity extends AccountAuthenticatorActivity {
    * Callback that handles auth based on success/failure
    */
   public void authCallback(boolean isSuccess) {
-    if (!isSuccess) {
-      Log.d(LOG_TAG, "not successful");
-      runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          authFailure();
-        }
-      });
-      return;
+    if (isSuccess) {
+      // Successful authentication. Create and add account to AccountManager.
+      // Note: Sync key may incorrect!
+      Log.d(LOG_TAG, "Using account manager " + mAccountManager);
+      final Intent intent = AccountCreator.createAccount(mContext,
+          mAccountManager, username, key, password, server);
+      if (intent != null) {
+        setAccountAuthenticatorResult(intent.getExtras());
+        setResult(RESULT_OK, intent);
+
+        runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            authSuccess();
+          }
+        });
+        return;
+      }
+      // TODO: Display error to user, probably will require new strings.
+      // For now, display default failure screen.
     }
 
-    // Successful authentication. Create and add account to AccountManager.
-    // Note: Sync key may incorrect!
-    Log.d(LOG_TAG, "Using account manager " + mAccountManager);
-    final Intent intent = AccountCreator.createAccount(mContext, mAccountManager,
-                                        username,
-                                        key, password, server);
-    setAccountAuthenticatorResult(intent.getExtras());
-    setResult(RESULT_OK, intent);
+    if (!isSuccess) {
+      Log.d(LOG_TAG, "Authentication failure.");
+    }
 
+    // Display default failure screen to user.
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        authSuccess();
+        authFailure();
       }
     });
   }
