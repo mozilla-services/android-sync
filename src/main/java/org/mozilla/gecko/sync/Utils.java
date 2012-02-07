@@ -133,8 +133,7 @@ public class Utils {
    * Helper to reseed the shared secure random number generator.
    */
   public static void reseedSharedRandom() {
-    int seed = (int)(System.nanoTime() % java.lang.Integer.MAX_VALUE);
-    sharedSecureRandom.setSeed(sharedSecureRandom.generateSeed(seed));
+    sharedSecureRandom.setSeed(sharedSecureRandom.generateSeed(8));
   }
 
   /*
