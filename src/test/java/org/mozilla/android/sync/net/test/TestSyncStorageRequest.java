@@ -220,4 +220,25 @@ public class TestSyncStorageRequest {
     r.post(new JSONObject());
     // Server is stopped in the callback.
   }
+
+  public class DeleteMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      assertTrue(request.contains("x-confirm-delete"));
+      assertEquals("1", request.getValue("x-confirm-delete"));
+      super.handle(request, response);
+    }
+  }
+
+  @Test
+  public void testDelete() throws URISyntaxException {
+    BaseResource.rewriteLocalhost = false;
+    data.startHTTPServer(new DeleteMockServer());
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
+    delegate._credentials = USER_PASS;
+    r.delegate = delegate;
+    r.delete();
+    // Server is stopped in the callback.
+  }
 }
