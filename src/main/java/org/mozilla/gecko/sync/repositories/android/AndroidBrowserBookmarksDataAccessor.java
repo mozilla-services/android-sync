@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.HashMap;
 
 import org.json.simple.JSONArray;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -49,7 +50,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
@@ -128,7 +128,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       if (statuses.containsKey(guid)) {
         if (statuses.get(guid)) {
           // Undelete.
-          Log.i(LOG_TAG, "Undeleting special GUID " + guid);
+          Logger.info(LOG_TAG, "Undeleting special GUID " + guid);
           ContentValues cv = new ContentValues();
           cv.put(BrowserContract.SyncColumns.IS_DELETED, 0);
           updateByGuid(guid, cv);
@@ -136,13 +136,15 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       } else {
         // Insert.
         if (guid.equals("mobile")) {
-          Log.i(LOG_TAG, "No mobile folder. Inserting one.");
+          Logger.info(LOG_TAG, "No mobile folder. Inserting one.");
           mobileRoot = insertSpecialFolder("mobile", 0);
         } else if (guid.equals("places")) {
           // This is awkward.
+          Logger.info(LOG_TAG, "No places root. Inserting one under mobile (" + mobileRoot + ").");
           desktopRoot = insertSpecialFolder("places", mobileRoot);
         } else {
           // unfiled, menu, toolbar.
+          Logger.info(LOG_TAG, "No " + guid + " root. Inserting one under places (" + desktopRoot + ").");
           insertSpecialFolder(guid, desktopRoot);
         }
       }
