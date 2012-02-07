@@ -124,7 +124,12 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
 
     if (accts.length == 0) { // Start J-PAKE for pairing if no accounts present.
+      Log.d(LOG_TAG, "No accounts; starting J-PAKE receiver.");
       displayReceiveNoPin();
+      if (jClient != null) {
+        // Cancel previous J-PAKE to free resources.
+        jClient.finished = true;
+      }
       jClient = new JPakeClient(this);
       jClient.receiveNoPin();
       return;
@@ -133,13 +138,17 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     // Set layout based on starting Intent.
     Bundle extras = this.getIntent().getExtras();
     if (extras != null) {
+      Log.d(LOG_TAG, "SetupSync with extras.");
       boolean isSetup = extras.getBoolean(Constants.INTENT_EXTRA_IS_SETUP);
       if (!isSetup) {
+        Log.d(LOG_TAG, "Account exists; Pair a Device started.");
         pairWithPin = true;
         displayPairWithPin();
         return;
       }
     }
+
+    Log.d(LOG_TAG, "Only one account supported. Redirecting.");
     // Display toast for "Only one account supported." and redirect to account management.
     Toast toast = Toast.makeText(mContext, R.string.sync_notification_oneaccount, Toast.LENGTH_LONG);
     toast.show();
@@ -190,10 +199,19 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     pin += row2.getText().toString() + row3.getText().toString();
 
     // Start J-PAKE.
+    if (jClient != null) {
+      // Cancel previous J-PAKE exchange.
+      jClient.finished = true;
+    }
     jClient = new JPakeClient(this);
-    jClient.pairWithPin(pin, false);
+    jClient.pairWithPin(pin);
   }
 
+  /**
+   * Handler when "Show me how" link is clicked.
+   * @param target
+   *          View that received the click.
+   */
   public void showClickHandler(View target) {
     Uri uri = null;
     // TODO: fetch these from fennec
@@ -206,6 +224,12 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   }
 
   /* Controller methods */
+
+  /**
+   * Display generated PIN to user.
+   * @param pin
+   *          12-character string generated for J-PAKE.
+   */
   public void displayPin(String pin) {
     if (pin == null) {
       Log.w(LOG_TAG, "Asked to display null pin.");
@@ -234,12 +258,17 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     });
   }
 
+  /**
+   * Abort current J-PAKE pairing. Clear forms/restart pairing.
+   * @param error
+   */
   public void displayAbort(String error) {
     if (!Constants.JPAKE_ERROR_USERABORT.equals(error) && !hasInternet()) {
       setContentView(R.layout.sync_setup_nointernet);
       return;
     }
     if (pairWithPin) {
+      // Clear PIN entries and display error.
       runOnUiThread(new Runnable() {
         @Override
         public void run() {
@@ -294,16 +323,6 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * link to a Sync account. Display "waiting for other device" dialog.
    */
   public void onPaired() {
-    if (!pairWithPin) {
-      runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          setContentView(R.layout.sync_setup_jpake_waiting);
-        }
-      });
-      return;
-    }
-
     // Extract Sync account data.
     Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
     if (accts.length == 0) {
@@ -325,7 +344,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       jClient.sendAndComplete(jAccount);
     } catch (JPakeNoActivePairingException e) {
       Log.e(LOG_TAG, "No active J-PAKE pairing.", e);
-      // TODO: some user-visible action!
+      displayAbort(Constants.JPAKE_ERROR_INVALID);
     }
   }
 
@@ -334,8 +353,14 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * pairing, does not require UI feedback to user.
    */
   public void onPairingStart() {
-    if (pairWithPin) {
-      // TODO: add in functionality if/when adding pairWithPIN.
+    if (!pairWithPin) {
+      runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          setContentView(R.layout.sync_setup_jpake_waiting);
+        }
+      });
+      return;
     }
   }
 

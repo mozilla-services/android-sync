@@ -8,14 +8,16 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
-import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
-import org.mozilla.gecko.sync.crypto.CryptoException;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.jpake.Gx3OrGx4IsZeroOrOneException;
 import org.mozilla.gecko.sync.jpake.IncorrectZkpException;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
@@ -23,14 +25,13 @@ import org.mozilla.gecko.sync.jpake.JPakeCrypto;
 import org.mozilla.gecko.sync.jpake.JPakeNumGenerator;
 import org.mozilla.gecko.sync.jpake.JPakeNumGeneratorRandom;
 import org.mozilla.gecko.sync.jpake.JPakeParty;
+import org.mozilla.gecko.sync.jpake.stage.ComputeKeyVerificationStage;
+import org.mozilla.gecko.sync.jpake.stage.VerifyPairingStage;
 import org.mozilla.gecko.sync.setup.Constants;
-import java.security.NoSuchAlgorithmException;
-import java.security.InvalidKeyException;
 
 public class TestJPakeSetup {
   // Note: will throw NullPointerException if aborts. Only use stateless public
   // methods.
-  JPakeClient jClientStateless = new JPakeClient(null);
 
   @Test
   public void testGx3OrGx4ZeroOrOneThrowsException()
@@ -238,9 +239,9 @@ public class TestJPakeSetup {
     KeyBundle keyBundle1 = JPakeCrypto.finalRound(secret1, party1);
     assertNotNull(keyBundle1);
 
-    // party1 computes the shared key, generates en encrypted message to party2.
-    ExtendedJSONObject verificationMsg = jClientStateless
-        .computeKeyVerification(keyBundle1);
+    // party1 computes the shared key, generates an encrypted message to party2.
+    ExtendedJSONObject verificationMsg = new ComputeKeyVerificationStage()
+        .computeKeyVerification(keyBundle1, party1.signerId);
     ExtendedJSONObject payload = verificationMsg
         .getObject(Constants.JSON_KEY_PAYLOAD);
     String ciphertext1 = (String) payload.get(Constants.JSON_KEY_CIPHERTEXT);
@@ -251,7 +252,7 @@ public class TestJPakeSetup {
     // party2 fetches the encrypted message and verifies the pairing against its
     // own derived key.
 
-    boolean isSuccess = jClientStateless.verifyCiphertext(ciphertext1, iv1,
+    boolean isSuccess = new VerifyPairingStage().verifyCiphertext(ciphertext1, iv1,
         keyBundle2);
     return isSuccess;
   }
