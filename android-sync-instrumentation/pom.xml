@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.mozilla.gecko</groupId>
-    <artifactId>android-sync-parent</artifactId>
+    <artifactId>android-sync</artifactId>
     <version>1</version>
   </parent>
 
   <groupId>org.mozilla.gecko</groupId>
   <artifactId>android-sync-instrumentation</artifactId>
   <packaging>apk</packaging>
-  <name>sync-instrumentation</name>
+  <name>Android Sync - Instrumentation</name>
 
   <properties>
     <project.basedir>../test</project.basedir>
@@ -68,20 +71,22 @@
           <resourceDirectory>${project.basedir}/../test/res</resourceDirectory>
 
           <test>
-            <!-- <skip>true|false|auto</skip> -->
-            <!--<instrumentationPackage>packageName</instrumentationPackage>-->                              `
-            <!--<instrumentationRunner>className</instrumentationRunner>-->
-            <!--<debug>true|false</debug>-->
-            <!--<coverage>true|false</coverage>-->
-            <!--<logonly>true|false</logonly>  avd-->
-            <!--<testsize>small|medium|large</testsize>-->
             <createReport>true</createReport>
-            <!-- <classes> -->
-            <!-- <class>org.mozilla.android.sync.stage.test.TestGlobalSession</class> -->
-            <!-- </classes> -->
-            <!--<packages>-->
-            <!--<package>your.package.name</package>-->
-            <!--</packages>-->
+            <!-- Configuration options for android-maven-plugin.
+                <skip>true|false|auto</skip>
+                <instrumentationPackage>packageName</instrumentationPackage>
+                <instrumentationRunner>className</instrumentationRunner>
+                <debug>true|false</debug>
+                <coverage>true|false</coverage>
+                <logonly>true|false</logonly>  avd
+                <testsize>small|medium|large</testsize>
+                <classes>
+                  <class>org.mozilla.android.sync.stage.test.TestGlobalSession</class> 
+                </classes>
+                <packages>
+                  <package>your.package.name</package>
+                </packages>
+            -->
           </test>
         </configuration>
         <extensions>true</extensions>
