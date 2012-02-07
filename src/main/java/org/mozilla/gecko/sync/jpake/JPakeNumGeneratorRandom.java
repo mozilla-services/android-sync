@@ -48,11 +48,6 @@ public class JPakeNumGeneratorRandom implements JPakeNumGenerator {
 
   @Override
   public BigInteger generateFromRange(BigInteger r) {
-    int maxBytes = (int) Math.ceil(((double) r.bitLength()) / 8);
-    BigInteger randInt = new BigInteger(Utils.generateRandomBytes(maxBytes));
-    // TODO: is this going to be very slow?
-    // bit shifting/masking to decrease mod computation
-    return randInt.mod(r);
+    return Utils.generateBigIntegerLessThan(r);
   }
-
 }
