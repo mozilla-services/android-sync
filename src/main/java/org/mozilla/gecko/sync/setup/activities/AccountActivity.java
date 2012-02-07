@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.setup.activities;
 import java.util.Locale;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.setup.AccountCreator;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.auth.AccountAuthenticator;
@@ -52,7 +53,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -88,7 +88,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.sync_account);
     mContext = getApplicationContext();
-    Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
+    Logger.debug(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(mContext);
 
     // Find UI elements.
@@ -111,7 +111,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     serverCheckbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        Log.i(LOG_TAG, "Toggling checkbox: " + isChecked);
+        Logger.info(LOG_TAG, "Toggling checkbox: " + isChecked);
         // Hack for pre-3.0 Android: can enter text into disabled EditText.
         if (!isChecked) { // Clear server input.
           serverInput.setVisibility(View.GONE);
@@ -168,7 +168,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
    * accessed by Fennec and Sync Service.
    */
   public void connectClickHandler(View target) {
-    Log.d(LOG_TAG, "connectClickHandler for view " + target);
+    Logger.debug(LOG_TAG, "connectClickHandler for view " + target);
     username = usernameInput.getText().toString().toLowerCase(Locale.US);
     password = passwordInput.getText().toString();
     key      = synckeyInput.getText().toString();
@@ -190,7 +190,6 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     enableCredEntry(false);
     activateView(connectButton, false);
     cancelButton.setOnClickListener(new OnClickListener() {
-
       @Override
       public void onClick(View v) {
         cancelConnectHandler(v);
@@ -234,9 +233,11 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   }
 
   private boolean validateInputs() {
-    if (usernameInput.length() == 0 || passwordInput.length() == 0
-        || synckeyInput.length() == 0
-        || (serverCheckbox.isChecked() && serverInput.length() == 0)) {
+    if (usernameInput.length() == 0 ||
+        passwordInput.length() == 0 ||
+        synckeyInput.length()  == 0 ||
+        (serverCheckbox.isChecked() &&
+         serverInput.length() == 0)) {
       return false;
     }
     return true;
@@ -246,30 +247,35 @@ public class AccountActivity extends AccountAuthenticatorActivity {
    * Callback that handles auth based on success/failure
    */
   public void authCallback(boolean isSuccess) {
-    if (!isSuccess) {
-      Log.d(LOG_TAG, "not successful");
-      runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          authFailure();
-        }
-      });
-      return;
+    if (isSuccess) {
+      // Successful authentication. Create and add account to AccountManager.
+      // Note: Sync key may be incorrect!
+      Logger.debug(LOG_TAG, "Using account manager " + mAccountManager);
+      final Intent intent = AccountCreator.createAccount(mContext, mAccountManager,
+                                                         username, key, password, server);
+      if (intent != null) {
+        setAccountAuthenticatorResult(intent.getExtras());
+        setResult(RESULT_OK, intent);
+
+        runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            authSuccess();
+          }
+        });
+        return;
+      }
+      // TODO: Display error to user, probably will require new strings.
+      // For now, fall through and display default failure screen.
+    } else {
+      Logger.debug(LOG_TAG, "Authentication failure.");
     }
 
-    // Successful authentication. Create and add account to AccountManager.
-    // Note: Sync key may incorrect!
-    Log.d(LOG_TAG, "Using account manager " + mAccountManager);
-    final Intent intent = AccountCreator.createAccount(mContext, mAccountManager,
-                                        username,
-                                        key, password, server);
-    setAccountAuthenticatorResult(intent.getExtras());
-    setResult(RESULT_OK, intent);
-
+    // Display default failure screen to user.
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        authSuccess();
+        authFailure();
       }
     });
   }
