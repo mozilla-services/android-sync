@@ -171,7 +171,10 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     password = passwordInput.getText().toString();
     key = synckeyInput.getText().toString();
     if (serverCheckbox.isChecked()) {
-      server = "https://" + serverInput.getText().toString();
+      server = serverInput.getText().toString();
+      if (!server.startsWith("https://")) {
+        server = "https://" + server;
+      }
     }
     enableCredEntry(false);
     activateView(connectButton, false);
@@ -251,10 +254,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
         return;
       }
       // TODO: Display error to user, probably will require new strings.
-      // For now, display default failure screen.
-    }
-
-    if (!isSuccess) {
+      // For now, fall through and display default failure screen.
+    } else {
       Log.d(LOG_TAG, "Authentication failure.");
     }
 
