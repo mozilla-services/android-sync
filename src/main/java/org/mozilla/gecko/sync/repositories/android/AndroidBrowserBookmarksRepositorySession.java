@@ -573,7 +573,31 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       Logger.debug(LOG_TAG, "Told to delete record " + record.guid + ". Ignoring.");
       return;
     }
+    final BookmarkRecord bookmarkRecord = (BookmarkRecord) record;
+    if (bookmarkRecord.isFolder()) {
+      Logger.debug(LOG_TAG, "Deleting folder. Ensuring consistency of children.");
+      handleFolderDeletion(bookmarkRecord);
+      return;
+    }
     super.storeRecordDeletion(record);
+  }
+
+  /**
+   * When a folder deletion is received, we must ensure -- for database
+   * consistency -- that its children are placed somewhere sane.
+   *
+   * Note that its children might also be deleted, but we'll process
+   * folders first. For that reason we might want to queue up these
+   * folder deletions and handle them in onStoreDone.
+   *
+   * See Bug 724739.
+   *
+   * @param folder
+   */
+  protected void handleFolderDeletion(final BookmarkRecord folder) {
+    // TODO: reparent children. Bug 724740.
+    // For now we'll trust that we'll process the item deletions, too.
+    super.storeRecordDeletion(folder);
   }
 
   @Override
