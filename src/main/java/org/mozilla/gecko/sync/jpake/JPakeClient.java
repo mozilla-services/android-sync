@@ -245,7 +245,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       channelRequest = new JPakeRequest(jpakeServer + "new_channel",
           makeRequestResourceDelegate());
     } catch (URISyntaxException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "URISyntaxException", e);
       abort(Constants.JPAKE_ERROR_CHANNEL);
       return;
     }
@@ -266,7 +266,7 @@ public class JPakeClient implements JPakeRequestDelegate {
           putRequest = new JPakeRequest(channelUrl,
               makeRequestResourceDelegate());
         } catch (URISyntaxException e) {
-          e.printStackTrace();
+          Log.e(LOG_TAG, "URISyntaxException", e);
           abort(Constants.JPAKE_ERROR_CHANNEL);
           return;
         }
@@ -462,17 +462,14 @@ public class JPakeClient implements JPakeRequestDelegate {
     } catch (IncorrectZkpException e) {
       Log.e(LOG_TAG, "ZKP mismatch");
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
-      e.printStackTrace();
       return;
     } catch (NoSuchAlgorithmException e) {
       Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
-      e.printStackTrace();
       return;
     } catch (InvalidKeyException e) {
       Log.e(LOG_TAG, "InvalidKeyException", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
-      e.printStackTrace();
       return;
     } catch (UnsupportedEncodingException e) {
       Log.e(LOG_TAG, "UnsupportedEncodingException", e);
@@ -490,12 +487,10 @@ public class JPakeClient implements JPakeRequestDelegate {
       } catch (UnsupportedEncodingException e) {
         Log.e(LOG_TAG, "Failed to encrypt key verification value.", e);
         abort(Constants.JPAKE_ERROR_INTERNAL);
-        e.printStackTrace();
         return;
       } catch (CryptoException e) {
         Log.e(LOG_TAG, "Failed to encrypt key verification value.", e);
         abort(Constants.JPAKE_ERROR_INTERNAL);
-        e.printStackTrace();
         return;
       }
 
@@ -531,8 +526,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       NonObjectJSONException {
     if (!verificationObject.get(Constants.JSON_KEY_TYPE).equals(
         theirSignerId + "3")) {
-      Log.e(LOG_TAG,
-          "Invalid round 3 message: " + verificationObject.toJSONString());
+      Log.e(LOG_TAG, "Invalid round 3 message: " + verificationObject.toJSONString());
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return false;
     }
@@ -594,9 +588,11 @@ public class JPakeClient implements JPakeRequestDelegate {
     } catch (UnsupportedEncodingException e) {
       Log.e(LOG_TAG, "Failed to encrypt data.", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
+      return;
     } catch (CryptoException e) {
       Log.e(LOG_TAG, "Failed to encrypt data.", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
+      return;
     }
     jOutgoing = new ExtendedJSONObject();
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "3");
@@ -621,6 +617,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         e.printStackTrace();
       }
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
     }
 
     // Decrypt payload and verify HMAC.
@@ -630,6 +627,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     } catch (NonObjectJSONException e1) {
       Log.e(LOG_TAG, "Invalid round 3 data.", e1);
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
+      return;
     }
     Log.d(LOG_TAG, "Decrypting data.");
     String cleartext = null;
@@ -638,9 +636,11 @@ public class JPakeClient implements JPakeRequestDelegate {
     } catch (UnsupportedEncodingException e1) {
       Log.e(LOG_TAG, "Failed to decrypt data.", e1);
       abort(Constants.JPAKE_ERROR_INTERNAL);
+      return;
     } catch (CryptoException e1) {
       Log.e(LOG_TAG, "Failed to decrypt data.", e1);
       abort(Constants.JPAKE_ERROR_KEYMISMATCH);
+      return;
     }
     JSONObject jCreds = null;
     try {
@@ -703,16 +703,14 @@ public class JPakeClient implements JPakeRequestDelegate {
         onRequestSuccess(res);
         break;
       default:
-        Log.e(LOG_TAG, "Could not retrieve data. Server responded with HTTP "
-            + statusCode);
+        Log.e(LOG_TAG, "Could not retrieve data. Server responded with HTTP " + statusCode);
         abort(Constants.JPAKE_ERROR_SERVER);
         return;
       }
       pollTries = 0;
       break;
     case PUT:
-      Log.e(LOG_TAG, "Could not upload data. Server responded with HTTP "
-          + response.getStatusCode());
+      Log.e(LOG_TAG, "Could not upload data. Server responded with HTTP " + response.getStatusCode());
       abort(Constants.JPAKE_ERROR_SERVER);
       break;
     case ABORT:
@@ -789,8 +787,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       etagHeaders = response.httpResponse().getHeaders("etag");
       if (etagHeaders == null) {
         try {
-          Log.e(LOG_TAG,
-              "Server did not supply ETag for message: " + response.body());
+          Log.e(LOG_TAG, "Server did not supply ETag for message: " + response.body());
           abort(Constants.JPAKE_ERROR_SERVER);
         } catch (IllegalStateException e) {
           e.printStackTrace();
@@ -833,6 +830,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         try {
           computeStepTwo();
         } catch (NonObjectJSONException e) {
+          Log.e(LOG_TAG, "NonObjectJSONException", e);
           abort(Constants.JPAKE_ERROR_INVALID);
           return;
         }
@@ -882,7 +880,9 @@ public class JPakeClient implements JPakeRequestDelegate {
         try {
           computeStepTwo();
         } catch (NonObjectJSONException e) {
+          Log.e(LOG_TAG, "NonObjectJSONException", e);
           abort(Constants.JPAKE_ERROR_INVALID);
+          return;
         }
         return; // No need to wait for response from PUT request.
       }
@@ -890,7 +890,9 @@ public class JPakeClient implements JPakeRequestDelegate {
         try {
           computeFinal();
         } catch (NonObjectJSONException e) {
+          Log.e(LOG_TAG, "NonObjectJSONException", e);
           abort(Constants.JPAKE_ERROR_INVALID);
+          return;
         }
         return; // No need to wait for response from PUT request.
       }
@@ -1156,7 +1158,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     try {
       getRequest = new JPakeRequest(channelUrl, makeRequestResourceDelegate());
     } catch (URISyntaxException e) {
-      e.printStackTrace();
+      Log.e(LOG_TAG, "URISyntaxException", e);
       abort(Constants.JPAKE_ERROR_CHANNEL);
       return;
     }
