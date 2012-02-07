@@ -370,7 +370,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     jParty.zkp3 = new Zkp(new BigInteger(zkp3_gr, 16), new BigInteger(zkp3_b, 16), zkp3_id);
     jParty.zkp4 = new Zkp(new BigInteger(zkp4_gr, 16), new BigInteger(zkp4_b, 16), zkp4_id);
 
-    // Jpake round 2
+    // J-PAKE round 2.
     try {
       JPakeCrypto.round2(JPakeClient.secretAsBigInteger(secret), jParty, numGen);
     } catch (Gx3OrGx4IsZeroOrOneException e) {
@@ -664,7 +664,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     ssActivity.onComplete(jCreds);
   }
 
-  /* JpakeRequestDelegate methods */
+  // JPakeRequestDelegate methods.
   @Override
   public void onRequestFailure(HttpResponse res) {
     JPakeResponse response = new JPakeResponse(res);
@@ -917,20 +917,20 @@ public class JPakeClient implements JPakeRequestDelegate {
 
   /* ResourceDelegate that handles Resource responses */
   public ResourceDelegate makeRequestResourceDelegate() {
-    return new JpakeRequestResourceDelegate(this);
+    return new JPakeRequestResourceDelegate(this);
   }
 
-  public class JpakeRequestResourceDelegate implements ResourceDelegate {
+  public class JPakeRequestResourceDelegate implements ResourceDelegate {
 
     private JPakeRequestDelegate requestDelegate;
 
-    public JpakeRequestResourceDelegate(JPakeRequestDelegate delegate) {
+    public JPakeRequestResourceDelegate(JPakeRequestDelegate delegate) {
       this.requestDelegate = delegate;
     }
 
     @Override
     public String getCredentials() {
-      // Jpake setup has no credentials
+      // J-PAKE setup has no credentials
       return null;
     }
 
