@@ -268,24 +268,32 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         String childGuid = getGUID(children);
         long parent = getParentID(children);
         trace("  Child GUID: " + childGuid + ", parent " + parent);
-        int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
+        long childPosition = getPosition(children);
         trace("  Child position: " + childPosition);
         if (childPosition >= count) {
           Logger.warn(LOG_TAG, "Child position " + childPosition + " greater than expected children " + count);
           broken.put(childGuid, 0L);
+        } else if (childPosition < 0) {
+          // TODO
+          Logger.debug(LOG_TAG, "Child position " + childPosition + " is negative. Broken!");
+          broken.put(childGuid, 0L);
         } else {
-          String existing = kids[childPosition];
+          String existing = kids[(int) childPosition];
           if (existing != null) {
             Logger.warn(LOG_TAG, "Child position " + childPosition + " already occupied! (" +
                                  childGuid + ", " + existing + ")");
             broken.put(childGuid, 0L);
           } else {
-            kids[childPosition] = childGuid;
+            kids[(int) childPosition] = childGuid;
           }
         }
         children.moveToNext();
       }
 
+      // We've got some children with valid positions, and children
+      // with useless ones. Pack the good ones to the front, then
+      // fill the rest.
+      Utils.pack(kids);
       try {
         Utils.fillArraySpaces(kids, broken);
       } catch (Exception e) {
@@ -308,6 +316,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     } finally {
       children.close();
     }
+
+    // TODO: update actual stored positions.
     return childArray;
   }
 
