@@ -210,6 +210,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
   }
 
+  // More efficient for bulk operations.
+  private long getPosition(Cursor cur, int positionIndex) {
+    return cur.getLong(positionIndex);
+  }
+  private long getPosition(Cursor cur) {
+    return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.POSITION);
+  }
+
   private String getParentName(String parentGUID) throws ParentNotFoundException, NullCursorException {
     if (parentGUID == null) {
       return "";
@@ -347,7 +355,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
       String destination = bookmark.deleted ? "unfiled" : "mobile";
       bookmark.androidParentID = getIDForGUID(destination);
-      bookmark.androidPosition = 0;
+      bookmark.androidPosition = getPosition(cur);
       bookmark.parentID        = destination;
       bookmark.parentName      = getParentName(destination);
       if (!bookmark.deleted) {
