@@ -258,7 +258,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       // Get children into array in correct order.
       while (!children.isAfterLast()) {
         String childGuid = getGUID(children);
-        trace("  Child GUID: " + childGuid);
+        long parent = getParentID(children);
+        trace("  Child GUID: " + childGuid + ", parent " + parent);
         int childPosition = (int) RepoUtils.getLongFromCursor(children, BrowserContract.Bookmarks.POSITION);
         trace("  Child position: " + childPosition);
         if (childPosition >= count) {
