@@ -32,6 +32,21 @@ public class TestUtils {
   }
 
   @Test
+  public void testPack() {
+    String[] testArray = new String[] {
+        "a", null, "b", null, "c", "d", null
+    };
+    Utils.pack(testArray);
+    assertEquals("a", testArray[0]);
+    assertEquals("b", testArray[1]);
+    assertEquals("c", testArray[2]);
+    assertEquals("d", testArray[3]);
+    assertNull(testArray[4]);
+    assertNull(testArray[5]);
+    assertNull(testArray[6]);
+  }
+
+  @Test
   public void testGenerateGUID() {
     for (int i = 0; i < 1000; ++i) {
       assertEquals(12, Utils.generateGuid().length());

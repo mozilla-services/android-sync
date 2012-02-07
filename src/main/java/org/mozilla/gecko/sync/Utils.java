@@ -267,4 +267,36 @@ public class Utils {
       throw new Exception("Could not fill array spaces.");
     }
   }
+
+  /**
+   * Take an array of strings, packing elements toward the start.
+   * @param kids
+   */
+  public static void pack(String[] kids) {
+    int src, dst = 0;
+    int c = kids.length;
+
+    while (dst < (c - 1)) {
+      // Find the first gap.
+      if (kids[dst] != null) {
+        ++dst;
+        continue;
+      }
+
+      // Find the next element to fill it.
+      src = dst + 1;
+      while (src < c && kids[src] == null) {
+        ++src;
+      }
+
+      // Didn't find any? Give up.
+      if (src >= c) {
+        return;
+      }
+
+      // Copy from src to dst.
+      kids[dst++] = kids[src];
+      kids[src++] = null;
+    }
+  }
 }
