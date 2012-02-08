@@ -46,7 +46,6 @@ import java.util.Arrays;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
@@ -62,7 +61,6 @@ public class Cryptographer {
 
   private static final String TRANSFORMATION     = "AES/CBC/PKCS5Padding";
   private static final String KEY_ALGORITHM_SPEC = "AES";
-  private static final int    KEY_SIZE           = 256;
 
   public static CryptoInfo encrypt(CryptoInfo info) throws CryptoException {
 
