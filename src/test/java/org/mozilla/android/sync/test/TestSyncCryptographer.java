@@ -104,35 +104,6 @@ public class TestSyncCryptographer {
     }
 
     @Test
-    public void testConstructKeyBundleKeys() throws UnsupportedEncodingException {
-
-        String username =               "smqvooxj664hmrkrv6bw4r4vkegjhkns";
-        String friendlyBase32SyncKey =  "gbh7teqqcgyzd65svjgibd7tqy";
-        String base64EncryptionKey =    "069EnS3EtDK4y1tZ1AyKX+U7WEsWRp9b" +
-                                        "RIKLdW/7aoE=";
-        String base64HmacKey =          "LF2YCS1QCgSNCf0BCQvQ06SGH8jqJDi9" +
-                                        "dKj0O+b0fwI=";
-
-        SyncCryptographer cryptographer = new SyncCryptographer(username, friendlyBase32SyncKey);
-        KeyBundle keys;
-        try {
-            keys = cryptographer.getCryptoKeysBundleKeys();
-        } catch (Exception e) {
-            fail();
-            return;
-        }
-
-        // Check Encryption Key
-        boolean equal = Arrays.equals(keys.getEncryptionKey(), Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8")));
-        assertEquals(true, equal);
-
-        // Check HMAC Key
-        equal = Arrays.equals(keys.getHMACKey(), Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")));
-        assertEquals(true, equal);
-
-    }
-
-    @Test
     public void testDecryptKeysBundle() throws CryptoException, UnsupportedEncodingException {
         String jsonInput =                      "{\"payload\": \"{\\\"ciphertext\\" +
                                                 "\":\\\"L1yRyZBkVYKXC1cTpeUqqfmKg" +
