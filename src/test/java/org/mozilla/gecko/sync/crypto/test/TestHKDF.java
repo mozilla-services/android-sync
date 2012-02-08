@@ -13,8 +13,6 @@ import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.HKDF;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 /*
  * This class tests the HKDF.java class.
