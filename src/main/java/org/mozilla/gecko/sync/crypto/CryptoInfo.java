@@ -4,6 +4,14 @@
 
 package org.mozilla.gecko.sync.crypto;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+
+import javax.crypto.Mac;
+
+import org.mozilla.apache.commons.codec.binary.Base64;
+
 /*
  * All info in these objects should be decoded (i.e. not BaseXX encoded).
  */
@@ -62,5 +70,22 @@ public class CryptoInfo {
 
   public void setKeys(KeyBundle keys) {
     this.keys = keys;
+  }
+
+  /*
+   * Generate HMAC for given cipher text.
+   */
+  public byte[] generatedHMAC() throws NoSuchAlgorithmException, InvalidKeyException {
+    Mac hmacHasher = HKDF.makeHMACHasher(getKeys().getHMACKey());
+    return hmacHasher.doFinal(Base64.encodeBase64(getMessage()));
+  }
+
+  /*
+   * Return true if generated HMAC is the same as the specified HMAC.
+   */
+  public boolean generatedHMACIsHMAC() throws NoSuchAlgorithmException, InvalidKeyException {
+    byte[] generatedHMAC = generatedHMAC();
+    byte[] expectedHMAC  = getHMAC();
+    return Arrays.equals(generatedHMAC, expectedHMAC);
   }
 }

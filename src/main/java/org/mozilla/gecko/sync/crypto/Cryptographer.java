@@ -90,7 +90,7 @@ public class Cryptographer {
 
     // Generate HMAC.
     try {
-      info.setHMAC(generateHMAC(info));
+      info.setHMAC(info.generatedHMAC());
     } catch (NoSuchAlgorithmException e) {
       throw new CryptoException(e);
     } catch (InvalidKeyException e) {
@@ -114,7 +114,7 @@ public class Cryptographer {
 
     // Check HMAC.
     try {
-      if (!verifyHMAC(info)) {
+      if (!info.generatedHMACIsHMAC()) {
         throw new HMACVerificationException();
       }
     } catch (NoSuchAlgorithmException e) {
@@ -174,29 +174,5 @@ public class Cryptographer {
       throw new CryptoException(e);
     }
     return cipher;
-  }
-
-  /*
-   * Helper to verify HMAC Input: CryptoInfo Output: true if HMAC is correct
-   */
-  private static boolean verifyHMAC(CryptoInfo bundle) throws NoSuchAlgorithmException, InvalidKeyException {
-    byte[] generatedHMAC = generateHMAC(bundle);
-    byte[] expectedHMAC  = bundle.getHMAC();
-    boolean eq = Arrays.equals(generatedHMAC, expectedHMAC);
-    if (!eq) {
-      System.err.println("Failed HMAC verification.");
-      System.err.println("Expecting: " + Utils.byte2hex(generatedHMAC));
-      System.err.println("Got:       " + Utils.byte2hex(expectedHMAC));
-    }
-    return eq;
-  }
-
-  /*
-   * Helper to generate HMAC Input: CryptoInfo Output: a generated HMAC for
-   * given cipher text
-   */
-  private static byte[] generateHMAC(CryptoInfo bundle) throws NoSuchAlgorithmException, InvalidKeyException {
-    Mac hmacHasher = HKDF.makeHMACHasher(bundle.getKeys().getHMACKey());
-    return hmacHasher.doFinal(Base64.encodeBase64(bundle.getMessage()));
   }
 }
