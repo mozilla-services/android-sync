@@ -41,6 +41,7 @@ package org.mozilla.gecko.sync.crypto;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
+import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -49,6 +50,8 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import java.security.InvalidKeyException;
 
 public class KeyBundle {
+    private static final String KEY_ALGORITHM_SPEC = "AES";
+    private static final int    KEY_SIZE           = 256;
 
     private byte[] encryptionKey;
     private byte[] hmacKey;
@@ -128,6 +131,26 @@ public class KeyBundle {
     public KeyBundle(byte[] encryptionKey, byte[] hmacKey) {
        this.setEncryptionKey(encryptionKey);
        this.setHMACKey(hmacKey);
+    }
+
+    /*
+     * Make a KeyBundle with two random 256 bit keys (encryption and HMAC).
+     *
+     * @return A KeyBundle with random keys.
+     */
+    public static KeyBundle withRandomKeys() throws CryptoException {
+      KeyGenerator keygen;
+      try {
+        keygen = KeyGenerator.getInstance(KEY_ALGORITHM_SPEC);
+      } catch (NoSuchAlgorithmException e) {
+        throw new CryptoException(e);
+      }
+
+      keygen.init(KEY_SIZE);
+      byte[] encryptionKey = keygen.generateKey().getEncoded();
+      byte[] hmacKey = keygen.generateKey().getEncoded();
+
+      return new KeyBundle(encryptionKey, hmacKey);
     }
 
     public byte[] getEncryptionKey() {
