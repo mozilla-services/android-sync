@@ -15,7 +15,7 @@ import org.mozilla.gecko.sync.crypto.CryptoInfo;
 import org.mozilla.gecko.sync.crypto.Cryptographer;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 
-public class TestCrypto {
+public class TestCryptographer {
 
     @Test
     public void testDecrypt() throws CryptoException {
