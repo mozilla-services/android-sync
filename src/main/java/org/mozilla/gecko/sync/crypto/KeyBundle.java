@@ -133,7 +133,17 @@ public class KeyBundle {
        this.setHMACKey(hmacKey);
     }
 
-    /*
+    /**
+     * Make a KeyBundle with the specified base64 encoded keys.
+     *
+     * @return A KeyBundle with the specified keys.
+     */
+    public static KeyBundle withBase64EncodedKeys(String base64EncryptionKey, String base64HmacKey) throws UnsupportedEncodingException {
+      return new KeyBundle(Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8")),
+                           Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")));
+    }
+
+    /**
      * Make a KeyBundle with two random 256 bit keys (encryption and HMAC).
      *
      * @return A KeyBundle with random keys.
@@ -167,10 +177,5 @@ public class KeyBundle {
 
     public void setHMACKey(byte[] hmacKey) {
         this.hmacKey = hmacKey;
-    }
-
-    public static KeyBundle decodeKeyStrings(String base64EncryptionKey, String base64HmacKey) throws UnsupportedEncodingException {
-      return new KeyBundle(Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8")),
-                           Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")));
     }
 }
