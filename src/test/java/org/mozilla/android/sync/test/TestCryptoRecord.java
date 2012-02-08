@@ -20,8 +20,6 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 public class TestCryptoRecord {
   String base64EncryptionKey = "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=";
@@ -35,7 +33,7 @@ public class TestCryptoRecord {
     record.payload = clearPayload;
     String expectedGUID = "5qRsgXWRJZXr";
     record.guid = expectedGUID;
-    record.keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
+    record.keyBundle = KeyBundle.withBase64EncodedKeys(base64EncryptionKey, base64HmacKey);
     record.encrypt();
     assertTrue(record.payload.get("title") == null);
     assertTrue(record.payload.get("ciphertext") != null);
@@ -58,7 +56,7 @@ public class TestCryptoRecord {
 
     String b64E = "0A7mU5SZ/tu7ZqwXW1og4qHVHN+zgEi4Xwfwjw+vEJw=";
     String b64H = "11GN34O9QWXkjR06g8t0gWE1sGgQeWL0qxxWwl8Dmxs=";
-    record.keyBundle = KeyBundle.decodeKeyStrings(b64E, b64H);
+    record.keyBundle = KeyBundle.withBase64EncodedKeys(b64E, b64H);
     record.decrypt();
 
     assertEquals("0-P9fabp9vJD", record.guid);

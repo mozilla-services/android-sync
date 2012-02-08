@@ -11,17 +11,16 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
-import org.mozilla.gecko.sync.crypto.CryptoException;
-import org.mozilla.gecko.sync.crypto.Cryptographer;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 public class TestCollectionKeys {
 
@@ -34,7 +33,7 @@ public class TestCollectionKeys {
     } catch (NoCollectionKeysSetException ex) {
       // Good.
     }
-    KeyBundle testKeys = Cryptographer.generateKeys();
+    KeyBundle testKeys = KeyBundle.withRandomKeys();
     ck.setDefaultKeyBundle(testKeys);
     assertEquals(testKeys, ck.defaultKeyBundle());
   }
@@ -48,8 +47,8 @@ public class TestCollectionKeys {
     } catch (NoCollectionKeysSetException ex) {
       // Good.
     }
-    KeyBundle testKeys = Cryptographer.generateKeys();
-    KeyBundle otherKeys = Cryptographer.generateKeys();
+    KeyBundle testKeys = KeyBundle.withRandomKeys();
+    KeyBundle otherKeys = KeyBundle.withRandomKeys();
 
     ck.setDefaultKeyBundle(testKeys);
     assertEquals(testKeys, ck.defaultKeyBundle());
