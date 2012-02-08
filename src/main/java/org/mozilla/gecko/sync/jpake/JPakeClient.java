@@ -237,19 +237,25 @@ public class JPakeClient implements JPakeRequestDelegate {
    */
   private void getChannel() {
     Log.d(LOG_TAG, "Getting channel.");
-    if (finished)
+    if (finished) {
+      Log.d(LOG_TAG, "Finished; returning.");
       return;
+    }
 
-    JPakeRequest channelRequest = null;
     try {
-      channelRequest = new JPakeRequest(jpakeServer + "new_channel",
-          makeRequestResourceDelegate());
+      final String uri = jpakeServer + "new_channel";
+      Log.d(LOG_TAG, "Fetching " + uri);
+      JPakeRequest channelRequest = new JPakeRequest(uri, makeRequestResourceDelegate());
+      channelRequest.get();
     } catch (URISyntaxException e) {
       Log.e(LOG_TAG, "URISyntaxException", e);
       abort(Constants.JPAKE_ERROR_CHANNEL);
       return;
+    } catch (Exception e) {
+      Log.e(LOG_TAG, "Unexpected exception in getChannel().", e);
+      abort(Constants.JPAKE_ERROR_CHANNEL);
+      return;
     }
-    channelRequest.get();
   }
 
   /*
