@@ -138,24 +138,6 @@ public class Cryptographer {
   }
 
   /*
-   * Make 2 random 256 bit keys (encryption and HMAC).
-   */
-  public static KeyBundle generateKeys() throws CryptoException {
-    KeyGenerator keygen;
-    try {
-      keygen = KeyGenerator.getInstance(KEY_ALGORITHM_SPEC);
-    } catch (NoSuchAlgorithmException e) {
-      e.printStackTrace();
-      throw new CryptoException(e);
-    }
-
-    keygen.init(KEY_SIZE);
-    byte[] encryptionKey = keygen.generateKey().getEncoded();
-    byte[] hmacKey = keygen.generateKey().getEncoded();
-    return new KeyBundle(encryptionKey, hmacKey);
-  }
-
-  /*
    * Performs functionality common to both the encryption and decryption
    * operations.
    *

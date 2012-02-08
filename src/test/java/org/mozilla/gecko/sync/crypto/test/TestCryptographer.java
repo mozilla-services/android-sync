@@ -136,7 +136,7 @@ public class TestCryptographer {
    */
   @Test
   public void testGenerateRandomKeys() throws CryptoException {
-    KeyBundle keys = Cryptographer.generateKeys();
+    KeyBundle keys = KeyBundle.withRandomKeys();
 
     assertEquals(keys.getEncryptionKey().length, 32);
     assertEquals(keys.getHMACKey().length, 32);
