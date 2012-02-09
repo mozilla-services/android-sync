@@ -39,6 +39,7 @@ package org.mozilla.gecko.sync.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
