@@ -221,7 +221,6 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
       waitHelper.performWait(1, performNotifyAfterDelayRunnable(SHORT_WAIT));
     } catch (AssertionFailedError e) {
       setPerformNotifyErrorCalled();
-      assertTrue(e.getMessage(), e.getMessage().contains("TIMEOUT"));
     }
     assertCalled();
   }
