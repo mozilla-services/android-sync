@@ -15,7 +15,7 @@ import org.mozilla.android.sync.test.helpers.DefaultDelegate;
  * inspection.
  *
  * This callback is expected to be used from within the friendly confines of a
- * UnitWaitHelper performWait.
+ * WaitHelper performWait.
  */
 public class MockGlobalSessionCallback extends DefaultDelegate implements GlobalSessionCallback {
   public int stageCounter = Stage.values().length - 1; // Exclude starting state.

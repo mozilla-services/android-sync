@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.AssertionFailedError;
 import android.util.Log;
 
+import org.mozilla.gecko.sync.ThreadPool;
+
 /**
  * Implements waiting for asynchronous test events.
  *
@@ -110,7 +112,7 @@ public class WaitHelper {
     }
   }
 
-  public void performNotify(final junit.framework.AssertionFailedError e) {
+  public void performNotify(final AssertionFailedError e) {
     if (e != null) {
       trace("performNotify called with AssertionFailedError " + e);
     } else {
@@ -123,19 +125,37 @@ public class WaitHelper {
     }
   }
 
-  public void performNotify(final android.test.AssertionFailedError e) {
-    junit.framework.AssertionFailedError ex = null;
+  // public void performNotify(final android.test.AssertionFailedError e) {
+  //   junit.framework.AssertionFailedError ex = null;
 
-    if (e != null) {
-      ex = new junit.framework.AssertionFailedError(e.getMessage());
-      ex.initCause(e.getCause());
-    }
+  //   if (e != null) {
+  //     ex = new junit.framework.AssertionFailedError(e.getMessage());
+  //     ex.initCause(e.getCause());
+  //   }
 
-    this.performNotify(ex);
-  }
+  //   this.performNotify(ex);
+  // }
 
   public void performNotify() {
     this.performNotify((AssertionFailedError) null);
+  }
+
+  /**
+   * Some things need to be tested asynchronously, and in order to wait
+   * properly, a separate thread must be spawned -- see the class comment. This
+   * helper function spawns that separate thread.
+   *
+   * @param runnable
+   *          A Runnable to be executed in it's own thread.
+   */
+  public void performWaitAfterSpawningThread(final Runnable runnable) {
+    Log.i("UnitWaitHelper", "performWaitAfterSpawningThread called with Runnable " + runnable);
+    this.performWait(
+      new Runnable() {
+        public void run() {
+          ThreadPool.run(runnable);
+        }
+      });
   }
 
   private static WaitHelper singleWaiter = new WaitHelper();

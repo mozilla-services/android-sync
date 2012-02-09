@@ -13,8 +13,8 @@ public abstract class DefaultDelegate {
 
   protected ExecutorService executor;
 
-  protected UnitWaitHelper testWaiter() {
-    return UnitWaitHelper.getTestWaiter();
+  protected WaitHelper testWaiter() {
+    return WaitHelper.getTestWaiter();
   }
 
   protected void sharedFail(String message) {
