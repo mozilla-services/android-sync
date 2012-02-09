@@ -130,8 +130,21 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     }
     username = usernameInput.getText().toString().toLowerCase(Locale.US);
     password = passwordInput.getText().toString();
+    key      = synckeyInput.getText().toString();
+
     if (serverCheckbox.isChecked()) {
-      server = serverInput.getText().toString();
+      String userServer = serverInput.getText().toString();
+      if (userServer != null) {
+        userServer = userServer.trim();
+        if (userServer.length() != 0) {
+          if (!userServer.startsWith("https://") &&
+              !userServer.startsWith("http://")) {
+            // Assume HTTPS if not specified.
+            userServer = "https://" + userServer;
+          }
+          server = userServer;
+        }
+      }
     }
 
     // TODO : Authenticate with Sync Service, once implemented, with
