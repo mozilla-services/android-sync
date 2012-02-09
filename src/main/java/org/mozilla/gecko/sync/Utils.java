@@ -81,21 +81,33 @@ public class Utils {
 
   public static void error(String logTag, String message) {
     logToStdout(logTag, " :: ERROR: ", message);
+    if (!Log.isLoggable(logTag, Log.ERROR)) {
+      return;
+    }
     Log.i(logTag, message);
   }
 
   public static void info(String logTag, String message) {
     logToStdout(logTag, " :: INFO: ", message);
+    if (!Log.isLoggable(logTag, Log.INFO)) {
+      return;
+    }
     Log.i(logTag, message);
   }
 
   public static void debug(String logTag, String message) {
     logToStdout(logTag, " :: DEBUG: ", message);
+    if (!Log.isLoggable(logTag, Log.DEBUG)) {
+      return;
+    }
     Log.d(logTag, message);
   }
 
   public static void trace(String logTag, String message) {
     if (!ENABLE_TRACE_LOGGING) {
+      return;
+    }
+    if (!Log.isLoggable(logTag, Log.VERBOSE)) {
       return;
     }
     logToStdout(logTag, " :: TRACE: ", message);
