@@ -51,7 +51,7 @@ import android.util.Log;
  *
  */
 class ConcurrentRecordConsumer extends RecordConsumer {
-  private static final String LOG_TAG = "ConcurrentRecordConsumer";
+  private static final String LOG_TAG = "CRecordConsumer";
 
   /**
    * When this is true and all records have been processed, the consumer

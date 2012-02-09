@@ -89,7 +89,7 @@ import android.util.Log;
 public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepositorySession {
 
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
-  public static final String LOG_TAG = "AndroidBrowserRepositorySession";
+  public static final String LOG_TAG = "BrowserRepoSession";
   private HashMap<String, String> recordToGuid;
 
   public AndroidBrowserRepositorySession(Repository repository) {

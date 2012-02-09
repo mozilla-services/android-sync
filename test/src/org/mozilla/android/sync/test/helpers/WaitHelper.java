@@ -24,6 +24,8 @@ import android.util.Log;
  */
 public class WaitHelper {
 
+  public static final String LOG_TAG = "WaitHelper";
+
   public class Result {
     public AssertionFailedError error;
     public Result() {
@@ -55,8 +57,6 @@ public class WaitHelper {
   }
 
   public BlockingQueue<Result> queue = new ArrayBlockingQueue<Result>(1);
-
-  public static final String LOG_TAG = "WaitHelper";
 
   /**
    * How long performWait should wait for, in milliseconds, with the
