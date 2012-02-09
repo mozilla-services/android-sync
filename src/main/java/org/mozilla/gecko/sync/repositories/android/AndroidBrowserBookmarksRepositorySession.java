@@ -339,16 +339,28 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       missingParentToChildren.put(bmk.parentID, children);
     }
 
-    if (bmk.isFolder()) {
-      Log.d(LOG_TAG, "Inserting folder " + bmk.guid + ", " + bmk.title +
-                     " with parent " + bmk.androidParentID +
-                     " (" + bmk.parentID + ", " + bmk.parentName +
-                     ", " + bmk.pos + ")");
+    if (Logger.LOG_PERSONAL_INFORMATION) {
+      if (bmk.isFolder()) {
+        Logger.pii(LOG_TAG, "Inserting folder " + bmk.guid + ", " + bmk.title +
+                            " with parent " + bmk.androidParentID +
+                            " (" + bmk.parentID + ", " + bmk.parentName +
+                            ", " + bmk.pos + ")");
+      } else {
+        Logger.pii(LOG_TAG, "Inserting bookmark " + bmk.guid + ", " + bmk.title + ", " +
+                            bmk.bookmarkURI + " with parent " + bmk.androidParentID +
+                            " (" + bmk.parentID + ", " + bmk.parentName +
+                            ", " + bmk.pos + ")");
+      }
     } else {
-      Log.d(LOG_TAG, "Inserting bookmark " + bmk.guid + ", " + bmk.title + ", " +
-                     bmk.bookmarkURI + " with parent " + bmk.androidParentID +
-                     " (" + bmk.parentID + ", " + bmk.parentName +
-                     ", " + bmk.pos + ")");
+      if (bmk.isFolder()) {
+        Logger.debug(LOG_TAG, "Inserting folder " + bmk.guid +  ", parent " +
+                              bmk.androidParentID +
+                              " (" + bmk.parentID + ", " + bmk.pos + ")");
+      } else {
+        Logger.debug(LOG_TAG, "Inserting bookmark " + bmk.guid + " with parent " +
+                              bmk.androidParentID +
+                              " (" + bmk.parentID + ", " + ", " + bmk.pos + ")");
+      }
     }
     return bmk;
   }
