@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -60,7 +61,7 @@ public class WBORepository extends Repository {
         if (record.lastModified >= timestamp) {
           if (filter != null &&
               filter.excludeRecord(record)) {
-            Log.d(LOG_TAG, "Excluding record " + record.guid);
+            Logger.debug(LOG_TAG, "Excluding record " + record.guid);
             continue;
           }
           delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(record);
@@ -97,15 +98,15 @@ public class WBORepository extends Repository {
         throw new NoStoreDelegateException();
       }
       Record existing = wbos.get(record.guid);
-      Log.d(LOG_TAG, "Existing record is " + (existing == null ? "<null>" : (existing.guid + ", " + existing)));
+      Logger.debug(LOG_TAG, "Existing record is " + (existing == null ? "<null>" : (existing.guid + ", " + existing)));
       if (existing != null &&
           existing.lastModified > record.lastModified) {
-        Log.d(LOG_TAG, "Local record is newer. Not storing.");
+        Logger.debug(LOG_TAG, "Local record is newer. Not storing.");
         delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
         return;
       }
       if (existing != null) {
-        Log.d(LOG_TAG, "Replacing local record.");
+        Logger.debug(LOG_TAG, "Replacing local record.");
       }
       wbos.put(record.guid, record);
       trackRecord(record);

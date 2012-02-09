@@ -316,7 +316,7 @@ public class StoreTrackingTest extends
   public class CountingWBORepository extends TrackingWBORepository {
     public AtomicLong counter = new AtomicLong(0L);
     public class CountingWBORepositorySession extends WBORepositorySession {
-      private static final String LOG_TAG = "CountingRepositorySession";
+      private static final String LOG_TAG = "CountingRepoSession";
 
       public CountingWBORepositorySession(WBORepository repository) {
         super(repository);
