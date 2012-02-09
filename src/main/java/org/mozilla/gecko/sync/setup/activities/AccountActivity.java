@@ -21,10 +21,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -49,6 +49,9 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private EditText            synckeyInput;
   private CheckBox            serverCheckbox;
   private Button              connectButton;
+  private Button              cancelButton;
+
+  private AccountAuthenticator accountAuthenticator;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -56,7 +59,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.sync_account);
     mContext = getApplicationContext();
-    Log.d(LOG_TAG, "AccountManager.get(" + mContext + ")");
+    Logger.debug(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(mContext);
 
     // Set "screen on" flag.
@@ -78,12 +81,13 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     serverInput.addTextChangedListener(inputValidator);
 
     connectButton = (Button) findViewById(R.id.accountConnectButton);
+    cancelButton = (Button) findViewById(R.id.accountCancelButton);
     serverCheckbox = (CheckBox) findViewById(R.id.checkbox_server);
 
     serverCheckbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        Log.i(LOG_TAG, "Toggling checkbox: " + isChecked);
+        Logger.info(LOG_TAG, "Toggling checkbox: " + isChecked);
         // Hack for pre-3.0 Android: can enter text into disabled EditText.
         if (!isChecked) { // Clear server input.
           serverInput.setVisibility(View.GONE);
@@ -101,10 +105,31 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   public void onResume() {
     super.onResume();
     clearCredentials();
+    usernameInput.requestFocus();
+    enableCredEntry(true);
+    cancelButton.setOnClickListener(new OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        cancelClickHandler(v);
+      }
+
+    });
   }
 
   public void cancelClickHandler(View target) {
     finish();
+  }
+
+  public void cancelConnectHandler(View target) {
+    if (accountAuthenticator != null) {
+      accountAuthenticator.isCanceled = true;
+      accountAuthenticator = null;
+    }
+    enableCredEntry(true);
+    activateView(connectButton, true);
+    clearCredentials();
+    usernameInput.requestFocus();
   }
 
   private void clearCredentials() {
@@ -116,7 +141,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
    * accessed by Fennec and Sync Service.
    */
   public void connectClickHandler(View target) {
-    Log.d(LOG_TAG, "connectClickHandler for view " + target);
+    Logger.debug(LOG_TAG, "connectClickHandler for view " + target);
     enableCredEntry(false);
     // Validate sync key format.
     try {
@@ -146,11 +171,17 @@ public class AccountActivity extends AccountAuthenticatorActivity {
         }
       }
     }
+    enableCredEntry(false);
+    activateView(connectButton, false);
+    cancelButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        cancelConnectHandler(v);
+      }
+    });
 
-    // TODO : Authenticate with Sync Service, once implemented, with
-    // onAuthSuccess as callback
-
-    authCallback();
+    accountAuthenticator = new AccountAuthenticator(this);
+    accountAuthenticator.authenticate(server, username, password);
   }
 
   /* Helper UI functions */
@@ -158,6 +189,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     usernameInput.setEnabled(toEnable);
     passwordInput.setEnabled(toEnable);
     synckeyInput.setEnabled(toEnable);
+    serverCheckbox.setEnabled(toEnable);
     if (!toEnable) {
       serverInput.setEnabled(toEnable);
     } else {
@@ -198,9 +230,19 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   /*
    * Callback that handles auth based on success/failure
    */
-  private void authCallback() {
-    // Create and add account to AccountManager
-    // TODO: only allow one account to be added?
+  public void authCallback(boolean isSuccess) {
+    if (!isSuccess) {
+      // Authentication was unsuccessful.
+      runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          authFailure();
+        }
+      });
+      return;
+    }
+
+    // Successful authentication. Create and add account to AccountManager.
     final SyncAccountParameters syncAccount = new SyncAccountParameters(mContext, mAccountManager,
         username, key, password, server);
     final Account account = SyncAccounts.createSyncAccount(syncAccount);
@@ -218,33 +260,41 @@ public class AccountActivity extends AccountAuthenticatorActivity {
       runOnUiThread(new Runnable() {
         @Override
         public void run() {
+          // Use default error.
+          // TODO: Display more accurate error (Account failed to be created).
           authFailure();
         }
       });
       return;
     }
 
-    // TODO: Currently, we do not actually authenticate username/pass against
-    // Moz sync server.
-
-    // Successfully added account.
+    // Account added successfully.
     setResult(RESULT_OK, intent);
+
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
         authSuccess();
       }
     });
+    return;
   }
 
   private void authFailure() {
+  /**
+   * Feedback to user of account setup failure.
+   */
     enableCredEntry(true);
     Intent intent = new Intent(mContext, SetupFailureActivity.class);
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
   }
 
-  private void authSuccess() {
+  /**
+   * Feedback to user of account setup success.
+   */
+  public void authSuccess() {
+    // Display feedback of successful account setup.
     Intent intent = new Intent(mContext, SetupSuccessActivity.class);
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
