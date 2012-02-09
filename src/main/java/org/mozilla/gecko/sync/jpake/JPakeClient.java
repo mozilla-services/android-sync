@@ -53,6 +53,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
@@ -236,15 +237,15 @@ public class JPakeClient implements JPakeRequestDelegate {
    * (Receiver Only) Request channel for J-PAKE from server.
    */
   private void getChannel() {
-    Utils.debug(LOG_TAG, "Getting channel.");
+    Logger.debug(LOG_TAG, "Getting channel.");
     if (finished) {
-      Utils.debug(LOG_TAG, "Finished; returning.");
+      Logger.debug(LOG_TAG, "Finished; returning.");
       return;
     }
 
     try {
       final String uri = jpakeServer + "new_channel";
-      Utils.debug(LOG_TAG, "Fetching " + uri);
+      Logger.debug(LOG_TAG, "Fetching " + uri);
       JPakeRequest channelRequest = new JPakeRequest(uri, makeRequestResourceDelegate());
       channelRequest.get();
     } catch (URISyntaxException e) {
@@ -263,7 +264,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * jOutgoing JSONObject.
    */
   private void putStep() {
-    Utils.debug(LOG_TAG, "Uploading message.");
+    Logger.debug(LOG_TAG, "Uploading message.");
     runOnThread(new Runnable() {
       @Override
       public void run() {
@@ -281,7 +282,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         } catch (UnsupportedEncodingException e) {
           e.printStackTrace();
         }
-        Utils.debug(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
+        Logger.debug(LOG_TAG, "outgoing: " + jOutgoing.toJSONString());
       }
     });
   }
@@ -290,7 +291,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Step One of J-PAKE protocol.
    */
   private void computeStepOne() throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    Utils.debug(LOG_TAG, "Computing round 1.");
+    Logger.debug(LOG_TAG, "Computing round 1.");
 
     JPakeCrypto.round1(jParty, numGen);
 
@@ -313,7 +314,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     jOutgoing.put(Constants.JSON_KEY_TYPE, mySignerId + "1");
     jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jOutgoing.put(Constants.JSON_KEY_VERSION, KEYEXCHANGE_VERSION);
-    Utils.debug(LOG_TAG, "Sending: " + jOutgoing.toJSONString());
+    Logger.debug(LOG_TAG, "Sending: " + jOutgoing.toJSONString());
 
     // Store context to determine next step after PUT request.
     stateContext = pairWithPin ? State.SNDR_STEP_ONE : State.RCVR_STEP_ONE;
@@ -328,7 +329,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Two message to be sent.
    */
   private void computeStepTwo() throws NonObjectJSONException {
-    Utils.debug(LOG_TAG, "Computing round 2.");
+    Logger.debug(LOG_TAG, "Computing round 2.");
 
     // Check incoming message sender.
     if (!jIncoming.get(Constants.JSON_KEY_TYPE).equals(theirSignerId + "1")) {
@@ -429,7 +430,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * encrypted message for verification of successful key exchange.
    */
   private void computeFinal() throws NonObjectJSONException {
-    Utils.debug(LOG_TAG, "Computing final round.");
+    Logger.debug(LOG_TAG, "Computing final round.");
     // Check incoming message type.
     if (!jIncoming.get(Constants.JSON_KEY_TYPE).equals(theirSignerId + "2")) {
       Log.e(LOG_TAG, "Invalid round 2 message: " + jIncoming.toJSONString());
@@ -484,7 +485,7 @@ public class JPakeClient implements JPakeRequestDelegate {
     }
 
     if (pairWithPin) { // Wait for other device to send verification of keys.
-      Utils.debug(LOG_TAG, "get: verifyPairing");
+      Logger.debug(LOG_TAG, "get: verifyPairing");
       this.state = State.VERIFY_PAIRING;
       scheduleGetRequest(jpakePollInterval);
     } else { // Prepare and send verification of keys.
@@ -513,7 +514,7 @@ public class JPakeClient implements JPakeRequestDelegate {
   public ExtendedJSONObject computeKeyVerification(KeyBundle keyBundle)
       throws UnsupportedEncodingException, CryptoException
   {
-    Utils.debug(LOG_TAG, "Encrypting key verification value.");
+    Logger.debug(LOG_TAG, "Encrypting key verification value.");
     // KeyBundle not null
     ExtendedJSONObject jPayload = encryptPayload(JPAKE_VERIFY_VALUE, keyBundle);
     ExtendedJSONObject result = new ExtendedJSONObject();
@@ -587,7 +588,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * @param payload   Credentials data to be encrypted.
    */
   private void encryptData(KeyBundle keyBundle, String payload) {
-    Utils.debug(LOG_TAG, "Encrypting data.");
+    Logger.debug(LOG_TAG, "Encrypting data.");
     ExtendedJSONObject jPayload = null;
     try {
       jPayload = encryptPayload(payload, keyBundle);
@@ -614,7 +615,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * @param keyBundle
    */
   private void decryptData(KeyBundle keyBundle) {
-    Utils.debug(LOG_TAG, "Verifying their key");
+    Logger.debug(LOG_TAG, "Verifying their key");
     if (!(theirSignerId + "3").equals((String) jIncoming
         .get(Constants.JSON_KEY_TYPE))) {
       try {
@@ -635,7 +636,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
-    Utils.debug(LOG_TAG, "Decrypting data.");
+    Logger.debug(LOG_TAG, "Decrypting data.");
     String cleartext = null;
     try {
       cleartext = new String(decryptPayload(iPayload, keyBundle), "UTF-8");
@@ -665,7 +666,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * @param jCreds Credentials to be stored by controller. May be null if device is sender.
    */
   private void complete(JSONObject jCreds) {
-    Utils.debug(LOG_TAG, "Exchange complete.");
+    Logger.debug(LOG_TAG, "Exchange complete.");
     finished = true;
     ssActivity.onComplete(jCreds);
   }
@@ -689,7 +690,7 @@ public class JPakeClient implements JPakeRequestDelegate {
       int statusCode = response.getStatusCode();
       switch (statusCode) {
       case 304:
-        Utils.debug(LOG_TAG, "Channel hasn't been updated yet. Will try again later");
+        Logger.debug(LOG_TAG, "Channel hasn't been updated yet. Will try again later");
         if (pollTries >= jpakeMaxTries) {
           Log.e(LOG_TAG, "Tried for " + pollTries + " times, maxTries " + jpakeMaxTries + ", aborting");
           abort(Constants.JPAKE_ERROR_TIMEOUT);
@@ -705,7 +706,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         abort(Constants.JPAKE_ERROR_NODATA);
         break;
       case 412: // "Precondition failed"
-        Utils.debug(LOG_TAG, "Message already replaced on server by other party.");
+        Logger.debug(LOG_TAG, "Message already replaced on server by other party.");
         onRequestSuccess(res);
         break;
       default:
@@ -760,7 +761,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         return;
       }
       channelUrl = jpakeServer + channel;
-      Utils.debug(LOG_TAG, "using channel " + channel);
+      Logger.debug(LOG_TAG, "using channel " + channel);
 
       ssActivity.displayPin(secret + channel);
 
@@ -817,7 +818,7 @@ public class JPakeClient implements JPakeRequestDelegate {
         abort(Constants.JPAKE_ERROR_INVALID);
         return;
       }
-      Utils.debug(LOG_TAG, "incoming message: " + jIncoming.toJSONString());
+      Logger.debug(LOG_TAG, "incoming message: " + jIncoming.toJSONString());
 
       if (this.state == State.SNDR_STEP_ZERO) {
         try {
@@ -1046,13 +1047,13 @@ public class JPakeClient implements JPakeRequestDelegate {
    *          Defaults to user abort
    */
   public void abort(String error) {
-    Utils.debug(LOG_TAG, "aborting...");
+    Logger.debug(LOG_TAG, "aborting...");
     finished = true;
 
     if (error == null) {
       error = Constants.JPAKE_ERROR_USERABORT;
     }
-    Utils.debug(LOG_TAG, error);
+    Logger.debug(LOG_TAG, error);
 
     if (Constants.JPAKE_ERROR_CHANNEL.equals(error)
         || Constants.JPAKE_ERROR_NETWORK.equals(error)
@@ -1068,7 +1069,7 @@ public class JPakeClient implements JPakeRequestDelegate {
    * Make a /report post to to server
    */
   private void reportFailure(String error) {
-    Utils.debug(LOG_TAG, "reporting error to server");
+    Logger.debug(LOG_TAG, "reporting error to server");
     this.error = error;
     runOnThread(new Runnable() {
       @Override

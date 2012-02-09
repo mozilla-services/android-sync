@@ -37,7 +37,7 @@
 
 package org.mozilla.gecko.sync.synchronizer;
 
-import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.util.Log;
@@ -65,15 +65,15 @@ class ConcurrentRecordConsumer extends RecordConsumer {
   }
 
   private static void info(String message) {
-    Utils.info(LOG_TAG, message);
+    Logger.info(LOG_TAG, message);
   }
 
   private static void debug(String message) {
-    Utils.debug(LOG_TAG, message);
+    Logger.debug(LOG_TAG, message);
   }
 
   private static void trace(String message) {
-    Utils.trace(LOG_TAG, message);
+    Logger.trace(LOG_TAG, message);
   }
 
   private Object monitor = new Object();

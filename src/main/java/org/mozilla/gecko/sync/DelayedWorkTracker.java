@@ -51,13 +51,13 @@ public class DelayedWorkTracker {
   protected int outstandingCount = 0;
 
   public int incrementOutstanding() {
-    Utils.trace(LOG_TAG, "Incrementing outstanding.");
+    Logger.trace(LOG_TAG, "Incrementing outstanding.");
     synchronized(this) {
       return ++outstandingCount;
     }
   }
   public int decrementOutstanding() {
-    Utils.trace(LOG_TAG, "Decrementing outstanding.");
+    Logger.trace(LOG_TAG, "Decrementing outstanding.");
     Runnable job = null;
     int count;
     synchronized(this) {
@@ -79,10 +79,10 @@ public class DelayedWorkTracker {
     }
   }
   public void delayWorkItem(Runnable item) {
-    Utils.trace(LOG_TAG, "delayWorkItem.");
+    Logger.trace(LOG_TAG, "delayWorkItem.");
     boolean runnableNow = false;
     synchronized(this) {
-      Utils.trace(LOG_TAG, "outstandingCount: " + outstandingCount);
+      Logger.trace(LOG_TAG, "outstandingCount: " + outstandingCount);
       if (outstandingCount == 0) {
         runnableNow = true;
       } else {
@@ -93,7 +93,7 @@ public class DelayedWorkTracker {
       }
     }
     if (runnableNow) {
-      Utils.trace(LOG_TAG, "Running item now.");
+      Logger.trace(LOG_TAG, "Running item now.");
       item.run();
     }
   }

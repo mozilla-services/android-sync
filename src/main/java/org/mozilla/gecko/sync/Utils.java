@@ -51,7 +51,6 @@ import org.mozilla.gecko.sync.crypto.Cryptographer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 public class Utils {
 
@@ -61,58 +60,6 @@ public class Utils {
 
   // See <http://developer.android.com/reference/android/content/Context.html#getSharedPreferences%28java.lang.String,%20int%29>
   public static final int SHARED_PREFERENCES_MODE = 0;
-
-
-  // We don't really have a trace logger, so use this to toggle
-  // some debug logging.
-  // This is awful. I'm so sorry.
-  public static boolean ENABLE_TRACE_LOGGING = true;
-
-  // If true, log to System.out as well as using Android's Log.* calls.
-  public static boolean LOG_TO_STDOUT = false;
-  public static void logToStdout(String... s) {
-    if (LOG_TO_STDOUT) {
-      for (String string : s) {
-        System.out.print(string);
-      }
-      System.out.println("");
-    }
-  }
-
-  public static void error(String logTag, String message) {
-    logToStdout(logTag, " :: ERROR: ", message);
-    if (!Log.isLoggable(logTag, Log.ERROR)) {
-      return;
-    }
-    Log.i(logTag, message);
-  }
-
-  public static void info(String logTag, String message) {
-    logToStdout(logTag, " :: INFO: ", message);
-    if (!Log.isLoggable(logTag, Log.INFO)) {
-      return;
-    }
-    Log.i(logTag, message);
-  }
-
-  public static void debug(String logTag, String message) {
-    logToStdout(logTag, " :: DEBUG: ", message);
-    if (!Log.isLoggable(logTag, Log.DEBUG)) {
-      return;
-    }
-    Log.d(logTag, message);
-  }
-
-  public static void trace(String logTag, String message) {
-    if (!ENABLE_TRACE_LOGGING) {
-      return;
-    }
-    if (!Log.isLoggable(logTag, Log.VERBOSE)) {
-      return;
-    }
-    logToStdout(logTag, " :: TRACE: ", message);
-    Log.v(logTag, message);
-  }
 
   public static String generateGuid() {
     byte[] encodedBytes = Base64.encodeBase64(generateRandomBytes(9), false);
@@ -272,7 +219,7 @@ public class Utils {
 
   public static SharedPreferences getSharedPreferences(Context context, String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
     String prefsPath = getPrefsPath(username, serverURL);
-    Log.d(LOG_TAG, "Shared preferences: " + prefsPath);
+    Logger.debug(LOG_TAG, "Shared preferences: " + prefsPath);
     return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
   }
 
