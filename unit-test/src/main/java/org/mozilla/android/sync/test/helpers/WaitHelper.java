@@ -125,16 +125,16 @@ public class WaitHelper {
     }
   }
 
-  // public void performNotify(final android.test.AssertionFailedError e) {
-  //   junit.framework.AssertionFailedError ex = null;
+   public void performNotify(final android.test.AssertionFailedError e) {
+     junit.framework.AssertionFailedError ex = null;
 
-  //   if (e != null) {
-  //     ex = new junit.framework.AssertionFailedError(e.getMessage());
-  //     ex.initCause(e.getCause());
-  //   }
+     if (e != null) {
+       ex = new junit.framework.AssertionFailedError(e.getMessage());
+       ex.initCause(e.getCause());
+     }
 
-  //   this.performNotify(ex);
-  // }
+     this.performNotify(ex);
+   }
 
   public void performNotify() {
     this.performNotify((AssertionFailedError) null);

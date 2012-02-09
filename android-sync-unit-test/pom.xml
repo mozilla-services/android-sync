@@ -9,9 +9,9 @@
   </parent>
 
   <groupId>org.mozilla.gecko</groupId>
-  <artifactId>android-sync-unit</artifactId>
+  <artifactId>android-sync-unit-test</artifactId>
   <version>1</version>
-  <name>Android Sync - Unit</name>
+  <name>Android Sync - Unit Tests</name>
   <properties>
     <project.basedir>../</project.basedir>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -60,6 +60,12 @@
       <!--      provided stubs will be found first by the class loader. -->
       <groupId>com.google.android</groupId>
       <artifactId>android</artifactId>
+      <version>2.3.3</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.android</groupId>
+      <artifactId>android-test</artifactId>
       <version>2.3.3</version>
       <scope>provided</scope>
     </dependency>

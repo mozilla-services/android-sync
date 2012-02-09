@@ -84,7 +84,7 @@
       </activation>
       <modules>
         <module>android-sync-app</module>
-        <module>android-sync-unit</module>
+        <module>android-sync-unit-test</module>
         <module>android-sync-instrumentation</module>
       </modules>
     </profile>

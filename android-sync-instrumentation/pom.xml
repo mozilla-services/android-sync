@@ -57,7 +57,7 @@
 
     <dependency>
       <groupId>org.mozilla.gecko</groupId>
-      <artifactId>android-sync-unit</artifactId>
+      <artifactId>android-sync-unit-test</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
