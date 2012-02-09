@@ -42,8 +42,8 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.security.SecureRandom;
+import java.util.HashMap;
 
 import org.mozilla.apache.commons.codec.binary.Base32;
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -142,26 +142,25 @@ public class Utils {
    * Output: Hex string
    */
   public static String byte2hex(byte[] b) {
-  
-      // String Buffer can be used instead
-      String hs = "";
-      String stmp = "";
-  
-      for (int n = 0; n < b.length; n++) {
-          stmp = (java.lang.Integer.toHexString(b[n] & 0XFF));
-  
-          if (stmp.length() == 1) {
-              hs = hs + "0" + stmp;
-          } else {
-              hs = hs + stmp;
-          }
-  
-          if (n < b.length - 1) {
-              hs = hs + "";
-          }
+    // StringBuffer should be used instead.
+    String hs = "";
+    String stmp;
+
+    for (int n = 0; n < b.length; n++) {
+      stmp = java.lang.Integer.toHexString(b[n] & 0XFF);
+
+      if (stmp.length() == 1) {
+        hs = hs + "0" + stmp;
+      } else {
+        hs = hs + stmp;
       }
-  
-      return hs;
+
+      if (n < b.length - 1) {
+        hs = hs + "";
+      }
+    }
+
+    return hs;
   }
 
   /*
@@ -170,21 +169,21 @@ public class Utils {
    * Output: A concatenated version of them
    */
   public static byte[] concatAll(byte[] first, byte[]... rest) {
-      int totalLength = first.length;
-      for (byte[] array : rest) {
-          totalLength += array.length;
-      }
-  
-      byte[] result = new byte[totalLength];
-      int offset = first.length;
+    int totalLength = first.length;
+    for (byte[] array : rest) {
+      totalLength += array.length;
+    }
 
-      System.arraycopy(first, 0, result, 0, offset);
-  
-      for (byte[] array : rest) {
-          System.arraycopy(array, 0, result, offset, array.length);
-          offset += array.length;
-      }
-      return result;
+    byte[] result = new byte[totalLength];
+    int offset = first.length;
+
+    System.arraycopy(first, 0, result, 0, offset);
+
+    for (byte[] array : rest) {
+      System.arraycopy(array, 0, result, offset, array.length);
+      offset += array.length;
+    }
+    return result;
   }
 
   /**
@@ -199,16 +198,16 @@ public class Utils {
    *         Should not occur.
    */
   public static byte[] decodeBase64(String base64) throws UnsupportedEncodingException {
-      return Base64.decodeBase64(base64.getBytes("UTF-8"));
+    return Base64.decodeBase64(base64.getBytes("UTF-8"));
   }
 
   /*
    * Decode a friendly base32 string.
    */
   public static byte[] decodeFriendlyBase32(String base32) {
-      Base32 converter = new Base32();
-      return converter.decode(base32.replace('8', 'l').replace('9', 'o')
-              .toUpperCase());
+    Base32 converter = new Base32();
+    final String translated = base32.replace('8', 'l').replace('9', 'o');
+    return converter.decode(translated.toUpperCase());
   }
 
   /*
@@ -216,19 +215,16 @@ public class Utils {
    * Input: Hex string
    * Output: byte[] version of hex string
    */
-  public static byte[] hex2Byte(String str)
-  {
-      if (str.length() % 2 == 1) {
-          str = "0" + str;
-      }
-  
-      byte[] bytes = new byte[str.length() / 2];
-      for (int i = 0; i < bytes.length; i++)
-      {
-          bytes[i] = (byte) Integer
-              .parseInt(str.substring(2 * i, 2 * i + 2), 16);
-      }
-      return bytes;
+  public static byte[] hex2Byte(String str) {
+    if (str.length() % 2 == 1) {
+      str = "0" + str;
+    }
+
+    byte[] bytes = new byte[str.length() / 2];
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = (byte) Integer.parseInt(str.substring(2 * i, 2 * i + 2), 16);
+    }
+    return bytes;
   }
 
   public static String millisecondsToDecimalSecondsString(long ms) {
