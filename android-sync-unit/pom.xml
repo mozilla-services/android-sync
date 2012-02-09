@@ -9,20 +9,64 @@
   </parent>
 
   <groupId>org.mozilla.gecko</groupId>
-  <artifactId>android-sync-app</artifactId>
+  <artifactId>android-sync-unit</artifactId>
   <version>1</version>
-  <packaging>apk</packaging>
-  <name>Android Sync - App</name>
+  <name>Android Sync - Unit</name>
   <properties>
     <project.basedir>../</project.basedir>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <mozilla.externalPackages>ch.boye.*:org.json.*:org.mozilla.apache.*</mozilla.externalPackages>
   </properties>
   <dependencies>
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <type>jar</type>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+      <type>jar</type>
+    </dependency>
+
+    <!-- Make httpclientandroidlib work. -->
+    <dependency>
+      <groupId>android.util</groupId>
+      <artifactId>log-unstub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>android.util</groupId>
+      <artifactId>base64-unstub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.1.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- This *must* come after the android.util stubs above; -->
+      <!--      otherwise, you will get Stub! exceptions because the Google -->
+      <!--      provided stubs will be found first by the class loader. -->
       <groupId>com.google.android</groupId>
       <artifactId>android</artifactId>
       <version>2.3.3</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.simpleframework</groupId>
+      <artifactId>simple</artifactId>
+      <version>4.1.21</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
@@ -30,37 +74,11 @@
   <build>
     <finalName>${project.artifactId}</finalName>
 
-    <sourceDirectory>../src/main/java</sourceDirectory>
-    <scriptSourceDirectory>../src/main/scripts</scriptSourceDirectory>
-    <testSourceDirectory>../src/test/java</testSourceDirectory>
+    <sourceDirectory>../unit-test/src</sourceDirectory>
+    <!-- <scriptSourceDirectory>../src/main/scripts</scriptSourceDirectory> -->
+    <testSourceDirectory>../unit-test/src</testSourceDirectory>
 
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <id>copy-dependencies</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.mozilla.gecko</groupId>
-                  <artifactId>android-sync-app</artifactId>
-                  <version>1</version>
-                  <type>jar</type>
-                  <overWrite>false</overWrite>
-                  <outputDirectory>jars</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
@@ -69,6 +87,7 @@
           <target>1.6</target>
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>com.jayway.maven.plugins.android.generation2</groupId>
         <artifactId>android-maven-plugin</artifactId>
@@ -77,7 +96,7 @@
             <platform>10</platform>
           </sdk>
           <emulator>
-            <!-- the name of the avd device to use for starting the emulator -->
+            the name of the avd device to use for starting the emulator
             <avd>native-sync-fennec</avd>
           </emulator>
           <undeployBeforeDeploy>true</undeployBeforeDeploy>
@@ -92,36 +111,11 @@
         </configuration>
         <extensions>true</extensions>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.11</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <descriptors>
-            <descriptor>src/main/assembly/deps.xml</descriptor>
-          </descriptors>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals><goal>add-source</goal></goals>
-            <configuration>
-              <sources>
-                <source>../external/httpclientandroidlib/httpclientandroidlib/src/</source>
-                <source>../external/json-simple-1.1/src/</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

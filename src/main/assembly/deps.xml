@@ -14,7 +14,6 @@
       <scope>runtime</scope>
       <excludes>
         <exclude>commons-logging:commons-logging</exclude>
-        <exclude>javassist:javassist</exclude>
         <exclude>org.apache.httpcomponents:httpclient</exclude>
         <exclude>org.apache.httpcomponents:httpcore</exclude>
       </excludes>

@@ -54,6 +54,12 @@
       <scope>provided</scope>
       <type>jar</type>
     </dependency>
+
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-unit</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
