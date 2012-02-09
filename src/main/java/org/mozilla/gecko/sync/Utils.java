@@ -111,7 +111,7 @@ public class Utils {
       return;
     }
     logToStdout(logTag, " :: TRACE: ", message);
-    Log.d(logTag, message);
+    Log.v(logTag, message);
   }
 
   public static String generateGuid() {
