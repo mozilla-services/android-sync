@@ -104,7 +104,7 @@ class ConcurrentRecordConsumer extends RecordConsumer {
   private Object countMonitor = new Object();
   @Override
   public void stored() {
-    debug("Record stored. Notifying.");
+    trace("Record stored. Notifying.");
     synchronized (countMonitor) {
       counter++;
     }
