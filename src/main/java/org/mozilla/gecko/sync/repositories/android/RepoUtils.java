@@ -46,6 +46,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
@@ -284,14 +285,18 @@ public class RepoUtils {
   private static BookmarkRecord logBookmark(BookmarkRecord rec) {
     try {
       Log.d(LOG_TAG, "Returning bookmark record " + rec.guid + " (" + rec.androidID +
-          ", " + rec.parentName + ":" + rec.parentID + ")");
-      Log.d(LOG_TAG, "> Title:            " + rec.title);
-      Log.d(LOG_TAG, "> Type:             " + rec.type);
-      Log.d(LOG_TAG, "> URI:              " + rec.bookmarkURI);
-      Log.d(LOG_TAG, "> Android position: " + rec.androidPosition);
-      Log.d(LOG_TAG, "> Position:         " + rec.pos);
-      if (rec.isFolder()) {
-        Log.d(LOG_TAG, "FOLDER: Children are " + (rec.children == null ? "null" : rec.children.toJSONString()));
+          ", parent " + rec.parentID + ")");
+      if (Utils.ENABLE_TRACE_LOGGING) {
+        Log.d(LOG_TAG, "> Parent name:      " + rec.parentName);
+        Log.d(LOG_TAG, "> Title:            " + rec.title);
+        Log.d(LOG_TAG, "> Type:             " + rec.type);
+        Log.d(LOG_TAG, "> URI:              " + rec.bookmarkURI);
+        Log.d(LOG_TAG, "> Android position: " + rec.androidPosition);
+        Log.d(LOG_TAG, "> Position:         " + rec.pos);
+        if (rec.isFolder()) {
+          Log.d(LOG_TAG, "FOLDER: Children are " +
+                         (rec.children == null ? "null" : rec.children.toJSONString()));
+        }
       }
     } catch (Exception e) {
       Log.d(LOG_TAG, "Exception logging bookmark record " + rec, e);
@@ -320,10 +325,12 @@ public class RepoUtils {
   private static HistoryRecord logHistory(HistoryRecord rec) {
     try {
       Log.d(LOG_TAG, "Returning history record " + rec.guid + " (" + rec.androidID + ")");
-      Log.d(LOG_TAG, "> Title:            " + rec.title);
-      Log.d(LOG_TAG, "> URI:              " + rec.histURI);
       Log.d(LOG_TAG, "> Visited:          " + rec.fennecDateVisited);
       Log.d(LOG_TAG, "> Visits:           " + rec.fennecVisitCount);
+      if (Utils.ENABLE_TRACE_LOGGING) {
+        Log.d(LOG_TAG, "> Title:            " + rec.title);
+        Log.d(LOG_TAG, "> URI:              " + rec.histURI);
+      }
     } catch (Exception e) {
       Log.d(LOG_TAG, "Exception logging bookmark record " + rec, e);
     }
