@@ -9,7 +9,7 @@ import java.util.Locale;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
-
+import org.mozilla.gecko.sync.setup.auth.AccountAuthenticator;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.content.Context;
@@ -124,11 +124,10 @@ public class AccountActivity extends AccountAuthenticatorActivity {
       }
     }
     enableCredEntry(false);
+    activateView(connectButton, false);
 
-    // TODO : Authenticate with Sync Service, once implemented, with
-    // onAuthSuccess as callback
-
-    authCallback();
+    AccountAuthenticator accountAuth = new AccountAuthenticator(this);
+    accountAuth.authenticate(server, username, password);
   }
 
   /* Helper UI functions */
@@ -176,19 +175,25 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   /*
    * Callback that handles auth based on success/failure
    */
-  private void authCallback() {
-    // Create and add account to AccountManager
-    // TODO: only allow one account to be added?
+  public void authCallback(boolean isSuccess) {
+    if (!isSuccess) {
+      Log.d(LOG_TAG, "not successful");
+      runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          authFailure();
+        }
+      });
+      return;
+    }
+
+    // Successful authentication. Create and add account to AccountManager.
+    // Note: Sync key may incorrect!
     Log.d(LOG_TAG, "Using account manager " + mAccountManager);
     final Intent intent = SyncAccounts.createAccount(mContext, mAccountManager,
                                        username,
                                         key, password, server);
     setAccountAuthenticatorResult(intent.getExtras());
-
-    // TODO: Currently, we do not actually authenticate username/pass against
-    // Moz sync server.
-
-    // Successful authentication result
     setResult(RESULT_OK, intent);
 
     runOnUiThread(new Runnable() {
@@ -201,13 +206,20 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
   @SuppressWarnings("unused")
   private void authFailure() {
+  /**
+   * Feedback to user of account setup failure.
+   */
     enableCredEntry(true);
     Intent intent = new Intent(mContext, SetupFailureActivity.class);
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
   }
 
-  private void authSuccess() {
+  /**
+   * Feedback to user of account setup success.
+   */
+  public void authSuccess() {
+    // Display feedback of successful account setup.
     Intent intent = new Intent(mContext, SetupSuccessActivity.class);
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
