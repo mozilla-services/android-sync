@@ -4,6 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>android-sync</project>
+		<project>android-sync-unit-test</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

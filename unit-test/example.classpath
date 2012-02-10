@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="var" path="M2_REPO/android/content/sharedpreferences-stub/1/sharedpreferences-stub-1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/android/util/base64-unstub/1/base64-unstub-1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/android/util/log-unstub/1/log-unstub-1.jar"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/android-sync"/>
+	<classpathentry kind="output" path="bin/classes"/>
+</classpath>
