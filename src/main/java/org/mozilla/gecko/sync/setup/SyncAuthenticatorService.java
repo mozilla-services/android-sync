@@ -153,7 +153,8 @@ public class SyncAuthenticatorService extends Service {
         // Username after hashing.
         try {
           String username = KeyBundle.usernameFromAccount(account.name);
-          Log.i("rnewman", "Account " + account.name + " hashes to " + username);
+          Logger.pii(LOG_TAG, "Account " + account.name + " hashes to " + username);
+          Logger.info(LOG_TAG, "Setting username. Null?" + (username == null));
           result.putString(Constants.OPTION_USERNAME, username);
         } catch (NoSuchAlgorithmException e) {
           // Do nothing. Calling code must check for missing value.
@@ -163,7 +164,7 @@ public class SyncAuthenticatorService extends Service {
 
         // Sync key.
         final String syncKey = am.getUserData(account, Constants.OPTION_SYNCKEY);
-        Log.i("rnewman", "Setting Sync Key to " + syncKey);
+        Logger.info(LOG_TAG, "Setting Sync Key. Null? " + (syncKey == null));
         result.putString(Constants.OPTION_SYNCKEY, syncKey);
 
         // Password.
