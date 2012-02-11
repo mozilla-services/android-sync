@@ -4,6 +4,7 @@
 package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ import org.junit.Test;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -208,5 +210,58 @@ public class TestCryptoRecord {
       assertEquals(expectedJson.get("id"), decrypted.payload.get("id"));
       assertEquals(expectedJson.get("title"), decrypted.payload.get("title"));
       assertEquals(expectedJson.get("histUri"), decrypted.payload.get("histUri"));
+  }
+
+  @Test
+  public void testDecryptKeysBundle() throws CryptoException, NonObjectJSONException, ParseException, IOException, NonArrayJSONException {
+    String jsonInput =                      "{\"payload\": \"{\\\"ciphertext\\" +
+                                            "\":\\\"L1yRyZBkVYKXC1cTpeUqqfmKg" +
+                                            "CinYV9YntGiG0PfYZSTLQ2s86WPI0VBb" +
+                                            "QbLZfx7udk6sf6CFE4w5EgiPx0XP3Fbj" +
+                                            "L7r4qIT0vjbAOrLKedZwA3cgiquc+PXM" +
+                                            "Etml8B4Dfm0crJK0iROlRkb+lePAYkzI" +
+                                            "iQn5Ba8mSWQEFoLy3zAcfCYXumA7E0Fj" +
+                                            "XYD+TqTG5bqYJY4zvPaB9mn9y3WHw==\\" +
+                                            "\",\\\"IV\\\":\\\"Jjb2oVI5uvvFfm" +
+                                            "ZYRY4GaA==\\\",\\\"hmac\\\":\\\"" +
+                                            "0b59731cb1aaedc85f54917b7058f361" +
+                                            "60826b70050b0d70cd42b0b609b1d717" +
+                                            "\\\"}\", \"id\": \"keys\", \"mod" +
+                                            "ified\": 1320183463.91}";
+    String username =                       "b6evr62dptbxz7fvebek7btljyu322wp";
+    String friendlyBase32SyncKey =          "basuxv2426eqj7frhvpcwkavdi";
+    String expectedDecryptedText =          "{\"default\":[\"K8fV6PHG8RgugfHe" +
+                                            "xGesbzTeOs2o12crN/G3bz0Bx1M=\",\"" +
+                                            "nbceuI6w1RJbBzh+iCJHEs8p4lElsOma" +
+                                            "yUhx+OztVgM=\"],\"collections\":" +
+                                            "{},\"collection\":\"crypto\",\"i" +
+                                            "d\":\"keys\"}";
+    String expectedBase64EncryptionKey =    "K8fV6PHG8RgugfHexGesbzTeOs2o12cr" +
+                                            "N/G3bz0Bx1M=";
+    String expectedBase64HmacKey =          "nbceuI6w1RJbBzh+iCJHEs8p4lElsOma" +
+                                            "yUhx+OztVgM=";
+
+    KeyBundle syncKeyBundle = new KeyBundle(username, friendlyBase32SyncKey);
+
+    ExtendedJSONObject json = new ExtendedJSONObject(jsonInput);
+    assertEquals("keys", json.get("id"));
+
+    CryptoRecord encrypted = CryptoRecord.fromJSONRecord(jsonInput);
+    encrypted.keyBundle = syncKeyBundle;
+    CryptoRecord decrypted = encrypted.decrypt();
+
+    // We don't necessarily produce exactly the same JSON but we do have the same values.
+    ExtendedJSONObject expectedJson = new ExtendedJSONObject(expectedDecryptedText);
+    assertEquals(expectedJson.get("id"), decrypted.payload.get("id"));
+    assertEquals(expectedJson.get("default"), decrypted.payload.get("default"));
+    assertEquals(expectedJson.get("collection"), decrypted.payload.get("collection"));
+    assertEquals(expectedJson.get("collections"), decrypted.payload.get("collections"));
+
+    // Check that the extracted keys were as expected.
+    JSONArray keys = ExtendedJSONObject.parseJSONObject(decrypted.payload.toJSONString()).getArray("default");
+    KeyBundle keyBundle = KeyBundle.decodeKeyStrings((String)keys.get(0), (String)keys.get(1));
+
+    assertArrayEquals(Base64.decodeBase64(expectedBase64EncryptionKey.getBytes("UTF-8")), keyBundle.getEncryptionKey());
+    assertArrayEquals(Base64.decodeBase64(expectedBase64HmacKey.getBytes("UTF-8")), keyBundle.getHMACKey());
   }
 }
