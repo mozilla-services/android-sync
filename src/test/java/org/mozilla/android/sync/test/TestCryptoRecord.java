@@ -175,4 +175,38 @@ public class TestCryptoRecord {
     assertEquals(expectedJson.get("title"), decrypted.payload.get("title"));
     assertEquals(expectedJson.get("histUri"), decrypted.payload.get("histUri"));
   }
+
+  @Test
+  public void testEncryptDecrypt() throws CryptoException, NonObjectJSONException, IOException, ParseException {
+      String originalText =           "{\"id\":\"hkZYpC-BH4Xi\",\"histU" +
+                                      "ri\":\"http://hathology.com/2008" +
+                                      "/06/how-to-edit-your-path-enviro" +
+                                      "nment-variables-on-mac-os-x/\",\"" +
+                                      "title\":\"How To Edit Your PATH " +
+                                      "Environment Variables On Mac OS " +
+                                      "X\",\"visits\":[{\"date\":131898" +
+                                      "2074310889,\"type\":1}]}";
+      String base64EncryptionKey =    "K8fV6PHG8RgugfHexGesbzTeOs2o12cr" +
+                                      "N/G3bz0Bx1M=";
+      String base64HmacKey =          "nbceuI6w1RJbBzh+iCJHEs8p4lElsOma" +
+                                      "yUhx+OztVgM=";
+
+      KeyBundle keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
+
+      // Encrypt.
+      CryptoRecord unencrypted = new CryptoRecord(originalText);
+      unencrypted.keyBundle = keyBundle;
+      CryptoRecord encrypted = unencrypted.encrypt();
+
+      // Decrypt after round-trip through JSON.
+      CryptoRecord undecrypted = CryptoRecord.fromJSONRecord(encrypted.toJSONString());
+      undecrypted.keyBundle = keyBundle;
+      CryptoRecord decrypted = undecrypted.decrypt();
+
+      // We don't necessarily produce exactly the same JSON but we do have the same values.
+      ExtendedJSONObject expectedJson = new ExtendedJSONObject(originalText);
+      assertEquals(expectedJson.get("id"), decrypted.payload.get("id"));
+      assertEquals(expectedJson.get("title"), decrypted.payload.get("title"));
+      assertEquals(expectedJson.get("histUri"), decrypted.payload.get("histUri"));
+  }
 }

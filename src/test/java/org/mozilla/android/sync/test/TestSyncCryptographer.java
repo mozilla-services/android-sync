@@ -20,45 +20,6 @@ import org.mozilla.gecko.sync.cryptographer.SyncCryptographer;
 public class TestSyncCryptographer {
 
     @Test
-    public void testEncryptDecrypt() throws CryptoException, UnsupportedEncodingException {
-        String originalText =           "{\"id\":\"hkZYpC-BH4Xi\",\"histU" +
-                                        "ri\":\"http://hathology.com/2008" +
-                                        "/06/how-to-edit-your-path-enviro" +
-                                        "nment-variables-on-mac-os-x/\",\"" +
-                                        "title\":\"How To Edit Your PATH " +
-                                        "Environment Variables On Mac OS " +
-                                        "X\",\"visits\":[{\"date\":131898" +
-                                        "2074310889,\"type\":1}]}";
-        String base64EncryptionKey =    "K8fV6PHG8RgugfHexGesbzTeOs2o12cr" +
-                                        "N/G3bz0Bx1M=";
-        String base64HmacKey =          "nbceuI6w1RJbBzh+iCJHEs8p4lElsOma" +
-                                        "yUhx+OztVgM=";
-        String username =               "b6evr62dptbxz7fvebek7btljyu322wp";
-        String friendlyBase32SyncKey =  "basuxv2426eqj7frhvpcwkavdi";
-
-        // Encrypt
-        SyncCryptographer cryptographer = new SyncCryptographer(username, friendlyBase32SyncKey, base64EncryptionKey, base64HmacKey);
-        CryptoStatusBundle result = cryptographer.encryptWBO(originalText);
-
-        // Check the status to make sure it worked
-        assertEquals(CryptoStatus.OK, result.getStatus());
-
-        // Decrypt
-        ExtendedJSONObject in = new ExtendedJSONObject();
-        in.put("payload", result.getJson());
-        in.put("id", "garbage_key");
-
-        String jsonString = in.toJSONString();
-        result = cryptographer.decryptWBO(jsonString);
-
-        // Check that decrypted text matches original
-        assertEquals(originalText, result.getJson());
-
-        // Check the status to make sure it worked
-        assertEquals(CryptoStatus.OK, result.getStatus());
-    }
-
-    @Test
     public void testDecryptKeysBundle() throws CryptoException, UnsupportedEncodingException {
         String jsonInput =                      "{\"payload\": \"{\\\"ciphertext\\" +
                                                 "\":\\\"L1yRyZBkVYKXC1cTpeUqqfmKg" +
