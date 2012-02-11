@@ -14,7 +14,7 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
  * inspection.
  *
  * This callback is expected to be used from within the friendly confines of a
- * UnitWaitHelper performWait.
+ * WaitHelper performWait.
  */
 public class MockGlobalSessionCallback implements GlobalSessionCallback {
   protected WaitHelper testWaiter() {
