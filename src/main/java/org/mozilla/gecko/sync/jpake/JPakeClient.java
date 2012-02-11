@@ -44,7 +44,8 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
-import java.util.Random;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -74,8 +75,6 @@ import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
-import java.security.NoSuchAlgorithmException;
-import java.security.InvalidKeyException;
 
 public class JPakeClient implements JPakeRequestDelegate {
   private static String       LOG_TAG                 = "JPakeClient";

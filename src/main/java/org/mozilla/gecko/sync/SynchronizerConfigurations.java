@@ -39,7 +39,6 @@ package org.mozilla.gecko.sync;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.json.simple.parser.ParseException;
