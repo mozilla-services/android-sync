@@ -20,8 +20,6 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 public class TestCryptoRecord {
   String base64EncryptionKey = "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=";
@@ -130,5 +128,51 @@ public class TestCryptoRecord {
     System.out.println("Expected encryption key: " + expectedEncryptKeyBase64);
     assertTrue(Arrays.equals(computedEncryptKey, Base64.decodeBase64(expectedEncryptKeyBase64.getBytes("UTF-8"))));
     assertTrue(Arrays.equals(computedHMACKey,    Base64.decodeBase64(expectedHMACKeyBase64.getBytes("UTF-8"))));
+  }
+
+  @Test
+  public void testDecrypt() throws CryptoException, NonObjectJSONException, IOException, ParseException {
+    String jsonInput =              "{\"sortindex\": 90, \"payload\":" +
+                                    "\"{\\\"ciphertext\\\":\\\"F4ukf0" +
+                                    "LM+vhffiKyjaANXeUhfmOPPmQYX1XBoG" +
+                                    "Rh1LiHeKHB5rqjhzd7yAoxqgmFnkIgQF" +
+                                    "YPSqRAoCxWiAeGULTX+KM4MU5drbNyR/" +
+                                    "690JBWSyE1vQSiMGwNIbTKnOLGHKkQVY" +
+                                    "HDpajg5BNFfvHNQ5Jx7uM9uJcmuEjCI6" +
+                                    "GRMDKyKjhsTqCd99MONkY5rISutaWQ0e" +
+                                    "EXFgpA9RZPv4jgWlQhe+YrVnpcrTi20b" +
+                                    "NgKp3IfIeqEelrZ5FJd2WGZOA021d3e7" +
+                                    "P3Z4qptefH4Q9/hySrWsELWngBaydyn/" +
+                                    "IjsheZuKra3kJSST/4SvRZ7qXn\\\",\\" +
+                                    "\"IV\\\":\\\"GadPajeXhpk75K2YH+L" +
+                                    "y4w==\\\",\\\"hmac\\\":\\\"71442" +
+                                    "d946502e3ca475c70a633d3d37f4b4e9" +
+                                    "313a6d1041d0c0550cd354e7605\\\"}" +
+                                    "\", \"id\": \"hkZYpC-BH4Xi\", \"" +
+                                    "modified\": 1320183464.21}";
+    String base64EncryptionKey =    "K8fV6PHG8RgugfHexGesbzTeOs2o12cr" +
+                                    "N/G3bz0Bx1M=";
+    String base64HmacKey =          "nbceuI6w1RJbBzh+iCJHEs8p4lElsOma" +
+                                    "yUhx+OztVgM=";
+    String expectedDecryptedText =  "{\"id\":\"hkZYpC-BH4Xi\",\"histU" +
+                                    "ri\":\"http://hathology.com/2008" +
+                                    "/06/how-to-edit-your-path-enviro" +
+                                    "nment-variables-on-mac-os-x/\",\"" +
+                                    "title\":\"How To Edit Your PATH " +
+                                    "Environment Variables On Mac OS " +
+                                    "X\",\"visits\":[{\"date\":131898" +
+                                    "2074310889,\"type\":1}]}";
+
+    KeyBundle keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
+
+    CryptoRecord encrypted = CryptoRecord.fromJSONRecord(jsonInput);
+    encrypted.keyBundle = keyBundle;
+    CryptoRecord decrypted = encrypted.decrypt();
+
+    // We don't necessarily produce exactly the same JSON but we do have the same values.
+    ExtendedJSONObject expectedJson = new ExtendedJSONObject(expectedDecryptedText);
+    assertEquals(expectedJson.get("id"), decrypted.payload.get("id"));
+    assertEquals(expectedJson.get("title"), decrypted.payload.get("title"));
+    assertEquals(expectedJson.get("histUri"), decrypted.payload.get("histUri"));
   }
 }
