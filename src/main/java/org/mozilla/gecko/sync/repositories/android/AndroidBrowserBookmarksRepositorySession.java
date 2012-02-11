@@ -317,6 +317,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return childArray;
   }
 
+  protected static boolean isDeleted(Cursor cur) {
+    return RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) != 0;
+  }
+
   @Override
   protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     String recordGUID = getGUID(cur);
@@ -325,6 +329,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     if (forbiddenGUID(recordGUID)) {
       Logger.debug(LOG_TAG, "Ignoring " + recordGUID + " record in recordFromMirrorCursor.");
       return null;
+    }
+
+    // Short-cut for deleted items.
+    if (isDeleted(cur)) {
+      return AndroidBrowserBookmarksRepositorySession.bookmarkFromMirrorCursor(cur, null, null, null);
     }
 
     long androidParentID = getParentID(cur);
@@ -648,9 +657,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   private static BookmarkRecord logBookmark(BookmarkRecord rec) {
     try {
-      Logger.debug(LOG_TAG, "Returning bookmark record " + rec.guid + " (" + rec.androidID +
+      Logger.debug(LOG_TAG, "Returning " + (rec.deleted ? "deleted " : "") +
+                            "bookmark record " + rec.guid + " (" + rec.androidID +
                            ", parent " + rec.parentID + ")");
-      if (Logger.LOG_PERSONAL_INFORMATION) {
+      if (!rec.deleted && Logger.LOG_PERSONAL_INFORMATION) {
         Logger.pii(LOG_TAG, "> Parent name:      " + rec.parentName);
         Logger.pii(LOG_TAG, "> Title:            " + rec.title);
         Logger.pii(LOG_TAG, "> Type:             " + rec.type);
@@ -672,13 +682,18 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   // Create a BookmarkRecord object from a cursor on a row containing a Fennec bookmark.
   public static BookmarkRecord bookmarkFromMirrorCursor(Cursor cur, String parentGUID, String parentName, JSONArray children) {
-
-    String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-    String collection = "bookmarks";
-    long lastModified = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
-    boolean deleted   = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
-    boolean isFolder  = RepoUtils.getIntFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER) == 1;
+    final String collection = "bookmarks";
+    final String guid       = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+    final long lastModified = RepoUtils.getLongFromCursor(cur,   BrowserContract.SyncColumns.DATE_MODIFIED);
+    final boolean deleted   = isDeleted(cur);
     BookmarkRecord rec = new BookmarkRecord(guid, collection, lastModified, deleted);
+
+    // No point in populating it.
+    if (deleted) {
+      return logBookmark(rec);
+    }
+
+    boolean isFolder  = RepoUtils.getIntFromCursor(cur, BrowserContract.Bookmarks.IS_FOLDER) == 1;
 
     rec.title = RepoUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.TITLE);
     rec.bookmarkURI = RepoUtils.getStringFromCursor(cur, BrowserContract.Bookmarks.URL);
