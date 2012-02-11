@@ -241,6 +241,11 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
     inner.storeDone();
   }
 
+  @Override
+  public void storeDone(long storeEnd) {
+    inner.storeDone(storeEnd);
+  }
+
   public class Crypto5MiddlewareRepositorySessionBeginDelegate implements RepositorySessionBeginDelegate {
     private Crypto5MiddlewareRepositorySession outerSession;
     private RepositorySessionBeginDelegate next;
