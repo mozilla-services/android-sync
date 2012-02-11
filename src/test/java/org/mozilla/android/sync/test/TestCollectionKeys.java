@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -11,17 +12,17 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.mozilla.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
-import org.mozilla.gecko.sync.crypto.CryptoException;
-import org.mozilla.gecko.sync.crypto.Cryptographer;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.crypto.Cryptographer;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 public class TestCollectionKeys {
 
@@ -94,5 +95,24 @@ public class TestCollectionKeys {
     assertSame(Base64.decodeBase64((String) (defaultKey.get(0))), ck1.defaultKeyBundle().getEncryptionKey());
     CollectionKeys ck2 = CollectionKeys.fromCryptoRecord(rec, null);
     assertSame(ck1.defaultKeyBundle().getEncryptionKey(), ck2.defaultKeyBundle().getEncryptionKey());
+  }
+
+  @Test
+  public void testCreateKeysBundle() throws CryptoException, NonObjectJSONException, IOException, ParseException, NoCollectionKeysSetException {
+    String username =                       "b6evr62dptbxz7fvebek7btljyu322wp";
+    String friendlyBase32SyncKey =          "basuxv2426eqj7frhvpcwkavdi";
+
+    KeyBundle syncKeyBundle = new KeyBundle(username, friendlyBase32SyncKey);
+
+    CollectionKeys ck = CollectionKeys.generateCollectionKeys();
+    CryptoRecord unencrypted = ck.asCryptoRecord();
+    unencrypted.keyBundle = syncKeyBundle;
+    CryptoRecord encrypted = unencrypted.encrypt();
+
+    CollectionKeys ckDecrypted = CollectionKeys.fromCryptoRecord(encrypted, syncKeyBundle);
+
+    // Compare decrypted keys to the keys that were set upon creation
+    assertArrayEquals(ck.defaultKeyBundle().getEncryptionKey(), ckDecrypted.defaultKeyBundle().getEncryptionKey());
+    assertArrayEquals(ck.defaultKeyBundle().getHMACKey(), ckDecrypted.defaultKeyBundle().getHMACKey());
   }
 }
