@@ -8,32 +8,22 @@ import java.io.IOException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataExtender;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
-import android.content.Context;
 import android.database.Cursor;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class AndroidBrowserHistoryDataExtenderTest extends ActivityInstrumentationTestCase2<StubActivity> {
+public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
 
   protected AndroidBrowserHistoryDataExtender extender;
   protected static final String LOG_TAG = "SyncHistoryVisitsTest";
-
-  public AndroidBrowserHistoryDataExtenderTest() {
-    super(StubActivity.class);
-  }
-
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
 
   public void setUp() {
     Log.i(LOG_TAG, "Wiping.");

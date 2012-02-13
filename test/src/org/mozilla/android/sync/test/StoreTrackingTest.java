@@ -30,45 +30,10 @@ import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class StoreTrackingTest extends
-    ActivityInstrumentationTestCase2<StubActivity> {
-
-  public StoreTrackingTest() {
-    super(StubActivity.class);
-  }
-
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
-
-  protected static void performWait(Runnable runnable) throws AssertionFailedError {
-    WaitHelper.getTestWaiter().performWait(runnable);
-  }
-
-  protected static void performNotify(AssertionFailedError e) {
-    WaitHelper.getTestWaiter().performNotify(e);
-  }
-
-  protected static void performNotify(InactiveSessionException e) {
-    final AssertionFailedError failed = new AssertionFailedError("Inactive session.");
-    failed.initCause(e);
-    performNotify(failed);
-  }
-
-  protected static void performNotify(InvalidSessionTransitionException e) {
-    final AssertionFailedError failed = new AssertionFailedError("Invalid session transition.");
-    failed.initCause(e);
-    performNotify(failed);
-  }
-
-  protected static void performNotify() {
-    WaitHelper.getTestWaiter().performNotify();
-  }
-
-  public static void assertEq(Object expected, Object actual) {
+public class StoreTrackingTest extends AndroidSyncTestCase {
+  public void assertEq(Object expected, Object actual) {
     try {
       assertEquals(expected, actual);
     } catch (AssertionFailedError e) {

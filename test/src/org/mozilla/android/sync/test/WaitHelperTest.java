@@ -13,6 +13,8 @@ import org.mozilla.gecko.sync.ThreadPool;
 
 import android.test.ActivityInstrumentationTestCase2;
 
+// Extend ActivityInstrumentationTestCase2 rather than AndroidSyncTestCase
+// since we want a fresh WaitHelper each test.
 public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivity> {
   private static final String ERROR_UNIQUE_IDENTIFIER = "error unique identifier";
 
