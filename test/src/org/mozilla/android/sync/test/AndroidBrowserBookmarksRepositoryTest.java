@@ -67,7 +67,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   // to store a folder first, store your record in "mobile" or one of the folders
   // that always exists.
 
-  public void testFetchOneWithChildren() {
+  public void testFetchOneWithChildren() throws NullCursorException {
     BookmarkRecord folder = BookmarkHelpers.createFolder1();
     BookmarkRecord bookmark1 = BookmarkHelpers.createBookmark1();
     BookmarkRecord bookmark2 = BookmarkHelpers.createBookmark2();
@@ -76,10 +76,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     Log.i(LOG_TAG, "Prepared.");
 
     AndroidBrowserRepositorySession session = getSession();
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     Record[] records = new Record[] { folder, bookmark1, bookmark2 };
     performWait(storeManyRunnable(session, records));
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    helper.dumpDB();
 
     String[] guids = new String[] { folder.guid };
     Record[] expected = new Record[] { folder };
@@ -291,7 +290,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    * Store a record after with the new guid as the parent
    * and make sure it works as well.
    */
-  public void testStoreIdenticalFoldersWithChildren() {
+  public void testStoreIdenticalFoldersWithChildren() throws NullCursorException {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
     Record record0 = BookmarkHelpers.createFolder1();
@@ -306,7 +305,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { rec0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
 
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    helper.dumpDB();
     Record record1 = BookmarkHelpers.createBookmark1();
     Record record2 = BookmarkHelpers.createBookmark2();
     Record record3 = BookmarkHelpers.createFolder1();

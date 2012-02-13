@@ -285,10 +285,11 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     Log.i(LOG_TAG, "Prepared.");
 
     AndroidBrowserRepositorySession session = getSession();
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+
+    helper.dumpDB();
     performWait(storeManyRunnable(session, expected));
 
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    helper.dumpDB();
     performWait(fetchAllRunnable(session, expected));
   }
   
