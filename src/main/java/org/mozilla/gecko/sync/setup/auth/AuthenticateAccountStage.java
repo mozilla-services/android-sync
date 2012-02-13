@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
@@ -60,7 +59,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
 
       @Override
       public void handleError(Exception e) {
-        Logger.debug(LOG_TAG, "handleError");
+        Logger.debug(LOG_TAG, "handleError", e);
         aa.abort("HTTP failure.", e);
       }
     };
@@ -96,43 +95,41 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
         switch(statusCode) {
         case 200:
           callbackDelegate.handleSuccess(true);
-          SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         case 401:
           callbackDelegate.handleSuccess(false);
-          SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         default:
           callbackDelegate.handleFailure(response);
         }
+        SyncResourceDelegate.consumeEntity(response.getEntity());
+        Logger.warn(LOG_TAG, "released entity.");
       }
 
       @Override
       public void handleHttpProtocolException(ClientProtocolException e) {
-        Logger.error(LOG_TAG, "Client protocol error.");
+        Logger.error(LOG_TAG, "Client protocol error.", e);
         callbackDelegate.handleError(e);
       }
 
       @Override
       public void handleHttpIOException(IOException e) {
+        Logger.error(LOG_TAG, "I/O exception.");
         callbackDelegate.handleError(e);
       }
 
       @Override
       public void handleTransportException(GeneralSecurityException e) {
+        Logger.error(LOG_TAG, "Transport exception.");
         callbackDelegate.handleError(e);
       }
     };
 
-    runOnThread(new Runnable() {
+    AccountAuthenticator.runOnThread(new Runnable() {
       @Override
       public void run() {
         httpResource.get();
       }
     });
-  }
-
-  private static void runOnThread(Runnable run) {
-    ThreadPool.run(run);
   }
 }
