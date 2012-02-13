@@ -94,6 +94,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
           serverInput.setText("");
         } else {
           serverInput.setVisibility(View.VISIBLE);
+          serverInput.setEnabled(true);
         }
         // Activate connectButton if necessary.
         activateView(connectButton, validateInputs());
@@ -132,11 +133,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   }
 
   private void clearCredentials() {
-    // Start with an empty form
-    usernameInput.setText("");
+    // Only clear password. Re-typing the sync key or email is annoying.
     passwordInput.setText("");
-    passwordInput.setText("");
-    // Don't clear sync key until exiting.
   }
 
   /*
@@ -180,6 +178,12 @@ public class AccountActivity extends AccountAuthenticatorActivity {
       @Override
       public void onClick(View v) {
         cancelConnectHandler(v);
+        // Set cancel click handler to leave account setup.
+        cancelButton.setOnClickListener(new OnClickListener() {
+          public void onClick(View v) {
+            cancelClickHandler(v);
+          }
+        });
       }
     });
 
