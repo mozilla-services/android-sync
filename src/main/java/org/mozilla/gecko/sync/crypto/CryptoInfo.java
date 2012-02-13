@@ -32,6 +32,33 @@ public class CryptoInfo {
   private byte[] hmac;
   private KeyBundle keys;
 
+  /**
+   * Return a CryptoInfo with given plaintext encrypted using given keys.
+   */
+  public static CryptoInfo encrypt(byte[] plaintextBytes, KeyBundle keys) throws CryptoException {
+    CryptoInfo info = new CryptoInfo(plaintextBytes, keys);
+    info.encrypt();
+    return info;
+  }
+
+  /**
+   * Return a CryptoInfo with given plaintext encrypted using given keys and initial vector.
+   */
+  public static CryptoInfo encrypt(byte[] plaintextBytes, byte[] iv, KeyBundle keys) throws CryptoException {
+    CryptoInfo info = new CryptoInfo(plaintextBytes, iv, null, keys);
+    info.encrypt();
+    return info;
+  }
+
+  /**
+   * Return a CryptoInfo with given ciphertext decrypted using given keys and initial vector, verifying that given HMAC validates.
+   */
+  public static CryptoInfo decrypt(byte[] ciphertext, byte[] iv, byte[] hmac, KeyBundle keys) throws CryptoException {
+    CryptoInfo info = new CryptoInfo(ciphertext, iv, hmac, keys);
+    info.decrypt();
+    return info;
+  }
+
   /*
    * Constructor typically used when encrypting.
    */
@@ -121,13 +148,11 @@ public class CryptoInfo {
   }
 
   /**
-   * Encrypt a CryptoInfo.
-   *
-   * @return Encrypted CryptoInfo.
+   * Encrypt a CryptoInfo in-place.
    *
    * @throws CryptoException
    */
-  public CryptoInfo encrypted() throws CryptoException {
+  public void encrypt() throws CryptoException {
 
     Cipher cipher = CryptoInfo.getCipher(TRANSFORMATION);
     try {
@@ -148,24 +173,28 @@ public class CryptoInfo {
     byte[] encryptedBytes = commonCrypto(cipher, getMessage());
     byte[] iv = cipher.getIV();
 
+    byte[] hmac;
     // Generate HMAC.
     try {
-      return new CryptoInfo(encryptedBytes, iv, generatedHMACFor(encryptedBytes, keys), keys);
+      hmac = generatedHMACFor(encryptedBytes, keys);
     } catch (NoSuchAlgorithmException e) {
       throw new CryptoException(e);
     } catch (InvalidKeyException e) {
       throw new CryptoException(e);
     }
+
+    // Update in place.  keys is already set.
+    this.setHMAC(hmac);
+    this.setIV(iv);
+    this.setMessage(encryptedBytes);
   }
 
   /**
-   * Decrypt a CryptoInfo.
-   *
-   * @return Decrypted CryptoInfo.
+   * Decrypt a CryptoInfo in-place.
    *
    * @throws CryptoException
    */
-  public CryptoInfo decrypted() throws CryptoException {
+  public void decrypt() throws CryptoException {
 
     // Check HMAC.
     try {
@@ -186,9 +215,13 @@ public class CryptoInfo {
     } catch (GeneralSecurityException ex) {
       throw new CryptoException(ex);
     }
-    byte[] decryptedMessage = commonCrypto(cipher, getMessage());
+    byte[] decryptedBytes = commonCrypto(cipher, getMessage());
+    byte[] iv = cipher.getIV();
 
-    return new CryptoInfo(decryptedMessage, cipher.getIV(), null, getKeys());
+    // Update in place.  keys is already set.
+    this.setHMAC(null);
+    this.setIV(iv);
+    this.setMessage(decryptedBytes);
   }
 
   /**

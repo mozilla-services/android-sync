@@ -64,6 +64,8 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
  * Until there's some benefit to the abstraction, we're simply going to
  * call this CryptoRecord.
  *
+ * CryptoRecord uses CryptoInfo to do the actual encryption and decryption.
+ *
  * @author rnewman
  *
  */
@@ -91,7 +93,8 @@ public class CryptoRecord extends Record {
     byte[] ciphertext = Base64.decodeBase64(((String) payload.get(KEY_CIPHERTEXT)).getBytes("UTF-8"));
     byte[] iv         = Base64.decodeBase64(((String) payload.get(KEY_IV)).getBytes("UTF-8"));
     byte[] hmac       = Utils.hex2Byte((String) payload.get(KEY_HMAC));
-    return new CryptoInfo(ciphertext, iv, hmac, keybundle).decrypted().getMessage();
+
+    return CryptoInfo.decrypt(ciphertext, iv, hmac, keybundle).getMessage();
   }
 
   // The encrypted JSON body object.
@@ -220,7 +223,7 @@ public class CryptoRecord extends Record {
     }
     String cleartext = payload.toJSONString();
     byte[] cleartextBytes = cleartext.getBytes("UTF-8");
-    CryptoInfo info = new CryptoInfo(cleartextBytes, keyBundle).encrypted();
+    CryptoInfo info = CryptoInfo.encrypt(cleartextBytes, keyBundle);
     String message = new String(Base64.encodeBase64(info.getMessage()));
     String iv      = new String(Base64.encodeBase64(info.getIV()));
     String hmac    = Utils.byte2hex(info.getHMAC());

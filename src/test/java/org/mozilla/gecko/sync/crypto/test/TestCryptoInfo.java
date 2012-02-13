@@ -23,23 +23,22 @@ public class TestCryptoInfo {
   @Test
   public void testEncryptedHMACIsSet() throws CryptoException, UnsupportedEncodingException, InvalidKeyException, NoSuchAlgorithmException {
     KeyBundle kb = KeyBundle.withRandomKeys();
-    CryptoInfo orig = new CryptoInfo("plaintext".getBytes("UTF-8"), kb);
-    CryptoInfo encr = orig.encrypted();
-    assertSame(kb, encr.getKeys());
-    assertTrue(encr.generatedHMACIsHMAC());
+    CryptoInfo encrypted = CryptoInfo.encrypt("plaintext".getBytes("UTF-8"), kb);
+    assertSame(kb, encrypted.getKeys());
+    assertTrue(encrypted.generatedHMACIsHMAC());
   }
 
   @Test
   public void testRandomEncryptedDecrypted() throws CryptoException, UnsupportedEncodingException, InvalidKeyException, NoSuchAlgorithmException {
     KeyBundle kb = KeyBundle.withRandomKeys();
     byte[] plaintext = "plaintext".getBytes("UTF-8");
-    CryptoInfo orig = new CryptoInfo(plaintext, kb);
-    CryptoInfo encr = orig.encrypted();
-    CryptoInfo decr = encr.decrypted();
-    assertTrue(Arrays.equals(plaintext, decr.getMessage()));
-    assertSame(null, decr.getHMAC());
-    assertTrue(Arrays.equals(decr.getIV(), encr.getIV()));
-    assertSame(kb, decr.getKeys());
+    CryptoInfo info = CryptoInfo.encrypt(plaintext, kb);
+    byte[] iv = info.getIV();
+    info.decrypt();
+    assertTrue(Arrays.equals(plaintext, info.getMessage()));
+    assertSame(null, info.getHMAC());
+    assertTrue(Arrays.equals(iv, info.getIV()));
+    assertSame(kb, info.getKeys());
   }
 
   @Test
@@ -79,14 +78,14 @@ public class TestCryptoInfo {
                                  "cyI6W3siZGF0ZSI6MTMxOTE0OTAxMjM3" +
                                  "MjQyNSwidHlwZSI6MX1dfQ==";
 
-    CryptoInfo decrypted = new CryptoInfo(
+    CryptoInfo decrypted = CryptoInfo.decrypt(
             Base64.decodeBase64(base64CipherText),
             Base64.decodeBase64(base64IV),
             Utils.hex2Byte(base16Hmac),
             new KeyBundle(
                 Base64.decodeBase64(base64EncryptionKey),
                 Base64.decodeBase64(base64HmacKey))
-            ).decrypted();
+            );
 
     // Check result
     byte[] a = decrypted.getMessage();
@@ -131,14 +130,13 @@ public class TestCryptoInfo {
                                  "cyI6W3siZGF0ZSI6MTMxOTE0OTAxMjM3" +
                                  "MjQyNSwidHlwZSI6MX1dfQ==";
 
-    CryptoInfo encrypted = new CryptoInfo(
+    CryptoInfo encrypted = CryptoInfo.encrypt(
             Base64.decodeBase64(base64ExpectedBytes),
             Base64.decodeBase64(base64IV),
-            null,
             new KeyBundle(
                 Base64.decodeBase64(base64EncryptionKey),
                 Base64.decodeBase64(base64HmacKey))
-            ).encrypted();
+            );
 
     // Check result
     byte[] a = encrypted.getMessage();
