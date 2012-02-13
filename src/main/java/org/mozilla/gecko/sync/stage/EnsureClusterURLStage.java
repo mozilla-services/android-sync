@@ -109,12 +109,13 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
         case 404:
           Log.i(LOG_TAG, "Got " + status + " for cluster URL request.");
           delegate.handleFailure(response);
+          SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         default:
           Log.w(LOG_TAG, "Got " + status + " fetching node/weave. Returning failure.");
           delegate.handleFailure(response);
+          SyncResourceDelegate.consumeEntity(response.getEntity());
         }
-        SyncResourceDelegate.consumeEntity(response.getEntity());
       }
 
       @Override
