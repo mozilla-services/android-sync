@@ -28,9 +28,9 @@ public class BrowserContractHelpers extends BrowserContract {
   public static final Uri PASSWORDS_CONTENT_URI            = null;
   /*
   public static final Uri PASSWORDS_CONTENT_URI            = withSyncAndDeleted(Passwords.CONTENT_URI);
+   */
   public static final Uri FORM_HISTORY_CONTENT_URI         = withSyncAndDeleted(FormHistory.CONTENT_URI);
   public static final Uri DELETED_FORM_HISTORY_CONTENT_URI = withSyncAndDeleted(DeletedFormHistory.CONTENT_URI);
-   */
 
   public static final String[] PasswordColumns = new String[] {
     CommonColumns._ID,
@@ -76,5 +76,19 @@ public class BrowserContractHelpers extends BrowserContract {
     Bookmarks.TAGS,
     Bookmarks.DESCRIPTION,
     Bookmarks.KEYWORD
+  };
+
+  public static final String[] FormHistoryColumns = new String[] {
+    FormHistory.ID,
+    // CommonColumns._ID,
+    SyncColumns.GUID,
+    // SyncColumns.DATE_CREATED,
+    // SyncColumns.DATE_MODIFIED,
+    // SyncColumns.IS_DELETED,
+    FormHistory.FIELD_NAME,
+    FormHistory.VALUE,
+    FormHistory.TIMES_USED,
+    FormHistory.FIRST_USED,
+    FormHistory.LAST_USED
   };
 }
