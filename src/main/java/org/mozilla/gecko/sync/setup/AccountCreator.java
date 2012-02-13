@@ -34,7 +34,7 @@ public class AccountCreator {
     Logger.info(LOG_TAG, "Adding account for " + Constants.ACCOUNTTYPE_SYNC);
     boolean result = false;
     try { // Bug 709879: Handle error during creation of account.
-      accountManager.addAccountExplicitly(account, password, userbundle);
+      result = accountManager.addAccountExplicitly(account, password, userbundle);
     } catch (SQLiteDiskIOException e) {
       Logger.warn(LOG_TAG, "Could not add account: SQLite error.", e);
       return null;
