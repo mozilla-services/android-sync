@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
@@ -15,55 +16,39 @@ import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
-public class FetchUserNodeStage implements AuthenticatorStage {
-  private final String LOG_TAG = "FetchUserNodeStage";
+public class EnsureUserExistenceStage implements AuthenticatorStage {
+  private final String LOG_TAG = "EnsureUserExistenceStage";
 
-  public interface FetchNodeStageDelegate {
-    public void handleSuccess(String url);
-    public void handleFailure(HttpResponse response);
+  public interface EnsureUserExistenceStageDelegate {
+    public void handleSuccess();
+    public void handleFailure();
     public void handleError(Exception e);
   }
-
   @Override
-  public void execute(final AccountAuthenticator aa) throws URISyntaxException {
-
-    FetchNodeStageDelegate callbackDelegate = new FetchNodeStageDelegate() {
+  public void execute(final AccountAuthenticator aa) throws URISyntaxException,
+      UnsupportedEncodingException {
+    final EnsureUserExistenceStageDelegate callbackDelegate = new EnsureUserExistenceStageDelegate() {
 
       @Override
-      public void handleSuccess(String server) {
-        if (server == null) { // No separate auth node; use server url.
-          Log.d(LOG_TAG, "Using server as auth node.");
-          aa.authServer = aa.nodeServer;
-          aa.runNextStage();
-          return;
-        }
-        if (!server.endsWith("/")) {
-          server += "/";
-        }
-        aa.authServer = server;
+      public void handleSuccess() {
+        // User exists; now determine auth node.
         aa.runNextStage();
       }
 
       @Override
-      public void handleFailure(HttpResponse response) {
-        int statusCode = response.getStatusLine().getStatusCode();
-        Log.d(LOG_TAG, "Failed to authenticate with status " + statusCode);
-        aa.abort(response.toString(), new Exception("HTTP " + statusCode + " error."));
+      public void handleFailure() {
+        aa.abort("No such user,", new Exception("No user."));
       }
 
       @Override
       public void handleError(Exception e) {
-        aa.abort("Error in fetching node.", e);
+        aa.abort("Error checking user existence.", e);
       }
-    };
-    String nodeRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash + "/" + Constants.AUTH_NODE_SUFFIX;
-    Log.d(LOG_TAG, "nodeUrl: " + nodeRequestUrl);
-    makeFetchNodeRequest(callbackDelegate, nodeRequestUrl);
-  }
 
-  private void makeFetchNodeRequest(final FetchNodeStageDelegate callbackDelegate, String fetchNodeUrl) throws URISyntaxException {
-    // Fetch node containing user.
-    final BaseResource httpResource = new BaseResource(fetchNodeUrl);
+    };
+
+    String userRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash;
+    final BaseResource httpResource = new BaseResource(userRequestUrl);
     httpResource.delegate = new SyncResourceDelegate(httpResource) {
 
       @Override
@@ -74,8 +59,13 @@ public class FetchUserNodeStage implements AuthenticatorStage {
           try {
             InputStream content = response.getEntity().getContent();
             BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
-            String server = reader.readLine();
-            callbackDelegate.handleSuccess(server);
+            String inUse = reader.readLine();
+            Log.d(LOG_TAG, "username inUse:" + inUse);
+            if (inUse.equals("1")) { // Username exists.
+              callbackDelegate.handleSuccess();
+            } else { // User does not exist.
+              callbackDelegate.handleFailure();
+            }
             SyncResourceDelegate.consumeReader(reader);
             reader.close();
           } catch (IllegalStateException e) {
@@ -84,12 +74,8 @@ public class FetchUserNodeStage implements AuthenticatorStage {
             callbackDelegate.handleError(e);
           }
           break;
-        case 404: // Does not support auth nodes, use server instead.
-          callbackDelegate.handleSuccess(null);
-          break;
-        default:
-          // No other acceptable states.
-          callbackDelegate.handleFailure(response);
+        default: // No other response is acceptable.
+          callbackDelegate.handleFailure();
         }
         SyncResourceDelegate.consumeEntity(response.getEntity());
       }
@@ -118,4 +104,5 @@ public class FetchUserNodeStage implements AuthenticatorStage {
       }
     });
   }
+
 }
