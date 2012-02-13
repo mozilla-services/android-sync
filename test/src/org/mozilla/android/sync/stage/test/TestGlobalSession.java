@@ -6,6 +6,7 @@ package org.mozilla.android.sync.stage.test;
 import java.io.IOException;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -17,9 +18,8 @@ import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.Context;
-import android.test.AndroidTestCase;
 
-public class TestGlobalSession extends AndroidTestCase {
+public class TestGlobalSession extends AndroidSyncTestCase {
   public void testStageAdvance() {
     assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
     assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
@@ -68,7 +68,7 @@ public class TestGlobalSession extends AndroidTestCase {
     String syncKey    = "abcdeabcdeabcdeabcdeabcdea";
     KeyBundle syncKeyBundle = new KeyBundle(username, syncKey);
     HappyCallback callback = new HappyCallback();
-    Context context = getContext();
+    Context context = getApplicationContext();
     System.out.println("Using context " + context);
     GlobalSession session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
     session.start();
