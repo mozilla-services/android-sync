@@ -15,7 +15,6 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
-import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
@@ -26,32 +25,9 @@ import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class StoreTrackingTest extends
-    ActivityInstrumentationTestCase2<StubActivity> {
-
-  public StoreTrackingTest() {
-    super(StubActivity.class);
-  }
-
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
-
-  protected void performWait(Runnable runnable) throws AssertionFailedError {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performWait(runnable);
-  }
-
-  protected void performNotify(AssertionFailedError e) {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
-  }
-
-  protected void performNotify() {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
-  }
-
+public class StoreTrackingTest extends AndroidSyncTestCase {
   public void assertEq(Object expected, Object actual) {
     try {
       assertEquals(expected, actual);
