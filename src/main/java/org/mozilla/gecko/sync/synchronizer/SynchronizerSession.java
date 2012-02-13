@@ -66,8 +66,15 @@ implements RecordsChannelDelegate,
   private RepositorySession sessionB;
   private RepositorySessionBundle bundleA;
   private RepositorySessionBundle bundleB;
+
+  // Bug 726054: just like desktop, we track our last interaction with the server,
+  // not the last record timestamp that we fetched. This ensures that we don't re-
+  // download the records we just uploaded, at the cost of skipping any records
+  // that a concurrently syncing client has uploaded.
   private long pendingATimestamp = -1;
   private long pendingBTimestamp = -1;
+  private long storeEndATimestamp = -1;
+  private long storeEndBTimestamp = -1;
   private boolean flowAToBCompleted = false;
   private boolean flowBToACompleted = false;
 
@@ -137,6 +144,7 @@ implements RecordsChannelDelegate,
         info("First RecordsChannel flow completed. Fetch end is " + fetchEnd +
              ". Store end is " + storeEnd + ". Starting next.");
         pendingATimestamp = fetchEnd;
+        storeEndBTimestamp = storeEnd;
         flowAToBCompleted = true;
         channelBToA.flow();
       }
@@ -169,7 +177,9 @@ implements RecordsChannelDelegate,
   public void onFlowCompleted(RecordsChannel channel, long fetchEnd, long storeEnd) {
     info("First RecordsChannel flow completed. Fetch end is " + fetchEnd +
          ". Store end is " + storeEnd + ". Finishing.");
+
     pendingBTimestamp = fetchEnd;
+    storeEndATimestamp = storeEnd;
     flowBToACompleted = true;
 
     // Finish the two sessions.
@@ -280,8 +290,8 @@ implements RecordsChannelDelegate,
 
     if (session == sessionA) {
       if (flowAToBCompleted) {
-        info("onFinishSucceeded: bumping session A's timestamp to " + pendingATimestamp);
-        bundle.bumpTimestamp(pendingATimestamp);
+        info("onFinishSucceeded: bumping session A's timestamp to " + pendingATimestamp + " or " + storeEndATimestamp);
+        bundle.bumpTimestamp(Math.max(pendingATimestamp, storeEndATimestamp));
         this.synchronizer.bundleA = bundle;
       }
       if (this.sessionB != null) {
@@ -291,8 +301,8 @@ implements RecordsChannelDelegate,
       }
     } else if (session == sessionB) {
       if (flowBToACompleted) {
-        info("onFinishSucceeded: bumping session B's timestamp to " + pendingBTimestamp);
-        bundle.bumpTimestamp(pendingBTimestamp);
+        info("onFinishSucceeded: bumping session B's timestamp to " + pendingBTimestamp + " or " + storeEndBTimestamp);
+        bundle.bumpTimestamp(Math.max(pendingBTimestamp, storeEndBTimestamp));
         this.synchronizer.bundleB = bundle;
         info("Notifying delegate.onSynchronized.");
         this.delegate.onSynchronized(this);
