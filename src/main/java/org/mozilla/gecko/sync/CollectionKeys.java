@@ -110,7 +110,7 @@ public class CollectionKeys {
   private static KeyBundle arrayToKeyBundle(JSONArray array) throws UnsupportedEncodingException {
     String encKeyStr  = (String) array.get(0);
     String hmacKeyStr = (String) array.get(1);
-    return KeyBundle.withBase64EncodedKeys(encKeyStr, hmacKeyStr);
+    return KeyBundle.fromBase64EncodedKeys(encKeyStr, hmacKeyStr);
   }
 
   @SuppressWarnings("unchecked")

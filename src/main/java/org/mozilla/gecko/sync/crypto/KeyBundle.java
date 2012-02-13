@@ -134,11 +134,11 @@ public class KeyBundle {
     }
 
     /**
-     * Make a KeyBundle with the specified base64 encoded keys.
+     * Make a KeyBundle with the specified base64-encoded keys.
      *
      * @return A KeyBundle with the specified keys.
      */
-    public static KeyBundle withBase64EncodedKeys(String base64EncryptionKey, String base64HmacKey) throws UnsupportedEncodingException {
+    public static KeyBundle fromBase64EncodedKeys(String base64EncryptionKey, String base64HmacKey) throws UnsupportedEncodingException {
       return new KeyBundle(Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8")),
                            Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")));
     }

@@ -35,7 +35,7 @@ public class TestCryptoRecord {
     record.payload = clearPayload;
     String expectedGUID = "5qRsgXWRJZXr";
     record.guid = expectedGUID;
-    record.keyBundle = KeyBundle.withBase64EncodedKeys(base64EncryptionKey, base64HmacKey);
+    record.keyBundle = KeyBundle.fromBase64EncodedKeys(base64EncryptionKey, base64HmacKey);
     record.encrypt();
     assertTrue(record.payload.get("title") == null);
     assertTrue(record.payload.get("ciphertext") != null);
@@ -58,7 +58,7 @@ public class TestCryptoRecord {
 
     String b64E = "0A7mU5SZ/tu7ZqwXW1og4qHVHN+zgEi4Xwfwjw+vEJw=";
     String b64H = "11GN34O9QWXkjR06g8t0gWE1sGgQeWL0qxxWwl8Dmxs=";
-    record.keyBundle = KeyBundle.withBase64EncodedKeys(b64E, b64H);
+    record.keyBundle = KeyBundle.fromBase64EncodedKeys(b64E, b64H);
     record.decrypt();
 
     assertEquals("0-P9fabp9vJD", record.guid);
@@ -165,7 +165,7 @@ public class TestCryptoRecord {
                                     "X\",\"visits\":[{\"date\":131898" +
                                     "2074310889,\"type\":1}]}";
 
-    KeyBundle keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
+    KeyBundle keyBundle = KeyBundle.fromBase64EncodedKeys(base64EncryptionKey, base64HmacKey);
 
     CryptoRecord encrypted = CryptoRecord.fromJSONRecord(jsonInput);
     encrypted.keyBundle = keyBundle;
@@ -193,7 +193,7 @@ public class TestCryptoRecord {
       String base64HmacKey =          "nbceuI6w1RJbBzh+iCJHEs8p4lElsOma" +
                                       "yUhx+OztVgM=";
 
-      KeyBundle keyBundle = KeyBundle.decodeKeyStrings(base64EncryptionKey, base64HmacKey);
+      KeyBundle keyBundle = KeyBundle.fromBase64EncodedKeys(base64EncryptionKey, base64HmacKey);
 
       // Encrypt.
       CryptoRecord unencrypted = new CryptoRecord(originalText);
@@ -259,7 +259,7 @@ public class TestCryptoRecord {
 
     // Check that the extracted keys were as expected.
     JSONArray keys = ExtendedJSONObject.parseJSONObject(decrypted.payload.toJSONString()).getArray("default");
-    KeyBundle keyBundle = KeyBundle.decodeKeyStrings((String)keys.get(0), (String)keys.get(1));
+    KeyBundle keyBundle = KeyBundle.fromBase64EncodedKeys((String)keys.get(0), (String)keys.get(1));
 
     assertArrayEquals(Base64.decodeBase64(expectedBase64EncryptionKey.getBytes("UTF-8")), keyBundle.getEncryptionKey());
     assertArrayEquals(Base64.decodeBase64(expectedBase64HmacKey.getBytes("UTF-8")), keyBundle.getHMACKey());
