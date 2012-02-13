@@ -7,11 +7,11 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
@@ -32,7 +32,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
       @Override
       public void handleSuccess(String server) {
         if (server == null) { // No separate auth node; use server url.
-          Log.d(LOG_TAG, "Using server as auth node.");
+          Logger.debug(LOG_TAG, "Using server as auth node.");
           aa.authServer = aa.nodeServer;
           aa.runNextStage();
           return;
@@ -47,7 +47,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
       @Override
       public void handleFailure(HttpResponse response) {
         int statusCode = response.getStatusLine().getStatusCode();
-        Log.d(LOG_TAG, "Failed to authenticate with status " + statusCode);
+        Logger.debug(LOG_TAG, "Failed to authenticate with status " + statusCode);
         aa.abort(response.toString(), new Exception("HTTP " + statusCode + " error."));
       }
 
@@ -57,7 +57,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
       }
     };
     String nodeRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash + "/" + Constants.AUTH_NODE_SUFFIX;
-    Log.d(LOG_TAG, "nodeUrl: " + nodeRequestUrl);
+    Logger.debug(LOG_TAG, "nodeUrl: " + nodeRequestUrl);
     makeFetchNodeRequest(callbackDelegate, nodeRequestUrl);
   }
 

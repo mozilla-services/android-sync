@@ -8,11 +8,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
@@ -60,7 +60,7 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
             InputStream content = response.getEntity().getContent();
             BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
             String inUse = reader.readLine();
-            Log.d(LOG_TAG, "username inUse:" + inUse);
+            Logger.debug(LOG_TAG, "username inUse:" + inUse);
             if (inUse.equals("1")) { // Username exists.
               callbackDelegate.handleSuccess();
             } else { // User does not exist.
