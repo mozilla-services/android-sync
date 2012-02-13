@@ -64,6 +64,19 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   protected abstract ContentValues getContentValues(Record record);
   protected abstract Uri getUri();
 
+  public void dumpDB() {
+    Cursor cur = null;
+    try {
+      cur = queryHelper.safeQuery(".dumpDB", null, null, null, null);
+      RepoUtils.dumpCursor(cur);
+    } catch (NullCursorException e) {
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
+  }
+
   public String dateModifiedWhere(long timestamp) {
     return BrowserContract.SyncColumns.DATE_MODIFIED + " >= " + Long.toString(timestamp);
   }

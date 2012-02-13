@@ -78,10 +78,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
         getRepository());
     Log.i("rnewman", "Prepared.");
 
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     Record[] records = new Record[] { folder, bookmark1, bookmark2 };
     performWait(storeManyRunnable(session, records));
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    helper.dumpDB();
 
     String[] guids = new String[] { folder.guid };
     Record[] expected = new Record[] { folder };
@@ -288,7 +287,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { rec0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
 
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    helper.dumpDB();
     Record record1 = BookmarkHelpers.createBookmark1();
     Record record2 = BookmarkHelpers.createBookmark2();
     Record record3 = BookmarkHelpers.createFolder1();
