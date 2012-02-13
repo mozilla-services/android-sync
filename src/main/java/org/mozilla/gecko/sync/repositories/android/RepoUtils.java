@@ -10,6 +10,7 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 
@@ -145,7 +146,42 @@ public class RepoUtils {
         Logger.pii(LOG_TAG, "> URI:              " + rec.histURI);
       }
     } catch (Exception e) {
-      Logger.debug(LOG_TAG, "Exception logging bookmark record " + rec, e);
+      Logger.debug(LOG_TAG, "Exception logging history record " + rec, e);
+    }
+    return rec;
+  }
+
+  // Create a FormHistoryRecord object from a cursor on a row with a moz_formhistory record in it
+  public static FormHistoryRecord formHistoryFromMirrorCursor(Cursor cur) {
+
+    String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+    String collection = "formhistory";
+    long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
+    boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
+    FormHistoryRecord rec = new FormHistoryRecord(guid, collection, lastModified, deleted);
+
+    rec.fieldName = getStringFromCursor(cur, BrowserContract.FormHistory.FIELD_NAME);
+    rec.fieldValue = getStringFromCursor(cur, BrowserContract.FormHistory.VALUE);
+    rec.androidID = getLongFromCursor(cur, BrowserContract.FormHistory.ID);
+    rec.fennecTimesUsed = getLongFromCursor(cur, BrowserContract.FormHistory.TIMES_USED);
+    rec.fennecFirstUsed = getLongFromCursor(cur, BrowserContract.FormHistory.FIRST_USED);
+    rec.fennecLastUsed  = getLongFromCursor(cur, BrowserContract.FormHistory.LAST_USED);
+
+    return logFormHistory(rec);
+  }
+
+  private static FormHistoryRecord logFormHistory(FormHistoryRecord rec) {
+    try {
+      Logger.debug(LOG_TAG, "Returning form history record " + rec.guid + " (" + rec.androidID + ")");
+      Logger.debug(LOG_TAG, "> Times used:           " + rec.fennecTimesUsed);
+      Logger.debug(LOG_TAG, "> First used:           " + rec.fennecFirstUsed);
+      Logger.debug(LOG_TAG, "> Last used:            " + rec.fennecLastUsed);
+      if (Logger.LOG_PERSONAL_INFORMATION) {
+        Logger.pii(LOG_TAG, "> Field name:           " + rec.fieldName);
+        Logger.pii(LOG_TAG, "> Field value:          " + rec.fieldValue);
+      }
+    } catch (Exception e) {
+      Logger.debug(LOG_TAG, "Exception logging form history record " + rec, e);
     }
     return rec;
   }
