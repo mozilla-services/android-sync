@@ -5,10 +5,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.AccountActivity;
-
-import android.util.Log;
 
 public class AccountAuthenticator {
   private final String LOG_TAG = "AccountSetupAuthenticator";
@@ -35,6 +35,7 @@ public class AccountAuthenticator {
 
   private void prepareStages() {
     stages = new ArrayList<AuthenticatorStage>();
+    stages.add(new EnsureUserExistenceStage());
     stages.add(new FetchUserNodeStage());
     stages.add(new AuthenticateAccountStage());
   }
@@ -55,7 +56,7 @@ public class AccountAuthenticator {
     } catch (UnsupportedEncodingException e) {
       abort("Username hash error.", e);
     }
-    Log.d(LOG_TAG, "usernameHash:" + usernameHash);
+    Logger.debug(LOG_TAG, "usernameHash:" + usernameHash);
 
     // Start first stage of authentication.
     runNextStage();
@@ -75,7 +76,7 @@ public class AccountAuthenticator {
     try {
       stages.get(stageIndex).execute(this);
     } catch (Exception e) {
-      Log.w(LOG_TAG, "Exception in stage " + stages.get(stageIndex));
+      Logger.warn(LOG_TAG, "Exception in stage " + stages.get(stageIndex));
       abort("Stage exception.", e);
     }
   }
@@ -92,8 +93,12 @@ public class AccountAuthenticator {
     if (isCanceled) {
       return;
     }
-    Log.w(LOG_TAG, reason, e);
+    Logger.warn(LOG_TAG, reason, e);
     activityCallback.authCallback(false);
   }
 
+  /* Helper functions */
+  public static void runOnThread(Runnable run) {
+    ThreadPool.run(run);
+  }
 }
