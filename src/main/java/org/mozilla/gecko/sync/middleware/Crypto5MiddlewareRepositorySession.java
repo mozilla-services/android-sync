@@ -237,4 +237,9 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   public void storeDone() {
     inner.storeDone();
   }
+
+  @Override
+  public void storeDone(long end) {
+    inner.storeDone(end);
+  }
 }
