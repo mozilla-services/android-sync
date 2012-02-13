@@ -5,6 +5,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.AccountActivity;
 
@@ -35,6 +36,7 @@ public class AccountAuthenticator {
 
   private void prepareStages() {
     stages = new ArrayList<AuthenticatorStage>();
+    stages.add(new EnsureUserExistenceStage());
     stages.add(new FetchUserNodeStage());
     stages.add(new AuthenticateAccountStage());
   }
@@ -96,4 +98,8 @@ public class AccountAuthenticator {
     activityCallback.authCallback(false);
   }
 
+  /* Helper functions */
+  public static void runOnThread(Runnable run) {
+    ThreadPool.run(run);
+  }
 }
