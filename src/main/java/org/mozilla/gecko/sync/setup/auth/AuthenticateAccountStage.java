@@ -12,11 +12,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.util.Base64;
@@ -27,7 +26,8 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class AuthenticateAccountStage implements AuthenticatorStage {
-  private final String LOG_TAG = "AuthenticateAccountStage";
+  private final String LOG_TAG = "AuthAccountStage";
+  private HttpRequestBase httpRequest = null;
 
   public interface AuthenticateAccountStageDelegate {
     public void handleSuccess(boolean isSuccess);
@@ -49,14 +49,21 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       public void handleFailure(HttpResponse response) {
         Logger.debug(LOG_TAG, "handleFailure");
         aa.abort(response.toString(), new Exception(response.getStatusLine().getStatusCode() + " error."));
+        if (response.getEntity() == null) {
+          // No cleanup necessary.
+          return;
+        }
         try {
           BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
           Logger.warn(LOG_TAG, "content: " + reader.readLine());
-          SyncResourceDelegate.consumeReader(reader);
-          reader.close();
-          SyncResourceDelegate.consumeEntity(response.getEntity());
+          BaseResource.consumeReader(reader);
         } catch (IllegalStateException e) {
           Logger.debug(LOG_TAG, "Error reading content.", e);
+        } catch (RuntimeException e) {
+          Logger.debug(LOG_TAG, "Unexpected exception.", e);
+          if (httpRequest != null) {
+            httpRequest.abort();
+          }
         } catch (IOException e) {
           Logger.debug(LOG_TAG, "Error reading content.", e);
         }
@@ -64,26 +71,38 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
 
       @Override
       public void handleError(Exception e) {
-        Logger.debug(LOG_TAG, "handleError");
+        Logger.debug(LOG_TAG, "handleError", e);
         aa.abort("HTTP failure.", e);
       }
     };
 
     // Calculate BasicAuth hash of username/password.
-    String authHash = Base64.encodeToString((aa.usernameHash + ":" + aa.password).getBytes(), Base64.DEFAULT);
-    String authRequestUrl = aa.authServer + Constants.AUTH_SERVER_VERSION + aa.usernameHash + "/" + Constants.AUTH_SERVER_SUFFIX;
-    authenticateAccount(callbackDelegate, authRequestUrl, authHash);
+    String authHeader = makeAuthHeader(aa.usernameHash, aa.password);
+    String authRequestUrl = makeAuthRequestUrl(aa.authServer, aa.usernameHash);
+    Logger.trace(LOG_TAG, "Making auth request to: " + authRequestUrl);
+    authenticateAccount(callbackDelegate, authRequestUrl, authHeader);
+
   }
 
-  private void authenticateAccount(final AuthenticateAccountStageDelegate callbackDelegate, final String authRequestUrl, final String authHeader) throws URISyntaxException {
+  /**
+   * Makes an authentication request to the server and passes appropriate response back to callback.
+   * @param callbackDelegate
+   *        Delegate to deal with HTTP response.
+   * @param authRequestUrl
+   * @param authHeader
+   * @throws URISyntaxException
+   */
+  // Made public for testing.
+  public void authenticateAccount(final AuthenticateAccountStageDelegate callbackDelegate, final String authRequestUrl, final String authHeader) throws URISyntaxException {
     final BaseResource httpResource = new BaseResource(authRequestUrl);
     httpResource.delegate = new SyncResourceDelegate(httpResource) {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
-
+        // Make reference to request, to abort if necessary.
+        httpRequest = request;
         client.log.enableDebug(true);
-        request.setHeader(new BasicHeader("User-Agent", SyncStorageRequest.USER_AGENT));
+        request.setHeader(new BasicHeader("User-Agent", GlobalConstants.USER_AGENT));
         // Host header is not set for some reason, so do it explicitly.
         try {
           URI authServerUri = new URI(authRequestUrl);
@@ -91,7 +110,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
         } catch (URISyntaxException e) {
           Logger.error(LOG_TAG, "Malformed uri, will be caught elsewhere.", e);
         }
-        request.setHeader(new BasicHeader("Authorization", "Basic " + authHeader));
+        request.setHeader(new BasicHeader("Authorization", authHeader));
       }
 
       @Override
@@ -100,35 +119,37 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
         switch(statusCode) {
         case 200:
           callbackDelegate.handleSuccess(true);
-          SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         case 401:
           callbackDelegate.handleSuccess(false);
-          SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         default:
           callbackDelegate.handleFailure(response);
         }
+        BaseResource.consumeEntity(response.getEntity());
+        Logger.info(LOG_TAG, "Released entity.");
       }
 
       @Override
       public void handleHttpProtocolException(ClientProtocolException e) {
-        Logger.error(LOG_TAG, "Client protocol error.");
+        Logger.error(LOG_TAG, "Client protocol error.", e);
         callbackDelegate.handleError(e);
       }
 
       @Override
       public void handleHttpIOException(IOException e) {
+        Logger.error(LOG_TAG, "I/O exception.");
         callbackDelegate.handleError(e);
       }
 
       @Override
       public void handleTransportException(GeneralSecurityException e) {
+        Logger.error(LOG_TAG, "Transport exception.");
         callbackDelegate.handleError(e);
       }
     };
 
-    runOnThread(new Runnable() {
+    AccountAuthenticator.runOnThread(new Runnable() {
       @Override
       public void run() {
         httpResource.get();
@@ -136,7 +157,11 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
     });
   }
 
-  private static void runOnThread(Runnable run) {
-    ThreadPool.run(run);
+  public String makeAuthHeader(String usernameHash, String password) {
+    return "Basic " + Base64.encodeToString((usernameHash + ":" + password).getBytes(), Base64.DEFAULT);
+  }
+
+  public String makeAuthRequestUrl(String authServer, String usernameHash) {
+    return authServer + Constants.AUTH_SERVER_VERSION + usernameHash + "/" + Constants.AUTH_SERVER_SUFFIX;
   }
 }
