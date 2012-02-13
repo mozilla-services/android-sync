@@ -7,7 +7,9 @@ import org.json.simple.JSONArray;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
@@ -58,7 +60,44 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   protected AndroidBrowserRepositoryDataAccessor getDataAccessor() {
     return new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
   }
- 
+
+  /**
+   * Hook to return an ExpectFetchDelegate, possibly with special GUIDs ignored.
+   */
+  @Override
+  public ExpectFetchDelegate preparedExpectFetchDelegate(Record[] expected) {
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
+  /**
+   * Hook to return an ExpectGuidsSinceDelegate expecting only special GUIDs (if there are any).
+   */
+  public ExpectGuidsSinceDelegate preparedExpectOnlySpecialGuidsSinceDelegate() {
+    ExpectGuidsSinceDelegate delegate = new ExpectGuidsSinceDelegate(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet().toArray(new String[] {}));
+    return delegate;
+  }
+
+  /**
+   * Hook to return an ExpectGuidsSinceDelegate, possibly with special GUIDs ignored.
+   */
+  @Override
+  public ExpectGuidsSinceDelegate preparedExpectGuidsSinceDelegate(String[] expected) {
+    ExpectGuidsSinceDelegate delegate = new ExpectGuidsSinceDelegate(expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
+  /**
+   * Hook to return an ExpectFetchSinceDelegate, possibly with special GUIDs ignored.
+   */
+  public ExpectFetchSinceDelegate preparedExpectFetchSinceDelegate(long timestamp, String[] expected) {
+    ExpectFetchSinceDelegate delegate = new ExpectFetchSinceDelegate(timestamp, expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
   // NOTE NOTE NOTE
   // Must store folder before records if we we are checking that the
   // records returned are the same as those sent in. If the folder isn't stored
@@ -244,7 +283,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
     doStore(session, expected);
-    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
+    ExpectFetchDelegate delegate = preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
     session.finish(new ExpectFinishDelegate());
   }
@@ -302,7 +341,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     rec0.children = new JSONArray();
     performWait(storeRunnable(session, record0));
 
-    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { rec0 });
+    ExpectFetchDelegate timestampDelegate = preparedExpectFetchDelegate(new Record[] { rec0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
 
     helper.dumpDB();
@@ -331,7 +370,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     Record[] expect = new Record[] {
         bmk1, bmk2, record3
     };
-    fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expect));
+    fetchAllRunnable(session, preparedExpectFetchDelegate(expect));
   }
   
   @Override
@@ -391,7 +430,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
                                           + expected[2].guid);
     doStore(session, expected);
 
-    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
+    ExpectFetchDelegate delegate = preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
     
     int found = 0;
