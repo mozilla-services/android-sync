@@ -133,9 +133,10 @@ implements RecordsChannelDelegate,
     // TODO: failed record handling.
     final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this);
     RecordsChannelDelegate channelDelegate = new RecordsChannelDelegate() {
-      public void onFlowCompleted(RecordsChannel recordsChannel, long end) {
-        info("First RecordsChannel flow completed. End is " + end + ". Starting next.");
-        pendingATimestamp = end;
+      public void onFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
+        info("First RecordsChannel flow completed. Fetch end is " + fetchEnd +
+             ". Store end is " + storeEnd + ". Starting next.");
+        pendingATimestamp = fetchEnd;
         flowAToBCompleted = true;
         channelBToA.flow();
       }
@@ -165,9 +166,10 @@ implements RecordsChannelDelegate,
   }
 
   @Override
-  public void onFlowCompleted(RecordsChannel channel, long end) {
-    info("Second RecordsChannel flow completed. End is " + end + ". Finishing.");
-    pendingBTimestamp = end;
+  public void onFlowCompleted(RecordsChannel channel, long fetchEnd, long storeEnd) {
+    info("First RecordsChannel flow completed. Fetch end is " + fetchEnd +
+         ". Store end is " + storeEnd + ". Finishing.");
+    pendingBTimestamp = fetchEnd;
     flowBToACompleted = true;
 
     // Finish the two sessions.

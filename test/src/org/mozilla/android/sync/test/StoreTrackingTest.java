@@ -156,8 +156,8 @@ public class StoreTrackingTest extends
       }
 
       @Override
-      public void onStoreCompleted() {
-        Log.d(getName(), "Store completed.");
+      public void onStoreCompleted(long timestamp) {
+        Log.d(getName(), "Store completed at " + timestamp + ".");
         session.fetch(new String[] { expectedGUID }, new SuccessFetchDelegate() {
          @Override
           public void onFetchedRecord(Record record) {
@@ -167,7 +167,7 @@ public class StoreTrackingTest extends
 
           @Override
           public void onFetchCompleted(long end) {
-            Log.d(getName(), "Fetch completed.");
+            Log.d(getName(), "Fetch completed at " + end + ".");
 
             // But fetching by time returns nothing.
             session.fetchSince(0, new SuccessFetchDelegate() {

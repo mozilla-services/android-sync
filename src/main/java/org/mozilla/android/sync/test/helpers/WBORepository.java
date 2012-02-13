@@ -134,10 +134,10 @@ public class WBORepository extends Repository {
     }
 
     @Override
-    public void storeDone() {
+    public void storeDone(long end) {
       // TODO: this is not guaranteed to be called after all of the record
       // store callbacks have completed!
-      delegate.deferredStoreDelegate(delegateExecutor).onStoreCompleted();
+      delegate.deferredStoreDelegate(delegateExecutor).onStoreCompleted(end);
     }
   }
 

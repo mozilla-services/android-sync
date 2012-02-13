@@ -21,7 +21,7 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onStoreCompleted() {
+  public void onStoreCompleted(long timestamp) {
     sharedFail("DefaultStoreDelegate used");
   }
 
@@ -51,11 +51,11 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
       }
 
       @Override
-      public void onStoreCompleted() {
+      public void onStoreCompleted(final long end) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onStoreCompleted();
+            self.onStoreCompleted(end);
           }
         });
       }
