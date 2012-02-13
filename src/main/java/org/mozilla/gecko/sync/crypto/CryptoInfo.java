@@ -8,16 +8,17 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.mozilla.apache.commons.codec.binary.Base64;
-import org.mozilla.gecko.sync.Utils;
 
 /*
  * All info in these objects should be decoded (i.e. not BaseXX encoded).
@@ -128,7 +129,7 @@ public class CryptoInfo {
    */
   public CryptoInfo encrypted() throws CryptoException {
 
-    Cipher cipher = Utils.getCipher(TRANSFORMATION);
+    Cipher cipher = CryptoInfo.getCipher(TRANSFORMATION);
     try {
       byte[] encryptionKey = getKeys().getEncryptionKey();
       SecretKeySpec spec = new SecretKeySpec(encryptionKey, KEY_ALGORITHM_SPEC);
@@ -177,7 +178,7 @@ public class CryptoInfo {
       throw new CryptoException(e);
     }
 
-    Cipher cipher = Utils.getCipher(TRANSFORMATION);
+    Cipher cipher = CryptoInfo.getCipher(TRANSFORMATION);
     try {
       byte[] encryptionKey = getKeys().getEncryptionKey();
       SecretKeySpec spec = new SecretKeySpec(encryptionKey, KEY_ALGORITHM_SPEC);
@@ -189,5 +190,19 @@ public class CryptoInfo {
 
     return new CryptoInfo(decryptedMessage, cipher.getIV(), null, getKeys());
   }
-}
 
+  /**
+   * Helper to get a Cipher object.
+   *
+   * @param transformation The type of Cipher to get.
+   */
+  private static Cipher getCipher(String transformation) throws CryptoException {
+    try {
+      return Cipher.getInstance(transformation);
+    } catch (NoSuchAlgorithmException e) {
+      throw new CryptoException(e);
+    } catch (NoSuchPaddingException e) {
+      throw new CryptoException(e);
+    }
+  }
+}

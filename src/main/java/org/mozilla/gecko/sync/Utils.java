@@ -46,12 +46,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.HashMap;
 
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
-
 import org.mozilla.apache.commons.codec.binary.Base32;
 import org.mozilla.apache.commons.codec.binary.Base64;
-import org.mozilla.gecko.sync.crypto.CryptoException;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -98,20 +94,6 @@ public class Utils {
   public static void reseedSharedRandom() {
     sharedSecureRandom.setSeed(sharedSecureRandom.generateSeed(8));
   }
-
-  /*
-   * Helper to get a Cipher object.
-   */
-  public static Cipher getCipher(String transformation) throws CryptoException {
-    try {
-      return Cipher.getInstance(transformation);
-    } catch (NoSuchAlgorithmException e) {
-      throw new CryptoException(e);
-    } catch (NoSuchPaddingException e) {
-      throw new CryptoException(e);
-    }
-  }
-
 
   /*
    * Helper to convert Byte Array to a Hex String
