@@ -5,7 +5,6 @@ package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.PasswordHelpers;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
