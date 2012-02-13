@@ -3,13 +3,13 @@
 
 package org.mozilla.gecko.sync.crypto.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import org.junit.Test;
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -35,9 +35,9 @@ public class TestCryptoInfo {
     CryptoInfo info = CryptoInfo.encrypt(plaintext, kb);
     byte[] iv = info.getIV();
     info.decrypt();
-    assertTrue(Arrays.equals(plaintext, info.getMessage()));
+    assertArrayEquals(plaintext, info.getMessage());
     assertSame(null, info.getHMAC());
-    assertTrue(Arrays.equals(iv, info.getIV()));
+    assertArrayEquals(iv, info.getIV());
     assertSame(kb, info.getKeys());
   }
 
@@ -87,10 +87,7 @@ public class TestCryptoInfo {
                 Base64.decodeBase64(base64HmacKey))
             );
 
-    // Check result
-    byte[] a = decrypted.getMessage();
-    byte[] b = Base64.decodeBase64(base64ExpectedBytes);
-    assertTrue(Arrays.equals(a, b));
+    assertArrayEquals(decrypted.getMessage(), Base64.decodeBase64(base64ExpectedBytes));
   }
 
   @Test
@@ -138,13 +135,7 @@ public class TestCryptoInfo {
                 Base64.decodeBase64(base64HmacKey))
             );
 
-    // Check result
-    byte[] a = encrypted.getMessage();
-    byte[] b = Base64.decodeBase64(base64CipherText);
-    assertTrue(Arrays.equals(a, b));
-
-    byte[] c = encrypted.getHMAC();
-    byte[] d = Utils.hex2Byte(base16Hmac);
-    assertTrue(Arrays.equals(c, d));
+    assertArrayEquals(Base64.decodeBase64(base64CipherText), encrypted.getMessage());
+    assertArrayEquals(Utils.hex2Byte(base16Hmac), encrypted.getHMAC());
   }
 }
