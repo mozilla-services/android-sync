@@ -83,7 +83,6 @@ public class GetRequestStage implements JPakeStage {
         }
         Log.d(LOG_TAG, "incoming message: " + jClient.jIncoming.toJSONString());
 
-        Log.d(LOG_TAG, "Advancing next stage.");
         jClient.runNextStage();
       }
 

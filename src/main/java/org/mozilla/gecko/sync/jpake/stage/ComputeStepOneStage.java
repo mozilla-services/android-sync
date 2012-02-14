@@ -64,9 +64,6 @@ public class ComputeStepOneStage implements JPakeStage {
     jClient.jOutgoing.put(Constants.JSON_KEY_VERSION, JPakeClient.KEYEXCHANGE_VERSION);
     Log.d(LOG_TAG, "Sending: " + jClient.jOutgoing.toJSONString());
 
-    Log.d(LOG_TAG, "Advancing stage.");
     jClient.runNextStage();
   }
-
-
 }

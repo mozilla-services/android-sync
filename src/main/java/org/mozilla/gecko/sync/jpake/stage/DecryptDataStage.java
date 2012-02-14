@@ -72,7 +72,6 @@ public class DecryptDataStage implements JPakeStage {
       return;
     }
 
-    Log.d(LOG_TAG, "Advancing next stage.");
     jClient.runNextStage();
   }
 

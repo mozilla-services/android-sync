@@ -122,7 +122,6 @@ public class ComputeStepTwoStage implements JPakeStage {
     jClient.jOutgoing.put(Constants.JSON_KEY_VERSION, JPakeClient.KEYEXCHANGE_VERSION);
     jClient.jOutgoing.put(Constants.JSON_KEY_PAYLOAD, oPayload);
 
-    Log.d(LOG_TAG, "Advancing stage.");
     jClient.runNextStage();
   }
 }

@@ -36,7 +36,6 @@ public class ComputeKeyVerificationStage implements JPakeStage {
       return;
     }
 
-    Log.d(LOG_TAG, "Advancing stage.");
     jClient.runNextStage();
   }
 

@@ -12,7 +12,6 @@ public class CompleteStage implements JPakeStage {
     Log.d(LOG_TAG, "Exchange complete.");
     jClient.finished = true;
     jClient.complete(jClient.jCreds);
-    Log.d(LOG_TAG, "Advancing stage.");
     jClient.runNextStage();
   }
 }

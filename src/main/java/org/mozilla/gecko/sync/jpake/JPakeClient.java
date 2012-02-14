@@ -218,7 +218,6 @@ public class JPakeClient {
       Log.d(LOG_TAG, "All stages complete.");
       return;
     }
-    Log.d(LOG_TAG, "runNextStage called by index " + stageIndex);
     stageIndex++;
     try{
       stages.get(stageIndex).execute(this);
@@ -296,7 +295,6 @@ public class JPakeClient {
    * Helper for turning a JSON object into a payload.
    *
    * @param body JSONObject body to be converted to StringEntity.
-   *
    * @return StringEntity representation of JSONObject.
    *
    * @throws UnsupportedEncodingException
@@ -345,13 +343,13 @@ public class JPakeClient {
     stageIndex = -1;
 
     // Encrypt data to send and set as jOutgoing.
-    Log.d(LOG_TAG, "Encrypting data to send.");
     String outData = jObj.toJSONString();
     encryptData(myKeyBundle, outData);
 
     // Start stages for sending credentials.
     runNextStage();
   }
+
   /* Setup helper functions */
 
   /*

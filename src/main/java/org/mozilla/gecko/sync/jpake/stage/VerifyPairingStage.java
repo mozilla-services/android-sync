@@ -16,7 +16,6 @@ import android.util.Log;
 public class VerifyPairingStage implements JPakeStage {
   private final String LOG_TAG = "VerifyPairingStage";
 
-
   @Override
   public void execute(JPakeClient jClient) {
     Log.d(LOG_TAG, "Verifying their key.");

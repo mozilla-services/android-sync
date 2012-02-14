@@ -90,7 +90,6 @@ public class ComputeFinalStage implements JPakeStage {
     }
 
     // Run next stage.
-    Log.d(LOG_TAG, "Advancing stage.");
     jClient.runNextStage();
   }
 
