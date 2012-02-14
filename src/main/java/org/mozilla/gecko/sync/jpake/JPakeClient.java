@@ -33,6 +33,7 @@ import org.mozilla.gecko.sync.jpake.stage.VerifyPairingStage;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 
+import android.util.Log;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 
 public class JPakeClient {
@@ -220,6 +221,7 @@ public class JPakeClient {
     stageIndex++;
     try{
       stages.get(stageIndex).execute(this);
+      Log.d(LOG_TAG, "running stage " + stages.get(stageIndex).toString());
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Exception in stage " + stages.get(stageIndex), e);
       abort("Stage exception.");
@@ -281,8 +283,8 @@ public class JPakeClient {
     CryptoInfo encrypted = CryptoInfo.encrypt(cleartextBytes, keyBundle);
 
     ExtendedJSONObject payload = new ExtendedJSONObject();
-    payload.put(Constants.JSON_KEY_CIPHERTEXT, encrypted.getMessage());
-    payload.put(Constants.JSON_KEY_IV, encrypted.getIV());
+    payload.put(Constants.JSON_KEY_CIPHERTEXT, new String(Base64.encodeBase64(encrypted.getMessage())));
+    payload.put(Constants.JSON_KEY_IV, new String(Base64.encodeBase64(encrypted.getIV())));
     if (makeHmac) {
       String hmac = Utils.byte2hex(encrypted.getHMAC());
       payload.put(Constants.JSON_KEY_HMAC, hmac);

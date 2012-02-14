@@ -71,7 +71,7 @@ public class VerifyPairingStage implements JPakeStage {
       KeyBundle keyBundle) throws UnsupportedEncodingException, CryptoException {
     byte[] cleartextBytes = JPakeClient.JPAKE_VERIFY_VALUE.getBytes("UTF-8");
     CryptoInfo encrypted = CryptoInfo.encrypt(cleartextBytes, Base64.decodeBase64(iv), keyBundle);
-    String myCiphertext = new String(Base64.encodeBase64(encrypted.getMessage()));
+    String myCiphertext = new String(Base64.encodeBase64(encrypted.getMessage()), "UTF-8");
     return myCiphertext.equals(theirCiphertext);
   }
 }

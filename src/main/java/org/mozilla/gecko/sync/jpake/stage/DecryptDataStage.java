@@ -18,7 +18,6 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.CryptoInfo;
-import org.mozilla.gecko.sync.crypto.Cryptographer;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -89,9 +88,8 @@ public class DecryptDataStage implements JPakeStage {
         .get(Constants.JSON_KEY_CIPHERTEXT));
     byte[] iv = Utils.decodeBase64((String) payload.get(Constants.JSON_KEY_IV));
     byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.JSON_KEY_HMAC));
-    byte[] plainbytes = Cryptographer.decrypt(new CryptoInfo(ciphertext, iv,
-        hmac, keybundle));
-    return plainbytes;
+    CryptoInfo decrypted = CryptoInfo.decrypt(ciphertext, iv, hmac, keybundle);
+    return decrypted.getMessage();
   }
 
   /**
