@@ -11,13 +11,13 @@ import java.security.GeneralSecurityException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.Resource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -36,7 +36,7 @@ public class PutRequestStage implements JPakeStage {
 
   @Override
   public void execute(final JPakeClient jClient) {
-    Log.d(LOG_TAG, "Upload message.");
+    Logger.debug(LOG_TAG, "Upload message.");
 
     // Create delegate.
     final PutRequestStageDelegate callbackDelegate = new PutRequestStageDelegate() {
@@ -51,7 +51,7 @@ public class PutRequestStage implements JPakeStage {
         };
         Timer timer = new Timer();
 
-        Log.d(LOG_TAG, "Pause for 2 * pollInterval before continuing.");
+        Logger.debug(LOG_TAG, "Pause for 2 * pollInterval before continuing.");
         // There's no point in returning early here since the next step will
         // always be a GET, so let's pause for twice the poll interval.
         timer.schedule(runNextStage, 2 * jClient.jpakePollInterval);
@@ -64,7 +64,7 @@ public class PutRequestStage implements JPakeStage {
 
       @Override
       public void handleError(Exception e) {
-        Log.e(LOG_TAG, "HTTP exception.", e);
+        Logger.error(LOG_TAG, "HTTP exception.", e);
         jClient.abort(Constants.JPAKE_ERROR_NETWORK);
       }
 
@@ -75,7 +75,7 @@ public class PutRequestStage implements JPakeStage {
     try {
       putRequest = createPutRequest(callbackDelegate, jClient);
     } catch (URISyntaxException e) {
-      Log.e(LOG_TAG, "URISyntaxException", e);
+      Logger.error(LOG_TAG, "URISyntaxException", e);
       jClient.abort(Constants.JPAKE_ERROR_CHANNEL);
       return;
     }
@@ -85,7 +85,7 @@ public class PutRequestStage implements JPakeStage {
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
-    Log.d(LOG_TAG, "Outgoing message: " + jClient.jOutgoing.toJSONString());
+    Logger.debug(LOG_TAG, "Outgoing message: " + jClient.jOutgoing.toJSONString());
   }
 
   private Resource createPutRequest(final PutRequestStageDelegate callbackDelegate, final JPakeClient jpakeClient) throws URISyntaxException {
@@ -101,16 +101,11 @@ public class PutRequestStage implements JPakeStage {
       public void handleHttpResponse(HttpResponse response) {
         int statusCode = response.getStatusLine().getStatusCode();
         Header[] etagHeaders = response.getHeaders("etag");
-        if (etagHeaders == null) {
-          Log.e(LOG_TAG, "Server did not supply ETag.");
-        } else {
-          Log.d(LOG_TAG, "Sender header: " + etagHeaders[0]);
-        }
         switch (statusCode) {
         case 200:
           etagHeaders = response.getHeaders("etag");
           if (etagHeaders == null) {
-            Log.e(LOG_TAG, "Server did not supply ETag.");
+            Logger.error(LOG_TAG, "Server did not supply ETag.");
             callbackDelegate.handleFailure(Constants.JPAKE_ERROR_SERVER);
             SyncResourceDelegate.consumeEntity(response.getEntity());
             return;
@@ -119,7 +114,7 @@ public class PutRequestStage implements JPakeStage {
           callbackDelegate.handleSuccess(response);
           break;
         default:
-          Log.e(LOG_TAG, "Could not upload data. Server responded with HTTP "
+          Logger.error(LOG_TAG, "Could not upload data. Server responded with HTTP "
               + statusCode);
           callbackDelegate.handleFailure(Constants.JPAKE_ERROR_SERVER);
         }

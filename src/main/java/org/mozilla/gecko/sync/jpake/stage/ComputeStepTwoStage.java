@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.jpake.BigIntegerHelper;
 import org.mozilla.gecko.sync.jpake.Gx3OrGx4IsZeroOrOneException;
@@ -19,18 +20,16 @@ import org.mozilla.gecko.sync.jpake.JPakeJson;
 import org.mozilla.gecko.sync.jpake.Zkp;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
-
 public class ComputeStepTwoStage implements JPakeStage {
   private final String LOG_TAG = "ComputeStepTwoStage";
 
   @Override
   public void execute(JPakeClient jClient) {
-    Log.d(LOG_TAG, "Computing round 2.");
+    Logger.debug(LOG_TAG, "Computing round 2.");
 
     // Check incoming message sender.
     if (!jClient.jIncoming.get(Constants.JSON_KEY_TYPE).equals(jClient.theirSignerId + "1")) {
-      Log.e(LOG_TAG, "Invalid round 1 message: " + jClient.jIncoming.toJSONString());
+      Logger.error(LOG_TAG, "Invalid round 1 message: " + jClient.jIncoming.toJSONString());
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
@@ -40,12 +39,12 @@ public class ComputeStepTwoStage implements JPakeStage {
     try {
       iPayload = jClient.jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
     } catch (NonObjectJSONException e) {
-      Log.e(LOG_TAG, "JSON object exception.", e);
+      Logger.error(LOG_TAG, "JSON object exception.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
       return;
     }
     if (iPayload == null) {
-      Log.e(LOG_TAG, "Invalid round 1 message: " + jClient.jIncoming.toJSONString());
+      Logger.error(LOG_TAG, "Invalid round 1 message: " + jClient.jIncoming.toJSONString());
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
@@ -60,14 +59,14 @@ public class ComputeStepTwoStage implements JPakeStage {
     }
 
     if (zkpPayload3 == null || zkpPayload4 == null) {
-      Log.e(LOG_TAG, "Invalid round 1 zkpPayload message");
+      Logger.error(LOG_TAG, "Invalid round 1 zkpPayload message");
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
 
     if (!jClient.theirSignerId.equals(zkpPayload3.get(Constants.ZKP_KEY_ID)) ||
         !jClient.theirSignerId.equals(zkpPayload4.get(Constants.ZKP_KEY_ID))) {
-      Log.e(LOG_TAG, "Invalid round 1 zkpPayload message");
+      Logger.error(LOG_TAG, "Invalid round 1 zkpPayload message");
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
@@ -92,19 +91,19 @@ public class ComputeStepTwoStage implements JPakeStage {
     try {
       JPakeCrypto.round2(JPakeClient.secretAsBigInteger(jClient.secret), jClient.jParty, jClient.numGen);
     } catch (Gx3OrGx4IsZeroOrOneException e) {
-      Log.e(LOG_TAG, "gx3 and gx4 cannot equal 0 or 1.");
+      Logger.error(LOG_TAG, "gx3 and gx4 cannot equal 0 or 1.");
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     } catch (IncorrectZkpException e) {
-      Log.e(LOG_TAG, "ZKP mismatch");
+      Logger.error(LOG_TAG, "ZKP mismatch");
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     } catch (NoSuchAlgorithmException e) {
-      Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
+      Logger.error(LOG_TAG, "NoSuchAlgorithmException", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     } catch (UnsupportedEncodingException e) {
-      Log.e(LOG_TAG, "UnsupportedEncodingException", e);
+      Logger.error(LOG_TAG, "UnsupportedEncodingException", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     }

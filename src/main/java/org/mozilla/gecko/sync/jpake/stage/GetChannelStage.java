@@ -8,13 +8,13 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.jpake.JPakeResponse;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -32,7 +32,7 @@ public class GetChannelStage implements JPakeStage {
 
   @Override
   public void execute(final JPakeClient jClient) {
-    Log.d(LOG_TAG, "Getting channel.");
+    Logger.debug(LOG_TAG, "Getting channel.");
 
     // Make delegate to handle responses and propagate them to JPakeClient.
     GetChannelStageDelegate callbackDelegate = new GetChannelStageDelegate() {
@@ -40,12 +40,12 @@ public class GetChannelStage implements JPakeStage {
       @Override
       public void handleSuccess(String channel) {
         if (jClient.finished) {
-          Log.d(LOG_TAG, "Finished; returning.");
+          Logger.debug(LOG_TAG, "Finished; returning.");
           return;
         }
 
         jClient.channelUrl = jClient.jpakeServer + channel;
-        Log.d(LOG_TAG, "Using channel " + channel);
+        Logger.debug(LOG_TAG, "Using channel " + channel);
         jClient.makeAndDisplayPin(channel);
 
         jClient.runNextStage();
@@ -58,19 +58,18 @@ public class GetChannelStage implements JPakeStage {
 
       @Override
       public void handleError(Exception e) {
-        Log.e(LOG_TAG, "Threw HTTP exception.", e);
+        Logger.error(LOG_TAG, "Threw HTTP exception.", e);
         jClient.abort(Constants.JPAKE_ERROR_CHANNEL);
       }
     };
 
-    Log.d(LOG_TAG, "Getting channel.");
     try {
       makeChannelRequest(callbackDelegate, jClient.jpakeServer + "new_channel", jClient.clientId);
     } catch (URISyntaxException e) {
-      Log.e(LOG_TAG, "Incorrect URI syntax.", e);
+      Logger.error(LOG_TAG, "Incorrect URI syntax.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
     } catch (Exception e) {
-      Log.e(LOG_TAG, "Unexpected exception.", e);
+      Logger.error(LOG_TAG, "Unexpected exception.", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
     }
   }

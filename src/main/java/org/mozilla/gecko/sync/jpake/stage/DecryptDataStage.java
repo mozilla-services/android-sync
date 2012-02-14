@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -22,52 +23,50 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
-
 public class DecryptDataStage implements JPakeStage {
   private final String LOG_TAG = "DecryptDataStage";
 
   @Override
   public void execute(JPakeClient jClient) {
-    Log.d(LOG_TAG, "Decrypting their payload.");
+    Logger.debug(LOG_TAG, "Decrypting their payload.");
     if (!(jClient.theirSignerId + "3").equals((String) jClient.jIncoming
         .get(Constants.JSON_KEY_TYPE))) {
-      Log.e(LOG_TAG, "Invalid round 3 data: " + jClient.jIncoming.toJSONString());
+      Logger.error(LOG_TAG, "Invalid round 3 data: " + jClient.jIncoming.toJSONString());
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
 
     // Decrypt payload and verify HMAC.
-    Log.d(LOG_TAG, "Decrypting payload.");
+    Logger.debug(LOG_TAG, "Decrypting payload.");
     ExtendedJSONObject iPayload = null;
     try {
       iPayload = jClient.jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
     } catch (NonObjectJSONException e1) {
-      Log.e(LOG_TAG, "Invalid round 3 data.", e1);
+      Logger.error(LOG_TAG, "Invalid round 3 data.", e1);
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
-    Log.d(LOG_TAG, "Decrypting data.");
+    Logger.debug(LOG_TAG, "Decrypting data.");
     String cleartext = null;
     try {
       cleartext = new String(decryptPayload(iPayload, jClient.myKeyBundle), "UTF-8");
     } catch (UnsupportedEncodingException e) {
-      Log.e(LOG_TAG, "Failed to decrypt data.", e);
+      Logger.error(LOG_TAG, "Failed to decrypt data.", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     } catch (CryptoException e) {
-      Log.e(LOG_TAG, "Failed to decrypt data.", e);
+      Logger.error(LOG_TAG, "Failed to decrypt data.", e);
       jClient.abort(Constants.JPAKE_ERROR_KEYMISMATCH);
       return;
     }
     try {
       jClient.jCreds = getJSONObject(cleartext);
     } catch (IOException e) {
-      Log.e(LOG_TAG, "I/O exception while creating JSON object.", e);
+      Logger.error(LOG_TAG, "I/O exception while creating JSON object.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
       return;
     } catch (ParseException e) {
-      Log.e(LOG_TAG, "JSON parse error.", e);
+      Logger.error(LOG_TAG, "JSON parse error.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
       return;
     }

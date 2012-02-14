@@ -8,37 +8,35 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.BigIntegerHelper;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
-
 import org.mozilla.gecko.sync.jpake.JPakeCrypto;
 import org.mozilla.gecko.sync.jpake.JPakeJson;
 import org.mozilla.gecko.sync.jpake.JPakeParty;
 import org.mozilla.gecko.sync.jpake.Zkp;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
-
 public class ComputeStepOneStage implements JPakeStage {
   private final static String LOG_TAG = "ComputeStepOneStage";
 
   @Override
   public void execute(JPakeClient jClient) {
-    Log.d(LOG_TAG, "Computing round 1.");
+    Logger.debug(LOG_TAG, "Computing round 1.");
 
     JPakeParty jClientParty = jClient.jParty;
     try {
       JPakeCrypto.round1(jClientParty, jClient.numGen);
     } catch (NoSuchAlgorithmException e) {
-      Log.e(LOG_TAG, "No such algorithm.", e);
+      Logger.error(LOG_TAG, "No such algorithm.", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     } catch (UnsupportedEncodingException e) {
-      Log.e(LOG_TAG, "Unsupported encoding.", e);
+      Logger.error(LOG_TAG, "Unsupported encoding.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
       return;
     } catch (Exception e) {
-      Log.e(LOG_TAG, "Unexpected exception.", e);
+      Logger.error(LOG_TAG, "Unexpected exception.", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     }
@@ -62,7 +60,7 @@ public class ComputeStepOneStage implements JPakeStage {
     jClient.jOutgoing.put(Constants.JSON_KEY_TYPE, jClient.mySignerId + "1");
     jClient.jOutgoing.put(Constants.JSON_KEY_PAYLOAD, jOne);
     jClient.jOutgoing.put(Constants.JSON_KEY_VERSION, JPakeClient.KEYEXCHANGE_VERSION);
-    Log.d(LOG_TAG, "Sending: " + jClient.jOutgoing.toJSONString());
+    Logger.debug(LOG_TAG, "Sending: " + jClient.jOutgoing.toJSONString());
 
     jClient.runNextStage();
   }

@@ -11,6 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.jpake.JPakeResponse;
@@ -19,7 +20,6 @@ import org.mozilla.gecko.sync.net.Resource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -41,47 +41,46 @@ public class GetRequestStage implements JPakeStage {
 
   @Override
   public void execute(final JPakeClient jClient) {
-    Log.d(LOG_TAG, "Retrieving next message.");
+    Logger.debug(LOG_TAG, "Retrieving next message.");
 
     final GetRequestStageDelegate callbackDelegate = new GetRequestStageDelegate() {
 
       @Override
       public void handleSuccess(HttpResponse response) {
         if (jClient.finished) {
-          Log.d(LOG_TAG, "Finished; returning.");
+          Logger.debug(LOG_TAG, "Finished; returning.");
           return;
         }
         JPakeResponse res = new JPakeResponse(response);
 
         Header[] etagHeaders = response.getHeaders("etag");
         if (etagHeaders == null) {
-          Log.e(LOG_TAG, "Server did not supply ETag.");
+          Logger.error(LOG_TAG, "Server did not supply ETag.");
           jClient.abort(Constants.JPAKE_ERROR_SERVER);
           return;
         }
 
         jClient.theirEtag = etagHeaders[0].toString();
-        Log.i(LOG_TAG, "their Etag: " + jClient.theirEtag);
         try {
           jClient.jIncoming = res.jsonObjectBody();
         } catch (IllegalStateException e) {
-          Log.e(LOG_TAG, "Illegal state.", e);
+          Logger.error(LOG_TAG, "Illegal state.", e);
           jClient.abort(Constants.JPAKE_ERROR_INVALID);
           return;
         } catch (IOException e) {
-          Log.e(LOG_TAG, "I/O Exception.", e);
+          Logger.error(LOG_TAG, "I/O Exception.", e);
           jClient.abort(Constants.JPAKE_ERROR_INVALID);
           return;
         } catch (ParseException e) {
-          Log.e(LOG_TAG, "Parse Exception.", e);
+          Logger.error(LOG_TAG, "Parse Exception.", e);
           jClient.abort(Constants.JPAKE_ERROR_INVALID);
           return;
         } catch (NonObjectJSONException e) {
-          Log.e(LOG_TAG, "JSON exception.", e);
+          Logger.error(LOG_TAG, "JSON exception.", e);
           jClient.abort(Constants.JPAKE_ERROR_INVALID);
           return;
         }
-        Log.d(LOG_TAG, "incoming message: " + jClient.jIncoming.toJSONString());
+        Logger.debug(LOG_TAG, "incoming message: " + jClient.jIncoming.toJSONString());
 
         jClient.runNextStage();
       }
@@ -93,7 +92,7 @@ public class GetRequestStage implements JPakeStage {
 
       @Override
       public void handleError(Exception e) {
-        Log.e(LOG_TAG, "Threw HTTP exception.", e);
+        Logger.error(LOG_TAG, "Threw HTTP exception.", e);
         jClient.abort(Constants.JPAKE_ERROR_NETWORK);
       }
     };
@@ -102,12 +101,12 @@ public class GetRequestStage implements JPakeStage {
     try {
       httpRequest = createGetRequest(callbackDelegate, jClient);
     } catch (URISyntaxException e) {
-      Log.e(LOG_TAG, "Incorrect URI syntax.", e);
+      Logger.error(LOG_TAG, "Incorrect URI syntax.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
       return;
     }
 
-    Log.d(LOG_TAG, "Scheduling GET request.");
+    Logger.debug(LOG_TAG, "Scheduling GET request.");
     getStepTimerTask = new GetStepTimerTask(httpRequest);
     timerScheduler.schedule(getStepTimerTask, jClient.jpakePollInterval);
   }
@@ -118,60 +117,50 @@ public class GetRequestStage implements JPakeStage {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
-        Log.d(LOG_TAG, "making poll request " + jpakeClient.pollTries);
         request.setHeader(new BasicHeader("X-KeyExchange-Id", jpakeClient.clientId));
         if (jpakeClient.myEtag != null) {
-          Log.d(LOG_TAG, "Setting 'If-None-Match' " + jpakeClient.myEtag);
           request.setHeader(new BasicHeader("If-None-Match", jpakeClient.myEtag));
         }
       }
 
       @Override
       public void handleHttpResponse(HttpResponse response) {
-        Header[] etagHeaders = response.getHeaders("etag");
-        if (etagHeaders == null || etagHeaders.length < 1) {
-          Log.e(LOG_TAG, "Server did not supply ETag.");
-        } else {
-          Log.d(LOG_TAG, "Sender header: " + etagHeaders[0]);
-        }
         int statusCode = response.getStatusLine().getStatusCode();
         switch (statusCode) {
         case 200:
-          Log.d(LOG_TAG, "GET 200.");
           jpakeClient.pollTries = 0; // Reset pollTries for next GET.
           callbackDelegate.handleSuccess(response);
           break;
         case 304:
-          Log.d(LOG_TAG, "Channel hasn't been updated yet. Will try again later");
+          Logger.debug(LOG_TAG, "Channel hasn't been updated yet. Will try again later");
           if (pollTries >= jpakeClient.jpakeMaxTries) {
-            Log.e(LOG_TAG, "Tried for " + pollTries + " times, maxTries " + jpakeClient.jpakeMaxTries + ", aborting");
+            Logger.error(LOG_TAG, "Tried for " + pollTries + " times, maxTries " + jpakeClient.jpakeMaxTries + ", aborting");
             callbackDelegate.handleFailure(Constants.JPAKE_ERROR_TIMEOUT);
             break;
           }
           jpakeClient.pollTries += 1;
           if (!jpakeClient.finished) {
-            Log.d(LOG_TAG, "Scheduling next GET request.");
+            Logger.debug(LOG_TAG, "Scheduling next GET request.");
             scheduleGetRequest(jpakeClient.jpakePollInterval, jpakeClient);
           } else {
-            Log.d(LOG_TAG, "Resetting pollTries");
+            Logger.debug(LOG_TAG, "Resetting pollTries");
             jpakeClient.pollTries = 0;
           }
           break;
         case 404:
-          Log.e(LOG_TAG, "No data found in channel.");
+          Logger.error(LOG_TAG, "No data found in channel.");
           callbackDelegate.handleFailure(Constants.JPAKE_ERROR_NODATA);
           break;
         case 412: // "Precondition failed"
-          Log.d(LOG_TAG, "Message already replaced on server by other party.");
+          Logger.debug(LOG_TAG, "Message already replaced on server by other party.");
           callbackDelegate.handleSuccess(response);
           break;
         default:
-          Log.e(LOG_TAG, "Could not retrieve data. Server responded with HTTP " + statusCode);
+          Logger.error(LOG_TAG, "Could not retrieve data. Server responded with HTTP " + statusCode);
           callbackDelegate.handleFailure(Constants.JPAKE_ERROR_SERVER);
           break;
         }
         // Clean up.
-        Log.d(LOG_TAG, "Cleaning up HTTP resources.");
         SyncResourceDelegate.consumeEntity(response.getEntity());
       }
 

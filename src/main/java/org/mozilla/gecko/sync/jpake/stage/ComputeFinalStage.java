@@ -10,6 +10,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.jpake.IncorrectZkpException;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
@@ -17,18 +18,16 @@ import org.mozilla.gecko.sync.jpake.JPakeCrypto;
 import org.mozilla.gecko.sync.jpake.Zkp;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Log;
-
 public class ComputeFinalStage implements JPakeStage {
   private final String LOG_TAG = "ComputeFinalStage";
 
   @Override
   public void execute(JPakeClient jClient) {
-    Log.d(LOG_TAG, "Computing final round.");
+    Logger.debug(LOG_TAG, "Computing final round.");
 
     // Check incoming message type.
     if (!jClient.jIncoming.get(Constants.JSON_KEY_TYPE).equals(jClient.theirSignerId + "2")) {
-      Log.e(LOG_TAG, "Invalid round 2 message: " + jClient.jIncoming.toJSONString());
+      Logger.error(LOG_TAG, "Invalid round 2 message: " + jClient.jIncoming.toJSONString());
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
@@ -40,20 +39,20 @@ public class ComputeFinalStage implements JPakeStage {
       iPayload = jClient.jIncoming.getObject(Constants.JSON_KEY_PAYLOAD);
       if (iPayload == null
           || iPayload.getObject(Constants.ZKP_KEY_ZKP_A) == null) {
-        Log.e(LOG_TAG,
+        Logger.error(LOG_TAG,
             "Invalid round 2 message: " + jClient.jIncoming.toJSONString());
         jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
         return;
       }
       zkpPayload = iPayload.getObject(Constants.ZKP_KEY_ZKP_A);
     } catch (NonObjectJSONException e) {
-      Log.e(LOG_TAG, "JSON object Exception.", e);
+      Logger.error(LOG_TAG, "JSON object Exception.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
       return;
     }
 
     if (!jClient.theirSignerId.equals(zkpPayload.get(Constants.ZKP_KEY_ID))) {
-      Log.e(LOG_TAG, "Invalid round 2 message: " + jClient.jIncoming.toJSONString());
+      Logger.error(LOG_TAG, "Invalid round 2 message: " + jClient.jIncoming.toJSONString());
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
@@ -72,19 +71,19 @@ public class ComputeFinalStage implements JPakeStage {
     try {
       jClient.myKeyBundle = JPakeCrypto.finalRound(JPakeClient.secretAsBigInteger(jClient.secret), jClient.jParty);
     } catch (IncorrectZkpException e) {
-      Log.e(LOG_TAG, "ZKP mismatch");
+      Logger.error(LOG_TAG, "ZKP mismatch");
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     } catch (NoSuchAlgorithmException e) {
-      Log.e(LOG_TAG, "NoSuchAlgorithmException", e);
+      Logger.error(LOG_TAG, "NoSuchAlgorithmException", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     } catch (InvalidKeyException e) {
-      Log.e(LOG_TAG, "InvalidKeyException", e);
+      Logger.error(LOG_TAG, "InvalidKeyException", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     } catch (UnsupportedEncodingException e) {
-      Log.e(LOG_TAG, "UnsupportedEncodingException", e);
+      Logger.error(LOG_TAG, "UnsupportedEncodingException", e);
       jClient.abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     }

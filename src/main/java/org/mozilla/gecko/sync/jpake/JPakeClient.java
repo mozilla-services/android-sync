@@ -33,7 +33,6 @@ import org.mozilla.gecko.sync.jpake.stage.VerifyPairingStage;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 
 public class JPakeClient {
@@ -215,14 +214,14 @@ public class JPakeClient {
    */
   public void runNextStage() {
     if (finished) {
-      Log.d(LOG_TAG, "All stages complete.");
+      Logger.debug(LOG_TAG, "All stages complete.");
       return;
     }
     stageIndex++;
     try{
       stages.get(stageIndex).execute(this);
     } catch (Exception e) {
-      Log.w(LOG_TAG, "Exception in stage " + stages.get(stageIndex));
+      Logger.error(LOG_TAG, "Exception in stage " + stages.get(stageIndex), e);
       abort("Stage exception.");
     }
   }
@@ -314,12 +313,12 @@ public class JPakeClient {
   }
 
   public void onPairingStart() {
-    Log.d(LOG_TAG, "Pairing started.");
+    Logger.debug(LOG_TAG, "Pairing started.");
     controllerActivity.onPairingStart();
   }
 
   public void onPaired() {
-    Log.d(LOG_TAG, "Pairing completed. Starting credential exchange.");
+    Logger.debug(LOG_TAG, "Pairing completed. Starting credential exchange.");
     controllerActivity.onPaired();
   }
 
@@ -333,7 +332,7 @@ public class JPakeClient {
   public void sendAndComplete(JSONObject jObj)
       throws JPakeNoActivePairingException {
     if (!paired || finished) {
-      Log.e(LOG_TAG, "Can't send data, no active pairing!");
+      Logger.error(LOG_TAG, "Can't send data, no active pairing!");
       throw new JPakeNoActivePairingException();
     }
     stages.clear();
@@ -395,16 +394,16 @@ public class JPakeClient {
    * @param payload Credentials data to be encrypted.
    */
   private void encryptData(KeyBundle keyBundle, String payload) {
-    Log.d(LOG_TAG, "Encrypting data.");
+    Logger.debug(LOG_TAG, "Encrypting data.");
     ExtendedJSONObject jPayload = null;
     try {
       jPayload = encryptPayload(payload, keyBundle, true);
     } catch (UnsupportedEncodingException e) {
-      Log.e(LOG_TAG, "Failed to encrypt data.", e);
+      Logger.error(LOG_TAG, "Failed to encrypt data.", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     } catch (CryptoException e) {
-      Log.e(LOG_TAG, "Failed to encrypt data.", e);
+      Logger.error(LOG_TAG, "Failed to encrypt data.", e);
       abort(Constants.JPAKE_ERROR_INTERNAL);
       return;
     }
