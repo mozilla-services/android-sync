@@ -268,11 +268,23 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  protected JSONObject makeAccountJSON(String username, String password,
+                                       String syncKey, String serverURL) {
+    JSONObject jAccount = new JSONObject();
+    jAccount.put(Constants.JSON_KEY_SYNCKEY,  syncKey);
+    jAccount.put(Constants.JSON_KEY_ACCOUNT,  username);
+    jAccount.put(Constants.JSON_KEY_PASSWORD, password);
+    jAccount.put(Constants.JSON_KEY_SERVER,   serverURL);
+
+    Log.d(LOG_TAG, "Extracted account data: " + jAccount.toJSONString());
+    return jAccount;
+  }
+
   /**
    * Device has finished key exchange, waiting for remote device to set up or
    * link to a Sync account. Display "waiting for other device" dialog.
    */
-  @SuppressWarnings("unchecked")
   public void onPaired() {
     if (!pairWithPin) {
       runOnUiThread(new Runnable() {
@@ -300,13 +312,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     String syncKey   = mAccountManager.getUserData(account, Constants.OPTION_SYNCKEY);
     String serverURL = mAccountManager.getUserData(account, Constants.OPTION_SERVER);
 
-    JSONObject jAccount = new JSONObject();
-    jAccount.put(Constants.JSON_KEY_SYNCKEY,  syncKey);
-    jAccount.put(Constants.JSON_KEY_ACCOUNT,  username);
-    jAccount.put(Constants.JSON_KEY_PASSWORD, password);
-    jAccount.put(Constants.JSON_KEY_SERVER,   serverURL);
-
-    Log.d(LOG_TAG, "Extracted account data: " + jAccount.toJSONString());
+    JSONObject jAccount = makeAccountJSON(username, password, syncKey, serverURL);
     try {
       jClient.sendAndComplete(jAccount);
     } catch (JPakeNoActivePairingException e) {
