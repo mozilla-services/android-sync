@@ -406,6 +406,25 @@ public class StoreTrackingTest extends
             Log.d(getName(), "Counts: " + countA + ", " + countB);
             assertEq(2L, countA);
             assertEq(3L, countB);
+
+            // Testing for store timestamp 'hack'.
+            // We fetched from A first, and so its bundle timestamp will be the last
+            // stored time. We fetched from B second, so its bundle timestamp will be
+            // the last fetched time.
+            final long timestampA = synchronizer.bundleA.getTimestamp();
+            final long timestampB = synchronizer.bundleB.getTimestamp();
+            Log.d(getName(), "Repo A timestamp: " + timestampA);
+            Log.d(getName(), "Repo B timestamp: " + timestampB);
+            Log.d(getName(), "Repo A fetch done: " + repoA.stats.fetchCompleted);
+            Log.d(getName(), "Repo A store done: " + repoA.stats.storeCompleted);
+            Log.d(getName(), "Repo B fetch done: " + repoB.stats.fetchCompleted);
+            Log.d(getName(), "Repo B store done: " + repoB.stats.storeCompleted);
+
+            assertTrue(timestampB <= timestampA);
+            assertTrue(repoA.stats.fetchCompleted <= timestampA);
+            assertTrue(repoA.stats.storeCompleted >= repoA.stats.fetchCompleted);
+            assertEquals(repoA.stats.storeCompleted, timestampA);
+            assertEquals(repoB.stats.fetchCompleted, timestampB);
             performNotify();
           }
 
