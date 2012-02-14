@@ -274,17 +274,17 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   protected JSONObject makeAccountJSON(String username, String password,
                                        String syncKey, String serverURL) {
 
-    // Hack to try to keep Java 1.7 from complaining about unchecked types.
-    HashMap<String, String> fields = new HashMap<String, String>(4);
+    JSONObject jAccount = new JSONObject();
+
+    // Hack to try to keep Java 1.7 from complaining about unchecked types,
+    // despite the presence of SuppressWarnings.
+    HashMap<String, String> fields = (HashMap<String, String>) jAccount;
 
     fields.put(Constants.JSON_KEY_SYNCKEY,  syncKey);
     fields.put(Constants.JSON_KEY_ACCOUNT,  username);
     fields.put(Constants.JSON_KEY_PASSWORD, password);
     fields.put(Constants.JSON_KEY_SERVER,   serverURL);
 
-    JSONObject jAccount = new JSONObject();
-
-    jAccount.putAll(fields);
     Log.d(LOG_TAG, "Extracted account data: " + jAccount.toJSONString());
     return jAccount;
   }
