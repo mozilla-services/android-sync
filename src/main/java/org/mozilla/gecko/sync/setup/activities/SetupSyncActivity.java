@@ -38,6 +38,8 @@
 
 package org.mozilla.gecko.sync.setup.activities;
 
+import java.util.HashMap;
+
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
@@ -271,12 +273,18 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   @SuppressWarnings("unchecked")
   protected JSONObject makeAccountJSON(String username, String password,
                                        String syncKey, String serverURL) {
-    JSONObject jAccount = new JSONObject();
-    jAccount.put(Constants.JSON_KEY_SYNCKEY,  syncKey);
-    jAccount.put(Constants.JSON_KEY_ACCOUNT,  username);
-    jAccount.put(Constants.JSON_KEY_PASSWORD, password);
-    jAccount.put(Constants.JSON_KEY_SERVER,   serverURL);
 
+    // Hack to try to keep Java 1.7 from complaining about unchecked types.
+    HashMap<String, String> fields = new HashMap<String, String>(4);
+
+    fields.put(Constants.JSON_KEY_SYNCKEY,  syncKey);
+    fields.put(Constants.JSON_KEY_ACCOUNT,  username);
+    fields.put(Constants.JSON_KEY_PASSWORD, password);
+    fields.put(Constants.JSON_KEY_SERVER,   serverURL);
+
+    JSONObject jAccount = new JSONObject();
+
+    jAccount.putAll(fields);
     Log.d(LOG_TAG, "Extracted account data: " + jAccount.toJSONString());
     return jAccount;
   }
