@@ -21,10 +21,10 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records, long end) {
+  public void onFetchSucceeded(Record[] records, final long fetchEnd) {
     Log.i("ExpectFetchDelegate", "onFetchSucceeded: " + ((records == null) ? "null" : "" + records.length) + " records.");
     this.records.addAll(Arrays.asList(records));
-    this.onFetchCompleted(end);
+    this.onFetchCompleted(fetchEnd);
   }
 
   @Override
@@ -34,10 +34,10 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchCompleted(long end) {
-    Log.i("ExpectFetchDelegate", "onFetchCompleted: " + end);
+  public void onFetchCompleted(final long fetchEnd) {
+    Log.i("ExpectFetchDelegate", "onFetchCompleted: " + fetchEnd);
     Log.i("ExpectFetchDelegate", "Records: " + this.recordCount());
-    super.onDone(this.records, this.expect, end);
+    super.onDone(this.records, this.expect, fetchEnd);
   }
 
   public Record recordAt(int i) {

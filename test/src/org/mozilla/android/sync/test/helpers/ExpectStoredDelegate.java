@@ -18,7 +18,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   }
 
   @Override
-  public synchronized void onStoreCompleted() {
+  public synchronized void onStoreCompleted(long storeEnd) {
     if (this.storedRecord == null) {
       System.out.println("Notifying in onStoreCompleted.");
       testWaiter().performNotify();
