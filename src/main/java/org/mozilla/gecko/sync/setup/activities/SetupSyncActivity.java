@@ -49,6 +49,7 @@ import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -57,6 +58,8 @@ import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Display;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -430,6 +433,11 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       @Override
       public void afterTextChanged(Editable s) {
          activateButton(connectButton, pinEntryCompleted());
+         Display display = getWindowManager().getDefaultDisplay();
+         int rotation = display.getRotation();
+         if (rotation == Surface.ROTATION_0 && s.length() == 4) {
+           row2.requestFocus();
+         }
       }
 
       @Override
@@ -445,7 +453,12 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     row2.addTextChangedListener(new TextWatcher() {
       @Override
       public void afterTextChanged(Editable s) {
+        Display display = getWindowManager().getDefaultDisplay();
+        int rotation = display.getRotation();
         activateButton(connectButton, pinEntryCompleted());
+        if (rotation == Surface.ROTATION_0 && s.length() == 4) {
+          row3.requestFocus();
+        }
       }
 
       @Override
