@@ -175,7 +175,7 @@ implements RecordsChannelDelegate,
 
   @Override
   public void onFlowCompleted(RecordsChannel channel, long fetchEnd, long storeEnd) {
-    info("First RecordsChannel flow completed. Fetch end is " + fetchEnd +
+    info("Second RecordsChannel flow completed. Fetch end is " + fetchEnd +
          ". Store end is " + storeEnd + ". Finishing.");
 
     pendingBTimestamp = fetchEnd;

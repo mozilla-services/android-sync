@@ -128,11 +128,11 @@ public class StoreTrackingTest extends
     }
 
     @Override
-    public void onFetchSucceeded(Record[] records, long end) {
+    public void onFetchSucceeded(Record[] records, final long fetchEnd) {
       for (Record record : records) {
         this.onFetchedRecord(record);
       }
-      this.onFetchCompleted(end);
+      this.onFetchCompleted(fetchEnd);
     }
 
     @Override
@@ -166,8 +166,8 @@ public class StoreTrackingTest extends
           }
 
           @Override
-          public void onFetchCompleted(long end) {
-            Log.d(getName(), "Fetch completed at " + end + ".");
+          public void onFetchCompleted(final long fetchEnd) {
+            Log.d(getName(), "Fetch completed at " + fetchEnd + ".");
 
             // But fetching by time returns nothing.
             session.fetchSince(0, new SuccessFetchDelegate() {
@@ -181,7 +181,7 @@ public class StoreTrackingTest extends
               }
 
               @Override
-              public void onFetchCompleted(long end) {
+              public void onFetchCompleted(final long fetchEnd) {
                 if (fetched.get()) {
                   Log.d(getName(), "Not finishing session: record retrieved.");
                   return;

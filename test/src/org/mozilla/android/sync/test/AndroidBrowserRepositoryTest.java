@@ -581,7 +581,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return new DefaultFetchDelegate() {
       
       @Override
-      public void onFetchCompleted(long end) {
+      public void onFetchCompleted(final long fetchEnd) {
         assertEquals(guid, this.records.get(0).guid);
         testWaiter().performNotify();
       }

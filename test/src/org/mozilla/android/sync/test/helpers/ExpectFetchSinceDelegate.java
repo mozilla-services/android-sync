@@ -27,7 +27,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchCompleted(long end) {
+  public void onFetchCompleted(final long fetchEnd) {
     Log.i("ExpectFetchSinceDelegate", "onFetchCompleted.");
     AssertionFailedError err = null;
     try {

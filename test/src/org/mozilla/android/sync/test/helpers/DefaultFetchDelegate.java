@@ -30,12 +30,12 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records, long end) {
+  public void onFetchSucceeded(Record[] records, final long fetchEnd) {
     Log.d(LOG_TAG, "onFetchSucceeded");
     for (Record record : records) {
       this.records.add(record);
     }
-    this.onFetchCompleted(end);
+    this.onFetchCompleted(fetchEnd);
   }
 
   protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected, long end) {
@@ -98,7 +98,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchCompleted(long end) {
+  public void onFetchCompleted(final long fetchEnd) {
     Log.d(LOG_TAG, "onFetchCompleted. Doing nothing.");
   }
 
