@@ -13,7 +13,7 @@ public class ExpectStoreCompletedDelegate extends DefaultStoreDelegate {
   }
 
   @Override
-  public void onStoreCompleted(long timestamp) {
+  public void onStoreCompleted(long storeEnd) {
     testWaiter().performNotify();
   }
 }

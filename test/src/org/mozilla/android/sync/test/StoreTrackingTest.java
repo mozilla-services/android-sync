@@ -156,8 +156,8 @@ public class StoreTrackingTest extends
       }
 
       @Override
-      public void onStoreCompleted(long timestamp) {
-        Log.d(getName(), "Store completed at " + timestamp + ".");
+      public void onStoreCompleted(long storeEnd) {
+        Log.d(getName(), "Store completed at " + storeEnd + ".");
         session.fetch(new String[] { expectedGUID }, new SuccessFetchDelegate() {
          @Override
           public void onFetchedRecord(Record record) {
