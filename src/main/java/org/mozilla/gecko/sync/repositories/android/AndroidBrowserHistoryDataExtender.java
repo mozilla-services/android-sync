@@ -61,8 +61,11 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
   public static final String COL_GUID = "guid";
   public static final String COL_VISITS = "visits";
 
+  private final RepoUtils.QueryHelper queryHelper;
+
   public AndroidBrowserHistoryDataExtender(Context context) {
     super(context, DB_NAME, null, SCHEMA_VERSION);
+    this.queryHelper = new RepoUtils.QueryHelper(context, null, LOG_TAG);
   }
 
   @Override
@@ -178,16 +181,9 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
     String[] args = new String[] { guid };
 
     SQLiteDatabase db = this.getCachedReadableDatabase();
-    long queryStart = System.currentTimeMillis();
-    Cursor cur = db.query(TBL_HISTORY_EXT,
-                          new String[] { COL_GUID, COL_VISITS },
-                          where, args,
-                          null, null, null);
-    RepoUtils.queryTimeLogger("AndroidBrowserHistoryDataExtender.fetch(guid)", queryStart, System.currentTimeMillis());
-    if (cur == null) {
-      Logger.error(LOG_TAG, "Got a null cursor while doing fetch for guid " + guid + " on history extension table");
-      throw new NullCursorException(null);
-    }
+    Cursor cur = queryHelper.safeQuery(db, ".fetch", TBL_HISTORY_EXT,
+        new String[] { COL_GUID, COL_VISITS },
+        where, args, null, null, null, null);
     return cur;
   }
 
