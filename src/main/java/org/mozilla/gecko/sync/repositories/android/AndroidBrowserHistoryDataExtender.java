@@ -39,6 +39,7 @@
 package org.mozilla.gecko.sync.repositories.android;
 
 import org.json.simple.JSONArray;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 
 import android.content.ContentValues;
@@ -46,12 +47,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
 
-  public static final String TAG = "AndroidBrowserHistoryDataExtender";
-  
+  public static final String LOG_TAG = "A.BrowHist.DataExtender";
+
   // Database Specifications.
   protected static final String DB_NAME = "history_extension_database";
   protected static final int SCHEMA_VERSION = 1;
@@ -60,8 +60,8 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
   public static final String TBL_HISTORY_EXT = "HistoryExtension";
   public static final String COL_GUID = "guid";
   public static final String COL_VISITS = "visits";
-  
-  protected AndroidBrowserHistoryDataExtender(Context context) {
+
+  public AndroidBrowserHistoryDataExtender(Context context) {
     super(context, DB_NAME, null, SCHEMA_VERSION);
   }
 
@@ -123,15 +123,29 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
     onUpgrade(db, SCHEMA_VERSION, SCHEMA_VERSION);
   }
 
-  // If a record with given GUID exists, we'll delete it
-  // and store the updated version.
-  public long store(String guid, JSONArray visits) {
+  /**
+   * Store visit data.
+   *
+   * If a row with GUID `guid` does not exist, insert a new row.
+   * If a row with GUID `guid` does exist, replace the visits column.
+   *
+   * @param guid The GUID to store to.
+   * @param visits New visits data.
+   */
+  public void store(String guid, JSONArray visits) {
     SQLiteDatabase db = this.getCachedReadableDatabase();
-    
-    // delete if exists
-    delete(guid);
-    
-    // insert new
+
+    boolean rowExists = false;
+    try {
+      Cursor cur = fetch(guid);
+      if (cur.getCount() >= 1) {
+        rowExists = true;
+      }
+      cur.close();
+    } catch (NullCursorException e) {
+      // Do nothing.
+    }
+
     ContentValues cv = new ContentValues();
     cv.put(COL_GUID, guid);
     if (visits == null) {
@@ -139,11 +153,26 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
     } else {
       cv.put(COL_VISITS, visits.toJSONString());
     }
-    long rowId = db.insert(TBL_HISTORY_EXT, null, cv);
-    Log.i(TAG, "Inserted history extension record into row: " + rowId);
-    return rowId;
+
+    if (!rowExists) {
+      long rowId = db.insert(TBL_HISTORY_EXT, null, cv);
+      Logger.debug(LOG_TAG, "Inserted history extension record into row: " + rowId);
+    } else {
+      String where = COL_GUID + " = ?";
+      String[] args = new String[] { guid };
+
+      db.update(TBL_HISTORY_EXT, cv, where, args);
+      Logger.debug(LOG_TAG, "Replaced history extension record for row with GUID " + guid);
+    }
   }
-  
+
+  /**
+   * Fetch a row.
+   *
+   * @param guid The GUID of the row to fetch.
+   * @return A Cursor.
+   * @throws NullCursorException
+   */
   public Cursor fetch(String guid) throws NullCursorException {
     String where = COL_GUID + " = ?";
     String[] args = new String[] { guid };
@@ -156,17 +185,55 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
                           null, null, null);
     RepoUtils.queryTimeLogger("AndroidBrowserHistoryDataExtender.fetch(guid)", queryStart, System.currentTimeMillis());
     if (cur == null) {
-      Log.e(TAG, "Got a null cursor while doing fetch for guid " + guid + " on history extension table");
+      Logger.error(LOG_TAG, "Got a null cursor while doing fetch for guid " + guid + " on history extension table");
       throw new NullCursorException(null);
     }
     return cur;
   }
-  
-  public void delete(String guid) {
+
+  public JSONArray visitsForGUID(String guid) throws NullCursorException {
+    Logger.debug(LOG_TAG, "Fetching visits for GUID " + guid);
+    Cursor visits = fetch(guid);
+    try {
+      if (!visits.moveToFirst()) {
+        // Cursor is empty.
+        return new JSONArray();
+      } else {
+        return RepoUtils.getJSONArrayFromCursor(visits, COL_VISITS);
+      }
+    } finally {
+      visits.close();
+    }
+  }
+
+  /**
+   * Delete a row.
+   *
+   * @param guid The GUID of the row to delete.
+   * @return The number of rows deleted, either 0 (if a row with this GUID does not exist) or 1.
+   */
+  public int delete(String guid) {
     String where = COL_GUID + " = ?";
     String[] args = new String[] { guid };
 
     SQLiteDatabase db = this.getCachedWritableDatabase();
-    db.delete(TBL_HISTORY_EXT, where, args);
+    return db.delete(TBL_HISTORY_EXT, where, args);
+  }
+
+  /**
+   * Fetch all rows.
+   *
+   * @return A Cursor.
+   * @throws NullCursorException
+   */
+  public Cursor fetchAll() throws NullCursorException {
+    SQLiteDatabase db = this.getCachedReadableDatabase();
+    Cursor cur = db.query(TBL_HISTORY_EXT,
+        new String[] { COL_GUID, COL_VISITS },
+        null, null, null, null, null);
+    if (cur == null) {
+      throw new NullCursorException(null);
+    }
+    return cur;
   }
 }
