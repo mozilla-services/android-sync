@@ -7,7 +7,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 /**
@@ -27,23 +26,26 @@ public class WaitHelper {
   public static final String LOG_TAG = "WaitHelper";
 
   public class Result {
-    public AssertionFailedError error;
+    public Throwable error;
     public Result() {
       error = null;
     }
 
-    public Result(AssertionFailedError error) {
+    public Result(Throwable error) {
       this.error = error;
     }
+  }
+
+  public abstract class WaitHelperError extends Error {
+    private static final long serialVersionUID = 7074690961681883619L;
   }
 
   /**
    * Immutable.
    *
    * @author rnewman
-   *
    */
-  public class TimeoutError extends AssertionFailedError {
+  public class TimeoutError extends WaitHelperError {
     private static final long serialVersionUID = 8591672555848651736L;
     public final int waitTimeInMillis;
 
@@ -52,8 +54,21 @@ public class WaitHelper {
     }
   }
 
-  public class MultipleNotificationsError extends AssertionFailedError {
+  public class MultipleNotificationsError extends WaitHelperError {
     private static final long serialVersionUID = -9072736521571635495L;
+  }
+
+  public class InterruptedError extends WaitHelperError {
+    private static final long serialVersionUID = 8383948170038639308L;
+  }
+
+  public class InnerError extends WaitHelperError {
+    private static final long serialVersionUID = 3008502618576773778L;
+    public Throwable innerError;
+
+    public InnerError(Throwable e) {
+      innerError = e;
+    }
   }
 
   public BlockingQueue<Result> queue = new ArrayBlockingQueue<Result>(1);
@@ -68,11 +83,11 @@ public class WaitHelper {
     Log.i(LOG_TAG, message);
   }
 
-  public void performWait(Runnable action) throws AssertionFailedError {
+  public void performWait(Runnable action) throws WaitHelperError {
     this.performWait(defaultWaitTimeoutInMillis, action);
   }
 
-  public void performWait(int waitTimeoutInMillis, Runnable action) throws AssertionFailedError {
+  public void performWait(int waitTimeoutInMillis, Runnable action) throws WaitHelperError {
     trace("performWait called.");
 
     Result result = null;
@@ -82,9 +97,7 @@ public class WaitHelper {
         try {
           action.run();
         } catch (Exception ex) {
-          final AssertionFailedError error = new AssertionFailedError(ex.getMessage());
-          error.initCause(ex);
-          throw error;
+          throw new InnerError(ex);
         }
       }
 
@@ -96,7 +109,7 @@ public class WaitHelper {
     } catch (InterruptedException e) {
       // We were interrupted.
       trace("performNotify interrupted with InterruptedException " + e);
-      throw new AssertionFailedError("INTERRUPTED!");
+      throw new InterruptedError();
     }
 
     if (result == null) {
@@ -104,15 +117,15 @@ public class WaitHelper {
       throw new TimeoutError(waitTimeoutInMillis);
     } else if (result.error != null) {
       // Rethrow any assertion with which we were notified.
-      throw result.error;
+      throw new InnerError(result.error);
     } else {
       // Success!
     }
   }
 
-  public void performNotify(final junit.framework.AssertionFailedError e) {
+  public void performNotify(final Throwable e) {
     if (e != null) {
-      trace("performNotify called with AssertionFailedError " + e);
+      trace("performNotify called with Throwable " + e);
     } else {
       trace("performNotify called.");
     }
@@ -123,19 +136,8 @@ public class WaitHelper {
     }
   }
 
-  public void performNotify(final android.test.AssertionFailedError e) {
-    junit.framework.AssertionFailedError ex = null;
-
-    if (e != null) {
-      ex = new junit.framework.AssertionFailedError(e.getMessage());
-      ex.initCause(e.getCause());
-    }
-
-    this.performNotify(ex);
-  }
-
   public void performNotify() {
-    this.performNotify((AssertionFailedError) null);
+    this.performNotify(null);
   }
 
   private static WaitHelper singleWaiter = new WaitHelper();
