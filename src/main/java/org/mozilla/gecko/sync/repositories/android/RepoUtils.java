@@ -201,7 +201,7 @@ public class RepoUtils {
       Cursor c = this.query(db, label, table, columns, selection, selectionArgs,
           groupBy, having, orderBy, limit);
       if (c == null) {
-        Log.e(tag, "Got null cursor exception in " + tag + ((label == null) ? "" : label));
+        Logger.error(tag, "Got null cursor exception in " + tag + ((label == null) ? "" : label));
         throw new NullCursorException(null);
       }
       return c;
