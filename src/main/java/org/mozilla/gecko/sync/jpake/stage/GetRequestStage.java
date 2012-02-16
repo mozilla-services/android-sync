@@ -58,7 +58,7 @@ public class GetRequestStage extends JPakeStage {
           return;
         }
 
-        jClient.theirEtag = etagHeader.toString();
+        jClient.theirEtag = etagHeader.getValue();
         try {
           jClient.jIncoming = res.jsonObjectBody();
         } catch (Exception e) {

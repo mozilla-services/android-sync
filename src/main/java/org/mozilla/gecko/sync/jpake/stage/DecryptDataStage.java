@@ -22,6 +22,8 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.setup.Constants;
 
+import android.util.Log;
+
 public class DecryptDataStage extends JPakeStage {
 
   @Override
@@ -90,7 +92,7 @@ public class DecryptDataStage extends JPakeStage {
 
     byte[] ciphertext = Utils.decodeBase64(sCiphertext);
     byte[] iv = Utils.decodeBase64(sIv);
-    byte[] hmac = Utils.hex2Byte((String) payload.get(sHmac));
+    byte[] hmac = Utils.hex2Byte(sHmac);
 
     CryptoInfo decrypted = CryptoInfo.decrypt(ciphertext, iv, hmac, keybundle);
     return decrypted.getMessage();

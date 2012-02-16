@@ -93,6 +93,11 @@ public class PutRequestStage extends JPakeStage {
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
         request.setHeader(new BasicHeader("X-KeyExchange-Id", jpakeClient.clientId));
+//        if (jpakeClient.theirEtag != null) {
+//          request.setHeader(new BasicHeader("If-Match", jpakeClient.theirEtag));
+//        } else {
+//          request.setHeader(new BasicHeader("If-None-Match", "*"));
+//        }
       }
 
       @Override
@@ -107,7 +112,7 @@ public class PutRequestStage extends JPakeStage {
             SyncResourceDelegate.consumeEntity(response.getEntity());
             return;
           }
-          jpakeClient.myEtag = etagHeader.toString();
+          jpakeClient.myEtag = etagHeader.getValue();
           callbackDelegate.handleSuccess(response);
           break;
         default:
