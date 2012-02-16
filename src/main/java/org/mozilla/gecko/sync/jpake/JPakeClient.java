@@ -6,8 +6,8 @@ package org.mozilla.gecko.sync.jpake;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import org.json.simple.JSONObject;
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -33,7 +33,6 @@ import org.mozilla.gecko.sync.jpake.stage.VerifyPairingStage;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 
 public class JPakeClient {
@@ -88,9 +87,7 @@ public class JPakeClient {
 
   // UI controller.
   private SetupSyncActivity controllerActivity;
-  private List<JPakeStage>  stages;
-
-  private int               stageIndex = -1; // Stages not started.
+  private Queue<JPakeStage>  stages;
 
   public JPakeClient(SetupSyncActivity activity) {
     controllerActivity = activity;
@@ -107,66 +104,73 @@ public class JPakeClient {
   }
 
   /**
-   * Set up sequence of stages for J-PAKE.
+   * Set up Sender sequence of stages for J-PAKE. (sender of credentials)
    *
    * @param pairWithPin
    *          boolean to determine which type of setup has been initiated
    *          (pairWithPin or receiveNoPin)
    */
 
-  private void prepareStagesAndStartWithPin(boolean pairWithPin) {
-    stages = new ArrayList<JPakeStage>();
-    if (pairWithPin) {
-      // Acting as sender, called by pairWithPin.
-      stages.add(new ComputeStepOneStage());
-      stages.add(new GetRequestStage());
-      stages.add(new PutRequestStage());
-      stages.add(new ComputeStepTwoStage());
-      stages.add(new GetRequestStage());
-      stages.add(new PutRequestStage());
-      stages.add(new ComputeFinalStage());
-      stages.add(new GetRequestStage());
-      stages.add(new VerifyPairingStage());
-    } else {
+  private void prepareSenderStages() {
+    Queue<JPakeStage> jStages = new LinkedList<JPakeStage>();
+    jStages.add(new ComputeStepOneStage());
+    jStages.add(new GetRequestStage());
+    jStages.add(new PutRequestStage());
+    jStages.add(new ComputeStepTwoStage());
+    jStages.add(new GetRequestStage());
+    jStages.add(new PutRequestStage());
+    jStages.add(new ComputeFinalStage());
+    jStages.add(new GetRequestStage());
+    jStages.add(new VerifyPairingStage());
 
-      // Acting as receiver, called by receiveNoPin.
-      stages.add(new GetChannelStage());
-      stages.add(new ComputeStepOneStage());
-      stages.add(new PutRequestStage());
-      stages.add(new GetRequestStage());
-      stages.add(new JPakeStage() {
-        @Override
-        public void execute(JPakeClient jpakeClient) {
+    stages = jStages;
+  }
 
-          // Notify controller that pairing has started.
-          jpakeClient.onPairingStart();
+  /**
+   * Set up Receiver sequence of stages for J-PAKE. (receiver of credentials)
+   *
+   * @param pairWithPin
+   *          boolean to determine which type of setup has been initiated
+   *          (pairWithPin or receiveNoPin)
+   */
+  private void prepareReceiverStages() {
+    Queue<JPakeStage> jStages = new LinkedList<JPakeStage>();
+    jStages.add(new GetChannelStage());
+    jStages.add(new ComputeStepOneStage());
+    jStages.add(new PutRequestStage());
+    jStages.add(new GetRequestStage());
+    jStages.add(new JPakeStage() {
+      @Override
+      public void execute(JPakeClient jpakeClient) {
 
-          // Switch back to smaller time-out.
-          jpakeClient.jpakeMaxTries = JPakeClient.MAX_TRIES;
-          jpakeClient.runNextStage();
-        }
-      });
-      stages.add(new ComputeStepTwoStage());
-      stages.add(new PutRequestStage());
-      stages.add(new GetRequestStage());
-      stages.add(new ComputeFinalStage());
-      stages.add(new ComputeKeyVerificationStage());
-      stages.add(new PutRequestStage());
-      stages.add(new JPakeStage() {
+        // Notify controller that pairing has started.
+        jpakeClient.onPairingStart();
 
-        @Override
-        public void execute(JPakeClient jpakeClient) {
-          jpakeMaxTries = MAX_TRIES_LAST_MSG;
-          jpakeClient.runNextStage();
-        }
+        // Switch back to smaller time-out.
+        jpakeClient.jpakeMaxTries = JPakeClient.MAX_TRIES;
+        jpakeClient.runNextStage();
+      }
+    });
+    jStages.add(new ComputeStepTwoStage());
+    jStages.add(new PutRequestStage());
+    jStages.add(new GetRequestStage());
+    jStages.add(new ComputeFinalStage());
+    jStages.add(new ComputeKeyVerificationStage());
+    jStages.add(new PutRequestStage());
+    jStages.add(new JPakeStage() {
 
-      });
-      stages.add(new GetRequestStage());
-      stages.add(new DecryptDataStage());
-      stages.add(new CompleteStage());
-    }
-    // Start running on the first stage.
-    runNextStage();
+      @Override
+      public void execute(JPakeClient jpakeClient) {
+        jpakeMaxTries = MAX_TRIES_LAST_MSG;
+        jpakeClient.runNextStage();
+      }
+
+    });
+    jStages.add(new GetRequestStage());
+    jStages.add(new DecryptDataStage());
+    jStages.add(new CompleteStage());
+
+    stages = jStages;
   }
 
   /**
@@ -187,7 +191,8 @@ public class JPakeClient {
     channel = pin.substring(JPAKE_LENGTH_SECRET);
     channelUrl = jpakeServer + channel;
 
-    prepareStagesAndStartWithPin(true);
+    prepareSenderStages();
+    runNextStage();
   }
 
   /**
@@ -207,23 +212,25 @@ public class JPakeClient {
     jpakeMaxTries = MAX_TRIES_FIRST_MSG;
 
     createSecret();
-    prepareStagesAndStartWithPin(false);
+    prepareReceiverStages();
+    runNextStage();
   }
 
   /**
    * Run next stage of J-PAKE.
    */
   public void runNextStage() {
-    if (finished) {
+    if (finished || stages.size() == 0) {
       Logger.debug(LOG_TAG, "All stages complete.");
       return;
     }
-    stageIndex++;
+    JPakeStage nextStage = null; 
     try{
-      stages.get(stageIndex).execute(this);
-      Log.d(LOG_TAG, "running stage " + stages.get(stageIndex).toString());
+      nextStage = stages.remove();
+      Logger.debug(LOG_TAG, "starting stage " + nextStage.toString());
+      nextStage.execute(this);
     } catch (Exception e) {
-      Logger.error(LOG_TAG, "Exception in stage " + stages.get(stageIndex), e);
+      Logger.error(LOG_TAG, "Exception in stage " + nextStage, e);
       abort("Stage exception.");
     }
   }
@@ -283,11 +290,15 @@ public class JPakeClient {
     CryptoInfo encrypted = CryptoInfo.encrypt(cleartextBytes, keyBundle);
 
     ExtendedJSONObject payload = new ExtendedJSONObject();
-    payload.put(Constants.JSON_KEY_CIPHERTEXT, new String(Base64.encodeBase64(encrypted.getMessage())));
-    payload.put(Constants.JSON_KEY_IV, new String(Base64.encodeBase64(encrypted.getIV())));
+
+    String message64 = new String(Base64.encodeBase64(encrypted.getMessage()));
+    String iv64 = new String(Base64.encodeBase64(encrypted.getIV()));
+
+    payload.put(Constants.JSON_KEY_CIPHERTEXT, message64);
+    payload.put(Constants.JSON_KEY_IV, iv64);
     if (makeHmac) {
-      String hmac = Utils.byte2hex(encrypted.getHMAC());
-      payload.put(Constants.JSON_KEY_HMAC, hmac);
+      String hmacHex = Utils.byte2hex(encrypted.getHMAC());
+      payload.put(Constants.JSON_KEY_HMAC, hmacHex);
     }
     return payload;
   }
@@ -340,8 +351,6 @@ public class JPakeClient {
     stages.clear();
     stages.add(new PutRequestStage());
     stages.add(new CompleteStage());
-    // Reset stage index.
-    stageIndex = -1;
 
     // Encrypt data to send and set as jOutgoing.
     String outData = jObj.toJSONString();

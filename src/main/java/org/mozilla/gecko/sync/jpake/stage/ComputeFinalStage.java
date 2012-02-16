@@ -18,8 +18,7 @@ import org.mozilla.gecko.sync.jpake.JPakeCrypto;
 import org.mozilla.gecko.sync.jpake.Zkp;
 import org.mozilla.gecko.sync.setup.Constants;
 
-public class ComputeFinalStage implements JPakeStage {
-  private final String LOG_TAG = "ComputeFinalStage";
+public class ComputeFinalStage extends JPakeStage {
 
   @Override
   public void execute(JPakeClient jClient) {

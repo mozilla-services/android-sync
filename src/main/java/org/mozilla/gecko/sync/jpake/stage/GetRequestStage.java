@@ -10,9 +10,7 @@ import java.security.GeneralSecurityException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.jpake.JPakeResponse;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -27,8 +25,8 @@ import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
-public class GetRequestStage implements JPakeStage {
-  private final static String LOG_TAG = "GetRequestStage";
+public class GetRequestStage extends JPakeStage {
+
   private Timer timerScheduler = new Timer();
   private int pollTries;
   private GetStepTimerTask getStepTimerTask;
@@ -53,30 +51,18 @@ public class GetRequestStage implements JPakeStage {
         }
         JPakeResponse res = new JPakeResponse(response);
 
-        Header[] etagHeaders = response.getHeaders("etag");
-        if (etagHeaders == null) {
+        Header etagHeader = response.getFirstHeader("etag");
+        if (etagHeader == null) {
           Logger.error(LOG_TAG, "Server did not supply ETag.");
           jClient.abort(Constants.JPAKE_ERROR_SERVER);
           return;
         }
 
-        jClient.theirEtag = etagHeaders[0].toString();
+        jClient.theirEtag = etagHeader.toString();
         try {
           jClient.jIncoming = res.jsonObjectBody();
-        } catch (IllegalStateException e) {
+        } catch (Exception e) {
           Logger.error(LOG_TAG, "Illegal state.", e);
-          jClient.abort(Constants.JPAKE_ERROR_INVALID);
-          return;
-        } catch (IOException e) {
-          Logger.error(LOG_TAG, "I/O Exception.", e);
-          jClient.abort(Constants.JPAKE_ERROR_INVALID);
-          return;
-        } catch (ParseException e) {
-          Logger.error(LOG_TAG, "Parse Exception.", e);
-          jClient.abort(Constants.JPAKE_ERROR_INVALID);
-          return;
-        } catch (NonObjectJSONException e) {
-          Logger.error(LOG_TAG, "JSON exception.", e);
           jClient.abort(Constants.JPAKE_ERROR_INVALID);
           return;
         }

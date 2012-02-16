@@ -3,8 +3,7 @@ package org.mozilla.gecko.sync.jpake.stage;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 
-public class CompleteStage implements JPakeStage {
-  private final String LOG_TAG = "CompleteStage";
+public class CompleteStage extends JPakeStage {
 
   @Override
   public void execute(JPakeClient jClient) {

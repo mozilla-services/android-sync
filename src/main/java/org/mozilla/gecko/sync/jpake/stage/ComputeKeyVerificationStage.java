@@ -13,8 +13,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.setup.Constants;
 
-public class ComputeKeyVerificationStage implements JPakeStage {
-  private final String LOG_TAG = "ComputeKeyVerificationS";
+public class ComputeKeyVerificationStage extends JPakeStage {
 
   @Override
   public void execute(JPakeClient jClient) {

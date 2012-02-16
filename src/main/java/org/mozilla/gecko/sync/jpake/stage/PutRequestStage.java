@@ -25,8 +25,7 @@ import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
-public class PutRequestStage implements JPakeStage {
-  private final String LOG_TAG = "PutRequestStage";
+public class PutRequestStage extends JPakeStage {
 
   private interface PutRequestStageDelegate {
     public void handleSuccess(HttpResponse response);
@@ -67,7 +66,6 @@ public class PutRequestStage implements JPakeStage {
         Logger.error(LOG_TAG, "HTTP exception.", e);
         jClient.abort(Constants.JPAKE_ERROR_NETWORK);
       }
-
     };
 
     // Create PUT request.
@@ -100,22 +98,20 @@ public class PutRequestStage implements JPakeStage {
       @Override
       public void handleHttpResponse(HttpResponse response) {
         int statusCode = response.getStatusLine().getStatusCode();
-        Header[] etagHeaders = response.getHeaders("etag");
         switch (statusCode) {
         case 200:
-          etagHeaders = response.getHeaders("etag");
-          if (etagHeaders == null) {
+          Header etagHeader = response.getFirstHeader("etag");
+          if (etagHeader == null) {
             Logger.error(LOG_TAG, "Server did not supply ETag.");
             callbackDelegate.handleFailure(Constants.JPAKE_ERROR_SERVER);
             SyncResourceDelegate.consumeEntity(response.getEntity());
             return;
           }
-          jpakeClient.myEtag = response.getHeaders("etag")[0].getValue();
+          jpakeClient.myEtag = etagHeader.toString();
           callbackDelegate.handleSuccess(response);
           break;
         default:
-          Logger.error(LOG_TAG, "Could not upload data. Server responded with HTTP "
-              + statusCode);
+          Logger.error(LOG_TAG, "Could not upload data. Server responded with HTTP " + statusCode);
           callbackDelegate.handleFailure(Constants.JPAKE_ERROR_SERVER);
         }
         SyncResourceDelegate.consumeEntity(response.getEntity());

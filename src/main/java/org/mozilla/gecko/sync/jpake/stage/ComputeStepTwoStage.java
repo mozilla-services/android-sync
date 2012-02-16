@@ -20,8 +20,7 @@ import org.mozilla.gecko.sync.jpake.JPakeJson;
 import org.mozilla.gecko.sync.jpake.Zkp;
 import org.mozilla.gecko.sync.setup.Constants;
 
-public class ComputeStepTwoStage implements JPakeStage {
-  private final String LOG_TAG = "ComputeStepTwoStage";
+public class ComputeStepTwoStage extends JPakeStage {
 
   @Override
   public void execute(JPakeClient jClient) {

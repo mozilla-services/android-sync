@@ -21,12 +21,11 @@ import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
-public class GetChannelStage implements JPakeStage {
-  private final String LOG_TAG = "GetChannelStage";
+public class GetChannelStage extends JPakeStage {
 
   private interface GetChannelStageDelegate {
     public void handleSuccess(String channel);
-    public void handleFailure(String error  );
+    public void handleFailure(String error);
     public void handleError(Exception e);
   }
 

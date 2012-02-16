@@ -22,8 +22,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.setup.Constants;
 
-public class DecryptDataStage implements JPakeStage {
-  private final String LOG_TAG = "DecryptDataStage";
+public class DecryptDataStage extends JPakeStage {
 
   @Override
   public void execute(JPakeClient jClient) {
@@ -84,10 +83,15 @@ public class DecryptDataStage implements JPakeStage {
    */
   private byte[] decryptPayload(ExtendedJSONObject payload, KeyBundle keybundle)
       throws CryptoException, UnsupportedEncodingException {
-    byte[] ciphertext = Utils.decodeBase64((String) payload
-        .get(Constants.JSON_KEY_CIPHERTEXT));
-    byte[] iv = Utils.decodeBase64((String) payload.get(Constants.JSON_KEY_IV));
-    byte[] hmac = Utils.hex2Byte((String) payload.get(Constants.JSON_KEY_HMAC));
+
+    String sCiphertext = (String) payload.get(Constants.JSON_KEY_CIPHERTEXT);
+    String sIv = (String) payload.get(Constants.JSON_KEY_IV);
+    String sHmac = (String) payload.get(Constants.JSON_KEY_HMAC);
+
+    byte[] ciphertext = Utils.decodeBase64(sCiphertext);
+    byte[] iv = Utils.decodeBase64(sIv);
+    byte[] hmac = Utils.hex2Byte((String) payload.get(sHmac));
+
     CryptoInfo decrypted = CryptoInfo.decrypt(ciphertext, iv, hmac, keybundle);
     return decrypted.getMessage();
   }

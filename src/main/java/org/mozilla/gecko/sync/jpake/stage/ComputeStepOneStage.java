@@ -17,8 +17,7 @@ import org.mozilla.gecko.sync.jpake.JPakeParty;
 import org.mozilla.gecko.sync.jpake.Zkp;
 import org.mozilla.gecko.sync.setup.Constants;
 
-public class ComputeStepOneStage implements JPakeStage {
-  private final static String LOG_TAG = "ComputeStepOneStage";
+public class ComputeStepOneStage extends JPakeStage {
 
   @Override
   public void execute(JPakeClient jClient) {

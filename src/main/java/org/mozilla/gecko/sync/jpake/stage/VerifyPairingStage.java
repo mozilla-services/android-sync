@@ -12,31 +12,28 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.setup.Constants;
 
-public class VerifyPairingStage implements JPakeStage {
-  private final String LOG_TAG = "VerifyPairingStage";
+public class VerifyPairingStage extends JPakeStage {
 
   @Override
   public void execute(JPakeClient jClient) {
     Logger.debug(LOG_TAG, "Verifying their key.");
 
     ExtendedJSONObject verificationObj = jClient.jIncoming;
-    if (!verificationObj.get(Constants.JSON_KEY_TYPE).equals(
-        jClient.theirSignerId + "3")) {
+    String signerId = (String) verificationObj.get(Constants.JSON_KEY_TYPE);
+    if (!signerId.equals(jClient.theirSignerId + "3")) {
       Logger.error(LOG_TAG, "Invalid round 3 message: " + verificationObj.toJSONString());
       jClient.abort(Constants.JPAKE_ERROR_WRONGMESSAGE);
       return;
     }
     ExtendedJSONObject payload;
     try {
-      payload = verificationObj
-          .getObject(Constants.JSON_KEY_PAYLOAD);
+      payload = verificationObj.getObject(Constants.JSON_KEY_PAYLOAD);
     } catch (NonObjectJSONException e) {
       Logger.error(LOG_TAG, "JSON exception.", e);
       jClient.abort(Constants.JPAKE_ERROR_INVALID);
       return;
     }
-    String theirCiphertext = (String) payload
-        .get(Constants.JSON_KEY_CIPHERTEXT);
+    String theirCiphertext = (String) payload.get(Constants.JSON_KEY_CIPHERTEXT);
     String iv = (String) payload.get(Constants.JSON_KEY_IV);
     boolean correctPairing;
     try {
