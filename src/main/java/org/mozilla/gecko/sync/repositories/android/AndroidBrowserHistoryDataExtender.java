@@ -137,7 +137,7 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
    * @param visits New visits data.
    */
   public void store(String guid, JSONArray visits) {
-    SQLiteDatabase db = this.getCachedReadableDatabase();
+    SQLiteDatabase db = this.getCachedWritableDatabase();
 
     boolean rowExists = false;
     try {
