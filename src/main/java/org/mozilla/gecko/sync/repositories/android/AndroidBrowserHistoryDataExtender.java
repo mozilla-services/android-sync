@@ -139,17 +139,6 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
   public void store(String guid, JSONArray visits) {
     SQLiteDatabase db = this.getCachedWritableDatabase();
 
-    boolean rowExists = false;
-    try {
-      Cursor cur = fetch(guid);
-      if (cur.getCount() >= 1) {
-        rowExists = true;
-      }
-      cur.close();
-    } catch (NullCursorException e) {
-      // Do nothing.
-    }
-
     ContentValues cv = new ContentValues();
     cv.put(COL_GUID, guid);
     if (visits == null) {
@@ -158,15 +147,14 @@ public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
       cv.put(COL_VISITS, visits.toJSONString());
     }
 
-    if (!rowExists) {
+    String where = COL_GUID + " = ?";
+    String[] args = new String[] { guid };
+    int rowsUpdated = db.update(TBL_HISTORY_EXT, cv, where, args);
+    if (rowsUpdated >= 1) {
+      Logger.debug(LOG_TAG, "Replaced history extension record for row with GUID " + guid);
+    } else {
       long rowId = db.insert(TBL_HISTORY_EXT, null, cv);
       Logger.debug(LOG_TAG, "Inserted history extension record into row: " + rowId);
-    } else {
-      String where = COL_GUID + " = ?";
-      String[] args = new String[] { guid };
-
-      db.update(TBL_HISTORY_EXT, cv, where, args);
-      Logger.debug(LOG_TAG, "Replaced history extension record for row with GUID " + guid);
     }
   }
 
