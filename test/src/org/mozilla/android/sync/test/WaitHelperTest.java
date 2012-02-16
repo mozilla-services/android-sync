@@ -131,9 +131,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   protected void expectAssertionFailedError(Runnable runnable) {
     try {
       waitHelper.performWait(runnable);
-    } catch (AssertionFailedError e) {
+    } catch (WaitHelper.InnerError e) {
+      AssertionFailedError inner = (AssertionFailedError)e.innerError;
       setPerformNotifyErrorCalled();
-      String message = e.getMessage();
+      String message = inner.getMessage();
       assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
                  message.contains(ERROR_UNIQUE_IDENTIFIER));
     }
@@ -142,9 +143,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   protected void expectAssertionFailedErrorAfterDelay(int wait, Runnable runnable) {
     try {
       waitHelper.performWait(wait, runnable);
-    } catch (AssertionFailedError e) {
+    } catch (WaitHelper.InnerError e) {
+      AssertionFailedError inner = (AssertionFailedError)e.innerError;
       setPerformNotifyErrorCalled();
-      String message = e.getMessage();
+      String message = inner.getMessage();
       assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
                  message.contains(ERROR_UNIQUE_IDENTIFIER));
     }
