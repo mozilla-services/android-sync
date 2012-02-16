@@ -140,6 +140,15 @@ public class WaitHelper {
     this.performNotify(null);
   }
 
+  public static Runnable onThreadRunnable(final Runnable r) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        new Thread(r).start();
+      }
+    };
+  }
+
   private static WaitHelper singleWaiter = new WaitHelper();
   public static WaitHelper getTestWaiter() {
     return singleWaiter;
