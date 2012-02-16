@@ -50,7 +50,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class AndroidBrowserHistoryDataExtender extends SQLiteOpenHelper {
 
-  public static final String LOG_TAG = "A.BrowHist.DataExtender";
+  public static final String LOG_TAG = "SyncHistoryVisits";
 
   // Database Specifications.
   protected static final String DB_NAME = "history_extension_database";

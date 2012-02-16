@@ -25,7 +25,7 @@ import android.util.Log;
 public class AndroidBrowserHistoryDataExtenderTest extends ActivityInstrumentationTestCase2<StubActivity> {
 
   protected AndroidBrowserHistoryDataExtender extender;
-  protected static final String LOG_TAG = "AndroidBrowserHistoryDataExtenderTest";
+  protected static final String LOG_TAG = "SyncHistoryVisitsTest";
 
   public AndroidBrowserHistoryDataExtenderTest() {
     super(StubActivity.class);
