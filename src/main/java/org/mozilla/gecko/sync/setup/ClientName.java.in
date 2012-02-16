@@ -1,0 +1,10 @@
+#filter substitution
+
+package org.mozilla.gecko.sync.setup;
+
+public class ClientName {
+  public static final String PRODUCT_NAME = "@MOZ_APP_DISPLAYNAME@";
+  public static String getClientName() {
+    return PRODUCT_NAME.replace("_", " ") + " on " + android.os.Build.MODEL;
+  }
+}
