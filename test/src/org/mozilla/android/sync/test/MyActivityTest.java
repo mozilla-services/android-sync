@@ -1,10 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-//
-// Alas, this whole test is bitrotted when used for the real Android test environment.
-//
-
 package org.mozilla.android.sync.test;
 
 //import org.mozilla.android.sync.MainActivity;
