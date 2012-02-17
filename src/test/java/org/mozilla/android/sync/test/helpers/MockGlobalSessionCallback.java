@@ -8,7 +8,6 @@ import static org.junit.Assert.assertEquals;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
-import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 
 /**
  * A callback for use with a GlobalSession that records what happens for later
@@ -17,7 +16,11 @@ import org.mozilla.android.sync.test.helpers.DefaultDelegate;
  * This callback is expected to be used from within the friendly confines of a
  * UnitWaitHelper performWait.
  */
-public class MockGlobalSessionCallback extends DefaultDelegate implements GlobalSessionCallback {
+public class MockGlobalSessionCallback implements GlobalSessionCallback {
+  protected WaitHelper testWaiter() {
+    return WaitHelper.getTestWaiter();
+  }
+
   public int stageCounter = Stage.values().length - 1; // Exclude starting state.
   public boolean calledSuccess = false;
   public boolean calledError = false;
