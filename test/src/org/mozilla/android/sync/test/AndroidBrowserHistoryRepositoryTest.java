@@ -6,10 +6,8 @@ package org.mozilla.android.sync.test;
 import org.json.simple.JSONObject;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataExtender;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
@@ -24,7 +22,6 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
 public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
   
@@ -319,85 +316,4 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
         BrowserContract.History.HistoryColumns, null, null, null);
     return cur;
   }
-
-  private class DataExtender extends AndroidBrowserHistoryDataExtender {
-    protected DataExtender(Context context) {
-      super(context);
-    }
-
-    public Cursor fetchAll() throws NullCursorException {
-      SQLiteDatabase db = this.getCachedReadableDatabase();
-      Cursor cur = db.query(TBL_HISTORY_EXT,
-                            new String[] { COL_GUID, COL_VISITS },
-                            null, null, null, null, null);
-      if (cur == null) {
-        throw new NullCursorException(null);
-      }
-      return cur;
-    }
-  }
-
-  public void testDataExtenderDelete() {
-    Context context = getApplicationContext();
-    DataExtender db = new DataExtender(context);
-    db.wipe();
-
-    String evilGUID = "' or '1'='1";
-    db.store(Utils.generateGuid(), null);
-    db.store(Utils.generateGuid(), null);
-    db.store(evilGUID, null);
-    db.delete(evilGUID);
-
-    Cursor cur = null;
-    try {
-      cur = db.fetchAll();
-      assertEquals(cur.getCount(), 2);
-      assertTrue(cur.moveToFirst());
-      while (!cur.isAfterLast()) {
-        String guid = RepoUtils.getStringFromCursor(cur, DataExtender.COL_GUID);
-        assertFalse(evilGUID.equals(guid));
-        cur.moveToNext();
-      }
-    } catch (NullCursorException e) {
-      e.printStackTrace();
-      fail("Should not have null cursor.");
-    } finally {
-      if (cur != null) {
-         cur.close();
-      }
-      db.close();
-    }
-  }
-
-  public void testDataExtenderFetch() {
-    Context context = getApplicationContext();
-    AndroidBrowserHistoryDataExtender db = new DataExtender(context);
-    db.wipe();
-
-    String evilGUID = "' or '1'='1";
-    db.store(Utils.generateGuid(), null);
-    db.store(Utils.generateGuid(), null);
-    db.store(evilGUID, null);
-
-    Cursor cur = null;
-    try {
-      cur = db.fetch(evilGUID);
-      assertEquals(1, cur.getCount());
-      assertTrue(cur.moveToFirst());
-      while (!cur.isAfterLast()) {
-        String guid = RepoUtils.getStringFromCursor(cur, DataExtender.COL_GUID);
-        assertEquals(evilGUID, guid);
-        cur.moveToNext();
-      }
-    } catch (NullCursorException e) {
-      e.printStackTrace();
-      fail("Should not have null cursor.");
-    } finally {
-      if (cur != null) {
-        cur.close();
-      }
-      db.close();
-    }
-  }
-
 }
