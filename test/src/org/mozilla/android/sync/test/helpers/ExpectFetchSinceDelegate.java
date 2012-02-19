@@ -13,6 +13,7 @@ import java.util.Map;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
@@ -26,9 +27,9 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchCompleted(long end) {
+  public void onFetchCompleted(final long fetchEnd) {
     Log.i("ExpectFetchSinceDelegate", "onFetchCompleted.");
-    AssertionError err = null;
+    AssertionFailedError err = null;
     try {
 
       Map<String, String> specialGuids = RepoUtils.SPECIAL_GUIDS_MAP;
@@ -42,7 +43,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
         assertTrue(record.lastModified >= this.earliest);
       }
       assertEquals(this.expected.length, records.size() - countSpecials);
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       err = e;
     }
     testWaiter().performNotify(err);

@@ -1,10 +1,13 @@
-* You need Maven 3. `brew update; brew install maven`.
+* You need Maven 3.  Homebrew is possibly easiest:
+
+  brew update
+  brew install maven
 
 * You need to prepare the repo before you can use it.
-  * Use preprocess.sh to build manifests etc. to keep Eclipse happy. The output
+  * Use `preprocess.sh` to build manifests etc. to keep Eclipse happy. The output
     is ignored by Git, and the Fennec merge script skips them, too.
-  * The fennec-code-drop.sh script does this for you, as well as running tests.
-  * To run Android tests, you'll need to create .project and .classpath in `test,
+  * The `fennec-code-drop.sh` script does this for you, as well as running tests.
+  * To run Android tests, you'll need to create .project and .classpath in `test`,
     too.
 
 * To make changes to generated files.
@@ -13,6 +16,10 @@
   * The same goes for other files that are produced by preprocess.sh.
   * If you want to alter a value _to affect our build only_, put it in
     AndroidManifest.xml.in.
+
+* To run the unit and integration test suites:
+  * `mvn test`
+  * `mvn integration-test` with an emulator running or a device connected.
 
 * To merge to mozilla-central:
 
@@ -26,13 +33,13 @@
   pushd $MC
   # hg add any files that have been added. Removing files that have been
   # removed is an exercise for the reader.
-  hg qref
+  hg qrefresh
 
 * If you *know* all tests pass, or you're in an environment that prevents you
-  from running them, you can invoke fennec-copy-code.sh directly (with the
+  from running them, you can invoke `fennec-copy-code.sh` directly (with the
   appropriate environment variables.)
 
-* To build:
+* To build mozilla-central:
 
   # You can do a partial build if you know what you're doing.
   make -f client.mk

@@ -9,6 +9,8 @@ import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 
+import junit.framework.AssertionFailedError;
+
 /**
  * Pokes field in AndroidBookmarksTestHelper.
  *
@@ -21,7 +23,7 @@ public class SetupDelegate extends DefaultSessionCreationDelegate {
       assertNotNull(sess);
       AndroidBrowserRepositoryTestHelper.session = (AndroidBrowserRepositorySession) sess;
       AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
-    } catch (AssertionError e) {  
+    } catch (AssertionFailedError e) {  
       AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
     }
   }

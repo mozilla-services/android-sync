@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -18,11 +19,23 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelega
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
-import android.util.Log;
 
 public class WBORepository extends Repository {
 
+  public class WBORepositoryStats {
+    public long created         = -1;
+    public long begun           = -1;
+    public long fetchBegan      = -1;
+    public long fetchCompleted  = -1;
+    public long storeBegan      = -1;
+    public long storeCompleted  = -1;
+    public long finished        = -1;
+  }
+
   public static final String LOG_TAG = "WBORepository";
+
+  // Access to stats is not guarded.
+  public WBORepositoryStats stats;
 
   public class WBORepositorySession extends StoreTrackingRepositorySession {
 
@@ -33,7 +46,9 @@ public class WBORepository extends Repository {
     public WBORepositorySession(WBORepository repository) {
       super(repository);
       wboRepository = repository;
-      wbos = new ConcurrentHashMap<String, Record>();
+      wbos          = new ConcurrentHashMap<String, Record>();
+      stats         = new WBORepositoryStats();
+      stats.created = now();
     }
 
     @Override
@@ -52,7 +67,8 @@ public class WBORepository extends Repository {
     @Override
     public void fetchSince(long timestamp,
                            RepositorySessionFetchRecordsDelegate delegate) {
-      long fetchBegin = System.currentTimeMillis();
+      long fetchBegan  = now();
+      stats.fetchBegan = fetchBegan;
       RecordFilter filter = storeTracker.getFilter();
 
       for (Entry<String, Record> entry : wbos.entrySet()) {
@@ -60,35 +76,43 @@ public class WBORepository extends Repository {
         if (record.lastModified >= timestamp) {
           if (filter != null &&
               filter.excludeRecord(record)) {
-            Log.d(LOG_TAG, "Excluding record " + record.guid);
+            Logger.debug(LOG_TAG, "Excluding record " + record.guid);
             continue;
           }
           delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(record);
         }
       }
-      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchBegin);
+      long fetchCompleted  = now();
+      stats.fetchCompleted = fetchCompleted;
+      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchCompleted);
     }
 
     @Override
     public void fetch(final String[] guids,
                       final RepositorySessionFetchRecordsDelegate delegate) {
-      long fetchBegin = System.currentTimeMillis();
+      long fetchBegan  = now();
+      stats.fetchBegan = fetchBegan;
       for (String guid : guids) {
         if (wbos.containsKey(guid)) {
           delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(wbos.get(guid));
         }
       }
-      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchBegin);
+      long fetchCompleted  = now();
+      stats.fetchCompleted = fetchCompleted;
+      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchCompleted);
     }
 
     @Override
     public void fetchAll(final RepositorySessionFetchRecordsDelegate delegate) {
-      long fetchBegin = System.currentTimeMillis();
+      long fetchBegan  = now();
+      stats.fetchBegan = fetchBegan;
       for (Entry<String, Record> entry : wbos.entrySet()) {
         Record record = entry.getValue();
         delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(record);
       }
-      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchBegin);
+      long fetchCompleted  = now();
+      stats.fetchCompleted = fetchCompleted;
+      delegate.deferredFetchDelegate(delegateExecutor).onFetchCompleted(fetchCompleted);
     }
 
     @Override
@@ -96,16 +120,19 @@ public class WBORepository extends Repository {
       if (delegate == null) {
         throw new NoStoreDelegateException();
       }
+      if (stats.storeBegan < 0) {
+        stats.storeBegan = now();
+      }
       Record existing = wbos.get(record.guid);
-      Log.d(LOG_TAG, "Existing record is " + (existing == null ? "<null>" : (existing.guid + ", " + existing)));
+      Logger.debug(LOG_TAG, "Existing record is " + (existing == null ? "<null>" : (existing.guid + ", " + existing)));
       if (existing != null &&
           existing.lastModified > record.lastModified) {
-        Log.d(LOG_TAG, "Local record is newer. Not storing.");
+        Logger.debug(LOG_TAG, "Local record is newer. Not storing.");
         delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
         return;
       }
       if (existing != null) {
-        Log.d(LOG_TAG, "Replacing local record.");
+        Logger.debug(LOG_TAG, "Replacing local record.");
       }
       wbos.put(record.guid, record);
       trackRecord(record);
@@ -123,20 +150,26 @@ public class WBORepository extends Repository {
     @Override
     public void finish(RepositorySessionFinishDelegate delegate) {
       ((WBORepository) repository).wbos = this.wbos;
+      stats.finished = now();
       delegate.deferredFinishDelegate(delegateExecutor).onFinishSucceeded(this, this.getBundle());
     }
 
     @Override
     public void begin(RepositorySessionBeginDelegate delegate) {
       this.wbos = ((WBORepository) repository).cloneWBOs();
+      stats.begun = now();
       super.begin(delegate);
     }
 
     @Override
-    public void storeDone() {
+    public void storeDone(long end) {
       // TODO: this is not guaranteed to be called after all of the record
       // store callbacks have completed!
-      delegate.deferredStoreDelegate(delegateExecutor).onStoreCompleted();
+      if (stats.storeBegan < 0) {
+        stats.storeBegan = end;
+      }
+      stats.storeCompleted = end;
+      delegate.deferredStoreDelegate(delegateExecutor).onStoreCompleted(end);
     }
   }
 

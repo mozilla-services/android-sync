@@ -87,7 +87,7 @@ public class TestWBOCollectionRequestDelegate {
     // Here are our keys.
     String encrKey   = "0A7mU5SZ/tu7ZqwXW1og4qHVHN+zgEi4Xwfwjw+vEJw=";
     String hmacKey   = "11GN34O9QWXkjR06g8t0gWE1sGgQeWL0qxxWwl8Dmxs=";
-    delegate.bookmarksBundle = KeyBundle.decodeKeyStrings(encrKey, hmacKey);
+    delegate.bookmarksBundle = KeyBundle.fromBase64EncodedKeys(encrKey, hmacKey);
 
     r.get(); 
   }

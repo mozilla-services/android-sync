@@ -39,6 +39,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.content.ContentValues;
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
+import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentationTestCase2<StubActivity> {
@@ -54,7 +55,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
 
-  protected void performWait(Runnable runnable) throws AssertionError {
+  protected void performWait(Runnable runnable) throws AssertionFailedError {
     AndroidBrowserRepositoryTestHelper.testWaiter.performWait(runnable);
   }
   
@@ -580,7 +581,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return new DefaultFetchDelegate() {
       
       @Override
-      public void onFetchCompleted(long end) {
+      public void onFetchCompleted(final long fetchEnd) {
         assertEquals(guid, this.records.get(0).guid);
         testWaiter().performNotify();
       }

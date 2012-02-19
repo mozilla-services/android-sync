@@ -3,76 +3,148 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 /**
  * Implements waiting for asynchronous test events.
- * @author rnewman
  *
+ * Call WaitHelper.getTestWaiter() to get the unique instance.
+ *
+ * Call performWait(runnable) to execute runnable synchronously.
+ * runnable *must* call performNotify() on all exit paths to signal to
+ * the TestWaiter that the runnable has completed.
+ *
+ * @author rnewman
+ * @author nalexander
  */
 public class WaitHelper {
-  Object lastAssertionMonitor = new Object();
-  AssertionError lastAssertion = null;
+
+  public static final String LOG_TAG = "WaitHelper";
+
+  public class Result {
+    public AssertionFailedError error;
+    public Result() {
+      error = null;
+    }
+
+    public Result(AssertionFailedError error) {
+      this.error = error;
+    }
+  }
 
   /**
-   * We take a Runnable as a parameter so that it'll be invoked inside the
-   * synchronized session, which allows us to be waiting by the time the
-   * Runnable executes.
+   * Immutable.
    *
-   * action *must* start a new thread before attempting to wait or notify
-   * this helper, otherwise this trick doesn't work!
+   * @author rnewman
    *
-   * @param action
-   * @throws AssertionError
    */
-  public synchronized void performWait(Runnable action) throws AssertionError {
-    Log.i("WaitHelper", "performWait called.");
+  public class TimeoutError extends AssertionFailedError {
+    private static final long serialVersionUID = 8591672555848651736L;
+    public final int waitTimeInMillis;
+
+    public TimeoutError(int waitTimeInMillis) {
+      this.waitTimeInMillis = waitTimeInMillis;
+    }
+  }
+
+  public class MultipleNotificationsError extends AssertionFailedError {
+    private static final long serialVersionUID = -9072736521571635495L;
+  }
+
+  public BlockingQueue<Result> queue = new ArrayBlockingQueue<Result>(1);
+
+  /**
+   * How long performWait should wait for, in milliseconds, with the
+   * convention that a negative value means "wait forever".
+   */
+  public static int defaultWaitTimeoutInMillis = -1;
+
+  public void trace(String message) {
+    Log.i(LOG_TAG, message);
+  }
+
+  public void performWait(Runnable action) throws AssertionFailedError {
+    this.performWait(defaultWaitTimeoutInMillis, action);
+  }
+
+  public void performWait(int waitTimeoutInMillis, Runnable action) throws AssertionFailedError {
+    trace("performWait called.");
+
+    Result result = null;
+
     try {
       if (action != null) {
         try {
           action.run();
         } catch (Exception ex) {
-          throw new AssertionError(ex);
+          final AssertionFailedError error = new AssertionFailedError(ex.getMessage());
+          error.initCause(ex);
+          throw error;
         }
       }
-      Log.d("WaitHelper", "Waiting.");
-      WaitHelper.this.wait();
-      synchronized (lastAssertionMonitor) {
-        Log.d("WaitHelper", "Done waiting. lastAssertion is " + this.lastAssertion);
-        // Rethrow any assertion with which we were notified.
-        if (this.lastAssertion != null) {
-          AssertionError e = this.lastAssertion;
-          this.lastAssertion = null;
-          Log.d("WaitHelper", "Rethrowing.", e);
-          throw e;
-        }
+
+      if (waitTimeoutInMillis < 0) {
+        result = queue.take();
+      } else {
+        result = queue.poll(waitTimeoutInMillis, TimeUnit.MILLISECONDS);
       }
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      // We were interrupted.
+      trace("performNotify interrupted with InterruptedException " + e);
+      throw new AssertionFailedError("INTERRUPTED!");
+    }
+
+    if (result == null) {
+      // We timed out.
+      throw new TimeoutError(waitTimeoutInMillis);
+    } else if (result.error != null) {
+      // Rethrow any assertion with which we were notified.
+      throw result.error;
+    } else {
+      // Success!
     }
   }
 
-  public void performWait() throws AssertionError {
-    this.performWait(null);
-  }
-
-  public synchronized void performNotify(AssertionError e) {
+  public void performNotify(final junit.framework.AssertionFailedError e) {
     if (e != null) {
-      Log.i("WaitHelper", "performNotify called with AssertionError " + e);
+      trace("performNotify called with AssertionFailedError " + e);
+    } else {
+      trace("performNotify called.");
     }
-    synchronized (lastAssertionMonitor) {
-      this.lastAssertion = e;
+
+    if (!queue.offer(new Result(e))) {
+      // This could happen if performNotify is called multiple times (which is an error).
+      throw new MultipleNotificationsError();
     }
-    WaitHelper.this.notify();
   }
 
-  public synchronized void performNotify() {
-    Log.i("WaitHelper", "performNotify called.");
-    this.performNotify(null);
+  public void performNotify(final android.test.AssertionFailedError e) {
+    junit.framework.AssertionFailedError ex = null;
+
+    if (e != null) {
+      ex = new junit.framework.AssertionFailedError(e.getMessage());
+      ex.initCause(e.getCause());
+    }
+
+    this.performNotify(ex);
+  }
+
+  public void performNotify() {
+    this.performNotify((AssertionFailedError) null);
   }
 
   private static WaitHelper singleWaiter = new WaitHelper();
   public static WaitHelper getTestWaiter() {
     return singleWaiter;
   }
+
+  public static void resetTestWaiter() {
+    singleWaiter = new WaitHelper();
+  }
+
 }

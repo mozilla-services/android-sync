@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.mozilla.gecko</groupId>
+    <artifactId>android-sync</artifactId>
+    <version>1</version>
+  </parent>
+
+  <groupId>org.mozilla.gecko</groupId>
+  <artifactId>android-sync-instrumentation</artifactId>
+  <packaging>apk</packaging>
+  <name>Android Sync - Instrumentation</name>
+
+  <properties>
+    <project.basedir>../test</project.basedir>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.android</groupId>
+      <artifactId>android</artifactId>
+      <version>2.3.3</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.android</groupId>
+      <artifactId>android-test</artifactId>
+      <version>2.3.3</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <type>apk</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+      <type>jar</type>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>${project.artifactId}</finalName>
+
+    <sourceDirectory>../test/src</sourceDirectory>
+    <!-- <testSourceDirectory>../test/src/test/java</testSourceDirectory> -->
+
+    <plugins>
+      <plugin>
+        <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+        <artifactId>android-maven-plugin</artifactId>
+        <configuration>
+          <androidManifestFile>${project.basedir}/../test/AndroidManifest.xml</androidManifestFile>
+          <resourceDirectory>${project.basedir}/../test/res</resourceDirectory>
+
+          <test>
+            <createReport>true</createReport>
+            <!-- Configuration options for android-maven-plugin.
+                <skip>true|false|auto</skip>
+                <instrumentationPackage>packageName</instrumentationPackage>
+                <instrumentationRunner>className</instrumentationRunner>
+                <debug>true|false</debug>
+                <coverage>true|false</coverage>
+                <logonly>true|false</logonly>  avd
+                <testsize>small|medium|large</testsize>
+                <classes>
+                  <class>org.mozilla.android.sync.stage.test.TestGlobalSession</class>
+                </classes>
+                <packages>
+                  <package>your.package.name</package>
+                </packages>
+            -->
+          </test>
+        </configuration>
+        <extensions>true</extensions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

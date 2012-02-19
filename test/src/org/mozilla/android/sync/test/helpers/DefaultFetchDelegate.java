@@ -16,6 +16,7 @@ import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionFe
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 public class DefaultFetchDelegate extends DefaultDelegate implements RepositorySessionFetchRecordsDelegate {
@@ -29,12 +30,12 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records, long end) {
+  public void onFetchSucceeded(Record[] records, final long fetchEnd) {
     Log.d(LOG_TAG, "onFetchSucceeded");
     for (Record record : records) {
       this.records.add(record);
     }
-    this.onFetchCompleted(end);
+    this.onFetchCompleted(fetchEnd);
   }
 
   protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected, long end) {
@@ -77,7 +78,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
       assertEquals(expected.size(), expectedCount);
       Log.i(LOG_TAG, "Notifying success.");
       testWaiter().performNotify();
-    } catch (AssertionError e) {
+    } catch (AssertionFailedError e) {
       Log.e(LOG_TAG, "Notifying assertion failure.");
       testWaiter().performNotify(e);
     } catch (Exception e) {
@@ -97,7 +98,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchCompleted(long end) {
+  public void onFetchCompleted(final long fetchEnd) {
     Log.d(LOG_TAG, "onFetchCompleted. Doing nothing.");
   }
 
