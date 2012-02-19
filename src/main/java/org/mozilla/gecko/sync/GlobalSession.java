@@ -70,6 +70,7 @@ import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
+import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -194,6 +195,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
     stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
+    stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
 
     // TODO: more stages.
     stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
