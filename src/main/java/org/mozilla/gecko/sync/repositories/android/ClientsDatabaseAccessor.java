@@ -1,6 +1,13 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.gecko.sync.repositories.android;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
@@ -9,17 +16,17 @@ import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import android.content.Context;
 import android.database.Cursor;
 
-public class ClientsDatabaseContentProvider {
+public class ClientsDatabaseAccessor {
 
-  public static final String LOG_TAG = "ClientsDatabaseContentProvider";
+  public static final String LOG_TAG = "ClientsDatabaseAccessor";
 
   private GlobalSession session;
   private ClientsDatabase db;
 
   // Need this so we can properly stub out the class for testing.
-  public ClientsDatabaseContentProvider() {}
+  public ClientsDatabaseAccessor() {}
 
-  public ClientsDatabaseContentProvider(Context context, GlobalSession session) {
+  public ClientsDatabaseAccessor(Context context, GlobalSession session) {
     this.session = session;
     db = new ClientsDatabase(context);
   }
@@ -34,31 +41,12 @@ public class ClientsDatabaseContentProvider {
     }
   }
 
-  /**
-   * If no record exists with the same id as newRecord or if it exists but
-   * is not equal, newRecord will be inserted into the database. If newRecord
-   * was successfully inserted, return true. Otherwise return false.
-   *
-   * @param newRecord
-   * @return
-   * @throws NullCursorException
-   */
-  public boolean compareAndStore(ClientRecord newRecord) throws NullCursorException {
-    ClientRecord oldRecord = this.fetch(newRecord.guid);
-
-    if (oldRecord == null || !oldRecord.equals(newRecord)) {
-      db.store(getAccountGUID(), newRecord);
-      return true;
-    }
-    return false;
-  }
-
   public ClientRecord fetch(String profileID) throws NullCursorException {
     Cursor cur = null;
     try {
       cur = db.fetch(getAccountGUID(), profileID);
 
-      if (!cur.moveToFirst()) {
+      if (cur == null || !cur.moveToFirst()) {
         return null;
       }
       return recordFromCursor(cur);
@@ -69,19 +57,21 @@ public class ClientsDatabaseContentProvider {
     }
   }
 
-  public ArrayList<ClientRecord> fetchAll() throws NullCursorException {
-    ArrayList<ClientRecord> list = new ArrayList<ClientRecord>();
+  public Map<String, ClientRecord> fetchAll() throws NullCursorException {
+    HashMap<String, ClientRecord> map = new HashMap<String, ClientRecord>();
     Cursor cur = null;
     try {
       cur = db.fetchAll();
-      if (!cur.moveToFirst()) {
-        return list;
+      if (cur == null || !cur.moveToFirst()) {
+        return Collections.unmodifiableMap(map);
       }
       while (!cur.isAfterLast()) {
-        list.add(recordFromCursor(cur));
+        ClientRecord clientRecord = recordFromCursor(cur);
+        map.put(clientRecord.guid, clientRecord);
         cur.moveToNext();
       }
-      return list;
+
+      return Collections.unmodifiableMap(map);
     } finally {
       if (cur != null) {
         cur.close();

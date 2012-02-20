@@ -6,10 +6,17 @@ package org.mozilla.gecko.sync.delegates;
 
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import android.util.Log;
 
+/**
+ * Handles client records uploaded via SyncClientsEngineStage.
+ *
+ * @author Marina Samuel
+ *
+ */
 public class ClientUploadDelegate implements SyncStorageRequestDelegate {
   protected static final String LOG_TAG = "ClientUploadDelegate";
   private GlobalSession session;
@@ -33,7 +40,8 @@ public class ClientUploadDelegate implements SyncStorageRequestDelegate {
   public void handleRequestSuccess(SyncStorageResponse response) {
     // Response body must be consumed in order to reuse the connection.
     try {
-      Log.i(LOG_TAG, "Client upload was successful. Response body: " + response.body());
+      String body = response.body();
+      Logger.debug(LOG_TAG, "Client record upload succeeded: " + body);
     } catch (Exception e) {
       session.abort(e, "Unable to print response body");
     }
@@ -43,12 +51,13 @@ public class ClientUploadDelegate implements SyncStorageRequestDelegate {
 
   @Override
   public void handleRequestFailure(SyncStorageResponse response) {
-    Log.i(LOG_TAG, "Client upload failed. Aborting sync.");
+    Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
     session.abort(new HTTPFailureException(response), "Client upload failed.");
   }
 
   @Override
   public void handleRequestError(Exception ex) {
+    Logger.info(LOG_TAG, "Client upload error. Aborting sync.");
     session.abort(ex, "Client upload failed.");
   }
 }

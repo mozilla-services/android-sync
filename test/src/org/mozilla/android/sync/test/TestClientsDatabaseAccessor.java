@@ -1,18 +1,19 @@
 package org.mozilla.android.sync.test;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
-import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseContentProvider;
+import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
 import android.content.Context;
 import android.test.AndroidTestCase;
 
-public class TestClientsDatabaseContentProvider extends AndroidTestCase {
+public class TestClientsDatabaseAccessor extends AndroidTestCase {
 
-  public class StubbedClientsDatabaseContentProvider extends ClientsDatabaseContentProvider {
+  public class StubbedClientsDatabaseContentProvider extends ClientsDatabaseAccessor {
     private final String accountGUID = Utils.generateGuid();
 
     public StubbedClientsDatabaseContentProvider(Context mContext) {
@@ -82,8 +83,10 @@ public class TestClientsDatabaseContentProvider extends AndroidTestCase {
     list.add(record1);
     list.add(record2);
 
+    boolean thrown = false;
     try {
-      ArrayList<ClientRecord> records =  db.fetchAll();
+      Map<String, ClientRecord> records =  db.fetchAll();
+
       assertNotNull(records);
       assertEquals(0, records.size());
 
@@ -91,31 +94,16 @@ public class TestClientsDatabaseContentProvider extends AndroidTestCase {
       records = db.fetchAll();
       assertNotNull(records);
       assertEquals(2, records.size());
-      assertTrue(record1.equals(records.get(0)) || record1.equals(records.get(1)));
-      assertTrue(record2.equals(records.get(0)) || record2.equals(records.get(1)));
+      assertTrue(record1.equals(records.get(record1.guid)));
+      assertTrue(record2.equals(records.get(record2.guid)));
+
+      // put() should throw an exception since records is immutable.
+      records.put(null, null);
     } catch (NullCursorException e) {
       fail("Should not have NullPointerException.");
+    } catch (UnsupportedOperationException e) {
+      thrown = true;
     }
-  }
-
-  public void testCompareAndStore() {
-    StubbedClientsDatabaseContentProvider db =
-        new StubbedClientsDatabaseContentProvider(mContext);
-    db.wipe();
-
-    try {
-      ClientRecord record1 = new ClientRecord();
-      ClientRecord record2 = new ClientRecord();
-      db.store(record1);
-
-      assertFalse(db.compareAndStore(record1));
-
-      record1.name = "New Name";
-      assertTrue(db.compareAndStore(record1));
-
-      assertTrue(db.compareAndStore(record2));
-    } catch (NullCursorException e) {
-      fail("Should not have NullPointerException.");
-    }
+    assertTrue(thrown);
   }
 }

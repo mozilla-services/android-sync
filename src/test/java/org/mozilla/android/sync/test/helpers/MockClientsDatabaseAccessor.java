@@ -1,12 +1,13 @@
 package org.mozilla.android.sync.test.helpers;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.mozilla.gecko.sync.repositories.NullCursorException;
-import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseContentProvider;
+import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
-public class MockClientsDatabaseContentProvider extends ClientsDatabaseContentProvider {
+public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   @Override
   public void store(ClientRecord record) {}
 
@@ -14,17 +15,12 @@ public class MockClientsDatabaseContentProvider extends ClientsDatabaseContentPr
   public void store(ArrayList<ClientRecord> records) {}
 
   @Override
-  public boolean compareAndStore(ClientRecord newRecord) throws NullCursorException {
-    return true;
-  }
-
-  @Override
   public ClientRecord fetch(String profileID) throws NullCursorException {
     return null;
   }
 
   @Override
-  public ArrayList<ClientRecord> fetchAll() throws NullCursorException {
+  public Map<String, ClientRecord> fetchAll() throws NullCursorException {
     return null;
   }
 

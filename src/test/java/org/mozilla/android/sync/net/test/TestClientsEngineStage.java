@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockClientUploadDelegate;
-import org.mozilla.android.sync.test.helpers.MockClientsDatabaseContentProvider;
+import org.mozilla.android.sync.test.helpers.MockClientsDatabaseAccessor;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.gecko.sync.CollectionKeys;
@@ -74,7 +74,7 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   public void init() {
     localClient = new ClientRecord(Constants.PROFILE_ID);
     clientUploadDelegate = new MockClientUploadDelegate(session, data);
-    db = new MockClientsDatabaseContentProvider();
+    db = new MockClientsDatabaseAccessor();
   }
 
 

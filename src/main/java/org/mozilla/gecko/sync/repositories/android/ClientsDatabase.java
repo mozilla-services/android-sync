@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
@@ -11,7 +12,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 public class ClientsDatabase extends CachedSQLiteOpenHelper {
 
@@ -27,6 +27,9 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
   public static final String COL_PROFILE      = "profile";
   public static final String COL_NAME         = "name";
   public static final String COL_TYPE         = "device_type";
+
+  public static final String[] TBL_COLUMNS = new String[] { COL_ACCOUNT_GUID, COL_PROFILE, COL_NAME, COL_TYPE };
+  public static final String TBL_KEY = COL_ACCOUNT_GUID + " = ? and " + COL_PROFILE + " = ?";
 
   private final RepoUtils.QueryHelper queryHelper;
 
@@ -60,48 +63,44 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
 
   // If a record with given GUID exists, we'll delete it
   // and store the updated version.
-  public long store(String accountGUID, ClientRecord record) {
-    SQLiteDatabase db = this.getCachedReadableDatabase();
+  public void store(String accountGUID, ClientRecord record) {
+    SQLiteDatabase db = this.getCachedWritableDatabase();
 
-    // Delete if exists.
-    delete(accountGUID, record.guid);
-
-    // insert new
     ContentValues cv = new ContentValues();
     cv.put(COL_ACCOUNT_GUID, accountGUID);
     cv.put(COL_PROFILE, record.guid);
     cv.put(COL_NAME, record.name);
     cv.put(COL_TYPE, record.type);
 
-    long rowId = db.insert(TBL_CLIENTS, null, cv);
-    Log.i(LOG_TAG, "Inserted client record into row: " + rowId);
-    return rowId;
+    String where = COL_ACCOUNT_GUID + " = ? and " + COL_PROFILE + " = ?";
+    String[] args = new String[] { accountGUID, record.guid };
+    int rowsUpdated = db.update(TBL_CLIENTS, cv, where, args);
+
+    if (rowsUpdated >= 1) {
+      Logger.debug(LOG_TAG, "Replaced client record for row with accountGUID " + accountGUID);
+    } else {
+      long rowId = db.insert(TBL_CLIENTS, null, cv);
+      Logger.debug(LOG_TAG, "Inserted client record into row: " + rowId);
+    }
   }
 
   public Cursor fetch(String accountGuid, String profileId) throws NullCursorException {
-    String[] columns = new String[] { COL_ACCOUNT_GUID, COL_PROFILE, COL_NAME, COL_TYPE };
-    String where = COL_ACCOUNT_GUID + " = ? and " + COL_PROFILE + " = ?";
     String[] args = new String[] { accountGuid, profileId };
-
     SQLiteDatabase db = this.getCachedReadableDatabase();
 
-    Cursor cur = queryHelper.safeQuery(db, ".fetch", TBL_CLIENTS, columns, where, args, null, null, null, null);
-    return cur;
+    return queryHelper.safeQuery(db, ".fetch", TBL_CLIENTS, TBL_COLUMNS, TBL_KEY, args);
   }
 
   public Cursor fetchAll() throws NullCursorException {
-    String[] columns = new String[] { COL_ACCOUNT_GUID, COL_PROFILE, COL_NAME, COL_TYPE };
     SQLiteDatabase db = this.getCachedReadableDatabase();
 
-    Cursor cur = queryHelper.safeQuery(db, ".fetch", TBL_CLIENTS, columns, null, null, null, null, null, null);
-    return cur;
+    return queryHelper.safeQuery(db, ".fetch", TBL_CLIENTS, TBL_COLUMNS, null, null);
   }
 
-  public void delete(String accountGuid, String profileId) {
-    String where = COL_ACCOUNT_GUID + " = ? and " + COL_PROFILE + " = ?";
-    String[] args = new String[] { accountGuid, profileId };
+  public void delete(String accountGUID, String profileId) {
+    String[] args = new String[] { accountGUID, profileId };
 
     SQLiteDatabase db = this.getCachedWritableDatabase();
-    db.delete(TBL_CLIENTS, where, args);
+    db.delete(TBL_CLIENTS, TBL_KEY, args);
   }
 }

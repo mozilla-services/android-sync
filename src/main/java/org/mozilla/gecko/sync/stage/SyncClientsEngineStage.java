@@ -18,7 +18,7 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
-import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseContentProvider;
+import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -32,7 +32,7 @@ public class SyncClientsEngineStage extends WBOCollectionRequestDelegate impleme
   protected GlobalSession session;
   protected ClientRecordFactory factory = new ClientRecordFactory();
   protected ClientUploadDelegate clientUploadDelegate;
-  protected ClientsDatabaseContentProvider db;
+  protected ClientsDatabaseAccessor db;
 
   // Account/Profile info
   protected ClientRecord localClient;
@@ -65,11 +65,10 @@ public class SyncClientsEngineStage extends WBOCollectionRequestDelegate impleme
       // Generate CryptoRecord from ClientRecord to upload.
       CryptoRecord cryptoRecord = cryptoFromClient(localClient);
       if (shouldUpload() && cryptoRecord != null) {
+        db.store(localClient);
         this.uploadClientRecord(cryptoRecord);
         session.advance();
       }
-    } catch (NullCursorException e) {
-      session.abort(e, "Got null cursor for fetching client with id " + localClient.guid);
     } catch (Exception e) {
       session.abort(e, "Unable to print response body");
     } finally {
@@ -124,13 +123,13 @@ public class SyncClientsEngineStage extends WBOCollectionRequestDelegate impleme
     localClient.name = session.getClientName();
 
     clientUploadDelegate = new ClientUploadDelegate(session);
-    db = new ClientsDatabaseContentProvider(session.getContext(), session);
+    db = new ClientsDatabaseAccessor(session.getContext(), session);
     db.wipe();
   }
 
-  protected boolean shouldUpload() throws NullCursorException {
-    // If localClient was stored we should also upload it.
-    return db.compareAndStore(localClient);
+  // TODO: Bug 729248 - Smarter upload of client records.
+  protected boolean shouldUpload() {
+    return true;
   }
 
   protected CryptoRecord cryptoFromClient(ClientRecord record) {
