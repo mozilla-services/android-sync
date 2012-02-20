@@ -20,6 +20,7 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
+import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -43,37 +44,32 @@ public class TestGlobalSession {
   }
 
   /**
-   * A mock GlobalSession that fakes a 503 on info/collections and
-   * sets X-Weave-Backoff header to the specified number of seconds.
+   * A mock GlobalSession that fakes the info/collections stage.
    */
-  public class MockBackoffGlobalSession extends MockGlobalSession {
+  public class MockGlobalSessionWithInfoCollectionsStage extends MockGlobalSession {
 
     public MockSharedPreferences prefs;
-    public long backoffInSeconds = -1;
 
-    public MockBackoffGlobalSession(long backoffInSeconds,
-        String clusterURL, String username, String password,
-        KeyBundle syncKeyBundle, GlobalSessionCallback callback)
-            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
-      super(clusterURL, username, password, syncKeyBundle, callback);
-      this.backoffInSeconds = backoffInSeconds;
+    public MockGlobalSessionWithInfoCollectionsStage(GlobalSessionCallback callback)
+            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException, CryptoException {
+      super(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
     }
 
-    public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
+    public void infoCollectionsStage(GlobalSession session) {
+      session.advance();
+    }
+
+    public class MockInfoCollectionsStage extends FetchInfoCollectionsStage {
       @Override
       public void execute(GlobalSession session) {
-        final HttpResponse response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
-
-        response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
-        session.abort(new HTTPFailureException(new SyncStorageResponse(response)), "Failure fetching info/collections.");
+        infoCollectionsStage(session);
       }
     }
 
     @Override
     protected void prepareStages() {
       super.prepareStages();
-      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage());
+      stages.put(Stage.fetchInfoCollections, new MockInfoCollectionsStage());
     }
   }
 
@@ -232,8 +228,16 @@ public class TestGlobalSession {
   public void testBackoffCalledInStages() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockBackoffGlobalSession(TEST_BACKOFF_IN_SECONDS, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+      final GlobalSession session = new MockGlobalSessionWithInfoCollectionsStage(callback) {
+        @Override
+        public void infoCollectionsStage(GlobalSession session) {
+          final HttpResponse response = new BasicHttpResponse(
+              new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
+
+          response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
+          session.abort(new HTTPFailureException(new SyncStorageResponse(response)), "Failure fetching info/collections.");
+        }
+      };
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
@@ -256,5 +260,40 @@ public class TestGlobalSession {
       e.printStackTrace();
       fail("Got exception.");
     }
+  }
+
+  /**
+   * Test that a failling session calls requestNewNodeAssignment on 401 HTTP status code.
+   */
+  @Test
+  public void testNewNodeAssignmentCalledOn401() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockGlobalSessionWithInfoCollectionsStage(callback) {
+      @Override
+      public void infoCollectionsStage(GlobalSession session) {
+        final HttpResponse response = new BasicHttpResponse(
+            new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 401, "User not found"));
+
+        session.abort(new HTTPFailureException(new SyncStorageResponse(response)), "Failure fetching info/collections.");
+      }
+    };
+
+    getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      public void run() {
+        try {
+          session.start();
+        } catch (Exception e) {
+          final AssertionFailedError error = new AssertionFailedError();
+          error.initCause(e);
+          getTestWaiter().performNotify(error);
+        }
+      }
+    }));
+
+    assertEquals(false, callback.calledSuccess);
+    assertEquals(true,  callback.calledError);
+    assertEquals(false, callback.calledAborted);
+    assertEquals(false, callback.calledRequestBackoff);
+    assertEquals(true,  callback.calledRequestNewNodeAssignment);
   }
 }
