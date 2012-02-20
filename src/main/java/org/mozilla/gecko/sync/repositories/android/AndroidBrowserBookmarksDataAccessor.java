@@ -38,11 +38,13 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.android.BrowserContract.Bookmarks;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -78,10 +80,40 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return BrowserContract.Bookmarks.CONTENT_URI;
   }
 
+  protected Uri getPositionsUri() {
+    return BrowserContract.Bookmarks.POSITIONS_CONTENT_URI;
+  }
+
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
     // Exclude "places" and "tags", in case they've ended up in the DB.
     String where = BOOKMARK_IS_FOLDER + " AND " + GUID_NOT_TAGS_OR_PLACES;
     return queryHelper.safeQuery(".getGuidsIDsForFolders", null, where, null, null);
+  }
+
+  /**
+   * Take a sequence of GUIDs, updating the database accordingly.
+   *
+   * @param childArray
+   */
+  public int updatePositions(ArrayList<String> childArray) {
+    String[] args = childArray.toArray(new String[childArray.size()]);
+    return context.getContentResolver().update(getPositionsUri(), new ContentValues(), null, args);
+  }
+
+  /**
+   * Bump the modified time of a record by ID.
+   *
+   * @param id
+   * @param modified
+   * @return
+   */
+  public int bumpModified(long id, long modified) {
+    String where = Bookmarks._ID + " = ?";
+    String[] selectionArgs = new String[] { String.valueOf(id) };
+    ContentValues values = new ContentValues();
+    values.put(Bookmarks.DATE_MODIFIED, modified);
+
+    return context.getContentResolver().update(getUri(), values, where, selectionArgs );
   }
 
   protected void updateParentAndPosition(String guid, long newParentId, long position) {
