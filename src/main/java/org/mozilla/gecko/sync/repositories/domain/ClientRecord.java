@@ -44,6 +44,7 @@ public class ClientRecord extends Record {
 
     this.lastModified = payload.lastModified;
     this.deleted      = payload.deleted;
+    this.collection   = payload.collection;
 
     this.name = (String) p.get("name");
     this.type = (String) p.get("type");
@@ -53,14 +54,14 @@ public class ClientRecord extends Record {
   public CryptoRecord getPayload() {
     CryptoRecord rec = new CryptoRecord(this);
     rec.payload = new ExtendedJSONObject();
-    rec.payload.put("id",            this.guid);
-    rec.payload.put("name",          this.name);
-    rec.payload.put("type",          this.type);
+    putPayload(rec, "id",   this.guid);
+    putPayload(rec, "name", this.name);
+    putPayload(rec, "type", this.type);
     return rec;
   }
 
   public boolean equals(Object o) {
-    if (!super.equals(o) || !(o instanceof ClientRecord)) {
+    if (!(o instanceof ClientRecord) || !super.equals(o)) {
       return false;
     }
 
@@ -90,6 +91,13 @@ Example record:
 
 {id:"relf31w7B4F1",
  name:"marina_mac",
- type:"mobile"}
+ type:"mobile"
+ commands:[{"args":["bookmarks"],"command":"wipeEngine"},
+           {"args":["forms"],"command":"wipeEngine"},
+           {"args":["history"],"command":"wipeEngine"},
+           {"args":["passwords"],"command":"wipeEngine"},
+           {"args":["prefs"],"command":"wipeEngine"},
+           {"args":["tabs"],"command":"wipeEngine"},
+           {"args":["addons"],"command":"wipeEngine"}]}
 */
 }
