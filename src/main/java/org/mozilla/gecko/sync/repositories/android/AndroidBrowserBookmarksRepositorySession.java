@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.R;
@@ -46,17 +48,22 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    * And of course folders can refer to local children (including ones that might
    * be reconciled into oblivion!), or local children in other folders. And the local
    * version of a folder -- which might be a reconciling target, or might not -- can
-   * have local additions or removals.
+   * have local additions or removals. (That causes complications with on-the-fly
+   * reordering: we don't know in advance which records will even exist by the end
+   * of the sync.)
    *
    * We opt to leave records in a reasonable state as we go, applying reordering/
-   * reparenting operations whenever possible. Typically this is after all incoming
-   * records have been applied. As such, we need to track a bunch of stuff as we go:
+   * reparenting operations whenever possible. A final sequence is applied after all
+   * incoming records have been handled.
+   *
+   * As such, we need to track a bunch of stuff as we go:
    *
    * • For each downloaded folder, the array of children. These will be server GUIDs,
    *   but not necessarily identical to the remote list: if we download a record and
    *   it's been locally moved, it must be removed from this child array.
    *
-   *   This mapping can be discarded when reordering has occurred.
+   *   This mapping can be discarded when final reordering has occurred, either on
+   *   store completion or when every child has been seen within this session.
    *
    * • A list of orphans: records whose parent folder does not yet exist. This can be
    *   trimmed as orphans are reparented.
@@ -64,6 +71,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    * • Mappings from folder GUIDs to folder IDs, so that we can parent items without
    *   having to look in the DB. Of course, this must be kept up-to-date as we
    *   reconcile.
+   *
+   * Reordering also needs to occur during fetch. That is, a folder might have been
+   * created locally, or modified locally without any remote changes. An order must
+   * be generated for the folder's children array, and it must be persisted into the
+   * database to act as a starting point for future changes. But of course we don't
+   * want to incur a database write if the children already have a satisfactory order.
    *
    * Do we also need a list of "adopters", parents that are still waiting for children?
    * As items get picked out of the orphans list, we can do on-the-fly ordering, until
@@ -244,80 +257,91 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return parentName;
   }
 
+  /**
+   * Retrieve the child array for a record, repositioning and updating the database as necessary.
+   *
+   * @param folderID
+   *        The database ID of the folder.
+   * @param persist
+   *        True if generated positions should be written to the database. The modified
+   *        time of the parent folder is only bumped if this is true.
+   * @return
+   *        An array of GUIDs.
+   * @throws NullCursorException
+   */
   @SuppressWarnings("unchecked")
-  private JSONArray getChildren(long androidID) throws NullCursorException {
-    trace("Calling getChildren for androidID " + androidID);
+  private JSONArray getChildrenArray(long folderID, boolean persist) throws NullCursorException {
+    trace("Calling getChildren for androidID " + folderID);
     JSONArray childArray = new JSONArray();
-    Cursor children = dataAccessor.getChildren(androidID);
+    Cursor children = dataAccessor.getChildren(folderID);
     try {
       if (!children.moveToFirst()) {
         trace("No children: empty cursor.");
         return childArray;
       }
+      final int positionIndex = children.getColumnIndex(BrowserContract.Bookmarks.POSITION);
+      final int count = children.getCount();
+      Logger.debug(LOG_TAG, "Expecting " + count + " children.");
 
-      int count = children.getCount();
-      String[] kids = new String[count];
-      trace("Expecting " + count + " children.");
+      // Sorted by requested position.
+      TreeMap<Long, ArrayList<String>> guids = new TreeMap<Long, ArrayList<String>>();
 
-      // Track badly positioned records.
-      // TODO: use a mechanism here that preserves ordering.
-      HashMap<String, Long> broken = new HashMap<String, Long>();
-
-      // Get children into array in correct order.
       while (!children.isAfterLast()) {
-        String childGuid = getGUID(children);
-        long parent = getParentID(children);
-        trace("  Child GUID: " + childGuid + ", parent " + parent);
-        long childPosition = getPosition(children);
+        final String childGuid   = getGUID(children);
+        final long childPosition = getPosition(children, positionIndex);
+        trace("  Child GUID: " + childGuid);
         trace("  Child position: " + childPosition);
-        if (childPosition >= count) {
-          Logger.warn(LOG_TAG, "Child position " + childPosition + " greater than expected children " + count);
-          broken.put(childGuid, 0L);
-        } else if (childPosition < 0) {
-          // TODO
-          Logger.debug(LOG_TAG, "Child position " + childPosition + " is negative. Broken!");
-          broken.put(childGuid, 0L);
-        } else {
-          String existing = kids[(int) childPosition];
-          if (existing != null) {
-            Logger.warn(LOG_TAG, "Child position " + childPosition + " already occupied! (" +
-                                 childGuid + ", " + existing + ")");
-            broken.put(childGuid, 0L);
-          } else {
-            kids[(int) childPosition] = childGuid;
-          }
-        }
+        Utils.addToIndexBucketMap(guids, Math.abs(childPosition), childGuid);
         children.moveToNext();
       }
 
-      // We've got some children with valid positions, and children
-      // with useless ones. Pack the good ones to the front, then
-      // fill the rest.
-      Utils.pack(kids);
-      try {
-        Utils.fillArraySpaces(kids, broken);
-      } catch (Exception e) {
-        Logger.error(LOG_TAG, "Unable to reposition children to yield a valid sequence. Data loss may result.", e);
-      }
-      // TODO: now use 'broken' to edit the records on disk.
+      // This will suffice for taking a jumble of records and indices and
+      // producing a sorted sequence that preserves some kind of order --
+      // from the abs of the position, falling back on cursor order (that
+      // is, creation time and ID).
+      // Note that this code is not intended to merge values from two sources!
+      boolean changed = false;
+      int i = 0;
+      for (Entry<Long, ArrayList<String>> entry : guids.entrySet()) {
+        long pos = entry.getKey().longValue();
+        int atPos = entry.getValue().size();
 
-      // Collect into a more friendly data structure.
-      for (int i = 0; i < count; ++i) {
-        String kid = kids[i];
-        if (forbiddenGUID(kid)) {
-          continue;
+        // If every element has a different index, and the indices are
+        // in strict natural order, then changed will be false.
+        if (atPos > 1 || pos != i) {
+          changed = true;
         }
-        childArray.add(kid);
+        for (String guid : entry.getValue()) {
+          if (!forbiddenGUID(guid)) {
+            childArray.add(guid);
+          }
+        }
       }
+
       if (Logger.logVerbose(LOG_TAG)) {
         // Don't JSON-encode unless we're logging.
         Logger.trace(LOG_TAG, "Output child array: " + childArray.toJSONString());
+      }
+
+      if (!changed) {
+        Logger.debug(LOG_TAG, "Nothing moved! Database reflects child array.");
+        return childArray;
+      }
+
+      if (!persist) {
+        return childArray;
+      }
+
+      Logger.debug(LOG_TAG, "Generating child array required moving records. Updating DB.");
+      final long time = now();
+      if (0 < dataAccessor.updatePositions(childArray)) {
+        Logger.debug(LOG_TAG, "Bumping parent time to " + time + ".");
+        dataAccessor.bumpModified(folderID, time);
       }
     } finally {
       children.close();
     }
 
-    // TODO: update actual stored positions.
     return childArray;
   }
 
@@ -326,7 +350,23 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
-  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  protected Record retrieveDuringStore(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    // During storing of a retrieved record, we never care about the children
+    // array that's already present in the database -- we don't use it for
+    // reconciling. Skip all that effort for now.
+    return retrieveRecord(cur, false);
+  }
+
+  @Override
+  protected Record retrieveDuringFetch(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    return retrieveRecord(cur, true);
+  }
+
+  /**
+   * Build a record from a cursor, with a flag to dictate whether the
+   * children array should be computed and written back into the database.
+   */
+  protected BookmarkRecord retrieveRecord(Cursor cur, boolean computeAndPersistChildren) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     String recordGUID = getGUID(cur);
     Logger.trace(LOG_TAG, "Record from mirror cursor: " + recordGUID);
 
@@ -364,8 +404,13 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       needsReparenting = true;
     }
 
-    // If record is a folder, build out the children array.
-    JSONArray childArray = getChildArrayForCursor(cur, recordGUID);
+    // If record is a folder, and we want to see children at this time, then build out the children array.
+    final JSONArray childArray;
+    if (computeAndPersistChildren) {
+      childArray = getChildrenArrayForRecordCursor(cur, recordGUID, true);
+    } else {
+      childArray = null;
+    }
     String parentName = getParentName(androidParentGUID);
     BookmarkRecord bookmark = AndroidBrowserBookmarksRepositorySession.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
 
@@ -379,7 +424,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       bookmark.parentName      = getParentName(destination);
       if (!bookmark.deleted) {
         // Actually move it.
-        // TODO: compute position.
+        // TODO: compute position. Persist.
         relocateBookmark(bookmark);
       }
     }
@@ -397,17 +442,19 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     dataAccessor.updateParentAndPosition(bookmark.guid, bookmark.androidParentID, bookmark.androidPosition);
   }
 
-  protected JSONArray getChildArrayForCursor(Cursor cur, String recordGUID) throws NullCursorException {
-    JSONArray childArray = null;
+  protected JSONArray getChildrenArrayForRecordCursor(Cursor cur, String recordGUID, boolean persist) throws NullCursorException {
     boolean isFolder = rowIsFolder(cur);
-    Logger.debug(LOG_TAG, "Record " + recordGUID + " is a " + (isFolder ? "folder." : "bookmark."));
-    if (isFolder) {
-      long androidID = guidToID.get(recordGUID);
-      childArray = getChildren(androidID);
+    if (!isFolder) {
+      return null;
     }
-    if (childArray != null) {
-      Logger.debug(LOG_TAG, "Fetched " + childArray.size() + " children for " + recordGUID);
+
+    long androidID = guidToID.get(recordGUID);
+    JSONArray childArray = getChildrenArray(androidID, persist);
+    if (childArray == null) {
+      return null;
     }
+
+    Logger.debug(LOG_TAG, "Fetched " + childArray.size() + " children for " + recordGUID);
     return childArray;
   }
 
@@ -481,22 +528,36 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   };
 
   @Override
-  @SuppressWarnings("unchecked")
+  protected Record reconcileRecords(Record remoteRecord, Record localRecord,
+                                    long lastRemoteRetrieval,
+                                    long lastLocalRetrieval) {
+
+    BookmarkRecord reconciled = (BookmarkRecord) super.reconcileRecords(remoteRecord, localRecord,
+                                                                        lastRemoteRetrieval,
+                                                                        lastLocalRetrieval);
+
+    // For now we *always* use the remote record's children array as a starting point.
+    // We won't write it into the database yet; we'll record it and process as we go.
+    reconciled.children = ((BookmarkRecord) remoteRecord).children;
+    return reconciled;
+  }
+
+  @Override
   protected Record prepareRecord(Record record) {
     BookmarkRecord bmk = (BookmarkRecord) record;
     
     // Check if parent exists.
     // TODO: synchronization!
-    // TODO: you're modifying a child array in-place! Don't do that!
     if (guidToID.containsKey(bmk.parentID)) {
       bmk.androidParentID = guidToID.get(bmk.parentID);
+
+      // Might as well set a basic position from the downloaded children array.
       JSONArray children = parentToChildArray.get(bmk.parentID);
       if (children != null) {
-        if (!children.contains(bmk.guid)) {
-          children.add(bmk.guid);
-          parentToChildArray.put(bmk.parentID, children);
+        int index = children.indexOf(bmk.guid);
+        if (index >= 0) {
+          bmk.androidPosition = index;
         }
-        bmk.androidPosition = children.indexOf(bmk.guid);
       }
     }
     else {
@@ -539,7 +600,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   protected void updateBookkeeping(Record record) throws NoGuidForIdException,
                                                          NullCursorException,
                                                          ParentNotFoundException {
@@ -547,7 +607,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     BookmarkRecord bmk = (BookmarkRecord) record;
 
     // If record is folder, update maps and re-parent children if necessary.
-    if (!bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+    if (!bmk.isFolder()) {
       Logger.debug(LOG_TAG, "Not a folder. No bookkeeping.");
       return;
     }
@@ -562,17 +622,17 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     JSONArray childArray = bmk.children;
 
-    Logger.debug(LOG_TAG, record.guid + " has children " + childArray.toJSONString());
+    if (Logger.logVerbose(LOG_TAG)) {
+      Logger.trace(LOG_TAG, bmk.guid + " has children " + childArray.toJSONString());
+    }
     parentToChildArray.put(bmk.guid, childArray);
 
     // Re-parent.
     if (missingParentToChildren.containsKey(bmk.guid)) {
       for (String child : missingParentToChildren.get(bmk.guid)) {
-        long position;
-        if (!bmk.children.contains(child)) {
-          childArray.add(child);
-        }
-        position = childArray.indexOf(child);
+        // This might return -1; that's OK, the bookmark will
+        // be properly repositioned later.
+        long position = childArray.indexOf(child);
         dataAccessor.updateParentAndPosition(child, bmk.androidID, position);
         needsReparenting--;
       }
