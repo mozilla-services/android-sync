@@ -24,7 +24,7 @@ public class TestRetryAfter {
     response.addHeader("Retry-After", Long.toString(TEST_SECONDS)); // Retry-After given in seconds.
 
     final SyncResponse syncResponse = new SyncResponse(response);
-    assertEquals(TEST_SECONDS, syncResponse.retryAfter());
+    assertEquals(TEST_SECONDS, syncResponse.retryAfterInSeconds());
   }
 
   @Test
@@ -36,8 +36,8 @@ public class TestRetryAfter {
     response.addHeader("Retry-After", DateUtils.formatDate(future));
 
     final SyncResponse syncResponse = new SyncResponse(response);
-    assertTrue(syncResponse.retryAfter() > TEST_SECONDS - 15);
-    assertTrue(syncResponse.retryAfter() < TEST_SECONDS + 15);
+    assertTrue(syncResponse.retryAfterInSeconds() > TEST_SECONDS - 15);
+    assertTrue(syncResponse.retryAfterInSeconds() < TEST_SECONDS + 15);
   }
 
   @Test
@@ -47,6 +47,6 @@ public class TestRetryAfter {
     response.addHeader("Retry-After", "10X");
 
     final SyncResponse syncResponse = new SyncResponse(response);
-    assertEquals(-1, syncResponse.retryAfter());
+    assertEquals(-1, syncResponse.retryAfterInSeconds());
   }
 }

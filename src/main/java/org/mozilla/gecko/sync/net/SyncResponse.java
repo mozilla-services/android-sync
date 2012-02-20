@@ -148,9 +148,9 @@ public class SyncResponse {
   }
 
   /**
-   * @return A number of seconds, or -1 if the header was not present.
+   * @return A number of seconds, or -1 if the 'Retry-After' header was not present.
    */
-  public int retryAfter() throws NumberFormatException {
+  public int retryAfterInSeconds() throws NumberFormatException {
     if (!this.hasHeader(HEADER_RETRY_AFTER)) {
       return -1;
     }
@@ -178,8 +178,26 @@ public class SyncResponse {
     }
   }
 
-  public int weaveBackoff() throws NumberFormatException {
+  /**
+   * @return A number of seconds, or -1 if the 'X-Weave-Backoff' header was not
+   *         present.
+   */
+  public int weaveBackoffInSeconds() throws NumberFormatException {
     return this.getIntegerHeader("x-weave-backoff");
+  }
+
+  /**
+   * @return A number of milliseconds, or -1 if neither the 'Retry-After' or
+   *         'X-Weave-Backoff' header was present.
+   */
+  public int totalBackoffInMilliseconds() {
+    int totalBackoff = -1;
+    try {
+      totalBackoff = 1000 * Math.max(retryAfterInSeconds(), weaveBackoffInSeconds());
+    } catch (NumberFormatException e) {
+    }
+
+    return totalBackoff;
   }
 
   /**
