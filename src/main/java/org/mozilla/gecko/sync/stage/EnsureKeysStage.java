@@ -116,6 +116,28 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
     session.advance();
   }
 
+  protected void generateAndUploadKeys() {
+    CryptoRecord keysWBO;
+    try {
+      keysWBO = CollectionKeys.generateCollectionKeysRecord();
+    } catch (CryptoException e) {
+      session.abort(e, "Couldn't generate new key bundle.");
+      return;
+    }
+    keysWBO.keyBundle = session.config.syncKeyBundle;
+    try {
+      keysWBO.encrypt();
+    } catch (UnsupportedEncodingException e) {
+      // Shouldn't occur, so let's not waste too much time on niceties. TODO
+      session.abort(e, "Couldn't encrypt new key bundle: unsupported encoding.");
+      return;
+    } catch (CryptoException e) {
+      session.abort(e, "Couldn't encrypt new key bundle.");
+      return;
+    }
+    session.uploadKeys(keysWBO, this);
+  }
+
   @Override
   public void handleRequestFailure(SyncStorageResponse response) {
     if (retrying) {
@@ -127,25 +149,7 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
     Log.i(LOG_TAG, "Got " + statusCode + " fetching keys.");
     if (statusCode == 404) {
       // No keys. Generate and upload, then refetch.
-      CryptoRecord keysWBO;
-      try {
-        keysWBO = CollectionKeys.generateCollectionKeysRecord();
-      } catch (CryptoException e) {
-        session.abort(e, "Couldn't generate new key bundle.");
-        return;
-      }
-      keysWBO.keyBundle = session.config.syncKeyBundle;
-      try {
-        keysWBO.encrypt();
-      } catch (UnsupportedEncodingException e) {
-        // Shouldn't occur, so let's not waste too much time on niceties. TODO
-        session.abort(e, "Couldn't encrypt new key bundle: unsupported encoding.");
-        return;
-      } catch (CryptoException e) {
-        session.abort(e, "Couldn't encrypt new key bundle.");
-        return;
-      }
-      session.uploadKeys(keysWBO, this);
+      generateAndUploadKeys();
       return;
     }
     session.handleHTTPError(response, "Failure fetching keys.");
