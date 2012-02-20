@@ -90,6 +90,39 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
   protected Map<Stage, GlobalSyncStage> stages;
   public Stage currentState = Stage.idle;
 
+  /**
+   * Was my cluster URL set this session?
+   *
+   * We record this so that on a 401 (user name/password invalid on this node),
+   * we can differentiate between "node reassignment" and
+   * "user password changed".
+   *
+   * The "node reassignment" flow is:
+   * <ul>
+   * <li>Some GlobalSessions complete successfully, setting the cluster URL along the way.</li>
+   * <li>A GlobalSession is kicked off that does not fetch a new cluster URL since it already has one.</li>
+   * <li>A 401 occurs: the GlobalSession fails and the cluster URL is removed.</li>
+   * <li>The next GlobalSession kicked off finds that the cluster URL is not set, so it retrieves a new cluster URL, and completes successfully.</li>
+   * </ul>
+   *
+   * The "user password changed" flow is:
+   * <ul>
+   * <li>Some GlobalSessions complete successfully, setting the cluster URL along the way.</li>
+   * <li>The user changes his password.</li>
+   * <li>A GlobalSession is kicked off that does not fetch a new cluster URL since it already has one.</li>
+   * <li>A 401 occurs: the GlobalSession fails and the cluster URL is removed.</li>
+   * <li>The next GlobalSession kicked off finds that the cluster URL is not set, so it retrieves a new cluster URL, but...</li>
+   * <li>... another 401 occurs: the new GlobalSession fails, leaves the cluster URL intact, and calls <code>informAuthenticationFailed</code>.</li>
+   * </ul>
+   *
+   * <code>informAuthenticationFailed</code> can compare a newly fetched cluster URL against the old cluster URL to determine definitively if the "user password changed".
+   * <p>
+   * Written in {@link EnsureClusterURLStage#execute(GlobalSession)}.
+   *
+   * Read in {@link #interpretHTTPFailure(HttpResponse)}.
+   */
+  public boolean clusterURLSetThisSession = false;
+
   private GlobalSessionCallback callback;
   private Context context;
 
@@ -336,6 +369,25 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     long backoff = Math.max(retryAfter, weaveBackoff);
     if (backoff > 0) {
       callback.requestBackoff(backoff);
+    }
+
+    if (response.getStatusLine().getStatusCode() == 401) {
+      if (!clusterURLSetThisSession) {
+        /*
+         * We have a 401 on a stale cluster URL. Remove the stale cluster URL.
+         * This GlobalSession will fail, but the next one will fetch a new
+         * cluster URL and will distinguish between "node reassignment"
+         * and "user password changed".
+         */
+        config.forgetClusterURL();
+      } else {
+        /*
+         * We have a 401 on a fresh cluster URL. Leave the cluster URL, but call
+         * <code>informAuthenticationFailed</code> to alert that
+         * "user password changed" (with high probability).
+         */
+        callback.informAuthenticationFailed();
+      }
     }
   }
 

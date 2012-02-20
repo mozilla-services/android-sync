@@ -180,6 +180,7 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
 
         try {
           session.config.setClusterURL(url);
+          session.clusterURLSetThisSession = true;
           ThreadPool.run(new Runnable() {
             @Override
             public void run() {
@@ -207,6 +208,7 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
           if (serverURL != null) {
             Log.i(LOG_TAG, "Using serverURL <" + serverURL.toASCIIString() + "> as clusterURL.");
             session.config.setClusterURL(serverURL);
+            session.clusterURLSetThisSession = true;
             session.advance();
             return;
           }

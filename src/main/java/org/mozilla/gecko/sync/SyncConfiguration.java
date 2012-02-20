@@ -403,6 +403,14 @@ public class SyncConfiguration implements CredentialsSource {
     this.setClusterURL(new URI(url));
   }
 
+  public void forgetClusterURL() {
+    clusterURL = null;
+    Editor edit = this.getPrefs().edit();
+    edit.putString("clusterURL", null);
+    edit.commit();
+    Log.i(LOG_TAG, "Forgot cluster URL.");
+  }
+
   /**
    * Used for direct management of related prefs.
    * @return
