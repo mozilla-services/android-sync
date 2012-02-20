@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.HashMap;
+
 import junit.framework.AssertionFailedError;
 
 import org.json.simple.JSONArray;
@@ -14,6 +16,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
@@ -160,7 +163,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     final String folderGUID = "mobile";
 
     wipe();
-    setUpFennecMobileRecord();
+    long mobile = setUpFennecMobileRecord();
 
     // No children.
     assertChildrenAreUnordered(repo, folderGUID, new Record[] {});
@@ -177,6 +180,12 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     assertEquals(2, folderChildren.size());
     String guidOne = (String) folderChildren.get(0);
     String guidTwo = (String) folderChildren.get(1);
+
+    // Make sure positions were saved.
+    assertChildrenAreDirect(mobile, new String[] {
+        guidOne,
+        guidTwo
+    });
 
     // Add some through Sync.
     BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now, false);
@@ -211,12 +220,25 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     BookmarkRecord expectedTwo = new BookmarkRecord(guidTwo, "bookmarks", now - 10, false);
 
     // We want the server to win in this case, and otherwise to preserve order.
-    assertChildrenAreOrdered(repo, folderGUID, new Record[] {
+    // TODO
+    assertChildrenAreUnordered(repo, folderGUID, new Record[] {
         bookmarkA,
         bookmarkB,
         expectedOne,
         expectedTwo
     });
+
+    // Furthermore, the children of that folder should be correct in the DB.
+    final long folderId = storedIDs.get(folderGUID).longValue();
+    Log.d(getName(), "Folder " + folderGUID + " => " + folderId);
+    /*
+    assertChildrenAreDirect(folderId, new String[] {
+        bookmarkA.guid,
+        bookmarkB.guid,
+        expectedOne.guid,
+        expectedTwo.guid
+    });
+    */
   }
 
   public Context getApplicationContext() {
@@ -310,6 +332,8 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     }
   }
 
+  final HashMap<String, Long> storedIDs = new HashMap<String, Long>();
+
   /**
    * Create a new session for the given repository, storing each record
    * from the provided array. Notifies on failure or success.
@@ -332,6 +356,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
           @Override
           public void onRecordStoreSucceeded(Record record) {
             // Great.
+            storedIDs.put(record.guid, record.androidID);
           }
         };
         session.setStoreDelegate(storeDelegate);
@@ -502,6 +527,42 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     assertEquals(expected.length, folderChildren.size());
     for (Record record : expected) {
       folderChildren.contains(record.guid);
+    }
+  }
+
+  /**
+   * Assert that the children of the provided ID are correct and positioned in the database.
+   * @param id
+   * @param guids
+   */
+  protected void assertChildrenAreDirect(long id, String[] guids) {
+    Log.d(getName(), "Fetching children directly from DB...");
+    AndroidBrowserBookmarksDataAccessor accessor = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
+    Cursor cur = null;
+    try {
+      cur = accessor.getChildren(id);
+    } catch (NullCursorException e) {
+      fail("Got null cursor.");
+    }
+    try {
+      assertTrue(cur.moveToFirst());
+      int i = 0;
+      final int guidCol = cur.getColumnIndex(BrowserContract.SyncColumns.GUID);
+      final int posCol = cur.getColumnIndex(BrowserContract.Bookmarks.POSITION);
+      while (!cur.isAfterLast()) {
+        assertTrue(i < guids.length);
+        final String guid = cur.getString(guidCol);
+        final int pos = cur.getInt(posCol);
+        Log.d(getName(), "Fetched child: " + guid + " has position " + pos);
+        assertEquals(guids[i], guid);
+        assertEquals(i,        pos);
+
+        ++i;
+        cur.moveToNext();
+      }
+      assertEquals(i, guids.length);
+    } finally {
+      cur.close();
     }
   }
 }
