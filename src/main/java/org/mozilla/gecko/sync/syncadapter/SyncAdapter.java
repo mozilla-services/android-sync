@@ -400,4 +400,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       this.extendEarliestNextSync(System.currentTimeMillis() + backoff);
     }
   }
+
+  @Override
+  public void requestNewNodeAssignment() {
+    // TODO: retry sync?
+  }
 }

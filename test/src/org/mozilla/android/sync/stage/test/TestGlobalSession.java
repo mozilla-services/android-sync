@@ -50,6 +50,11 @@ public class TestGlobalSession extends AndroidTestCase {
     }
 
     @Override
+    public void requestNewNodeAssignment() {
+      fail("No requestNewNodeAssignment.");
+    }
+
+    @Override
     public void handleAborted(GlobalSession globalSession, String reason) {
       fail("Not expecting abort.");
     }

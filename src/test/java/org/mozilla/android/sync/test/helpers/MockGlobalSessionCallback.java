@@ -26,6 +26,7 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   public boolean calledError = false;
   public boolean calledAborted = false;
   public boolean calledRequestBackoff = false;
+  public boolean calledRequestNewNodeAssignment = false;
   public long weaveBackoff = -1;
 
   @Override
@@ -57,6 +58,11 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   public void requestBackoff(long backoff) {
     this.calledRequestBackoff = true;
     this.weaveBackoff = backoff;
+  }
+
+  @Override
+  public void requestNewNodeAssignment() {
+    this.calledRequestNewNodeAssignment = true;
   }
 
   @Override
