@@ -48,6 +48,15 @@ public interface GlobalSessionCallback {
    */
   void requestBackoff(long backoff);
 
+  /**
+   * We retrieved a fresh cluster URL, but still the node/weave cluster URL
+   * server rejected this user's authentication. We should check that the
+   * existing cluster URL matches a freshly retrieved cluster URL, and if so the
+   * user interface should inform the user and query for updated authentication
+   * credentials.
+   */
+  void informAuthenticationFailed();
+
   void handleAborted(GlobalSession globalSession, String reason);
   void handleError(GlobalSession globalSession, Exception ex);
   void handleSuccess(GlobalSession globalSession);
