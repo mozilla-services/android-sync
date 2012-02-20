@@ -94,6 +94,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
 
   private GlobalSessionCallback callback;
   private Context context;
+  private ClientsDataDelegate clientsDelegate;
 
   /*
    * Key accessors.
@@ -177,8 +178,9 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
 
     this.callback        = callback;
     this.context         = context;
+    this.clientsDelegate = clientsDelegate;
 
-    config = new SyncConfiguration(prefsPath, this, clientsDelegate);
+    config = new SyncConfiguration(prefsPath, this);
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;
     config.username      = username;
@@ -697,10 +699,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
   }
 
   public String getAccountGUID() {
-    return config.getAccountGUID();
+    return clientsDelegate.getAccountGUID();
   }
 
   public String getClientName() {
-    return config.getClientName();
+    return clientsDelegate.getClientName();
   }
 }

@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.AlreadySyncingException;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
@@ -412,23 +413,21 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     }
   }
 
-  @Override
-  public String getPersistedAccountGUID() {
-    return mAccountManager.getUserData(localAccount, Constants.ACCOUNT_GUID);
+  synchronized public String getAccountGUID() {
+    String accountGUID = mAccountManager.getUserData(localAccount, Constants.ACCOUNT_GUID);
+    if (accountGUID == null) {
+      accountGUID = Utils.generateGuid();
+      mAccountManager.setUserData(localAccount, Constants.ACCOUNT_GUID, accountGUID);
+    }
+    return accountGUID;
   }
 
-  @Override
-  public void setPersistedAccountGUID(String guid) {
-    mAccountManager.setUserData(localAccount, Constants.ACCOUNT_GUID, guid);
-  }
-
-  @Override
-  public String getPersistedClientName() {
-    return mAccountManager.getUserData(localAccount, Constants.CLIENT_NAME);
-  }
-
-  @Override
-  public void setPersistedClientName(String clientName) {
-    mAccountManager.setUserData(localAccount, Constants.CLIENT_NAME, clientName);
+  synchronized public String getClientName() {
+    String clientName = mAccountManager.getUserData(localAccount, Constants.CLIENT_NAME);
+    if (clientName == null) {
+      clientName = GlobalConstants.PRODUCT_NAME + " on " + android.os.Build.MODEL;
+      mAccountManager.setUserData(localAccount, Constants.CLIENT_NAME, clientName);
+    }
+    return clientName;
   }
 }
