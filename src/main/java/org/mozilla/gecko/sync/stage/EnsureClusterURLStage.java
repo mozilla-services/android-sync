@@ -209,9 +209,8 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
           }
           Log.w(LOG_TAG, "No serverURL set to use as fallback cluster URL. Aborting sync.");
           // Fallthrough to abort.
-        } else {
-          session.interpretHTTPFailure(response);
         }
+
         session.abort(new Exception("HTTP failure."), "Got failure fetching cluster URL.");
       }
 

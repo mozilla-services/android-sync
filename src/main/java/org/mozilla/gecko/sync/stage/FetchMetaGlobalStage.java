@@ -40,6 +40,7 @@ package org.mozilla.gecko.sync.stage;
 import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -60,7 +61,7 @@ public class FetchMetaGlobalStage implements GlobalSyncStage {
 
     @Override
     public void handleFailure(SyncStorageResponse response) {
-      session.handleHTTPError(response, "Failure fetching meta/global.");
+      session.abort(new HTTPFailureException(response), "Failure fetching meta/global.");
     }
 
     @Override

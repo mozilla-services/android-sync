@@ -17,6 +17,7 @@ import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -65,7 +66,7 @@ public class TestGlobalSession {
           new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
         response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
-        session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
+        session.abort(new HTTPFailureException(new SyncStorageResponse(response)), "Failure fetching info/collections.");
       }
     }
 
@@ -92,7 +93,7 @@ public class TestGlobalSession {
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
-          session.handleHTTPError(new SyncStorageResponse(response), "Illegal method/protocol");
+          session.abort(new HTTPFailureException(new SyncStorageResponse(response)), "Illegal method/protocol");
         }
       }));
 

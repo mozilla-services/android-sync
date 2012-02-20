@@ -9,6 +9,7 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
@@ -40,7 +41,7 @@ public class TestBackoff {
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
-      session.interpretHTTPFailure(response); // This is synchronous...
+      session.interpretHTTPFailure(new SyncStorageResponse(response)); // This is synchronous...
 
       assertEquals(false, callback.calledSuccess); // ... so we can test immediately.
       assertEquals(false, callback.calledError);
@@ -67,7 +68,7 @@ public class TestBackoff {
       final HttpResponse response = new BasicHttpResponse(
 	new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
 
-      session.interpretHTTPFailure(response); // This is synchronous...
+      session.interpretHTTPFailure(new SyncStorageResponse(response)); // This is synchronous...
 
       assertEquals(false, callback.calledSuccess); // ... so we can test immediately.
       assertEquals(false, callback.calledError);
@@ -96,7 +97,7 @@ public class TestBackoff {
       response.addHeader("Retry-After", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS + 1)); // If we now add a second header, the larger should be returned.
 
-      session.interpretHTTPFailure(response); // This is synchronous...
+      session.interpretHTTPFailure(new SyncStorageResponse(response)); // This is synchronous...
 
       assertEquals(false, callback.calledSuccess); // ... so we can test immediately.
       assertEquals(false, callback.calledError);

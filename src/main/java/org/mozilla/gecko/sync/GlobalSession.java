@@ -74,16 +74,12 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class GlobalSession implements CredentialsSource, PrefsSource {
   private static final String LOG_TAG = "GlobalSession";
 
   public static final String API_VERSION   = "1.1";
   public static final long STORAGE_VERSION = 5;
-
-  private static final String HEADER_RETRY_AFTER     = "retry-after";
-  private static final String HEADER_X_WEAVE_BACKOFF = "x-weave-backoff";
 
   public SyncConfiguration config = null;
 
@@ -304,38 +300,36 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
   }
 
   public void abort(Exception e, String reason) {
-    Log.w(LOG_TAG, "Aborting sync: " + reason, e);
+    // All errors go through abort, so let's do some handling here.
+    if (e instanceof HTTPFailureException) {
+      SyncStorageResponse response = ((HTTPFailureException)e).response;
+      Log.w(LOG_TAG, "Aborting sync due to HTTP response status code " + response.getStatusCode());
+
+      interpretHTTPFailure(response);
+    } else {
+      Log.w(LOG_TAG, "Aborting sync: " + reason, e);
+    }
+
     this.callback.handleError(this, e);
   }
 
-  public void handleHTTPError(SyncStorageResponse response, String reason) {
-    // TODO: handling of 50x (backoff), 401 (node reassignment or auth error).
-    // Fall back to aborting.
-    Log.w(LOG_TAG, "Aborting sync due to HTTP " + response.getStatusCode());
-    this.interpretHTTPFailure(response.httpResponse());
-    this.abort(new HTTPFailureException(response), reason);
-  }
-
   /**
-   * Perform appropriate backoff etc. extraction.
+   * Perform callback actions depending on the HTTP status code and headers of `response`.
+   *
+   * Call `requestBackoff` if 'Retry-After' or 'X-Weave-Backoff' header is set.
+   * Call `requestNewNodeAssignment` if status code is 401.
    */
-  public void interpretHTTPFailure(HttpResponse response) {
+  public void interpretHTTPFailure(SyncStorageResponse response) {
     // TODO: handle permanent rejection.
-    long retryAfter = 0;
-    long weaveBackoff = 0;
-    if (response.containsHeader(HEADER_RETRY_AFTER)) {
-      // Handles non-decimals just fine.
-      String headerValue = response.getFirstHeader(HEADER_RETRY_AFTER).getValue();
-      retryAfter = Utils.decimalSecondsToMilliseconds(headerValue);
-    }
-    if (response.containsHeader(HEADER_X_WEAVE_BACKOFF)) {
-      // Handles non-decimals just fine.
-      String headerValue = response.getFirstHeader(HEADER_X_WEAVE_BACKOFF).getValue();
-      weaveBackoff = Utils.decimalSecondsToMilliseconds(headerValue);
-    }
-    long backoff = Math.max(retryAfter, weaveBackoff);
+
+    int backoff = response.totalBackoffInMilliseconds();
     if (backoff > 0) {
+      // Check X-Weave-Backoff and Retry-After for all status codes.
       callback.requestBackoff(backoff);
+    }
+
+    if (response.getStatusCode() == 401) {
+      callback.requestNewNodeAssignment();
     }
   }
 
@@ -374,17 +368,19 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
 
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
+        Log.i(LOG_TAG, "New keys uploaded.");
         keyUploadDelegate.onKeysUploaded();
       }
 
       @Override
       public void handleRequestFailure(SyncStorageResponse response) {
-        self.interpretHTTPFailure(response.httpResponse());
+        Log.w(LOG_TAG, "Got failure " + response.getStatusCode() + " uploading keys.");
         keyUploadDelegate.onKeyUploadFailed(new HTTPFailureException(response));
       }
 
       @Override
       public void handleRequestError(Exception ex) {
+        Log.w(LOG_TAG, "Got error uploading keys.", ex);
         keyUploadDelegate.onKeyUploadFailed(ex);
       }
 
@@ -537,9 +533,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
 
           @Override
           public void handleFailure(SyncStorageResponse response) {
-            // TODO: respect backoffs etc.
             Log.w(LOG_TAG, "Got failure " + response.getStatusCode() + " uploading new meta/global.");
-            session.interpretHTTPFailure(response.httpResponse());
             freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));
           }
 
@@ -610,7 +604,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
 
   private void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
     SyncStorageRequest request;
-    final GlobalSession self = this;
 
     try {
       request = new SyncStorageRequest(config.storageURL(false));
@@ -635,8 +628,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
       @Override
       public void handleRequestFailure(SyncStorageResponse response) {
         Log.w(LOG_TAG, "Got request failure " + response.getStatusCode() + " in wipeServer.");
-        // Process HTTP failures here to pick up backoffs, etc.
-        self.interpretHTTPFailure(response.httpResponse());
         wipeDelegate.onWipeFailed(new HTTPFailureException(response));
       }
 

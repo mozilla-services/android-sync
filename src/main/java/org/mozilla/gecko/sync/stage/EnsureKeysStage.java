@@ -47,6 +47,7 @@ import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
@@ -141,7 +142,7 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
   @Override
   public void handleRequestFailure(SyncStorageResponse response) {
     if (retrying) {
-      session.handleHTTPError(response, "Failure in refetching uploaded keys.");
+      session.abort(new HTTPFailureException(response), "Failure in refetching uploaded keys.");
       return;
     }
 
@@ -151,8 +152,9 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
       // No keys. Generate and upload, then refetch.
       generateAndUploadKeys();
       return;
+    } else {
+      session.abort(new HTTPFailureException(response), "Failure fetching keys.");
     }
-    session.handleHTTPError(response, "Failure fetching keys.");
   }
 
   @Override
