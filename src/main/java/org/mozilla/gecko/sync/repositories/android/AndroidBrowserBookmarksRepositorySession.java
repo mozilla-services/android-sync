@@ -210,6 +210,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.PARENT);
   }
 
+  // More efficient for bulk operations.
+  private long getPosition(Cursor cur, int positionIndex) {
+    return cur.getLong(positionIndex);
+  }
   private long getPosition(Cursor cur) {
     return RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks.POSITION);
   }
