@@ -220,11 +220,23 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   // Exclude "places", which is stored under "mobile" for convenience.
   // Remember to manually reparent "places" if you change "mobile"!
   public Cursor getChildren(long androidID) throws NullCursorException {
-    String where = BrowserContract.Bookmarks.PARENT + " = ? AND " +
-                   BrowserContract.SyncColumns.GUID + " <> ?" ;
-    String[] args = new String[] { String.valueOf(androidID), "places" };
-    return queryHelper.safeQuery(".getChildren", getAllColumns(), where, args, null);
+    return getChildren(androidID, false);
   }
+
+  public Cursor getChildren(long androidID, boolean includeDeleted) throws NullCursorException {
+    final String where = BrowserContract.Bookmarks.PARENT + " = ? AND " +
+                         BrowserContract.SyncColumns.GUID + " <> ? " +
+                         (!includeDeleted ? ("AND " + BrowserContract.SyncColumns.IS_DELETED + " = 0") : "");
+
+    final String[] args = new String[] { String.valueOf(androidID), "places" };
+
+    // Order by position, falling back on creation date and ID.
+    final String order = BrowserContract.Bookmarks.POSITION + ", " +
+                         BrowserContract.SyncColumns.DATE_CREATED + ", " +
+                         BrowserContract.Bookmarks._ID;
+    return queryHelper.safeQuery(".getChildren", getAllColumns(), where, args, order);
+  }
+
   
   @Override
   protected String[] getAllColumns() {
