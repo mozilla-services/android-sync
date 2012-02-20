@@ -247,15 +247,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   /**
    * Retrieve the child array for a record, repositioning and updating the database as necessary.
    *
-   * @param androidID
+   * @param folderID
+   *        The database ID of the folder.
+   * @param persist
+   *        True if generated positions should be written to the database. The modified
+   *        time of the parent folder is only bumped if this is true.
    * @return
+   *        An array of GUIDs.
    * @throws NullCursorException
    */
   @SuppressWarnings("unchecked")
-  private JSONArray getChildren(long androidID) throws NullCursorException {
-    trace("Calling getChildren for androidID " + androidID);
+  private JSONArray getChildrenArray(long folderID, boolean persist) throws NullCursorException {
+    trace("Calling getChildren for androidID " + folderID);
     JSONArray childArray = new JSONArray();
-    Cursor children = dataAccessor.getChildren(androidID);
+    Cursor children = dataAccessor.getChildren(folderID);
     try {
       if (!children.moveToFirst()) {
         trace("No children: empty cursor.");
@@ -264,7 +269,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
       int count = children.getCount();
       String[] kids = new String[count];
-      Logger.info(LOG_TAG, "Expecting " + count + " children.");
+      Logger.debug(LOG_TAG, "Expecting " + count + " children.");
 
       // Track badly positioned records.
       HashMap<String, Long> broken = new HashMap<String, Long>();   // TODO: sorted by value.
@@ -279,25 +284,21 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         trace("  Child GUID: " + childGuid + ", parent " + parent);
         trace("  Child position: " + childPosition);
 
-        if (childPosition >= count) {
-          Logger.warn(LOG_TAG, "Child position " + childPosition + " greater than expected children " + count);
-          broken.put(childGuid, 0L);
-        } else if (childPosition < 0) {
-          Logger.debug(LOG_TAG, "Child position " + childPosition + " is negative. Broken!");
-          broken.put(childGuid, 0L);
+        if (childPosition < 0 || childPosition >= count) {
+          Logger.warn(LOG_TAG, "Child position " + childPosition + " out of range: [0, " + count + ")");
+          broken.put(childGuid, childPosition);
         } else {
           String existing = kids[(int) childPosition];
-          if (existing != null) {
+          if (existing == null) {
+            kids[(int) childPosition] = childGuid;
+          } else {
             Logger.warn(LOG_TAG, "Child position " + childPosition + " already occupied! (" +
                                  childGuid + ", " + existing + ")");
             broken.put(childGuid, childPosition);
-          } else {
-            kids[(int) childPosition] = childGuid;
           }
         }
         children.moveToNext();
       }
-      Logger.info(LOG_TAG, "Got here.");
 
       int moved = 0;
       boolean forbidden = false;
@@ -313,8 +314,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Unable to reposition children to yield a valid sequence. Data loss may result.", e);
         }
-      } else {
-        Logger.debug(LOG_TAG, "No broken records.");
       }
 
       // Collect into a more friendly data structure.
@@ -331,15 +330,21 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         // Don't JSON-encode unless we're logging.
         Logger.trace(LOG_TAG, "Output child array: " + childArray.toJSONString());
       }
-      if (moved > 0 || forbidden) {
-        Logger.debug(LOG_TAG, "Generating child array required moving " + moved + " records. Updating DB.");
-        final long time = now();
-        if (0 < dataAccessor.updatePositions(childArray)) {
-          Logger.debug(LOG_TAG, "Bumping parent time.");
-          dataAccessor.bumpModified(androidID, time);
-        }
-      } else {
+
+      if (!persist) {
+        return childArray;
+      }
+
+      if (moved == 0 && !forbidden) {
         Logger.debug(LOG_TAG, "Nothing moved!");
+        return childArray;
+      }
+
+      Logger.debug(LOG_TAG, "Generating child array required moving " + moved + " records. Updating DB.");
+      final long time = now();
+      if (0 < dataAccessor.updatePositions(childArray)) {
+        Logger.debug(LOG_TAG, "Bumping parent time to " + time + ".");
+        dataAccessor.bumpModified(folderID, time);
       }
     } finally {
       children.close();
@@ -392,7 +397,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
 
     // If record is a folder, build out the children array.
-    JSONArray childArray = getChildArrayForCursor(cur, recordGUID);
+    boolean persist = true;     // TODO
+    JSONArray childArray = getChildrenArrayForRecordCursor(cur, recordGUID, persist);
     String parentName = getParentName(androidParentGUID);
     BookmarkRecord bookmark = AndroidBrowserBookmarksRepositorySession.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
 
@@ -424,17 +430,19 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     dataAccessor.updateParentAndPosition(bookmark.guid, bookmark.androidParentID, bookmark.androidPosition);
   }
 
-  protected JSONArray getChildArrayForCursor(Cursor cur, String recordGUID) throws NullCursorException {
-    JSONArray childArray = null;
+  protected JSONArray getChildrenArrayForRecordCursor(Cursor cur, String recordGUID, boolean persist) throws NullCursorException {
     boolean isFolder = rowIsFolder(cur);
-    Logger.debug(LOG_TAG, "Record " + recordGUID + " is a " + (isFolder ? "folder." : "bookmark."));
-    if (isFolder) {
-      long androidID = guidToID.get(recordGUID);
-      childArray = getChildren(androidID);
+    if (!isFolder) {
+      return null;
     }
-    if (childArray != null) {
-      Logger.debug(LOG_TAG, "Fetched " + childArray.size() + " children for " + recordGUID);
+
+    long androidID = guidToID.get(recordGUID);
+    JSONArray childArray = getChildrenArray(androidID, persist);
+    if (childArray == null) {
+      return null;
     }
+
+    Logger.debug(LOG_TAG, "Fetched " + childArray.size() + " children for " + recordGUID);
     return childArray;
   }
 
