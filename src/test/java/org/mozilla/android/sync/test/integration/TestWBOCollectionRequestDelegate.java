@@ -25,7 +25,7 @@ public class TestWBOCollectionRequestDelegate {
   static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
 
-  public class LiveDelegate extends WBOCollectionRequestDelegate {
+  public class TestLiveWBOCollectionRequestDelegate extends WBOCollectionRequestDelegate {
 
     public KeyBundle bookmarksBundle = null;
     public ArrayList<CryptoRecord> wbos = new ArrayList<CryptoRecord>();
@@ -38,7 +38,7 @@ public class TestWBOCollectionRequestDelegate {
     @Override
     public String ifUnmodifiedSince() {
       return null;
-    }    
+    }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
@@ -81,7 +81,7 @@ public class TestWBOCollectionRequestDelegate {
   public void testRealLiveBookmarks() throws URISyntaxException, UnsupportedEncodingException {
     URI u = new URI(REMOTE_BOOKMARKS_URL);
     SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(u);
-    LiveDelegate delegate = new LiveDelegate();
+    TestLiveWBOCollectionRequestDelegate delegate = new TestLiveWBOCollectionRequestDelegate();
     r.delegate = delegate;
 
     // Here are our keys.
