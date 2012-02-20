@@ -244,6 +244,13 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     return parentName;
   }
 
+  /**
+   * Retrieve the child array for a record, repositioning and updating the database as necessary.
+   *
+   * @param androidID
+   * @return
+   * @throws NullCursorException
+   */
   @SuppressWarnings("unchecked")
   private JSONArray getChildren(long androidID) throws NullCursorException {
     trace("Calling getChildren for androidID " + androidID);
@@ -257,24 +264,25 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
       int count = children.getCount();
       String[] kids = new String[count];
-      trace("Expecting " + count + " children.");
+      Logger.info(LOG_TAG, "Expecting " + count + " children.");
 
       // Track badly positioned records.
-      // TODO: use a mechanism here that preserves ordering.
-      HashMap<String, Long> broken = new HashMap<String, Long>();
+      HashMap<String, Long> broken = new HashMap<String, Long>();   // TODO: sorted by value.
+
+      int positionIndex = children.getColumnIndex(BrowserContract.Bookmarks.POSITION);
 
       // Get children into array in correct order.
       while (!children.isAfterLast()) {
-        String childGuid = getGUID(children);
-        long parent = getParentID(children);
+        String childGuid   = getGUID(children);
+        long parent        = getParentID(children);
+        long childPosition = getPosition(children, positionIndex);
         trace("  Child GUID: " + childGuid + ", parent " + parent);
-        long childPosition = getPosition(children);
         trace("  Child position: " + childPosition);
+
         if (childPosition >= count) {
           Logger.warn(LOG_TAG, "Child position " + childPosition + " greater than expected children " + count);
           broken.put(childGuid, 0L);
         } else if (childPosition < 0) {
-          // TODO
           Logger.debug(LOG_TAG, "Child position " + childPosition + " is negative. Broken!");
           broken.put(childGuid, 0L);
         } else {
@@ -282,29 +290,39 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
           if (existing != null) {
             Logger.warn(LOG_TAG, "Child position " + childPosition + " already occupied! (" +
                                  childGuid + ", " + existing + ")");
-            broken.put(childGuid, 0L);
+            broken.put(childGuid, childPosition);
           } else {
             kids[(int) childPosition] = childGuid;
           }
         }
         children.moveToNext();
       }
+      Logger.info(LOG_TAG, "Got here.");
 
-      // We've got some children with valid positions, and children
-      // with useless ones. Pack the good ones to the front, then
-      // fill the rest.
-      Utils.pack(kids);
-      try {
-        Utils.fillArraySpaces(kids, broken);
-      } catch (Exception e) {
-        Logger.error(LOG_TAG, "Unable to reposition children to yield a valid sequence. Data loss may result.", e);
+      int moved = 0;
+      boolean forbidden = false;
+      if (broken.size() > 0) {
+        // We've got some children with valid positions, and children
+        // with useless ones. Pack the good ones to the front, then
+        // fill the rest.
+        moved = Utils.pack(kids);
+        Logger.debug(LOG_TAG, "Packing moved " + moved + " records.");
+        try {
+          moved += Utils.fillArraySpaces(kids, broken);
+          Logger.debug(LOG_TAG, "Filling and packing moved " + moved + " records.");
+        } catch (Exception e) {
+          Logger.error(LOG_TAG, "Unable to reposition children to yield a valid sequence. Data loss may result.", e);
+        }
+      } else {
+        Logger.debug(LOG_TAG, "No broken records.");
       }
-      // TODO: now use 'broken' to edit the records on disk.
 
       // Collect into a more friendly data structure.
       for (int i = 0; i < count; ++i) {
         String kid = kids[i];
+        // Eliminate any special folders that crept in. TODO: why?
         if (forbiddenGUID(kid)) {
+          forbidden = true;
           continue;
         }
         childArray.add(kid);
@@ -313,11 +331,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         // Don't JSON-encode unless we're logging.
         Logger.trace(LOG_TAG, "Output child array: " + childArray.toJSONString());
       }
+      if (moved > 0 || forbidden) {
+        Logger.debug(LOG_TAG, "Generating child array required moving " + moved + " records. Updating DB.");
+        final long time = now();
+        if (0 < dataAccessor.updatePositions(childArray)) {
+          Logger.debug(LOG_TAG, "Bumping parent time.");
+          dataAccessor.bumpModified(androidID, time);
+        }
+      } else {
+        Logger.debug(LOG_TAG, "Nothing moved!");
+      }
     } finally {
       children.close();
     }
 
-    // TODO: update actual stored positions.
     return childArray;
   }
 
