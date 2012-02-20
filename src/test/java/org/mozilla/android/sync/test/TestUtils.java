@@ -36,7 +36,7 @@ public class TestUtils {
     String[] testArray = new String[] {
         "a", null, "b", null, "c", "d", null
     };
-    Utils.pack(testArray);
+    assertEquals(3, Utils.pack(testArray));
     assertEquals("a", testArray[0]);
     assertEquals("b", testArray[1]);
     assertEquals("c", testArray[2]);

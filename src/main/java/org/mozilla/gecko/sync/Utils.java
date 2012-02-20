@@ -240,24 +240,29 @@ public class Utils {
    *
    * @param dest
    * @param source
+   * @return the number of moved items.
    * @throws Exception
    */
-  public static void fillArraySpaces(String[] dest, HashMap<String, Long> source) throws Exception {
+  public static int fillArraySpaces(String[] dest, HashMap<String, Long> source) throws Exception {
     int i = 0;
     int c = dest.length;
     int needed = source.size();
+
     if (needed == 0) {
-      return;
+      return 0;
     }
     if (needed > c) {
       throw new Exception("Need " + needed + " array spaces, have no more than " + c);
     }
+
+    int moved = 0;
     for (String key : source.keySet()) {
       while (i < c) {
         if (dest[i] == null) {
           // Great!
           dest[i] = key;
           source.put(key, (long) i);
+          moved++;
           break;
         }
         ++i;
@@ -266,15 +271,18 @@ public class Utils {
     if (i >= c) {
       throw new Exception("Could not fill array spaces.");
     }
+    return moved;
   }
 
   /**
    * Take an array of strings, packing elements toward the start.
    * @param kids
+   * @return the number of moved elements.
    */
-  public static void pack(String[] kids) {
+  public static int pack(String[] kids) {
     int src, dst = 0;
     int c = kids.length;
+    int moved = 0;
 
     while (dst < (c - 1)) {
       // Find the first gap.
@@ -291,12 +299,14 @@ public class Utils {
 
       // Didn't find any? Give up.
       if (src >= c) {
-        return;
+        return moved;
       }
 
       // Copy from src to dst.
       kids[dst++] = kids[src];
       kids[src++] = null;
+      moved++;
     }
+    return moved;
   }
 }
