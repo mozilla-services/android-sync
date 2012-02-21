@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.R;
@@ -266,81 +268,60 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         trace("No children: empty cursor.");
         return childArray;
       }
-
-      int count = children.getCount();
-      String[] kids = new String[count];
+      final int positionIndex = children.getColumnIndex(BrowserContract.Bookmarks.POSITION);
+      final int count = children.getCount();
       Logger.debug(LOG_TAG, "Expecting " + count + " children.");
 
-      // Track badly positioned records.
-      HashMap<String, Long> broken = new HashMap<String, Long>();   // TODO: sorted by value.
+      // Sorted by requested position.
+      TreeMap<Long, ArrayList<String>> guids = new TreeMap<Long, ArrayList<String>>();
 
-      int positionIndex = children.getColumnIndex(BrowserContract.Bookmarks.POSITION);
-
-      // Get children into array in correct order.
       while (!children.isAfterLast()) {
-        String childGuid   = getGUID(children);
-        long parent        = getParentID(children);
-        long childPosition = getPosition(children, positionIndex);
-        trace("  Child GUID: " + childGuid + ", parent " + parent);
+        final String childGuid   = getGUID(children);
+        final long childPosition = getPosition(children, positionIndex);
+        trace("  Child GUID: " + childGuid);
         trace("  Child position: " + childPosition);
-
-        if (childPosition < 0 || childPosition >= count) {
-          Logger.warn(LOG_TAG, "Child position " + childPosition + " out of range: [0, " + count + ")");
-          broken.put(childGuid, childPosition);
-        } else {
-          String existing = kids[(int) childPosition];
-          if (existing == null) {
-            kids[(int) childPosition] = childGuid;
-          } else {
-            Logger.warn(LOG_TAG, "Child position " + childPosition + " already occupied! (" +
-                                 childGuid + ", " + existing + ")");
-            broken.put(childGuid, childPosition);
-          }
-        }
+        Utils.addToIndexBucketMap(guids, Math.abs(childPosition), childGuid);
         children.moveToNext();
       }
 
-      int moved = 0;
-      boolean forbidden = false;
-      if (broken.size() > 0) {
-        // We've got some children with valid positions, and children
-        // with useless ones. Pack the good ones to the front, then
-        // fill the rest.
-        moved = Utils.pack(kids);
-        Logger.debug(LOG_TAG, "Packing moved " + moved + " records.");
-        try {
-          moved += Utils.fillArraySpaces(kids, broken);
-          Logger.debug(LOG_TAG, "Filling and packing moved " + moved + " records.");
-        } catch (Exception e) {
-          Logger.error(LOG_TAG, "Unable to reposition children to yield a valid sequence. Data loss may result.", e);
+      // This will suffice for taking a jumble of records and indices and
+      // producing a sorted sequence that preserves some kind of order --
+      // from the abs of the position, falling back on cursor order (that
+      // is, creation time and ID).
+      // Note that this code is not intended to merge values from two sources!
+      boolean changed = false;
+      int i = 0;
+      for (Entry<Long, ArrayList<String>> entry : guids.entrySet()) {
+        long pos = entry.getKey().longValue();
+        int atPos = entry.getValue().size();
+
+        // If every element has a different index, and the indices are
+        // in strict natural order, then changed will be false.
+        if (atPos > 1 || pos != i) {
+          changed = true;
+        }
+        for (String guid : entry.getValue()) {
+          if (!forbiddenGUID(guid)) {
+            childArray.add(guid);
+          }
         }
       }
 
-      // Collect into a more friendly data structure.
-      for (int i = 0; i < count; ++i) {
-        String kid = kids[i];
-        // Eliminate any special folders that crept in. TODO: why?
-        if (forbiddenGUID(kid)) {
-          forbidden = true;
-          continue;
-        }
-        childArray.add(kid);
-      }
       if (Logger.logVerbose(LOG_TAG)) {
         // Don't JSON-encode unless we're logging.
         Logger.trace(LOG_TAG, "Output child array: " + childArray.toJSONString());
+      }
+
+      if (!changed) {
+        Logger.debug(LOG_TAG, "Nothing moved! Database reflects child array.");
+        return childArray;
       }
 
       if (!persist) {
         return childArray;
       }
 
-      if (moved == 0 && !forbidden) {
-        Logger.debug(LOG_TAG, "Nothing moved!");
-        return childArray;
-      }
-
-      Logger.debug(LOG_TAG, "Generating child array required moving " + moved + " records. Updating DB.");
+      Logger.debug(LOG_TAG, "Generating child array required moving records. Updating DB.");
       final long time = now();
       if (0 < dataAccessor.updatePositions(childArray)) {
         Logger.debug(LOG_TAG, "Bumping parent time to " + time + ".");

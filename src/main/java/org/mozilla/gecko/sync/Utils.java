@@ -44,8 +44,9 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Locale;
+import java.util.TreeMap;
 
 import org.mozilla.apache.commons.codec.binary.Base32;
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -234,79 +235,12 @@ public class Utils {
     return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
   }
 
-  /**
-   * Populate null slots in the provided array from keys in the provided Map.
-   * Set values in the map to be the new indices.
-   *
-   * @param dest
-   * @param source
-   * @return the number of moved items.
-   * @throws Exception
-   */
-  public static int fillArraySpaces(String[] dest, HashMap<String, Long> source) throws Exception {
-    int i = 0;
-    int c = dest.length;
-    int needed = source.size();
-
-    if (needed == 0) {
-      return 0;
+  public static void addToIndexBucketMap(TreeMap<Long, ArrayList<String>> map, long index, String value) {
+    ArrayList<String> bucket = map.get(index);
+    if (bucket == null) {
+      bucket = new ArrayList<String>();
     }
-    if (needed > c) {
-      throw new Exception("Need " + needed + " array spaces, have no more than " + c);
-    }
-
-    int moved = 0;
-    for (String key : source.keySet()) {
-      while (i < c) {
-        if (dest[i] == null) {
-          // Great!
-          dest[i] = key;
-          source.put(key, (long) i);
-          moved++;
-          break;
-        }
-        ++i;
-      }
-    }
-    if (i >= c) {
-      throw new Exception("Could not fill array spaces.");
-    }
-    return moved;
-  }
-
-  /**
-   * Take an array of strings, packing elements toward the start.
-   * @param kids
-   * @return the number of moved elements.
-   */
-  public static int pack(String[] kids) {
-    int src, dst = 0;
-    int c = kids.length;
-    int moved = 0;
-
-    while (dst < (c - 1)) {
-      // Find the first gap.
-      if (kids[dst] != null) {
-        ++dst;
-        continue;
-      }
-
-      // Find the next element to fill it.
-      src = dst + 1;
-      while (src < c && kids[src] == null) {
-        ++src;
-      }
-
-      // Didn't find any? Give up.
-      if (src >= c) {
-        return moved;
-      }
-
-      // Copy from src to dst.
-      kids[dst++] = kids[src];
-      kids[src++] = null;
-      moved++;
-    }
-    return moved;
+    bucket.add(value);
+    map.put(index, bucket);
   }
 }
