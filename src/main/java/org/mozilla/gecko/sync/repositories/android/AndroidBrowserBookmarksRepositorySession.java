@@ -351,6 +351,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   @Override
   protected Record retrieveDuringStore(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    // During storing of a retrieved record, we never care about the children
+    // array that's already present in the database -- we don't use it for
+    // reconciling. Skip all that effort for now.
     return retrieveRecord(cur, false);
   }
 
@@ -361,9 +364,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   /**
    * Build a record from a cursor, with a flag to dictate whether the
-   * computed children array is written back into the database.
+   * children array should be computed and written back into the database.
    */
-  protected BookmarkRecord retrieveRecord(Cursor cur, boolean persist) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  protected BookmarkRecord retrieveRecord(Cursor cur, boolean computeAndPersistChildren) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     String recordGUID = getGUID(cur);
     Logger.trace(LOG_TAG, "Record from mirror cursor: " + recordGUID);
 
@@ -401,8 +404,13 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       needsReparenting = true;
     }
 
-    // If record is a folder, build out the children array.
-    JSONArray childArray = getChildrenArrayForRecordCursor(cur, recordGUID, persist);
+    // If record is a folder, and we want to see children at this time, then build out the children array.
+    final JSONArray childArray;
+    if (computeAndPersistChildren) {
+      childArray = getChildrenArrayForRecordCursor(cur, recordGUID, true);
+    } else {
+      childArray = null;
+    }
     String parentName = getParentName(androidParentGUID);
     BookmarkRecord bookmark = AndroidBrowserBookmarksRepositorySession.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
 
