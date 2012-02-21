@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -142,6 +143,11 @@ public class WBORepository extends Repository {
 
     @Override
     public void wipe(final RepositorySessionWipeDelegate delegate) {
+      if (!isActive()) {
+        delegate.onWipeFailed(new InactiveSessionException(null));
+        return;
+      }
+
       this.wbos = new ConcurrentHashMap<String, Record>();
       ((WBORepository) this.repository).wbos = new ConcurrentHashMap<String, Record>();
       delegate.deferredWipeDelegate(delegateExecutor).onWipeSucceeded();
@@ -151,7 +157,7 @@ public class WBORepository extends Repository {
     public void finish(RepositorySessionFinishDelegate delegate) {
       ((WBORepository) repository).wbos = this.wbos;
       stats.finished = now();
-      delegate.deferredFinishDelegate(delegateExecutor).onFinishSucceeded(this, this.getBundle());
+      super.finish(delegate);
     }
 
     @Override
