@@ -579,22 +579,21 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   protected Record prepareRecord(Record record) {
     BookmarkRecord bmk = (BookmarkRecord) record;
     
     // Check if parent exists.
     // TODO: synchronization!
-    // TODO: you're modifying a child array in-place! Don't do that!
     if (guidToID.containsKey(bmk.parentID)) {
       bmk.androidParentID = guidToID.get(bmk.parentID);
+
+      // Might as well set a basic position from the downloaded children array.
       JSONArray children = parentToChildArray.get(bmk.parentID);
       if (children != null) {
-        if (!children.contains(bmk.guid)) {
-          children.add(bmk.guid);
-          parentToChildArray.put(bmk.parentID, children);
+        int index = children.indexOf(bmk.guid);
+        if (index >= 0) {
+          bmk.androidPosition = index;
         }
-        bmk.androidPosition = children.indexOf(bmk.guid);
       }
     }
     else {
