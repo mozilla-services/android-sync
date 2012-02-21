@@ -221,7 +221,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
 
     // We want the server to win in this case, and otherwise to preserve order.
     // TODO
-    assertChildrenAreUnordered(repo, folderGUID, new Record[] {
+    assertChildrenAreOrdered(repo, folderGUID, new Record[] {
         bookmarkA,
         bookmarkB,
         expectedOne,
@@ -231,14 +231,13 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     // Furthermore, the children of that folder should be correct in the DB.
     final long folderId = storedIDs.get(folderGUID).longValue();
     Log.d(getName(), "Folder " + folderGUID + " => " + folderId);
-    /*
+
     assertChildrenAreDirect(folderId, new String[] {
         bookmarkA.guid,
         bookmarkB.guid,
         expectedOne.guid,
         expectedTwo.guid
     });
-    */
   }
 
   public Context getApplicationContext() {
