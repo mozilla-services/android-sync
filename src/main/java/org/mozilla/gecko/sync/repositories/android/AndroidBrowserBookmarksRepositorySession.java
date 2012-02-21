@@ -622,7 +622,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     JSONArray childArray = bmk.children;
 
-    Logger.debug(LOG_TAG, record.guid + " has children " + childArray.toJSONString());
+    if (Logger.logVerbose(LOG_TAG)) {
+      Logger.trace(LOG_TAG, bmk.guid + " has children " + childArray.toJSONString());
+    }
     parentToChildArray.put(bmk.guid, childArray);
 
     // Re-parent.
