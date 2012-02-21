@@ -607,7 +607,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     BookmarkRecord bmk = (BookmarkRecord) record;
 
     // If record is folder, update maps and re-parent children if necessary.
-    if (!bmk.type.equalsIgnoreCase(AndroidBrowserBookmarksDataAccessor.TYPE_FOLDER)) {
+    if (!bmk.isFolder()) {
       Logger.debug(LOG_TAG, "Not a folder. No bookkeeping.");
       return;
     }
