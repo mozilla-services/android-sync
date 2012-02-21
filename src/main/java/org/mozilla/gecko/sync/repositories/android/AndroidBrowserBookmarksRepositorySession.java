@@ -673,10 +673,46 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     super.storeRecordDeletion(folder);
   }
 
+  @SuppressWarnings("unchecked")
+  private void finishUp() {
+    try {
+      Logger.debug(LOG_TAG, "Have " + parentToChildArray.size() + " folders whose children might need repositioning.");
+      for (Entry<String, JSONArray> entry : parentToChildArray.entrySet()) {
+        String guid = entry.getKey();
+        JSONArray onServer = entry.getValue();
+        try {
+          final long folderID = getIDForGUID(guid);
+          JSONArray inDB = getChildrenArray(folderID, false);
+          int added = 0;
+          for (Object o : inDB) {
+            if (!onServer.contains(o)) {
+              onServer.add(o);
+              added++;
+            }
+          }
+          Logger.debug(LOG_TAG, "Added " + added + " items locally.");
+          dataAccessor.updatePositions(new ArrayList<String>(onServer));
+          dataAccessor.bumpModified(folderID, now());
+          // Wow, this is spectacularly wasteful.
+          untrackRecord(retrieveByGUIDDuringStore(guid));
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Error repositioning children for " + guid, e);
+        }
+      }
+    } finally {
+      super.storeDone();
+    }
+  }
+
   @Override
   public void storeDone() {
-    // TODO: queue up a Runnable to do final reparenting/repositioning work.
-    super.storeDone();
+    Runnable command = new Runnable() {
+      @Override
+      public void run() {
+        finishUp();
+      }
+    };
+    storeWorkQueue.execute(command);
   }
 
   @Override
