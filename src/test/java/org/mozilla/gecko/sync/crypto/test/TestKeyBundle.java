@@ -3,8 +3,8 @@
 
 package org.mozilla.gecko.sync.crypto.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -19,10 +19,12 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 public class TestKeyBundle {
   @Test
   public void testUsernameFromAccount() throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    assertEquals(Utils.sha1Base32("foobar@baz.com"), "xee7ffonluzpdp66l6xgpyh2v2w6ojkc");
-    assertEquals(KeyBundle.usernameFromAccount("foobar@baz.com"), "xee7ffonluzpdp66l6xgpyh2v2w6ojkc");
-    assertEquals(KeyBundle.usernameFromAccount("foobar"), "foobar");
-    assertEquals(KeyBundle.usernameFromAccount("xee7ffonluzpdp66l6xgpyh2v2w6ojkc"), "xee7ffonluzpdp66l6xgpyh2v2w6ojkc");
+    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", Utils.sha1Base32("foobar@baz.com"));
+    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", KeyBundle.usernameFromAccount("foobar@baz.com"));
+    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", KeyBundle.usernameFromAccount("FooBar@Baz.com"));
+    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", KeyBundle.usernameFromAccount("xee7ffonluzpdp66l6xgpyh2v2w6ojkc"));
+    assertEquals("foobar",                           KeyBundle.usernameFromAccount("foobar"));
+    assertEquals("foobar",                           KeyBundle.usernameFromAccount("FOOBAr"));
   }
 
   @Test
@@ -35,8 +37,8 @@ public class TestKeyBundle {
                                    "dKj0O+b0fwI=";
 
     KeyBundle keys = new KeyBundle(username, friendlyBase32SyncKey);
-    assertTrue(Arrays.equals(keys.getEncryptionKey(), Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8"))));
-    assertTrue(Arrays.equals(keys.getHMACKey(), Base64.decodeBase64(base64HmacKey.getBytes("UTF-8"))));
+    assertArrayEquals(keys.getEncryptionKey(), Base64.decodeBase64(base64EncryptionKey.getBytes("UTF-8")));
+    assertArrayEquals(keys.getHMACKey(), Base64.decodeBase64(base64HmacKey.getBytes("UTF-8")));
   }
 
   /*
@@ -47,8 +49,8 @@ public class TestKeyBundle {
   public void testGenerateRandomKeys() throws CryptoException {
     KeyBundle keys = KeyBundle.withRandomKeys();
 
-    assertEquals(keys.getEncryptionKey().length, 32);
-    assertEquals(keys.getHMACKey().length, 32);
+    assertEquals(32, keys.getEncryptionKey().length);
+    assertEquals(32, keys.getHMACKey().length);
 
     boolean equal = Arrays.equals(keys.getEncryptionKey(), keys.getHMACKey());
     assertEquals(false, equal);
