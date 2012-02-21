@@ -62,7 +62,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
 
   @Override
   protected Uri getUri() {
-    return BrowserContract.History.CONTENT_URI;
+    return BrowserContractHelpers.HISTORY_CONTENT_URI;
   }
 
   @Override
@@ -91,7 +91,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
 
   @Override
   protected String[] getAllColumns() {
-    return BrowserContract.History.HistoryColumns;
+    return BrowserContractHelpers.HistoryColumns;
   }
   
   @Override

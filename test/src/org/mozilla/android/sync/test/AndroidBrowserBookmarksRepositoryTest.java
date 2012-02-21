@@ -19,6 +19,7 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContract;
+import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
@@ -490,8 +491,8 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   
   protected Cursor getAllBookmarks() {
     Context context = getApplicationContext();
-    Cursor cur = context.getContentResolver().query(BrowserContract.Bookmarks.CONTENT_URI,
-        BrowserContract.Bookmarks.BookmarkColumns, null, null, null);
+    Cursor cur = context.getContentResolver().query(BrowserContractHelpers.BOOKMARKS_CONTENT_URI,
+        BrowserContractHelpers.BookmarkColumns, null, null, null);
     return cur;
   }
 

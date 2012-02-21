@@ -14,6 +14,7 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContract;
+import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
@@ -312,8 +313,8 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
 
   protected Cursor getAllHistory() {
     Context context = getApplicationContext();
-    Cursor cur = context.getContentResolver().query(BrowserContract.History.CONTENT_URI,
-        BrowserContract.History.HistoryColumns, null, null, null);
+    Cursor cur = context.getContentResolver().query(BrowserContractHelpers.HISTORY_CONTENT_URI,
+        BrowserContractHelpers.HistoryColumns, null, null, null);
     return cur;
   }
 }

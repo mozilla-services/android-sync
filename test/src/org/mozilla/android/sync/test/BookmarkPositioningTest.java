@@ -25,6 +25,7 @@ import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.gecko.sync.repositories.android.BrowserContract;
+import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -486,7 +487,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
   }
 
   protected Uri insertRow(ContentValues values) {
-    Uri uri = BrowserContract.Bookmarks.CONTENT_URI;
+    Uri uri = BrowserContractHelpers.BOOKMARKS_CONTENT_URI;
     return getApplicationContext().getContentResolver().insert(uri, values);
   }
 
@@ -527,7 +528,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
   private long fennecGetMobileBookmarksFolderId(ContentResolver cr) {
     Cursor c = null;
     try {
-      c = cr.query(appendProfile(BrowserContract.Bookmarks.CONTENT_URI),
+      c = cr.query(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI),
           new String[] { BrowserContract.Bookmarks._ID },
           BrowserContract.Bookmarks.GUID + " = ?",
           new String[] { BrowserContract.Bookmarks.MOBILE_FOLDER_GUID },
@@ -561,13 +562,13 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     values.put(BrowserContract.Bookmarks.IS_DELETED, 0);
 
     Log.i(getName(), "Adding bookmark " + title + ", " + uri + " in " + folderId);
-    int updated = cr.update(appendProfile(BrowserContract.Bookmarks.CONTENT_URI),
+    int updated = cr.update(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI),
         values,
         BrowserContract.Bookmarks.URL + " = ?",
             new String[] { uri });
 
     if (updated == 0) {
-      Uri insert = cr.insert(appendProfile(BrowserContract.Bookmarks.CONTENT_URI), values);
+      Uri insert = cr.insert(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI), values);
       long idFromUri = RepoUtils.getAndroidIdFromUri(insert);
       Log.i(getName(), "Inserted " + uri + " as " + idFromUri);
       Log.i(getName(), "Position is " + getPosition(idFromUri));
@@ -576,7 +577,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
 
   private long getPosition(long idFromUri) {
     ContentResolver cr = getApplicationContext().getContentResolver();
-    Cursor c = cr.query(appendProfile(BrowserContract.Bookmarks.CONTENT_URI),
+    Cursor c = cr.query(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI),
                         new String[] { BrowserContract.Bookmarks.POSITION },
                         BrowserContract.Bookmarks._ID + " = ?",
                         new String[] { String.valueOf(idFromUri) },
@@ -598,7 +599,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
   protected void wipe() {
     Log.d(getName(), "Wiping.");
     final ContentResolver cr = getApplicationContext().getContentResolver();
-    cr.delete(BrowserContract.Bookmarks.CONTENT_URI, null, null);
+    cr.delete(BrowserContractHelpers.BOOKMARKS_CONTENT_URI, null, null);
   }
 
   protected void assertChildrenAreOrdered(AndroidBrowserBookmarksRepository repo, String guid, Record[] expected) {

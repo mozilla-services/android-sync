@@ -77,11 +77,11 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
 
   @Override
   protected Uri getUri() {
-    return BrowserContract.Bookmarks.CONTENT_URI;
+    return BrowserContractHelpers.BOOKMARKS_CONTENT_URI;
   }
 
   protected Uri getPositionsUri() {
-    return BrowserContract.Bookmarks.POSITIONS_CONTENT_URI;
+    return BrowserContractHelpers.BOOKMARKS_POSITIONS_CONTENT_URI;
   }
 
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
@@ -251,6 +251,6 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   
   @Override
   protected String[] getAllColumns() {
-    return BrowserContract.Bookmarks.BookmarkColumns;
+    return BrowserContractHelpers.BookmarkColumns;
   }
 }
