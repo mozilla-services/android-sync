@@ -317,7 +317,9 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     expected[0] = record0.guid;
     expected[1] = record1.guid;
 
+    Log.i(getName(), "Storing two records...");
     performWait(storeManyRunnable(session, new Record[] { record0, record1 }));
+    Log.i(getName(), "Getting guids since " + timestamp + "; expecting " + expected.length);
     performWait(guidsSinceRunnable(session, timestamp, expected));
   }
   
