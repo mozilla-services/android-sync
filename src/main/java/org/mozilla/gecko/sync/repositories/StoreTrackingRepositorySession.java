@@ -48,6 +48,16 @@ public abstract class StoreTrackingRepositorySession extends RepositorySession {
   }
 
   @Override
+  protected synchronized void untrackRecord(Record record) {
+    if (this.storeTracker == null) {
+      throw new IllegalStateException("Store tracker not yet initialized!");
+    }
+
+    Logger.debug(LOG_TAG, "Un-tracking record " + record.guid + ".");
+    this.storeTracker.untrackStoredForExclusion(record.guid);
+  }
+
+  @Override
   public void abort(RepositorySessionFinishDelegate delegate) {
     this.storeTracker = null;
     super.abort(delegate);
