@@ -358,4 +358,7 @@ public abstract class RepositorySession {
    */
   protected synchronized void trackRecord(Record record) {
   }
+
+  protected synchronized void untrackRecord(Record record) {
+  }
 }
