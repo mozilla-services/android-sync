@@ -358,7 +358,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
-  protected Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  protected Record retrieveDuringStore(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    return retrieveRecord(cur, false);
+  }
+
+  @Override
+  protected Record retrieveDuringFetch(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    return retrieveRecord(cur, true);
+  }
+
+  /**
+   * Build a record from a cursor, with a flag to dictate whether the
+   * computed children array is written back into the database.
+   */
+  protected BookmarkRecord retrieveRecord(Cursor cur, boolean persist) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     String recordGUID = getGUID(cur);
     Logger.trace(LOG_TAG, "Record from mirror cursor: " + recordGUID);
 
@@ -397,7 +410,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
 
     // If record is a folder, build out the children array.
-    boolean persist = true;     // TODO
     JSONArray childArray = getChildrenArrayForRecordCursor(cur, recordGUID, persist);
     String parentName = getParentName(androidParentGUID);
     BookmarkRecord bookmark = AndroidBrowserBookmarksRepositorySession.bookmarkFromMirrorCursor(cur, androidParentGUID, parentName, childArray);
@@ -412,7 +424,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       bookmark.parentName      = getParentName(destination);
       if (!bookmark.deleted) {
         // Actually move it.
-        // TODO: compute position.
+        // TODO: compute position. Persist.
         relocateBookmark(bookmark);
       }
     }
