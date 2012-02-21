@@ -119,7 +119,9 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   protected void updateParentAndPosition(String guid, long newParentId, long position) {
     ContentValues cv = new ContentValues();
     cv.put(BrowserContract.Bookmarks.PARENT, newParentId);
-    cv.put(BrowserContract.Bookmarks.POSITION, position);
+    if (position >= 0) {
+      cv.put(BrowserContract.Bookmarks.POSITION, position);
+    }
     updateByGuid(guid, cv);
   } 
   

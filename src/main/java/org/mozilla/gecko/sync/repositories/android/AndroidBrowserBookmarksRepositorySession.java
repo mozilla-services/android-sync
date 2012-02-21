@@ -636,7 +636,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   protected void updateBookkeeping(Record record) throws NoGuidForIdException,
                                                          NullCursorException,
                                                          ParentNotFoundException {
@@ -665,11 +664,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // Re-parent.
     if (missingParentToChildren.containsKey(bmk.guid)) {
       for (String child : missingParentToChildren.get(bmk.guid)) {
-        long position;
-        if (!bmk.children.contains(child)) {
-          childArray.add(child);
-        }
-        position = childArray.indexOf(child);
+        // This might return -1; that's OK, the bookmark will
+        // be properly repositioned later.
+        long position = childArray.indexOf(child);
         dataAccessor.updateParentAndPosition(child, bmk.androidID, position);
         needsReparenting--;
       }
