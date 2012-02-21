@@ -297,6 +297,61 @@ public class BookmarkRecord extends Record {
     if (a != null && b == null) return false;
     return RepoUtils.stringsEqual(a.toJSONString(), b.toJSONString());
   }
+
+  private boolean emptyArray(JSONArray array) {
+    return null == array ||
+           0    == array.size();
+  }
+
+  @SuppressWarnings("unchecked")
+  private JSONArray orderedSetUnion(JSONArray to, JSONArray from) {
+    JSONArray out = (JSONArray) to.clone();
+
+    // Srsly, screw you, JSONArray.
+    for (Object o : from) {
+      if (!out.contains(o)) {
+        out.add(o);
+      }
+    }
+    return out;
+  }
+
+  private JSONArray cloneArray(JSONArray array) {
+    return (array == null) ? new JSONArray() : (JSONArray) array.clone();
+  }
+
+  /**
+   * Replace our children array to reflect the two sources.
+   *
+   * Return true if the children array has changed.
+   *
+   * @param remoteChildren
+   * @param localChildren
+   * @param remoteModified
+   * @param localModified
+   */
+  public boolean reconcileChildren(final JSONArray remoteChildren,
+                                final JSONArray localChildren,
+                                final long remoteModified,
+                                final long localModified) {
+    JSONArray reconciled;
+    if (emptyArray(remoteChildren)) {
+      reconciled = cloneArray(localChildren);
+    } else if (emptyArray(localChildren)) {
+      reconciled = cloneArray(remoteChildren);
+    } else {
+      // Must merge. For now we always preserve the remote order.
+      // Yes, this is just an ordered set union.
+      reconciled = orderedSetUnion(remoteChildren, localChildren);
+    }
+
+    if (jsonArrayStringsEqual(this.children, reconciled)) {
+      return false;
+    } else {
+      this.children = reconciled;
+      return true;
+    }
+  }
 }
 
 
