@@ -188,6 +188,13 @@ implements RecordsChannelDelegate,
       }
 
       @Override
+      public void onFlowFetchFailed(RecordsChannel recordsChannel, Exception ex) {
+        // TODO: clean up, tear down, abort.
+        warn("First RecordsChannel onFlowFetchFailed. Reporting store error.", ex);
+        session.delegate.onFetchError(ex);
+      }
+
+      @Override
       public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
         // TODO: clean up, tear down, abort.
         warn("First RecordsChannel onFlowStoreFailed. Reporting store error.", ex);
@@ -224,6 +231,12 @@ implements RecordsChannelDelegate,
   @Override
   public void onFlowBeginFailed(RecordsChannel recordsChannel, Exception ex) {
     warn("Second RecordsChannel onFlowBeginFailed. Not reporting error.", ex);
+  }
+
+  @Override
+  public void onFlowFetchFailed(RecordsChannel recordsChannel, Exception ex) {
+    // TODO Auto-generated method stub
+    warn("Second RecordsChannel onFlowFetchFailed. Not reporting error.", ex);
   }
 
   @Override

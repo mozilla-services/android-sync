@@ -187,6 +187,7 @@ class RecordsChannel implements
   public void onFetchFailed(Exception ex, Record record) {
     Logger.warn(LOG_TAG, "onFetchFailed. Calling for immediate stop.", ex);
     this.consumer.halt();
+    delegate.onFlowFetchFailed(this, ex);
   }
 
   @Override
