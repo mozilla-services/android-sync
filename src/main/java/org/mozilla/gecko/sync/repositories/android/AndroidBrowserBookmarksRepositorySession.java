@@ -528,6 +528,46 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   };
 
   @Override
+  protected Record reconcileRecords(Record remoteRecord, Record localRecord,
+                                    long lastRemoteRetrieval,
+                                    long lastLocalRetrieval) {
+
+    BookmarkRecord reconciled = (BookmarkRecord) super.reconcileRecords(remoteRecord, localRecord,
+                                                                        lastRemoteRetrieval,
+                                                                        lastLocalRetrieval);
+
+    // null:   local wins, or equal: nothing to be done.
+    // record: the most recent record, with remote GUID and local Android ID.
+    // Side-effect: if the remote record has won, track it to avoid upload.
+    //
+    // Our additions:
+    // - ensure that the applied record has the union of the child arrays
+    //   from both records
+    // - if the child array changed, un-track the record. (TODO: this should
+    //   be unnecessary if we track with modified times…)
+    // - update parenting maps. This should get taken care of during insertion.
+    if (reconciled == null) {
+      return reconciled;
+    }
+    JSONArray remoteChildren = null;
+    JSONArray localChildren  = null;
+    if (remoteRecord instanceof BookmarkRecord) {
+      remoteChildren = ((BookmarkRecord) remoteRecord).children;
+    }
+
+    if (localRecord instanceof BookmarkRecord) {
+      localChildren = ((BookmarkRecord) localRecord).children;
+    }
+
+    boolean changed = reconciled.reconcileChildren(remoteChildren, localChildren, remoteRecord.lastModified, localRecord.lastModified);
+    if (changed) {
+      // Child array changed, so we do want to upload it after all!
+      this.untrackRecord(reconciled);
+    }
+    return reconciled;
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   protected Record prepareRecord(Record record) {
     BookmarkRecord bmk = (BookmarkRecord) record;
