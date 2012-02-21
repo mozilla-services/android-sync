@@ -48,17 +48,22 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    * And of course folders can refer to local children (including ones that might
    * be reconciled into oblivion!), or local children in other folders. And the local
    * version of a folder -- which might be a reconciling target, or might not -- can
-   * have local additions or removals.
+   * have local additions or removals. (That causes complications with on-the-fly
+   * reordering: we don't know in advance which records will even exist by the end
+   * of the sync.)
    *
    * We opt to leave records in a reasonable state as we go, applying reordering/
-   * reparenting operations whenever possible. Typically this is after all incoming
-   * records have been applied. As such, we need to track a bunch of stuff as we go:
+   * reparenting operations whenever possible. A final sequence is applied after all
+   * incoming records have been handled.
+   *
+   * As such, we need to track a bunch of stuff as we go:
    *
    * • For each downloaded folder, the array of children. These will be server GUIDs,
    *   but not necessarily identical to the remote list: if we download a record and
    *   it's been locally moved, it must be removed from this child array.
    *
-   *   This mapping can be discarded when reordering has occurred.
+   *   This mapping can be discarded when final reordering has occurred, either on
+   *   store completion or when every child has been seen within this session.
    *
    * • A list of orphans: records whose parent folder does not yet exist. This can be
    *   trimmed as orphans are reparented.
@@ -66,6 +71,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    * • Mappings from folder GUIDs to folder IDs, so that we can parent items without
    *   having to look in the DB. Of course, this must be kept up-to-date as we
    *   reconcile.
+   *
+   * Reordering also needs to occur during fetch. That is, a folder might have been
+   * created locally, or modified locally without any remote changes. An order must
+   * be generated for the folder's children array, and it must be persisted into the
+   * database to act as a starting point for future changes. But of course we don't
+   * want to incur a database write if the children already have a satisfactory order.
    *
    * Do we also need a list of "adopters", parents that are still waiting for children?
    * As items get picked out of the orphans list, we can do on-the-fly ordering, until
