@@ -96,6 +96,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    * @param childArray
    */
   public int updatePositions(ArrayList<String> childArray) {
+    Logger.debug(LOG_TAG, "Updating positions for " + childArray.size() + " items.");
     String[] args = childArray.toArray(new String[childArray.size()]);
     return context.getContentResolver().update(getPositionsUri(), new ContentValues(), null, args);
   }
@@ -108,6 +109,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    * @return
    */
   public int bumpModified(long id, long modified) {
+    Logger.debug(LOG_TAG, "Bumping modified for " + id + " to " + modified);
     String where = Bookmarks._ID + " = ?";
     String[] selectionArgs = new String[] { String.valueOf(id) };
     ContentValues values = new ContentValues();
