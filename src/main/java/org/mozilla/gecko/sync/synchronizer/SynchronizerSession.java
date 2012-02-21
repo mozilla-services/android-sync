@@ -51,6 +51,33 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDele
 import android.content.Context;
 import android.util.Log;
 
+/**
+ * I coordinate the moving parts of a sync started by
+ * {@link Synchronizer#synchronize}.
+ *
+ * I flow records twice: first from A to B, and then from B to A. I provide
+ * fine-grained feedback by calling my delegate's callback methods.
+ *
+ * Initialize me by creating me with a Synchronizer and a
+ * SynchronizerSessionDelegate. Kick things off by calling `init` with two
+ * RepositorySessionBundles, and then call `synchronize` in your `onInitialized`
+ * callback.
+ *
+ * I always call exactly one of my delegate's `onInitialized` or
+ * `onSessionError` callback methods from `init`.
+ *
+ * I call my delegate's `onSynchronizeSkipped` callback method if there is no
+ * data to be synchronized in `synchronize`.
+ *
+ * In addition, I call `onFetchError`, `onStoreError`, and `onSessionError` when
+ * I encounter a fetch, store, or session error while synchronizing.
+ *
+ * Typically my delegate will call `abort` in its error callbacks, which will
+ * call my delegate's `onSynchronizeAborted` method and halt the sync.
+ *
+ * I always call exactly one of my delegate's `onSynchronized` or
+ * `onSynchronizeFailed` callback methods if I have not seen an error.
+ */
 public class SynchronizerSession
 extends DeferrableRepositorySessionCreationDelegate
 implements RecordsChannelDelegate,
@@ -140,10 +167,15 @@ implements RecordsChannelDelegate,
     final SynchronizerSession session = this;
 
     // TODO: failed record handling.
+
+    // This is the *second* record channel to flow.
+    // I, SynchronizerSession, am the delegate for the *second* flow.
     final RecordsChannel channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this);
-    RecordsChannelDelegate channelDelegate = new RecordsChannelDelegate() {
+
+    // This is the delegate for the *first* flow.
+    RecordsChannelDelegate channelAToBDelegate = new RecordsChannelDelegate() {
       public void onFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
-        info("First RecordsChannel flow completed. Fetch end is " + fetchEnd +
+        info("First RecordsChannel onFlowCompleted. Fetch end is " + fetchEnd +
              ". Store end is " + storeEnd + ". Starting next.");
         pendingATimestamp = fetchEnd;
         storeEndBTimestamp = storeEnd;
@@ -153,24 +185,34 @@ implements RecordsChannelDelegate,
 
       @Override
       public void onFlowBeginFailed(RecordsChannel recordsChannel, Exception ex) {
-        warn("First RecordsChannel flow failed to begin.");
+        warn("First RecordsChannel onFlowBeginFailed. Reporting session error.", ex);
         session.delegate.onSessionError(ex);
+      }
+
+      @Override
+      public void onFlowFetchFailed(RecordsChannel recordsChannel, Exception ex) {
+        // TODO: clean up, tear down, abort.
+        warn("First RecordsChannel onFlowFetchFailed. Reporting store error.", ex);
+        session.delegate.onFetchError(ex);
       }
 
       @Override
       public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
         // TODO: clean up, tear down, abort.
-        warn("First RecordsChannel flow failed.");
+        warn("First RecordsChannel onFlowStoreFailed. Reporting store error.", ex);
         session.delegate.onStoreError(ex);
       }
 
       @Override
       public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
-        warn("onFlowFinishedFailed. Reporting store error.", ex);
+        warn("First RecordsChannel onFlowFinishedFailed. Reporting store error.", ex);
         session.delegate.onStoreError(ex);
       }
     };
-    final RecordsChannel channelAToB = new RecordsChannel(this.sessionA, this.sessionB, channelDelegate);
+
+    // This is the *first* channel to flow.
+    final RecordsChannel channelAToB = new RecordsChannel(this.sessionA, this.sessionB, channelAToBDelegate);
+
     info("Starting A to B flow. Channel is " + channelAToB);
     try {
       channelAToB.beginAndFlow();
@@ -181,7 +223,7 @@ implements RecordsChannelDelegate,
 
   @Override
   public void onFlowCompleted(RecordsChannel channel, long fetchEnd, long storeEnd) {
-    info("Second RecordsChannel flow completed. Fetch end is " + fetchEnd +
+    info("Second RecordsChannel onFlowCompleted. Fetch end is " + fetchEnd +
          ". Store end is " + storeEnd + ". Finishing.");
 
     pendingBTimestamp = fetchEnd;
@@ -198,24 +240,36 @@ implements RecordsChannelDelegate,
 
   @Override
   public void onFlowBeginFailed(RecordsChannel recordsChannel, Exception ex) {
-    warn("Second RecordsChannel flow failed to begin.", ex);
+    warn("Second RecordsChannel onFlowBeginFailed. Not reporting error.", ex);
+  }
+
+  @Override
+  public void onFlowFetchFailed(RecordsChannel recordsChannel, Exception ex) {
+    // TODO Auto-generated method stub
+    warn("Second RecordsChannel onFlowFetchFailed. Not reporting error.", ex);
   }
 
   @Override
   public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO Auto-generated method stub
-    warn("Second RecordsChannel flow failed.");
+    warn("Second RecordsChannel onFlowStoreFailed. Not reporting error.", ex);
   }
 
   @Override
   public void onFlowFinishFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO Auto-generated method stub
-    warn("First RecordsChannel flow failed to finish.");
+    warn("Second RecordsChannel onFlowFinishFailed. Not reporting error.", ex);
   }
-
 
   /*
    * RepositorySessionCreationDelegate methods.
+   */
+
+  /**
+   * I could be called twice: once for sessionA and once for sessionB.
+   *
+   * I try to clean up sessionA if it is not null, since it is create sessionB
+   * that failed.
    */
   @Override
   public void onSessionCreateFailed(Exception ex) {
@@ -234,6 +288,12 @@ implements RecordsChannelDelegate,
     this.delegate.onSessionError(ex);
   }
 
+  /**
+   * I should be called twice: first for sessionA and second for sessionB.
+   *
+   * If I am called for sessionB, I call my delegate's `onInitialized` callback
+   * method because my repository sessions are correctly initialized.
+   */
   // TODO: some of this "finish and clean up" code can be refactored out.
   @Override
   public void onSessionCreated(RepositorySession session) {
@@ -281,6 +341,12 @@ implements RecordsChannelDelegate,
   /*
    * RepositorySessionFinishDelegate methods.
    */
+
+  /**
+   * I could be called twice: once for sessionA and once for sessionB.
+   *
+   * If sessionB couldn't be created, I don't fail again.
+   */
   @Override
   public void onFinishFailed(Exception ex) {
     if (this.sessionB == null) {
@@ -292,6 +358,14 @@ implements RecordsChannelDelegate,
     this.delegate.onSynchronizeFailed(this, ex, "Finish of session " + session + " failed.");
   }
 
+  /**
+   * I should be called twice: first for sessionA and second for sessionB.
+   *
+   * If I am called for sessionA, I try to finish sessionB.
+   *
+   * If I am called for sessionB, I call my delegate's `onSynchronized` callback
+   * method because my flows should have completed.
+   */
   @Override
   public void onFinishSucceeded(RepositorySession session,
                                 RepositorySessionBundle bundle) {
@@ -303,6 +377,9 @@ implements RecordsChannelDelegate,
         info("onFinishSucceeded: bumping session A's timestamp to " + pendingATimestamp + " or " + storeEndATimestamp);
         bundle.bumpTimestamp(Math.max(pendingATimestamp, storeEndATimestamp));
         this.synchronizer.bundleA = bundle;
+      } else {
+        // Should not happen!
+        this.delegate.onSessionError(new UnexpectedSessionException(sessionA));
       }
       if (this.sessionB != null) {
         info("Finishing session B.");
@@ -320,6 +397,9 @@ implements RecordsChannelDelegate,
         this.synchronizer.bundleB = bundle;
         info("Notifying delegate.onSynchronized.");
         this.delegate.onSynchronized(this);
+      } else {
+        // Should not happen!
+        this.delegate.onSessionError(new UnexpectedSessionException(sessionB));
       }
     } else {
       // TODO: hurrrrrr...
