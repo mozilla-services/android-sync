@@ -75,13 +75,34 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
     BaseResource resource = new BaseResource(nodeWeaveURL);
     resource.delegate = new SyncResourceDelegate(resource) {
 
+      /**
+       * Handle the response for GET https://server/pathname/version/username/node/weave.
+       *
+       * Returns the Weave (aka Sync) Node that the client is located on.
+       * Sync-specific calls should be directed to that node.
+       *
+       * Return value: the node URL, an unadorned (not JSON) string.
+       *
+       * node may be 'null' if no node can be assigned at this time, probably
+       * due to sign up throttling.
+       *
+       * Possible errors:
+       *
+       * 503: there was an error getting a node | empty body
+       *
+       * 400: for historical reasons treated as 404.
+       *
+       * 404: user not found | empty body
+       *
+       * {@link http://docs.services.mozilla.com/reg/apis.html}
+       */
       @Override
       public void handleHttpResponse(HttpResponse response) {
+
         int status = response.getStatusLine().getStatusCode();
         switch (status) {
         case 200:
-          Log.i(LOG_TAG, "Got 200 for node/weave fetch.");
-          // Great!
+          Log.i(LOG_TAG, "Got 200 for node/weave cluster URL request (user found; succeeding).");
           HttpEntity entity = response.getEntity();
           if (entity == null) {
             delegate.handleSuccess(null);
@@ -107,12 +128,17 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
           break;
         case 400:
         case 404:
-          Log.i(LOG_TAG, "Got " + status + " for cluster URL request.");
+          Log.i(LOG_TAG, "Got " + status + " for node/weave cluster URL request (user not found; failing).");
+          delegate.handleFailure(response);
+          SyncResourceDelegate.consumeEntity(response.getEntity());
+          break;
+        case 503:
+          Log.i(LOG_TAG, "Got 503 for node/weave cluster URL request (error fetching node; failing).");
           delegate.handleFailure(response);
           SyncResourceDelegate.consumeEntity(response.getEntity());
           break;
         default:
-          Log.w(LOG_TAG, "Got " + status + " fetching node/weave. Returning failure.");
+          Log.w(LOG_TAG, "Got " + status + " for node/weave cluster URL request (unexpected HTTP status; failing).");
           delegate.handleFailure(response);
           SyncResourceDelegate.consumeEntity(response.getEntity());
         }
