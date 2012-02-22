@@ -549,32 +549,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   @Override
   protected Record prepareRecord(Record record) {
     BookmarkRecord bmk = (BookmarkRecord) record;
-    
-    // Check if parent exists.
-    // TODO: synchronization!
-    if (guidToID.containsKey(bmk.parentID)) {
-      bmk.androidParentID = guidToID.get(bmk.parentID);
 
-      // Might as well set a basic position from the downloaded children array.
-      JSONArray children = parentToChildArray.get(bmk.parentID);
-      if (children != null) {
-        int index = children.indexOf(bmk.guid);
-        if (index >= 0) {
-          bmk.androidPosition = index;
-        }
-      }
-    }
-    else {
-      bmk.androidParentID = guidToID.get("unfiled");
-      ArrayList<String> children;
-      if (missingParentToChildren.containsKey(bmk.parentID)) {
-        children = missingParentToChildren.get(bmk.parentID);
-      } else {
-        children = new ArrayList<String>();
-      }
-      children.add(bmk.guid);
-      needsReparenting++;
-      missingParentToChildren.put(bmk.parentID, children);
+    if (!isSpecialRecord(record)) {
+      // We never want to reparent special records.
+      handleParenting(bmk);
     }
 
     if (Logger.LOG_PERSONAL_INFORMATION) {
@@ -601,6 +579,43 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       }
     }
     return bmk;
+  }
+
+  /**
+   * If the provided record doesn't have correct parent information,
+   * update appropriate bookkeeping to improve the situation.
+   *
+   * @param bmk
+   */
+  private void handleParenting(BookmarkRecord bmk) {
+    if (guidToID.containsKey(bmk.parentID)) {
+      bmk.androidParentID = guidToID.get(bmk.parentID);
+
+      // Might as well set a basic position from the downloaded children array.
+      JSONArray children = parentToChildArray.get(bmk.parentID);
+      if (children != null) {
+        int index = children.indexOf(bmk.guid);
+        if (index >= 0) {
+          bmk.androidPosition = index;
+        }
+      }
+    }
+    else {
+      bmk.androidParentID = guidToID.get("unfiled");
+      ArrayList<String> children;
+      if (missingParentToChildren.containsKey(bmk.parentID)) {
+        children = missingParentToChildren.get(bmk.parentID);
+      } else {
+        children = new ArrayList<String>();
+      }
+      children.add(bmk.guid);
+      needsReparenting++;
+      missingParentToChildren.put(bmk.parentID, children);
+    }
+  }
+
+  private boolean isSpecialRecord(Record record) {
+    return SPECIAL_GUID_PARENTS.containsKey(record.guid);
   }
 
   @Override
