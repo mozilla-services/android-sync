@@ -68,6 +68,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
     String authHash = Base64.encodeToString((aa.usernameHash + ":" + aa.password).getBytes(), Base64.DEFAULT);
     String authRequestUrl = aa.authServer + Constants.AUTH_SERVER_VERSION + aa.usernameHash + "/" + Constants.AUTH_SERVER_SUFFIX;
     authenticateAccount(callbackDelegate, authRequestUrl, authHash);
+
   }
 
   private void authenticateAccount(final AuthenticateAccountStageDelegate callbackDelegate, final String authRequestUrl, final String authHeader) throws URISyntaxException {
