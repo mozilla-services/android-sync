@@ -116,7 +116,10 @@ public class HistoryRecord extends Record {
     this.checkGUIDs(p);
 
     this.lastModified  = payload.lastModified;
-    this.deleted       = payload.deleted;
+    final Object del = p.get("deleted");
+    if (del instanceof Boolean) {
+      this.deleted = (Boolean) del;
+    }
 
     this.histURI = (String) p.get("histUri");
     this.title   = (String) p.get("title");

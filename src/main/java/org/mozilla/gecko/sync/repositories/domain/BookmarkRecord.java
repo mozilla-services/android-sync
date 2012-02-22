@@ -150,9 +150,13 @@ public class BookmarkRecord extends Record {
     this.guid = payload.guid;
     checkGUIDs(p);
 
+    final Object del = p.get("deleted");
+    if (del instanceof Boolean) {
+      this.deleted = (Boolean) del;
+    }
+
     this.collection    = payload.collection;
     this.lastModified  = payload.lastModified;
-    this.deleted       = payload.deleted;
 
     this.type          = (String) p.get("type");
     this.title         = (String) p.get("title");
