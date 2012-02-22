@@ -495,7 +495,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // hairy stuff. Here's the setup for it.
 
     Logger.debug(LOG_TAG, "Preparing folder ID mappings.");
-    idToGuid.put(0L, "places");       // Fake our root.
+
+    // Fake our root.
+    Logger.debug(LOG_TAG, "Tracking places root as ID 0.");
+    idToGuid.put(0L, "places");
+    guidToID.put("places", 0L);
     try {
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
