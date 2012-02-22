@@ -713,7 +713,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
           dataAccessor.updatePositions(new ArrayList<String>(onServer));
           dataAccessor.bumpModified(folderID, now());
           // Wow, this is spectacularly wasteful.
-          untrackRecord(retrieveByGUIDDuringStore(guid));
+          Logger.debug(LOG_TAG, "Untracking " + guid);
+          final Record record = retrieveByGUIDDuringStore(guid);
+          if (record == null) {
+            return;
+          }
+          untrackRecord(record);
         } catch (Exception e) {
           Logger.warn(LOG_TAG, "Error repositioning children for " + guid, e);
         }
