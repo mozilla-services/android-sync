@@ -8,7 +8,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -60,14 +59,14 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
             InputStream content = response.getEntity().getContent();
             BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
             String inUse = reader.readLine();
-            Logger.debug(LOG_TAG, "username inUse:" + inUse);
+            SyncResourceDelegate.consumeReader(reader);
+            reader.close();
+            // Removed Logger.debug inUse, because stalling.
             if (inUse.equals("1")) { // Username exists.
               callbackDelegate.handleSuccess();
             } else { // User does not exist.
               callbackDelegate.handleFailure();
             }
-            SyncResourceDelegate.consumeReader(reader);
-            reader.close();
           } catch (IllegalStateException e) {
             callbackDelegate.handleError(e);
           } catch (IOException e) {
