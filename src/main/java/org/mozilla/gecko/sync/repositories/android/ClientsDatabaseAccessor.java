@@ -9,9 +9,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
+import org.mozilla.gecko.sync.setup.Constants;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -20,19 +20,17 @@ public class ClientsDatabaseAccessor {
 
   public static final String LOG_TAG = "ClientsDatabaseAccessor";
 
-  private GlobalSession session;
   private ClientsDatabase db;
 
   // Need this so we can properly stub out the class for testing.
   public ClientsDatabaseAccessor() {}
 
-  public ClientsDatabaseAccessor(Context context, GlobalSession session) {
-    this.session = session;
+  public ClientsDatabaseAccessor(Context context) {
     db = new ClientsDatabase(context);
   }
 
   public void store(ClientRecord record) {
-    db.store(getAccountGUID(), record);
+    db.store(getProfileId(), record);
   }
 
   public void store(ArrayList<ClientRecord> records) {
@@ -41,10 +39,10 @@ public class ClientsDatabaseAccessor {
     }
   }
 
-  public ClientRecord fetch(String profileID) throws NullCursorException {
+  public ClientRecord fetch(String accountGUID) throws NullCursorException {
     Cursor cur = null;
     try {
-      cur = db.fetch(getAccountGUID(), profileID);
+      cur = db.fetch(accountGUID, getProfileId());
 
       if (cur == null || !cur.moveToFirst()) {
         return null;
@@ -80,17 +78,13 @@ public class ClientsDatabaseAccessor {
   }
 
   protected ClientRecord recordFromCursor(Cursor cur) {
-    String profileID = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_PROFILE);
+    String accountGUID = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_ACCOUNT_GUID);
     String clientName = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_NAME);
     String clientType = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_TYPE);
-    ClientRecord record = new ClientRecord(profileID);
+    ClientRecord record = new ClientRecord(accountGUID);
     record.name = clientName;
     record.type = clientType;
     return record;
-  }
-
-  protected String getAccountGUID() {
-    return session.getAccountGUID();
   }
 
   public int numClients() {
@@ -99,6 +93,10 @@ public class ClientsDatabaseAccessor {
     } catch (NullCursorException e) {
       return 0;
     }
+  }
+
+  private String getProfileId() {
+    return Constants.PROFILE_ID;
   }
 
   public void wipe() {

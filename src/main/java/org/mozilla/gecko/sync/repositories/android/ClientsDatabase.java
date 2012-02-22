@@ -61,23 +61,22 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
     onCreate(db);
   }
 
-  // If a record with given GUID exists, we'll delete it
-  // and store the updated version.
-  public void store(String accountGUID, ClientRecord record) {
+  // If a record with given GUID exists, we'll update it,
+  // otherwise we'll insert it.
+  public void store(String profileId, ClientRecord record) {
     SQLiteDatabase db = this.getCachedWritableDatabase();
 
     ContentValues cv = new ContentValues();
-    cv.put(COL_ACCOUNT_GUID, accountGUID);
-    cv.put(COL_PROFILE, record.guid);
+    cv.put(COL_ACCOUNT_GUID, record.guid);
+    cv.put(COL_PROFILE, profileId);
     cv.put(COL_NAME, record.name);
     cv.put(COL_TYPE, record.type);
 
-    String where = COL_ACCOUNT_GUID + " = ? and " + COL_PROFILE + " = ?";
-    String[] args = new String[] { accountGUID, record.guid };
-    int rowsUpdated = db.update(TBL_CLIENTS, cv, where, args);
+    String[] args = new String[] { record.guid, profileId };
+    int rowsUpdated = db.update(TBL_CLIENTS, cv, TBL_KEY, args);
 
     if (rowsUpdated >= 1) {
-      Logger.debug(LOG_TAG, "Replaced client record for row with accountGUID " + accountGUID);
+      Logger.debug(LOG_TAG, "Replaced client record for row with accountGUID " + record.guid);
     } else {
       long rowId = db.insert(TBL_CLIENTS, null, cv);
       Logger.debug(LOG_TAG, "Inserted client record into row: " + rowId);

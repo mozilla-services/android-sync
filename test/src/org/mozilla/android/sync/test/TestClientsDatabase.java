@@ -1,10 +1,11 @@
 package org.mozilla.android.sync.test;
 
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabase;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
+import org.mozilla.gecko.sync.setup.Constants;
+
 import android.database.Cursor;
 import android.test.AndroidTestCase;
 
@@ -13,13 +14,13 @@ public class TestClientsDatabase extends AndroidTestCase {
     ClientsDatabase db = new ClientsDatabase(mContext);
     db.wipe();
     ClientRecord record = new ClientRecord();
-    String accountGUID = Utils.generateGuid();
-    db.store(accountGUID, record);
+    String profileConst = Constants.PROFILE_ID;
+    db.store(profileConst, record);
 
     Cursor cur = null;
     try {
       // Test stored item gets fetched correctly.
-      cur = db.fetch(accountGUID, record.guid);
+      cur = db.fetch(record.guid, profileConst);
       assertTrue(cur.moveToFirst());
       assertEquals(1, cur.getCount());
 
@@ -28,8 +29,8 @@ public class TestClientsDatabase extends AndroidTestCase {
       String clientName = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_NAME);
       String clientType = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_TYPE);
 
-      assertEquals(accountGUID, guid);
-      assertEquals(record.guid, profileId);
+      assertEquals(record.guid, guid);
+      assertEquals(profileConst, profileId);
       assertEquals(record.name, clientName);
       assertEquals(record.type, clientType);
     } catch (NullCursorException e) {
@@ -47,21 +48,21 @@ public class TestClientsDatabase extends AndroidTestCase {
     db.wipe();
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
-    String accountGUID = Utils.generateGuid();
+    String profileConst = Constants.PROFILE_ID;
 
-    db.store(accountGUID, record1);
-    db.store(accountGUID, record2);
+    db.store(profileConst, record1);
+    db.store(profileConst, record2);
 
-    // Test record doesn't exist after delete.
     Cursor cur = null;
     try {
-      db.delete(accountGUID, record1.guid);
-      cur = db.fetch(accountGUID, record1.guid);
+      // Test record doesn't exist after delete.
+      db.delete(record1.guid, profileConst);
+      cur = db.fetch(record1.guid, profileConst);
       assertFalse(cur.moveToFirst());
       assertEquals(0, cur.getCount());
 
       // Test record2 still there after deleting record1.
-      cur = db.fetch(accountGUID, record2.guid);
+      cur = db.fetch(record2.guid, profileConst);
       assertTrue(cur.moveToFirst());
       assertEquals(1, cur.getCount());
 
@@ -70,8 +71,8 @@ public class TestClientsDatabase extends AndroidTestCase {
       String clientName = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_NAME);
       String clientType = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_TYPE);
 
-      assertEquals(accountGUID, guid);
-      assertEquals(record2.guid, profileId);
+      assertEquals(record2.guid, guid);
+      assertEquals(profileConst, profileId);
       assertEquals(record2.name, clientName);
       assertEquals(record2.type, clientType);
     } catch (NullCursorException e) {
@@ -89,28 +90,28 @@ public class TestClientsDatabase extends AndroidTestCase {
     db.wipe();
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
-    String accountGUID = Utils.generateGuid();
+    String profileConst = Constants.PROFILE_ID;
 
-    db.store(accountGUID, record1);
-    db.store(accountGUID, record2);
+    db.store(profileConst, record1);
+    db.store(profileConst, record2);
 
 
     Cursor cur = null;
     try {
       // Test before wipe the records are there.
-      cur = db.fetch(accountGUID, record2.guid);
+      cur = db.fetch(record2.guid, profileConst);
       assertTrue(cur.moveToFirst());
       assertEquals(1, cur.getCount());
-      cur = db.fetch(accountGUID, record2.guid);
+      cur = db.fetch(record2.guid, profileConst);
       assertTrue(cur.moveToFirst());
       assertEquals(1, cur.getCount());
 
       // Test after wipe neither record exists.
       db.wipe();
-      cur = db.fetch(accountGUID, record2.guid);
+      cur = db.fetch(record2.guid, profileConst);
       assertFalse(cur.moveToFirst());
       assertEquals(0, cur.getCount());
-      cur = db.fetch(accountGUID, record1.guid);
+      cur = db.fetch(record1.guid, profileConst);
       assertFalse(cur.moveToFirst());
       assertEquals(0, cur.getCount());
     } catch (NullCursorException e) {

@@ -13,22 +13,16 @@ import android.test.AndroidTestCase;
 
 public class TestClientsDatabaseAccessor extends AndroidTestCase {
 
-  public class StubbedClientsDatabaseContentProvider extends ClientsDatabaseAccessor {
-    private final String accountGUID = Utils.generateGuid();
+  public class StubbedClientsDatabaseAccessor extends ClientsDatabaseAccessor {
 
-    public StubbedClientsDatabaseContentProvider(Context mContext) {
-      super(mContext, null);
-    }
-
-    @Override
-    protected String getAccountGUID() {
-      return accountGUID;
+    public StubbedClientsDatabaseAccessor(Context mContext) {
+      super(mContext);
     }
   }
 
   public void testStoreArrayListAndFetch() {
-    StubbedClientsDatabaseContentProvider db =
-        new StubbedClientsDatabaseContentProvider(mContext);
+    StubbedClientsDatabaseAccessor db =
+        new StubbedClientsDatabaseAccessor(mContext);
     db.wipe();
 
     ArrayList<ClientRecord> list = new ArrayList<ClientRecord>();
@@ -58,8 +52,8 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
   }
 
   public void testNumClients() {
-    StubbedClientsDatabaseContentProvider db =
-        new StubbedClientsDatabaseContentProvider(mContext);
+    StubbedClientsDatabaseAccessor db =
+        new StubbedClientsDatabaseAccessor(mContext);
     db.wipe();
 
     final int COUNT = 5;
@@ -72,8 +66,8 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
   }
 
   public void testFetchAll() {
-    StubbedClientsDatabaseContentProvider db =
-        new StubbedClientsDatabaseContentProvider(mContext);
+    StubbedClientsDatabaseAccessor db =
+        new StubbedClientsDatabaseAccessor(mContext);
     db.wipe();
 
     ArrayList<ClientRecord> list = new ArrayList<ClientRecord>();

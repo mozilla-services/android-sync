@@ -21,6 +21,7 @@ import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 public class MockGlobalSession extends GlobalSession {
 
   public MockSharedPreferences prefs;
+  public int numClients;
 
   public MockGlobalSession(String clusterURL, String username, String password,
 				  KeyBundle syncKeyBundle, GlobalSessionCallback callback)
@@ -42,6 +43,16 @@ public class MockGlobalSession extends GlobalSession {
   @Override
   public Context getContext() {
     return null;
+  }
+
+  @Override
+  public void setNumClients(int numClients) {
+    this.numClients = numClients;
+  }
+
+  @Override
+  public int getNumClients() {
+    return this.numClients;
   }
 
   @Override

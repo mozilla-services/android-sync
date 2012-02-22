@@ -15,6 +15,7 @@ public class Constants {
   public static final String OPTION_SERVER        = "option.serverUrl";
   public static final String ACCOUNT_GUID         = "account.guid";
   public static final String CLIENT_NAME          = "account.clientName";
+  public static final String NUM_CLIENTS          = "account.numClients";
 
   // Constants for client records.
   public static final String PROFILE_ID  = "default";     // Generic profile id for now, until multiple profiles are implemented.

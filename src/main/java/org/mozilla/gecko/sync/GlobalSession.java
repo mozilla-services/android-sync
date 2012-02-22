@@ -705,4 +705,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
   public String getClientName() {
     return clientsDelegate.getClientName();
   }
+
+  public void setNumClients(int numClients) {
+    clientsDelegate.setNumClients(numClients);
+  }
+
+  public int getNumClients() {
+    return clientsDelegate.getNumClients();
+  }
 }

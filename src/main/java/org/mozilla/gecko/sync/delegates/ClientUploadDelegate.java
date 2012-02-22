@@ -7,9 +7,9 @@ package org.mozilla.gecko.sync.delegates;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
-import android.util.Log;
 
 /**
  * Handles client records uploaded via SyncClientsEngineStage.
@@ -38,14 +38,8 @@ public class ClientUploadDelegate implements SyncStorageRequestDelegate {
 
   @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
-    // Response body must be consumed in order to reuse the connection.
-    try {
-      String body = response.body();
-      Logger.debug(LOG_TAG, "Client record upload succeeded: " + body);
-    } catch (Exception e) {
-      session.abort(e, "Unable to print response body");
-    }
-
+    // Response entity must be consumed in order to reuse the connection.
+    SyncResourceDelegate.consumeEntity(response.httpResponse().getEntity());
     session.advance();
   }
 

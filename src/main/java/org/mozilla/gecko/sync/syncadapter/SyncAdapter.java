@@ -413,6 +413,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     }
   }
 
+  @Override
   synchronized public String getAccountGUID() {
     String accountGUID = mAccountManager.getUserData(localAccount, Constants.ACCOUNT_GUID);
     if (accountGUID == null) {
@@ -422,6 +423,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     return accountGUID;
   }
 
+  @Override
   synchronized public String getClientName() {
     String clientName = mAccountManager.getUserData(localAccount, Constants.CLIENT_NAME);
     if (clientName == null) {
@@ -429,5 +431,21 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       mAccountManager.setUserData(localAccount, Constants.CLIENT_NAME, clientName);
     }
     return clientName;
+  }
+
+  @Override
+  public void setNumClients(int numClients) {
+    mAccountManager.setUserData(localAccount, Constants.NUM_CLIENTS,
+        Integer.toString(numClients));
+  }
+
+  @Override
+  public int getNumClients() {
+    String numClients = mAccountManager.getUserData(localAccount, Constants.NUM_CLIENTS);
+    if (numClients == null) {
+      numClients = "0";
+      mAccountManager.setUserData(localAccount, Constants.NUM_CLIENTS, numClients);
+    }
+    return Integer.parseInt(numClients);
   }
 }

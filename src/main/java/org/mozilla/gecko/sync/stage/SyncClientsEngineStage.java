@@ -1,15 +1,17 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.gecko.sync.stage;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
-import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientUploadDelegate;
@@ -17,17 +19,14 @@ import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
-import org.mozilla.gecko.sync.setup.Constants;
-
-import android.util.Log;
 
 public class SyncClientsEngineStage extends WBOCollectionRequestDelegate implements GlobalSyncStage {
   protected static final String LOG_TAG = "SyncClientsEngineStage";
-  private static final String COLLECTION_NAME = "clients";
+  protected static final String COLLECTION_NAME = "clients";
 
   protected GlobalSession session;
   protected ClientRecordFactory factory = new ClientRecordFactory();
@@ -36,6 +35,7 @@ public class SyncClientsEngineStage extends WBOCollectionRequestDelegate impleme
 
   // Account/Profile info
   protected ClientRecord localClient;
+  protected boolean shouldWipe;
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
@@ -58,73 +58,62 @@ public class SyncClientsEngineStage extends WBOCollectionRequestDelegate impleme
 
   @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
-    try {
-      // Response body must be consumed in order to reuse the connection.
-      Log.i(LOG_TAG, "get() was successful. Response body: " + response.body());
+    session.setNumClients(db.numClients());
+    this.checkAndUpload();
 
-      // Generate CryptoRecord from ClientRecord to upload.
-      CryptoRecord cryptoRecord = cryptoFromClient(localClient);
-      if (shouldUpload() && cryptoRecord != null) {
-        db.store(localClient);
-        this.uploadClientRecord(cryptoRecord);
-        session.advance();
-      }
-    } catch (Exception e) {
-      session.abort(e, "Unable to print response body");
-    } finally {
-      db.close();
-    }
+    // Close the database to clear cached readableDatabase/writeableDatabase
+    // after we've completed our last transaction (db.store()).
+    db.close();
   }
 
   @Override
   public void handleRequestFailure(SyncStorageResponse response) {
-    Log.i(LOG_TAG, "Client upload failed. Aborting sync.");
+    Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
     session.abort(new HTTPFailureException(response), "Client download failed.");
+
+    // Close the database upon failure.
+    db.close();
   }
 
   @Override
   public void handleRequestError(Exception ex) {
+    Logger.info(LOG_TAG, "Client upload error. Aborting sync.");
     session.abort(ex, "Failure fetching client record.");
+
+    // Close the database upon error.
+    db.close();
   }
 
   @Override
   public void handleWBO(CryptoRecord record) {
     ClientRecord r;
     try {
-      r = (ClientRecord) factory.createRecord(((CryptoRecord) record).decrypt());
-      printRecord(r);
-    } catch (IllegalStateException e) {
-      session.abort(e, "Invalid client WBO.");
-      return;
-    } catch (NonObjectJSONException e) {
-      session.abort(e, "Invalid client WBO.");
-      return;
-    } catch (CryptoException e) {
-      session.abort(e, "CryptoException handling client WBO.");
-      return;
-    } catch (IOException e) {
-      // Some kind of lower-level error.
-      session.abort(e, "IOException fetching client record.");
-      return;
-    } catch (ParseException e) {
-      session.abort(e, "Invalid client WBO.");
+      r = (ClientRecord) factory.createRecord(record.decrypt());
+      RepoUtils.logClient(r);
+    } catch (Exception e) {
+      session.abort(e, "Exception handling client WBO.");
       return;
     }
-    db.store(r);
+    wipeAndStore(r);
   }
 
   @Override
   public KeyBundle keyBundle() {
-    return session.config.syncKeyBundle;
+    try {
+      return session.keyForCollection(COLLECTION_NAME);
+    } catch (NoCollectionKeysSetException e) {
+      session.abort(e, "No collection keys set.");
+      return null;
+    }
   }
 
   protected void init() {
-    localClient = new ClientRecord(getProfileID());
+    localClient = new ClientRecord(session.getAccountGUID());
     localClient.name = session.getClientName();
 
     clientUploadDelegate = new ClientUploadDelegate(session);
-    db = new ClientsDatabaseAccessor(session.getContext(), session);
-    db.wipe();
+    db = new ClientsDatabaseAccessor(session.getContext());
+    shouldWipe = true;
   }
 
   // TODO: Bug 729248 - Smarter upload of client records.
@@ -132,20 +121,27 @@ public class SyncClientsEngineStage extends WBOCollectionRequestDelegate impleme
     return true;
   }
 
+  public void checkAndUpload() {
+    // Generate CryptoRecord from ClientRecord to upload.
+    CryptoRecord cryptoRecord = cryptoFromClient(localClient);
+    if (shouldUpload() && cryptoRecord != null) {
+      this.wipeAndStore(localClient);
+      this.uploadClientRecord(cryptoRecord);
+      session.advance();
+    }
+  }
+
   protected CryptoRecord cryptoFromClient(ClientRecord record) {
     String encryptionFailure = "Couldn't encrypt new client record.";
     CryptoRecord cryptoRecord = record.getPayload();
     try {
-      cryptoRecord.keyBundle = session.keyForCollection(COLLECTION_NAME);
+      cryptoRecord.keyBundle = keyBundle();
       cryptoRecord.encrypt();
     } catch (UnsupportedEncodingException e) {
       session.abort(e, encryptionFailure + " Unsupported encoding.");
       return null;
     } catch (CryptoException e) {
       session.abort(e, encryptionFailure);
-      return null;
-    } catch (NoCollectionKeysSetException e) {
-      session.abort(e, encryptionFailure + " No collection keys set.");
       return null;
     }
     return cryptoRecord;
@@ -175,15 +171,11 @@ public class SyncClientsEngineStage extends WBOCollectionRequestDelegate impleme
     }
   }
 
-  protected String getProfileID() {
-    return Constants.PROFILE_ID;
-  }
-
-  // TODO: Remove this, only used it for testing.
-  private void printRecord(ClientRecord r) {
-    System.out.println("GUID: " + r.guid);
-    System.out.println("NAME: " + r.name);
-    System.out.println("TYPE: " + r.type);
-    System.out.println("LASTMOD: " + r.lastModified);
+  protected void wipeAndStore(ClientRecord record) {
+    if (shouldWipe) {
+      db.wipe();
+      shouldWipe = false;
+    }
+    db.store(record);
   }
 }

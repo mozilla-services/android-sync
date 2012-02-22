@@ -8,11 +8,20 @@ import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
 public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
-  @Override
-  public void store(ClientRecord record) {}
+  public boolean storedRecord = false;
+  public boolean wiped = false;
+  public boolean closed = false;
+  public boolean storedArrayList = false;
 
   @Override
-  public void store(ArrayList<ClientRecord> records) {}
+  public void store(ClientRecord record) {
+    storedRecord = true;
+  }
+
+  @Override
+  public void store(ArrayList<ClientRecord> records) {
+    storedArrayList = false;
+  }
 
   @Override
   public ClientRecord fetch(String profileID) throws NullCursorException {
@@ -30,8 +39,16 @@ public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   }
 
   @Override
-  public void wipe() {}
+  public void wipe() {
+    wiped = true;
+  }
 
   @Override
-  public void close() {}
+  public void close() {
+    closed = true;
+  }
+
+  public void resetVars() {
+    storedRecord = wiped = closed = storedArrayList = false;
+  }
 }
