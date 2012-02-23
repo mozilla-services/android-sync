@@ -7,7 +7,9 @@ import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -275,5 +277,28 @@ public class BookmarkHelpers {
     } finally {
       cur.close();
     }
+  }
+
+  /**
+   * Return an ExpectFetchDelegate with special folders excluded.
+   * @param expected
+   * @return
+   */
+  public static ExpectFetchDelegate preparedExpectFetchDelegate(Record[] expected) {
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
+  public static ExpectGuidsSinceDelegate preparedExpectGuidsSinceDelegate(String[] expected) {
+    ExpectGuidsSinceDelegate delegate = new ExpectGuidsSinceDelegate(expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
+  public static ExpectFetchSinceDelegate preparedExpectFetchSinceDelegate(long timestamp, String[] expected) {
+    ExpectFetchSinceDelegate delegate = new ExpectFetchSinceDelegate(timestamp, expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
   }
 }

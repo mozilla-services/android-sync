@@ -9,9 +9,10 @@ import static junit.framework.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -23,7 +24,8 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
 
   private static final String LOG_TAG = "DefaultFetchDelegate";
   public ArrayList<Record> records = new ArrayList<Record>();
-  
+  public Set<String> ignore = new HashSet<String>();
+
   @Override
   public void onFetchFailed(Exception ex, Record record) {
     sharedFail("Shouldn't fail");
@@ -47,8 +49,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
       int expectedCount = 0;
       Log.d(LOG_TAG, "Counting expected keys.");
       for (String key : expected.keySet()) {
-        if (RepoUtils.SPECIAL_GUIDS_MAP == null ||
-            !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(key)) {
+        if (!ignore.contains(key)) {
           expectedCount++;
         }
       }
@@ -57,9 +58,8 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
         Log.d(LOG_TAG, "Record.");
         Log.d(LOG_TAG, record.guid);
 
-        // Ignore special guids for bookmarks
-        if (RepoUtils.SPECIAL_GUIDS_MAP == null ||
-            !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
+        // Ignore special GUIDs (e.g., for bookmarks).
+        if (!ignore.contains(record.guid)) {
           Record expect = expected.get(record.guid);
           if (expect == null) {
             Log.d(LOG_TAG, "Failing.");
