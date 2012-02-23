@@ -220,13 +220,17 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return cv;
   }
   
-  // Returns a cursor with any records that list the given androidID as a parent.
-  // Exclude "places", which is stored under "mobile" for convenience.
-  // Remember to manually reparent "places" if you change "mobile"!
+  /**
+   * Returns a cursor over non-deleted records that list the given androidID as a parent.
+   */
   public Cursor getChildren(long androidID) throws NullCursorException {
     return getChildren(androidID, false);
   }
 
+  /**
+   * Returns a cursor with any records that list the given androidID as a parent.
+   * Excludes 'places', and optionally any deleted records.
+   */
   public Cursor getChildren(long androidID, boolean includeDeleted) throws NullCursorException {
     final String where = BrowserContract.Bookmarks.PARENT + " = ? AND " +
                          BrowserContract.SyncColumns.GUID + " <> ? " +
