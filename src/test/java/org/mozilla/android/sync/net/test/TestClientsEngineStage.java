@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
-import org.mozilla.android.sync.test.helpers.MockClientUploadDelegate;
 import org.mozilla.android.sync.test.helpers.MockClientsDatabaseAccessor;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
@@ -22,6 +21,7 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
@@ -58,6 +58,15 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     }
   }
 
+  @Before
+  @Override
+  public void init() {
+    localClient = new ClientRecord(Utils.generateGuid());
+    clientDownloadDelegate = new TestClientDownloadDelegate();
+    clientUploadDelegate = new MockClientUploadDelegate();
+    db = new MockClientsDatabaseAccessor();
+  }
+
   @Override
   protected void downloadClientRecords() {
     BaseResource.rewriteLocalhost = false;
@@ -72,39 +81,71 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     super.uploadClientRecord(record);
   }
 
-  @Override
-  public void handleRequestSuccess(SyncStorageResponse response) {
-    data.stopHTTPServer();
-    assertTrue(response.wasSuccessful());
+  public class TestClientDownloadDelegate extends ClientDownloadDelegate {
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse response) {
+      data.stopHTTPServer();
+      assertTrue(response.wasSuccessful());
 
-    assertEquals(expectedClients.size(), numRecordsFromGetRequest);
-    for (int i = 0; i < downloadedClients.size(); i++) {
-      assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
+      assertEquals(expectedClients.size(), numRecordsFromGetRequest);
+      for (int i = 0; i < downloadedClients.size(); i++) {
+        assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
+      }
+
+      super.handleRequestSuccess(response);
+      assertEquals(Stage.idle, session.currentState);
     }
 
-    super.handleRequestSuccess(response);
-    assertEquals(Stage.idle, session.currentState);
-  }
+    @Override
+    public void handleRequestFailure(SyncStorageResponse response) {
+      super.handleRequestFailure(response);
+      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      fail("Should not error.");
+      data.stopHTTPServer();
+    }
 
-  @Override
-  public void handleWBO(CryptoRecord record) {
-    //super.handleWBO(record);
-    ClientRecord r;
-    try {
-      r = (ClientRecord) factory.createRecord(record.decrypt());
-      downloadedClients.add(r);
-      numRecordsFromGetRequest++;
-    } catch (Exception e) {
-      fail("handleWBO failed.");
+    @Override
+    public void handleRequestError(Exception ex) {
+      super.handleRequestError(ex);
+      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      fail("Should not fail.");
+      data.stopHTTPServer();
+    }
+
+    @Override
+    public void handleWBO(CryptoRecord record) {
+      ClientRecord r;
+      try {
+        r = (ClientRecord) factory.createRecord(record.decrypt());
+        downloadedClients.add(r);
+        numRecordsFromGetRequest++;
+      } catch (Exception e) {
+        fail("handleWBO failed.");
+      }
     }
   }
 
-  @Before
-  @Override
-  public void init() {
-    localClient = new ClientRecord(Utils.generateGuid());
-    clientUploadDelegate = new MockClientUploadDelegate(session, data);
-    db = new MockClientsDatabaseAccessor();
+  public class MockClientUploadDelegate extends ClientUploadDelegate {
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse response) {
+      assertTrue(response.wasSuccessful());
+      // Make sure we consume the entity, so we can reuse the connection.
+      SyncResourceDelegate.consumeEntity(response.httpResponse().getEntity());
+      data.stopHTTPServer();
+    }
+
+    @Override
+    public void handleRequestFailure(SyncStorageResponse response) {
+      fail("Should not fail.");
+      data.stopHTTPServer();
+    }
+
+    @Override
+    public void handleRequestError(Exception ex) {
+      ex.printStackTrace();
+      fail("Should not error.");
+      data.stopHTTPServer();
+    }
   }
 
   @Test
