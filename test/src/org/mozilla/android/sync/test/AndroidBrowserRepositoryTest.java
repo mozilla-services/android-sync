@@ -13,10 +13,8 @@ import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectManyStoredDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoreCompletedDelegate;
@@ -187,22 +185,23 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     };
   }
   public static Runnable fetchAllRunnable(final RepositorySession session, final Record[] expectedRecords) {
-    return fetchAllRunnable(session, new ExpectFetchDelegate(expectedRecords));
+    return fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expectedRecords));
   }
-  
+
   public static Runnable guidsSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
     return new Runnable() {
       @Override
       public void run() {
-        session.guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
+        session.guidsSince(timestamp, BookmarkHelpers.preparedExpectGuidsSinceDelegate(expected));
       }
     };
-  }  
+  }
+
   public static Runnable fetchSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
     return new Runnable() {
       @Override
       public void run() {
-        session.fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, expected));
+        session.fetchSince(timestamp, BookmarkHelpers.preparedExpectFetchSinceDelegate(timestamp, expected));
       }
     };
   }
@@ -216,7 +215,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     };    
   }
   public static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final Record[] expected) {
-    return fetchRunnable(session, guids, new ExpectFetchDelegate(expected));
+    return fetchRunnable(session, guids, BookmarkHelpers.preparedExpectFetchDelegate(expected));
   }
   
   public static Runnable cleanRunnable(final Repository repository, final boolean success, final Context context, final DefaultCleanDelegate delegate) {
@@ -224,7 +223,6 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       @Override
       public void run() {
         repository.clean(success, delegate, context);
-        
       }
     };
   }
@@ -302,7 +300,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       }
     })); 
     
-    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
+    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
   }
   
   /*
@@ -494,13 +492,13 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     remote.guid = local.guid;
     
     // Get the timestamp and make remote newer than it
-    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
+    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { local });
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
     remote.lastModified = timestampDelegate.records.get(0).lastModified + 1000;
     performWait(storeRunnable(session, remote));
 
     Record[] expected = new Record[] { remote };
-    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
+    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
   }
 
@@ -517,14 +515,14 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     remote.guid = local.guid;
     
     // Get the timestamp and make remote older than it
-    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
+    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { local });
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
     remote.lastModified = timestampDelegate.records.get(0).lastModified - 1000;
     performWait(storeRunnable(session, remote));
     
     // Do a fetch and make sure that we get back the local record.
     Record[] expected = new Record[] { local };
-    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(expected)));
+    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
   }
   
   /*
@@ -540,14 +538,14 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     // Pass the same record to store, but mark it deleted and modified
     // more recently
-    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(new Record[] { local });
+    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { local });
     performWait(fetchRunnable(session, new String[] { local.guid }, timestampDelegate));
     remote.lastModified = timestampDelegate.records.get(0).lastModified + 1000;
     remote.deleted = true;
     remote.guid = local.guid;
     performWait(storeRunnable(session, remote));
 
-    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(new Record[]{})));
+    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(new Record[]{})));
   }
   
   // Store two records that are identical (this has different meanings based on the
@@ -573,7 +571,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Log.i("storeIdenticalExceptGuid", "Stored modified.");
     
     Record[] expected = new Record[] { record0 };
-    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(expected)));
+    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
     Log.i("storeIdenticalExceptGuid", "Fetched all. Returning.");
   }
   
@@ -581,13 +579,11 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   // at some points it won't be since parent folder hasn't been stored.
   private DefaultFetchDelegate getTimestampDelegate(final String guid) {
     return new DefaultFetchDelegate() {
-      
       @Override
       public void onFetchCompleted(final long fetchEnd) {
         assertEquals(guid, this.records.get(0).guid);
         testWaiter().performNotify();
       }
-      
     };
   }
   
@@ -611,7 +607,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     // Get the timestamp and make remote older than it
     Record[] expected = new Record[] { local };
-    ExpectFetchDelegate timestampDelegate = new ExpectFetchDelegate(expected);
+    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
 
     Log.d("deleteLocalNewer", "Fetched.");
@@ -624,7 +620,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Log.d("deleteLocalNewer", "Stored deleted.");
 
     // Do a fetch and make sure that we get back the first (local) record.
-    performWait(fetchAllRunnable(session, new ExpectFetchDelegate(expected)));
+    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
     Log.d("deleteLocalNewer", "Fetched and done!");
   }
   
@@ -642,7 +638,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     remote.deleted = true;
     performWait(quietStoreRunnable(session, remote));
 
-    ExpectFetchDelegate delegate = new ExpectFetchDelegate(new Record[]{});
+    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[]{});
     performWait(fetchAllRunnable(session, delegate));
   }
   
