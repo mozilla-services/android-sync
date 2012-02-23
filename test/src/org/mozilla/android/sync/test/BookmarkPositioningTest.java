@@ -577,7 +577,7 @@ mobile folder created without title.
 Unsorted put in mobile???
 Tests for children retrieval
 Tests for children merge
-Tests for modify retrieve parent when child added, removed, reordered (oh, reorder is hard! Any change, then. )
+Tests for modify retrieve parent when child added, removed, reordered (oh, reorder is hard! Any change, then.)
 Safety mode?
 Test storing folder first, contents first.
 Store folder in next session. Verify order recovery.
