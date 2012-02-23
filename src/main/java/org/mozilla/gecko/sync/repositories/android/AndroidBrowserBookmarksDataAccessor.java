@@ -115,7 +115,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     ContentValues values = new ContentValues();
     values.put(Bookmarks.DATE_MODIFIED, modified);
 
-    return context.getContentResolver().update(getUri(), values, where, selectionArgs );
+    return context.getContentResolver().update(getUri(), values, where, selectionArgs);
   }
 
   protected void updateParentAndPosition(String guid, long newParentId, long position) {
