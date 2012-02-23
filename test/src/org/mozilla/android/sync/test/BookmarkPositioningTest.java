@@ -3,7 +3,10 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 
 import junit.framework.AssertionFailedError;
 
@@ -90,14 +93,14 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
 
     wipe();
     Log.d(getName(), "Storing just folder...");
-    storeRecordsInSession(repo, folderOnly);
+    storeRecordsInSession(repo, folderOnly, null);
 
     // We don't have any children, despite our insistence upon storing.
     assertChildrenAreOrdered(repo, folderGUID, new Record[] {});
 
     // Now store the children.
     Log.d(getName(), "Storing children...");
-    storeRecordsInSession(repo, children);
+    storeRecordsInSession(repo, children, null);
 
     // Now we have children, but their order is not determined, because
     // they were stored out-of-session with the original folder.
@@ -107,7 +110,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     // right place.
     folder.lastModified++;
     Log.d(getName(), "Storing just folder again...");
-    storeRecordsInSession(repo, folderOnly);
+    storeRecordsInSession(repo, folderOnly, null);
     Log.d(getName(), "Fetching children yet again...");
     assertChildrenAreOrdered(repo, folderGUID, children);
 
@@ -137,22 +140,22 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     parentLast[2]  = bookmarkC;
 
     wipe();
-    storeRecordsInSession(repo, parentMixed);
+    storeRecordsInSession(repo, parentMixed, null);
     assertChildrenAreOrdered(repo, folderGUID, children);
 
     wipe();
-    storeRecordsInSession(repo, parentFirst);
+    storeRecordsInSession(repo, parentFirst, null);
     assertChildrenAreOrdered(repo, folderGUID, children);
 
     wipe();
-    storeRecordsInSession(repo, parentLast);
+    storeRecordsInSession(repo, parentLast, null);
     assertChildrenAreOrdered(repo, folderGUID, children);
 
     // Ensure that records are ordered even if we re-process the folder.
     wipe();
-    storeRecordsInSession(repo, parentLast);
+    storeRecordsInSession(repo, parentLast, null);
     folder.lastModified++;
-    storeRecordsInSession(repo, folderOnly);
+    storeRecordsInSession(repo, folderOnly, null);
     assertChildrenAreOrdered(repo, folderGUID, children);
   }
 
@@ -214,7 +217,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     parentMixed[1] = folder;
     parentMixed[2] = bookmarkB;
 
-    storeRecordsInSession(repo, parentMixed);
+    storeRecordsInSession(repo, parentMixed, null);
 
     BookmarkRecord expectedOne = new BookmarkRecord(guidOne, "bookmarks", now - 10, false);
     BookmarkRecord expectedTwo = new BookmarkRecord(guidTwo, "bookmarks", now - 10, false);
@@ -238,6 +241,89 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
         expectedOne.guid,
         expectedTwo.guid
     });
+  }
+
+  /**
+   * Apply a folder record whose children array is already accurately
+   * stored in the database. Verify that the parent folder is not flagged
+   * for reupload (i.e., that its modified time is *ahem* unmodified).
+   */
+  public void testNoReorderingMeansNoReupload() {
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+
+    long now = System.currentTimeMillis();
+
+    final String folderGUID = "eaaaaaaaafff";
+    BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now -5, false);
+    BookmarkRecord bookmarkA = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now -1, false);
+    BookmarkRecord bookmarkB = new BookmarkRecord("baaaaaaaabbb", "bookmarks", now -3, false);
+
+    folder.children   = childrenFromRecords(bookmarkA, bookmarkB);
+    folder.sortIndex  = 150;
+    folder.title      = "Test items";
+    folder.parentID   = "toolbar";
+    folder.parentName = "Bookmarks Toolbar";
+    folder.type       = "folder";
+
+    bookmarkA.parentID    = folderGUID;
+    bookmarkA.bookmarkURI = "http://example.com/A";
+    bookmarkA.title       = "Title A";
+    bookmarkA.type        = "bookmark";
+
+    bookmarkB.parentID    = folderGUID;
+    bookmarkB.bookmarkURI = "http://example.com/B";
+    bookmarkB.title       = "Title B";
+    bookmarkB.type        = "bookmark";
+
+    BookmarkRecord[] abf = new BookmarkRecord[3];
+    BookmarkRecord[] justFolder = new BookmarkRecord[1];
+
+    abf[0] = bookmarkA;
+    abf[1] = bookmarkB;
+    abf[2] = folder;
+
+    justFolder[0] = folder;
+
+    final String[] abGUIDs   = new String[] { bookmarkA.guid, bookmarkB.guid };
+    final Record[] abRecords = new Record[] { bookmarkA, bookmarkB };
+    final String[] baGUIDs   = new String[] { bookmarkB.guid, bookmarkA.guid };
+    final Record[] baRecords = new Record[] { bookmarkB, bookmarkA };
+
+    wipe();
+    Log.d(getName(), "Storing A, B, folder...");
+    storeRecordsInSession(repo, abf, null);
+
+    long folderID = storedIDs.get(folderGUID);
+    assertChildrenAreOrdered(repo, folderGUID, abRecords);
+    assertChildrenAreDirect(folderID, abGUIDs);
+
+    // To ensure an interval.
+    try {
+      Thread.sleep(100);
+    } catch (InterruptedException e) {
+    }
+
+    // Store the same folder record again, and check the tracking.
+    // Because the folder array didn't change,
+    // the item is still tracked to not be uploaded.
+    folder.lastModified = System.currentTimeMillis() + 1;
+    HashSet<String> tracked = new HashSet<String>();
+    storeRecordsInSession(repo, justFolder, tracked);
+    assertChildrenAreOrdered(repo, folderGUID, abRecords);
+    assertChildrenAreDirect(folderID, abGUIDs);
+
+    assertTrue(tracked.contains(folderGUID));
+
+    // Store again, but with a different order.
+    tracked = new HashSet<String>();
+    folder.children = childrenFromRecords(bookmarkB, bookmarkA);
+    folder.lastModified = System.currentTimeMillis() + 1;
+    storeRecordsInSession(repo, justFolder, tracked);
+    assertChildrenAreOrdered(repo, folderGUID, baRecords);
+    assertChildrenAreDirect(folderID, baGUIDs);
+
+    // Now it's going to be reuploaded.
+    assertFalse(tracked.contains(folderGUID));
   }
 
   public Context getApplicationContext() {
@@ -337,11 +423,14 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
    * Create a new session for the given repository, storing each record
    * from the provided array. Notifies on failure or success.
    *
+   * Optionally populates a provided Collection with tracked items.
    * @param repo
    * @param records
+   * @param tracked
    */
   public void storeRecordsInSession(AndroidBrowserBookmarksRepository repo,
-                                    final BookmarkRecord[] records) {
+                                    final BookmarkRecord[] records,
+                                    final Collection<String> tracked) {
     SimpleSuccessBeginDelegate beginDelegate = new SimpleSuccessBeginDelegate() {
       @Override
       public void onBeginSucceeded(final RepositorySession session) {
@@ -349,6 +438,13 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
 
           @Override
           public void onStoreCompleted(final long storeEnd) {
+            // Pass back whatever we tracked.
+            if (tracked != null) {
+              Iterator<String> iter = session.getTrackedRecordIDs();
+              while (iter.hasNext()) {
+                tracked.add(iter.next());
+              }
+            }
             finishAndNotify(session);
           }
 
