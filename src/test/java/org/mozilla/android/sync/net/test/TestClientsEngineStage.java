@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -26,6 +28,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import org.simpleframework.http.Request;
@@ -178,6 +181,46 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     assertTrue(((MockClientsDatabaseAccessor)db).storedRecord);
 
     ((MockClientsDatabaseAccessor)db).resetVars();
+  }
+
+  private void setRecentClientRecordTimestamp() {
+    session.config.persistServerClientRecordTimestamp(System.currentTimeMillis() - (CLIENTS_TTL_REFRESH - 1000));
+  }
+
+  @Test
+  public void testShouldUploadNoCommandsToProcess() throws NullCursorException {
+    // shouldUpload() returns true.
+    assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(commandsNeedUpload);
+    assertTrue(shouldUpload());
+
+    // Set the timestamp to be a little earlier than refresh time,
+    // so shouldUpload() returns false.
+    setRecentClientRecordTimestamp();
+    assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(commandsNeedUpload);
+    assertFalse(shouldUpload());
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testShouldUploadProcessCommands() throws NullCursorException {
+    // shouldUpload() returns false since array is size 0 and
+    // it has not been long enough yet to require an upload.
+    processCommands(new JSONArray());
+    setRecentClientRecordTimestamp();
+    assertFalse(commandsNeedUpload);
+    assertFalse(shouldUpload());
+
+    // shouldUpload() returns true since array is size 1 even though
+    // it has not been long enough yet to require an upload.
+    JSONArray commands = new JSONArray();
+    commands.add(new JSONObject());
+    processCommands(commands);
+    setRecentClientRecordTimestamp();
+    assertEquals(1, commands.size());
+    assertTrue(commandsNeedUpload);
+    assertTrue(shouldUpload());
   }
 
   public class UploadMockServer extends MockServer {

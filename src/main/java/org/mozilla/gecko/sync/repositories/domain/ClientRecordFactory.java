@@ -4,11 +4,15 @@
 
 package org.mozilla.gecko.sync.repositories.domain;
 
+import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 
 public class ClientRecordFactory extends RecordFactory {
+  private static final String LOG_TAG = "RecordFactory";
 
   @Override
   public Record createRecord(Record record) {
@@ -18,7 +22,15 @@ public class ClientRecordFactory extends RecordFactory {
     String name = (String) p.get("name");
     String type = (String) p.get("type");
 
-    ClientRecord r = new ClientRecord(guid, name, type);
+    JSONArray commands = null;
+    try {
+      commands = p.getArray("commands");
+    } catch (NonArrayJSONException e) {
+      Logger.debug(LOG_TAG, "Got non-array commands in client record " + guid, e);
+      // Keep commands as null.
+    }
+
+    ClientRecord r = new ClientRecord(guid, name, type, commands);
     r.initFromPayload((CryptoRecord) record);
     return r;
   }

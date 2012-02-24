@@ -7,6 +7,8 @@ package org.mozilla.gecko.sync.stage;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
@@ -31,6 +33,8 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 public class SyncClientsEngineStage implements GlobalSyncStage {
   protected static final String LOG_TAG = "SyncClientsEngineStage";
   protected static final String COLLECTION_NAME = "clients";
+  protected static final int CLIENTS_TTL_REFRESH = 604800000; // 7 days
+  protected static final int MAX_UPLOAD_FAILURE_COUNT = 5;
 
   protected GlobalSession session;
   protected final ClientRecordFactory factory = new ClientRecordFactory();
@@ -42,6 +46,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected ClientRecord localClient;
   protected boolean shouldWipe;
   protected ClientsDataDelegate clientsDataDelegate;
+  protected boolean commandsNeedUpload;
+  protected int uploadAttemptsCount = 0;
 
   /**
    * The following two delegates, ClientDownloadDelegate and ClientUploadDelegate
@@ -55,7 +61,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
    *
    */
   public class ClientDownloadDelegate extends WBOCollectionRequestDelegate {
-
     @Override
     public String credentials() {
       return session.credentials();
@@ -70,6 +75,12 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       try {
+        // If we processed commands, then the last upload of our record was
+        // not by us and we should update our local timestamp.
+        if (commandsNeedUpload) {
+          session.config.persistServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
+        }
+
         clientUploadDelegate = new ClientUploadDelegate();
         clientsDataDelegate.setClientsCount(db.clientsCount());
         checkAndUpload();
@@ -107,6 +118,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       ClientRecord r;
       try {
         r = (ClientRecord) factory.createRecord(record.decrypt());
+        if (r.guid == localClient.guid) {
+          processCommands(r.commands);
+        }
         RepoUtils.logClient(r);
       } catch (Exception e) {
         session.abort(e, "Exception handling client WBO.");
@@ -136,24 +150,40 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public String ifUnmodifiedSince() {
-      // TODO last client upload time?
-      return null;
+      return Long.toString(session.config.getPersistedServerClientRecordTimestamp() / 1000);
     }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
+      commandsNeedUpload = false;
+      uploadAttemptsCount = 0;
       // Response entity must be consumed in order to reuse the connection.
       HttpResponse httpResponse = response.httpResponse();
       if (httpResponse != null) {
         SyncResourceDelegate.consumeEntity(httpResponse.getEntity());
       }
+      session.config.persistServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
       session.advance();
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
-      session.abort(new HTTPFailureException(response), "Client upload failed.");
+      int statusCode = response.getStatusCode();
+
+      // If upload failed because of `ifUnmodifiedSince` then there are new
+      // commands uploaded to our record. We must download and process them first.
+      if (!commandsNeedUpload ||
+          (commandsNeedUpload && statusCode == 412) ||
+          uploadAttemptsCount >= MAX_UPLOAD_FAILURE_COUNT) {
+        Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
+        session.abort(new HTTPFailureException(response), "Client upload failed.");
+      }
+
+      // commandsNeedUpload == true &&
+      // statusCode != 412 &&
+      // uploadAttemptCount < MAX_UPLOAD_FAILURE_COUNT
+      uploadAttemptsCount++;
+      checkAndUpload();
     }
 
     @Override
@@ -180,9 +210,18 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     shouldWipe = true;
   }
 
-  // TODO: Bug 729248 - Smarter upload of client records.
   protected boolean shouldUpload() {
-    return true;
+    long now = System.currentTimeMillis();
+    long lastUpload = session.config.getPersistedServerClientRecordTimestamp();   // Defaults to 0.
+    long age = now - lastUpload;
+    return commandsNeedUpload || age >= CLIENTS_TTL_REFRESH;
+  }
+
+  protected void processCommands(JSONArray commands) {
+    if (commands.size() > 0) {
+      commandsNeedUpload = true;
+    }
+    // TODO: Bug 715792 - Process commands here.
   }
 
   protected void checkAndUpload() {
