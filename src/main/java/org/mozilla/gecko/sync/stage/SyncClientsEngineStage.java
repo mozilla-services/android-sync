@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync.stage;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
@@ -28,6 +29,7 @@ import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
 public class SyncClientsEngineStage implements GlobalSyncStage {
   protected static final String LOG_TAG = "SyncClientsEngineStage";
   protected static final String COLLECTION_NAME = "clients";
+  protected static final int CLIENTS_TTL_REFRESH = 604800000; // 7 days
 
   protected GlobalSession session;
   protected ClientRecordFactory factory = new ClientRecordFactory();
@@ -66,7 +68,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       session.setNumClients(db.numClients());
-      checkAndUpload();
+      checkAndUpload(response);
 
       // Close the database to clear cached readableDatabase/writeableDatabase
       // after we've completed our last transaction (db.store()).
@@ -96,6 +98,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       ClientRecord r;
       try {
         r = (ClientRecord) factory.createRecord(record.decrypt());
+        if (r.equals(localClient)) {
+          localClient.commands = r.commands;
+        }
         RepoUtils.logClient(r);
       } catch (Exception e) {
         session.abort(e, "Exception handling client WBO.");
@@ -125,14 +130,14 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public String ifUnmodifiedSince() {
-      // TODO last client upload time?
-      return null;
+      return Long.toString(session.getServerClientRecordTimestamp());
     }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       // Response entity must be consumed in order to reuse the connection.
       SyncResourceDelegate.consumeEntity(response.httpResponse().getEntity());
+      session.setServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
       session.advance();
     }
 
@@ -167,15 +172,33 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     shouldWipe = true;
   }
 
-  // TODO: Bug 729248 - Smarter upload of client records.
-  protected boolean shouldUpload() {
-    return true;
+  protected boolean shouldUpload(SyncStorageResponse response) {
+    if (localClient.commands != null && localClient.commands.size() > 0) {
+      processCommands(response);
+      return true;
+    }
+
+    if ((System.currentTimeMillis() - session.getServerClientRecordTimestamp()
+        >= CLIENTS_TTL_REFRESH)) {
+      return true;
+    }
+    return false;
   }
 
-  public void checkAndUpload() {
+  protected void processCommands(SyncStorageResponse response) {
+    // If we are processing commands then another client uploaded our record
+    // and we should keep track of this upload time.
+    if (response != null) {
+      session.setServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
+    }
+
+    // TODO: Bug 715792 - Process commands here.
+  }
+
+  public void checkAndUpload(SyncStorageResponse response) {
     // Generate CryptoRecord from ClientRecord to upload.
     CryptoRecord cryptoRecord = cryptoFromClient(localClient);
-    if (shouldUpload() && cryptoRecord != null) {
+    if (shouldUpload(response) && cryptoRecord != null) {
       this.wipeAndStore(localClient);
       this.uploadClientRecord(cryptoRecord);
       session.advance();

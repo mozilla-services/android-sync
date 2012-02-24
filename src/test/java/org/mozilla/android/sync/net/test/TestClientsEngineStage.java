@@ -2,6 +2,7 @@ package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -9,6 +10,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -23,6 +26,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import org.simpleframework.http.Request;
@@ -42,6 +46,7 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
 
   private ArrayList<ClientRecord> expectedClients = new ArrayList<ClientRecord>();
   private ArrayList<ClientRecord> downloadedClients = new ArrayList<ClientRecord>();
+  private boolean commandsProcessed;
 
   @Before
   public void setup() {
@@ -79,6 +84,12 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new UploadMockServer());
     super.uploadClientRecord(record);
+  }
+
+  @Override
+  protected void processCommands(SyncStorageResponse response) {
+    super.processCommands(response);
+    commandsProcessed = true;
   }
 
   public class TestClientDownloadDelegate extends ClientDownloadDelegate {
@@ -180,6 +191,46 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     } catch (Exception e) {
       fail("Should not throw decryption exception.");
     }
+  }
+
+  private void setRecentClientRecordTimestamp() {
+    session.setServerClientRecordTimestamp(System.currentTimeMillis() - (CLIENTS_TTL_REFRESH - 1000));
+  }
+
+  @Test
+  public void testShouldUploadNoCommandsToProcess() throws NullCursorException {
+    // shouldUpload() returns true.
+    assertEquals(0, session.getServerClientRecordTimestamp());
+    assertNull(localClient.commands);
+    assertTrue(shouldUpload(null));
+    assertFalse(commandsProcessed);
+
+    // Set the timestamp to be a little earlier than refresh time,
+    // so shouldUpload() returns false.
+    setRecentClientRecordTimestamp();
+    assertFalse(0 == session.getServerClientRecordTimestamp());
+    assertNull(localClient.commands);
+    assertFalse(shouldUpload(null));
+    assertFalse(commandsProcessed);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testShouldUploadProcessCommands() throws NullCursorException {
+    // shouldUpload() returns false since array is size 0 and
+    // it has not been long enough yet to require an upload.
+    localClient.commands = new JSONArray();
+    setRecentClientRecordTimestamp();
+    assertFalse(shouldUpload(null));
+    assertFalse(commandsProcessed);
+
+    // shouldUpload() returns true since array is size 1 even though
+    // it has not been long enough yet to require an upload.
+    localClient.commands.add(new JSONObject());
+    setRecentClientRecordTimestamp();
+    assertEquals(1, localClient.commands.size());
+    assertTrue(shouldUpload(null));
+    assertTrue(commandsProcessed);
   }
 
   public class UploadMockServer extends MockServer {
