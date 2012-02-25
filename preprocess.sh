@@ -9,11 +9,13 @@ ANDROID_PACKAGE_NAME=$($PREPROCESSOR -Fsubstitution -DUSERNAME=$USERNAME package
 echo "Using ANDROID_PACKAGE_NAME $ANDROID_PACKAGE_NAME."
 
 AUTHORITIES=src/main/java/org/mozilla/gecko/sync/repositories/android/Authorities.java
+BROWSERCONTRACT=src/main/java/org/mozilla/gecko/db/BrowserContract.java
 MANIFEST=AndroidManifest.xml
 
 DEFINITIONS="-DANDROID_PACKAGE_NAME=$ANDROID_PACKAGE_NAME"
 $PREPROCESSOR $DEFINITIONS $AUTHORITIES.in > $AUTHORITIES
 $PREPROCESSOR $DEFINITIONS $MANIFEST.in > $MANIFEST
+$PREPROCESSOR $DEFINITIONS $BROWSERCONTRACT.in > $BROWSERCONTRACT
 
 $PREPROCESSOR $DEFINITIONS strings.xml.template > res/values/strings.xml
 $PREPROCESSOR $DEFINITIONS sync_syncadapter.xml.template > res/xml/sync_syncadapter.xml
