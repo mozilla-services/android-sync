@@ -65,7 +65,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return AndroidBrowserRepositoryTestHelper.session;
   }
   
-  private void wipe() {
+  protected void wipe() {
     if (helper == null) {
       helper = getDataAccessor();
     }
