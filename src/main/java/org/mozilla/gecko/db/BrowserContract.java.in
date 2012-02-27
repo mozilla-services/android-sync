@@ -1,4 +1,5 @@
-/* ***** BEGIN LICENSE BLOCK *****
+/* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
+ * ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Mozilla Public License Version
@@ -19,7 +20,6 @@
  *
  * Contributor(s):
  *   Lucas Rocha <lucasr@mozilla.com>
- *   Jason Voll <jvoll@mozilla.com>
  *
  * Alternatively, the contents of this file may be used under the terms of
  * either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -35,26 +35,32 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-package org.mozilla.gecko.sync.repositories.android;
+#filter substitution
+package org.mozilla.gecko.db;
 
 import android.net.Uri;
 
-/*
- * IMPORTANT NOTE
- * This file is a copy of mobile/android/base/db/BrowserContract.java
- * and is included here to avoid creating a compile-time dependency on
- * Fennec.
- */
-
 public class BrowserContract {
-    // Local change: use generated authority URI.
-    public static final Uri AUTHORITY_URI = Uri.parse("content://" + Authorities.BROWSER_AUTHORITY);
-    
-    public static final Uri PASSWORDS_AUTHORITY = Uri.parse("content://" + Authorities.PASSWORDS_AUTHORITY);
+    public static final String AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.browser";
+
+    public static final String PASSWORDS_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.passwords";
+
+    public static final String DELETED_PASSWORDS_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.deleted-passwords";
+    public static final String FORM_HISTORY_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.formhistory";
+    public static final String DELETED_FORM_HISTORY_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.deleted-formhistory";
+
+    public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
+
+    public static final Uri PASSWORDS_AUTHORITY_URI = Uri.parse("content://" + PASSWORDS_AUTHORITY);
+
+    public static final Uri DELETED_PASSWORDS_AUTHORITY_URI = Uri.parse("content://" + DELETED_PASSWORDS_AUTHORITY);
+    public static final Uri FORM_HISTORY_AUTHORITY_URI = Uri.parse("content://" + FORM_HISTORY_AUTHORITY);
+    public static final Uri DELETED_FORM_HISTORY_AUTHORITY_URI = Uri.parse("content://" + DELETED_FORM_HISTORY_AUTHORITY);
 
     public static final String DEFAULT_PROFILE = "default";
 
     public static final String PARAM_PROFILE = "profile";
+    public static final String PARAM_PROFILE_PATH = "profilePath";
 
     public static final String PARAM_LIMIT = "limit";
 
@@ -62,7 +68,7 @@ public class BrowserContract {
 
     public static final String PARAM_SHOW_DELETED = "show_deleted";
 
-    interface CommonColumns {
+    public interface CommonColumns {
         public static final String _ID = "_id";
     }
 
@@ -76,16 +82,24 @@ public class BrowserContract {
         public static final String IS_DELETED = "deleted";
     }
 
-    interface URLColumns {
+    public interface URLColumns {
         public static final String URL = "url";
 
         public static final String TITLE = "title";
     }
 
-    interface ImageColumns {
+    public interface ImageColumns {
         public static final String FAVICON = "favicon";
 
         public static final String THUMBNAIL = "thumbnail";
+    }
+
+    public interface DeletedColumns {
+        public static final String ID = "id";
+
+        public static final String GUID = "guid";
+
+        public static final String TIME_DELETED = "timeDeleted";
     }
 
     public static final class Images implements CommonColumns, ImageColumns, SyncColumns {
@@ -101,6 +115,8 @@ public class BrowserContract {
     public static final class Bookmarks implements CommonColumns, URLColumns, ImageColumns, SyncColumns {
         private Bookmarks() {}
 
+        public static final int FIXED_ROOT_ID = 0;
+
         public static final String MOBILE_FOLDER_GUID = "mobile";
         public static final String PLACES_FOLDER_GUID = "places";
         public static final String MENU_FOLDER_GUID = "menu";
@@ -108,11 +124,10 @@ public class BrowserContract {
         public static final String TOOLBAR_FOLDER_GUID = "toolbar";
         public static final String UNFILED_FOLDER_GUID = "unfiled";
 
-        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "bookmarks")
-            .buildUpon().appendQueryParameter(PARAM_IS_SYNC, "true")
-            .appendQueryParameter(PARAM_SHOW_DELETED, "true")
-            .build();
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "bookmarks");
         public static final Uri PARENTS_CONTENT_URI = Uri.withAppendedPath(CONTENT_URI, "parents");
+
+        // Hacky API for bulk-updating positions. Bug 728783.
         public static final Uri POSITIONS_CONTENT_URI = Uri.withAppendedPath(CONTENT_URI, "positions");
 
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/bookmark";
@@ -130,33 +145,12 @@ public class BrowserContract {
         public static final String DESCRIPTION = "description";
 
         public static final String KEYWORD = "keyword";
-        
-        public static final String[] BookmarkColumns = new String[] {
-          _ID,
-          GUID,
-          DATE_CREATED,
-          DATE_MODIFIED,
-          IS_DELETED,
-          TITLE,
-          URL,
-          IS_FOLDER,
-          PARENT,
-          POSITION,
-          TAGS,
-          DESCRIPTION,
-          KEYWORD
-        };
     }
-    
-    
 
     public static final class History implements CommonColumns, URLColumns, ImageColumns, SyncColumns {
         private History() {}
 
-        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "history")
-            .buildUpon().appendQueryParameter(PARAM_IS_SYNC, "true")
-            .appendQueryParameter(PARAM_SHOW_DELETED, "true")
-            .build();
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "history");
 
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/browser-history";
 
@@ -165,18 +159,6 @@ public class BrowserContract {
         public static final String DATE_LAST_VISITED = "date";
 
         public static final String VISITS = "visits";
-        
-        public static final String[] HistoryColumns = new String[] {
-          _ID,
-          GUID,
-          DATE_CREATED,
-          DATE_MODIFIED,
-          IS_DELETED,
-          TITLE,
-          URL,
-          DATE_LAST_VISITED,
-          VISITS
-        };
     }
 
     public static final class Schema {
@@ -186,63 +168,74 @@ public class BrowserContract {
 
         public static final String VERSION = "version";
     }
-    
-    public static final class Passwords {
-      private Passwords() {}
 
-      public static final Uri CONTENT_URI = Uri.withAppendedPath(PASSWORDS_AUTHORITY, "passwords")
-          .buildUpon().appendQueryParameter(PARAM_IS_SYNC, "true")
-          .appendQueryParameter(PARAM_SHOW_DELETED, "true")
-          .build();
+    public static final class Passwords implements CommonColumns, SyncColumns {
+        private Passwords() {}
 
-      public static final String CONTENT_TYPE = "vnd.android.cursor.dir/passwords";
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(PASSWORDS_AUTHORITY_URI, "passwords");
 
-      public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/passwords";
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/passwords";
 
-      public static final String _ID = "id";
+        public static final String ID = "id";
 
-      public static final String HOSTNAME = "hostname";
+        public static final String HOSTNAME = "hostname";
 
-      public static final String HTTP_REALM = "httpRealm";
+        public static final String HTTP_REALM = "httpRealm";
 
-      public static final String FORM_SUBMIT_URL = "formSubmitURL";
+        public static final String FORM_SUBMIT_URL = "formSubmitURL";
 
-      public static final String USERNAME_FIELD = "usernameField";
+        public static final String USERNAME_FIELD = "usernameField";
 
-      public static final String PASSWORD_FIELD = "passwordField";
+        public static final String PASSWORD_FIELD = "passwordField";
 
-      public static final String ENCRYPTED_USERNAME = "encryptedUsername";
+        public static final String ENCRYPTED_USERNAME = "encryptedUsername";
 
-      public static final String ENCRYPTED_PASSWORD = "encryptedPassword";
+        public static final String ENCRYPTED_PASSWORD = "encryptedPassword";
 
-      public static final String ENC_TYPE = "encType";
+        public static final String ENC_TYPE = "encType";
 
-      public static final String TIME_CREATED = "timeCreated";
+        public static final String TIME_CREATED = "timeCreated";
 
-      public static final String TIME_LAST_USED = "timeLastUsed";
+        public static final String TIME_LAST_USED = "timeLastUsed";
 
-      public static final String TIME_PASSWORD_CHANGED = "timePasswordChanged";
+        public static final String TIME_PASSWORD_CHANGED = "timePasswordChanged";
 
-      public static final String TIMES_USED = "timesUsed";
-      
-      public static final String[] PasswordColumns = new String[] {
-        _ID,
-        SyncColumns.GUID,
-        //TIME_CREATED,
-        //TIME_PASSWORD_CHANGED,
-        SyncColumns.DATE_CREATED,
-        SyncColumns.DATE_MODIFIED,
-        SyncColumns.IS_DELETED,
-        HOSTNAME,
-        HTTP_REALM,
-        FORM_SUBMIT_URL,
-        USERNAME_FIELD,
-        PASSWORD_FIELD,
-        ENCRYPTED_USERNAME,
-        ENCRYPTED_PASSWORD,
-        ENC_TYPE,
-        TIME_LAST_USED,
-        TIMES_USED
-      };
-  }
+        public static final String TIMES_USED = "timesUsed";
+    }
+
+    public static final class DeletedPasswords implements DeletedColumns {
+        private DeletedPasswords() {}
+
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/deleted-passwords";
+    }
+
+    public static final class FormHistory {
+        private FormHistory() {}
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(FORM_HISTORY_AUTHORITY_URI, "formhistory");
+
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/formhistory";
+
+        public static final String ID = "id";
+
+        public static final String FIELD_NAME = "fieldname";
+
+        public static final String VALUE = "value";
+
+        public static final String TIMES_USED = "timesUsed";
+
+        public static final String FIRST_USED = "firstUsed";
+
+        public static final String LAST_USED = "lastUsed";
+
+        public static final String GUID = "guid";
+    }
+
+    public static final class DeletedFormHistory implements DeletedColumns {
+        private DeletedFormHistory() {}
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(DELETED_FORM_HISTORY_AUTHORITY_URI, "deleted-formhistory");
+
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/deleted-formhistory";
+    }
 }
