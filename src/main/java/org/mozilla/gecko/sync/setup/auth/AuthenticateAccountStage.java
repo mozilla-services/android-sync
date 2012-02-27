@@ -23,6 +23,7 @@ import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class AuthenticateAccountStage implements AuthenticatorStage {
   private final String LOG_TAG = "AuthenticateAccountStage";
+  private HttpRequestBase httpRequest = null;
 
   public interface AuthenticateAccountStageDelegate {
     public void handleSuccess(boolean isSuccess);
@@ -44,14 +45,21 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       public void handleFailure(HttpResponse response) {
         Logger.debug(LOG_TAG, "handleFailure");
         aa.abort(response.toString(), new Exception(response.getStatusLine().getStatusCode() + " error."));
+        if (response.getEntity() == null) {
+          // No cleanup necessary.
+          return;
+        }
         try {
           BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
           Logger.warn(LOG_TAG, "content: " + reader.readLine());
           SyncResourceDelegate.consumeReader(reader);
-          reader.close();
-          SyncResourceDelegate.consumeEntity(response.getEntity());
         } catch (IllegalStateException e) {
           Logger.debug(LOG_TAG, "Error reading content.", e);
+        } catch (RuntimeException e) {
+          Logger.debug(LOG_TAG, "Unexpected exception.", e);
+          if (httpRequest != null) {
+            httpRequest.abort();
+          }
         } catch (IOException e) {
           Logger.debug(LOG_TAG, "Error reading content.", e);
         }
@@ -77,7 +85,8 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
-
+        // Make reference to request, to abort if necessary.
+        httpRequest = request;
         client.log.enableDebug(true);
         request.setHeader(new BasicHeader("User-Agent", SyncStorageRequest.USER_AGENT));
         // Host header is not set for some reason, so do it explicitly.
