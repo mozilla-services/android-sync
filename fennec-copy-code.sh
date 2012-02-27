@@ -15,12 +15,12 @@ rsync -a manifests $SYNC/
 
 echo "Copying sources. All use of R must be compiled with Fennec."
 SOURCEDIR="src/main/java/org/mozilla/gecko/sync"
-SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' -not -name 'Authorities.java' -and -not -name 'BrowserContract.java' | sed "s,$SOURCEDIR/,sync/,")
-rsync -C --exclude 'Authorities.java' --exclude 'BrowserContract.java' --exclude '*.in' -a $SOURCEDIR $ANDROID/base/
+SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' -not -name 'GlobalConstants.java' -and -not -name 'BrowserContract.java' | sed "s,$SOURCEDIR/,sync/,")
+rsync -C --exclude 'GlobalConstants.java' --exclude 'BrowserContract.java' --exclude '*.in' -a $SOURCEDIR $ANDROID/base/
 
-echo "Copying preprocessor Authorities file."
-PREPROCESS_FILES="sync/repositories/android/Authorities.java"
-cp $SOURCEDIR/repositories/android/Authorities.java.in $ANDROID/base/sync/repositories/android/
+echo "Copying preprocessed GlobalConstants file."
+PREPROCESS_FILES="sync/GlobalConstants.java"
+cp $SOURCEDIR/GlobalConstants.java.in $ANDROID/base/sync/
 
 echo "Copying preprocessed sync_syncadapter.xml."
 cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in

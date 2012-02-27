@@ -1,6 +1,6 @@
 AndroidManifest.xml
 R.java
-src/main/java/org/mozilla/gecko/sync/repositories/android/Authorities.java
+src/main/java/org/mozilla/gecko/sync/GlobalConstants.java
 src/main/java/org/mozilla/gecko/db/BrowserContract.java
 res/xml/sync_syncadapter.xml
 res/xml/sync_options.xml
