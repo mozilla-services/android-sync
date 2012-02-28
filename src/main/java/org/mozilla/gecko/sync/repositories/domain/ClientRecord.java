@@ -4,8 +4,11 @@
 
 package org.mozilla.gecko.sync.repositories.domain;
 
+import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -34,6 +37,7 @@ public class ClientRecord extends Record {
 
   public String name = "Default Name";
   public String type = Constants.CLIENT_TYPE;
+  public JSONArray commands;
 
   @Override
   public void initFromPayload(CryptoRecord payload) {
@@ -48,6 +52,12 @@ public class ClientRecord extends Record {
 
     this.name = (String) p.get("name");
     this.type = (String) p.get("type");
+    try {
+      this.commands = p.getArray("commands");
+    } catch (NonArrayJSONException e) {
+      Logger.error(LOG_TAG, "Got non-array commands in client record " + this.guid, e);
+      this.commands = new JSONArray();
+    }
   }
 
   @Override

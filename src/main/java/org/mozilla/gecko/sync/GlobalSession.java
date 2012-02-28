@@ -713,4 +713,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
   public int getNumClients() {
     return clientsDelegate.getNumClients();
   }
+
+  public void setServerClientRecordTimestamp(long timestamp) {
+    config.persistServerClientRecordTimestamp(timestamp);
+  }
+
+  public long getServerClientRecordTimestamp() {
+    return config.getPersistedServerClientRecordTimestamp();
+  }
 }
