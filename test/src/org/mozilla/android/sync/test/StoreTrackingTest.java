@@ -221,6 +221,7 @@ public class StoreTrackingTest extends
       @Override
       public void run() {
         doTestNewSessionRetrieveByTime(r, expectedGUID);
+        performNotify();
       }
     });
 
