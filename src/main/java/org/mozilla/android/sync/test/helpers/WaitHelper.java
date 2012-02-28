@@ -117,7 +117,9 @@ public class WaitHelper {
       throw new TimeoutError(waitTimeoutInMillis);
     } else if (result.error != null) {
       // Rethrow any assertion with which we were notified.
-      throw new InnerError(result.error);
+      InnerError innerError = new InnerError(result.error);
+      innerError.initCause(result.error);
+      throw innerError;
     } else {
       // Success!
     }

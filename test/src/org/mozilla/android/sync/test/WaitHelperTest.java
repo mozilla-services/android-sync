@@ -247,6 +247,23 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     assertBothCalled();
   }
 
+  public void testNestedWaitsAndNotifies() {
+      waitHelper.performWait(new Runnable() {
+        @Override
+        public void run() {
+          waitHelper.performWait(new Runnable() {
+            public void run() {
+              setPerformNotifyCalled();
+              waitHelper.performNotify();
+            }
+          });
+          setPerformNotifyErrorCalled();
+          waitHelper.performNotify();
+        }
+      });
+    assertBothCalled();
+  }
+
   public void testAssertIsReported() {
     try {
       waitHelper.performWait(1, new Runnable() {
@@ -263,7 +280,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   }
 
   /**
-   * This will timeout.  The sequence in the helper thread is:
+   * The inner wait will timeout, but the outer wait will succeed.  The sequence in the helper thread is:
    * - A short delay.
    * - performNotify is called.
    *
@@ -272,25 +289,33 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
    *   performNotify quickly enough.
    */
   public void testDelayInThread() throws InterruptedException {
-    try {
-      waitHelper.performWait(NO_WAIT, inThread(performNotifyAfterDelayRunnable(SHORT_WAIT)));
-    } catch (WaitHelper.TimeoutError e) {
-      setPerformNotifyErrorCalled();
-      assertEquals(NO_WAIT, e.waitTimeInMillis);
-    }
-    assertErrorCalled();
+    waitHelper.performWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          waitHelper.performWait(NO_WAIT, inThread(new Runnable() {
+            public void run() {
+              try {
+                Thread.sleep(SHORT_WAIT);
+              } catch (InterruptedException e) {
+                fail("Interrupted.");
+              }
 
-    // The spawned thread should have called performNotify() by now.
-    Thread.sleep(LONG_WAIT);
-    try {
-      waitHelper.performWait(1, this.performNothingRunnable());
-    } catch (AssertionFailedError e) {
-      fail("Should not have thrown!");
-    }
+              setPerformNotifyCalled();
+              waitHelper.performNotify();
+            }
+          }));
+        } catch (WaitHelper.TimeoutError e) {
+          setPerformNotifyErrorCalled();
+          assertEquals(NO_WAIT, e.waitTimeInMillis);
+        }
+      }
+    });
+    assertBothCalled();
   }
 
   /**
-   * This will timeout.  The sequence in the helper thread is:
+   * The inner wait will timeout, but the outer wait will succeed.  The sequence in the helper thread is:
    * - A short delay.
    * - performNotify is called.
    *
@@ -299,20 +324,28 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
    *   performNotify quickly enough.
    */
   public void testDelayInThreadPool() throws InterruptedException {
-    try {
-      waitHelper.performWait(NO_WAIT, inThreadPool(performNotifyAfterDelayRunnable(SHORT_WAIT)));
-    } catch (WaitHelper.TimeoutError e) {
-      setPerformNotifyErrorCalled();
-      assertEquals(NO_WAIT, e.waitTimeInMillis);
-    }
-    assertErrorCalled();
+    waitHelper.performWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          waitHelper.performWait(NO_WAIT, inThreadPool(new Runnable() {
+            public void run() {
+              try {
+                Thread.sleep(SHORT_WAIT);
+              } catch (InterruptedException e) {
+                fail("Interrupted.");
+              }
 
-    // The spawned thread should have called performNotify() by now.
-    Thread.sleep(LONG_WAIT);
-    try {
-      waitHelper.performWait(NO_WAIT, this.performNothingRunnable());
-    } catch (AssertionFailedError e) {
-      fail("Should not have thrown!");
-    }
+              setPerformNotifyCalled();
+              waitHelper.performNotify();
+            }
+          }));
+        } catch (WaitHelper.TimeoutError e) {
+          setPerformNotifyErrorCalled();
+          assertEquals(NO_WAIT, e.waitTimeInMillis);
+        }
+      }
+    });
+    assertBothCalled();
   }
 }
