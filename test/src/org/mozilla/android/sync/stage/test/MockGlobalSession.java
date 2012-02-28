@@ -99,6 +99,7 @@ public class MockGlobalSession extends GlobalSession {
     stages.put(Stage.fetchMetaGlobal,         new MockFetchMetaGlobalStage());
     stages.put(Stage.ensureKeysStage,         new MockFetchInfoCollectionsStage());
     stages.put(Stage.ensureClusterURL,        new MockEnsureClusterURLStage());
+    stages.put(Stage.syncClientsEngine,       new MockEnsureClusterURLStage());
 
   }
 
