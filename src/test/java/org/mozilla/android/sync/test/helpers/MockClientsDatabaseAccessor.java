@@ -1,6 +1,6 @@
 package org.mozilla.android.sync.test.helpers;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 import org.mozilla.gecko.sync.repositories.NullCursorException;
@@ -19,7 +19,7 @@ public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   }
 
   @Override
-  public void store(ArrayList<ClientRecord> records) {
+  public void store(Collection<ClientRecord> records) {
     storedArrayList = false;
   }
 
@@ -34,7 +34,7 @@ public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   }
 
   @Override
-  public int numClients() {
+  public int clientsCount() {
     return 0;
   }
 

@@ -62,7 +62,7 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
       list.add(new ClientRecord());
     }
     db.store(list);
-    assertEquals(COUNT, db.numClients());
+    assertEquals(COUNT, db.clientsCount());
   }
 
   public void testFetchAll() {

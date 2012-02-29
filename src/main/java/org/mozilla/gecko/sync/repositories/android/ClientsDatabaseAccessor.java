@@ -4,7 +4,7 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class ClientsDatabaseAccessor {
     db.store(getProfileId(), record);
   }
 
-  public void store(ArrayList<ClientRecord> records) {
+  public void store(Collection<ClientRecord> records) {
     for (ClientRecord record : records) {
       this.store(record);
     }
@@ -81,13 +81,11 @@ public class ClientsDatabaseAccessor {
     String accountGUID = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_ACCOUNT_GUID);
     String clientName = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_NAME);
     String clientType = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_TYPE);
-    ClientRecord record = new ClientRecord(accountGUID);
-    record.name = clientName;
-    record.type = clientType;
+    ClientRecord record = new ClientRecord(accountGUID, clientName, clientType);
     return record;
   }
 
-  public int numClients() {
+  public int clientsCount() {
     try {
       return db.fetchAll().getCount();
     } catch (NullCursorException e) {
