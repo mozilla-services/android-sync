@@ -19,7 +19,7 @@ public class TestRecord {
   @Test
   public void testRecordGUIDs() {
     for (int i = 0; i < 50; ++i) {
-      CryptoRecord cryptoRecord = new HistoryRecord().getPayload();
+      CryptoRecord cryptoRecord = new HistoryRecord().getEnvelope();
       assertEquals(12, cryptoRecord.guid.length());
       System.out.println(cryptoRecord.toJSONString());
     }

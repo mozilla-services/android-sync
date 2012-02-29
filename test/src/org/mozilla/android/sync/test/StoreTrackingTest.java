@@ -15,6 +15,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
@@ -245,13 +246,21 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
     }
 
     @Override
-    public void initFromPayload(CryptoRecord payload) {
+    public void initFromEnvelope(CryptoRecord payload) {
       return;
     }
 
     @Override
-    public CryptoRecord getPayload() {
+    public CryptoRecord getEnvelope() {
       return null;
+    }
+
+    @Override
+    protected void populatePayload(ExtendedJSONObject payload) {
+    }
+
+    @Override
+    protected void initFromPayload(ExtendedJSONObject payload) {
     }
 
     @Override
