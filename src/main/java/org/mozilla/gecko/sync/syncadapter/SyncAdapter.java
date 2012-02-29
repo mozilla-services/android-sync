@@ -414,7 +414,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   @Override
-  synchronized public String getAccountGUID() {
+  public synchronized String getAccountGUID() {
     String accountGUID = mAccountManager.getUserData(localAccount, Constants.ACCOUNT_GUID);
     if (accountGUID == null) {
       accountGUID = Utils.generateGuid();
@@ -424,7 +424,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   @Override
-  synchronized public String getClientName() {
+  public synchronized String getClientName() {
     String clientName = mAccountManager.getUserData(localAccount, Constants.CLIENT_NAME);
     if (clientName == null) {
       clientName = GlobalConstants.PRODUCT_NAME + " on " + android.os.Build.MODEL;
@@ -434,18 +434,18 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   @Override
-  synchronized public void setNumClients(int numClients) {
+  public synchronized void setClientsCount(int clientsCount) {
     mAccountManager.setUserData(localAccount, Constants.NUM_CLIENTS,
-        Integer.toString(numClients));
+        Integer.toString(clientsCount));
   }
 
   @Override
-  synchronized public int getNumClients() {
-    String numClients = mAccountManager.getUserData(localAccount, Constants.NUM_CLIENTS);
-    if (numClients == null) {
-      numClients = "0";
-      mAccountManager.setUserData(localAccount, Constants.NUM_CLIENTS, numClients);
+  public synchronized int getClientsCount() {
+    String clientsCount = mAccountManager.getUserData(localAccount, Constants.NUM_CLIENTS);
+    if (clientsCount == null) {
+      clientsCount = "0";
+      mAccountManager.setUserData(localAccount, Constants.NUM_CLIENTS, clientsCount);
     }
-    return Integer.parseInt(numClients);
+    return Integer.parseInt(clientsCount);
   }
 }

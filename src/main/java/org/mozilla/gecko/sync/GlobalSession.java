@@ -698,19 +698,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     return this.config.metaGlobal.engines.get(engineName) != null;
   }
 
-  public String getAccountGUID() {
-    return clientsDelegate.getAccountGUID();
-  }
-
-  public String getClientName() {
-    return clientsDelegate.getClientName();
-  }
-
-  public void setNumClients(int numClients) {
-    clientsDelegate.setNumClients(numClients);
-  }
-
-  public int getNumClients() {
-    return clientsDelegate.getNumClients();
+  public ClientsDataDelegate getClientsDelegate() {
+    return this.clientsDelegate;
   }
 }
