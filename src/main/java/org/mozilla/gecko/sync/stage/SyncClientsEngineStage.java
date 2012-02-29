@@ -14,6 +14,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
@@ -32,7 +33,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected static final String COLLECTION_NAME = "clients";
 
   protected GlobalSession session;
-  protected ClientRecordFactory factory = new ClientRecordFactory();
+  protected final ClientRecordFactory factory = new ClientRecordFactory();
   protected ClientUploadDelegate clientUploadDelegate;
   protected ClientDownloadDelegate clientDownloadDelegate;
   protected ClientsDatabaseAccessor db;
@@ -40,6 +41,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   // Account/Profile info
   protected ClientRecord localClient;
   protected boolean shouldWipe;
+  protected ClientsDataDelegate clientsDataDelegate;
 
   /**
    * The following two delegates, ClientDownloadDelegate and ClientUploadDelegate
@@ -67,30 +69,37 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      session.setNumClients(db.numClients());
-      checkAndUpload();
-
-      // Close the database to clear cached readableDatabase/writeableDatabase
-      // after we've completed our last transaction (db.store()).
-      db.close();
+      try {
+        clientUploadDelegate = new ClientUploadDelegate();
+        clientsDataDelegate.setClientsCount(db.clientsCount());
+        checkAndUpload();
+      } finally {
+        // Close the database to clear cached readableDatabase/writableDatabase
+        // after we've completed our last transaction (db.store()).
+        db.close();
+      }
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
-      session.abort(new HTTPFailureException(response), "Client download failed.");
-
-      // Close the database upon failure.
-      db.close();
+      try {
+        Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
+        session.abort(new HTTPFailureException(response), "Client download failed.");
+      } finally {
+        // Close the database upon failure.
+        db.close();
+      }
     }
 
     @Override
     public void handleRequestError(Exception ex) {
-      Logger.info(LOG_TAG, "Client upload error. Aborting sync.");
-      session.abort(ex, "Failure fetching client record.");
-
-      // Close the database upon error.
-      db.close();
+      try {
+        Logger.info(LOG_TAG, "Client upload error. Aborting sync.");
+        session.abort(ex, "Failure fetching client record.");
+      } finally {
+        // Close the database upon error.
+        db.close();
+      }
     }
 
     @Override
@@ -163,11 +172,10 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected void init() {
-    localClient = new ClientRecord(session.getAccountGUID());
-    localClient.name = session.getClientName();
+    clientsDataDelegate = session.getClientsDelegate();
+    localClient = new ClientRecord(clientsDataDelegate.getAccountGUID(), clientsDataDelegate.getClientName());
 
     clientDownloadDelegate = new ClientDownloadDelegate();
-    clientUploadDelegate = new ClientUploadDelegate();
     db = new ClientsDatabaseAccessor(session.getContext());
     shouldWipe = true;
   }
@@ -177,30 +185,25 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     return true;
   }
 
-  public void checkAndUpload() {
-    // Generate CryptoRecord from ClientRecord to upload.
-    CryptoRecord cryptoRecord = cryptoFromClient(localClient);
-    if (shouldUpload() && cryptoRecord != null) {
-      this.wipeAndStore(localClient);
-      this.uploadClientRecord(cryptoRecord);
+  protected void checkAndUpload() {
+    if (!shouldUpload()) {
       session.advance();
+      return;
     }
-  }
 
-  protected CryptoRecord cryptoFromClient(ClientRecord record) {
+    // Generate CryptoRecord from ClientRecord to upload.
     String encryptionFailure = "Couldn't encrypt new client record.";
-    CryptoRecord cryptoRecord = record.getPayload();
+    CryptoRecord cryptoRecord = localClient.getPayload();
     try {
       cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
       cryptoRecord.encrypt();
+      this.wipeAndStore(localClient);
+      this.uploadClientRecord(cryptoRecord);
     } catch (UnsupportedEncodingException e) {
       session.abort(e, encryptionFailure + " Unsupported encoding.");
-      return null;
     } catch (CryptoException e) {
       session.abort(e, encryptionFailure);
-      return null;
     }
-    return cryptoRecord;
   }
 
   protected void downloadClientRecords() {
@@ -217,7 +220,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
   protected void uploadClientRecord(CryptoRecord record) {
     try {
-      URI putURI = session.config.collectionURI(COLLECTION_NAME, false);
+      URI putURI = session.config.wboURI(COLLECTION_NAME, record.guid);
 
       SyncStorageRecordRequest request = new SyncStorageRecordRequest(putURI);
       request.delegate = clientUploadDelegate;

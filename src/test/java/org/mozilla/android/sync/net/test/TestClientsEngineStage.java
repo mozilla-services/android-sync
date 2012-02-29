@@ -12,13 +12,13 @@ import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockClientsDataDelegate;
 import org.mozilla.android.sync.test.helpers.MockClientsDatabaseAccessor;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
@@ -30,8 +30,8 @@ import org.simpleframework.http.Response;
 
 public class TestClientsEngineStage extends SyncClientsEngineStage {
 
-  private static final int TEST_PORT             = 15325;
-  private static final String TEST_SERVER        = "http://localhost:" + TEST_PORT;
+  private static final int TEST_PORT      = 15325;
+  private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
   private static final String USERNAME  = "john";
   private static final String PASSWORD  = "password";
@@ -61,9 +61,9 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   @Before
   @Override
   public void init() {
-    localClient = new ClientRecord(Utils.generateGuid());
+    clientsDataDelegate = new MockClientsDataDelegate();
+    localClient = new ClientRecord(clientsDataDelegate.getAccountGUID());
     clientDownloadDelegate = new TestClientDownloadDelegate();
-    clientUploadDelegate = new MockClientUploadDelegate();
     db = new MockClientsDatabaseAccessor();
   }
 
@@ -79,6 +79,12 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new UploadMockServer());
     super.uploadClientRecord(record);
+  }
+
+  @Override
+  public void checkAndUpload() {
+    clientUploadDelegate = new MockClientUploadDelegate();
+    super.checkAndUpload();
   }
 
   public class TestClientDownloadDelegate extends ClientDownloadDelegate {
@@ -171,17 +177,6 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     ((MockClientsDatabaseAccessor)db).resetVars();
   }
 
-  @Test
-  public void testCryptoFromClient() {
-    CryptoRecord cryptoRecord = cryptoFromClient(localClient);
-    try {
-      ClientRecord clientRecord = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
-      assertTrue(localClient.equals(clientRecord));
-    } catch (Exception e) {
-      fail("Should not throw decryption exception.");
-    }
-  }
-
   public class UploadMockServer extends MockServer {
     @Override
     public void handle(Request request, Response response) {
@@ -202,9 +197,19 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   }
 
   @Test
-  public void testUploadClientRecord() {
-    CryptoRecord cryptoRecord = cryptoFromClient(localClient);
-    this.uploadClientRecord(cryptoRecord);
+  public void testCheckAndUploadClientRecord() {
+    this.checkAndUpload();
+  }
+
+  private CryptoRecord cryptoFromClient(ClientRecord record) {
+    CryptoRecord cryptoRecord = record.getPayload();
+    cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
+    try {
+      cryptoRecord.encrypt();
+    } catch (Exception e) {
+      fail("Cannot encrypt client record.");
+    }
+    return cryptoRecord;
   }
 
   public class DownloadMockServer extends MockServer {
