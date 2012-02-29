@@ -152,13 +152,13 @@ public class RepoUtils {
   }
 
   public static void logClient(ClientRecord rec) {
-    Logger.debug(LOG_TAG, "Returning client record " + rec.guid + " (" + rec.androidID + ")");
-    Logger.debug(LOG_TAG, "Client Name: " + rec.name);
-    Logger.debug(LOG_TAG, "Client Type: " + rec.type);
-    Logger.debug(LOG_TAG, "Collection: " + rec.collection);
-    Logger.debug(LOG_TAG, "Last Modified: " + rec.lastModified);
-    Logger.debug(LOG_TAG, "Sort Index: " + rec.sortIndex);
-    Logger.debug(LOG_TAG, "Deleted: " + rec.deleted);
+    if (Logger.logVerbose(LOG_TAG)) {
+      Logger.trace(LOG_TAG, "Returning client record " + rec.guid + " (" + rec.androidID + ")");
+      Logger.trace(LOG_TAG, "Client Name: " + rec.name);
+      Logger.trace(LOG_TAG, "Client Type: " + rec.type);
+      Logger.trace(LOG_TAG, "Last Modified: " + rec.lastModified);
+      Logger.trace(LOG_TAG, "Deleted: " + rec.deleted);
+    }
   }
 
   public static PasswordRecord passwordFromMirrorCursor(Cursor cur) {

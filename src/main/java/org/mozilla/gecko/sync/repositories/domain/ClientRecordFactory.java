@@ -22,5 +22,4 @@ public class ClientRecordFactory extends RecordFactory {
     r.initFromPayload((CryptoRecord) record);
     return r;
   }
-
 }
