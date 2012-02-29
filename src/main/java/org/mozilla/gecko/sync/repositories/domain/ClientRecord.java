@@ -15,39 +15,47 @@ public class ClientRecord extends Record {
 
   public static final String COLLECTION_NAME = "clients";
 
-  public ClientRecord(String guid, String collection, long lastModified,
+  public ClientRecord(String guid, String name, String type, String collection, long lastModified,
       boolean deleted) {
     super(guid, collection, lastModified, deleted);
-  }
-  public ClientRecord(String guid, String collection, long lastModified) {
-    super(guid, collection, lastModified, false);
-  }
-  public ClientRecord(String guid, String collection) {
-    super(guid, collection, 0, false);
-  }
-  public ClientRecord(String guid) {
-    super(guid, COLLECTION_NAME, 0, false);
-  }
-  public ClientRecord() {
-    super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
+    this.name = name;
+    this.type = type;
   }
 
-  public String name = "Default Name";
-  public String type = Constants.CLIENT_TYPE;
+  public ClientRecord(String guid, String name, String type, String collection, long lastModified) {
+    this(guid, name, type, collection, lastModified, false);
+  }
+
+  public ClientRecord(String guid, String name, String type, String collection) {
+    this(guid, name, type, collection, 0, false);
+  }
+
+  public ClientRecord(String guid, String name, String type) {
+    this(guid, name, type, COLLECTION_NAME, 0, false);
+  }
+
+  public ClientRecord(String guid, String name) {
+    this(guid, name, Constants.CLIENT_TYPE, COLLECTION_NAME, 0, false);
+  }
+
+  public ClientRecord(String guid) {
+    this(guid, Constants.DEFAULT_CLIENT_NAME, Constants.CLIENT_TYPE, COLLECTION_NAME, 0, false);
+  }
+
+  public ClientRecord() {
+    this(Utils.generateGuid(), Constants.DEFAULT_CLIENT_NAME, Constants.CLIENT_TYPE, COLLECTION_NAME, 0, false);
+  }
+
+  public final String name;
+  public final String type;
 
   @Override
   public void initFromPayload(CryptoRecord payload) {
-    ExtendedJSONObject p = payload.payload;
-
-    this.guid = payload.guid;
-    this.checkGUIDs(p);
+    this.checkGUIDs(((CryptoRecord)payload).payload);
 
     this.lastModified = payload.lastModified;
     this.deleted      = payload.deleted;
     this.collection   = payload.collection;
-
-    this.name = (String) p.get("name");
-    this.type = (String) p.get("type");
   }
 
   @Override
@@ -75,13 +83,10 @@ public class ClientRecord extends Record {
 
   @Override
   public Record copyWithIDs(String guid, long androidID) {
-    ClientRecord out = new ClientRecord(guid, this.collection, this.lastModified, this.deleted);
+    ClientRecord out = new ClientRecord(guid, this.name, this.type,
+        this.collection, this.lastModified, this.deleted);
     out.androidID = androidID;
     out.sortIndex = this.sortIndex;
-
-    // Copy ClientRecord fields.
-    out.name = this.name;
-    out.type = this.type;
 
     return out;
   }

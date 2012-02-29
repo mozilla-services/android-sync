@@ -63,11 +63,9 @@ public class TestClientRecord extends AndroidTestCase{
     // Test ClientRecord.equals().
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
-    ClientRecord record3 = new ClientRecord();
-    ClientRecord record4 = new ClientRecord();
+    ClientRecord record3 = new ClientRecord(Utils.generateGuid(), "New Name");
+    ClientRecord record4 = new ClientRecord(Utils.generateGuid(), Constants.DEFAULT_CLIENT_NAME, "desktop");
     record2.guid = record1.guid;
-    record3.name = "New Name";
-    record4.type = "desktop";
 
     assertTrue(record2.equals(record1));
     assertFalse(record3.equals(record1));
