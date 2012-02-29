@@ -160,7 +160,7 @@ public class TestCrypto5MiddlewareRepositorySession {
 
     cryptoRecord = cryptoRecord.decrypt();
     BookmarkRecord decryptedRecord = new BookmarkRecord();
-    decryptedRecord.initFromPayload(cryptoRecord);
+    decryptedRecord.initFromEnvelope(cryptoRecord);
     assertEquals(record.title, decryptedRecord.title);
   }
 
@@ -174,12 +174,12 @@ public class TestCrypto5MiddlewareRepositorySession {
     final BookmarkRecord record2 = new BookmarkRecord("XXXXXXXXXXXX", "coll", System.currentTimeMillis(), false);
     record2.title = "unencrypted second title";
 
-    CryptoRecord encryptedRecord1 = record1.getPayload();
+    CryptoRecord encryptedRecord1 = record1.getEnvelope();
     encryptedRecord1.keyBundle = keyBundle;
     encryptedRecord1 = encryptedRecord1.encrypt();
     wboRepo.wbos.put(record1.guid, encryptedRecord1);
 
-    CryptoRecord encryptedRecord2 = record2.getPayload();
+    CryptoRecord encryptedRecord2 = record2.getEnvelope();
     encryptedRecord2.keyBundle = keyBundle;
     encryptedRecord2 = encryptedRecord2.encrypt();
     wboRepo.wbos.put(record2.guid, encryptedRecord2);
@@ -198,7 +198,7 @@ public class TestCrypto5MiddlewareRepositorySession {
 
     assertEquals(1, fetchRecordsDelegate.fetchedRecords.size());
     BookmarkRecord decryptedRecord = new BookmarkRecord();
-    decryptedRecord.initFromPayload((CryptoRecord)fetchRecordsDelegate.fetchedRecords.get(0));
+    decryptedRecord.initFromEnvelope((CryptoRecord)fetchRecordsDelegate.fetchedRecords.get(0));
     assertEquals(record1.title, decryptedRecord.title);
   }
 
@@ -212,12 +212,12 @@ public class TestCrypto5MiddlewareRepositorySession {
     final BookmarkRecord record2 = new BookmarkRecord("XXXXXXXXXXXX", "coll", System.currentTimeMillis(), false);
     record2.title = "unencrypted second title";
 
-    CryptoRecord encryptedRecord1 = record1.getPayload();
+    CryptoRecord encryptedRecord1 = record1.getEnvelope();
     encryptedRecord1.keyBundle = keyBundle;
     encryptedRecord1 = encryptedRecord1.encrypt();
     wboRepo.wbos.put(record1.guid, encryptedRecord1);
 
-    CryptoRecord encryptedRecord2 = record2.getPayload();
+    CryptoRecord encryptedRecord2 = record2.getEnvelope();
     encryptedRecord2.keyBundle = keyBundle;
     encryptedRecord2 = encryptedRecord2.encrypt();
     wboRepo.wbos.put(record2.guid, encryptedRecord2);
@@ -236,9 +236,9 @@ public class TestCrypto5MiddlewareRepositorySession {
 
     assertEquals(2, fetchAllRecordsDelegate.fetchedRecords.size());
     BookmarkRecord decryptedRecord1 = new BookmarkRecord();
-    decryptedRecord1.initFromPayload((CryptoRecord)fetchAllRecordsDelegate.fetchedRecords.get(0));
+    decryptedRecord1.initFromEnvelope((CryptoRecord)fetchAllRecordsDelegate.fetchedRecords.get(0));
     BookmarkRecord decryptedRecord2 = new BookmarkRecord();
-    decryptedRecord2.initFromPayload((CryptoRecord)fetchAllRecordsDelegate.fetchedRecords.get(1));
+    decryptedRecord2.initFromEnvelope((CryptoRecord)fetchAllRecordsDelegate.fetchedRecords.get(1));
 
     // We should get two different decrypted records
     assertFalse(decryptedRecord1.guid.equals(decryptedRecord2.guid));
