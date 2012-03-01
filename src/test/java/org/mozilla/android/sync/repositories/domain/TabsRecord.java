@@ -8,11 +8,14 @@ import java.util.ArrayList;
 
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+
+import android.content.ContentValues;
 
 /**
  * Represents a client's collection of tabs.
@@ -53,6 +56,20 @@ public class TabsRecord extends Record {
       o.put("urlHistory", history);
       o.put("lastUsed", lastUsed);
       return o;
+    }
+
+    public ContentValues toContentValues(String clientGUID, int position) {
+      ContentValues out = new ContentValues();
+      out.put(BrowserContract.Tabs.POSITION,    position);
+      out.put(BrowserContract.Tabs.CLIENT_GUID, clientGUID);
+
+      out.put(BrowserContract.Tabs.FAVICON,   this.icon);
+      out.put(BrowserContract.Tabs.LAST_USED, this.lastUsed);
+      out.put(BrowserContract.Tabs.TITLE,     this.title);
+      out.put(BrowserContract.Tabs.URL,       (String) this.history.get(0));
+      out.put(BrowserContract.Tabs.HISTORY,   this.history.toJSONString());
+      return out;
+
     }
   }
 
@@ -129,6 +146,23 @@ public class TabsRecord extends Record {
     out.clientName = this.clientName;
     out.tabs = new ArrayList<Tab>(this.tabs);
 
+    return out;
+  }
+
+  public ContentValues getClientsContentValues() {
+    ContentValues cv = new ContentValues();
+    cv.put(BrowserContract.Clients.GUID, this.guid);
+    cv.put(BrowserContract.Clients.NAME, this.clientName);
+    cv.put(BrowserContract.Clients.LAST_MODIFIED, this.lastModified);
+    return cv;
+  }
+
+  public ContentValues[] getTabsContentValues() {
+    int c = tabs.size();
+    ContentValues[] out = new ContentValues[c];
+    for (int i = 0; i < c; i++) {
+      out[i] = tabs.get(i).toContentValues(this.guid, i);
+    }
     return out;
   }
 }
