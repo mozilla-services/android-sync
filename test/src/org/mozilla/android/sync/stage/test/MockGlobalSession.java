@@ -11,14 +11,10 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
-import org.mozilla.gecko.sync.stage.EnsureKeysStage;
-import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
-import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
+import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.ServerSyncStage;
 
@@ -61,28 +57,7 @@ public class MockGlobalSession extends GlobalSession {
     }
   }
 
-  public class MockFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
-    @Override
-    public void execute(GlobalSession session) {
-      session.advance();
-    }
-  }
-
-  public class MockFetchMetaGlobalStage extends FetchMetaGlobalStage {
-    @Override
-    public void execute(GlobalSession session) {
-      session.advance();
-    }
-  }
-
-  public class MockEnsureKeysStage extends EnsureKeysStage {
-    @Override
-    public void execute(GlobalSession session) {
-      session.advance();
-    }
-  }
-
-  public class MockEnsureClusterURLStage extends EnsureClusterURLStage {
+  public class MockStage implements GlobalSyncStage {
     @Override
     public void execute(GlobalSession session) {
       session.advance();
@@ -95,11 +70,11 @@ public class MockGlobalSession extends GlobalSession {
     // Fake whatever stages we don't want to run.
     stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
     stages.put(Stage.syncHistory,             new MockServerSyncStage());
-    stages.put(Stage.fetchInfoCollections,    new MockFetchInfoCollectionsStage());
-    stages.put(Stage.fetchMetaGlobal,         new MockFetchMetaGlobalStage());
-    stages.put(Stage.ensureKeysStage,         new MockFetchInfoCollectionsStage());
-    stages.put(Stage.ensureClusterURL,        new MockEnsureClusterURLStage());
-    stages.put(Stage.syncClientsEngine,       new MockEnsureClusterURLStage());
+    stages.put(Stage.fetchInfoCollections,    new MockStage());
+    stages.put(Stage.fetchMetaGlobal,         new MockStage());
+    stages.put(Stage.ensureKeysStage,         new MockStage());
+    stages.put(Stage.ensureClusterURL,        new MockStage());
+    stages.put(Stage.syncClientsEngine,       new MockStage());
 
   }
 
