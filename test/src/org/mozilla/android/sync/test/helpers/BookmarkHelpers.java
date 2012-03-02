@@ -5,9 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
-import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class BookmarkHelpers {
 
@@ -214,28 +212,5 @@ public class BookmarkHelpers {
     record.parentName = topFolderName;
     record.type = "separator";
     return record;
-  }
-
-  /**
-   * Return an ExpectFetchDelegate with special folders excluded.
-   * @param expected
-   * @return
-   */
-  public static ExpectFetchDelegate preparedExpectFetchDelegate(Record[] expected) {
-    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
-    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
-    return delegate;
-  }
-
-  public static ExpectGuidsSinceDelegate preparedExpectGuidsSinceDelegate(String[] expected) {
-    ExpectGuidsSinceDelegate delegate = new ExpectGuidsSinceDelegate(expected);
-    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
-    return delegate;
-  }
-
-  public static ExpectFetchSinceDelegate preparedExpectFetchSinceDelegate(long timestamp, String[] expected) {
-    ExpectFetchSinceDelegate delegate = new ExpectFetchSinceDelegate(timestamp, expected);
-    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
-    return delegate;
   }
 }
