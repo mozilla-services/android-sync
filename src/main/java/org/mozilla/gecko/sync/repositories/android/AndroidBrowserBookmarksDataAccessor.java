@@ -65,6 +65,28 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
                      BrowserContract.Bookmarks.TAGS_FOLDER_GUID + "', '" +
                      BrowserContract.Bookmarks.PLACES_FOLDER_GUID + "')";
 
+  private static final String EXCLUDE_SPECIAL_GUIDS_WHERE_CLAUSE;
+  static {
+    if (AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS.length > 0) {
+      StringBuilder b = new StringBuilder(BrowserContract.SyncColumns.GUID + " NOT IN (");
+
+      int remaining = AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS.length - 1;
+      for (String specialGuid : AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS) {
+        b.append('"');
+        b.append(specialGuid);
+        b.append('"');
+        if (remaining > 0) {
+          b.append(", ");
+        }
+        remaining -= 1;
+      }
+      b.append(')');
+      EXCLUDE_SPECIAL_GUIDS_WHERE_CLAUSE = b.toString();
+    } else {
+      EXCLUDE_SPECIAL_GUIDS_WHERE_CLAUSE = null; // null is a valid where clause.
+    }
+  }
+
   public static final String TYPE_FOLDER = "folder";
   public static final String TYPE_BOOKMARK = "bookmark";
 
@@ -82,6 +104,13 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
 
   protected Uri getPositionsUri() {
     return BrowserContractHelpers.BOOKMARKS_POSITIONS_CONTENT_URI;
+  }
+
+  @Override
+  public void wipe() {
+    Uri uri = getUri();
+    Logger.info(LOG_TAG, "wiping (except for special guids): " + uri);
+    context.getContentResolver().delete(uri, EXCLUDE_SPECIAL_GUIDS_WHERE_CLAUSE, null);
   }
 
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {

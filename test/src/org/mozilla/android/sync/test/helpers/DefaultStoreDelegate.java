@@ -12,17 +12,17 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   
   @Override
   public void onRecordStoreFailed(Exception ex) {
-    sharedFail("Store failed");
+    performNotify("Store failed", ex);
   }
 
   @Override
   public void onRecordStoreSucceeded(Record record) {
-    sharedFail("DefaultStoreDelegate used");
+    performNotify("DefaultStoreDelegate used", null);
   }
 
   @Override
   public void onStoreCompleted(long storeEnd) {
-    sharedFail("DefaultStoreDelegate used");
+    performNotify("DefaultStoreDelegate used", null);
   }
 
   @Override
