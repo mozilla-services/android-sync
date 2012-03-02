@@ -4,15 +4,15 @@
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTest;
+import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
-public abstract class SimpleSuccessFetchDelegate implements
+public abstract class SimpleSuccessFetchDelegate extends DefaultDelegate implements
     RepositorySessionFetchRecordsDelegate {
   @Override
   public void onFetchFailed(Exception ex, Record record) {
-    AndroidBrowserRepositoryTest.performNotify("Fetch failed", ex);
+    performNotify("Fetch failed", ex);
   }
 
   @Override

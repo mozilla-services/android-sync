@@ -4,13 +4,13 @@
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTest;
+import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 
-public abstract class SimpleSuccessFinishDelegate implements RepositorySessionFinishDelegate {
+public abstract class SimpleSuccessFinishDelegate extends DefaultDelegate implements RepositorySessionFinishDelegate {
   @Override
   public void onFinishFailed(Exception ex) {
-    AndroidBrowserRepositoryTest.performNotify("Finish failed", ex);
+    performNotify("Finish failed", ex);
   }
 
   @Override

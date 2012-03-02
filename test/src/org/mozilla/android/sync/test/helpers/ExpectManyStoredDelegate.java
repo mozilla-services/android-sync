@@ -28,7 +28,7 @@ public class ExpectManyStoredDelegate extends DefaultStoreDelegate {
   public void onStoreCompleted(long storeEnd) {
     assertEquals(stored.get(), expectedGUIDs.size());
     System.out.println("Notifying in onStoreCompleted.");
-    testWaiter().performNotify();
+    performNotify();
   }
 
   @Override

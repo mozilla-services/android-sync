@@ -43,6 +43,6 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
     } catch (AssertionFailedError e) {
       err = e;
     }
-    testWaiter().performNotify(err);
+    performNotify(err);
   }
 }

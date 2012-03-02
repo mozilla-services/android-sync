@@ -342,7 +342,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     
     performWait(cleanRunnable(getRepository(), true, getApplicationContext(), new DefaultCleanDelegate() {
       public void onCleaned(Repository repo) {
-        testWaiter().performNotify();
+        performNotify();
       }
     })); 
     
@@ -628,7 +628,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       @Override
       public void onFetchCompleted(final long fetchEnd) {
         assertEquals(guid, this.records.get(0).guid);
-        testWaiter().performNotify();
+        performNotify();
       }
     };
   }

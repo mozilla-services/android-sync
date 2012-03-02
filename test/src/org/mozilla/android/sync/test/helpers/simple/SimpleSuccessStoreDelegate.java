@@ -4,13 +4,13 @@
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTest;
+import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 
-public abstract class SimpleSuccessStoreDelegate implements RepositorySessionStoreDelegate {
+public abstract class SimpleSuccessStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   @Override
   public void onRecordStoreFailed(Exception ex) {
-    AndroidBrowserRepositoryTest.performNotify("Store failed", ex);
+    performNotify("Store failed", ex);
   }
 
   @Override

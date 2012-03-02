@@ -9,11 +9,11 @@ public class DefaultGuidsSinceDelegate extends DefaultDelegate implements Reposi
 
   @Override
   public void onGuidsSinceFailed(Exception ex) {
-    sharedFail("shouldn't fail");
+    performNotify("shouldn't fail", ex);
   }
 
   @Override
   public void onGuidsSinceSucceeded(String[] guids) {
-    sharedFail("default guids since delegate called");
+    performNotify("default guids since delegate called", null);
   }
 }

@@ -11,12 +11,12 @@ public class DefaultSessionCreationDelegate extends DefaultDelegate implements
 
   @Override
   public void onSessionCreateFailed(Exception ex) {
-    sharedFail("Should not fail.");
+    performNotify("Session creation failed", ex);
   }
 
   @Override
   public void onSessionCreated(RepositorySession session) {
-    sharedFail("Should not have been created.");
+    performNotify("Should not have been created.", null);
   }
 
   @Override

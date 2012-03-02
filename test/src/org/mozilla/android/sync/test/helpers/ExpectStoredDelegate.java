@@ -21,7 +21,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   public synchronized void onStoreCompleted(long storeEnd) {
     if (this.storedRecord == null) {
       System.out.println("Notifying in onStoreCompleted.");
-      testWaiter().performNotify();
+      performNotify();
     }
   }
 
@@ -33,9 +33,9 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
         assertEquals(this.expectedGUID, record.guid);
       }
       System.out.println("Notifying in onRecordStoreSucceeded.");
-      testWaiter().performNotify();
+      performNotify();
     } catch (AssertionFailedError e) {
-      testWaiter().performNotify(e);
+      performNotify(e);
     }
   }
 }

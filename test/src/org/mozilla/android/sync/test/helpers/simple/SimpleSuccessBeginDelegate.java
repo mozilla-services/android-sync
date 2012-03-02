@@ -4,13 +4,13 @@
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTest;
+import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 
-public abstract class SimpleSuccessBeginDelegate implements RepositorySessionBeginDelegate {
+public abstract class SimpleSuccessBeginDelegate extends DefaultDelegate implements RepositorySessionBeginDelegate {
   @Override
   public void onBeginFailed(Exception ex) {
-    AndroidBrowserRepositoryTest.performNotify("Begin failed", ex);
+    performNotify("Begin failed", ex);
   }
 
   @Override
