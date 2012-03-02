@@ -84,6 +84,13 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return BrowserContractHelpers.BOOKMARKS_POSITIONS_CONTENT_URI;
   }
 
+  public void wipe() {
+    Uri uri = getUri();
+    Logger.info(LOG_TAG, "wiping (except for mobile): " + uri);
+    String where = BrowserContract.SyncColumns.GUID + " NOT IN ('mobile')";
+    context.getContentResolver().delete(uri, where, null);
+  }
+
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
     // Exclude "places" and "tags", in case they've ended up in the DB.
     String where = BOOKMARK_IS_FOLDER + " AND " + GUID_NOT_TAGS_OR_PLACES;

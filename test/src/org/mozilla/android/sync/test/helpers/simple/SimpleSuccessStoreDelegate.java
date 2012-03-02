@@ -4,20 +4,13 @@
 
 import java.util.concurrent.ExecutorService;
 
-import junit.framework.AssertionFailedError;
-
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTestHelper;
+import org.mozilla.android.sync.test.AndroidBrowserRepositoryTest;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
-
-import android.util.Log;
 
 public abstract class SimpleSuccessStoreDelegate implements RepositorySessionStoreDelegate {
   @Override
   public void onRecordStoreFailed(Exception ex) {
-    Log.w("SimpleSuccessStoreDelegate", "Store failed.", ex);
-    final AssertionFailedError e = new AssertionFailedError("Store failed: " + ex.getMessage());
-    e.initCause(ex);
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
+    AndroidBrowserRepositoryTest.performNotify("Store failed", ex);
   }
 
   @Override

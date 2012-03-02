@@ -4,17 +4,13 @@
 
 import java.util.concurrent.ExecutorService;
 
-import junit.framework.AssertionFailedError;
-
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTestHelper;
+import org.mozilla.android.sync.test.AndroidBrowserRepositoryTest;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 
 public abstract class SimpleSuccessFinishDelegate implements RepositorySessionFinishDelegate {
   @Override
   public void onFinishFailed(Exception ex) {
-    final AssertionFailedError e = new AssertionFailedError("Finish failed: " + ex.getMessage());
-    e.initCause(ex);
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
+    AndroidBrowserRepositoryTest.performNotify("Finish failed", ex);
   }
 
   @Override
