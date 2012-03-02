@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import org.json.simple.JSONArray;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessBeginDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessCreationDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;

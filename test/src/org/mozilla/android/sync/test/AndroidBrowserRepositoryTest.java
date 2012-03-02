@@ -5,8 +5,6 @@ package org.mozilla.android.sync.test;
 
 import java.util.concurrent.ExecutorService;
 
-import junit.framework.AssertionFailedError;
-
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultBeginDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
@@ -44,12 +42,11 @@ import android.util.Log;
 public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
   protected AndroidBrowserRepositoryDataAccessor helper;
-  protected static final String tag = "AndroidBrowserRepositoryTest";
+
+  protected static String LOG_TAG = "AndroidBrowserRepositoryTest";
 
   protected void wipe() {
-    if (helper == null) {
-      helper = getDataAccessor();
-    }
+    Log.i(LOG_TAG, "Wiping.");
     try {
       helper.wipe();
     } catch (NullPointerException e) {
@@ -59,18 +56,18 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       // error shouldn't occur in the future, but results from
       // trying to access content providers before Fennec has
       // been run at least once.
-      Log.e(tag, "ProfileDatabaseException seen in wipe. Begin should fail");
+      Log.e(LOG_TAG, "ProfileDatabaseException seen in wipe. Begin should fail");
       fail("NullPointerException in wipe.");
     }
   }
 
   public void setUp() {
-    Log.i("rnewman", "Wiping.");
+    helper = getDataAccessor();
     wipe();
   }
   
   protected RepositorySession prepSession() {
-    return AndroidBrowserRepositoryTestHelper.prepareRepositorySession(
+    return SessionTestHelper.prepareRepositorySession(
         getApplicationContext(),
         true,
         getRepository());
@@ -79,13 +76,13 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   protected RepositorySession prepEmptySession() {
-    return AndroidBrowserRepositoryTestHelper.prepEmptySession(
+    return SessionTestHelper.prepEmptySession(
         getApplicationContext(),
         getRepository());
   }
   
   protected RepositorySession prepEmptySessionWithoutBegin() {
-    return AndroidBrowserRepositoryTestHelper.prepEmptySessionWithoutBegin(
+    return SessionTestHelper.prepEmptySessionWithoutBegin(
         getApplicationContext(),
         getRepository());
   }
@@ -112,28 +109,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     public SessionRunnable() {
       super();
     }
-  }
-
-  protected SessionRunnable getStoreRunnable(final Record record, final ExpectStoredDelegate delegate) {
-    return new SessionRunnable() {
-      public void run() {
-        RepositorySession session = getSession();
-        session.setStoreDelegate(delegate);
-        try {
-          session.store(record);
-        } catch (NoStoreDelegateException e) {
-          fail("NoStoreDelegateException should not occur.");
-        }
-      }
-    };
-  }
-  
-  protected SessionRunnable getFetchAllRunnable(final ExpectFetchDelegate delegate) {
-    return new SessionRunnable() {
-      public void run() {
-        getSession().fetchAll(delegate);
-      }
-    };
   }
 
   public static Runnable storeRunnable(final RepositorySession session, final Record record, final DefaultStoreDelegate delegate) {
@@ -305,7 +280,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   
   protected void basicFetchAllTest(Record[] expected) {
     Log.i("rnewman", "Starting testFetchAll.");
-    RepositorySession session = AndroidBrowserRepositoryTestHelper.prepareRepositorySession(
+    RepositorySession session = SessionTestHelper.prepareRepositorySession(
         getApplicationContext(),
         true,
         getRepository());
@@ -695,7 +670,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * These tests don't need to be overriden in subclasses, they will just work.
    */
   public void testCreateSessionNullContext() {
-    Log.i("rnewman", "In testCreateSessionNullContext.");
+    Log.i(LOG_TAG, "In testCreateSessionNullContext.");
     AndroidBrowserRepository repo = getRepository();
     try {
       repo.createSession(new DefaultSessionCreationDelegate(), null);
