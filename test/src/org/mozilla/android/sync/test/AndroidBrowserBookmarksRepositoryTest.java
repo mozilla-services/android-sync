@@ -72,9 +72,8 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     BookmarkRecord bookmark1 = BookmarkHelpers.createBookmark1();
     BookmarkRecord bookmark2 = BookmarkHelpers.createBookmark2();
 
-    AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
-        new SetupDelegate(), true, getRepository());
-    Log.i("rnewman", "Prepared.");
+    prepSession();
+    Log.i(LOG_TAG, "Prepared.");
 
     AndroidBrowserRepositorySession session = getSession();
     BookmarkHelpers.dumpBookmarksDB(getApplicationContext());

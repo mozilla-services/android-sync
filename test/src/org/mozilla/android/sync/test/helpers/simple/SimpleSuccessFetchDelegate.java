@@ -4,9 +4,7 @@
 
 import java.util.concurrent.ExecutorService;
 
-import junit.framework.AssertionFailedError;
-
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTestHelper;
+import org.mozilla.android.sync.test.AndroidBrowserRepositoryTest;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -14,9 +12,7 @@ public abstract class SimpleSuccessFetchDelegate implements
     RepositorySessionFetchRecordsDelegate {
   @Override
   public void onFetchFailed(Exception ex, Record record) {
-    final AssertionFailedError e = new AssertionFailedError("Fetch failed: " + ex.getMessage());
-    e.initCause(ex);
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
+    AndroidBrowserRepositoryTest.performNotify("Fetch failed", ex);
   }
 
   @Override
