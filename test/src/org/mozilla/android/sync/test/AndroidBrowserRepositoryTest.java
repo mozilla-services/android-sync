@@ -5,7 +5,6 @@ package org.mozilla.android.sync.test;
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.DefaultBeginDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
@@ -15,8 +14,10 @@ import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginFailDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishFailDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectManyStoredDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoreCompletedDelegate;
@@ -94,24 +95,35 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     session.abort();
   }
 
-  public abstract static class SessionRunnable implements Runnable {
-    protected RepositorySession session;
-    public synchronized void setSession(RepositorySession session) {
-      this.session = session;
-    }
-    public synchronized RepositorySession getSession() {
-      return this.session;
-    }
-    public SessionRunnable(RepositorySession session) {
-      super();
-      setSession(session);
-    }
-    public SessionRunnable() {
-      super();
-    }
+  /**
+   * Hook to return an ExpectFetchDelegate, possibly with special GUIDs ignored.
+   */
+  public ExpectFetchDelegate preparedExpectFetchDelegate(Record[] expected) {
+    return new ExpectFetchDelegate(expected);
   }
 
-  public static Runnable storeRunnable(final RepositorySession session, final Record record, final DefaultStoreDelegate delegate) {
+  /**
+   * Hook to return an ExpectGuidsSinceDelegate, possibly with special GUIDs ignored.
+   */
+  public ExpectGuidsSinceDelegate preparedExpectGuidsSinceDelegate(String[] expected) {
+    return new ExpectGuidsSinceDelegate(expected);
+  }
+
+  /**
+   * Hook to return an ExpectGuidsSinceDelegate expecting only special GUIDs (if there are any).
+   */
+  public ExpectGuidsSinceDelegate preparedExpectOnlySpecialGuidsSinceDelegate() {
+    return new ExpectGuidsSinceDelegate(new String[] {});
+  }
+
+  /**
+   * Hook to return an ExpectFetchSinceDelegate, possibly with special GUIDs ignored.
+   */
+  public ExpectFetchSinceDelegate preparedExpectFetchSinceDelegate(long timestamp, String[] expected) {
+    return new ExpectFetchSinceDelegate(timestamp, expected);
+  }
+
+  public Runnable storeRunnable(final RepositorySession session, final Record record, final DefaultStoreDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -126,11 +138,11 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
 
-  public static Runnable storeRunnable(final RepositorySession session, final Record record) {
+  public Runnable storeRunnable(final RepositorySession session, final Record record) {
     return storeRunnable(session, record, new ExpectStoredDelegate(record.guid));
   }
 
-  public static Runnable storeManyRunnable(final RepositorySession session, final Record[] records, final DefaultStoreDelegate delegate) {
+  public Runnable storeManyRunnable(final RepositorySession session, final Record[] records, final DefaultStoreDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -147,7 +159,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
 
-  public static Runnable storeManyRunnable(final RepositorySession session, final Record[] records) {
+  public Runnable storeManyRunnable(final RepositorySession session, final Record[] records) {
     return storeManyRunnable(session, records, new ExpectManyStoredDelegate(records));
   }
 
@@ -158,7 +170,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * @param record
    * @return
    */
-  public static Runnable quietStoreRunnable(final RepositorySession session, final Record record) {
+  public Runnable quietStoreRunnable(final RepositorySession session, final Record record) {
     return storeRunnable(session, record, new ExpectStoreCompletedDelegate());
   }
 
@@ -196,29 +208,30 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       }
     };
   }
-  public static Runnable fetchAllRunnable(final RepositorySession session, final Record[] expectedRecords) {
-    return fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expectedRecords));
+
+  public Runnable fetchAllRunnable(final RepositorySession session, final Record[] expectedRecords) {
+    return fetchAllRunnable(session, preparedExpectFetchDelegate(expectedRecords));
   }
 
-  public static Runnable guidsSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
+  public Runnable guidsSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
     return new Runnable() {
       @Override
       public void run() {
-        session.guidsSince(timestamp, BookmarkHelpers.preparedExpectGuidsSinceDelegate(expected));
+        session.guidsSince(timestamp, preparedExpectGuidsSinceDelegate(expected));
       }
     };
   }
 
-  public static Runnable fetchSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
+  public Runnable fetchSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
     return new Runnable() {
       @Override
       public void run() {
-        session.fetchSince(timestamp, BookmarkHelpers.preparedExpectFetchSinceDelegate(timestamp, expected));
+        session.fetchSince(timestamp, preparedExpectFetchSinceDelegate(timestamp, expected));
       }
     };
   }
   
-  public static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final DefaultFetchDelegate delegate) {
+  public Runnable fetchRunnable(final RepositorySession session, final String[] guids, final DefaultFetchDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -230,11 +243,11 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       }
     };    
   }
-  public static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final Record[] expected) {
-    return fetchRunnable(session, guids, BookmarkHelpers.preparedExpectFetchDelegate(expected));
+  public Runnable fetchRunnable(final RepositorySession session, final String[] guids, final Record[] expected) {
+    return fetchRunnable(session, guids, preparedExpectFetchDelegate(expected));
   }
   
-  public static Runnable cleanRunnable(final Repository repository, final boolean success, final Context context, final DefaultCleanDelegate delegate) {
+  public Runnable cleanRunnable(final Repository repository, final boolean success, final Context context, final DefaultCleanDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -313,7 +326,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     
     final DefaultCleanDelegate delegate = new DefaultCleanDelegate() {
       public void onCleaned(Repository repo) {
-        testWaiter().performNotify();
+        performNotify();
       }
     };
 
@@ -324,7 +337,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
         delegate);
 
     performWait(cleanRunnable);    
-    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
     dispose(session);
   }
   
@@ -516,13 +529,13 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     remote.guid = local.guid;
     
     // Get the timestamp and make remote newer than it
-    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { local });
+    ExpectFetchDelegate timestampDelegate = preparedExpectFetchDelegate(new Record[] { local });
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
     remote.lastModified = timestampDelegate.records.get(0).lastModified + 1000;
     performWait(storeRunnable(session, remote));
 
     Record[] expected = new Record[] { remote };
-    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
+    ExpectFetchDelegate delegate = preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
     dispose(session);
   }
@@ -539,14 +552,14 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     remote.guid = local.guid;
     
     // Get the timestamp and make remote older than it
-    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { local });
+    ExpectFetchDelegate timestampDelegate = preparedExpectFetchDelegate(new Record[] { local });
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
     remote.lastModified = timestampDelegate.records.get(0).lastModified - 1000;
     performWait(storeRunnable(session, remote));
     
     // Do a fetch and make sure that we get back the local record.
     Record[] expected = new Record[] { local };
-    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));
     dispose(session);
   }
   
@@ -562,14 +575,14 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
     // Pass the same record to store, but mark it deleted and modified
     // more recently
-    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { local });
+    ExpectFetchDelegate timestampDelegate = preparedExpectFetchDelegate(new Record[] { local });
     performWait(fetchRunnable(session, new String[] { local.guid }, timestampDelegate));
     remote.lastModified = timestampDelegate.records.get(0).lastModified + 1000;
     remote.deleted = true;
     remote.guid = local.guid;
     performWait(storeRunnable(session, remote));
 
-    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(new Record[]{})));
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(new Record[]{})));
     dispose(session);
   }
   
@@ -594,7 +607,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     Log.i("storeIdenticalExceptGuid", "Stored modified.");
     
     Record[] expected = new Record[] { record0 };
-    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));
     Log.i("storeIdenticalExceptGuid", "Fetched all. Returning.");
     dispose(session);
   }
@@ -606,7 +619,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       @Override
       public void onFetchCompleted(final long fetchEnd) {
         assertEquals(guid, this.records.get(0).guid);
-        testWaiter().performNotify();
+        performNotify();
       }
     };
   }
@@ -629,7 +642,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
     // Get the timestamp and make remote older than it
     Record[] expected = new Record[] { local };
-    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
+    ExpectFetchDelegate timestampDelegate = preparedExpectFetchDelegate(expected);
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
 
     Log.d("deleteLocalNewer", "Fetched.");
@@ -642,7 +655,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     Log.d("deleteLocalNewer", "Stored deleted.");
 
     // Do a fetch and make sure that we get back the first (local) record.
-    performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));
     Log.d("deleteLocalNewer", "Fetched and done!");
     dispose(session);
   }
@@ -660,7 +673,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     remote.deleted = true;
     performWait(quietStoreRunnable(session, remote));
 
-    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[]{});
+    ExpectFetchDelegate delegate = preparedExpectFetchDelegate(new Record[]{});
     performWait(fetchAllRunnable(session, delegate));
     dispose(session);
   }
@@ -805,7 +818,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     performWait(run);
     dispose(session);
   }
-  
+
   private void verifyInactiveException(Exception ex) {
     if (!(ex instanceof InactiveSessionException)) {
       fail("Wrong exception type");

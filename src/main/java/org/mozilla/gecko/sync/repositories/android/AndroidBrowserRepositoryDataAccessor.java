@@ -82,9 +82,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
 
   public void wipe() {
-    Logger.info(LOG_TAG, "wiping: " + getUri());
-    String where = BrowserContract.SyncColumns.GUID + " NOT IN ('mobile')";
-    context.getContentResolver().delete(getUri(), where, null);
+    Uri uri = getUri();
+    Logger.info(LOG_TAG, "wiping: " + uri);
+    context.getContentResolver().delete(uri, null, null);
   }
   
   public void purgeDeleted() throws NullCursorException {

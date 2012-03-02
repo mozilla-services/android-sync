@@ -4,7 +4,6 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.PasswordHelpers;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsRepository;
@@ -22,9 +21,9 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
   @Override
   public void setUp() {
   }
+
   @Override
   protected void wipe() {
-    WaitHelper.getTestWaiter().performNotify();
   }
 
   @Override

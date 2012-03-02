@@ -7,7 +7,6 @@ import static junit.framework.Assert.assertNotNull;
 
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectOnlySpecialFoldersDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -76,16 +75,7 @@ public class SessionTestHelper {
   }
   
   public static RepositorySession prepEmptySession(final Context context, final Repository repository) {
-    final WaitHelper testWaiter = WaitHelper.getTestWaiter();
-    final RepositorySession session = prepareRepositorySession(context, true, repository);
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        session.guidsSince(0, new ExpectOnlySpecialFoldersDelegate());
-      }
-    };
-    testWaiter.performWait(runnable);
-    return session;
+    return prepareRepositorySession(context, true, repository);
   }
   
   public static RepositorySession prepEmptySessionWithoutBegin(Context context, Repository repository) {
