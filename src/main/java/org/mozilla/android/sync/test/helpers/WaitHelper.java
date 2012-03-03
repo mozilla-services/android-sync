@@ -25,7 +25,7 @@ public class WaitHelper {
 
   public static final String LOG_TAG = "WaitHelper";
 
-  public class Result {
+  public static class Result {
     public Throwable error;
     public Result() {
       error = null;
@@ -36,7 +36,7 @@ public class WaitHelper {
     }
   }
 
-  public abstract class WaitHelperError extends Error {
+  public static abstract class WaitHelperError extends Error {
     private static final long serialVersionUID = 7074690961681883619L;
   }
 
@@ -45,7 +45,7 @@ public class WaitHelper {
    *
    * @author rnewman
    */
-  public class TimeoutError extends WaitHelperError {
+  public static class TimeoutError extends WaitHelperError {
     private static final long serialVersionUID = 8591672555848651736L;
     public final int waitTimeInMillis;
 
@@ -54,15 +54,15 @@ public class WaitHelper {
     }
   }
 
-  public class MultipleNotificationsError extends WaitHelperError {
+  public static class MultipleNotificationsError extends WaitHelperError {
     private static final long serialVersionUID = -9072736521571635495L;
   }
 
-  public class InterruptedError extends WaitHelperError {
+  public static class InterruptedError extends WaitHelperError {
     private static final long serialVersionUID = 8383948170038639308L;
   }
 
-  public class InnerError extends WaitHelperError {
+  public static class InnerError extends WaitHelperError {
     private static final long serialVersionUID = 3008502618576773778L;
     public Throwable innerError;
 
