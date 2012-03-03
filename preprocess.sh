@@ -5,7 +5,7 @@ USERNAME=$(whoami)
 PREPROCESSOR="python tools/Preprocessor.py"
 
 ANDROID_PACKAGE_NAME=$($PREPROCESSOR -Fsubstitution -DUSERNAME=$USERNAME package-name.txt)
-MOZ_APP_DISPLAYNAME="Firefox Sync (Standalone)"
+MOZ_APP_DISPLAYNAME="FxSync"
 
 echo "Using ANDROID_PACKAGE_NAME $ANDROID_PACKAGE_NAME."
 echo "Using MOZ_APP_DISPLAYNAME $MOZ_APP_DISPLAYNAME."
