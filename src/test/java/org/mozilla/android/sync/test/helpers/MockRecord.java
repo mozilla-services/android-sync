@@ -1,6 +1,7 @@
 package org.mozilla.android.sync.test.helpers;
 
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class MockRecord extends Record {
@@ -10,12 +11,20 @@ public class MockRecord extends Record {
   }
 
   @Override
-  public void initFromPayload(CryptoRecord payload) {
+  public void initFromEnvelope(CryptoRecord payload) {
   }
 
   @Override
-  public CryptoRecord getPayload() {
+  public CryptoRecord getEnvelope() {
     return null;
+  }
+
+  @Override
+  protected void populatePayload(ExtendedJSONObject payload) {
+  }
+
+  @Override
+  protected void initFromPayload(ExtendedJSONObject payload) {
   }
 
   @Override
