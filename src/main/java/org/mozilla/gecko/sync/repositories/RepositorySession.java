@@ -252,8 +252,8 @@ public abstract class RepositorySession {
       delegate.deferredFinishDelegate(delegateQueue).onFinishFailed(e);
     }
     Logger.info(LOG_TAG, "Shutting down work queues.");
- //   storeWorkQueue.shutdown();
- //   delegateQueue.shutdown();
+    storeWorkQueue.shutdown();
+    delegateQueue.shutdown();
   }
 
   public boolean isActive() {
