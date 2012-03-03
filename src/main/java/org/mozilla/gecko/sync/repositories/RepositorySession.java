@@ -231,8 +231,15 @@ public abstract class RepositorySession {
    * @param delegate
    */
   public void abort(RepositorySessionFinishDelegate delegate) {
-    this.status = SessionStatus.DONE;    // TODO: ABORTED?
+    this.abort();
     delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
+  }
+
+  public void abort() {
+    // TODO: do something here.
+    status = SessionStatus.ABORTED;
+    storeWorkQueue.shutdown();
+    delegateQueue.shutdown();
   }
 
   public void finish(final RepositorySessionFinishDelegate delegate) {
@@ -259,13 +266,6 @@ public abstract class RepositorySession {
 
   public void setStatus(SessionStatus status) {
     this.status = status;
-  }
-
-  public void abort() {
-    // TODO: do something here.
-    status = SessionStatus.ABORTED;
-    storeWorkQueue.shutdown();
-    delegateQueue.shutdown();
   }
 
   /**
