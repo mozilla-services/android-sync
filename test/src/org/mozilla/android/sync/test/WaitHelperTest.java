@@ -6,6 +6,7 @@ package org.mozilla.android.sync.test;
 import junit.framework.AssertionFailedError;
 
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.android.sync.test.helpers.WaitHelper.InnerError;
 import org.mozilla.android.sync.test.helpers.WaitHelper.TimeoutError;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -131,7 +132,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   protected void expectAssertionFailedError(Runnable runnable) {
     try {
       waitHelper.performWait(runnable);
-    } catch (WaitHelper.InnerError e) {
+    } catch (InnerError e) {
       AssertionFailedError inner = (AssertionFailedError)e.innerError;
       setPerformNotifyErrorCalled();
       String message = inner.getMessage();
@@ -143,7 +144,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   protected void expectAssertionFailedErrorAfterDelay(int wait, Runnable runnable) {
     try {
       waitHelper.performWait(wait, runnable);
-    } catch (WaitHelper.InnerError e) {
+    } catch (InnerError e) {
       AssertionFailedError inner = (AssertionFailedError)e.innerError;
       setPerformNotifyErrorCalled();
       String message = inner.getMessage();
