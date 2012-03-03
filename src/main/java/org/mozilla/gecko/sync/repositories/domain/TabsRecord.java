@@ -37,7 +37,7 @@ public class TabsRecord extends Record {
     }
 
     public static Tab fromJSONObject(JSONObject o) throws NonArrayJSONException {
-      ExtendedJSONObject obj = new ExtendedJSONObject((JSONObject) o);
+      ExtendedJSONObject obj = new ExtendedJSONObject(o);
       String title      = obj.getString("title");
       String icon       = obj.getString("icon");
       JSONArray history = obj.getArray("urlHistory");
