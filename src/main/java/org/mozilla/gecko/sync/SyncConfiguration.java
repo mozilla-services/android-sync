@@ -229,7 +229,7 @@ public class SyncConfiguration implements CredentialsSource {
    * provide access to preferences.
    *
    * @param prefsPath
-   * @param context
+   * @param prefsSource
    */
   public SyncConfiguration(String prefsPath, PrefsSource prefsSource) {
     this.prefsPath   = prefsPath;
@@ -246,6 +246,8 @@ public class SyncConfiguration implements CredentialsSource {
    * Return a convenient accessor for part of prefs.
    * @param prefix
    * @return
+   *        A ConfigurationBranch object representing this
+   *        section of the preferences space.
    */
   public ConfigurationBranch getBranch(String prefix) {
     return new ConfigurationBranch(this, prefix);
@@ -405,7 +407,6 @@ public class SyncConfiguration implements CredentialsSource {
 
   /**
    * Used for direct management of related prefs.
-   * @return
    */
   public Editor getEditor() {
     return this.getPrefs().edit();
