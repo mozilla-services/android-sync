@@ -182,12 +182,7 @@ public abstract class RepositorySession {
    *
    */
   protected void sharedBegin() throws InvalidSessionTransitionException {
-    if (this.status == SessionStatus.UNSTARTED) {
-      this.status = SessionStatus.ACTIVE;
-    } else {
-      Logger.error(LOG_TAG, "Tried to begin() an already active or finished session");
-      throw new InvalidSessionTransitionException(null);
-    }
+    this.transitionFrom(SessionStatus.UNSTARTED, SessionStatus.ACTIVE);
   }
 
   public void begin(RepositorySessionBeginDelegate delegate) {
@@ -237,35 +232,44 @@ public abstract class RepositorySession {
 
   public void abort() {
     // TODO: do something here.
-    status = SessionStatus.ABORTED;
+    this.setStatus(SessionStatus.ABORTED);
     storeWorkQueue.shutdown();
     delegateQueue.shutdown();
   }
 
   public void finish(final RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
-    if (this.status == SessionStatus.ACTIVE) {
-      this.status = SessionStatus.DONE;
+    try {
+      this.transitionFrom(SessionStatus.ACTIVE, SessionStatus.DONE);
       delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
-    } else {
+    } catch (InvalidSessionTransitionException e) {
       Logger.error(LOG_TAG, "Tried to finish() an unstarted or already finished session");
-      Exception e = new InvalidSessionTransitionException(null);
       delegate.deferredFinishDelegate(delegateQueue).onFinishFailed(e);
     }
+
     Logger.info(LOG_TAG, "Shutting down work queues.");
     storeWorkQueue.shutdown();
     delegateQueue.shutdown();
   }
 
-  public boolean isActive() {
+  public synchronized boolean isActive() {
     return status == SessionStatus.ACTIVE;
   }
 
-  public SessionStatus getStatus() {
+  public synchronized SessionStatus getStatus() {
     return status;
   }
 
-  public void setStatus(SessionStatus status) {
+  public synchronized void setStatus(SessionStatus status) {
     this.status = status;
+  }
+
+  public synchronized void transitionFrom(SessionStatus from, SessionStatus to) throws InvalidSessionTransitionException {
+    if (from == null || this.status == from) {
+      this.status = to;
+      return;
+    }
+    Logger.warn(LOG_TAG, "Wanted to transition from " + from + " but in state " + this.status);
+    throw new InvalidSessionTransitionException(null);
   }
 
   /**
