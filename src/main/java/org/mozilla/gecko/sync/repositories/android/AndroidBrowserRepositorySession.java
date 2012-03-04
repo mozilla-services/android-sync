@@ -392,6 +392,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       @Override
       public void run() {
         if (!isActive()) {
+          Logger.warn(LOG_TAG, "AndroidBrowserRepositorySession is inactive. Store failing.");
           delegate.onRecordStoreFailed(new InactiveSessionException(null));
           return;
         }
