@@ -60,9 +60,11 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   protected void performNotify() {
     AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
   }
+
   protected void performNotify(AssertionFailedError e) {
     AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
   }
+
   protected void performNotify(InactiveSessionException e) {
     AssertionFailedError er = new AssertionFailedError("Inactive session.");
     er.initCause(e);
