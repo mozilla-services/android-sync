@@ -45,6 +45,11 @@ public class MockGlobalSession extends GlobalSession {
   }
 
   @Override
+  public boolean engineIsEnabled(String engine) {
+    return false;
+  }
+
+  @Override
   protected void prepareStages() {
     super.prepareStages();
     // Fake whatever stages we don't want to run.

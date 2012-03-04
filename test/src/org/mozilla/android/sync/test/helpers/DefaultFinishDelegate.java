@@ -2,6 +2,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import java.util.concurrent.ExecutorService;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -20,11 +21,14 @@ public class DefaultFinishDelegate extends DefaultDelegate implements Repository
 
   @Override
   public RepositorySessionFinishDelegate deferredFinishDelegate(final ExecutorService executor) {
+    final RepositorySessionFinishDelegate self = this;
+
+    Logger.info("DefaultFinishDelegate", "Deferring…");
     return new RepositorySessionFinishDelegate() {
-      final RepositorySessionFinishDelegate self = this;
       @Override
       public void onFinishSucceeded(final RepositorySession session,
                                     final RepositorySessionBundle bundle) {
+        Logger.info("DefaultFinishDelegate", "Executing onFinishSucceeded Runnable…");
         executor.execute(new Runnable() {
           @Override
           public void run() {

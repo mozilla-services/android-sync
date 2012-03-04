@@ -6,6 +6,8 @@ package org.mozilla.android.sync.test.helpers;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
+import android.util.Log;
+
 public class DefaultSessionCreationDelegate extends DefaultDelegate implements
     RepositorySessionCreationDelegate {
 
@@ -16,13 +18,14 @@ public class DefaultSessionCreationDelegate extends DefaultDelegate implements
 
   @Override
   public void onSessionCreated(RepositorySession session) {
+    Log.i("DefaultSessionCreationDelegate", "onSessionCreated...");
     sharedFail("Should not have been created.");
   }
 
   @Override
   public RepositorySessionCreationDelegate deferredCreationDelegate() {
+    final RepositorySessionCreationDelegate self = this;
     return new RepositorySessionCreationDelegate() {
-      final RepositorySessionCreationDelegate self = this;
 
       @Override
       public void onSessionCreated(final RepositorySession session) {
