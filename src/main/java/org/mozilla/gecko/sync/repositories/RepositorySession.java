@@ -80,7 +80,7 @@ public abstract class RepositorySession {
     Logger.trace(LOG_TAG, message);
   }
 
-  protected SessionStatus status = SessionStatus.UNSTARTED;
+  private SessionStatus status = SessionStatus.UNSTARTED;
   protected Repository repository;
   protected RepositorySessionStoreDelegate delegate;
 
@@ -273,6 +273,8 @@ public abstract class RepositorySession {
 
   public synchronized void transitionFrom(SessionStatus from, SessionStatus to) throws InvalidSessionTransitionException {
     if (from == null || this.status == from) {
+      Logger.trace(LOG_TAG, "Successfully transitioning from " + this.status + " to " + to);
+
       this.status = to;
       return;
     }
