@@ -32,7 +32,6 @@ public class AndroidBrowserRepositoryTestHelper {
           repository.createSession(delegate, context);
         }
       };
-      Log.i("rnewman", "Calling wait.");
       testWaiter.performWait(runnable);
     } catch (IllegalArgumentException ex) {
       Log.w("prepareRepositorySession", "Caught IllegalArgumentException.");
