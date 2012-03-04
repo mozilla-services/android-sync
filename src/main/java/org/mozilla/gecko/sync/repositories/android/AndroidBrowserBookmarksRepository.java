@@ -48,7 +48,8 @@ public class AndroidBrowserBookmarksRepository extends AndroidBrowserRepository 
   @Override
   protected void sessionCreator(RepositorySessionCreationDelegate delegate, Context context) {
     AndroidBrowserBookmarksRepositorySession session = new AndroidBrowserBookmarksRepositorySession(AndroidBrowserBookmarksRepository.this, context);
-    delegate.onSessionCreated(session);
+    final RepositorySessionCreationDelegate deferredCreationDelegate = delegate.deferredCreationDelegate();
+    deferredCreationDelegate.onSessionCreated(session);
   }
 
   @Override

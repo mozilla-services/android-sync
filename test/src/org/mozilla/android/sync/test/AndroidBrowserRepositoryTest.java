@@ -5,9 +5,13 @@ package org.mozilla.android.sync.test;
 
 import java.util.concurrent.ExecutorService;
 
+import junit.framework.AssertionFailedError;
+
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
+import org.mozilla.android.sync.test.helpers.DefaultBeginDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultCleanDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultFetchDelegate;
+import org.mozilla.android.sync.test.helpers.DefaultFinishDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.DefaultStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
@@ -19,17 +23,17 @@ import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectManyStoredDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoreCompletedDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -37,7 +41,6 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.content.ContentValues;
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
-import junit.framework.AssertionFailedError;
 import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentationTestCase2<StubActivity> {
@@ -53,28 +56,30 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
 
-  protected void performWait(Runnable runnable) throws AssertionFailedError {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performWait(runnable);
+  protected static void performWait(Runnable runnable) throws AssertionFailedError {
+    WaitHelper.getTestWaiter().performWait(runnable);
   }
   
-  protected void performNotify() {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
+  protected static void performNotify() {
+    WaitHelper.getTestWaiter().performNotify();
   }
 
-  protected void performNotify(AssertionFailedError e) {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
+  protected static void performNotify(AssertionFailedError e) {
+    WaitHelper.getTestWaiter().performNotify(e);
   }
 
-  protected void performNotify(InactiveSessionException e) {
+  protected static void performNotify(InactiveSessionException e) {
     AssertionFailedError er = new AssertionFailedError("Inactive session.");
     er.initCause(e);
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(er);
-  }
-
-  protected AndroidBrowserRepositorySession getSession() {
-    return AndroidBrowserRepositoryTestHelper.session;
+    WaitHelper.getTestWaiter().performNotify(er);
   }
   
+  protected static void performNotify(InvalidSessionTransitionException e) {
+    AssertionFailedError er = new AssertionFailedError("Invalid session transition.");
+    er.initCause(e);
+    WaitHelper.getTestWaiter().performNotify(er);
+  }
+
   protected void wipe() {
     if (helper == null) {
       helper = getDataAccessor();
@@ -98,25 +103,55 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     wipe();
   }
   
-  protected void prepSession() {
-    AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
-        new SetupDelegate(), true, getRepository());
+  protected RepositorySession prepSession() {
+    return AndroidBrowserRepositoryTestHelper.prepareRepositorySession(
+        getApplicationContext(),
+        true,
+        getRepository());
     // Clear old data.
     //wipe();
   }
   
-  protected void prepEmptySession() {
-    AndroidBrowserRepositoryTestHelper.prepEmptySession(getApplicationContext(), getRepository());
+  protected RepositorySession prepEmptySession() {
+    return AndroidBrowserRepositoryTestHelper.prepEmptySession(
+        getApplicationContext(),
+        getRepository());
   }
   
-  protected void prepEmptySessionWithoutBegin() {
-    AndroidBrowserRepositoryTestHelper.prepEmptySessionWithoutBegin(getApplicationContext(), getRepository());
+  protected RepositorySession prepEmptySessionWithoutBegin() {
+    return AndroidBrowserRepositoryTestHelper.prepEmptySessionWithoutBegin(
+        getApplicationContext(),
+        getRepository());
   }
-  
-  protected Runnable getStoreRunnable(final Record record, final ExpectStoredDelegate delegate) {
-    return new Runnable() {
+
+  protected void dispose(RepositorySession session) {
+    if (session == null) {
+      return;
+    }
+    session.abort();
+  }
+
+  public abstract static class SessionRunnable implements Runnable {
+    protected RepositorySession session;
+    public synchronized void setSession(RepositorySession session) {
+      this.session = session;
+    }
+    public synchronized RepositorySession getSession() {
+      return this.session;
+    }
+    public SessionRunnable(RepositorySession session) {
+      super();
+      setSession(session);
+    }
+    public SessionRunnable() {
+      super();
+    }
+  }
+
+  protected SessionRunnable getStoreRunnable(final Record record, final ExpectStoredDelegate delegate) {
+    return new SessionRunnable() {
       public void run() {
-        AndroidBrowserRepositorySession session = getSession();
+        RepositorySession session = getSession();
         session.setStoreDelegate(delegate);
         try {
           session.store(record);
@@ -127,8 +162,8 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     };
   }
   
-  protected Runnable getFetchAllRunnable(final ExpectFetchDelegate delegate) {
-    return new Runnable() {
+  protected SessionRunnable getFetchAllRunnable(final ExpectFetchDelegate delegate) {
+    return new SessionRunnable() {
       public void run() {
         getSession().fetchAll(delegate);
       }
@@ -186,6 +221,32 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return storeRunnable(session, record, new ExpectStoreCompletedDelegate());
   }
 
+  public static Runnable beginRunnable(final RepositorySession session, final DefaultBeginDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          session.begin(delegate);
+        } catch (InvalidSessionTransitionException e) {
+          performNotify(e);
+        }
+      }
+    };
+  }
+
+  public Runnable finishRunnable(final RepositorySession session, final DefaultFinishDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          session.finish(delegate);
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
+      }
+    };
+  }
+
   public static Runnable fetchAllRunnable(final RepositorySession session, final ExpectFetchDelegate delegate) {
     return new Runnable() {
       @Override
@@ -220,7 +281,11 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     return new Runnable() {
       @Override
       public void run() {
-        session.fetch(guids, delegate);
+        try {
+          session.fetch(guids, delegate);
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
       }
     };    
   }
@@ -268,22 +333,24 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
    * Test abstractions
    */
   protected void basicStoreTest(Record record) {
-    prepSession();    
-    performWait(storeRunnable(getSession(), record));
+    final RepositorySession session = prepSession();    
+    performWait(storeRunnable(session, record));
   }
   
   protected void basicFetchAllTest(Record[] expected) {
     Log.i("rnewman", "Starting testFetchAll.");
-    AndroidBrowserRepositoryTestHelper.prepareRepositorySession(getApplicationContext(),
-        new SetupDelegate(), true, getRepository());
+    RepositorySession session = AndroidBrowserRepositoryTestHelper.prepareRepositorySession(
+        getApplicationContext(),
+        true,
+        getRepository());
     Log.i("rnewman", "Prepared.");
 
-    AndroidBrowserRepositorySession session = getSession();
     BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     performWait(storeManyRunnable(session, expected));
 
     BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     performWait(fetchAllRunnable(session, expected));
+    dispose(session);
   }
   
   /*
@@ -291,8 +358,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
    */
   // Input: 4 records; 2 which are to be cleaned, 2 which should remain after the clean
   protected void cleanMultipleRecords(Record delete0, Record delete1, Record keep0, Record keep1, Record keep2) {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepSession();
     doStore(session, new Record[] {
         delete0, delete1, keep0, keep1, keep2
     });
@@ -304,21 +370,28 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     db.updateByGuid(delete0.guid, cv);
     db.updateByGuid(delete1.guid, cv);
     
-    performWait(cleanRunnable(getRepository(), true, getApplicationContext(), new DefaultCleanDelegate() {
+    final DefaultCleanDelegate delegate = new DefaultCleanDelegate() {
       public void onCleaned(Repository repo) {
         testWaiter().performNotify();
       }
-    })); 
-    
+    };
+
+    final Runnable cleanRunnable = cleanRunnable(
+        getRepository(),
+        true,
+        getApplicationContext(),
+        delegate);
+
+    performWait(cleanRunnable);    
     performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
+    dispose(session);
   }
   
   /*
    * Tests for guidsSince
    */
   protected void guidsSinceReturnMultipleRecords(Record record0, Record record1) {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepEmptySession();
     long timestamp = System.currentTimeMillis();
 
     String[] expected = new String[2];
@@ -329,25 +402,25 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     performWait(storeManyRunnable(session, new Record[] { record0, record1 }));
     Log.i(getName(), "Getting guids since " + timestamp + "; expecting " + expected.length);
     performWait(guidsSinceRunnable(session, timestamp, expected));
+    dispose(session);
   }
   
   protected void guidsSinceReturnNoRecords(Record record0) {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepEmptySession();
 
     //  Store 1 record in the past.
     performWait(storeRunnable(session, record0));
 
     String[] expected = {};
     performWait(guidsSinceRunnable(session, System.currentTimeMillis() + 1000, expected));
+    dispose(session);
   }
 
   /*
    * Tests for fetchSince
    */  
   protected void fetchSinceOneRecord(Record record0, Record record1) {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepSession();
 
     performWait(storeRunnable(session, record0));
     long timestamp = System.currentTimeMillis();
@@ -371,22 +444,22 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     performWait(fetchSinceRunnable(session, timestamp - 3000, expectedBoth));
 
     Log.i("fetchSinceOneRecord", "Done.");
+    dispose(session);
   }
   
   protected void fetchSinceReturnNoRecords(Record record) {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepEmptySession();
     
     performWait(storeRunnable(session, record));
 
     long timestamp = System.currentTimeMillis();
 
     performWait(fetchSinceRunnable(session, timestamp + 2000, new String[] {}));
+    dispose(session);
   }
   
   protected void fetchOneRecordByGuid(Record record0, Record record1) {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepEmptySession();
     
     Record[] store = new Record[] { record0, record1 };
     performWait(storeManyRunnable(session, store));
@@ -394,12 +467,12 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     String[] guids = new String[] { record0.guid };
     Record[] expected = new Record[] { record0 };
     performWait(fetchRunnable(session, guids, expected));
+    dispose(session);
   }
   
   protected void fetchMultipleRecordsByGuids(Record record0,
       Record record1, Record record2) {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepEmptySession();
 
     Record[] store = new Record[] { record0, record1, record2 };
     performWait(storeManyRunnable(session, store));
@@ -407,24 +480,24 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     String[] guids = new String[] { record0.guid, record2.guid };
     Record[] expected = new Record[] { record0, record2 };
     performWait(fetchRunnable(session, guids, expected));
+    dispose(session);
   }
   
   protected void fetchNoRecordByGuid(Record record) {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
+    RepositorySession session = prepEmptySession();
     
     performWait(storeRunnable(session, record));
     performWait(fetchRunnable(session,
                               new String[] { Utils.generateGuid() }, 
                               new Record[] {}));
+    dispose(session);
   }
   
   /*
    * Test wipe
    */
   protected void doWipe(final Record record0, final Record record1) {
-    prepEmptySession();
-    final AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = prepEmptySession();
     final Runnable run = new Runnable() {
       @Override
       public void run() {
@@ -479,6 +552,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     // Wipe.
     performWait(run);
+    dispose(session);
   }
   
   /*
@@ -492,8 +566,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
    * record has not been modified since last sync.
    */
   protected void remoteNewerTimeStamp(Record local, Record remote) {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = prepSession();
 
     // Record existing and hasn't changed since before lastSync.
     // Automatically will be assigned lastModified = current time.
@@ -510,6 +583,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Record[] expected = new Record[] { remote };
     ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
+    dispose(session);
   }
 
   /*
@@ -517,8 +591,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
    * we just take newer (local) record)
    */
   protected void localNewerTimeStamp(Record local, Record remote) {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = prepSession();
 
     performWait(storeRunnable(session, local));
 
@@ -533,14 +606,14 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     // Do a fetch and make sure that we get back the local record.
     Record[] expected = new Record[] { local };
     performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
+    dispose(session);
   }
   
   /*
    * Insert a record that is marked as deleted, remote has newer timestamp
    */
   protected void deleteRemoteNewer(Record local, Record remote) {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = prepSession();
     
     // Record existing and hasn't changed since before lastSync.
     // Automatically will be assigned lastModified = current time.
@@ -556,6 +629,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     performWait(storeRunnable(session, remote));
 
     performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(new Record[]{})));
+    dispose(session);
   }
   
   // Store two records that are identical (this has different meanings based on the
@@ -564,9 +638,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   // and then sync was enabled and this record existed on another sync'd device).
   public void storeIdenticalExceptGuid(Record record0) {
     Log.i("storeIdenticalExceptGuid", "Started.");
-    prepSession();
-    Log.i("storeIdenticalExceptGuid", "Prepped.");
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = prepSession();
     Log.i("storeIdenticalExceptGuid", "Session is " + session);
     performWait(storeRunnable(session, record0));
     Log.i("storeIdenticalExceptGuid", "Stored record0.");
@@ -583,6 +655,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Record[] expected = new Record[] { record0 };
     performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
     Log.i("storeIdenticalExceptGuid", "Fetched all. Returning.");
+    dispose(session);
   }
   
   // Special delegate so that we don't verify parenting is correct since
@@ -603,9 +676,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
    */
   protected void deleteLocalNewer(Record local, Record remote) {
     Log.d("deleteLocalNewer", "Begin.");
-    prepSession();
-    Log.d("deleteLocalNewer", "Prepped.");
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = prepSession();
 
     Log.d("deleteLocalNewer", "Storing local...");
     performWait(storeRunnable(session, local));
@@ -632,14 +703,14 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     // Do a fetch and make sure that we get back the first (local) record.
     performWait(fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expected)));
     Log.d("deleteLocalNewer", "Fetched and done!");
+    dispose(session);
   }
   
   /*
    * Insert a record that is marked as deleted, record never existed locally
    */
   protected void deleteRemoteLocalNonexistent(Record remote) {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = prepSession();
     
     long timestamp = 1000000000;
     
@@ -650,6 +721,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
 
     ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[]{});
     performWait(fetchAllRunnable(session, delegate));
+    dispose(session);
   }
   
   /*
@@ -668,116 +740,114 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   }
   
   public void testStoreNullRecord() {
-    prepSession();
+    final RepositorySession session = prepSession();
     try {
-      AndroidBrowserRepositorySession session = getSession();
       session.setStoreDelegate(new DefaultStoreDelegate());
       session.store(null);
       fail("Should throw.");
     } catch (Exception ex) {
       assertNotNull(ex);
     }
+    dispose(session);
   }
   
   public void testFetchNoGuids() {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
-    performWait(fetchRunnable(session, new String[] {}, new ExpectInvalidRequestFetchDelegate())); 
+    final RepositorySession session = prepEmptySession();
+    performWait(fetchRunnable(session, new String[] {}, new ExpectInvalidRequestFetchDelegate()));
+    dispose(session);
   }
   
   public void testFetchNullGuids() {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
-    performWait(fetchRunnable(session, null, new ExpectInvalidRequestFetchDelegate())); 
+    assertTrue(WaitHelper.isIdle());
+    final RepositorySession session = prepEmptySession();
+    performWait(fetchRunnable(session, null, new ExpectInvalidRequestFetchDelegate()));
+    dispose(session);
   }
   
   public void testBeginOnNewSession() {
-    prepEmptySessionWithoutBegin();
-    getSession().begin(new ExpectBeginDelegate());
+    assertTrue(WaitHelper.isIdle());
+    final RepositorySession session = prepEmptySessionWithoutBegin();
+    performWait(beginRunnable(session, new ExpectBeginDelegate()));
+    dispose(session);
   }
   
   public void testBeginOnRunningSession() {
-    prepEmptySession();
-    getSession().begin(new ExpectBeginFailDelegate());
+    assertTrue(WaitHelper.isIdle());
+    final RepositorySession session = prepEmptySession();
+    try {
+      session.begin(new ExpectBeginFailDelegate());
+    } catch (InvalidSessionTransitionException e) {
+      dispose(session);
+      return;
+    }
+    fail("Should have caught InvalidSessionTransitionException.");
   }
   
   public void testBeginOnFinishedSession() throws InactiveSessionException {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
-    session.finish(new ExpectFinishDelegate());
-    session.begin(new ExpectBeginFailDelegate());
+    assertTrue(WaitHelper.isIdle());
+    final RepositorySession session = prepEmptySession();
+    performWait(finishRunnable(session, new ExpectFinishDelegate()));
+    try {
+      session.begin(new ExpectBeginFailDelegate());
+    } catch (InvalidSessionTransitionException e) {
+      Log.i(getName(), "Yay! Got an exception.", e);
+      dispose(session);
+      return;
+    } catch (Exception e) {
+      Log.i(getName(), "Yay! Got an exception.", e);
+      dispose(session);
+      return;
+    }
+    fail("Should have caught InvalidSessionTransitionException.");
   }
   
   public void testFinishOnFinishedSession() throws InactiveSessionException {
-    prepEmptySession();
-    AndroidBrowserRepositorySession session = getSession();
-    session.finish(new ExpectFinishDelegate());
+    assertTrue(WaitHelper.isIdle());
+    final RepositorySession session = prepEmptySession();
+    performWait(finishRunnable(session, new ExpectFinishDelegate()));
     try {
       session.finish(new ExpectFinishFailDelegate());
     } catch (InactiveSessionException e) {
+      dispose(session);
       return;
     }
     fail("Should have caught InactiveSessionException.");
   }
   
   public void testFetchOnInactiveSession() throws InactiveSessionException {
-    prepEmptySessionWithoutBegin();
-    getSession().finish(new ExpectFinishFailDelegate());
-  }
-  
-  public void testFetchOnFinishedSession() {
-    prepEmptySession();
-    Runnable run = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          Log.i(getName(), "Finishing...");
-          getSession().finish(new ExpectFinishDelegate());
-        } catch (InactiveSessionException e) {
-          performNotify(e);
-        }
-        getSession().fetch(new String[] { Utils.generateGuid() },
-            new RepositorySessionFetchRecordsDelegate() {
-              @Override
-              public void onFetchSucceeded(Record[] records, long end) {
-                fail("Session inactive, should fail");
-                performNotify();
-              }
-
-              @Override
-              public void onFetchFailed(Exception ex, Record record) {
-                verifyInactiveException(ex);
-                performNotify();
-              }
-
-              @Override
-              public void onFetchedRecord(Record record) {
-                fail("Session inactive, should fail");
-                performNotify();
-              }
-
-              @Override
-              public void onFetchCompleted(long end) {
-                fail("Session inactive, should fail");
-                performNotify();
-              }
-
-              @Override
-              public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(ExecutorService executor) {
-                return this;
-              }
-            });
-      }
+    assertTrue(WaitHelper.isIdle());
+    final RepositorySession session = prepEmptySessionWithoutBegin();
+    try {
+      session.fetch(new String[] { Utils.generateGuid() }, new DefaultFetchDelegate());
+    } catch (InactiveSessionException e) {
+      // Yay.
+      dispose(session);
+      return;
     };
-    performWait(run);
+    fail("Should have caught InactiveSessionException.");
+  }
+
+  public void testFetchOnFinishedSession() {
+    assertTrue(WaitHelper.isIdle());
+    final RepositorySession session = prepEmptySession();
+    Log.i(getName(), "Finishing...");
+    performWait(finishRunnable(session, new ExpectFinishDelegate()));
+    try {
+      session.fetch(new String[] { Utils.generateGuid() }, new DefaultFetchDelegate());
+    } catch (InactiveSessionException e) {
+      // Yay.
+      dispose(session);
+      return;
+    };
+    fail("Should have caught InactiveSessionException.");
   }
   
   public void testGuidsSinceOnUnstartedSession() {
-    prepEmptySessionWithoutBegin();
+    final RepositorySession session = prepEmptySessionWithoutBegin();
     Runnable run = new Runnable() {
       @Override
       public void run() {
-        getSession().guidsSince(System.currentTimeMillis(),
+        session.guidsSince(System.currentTimeMillis(),
             new RepositorySessionGuidsSinceDelegate() {
               public void onGuidsSinceSucceeded(String[] guids) {
                 fail("Session inactive, should fail");
@@ -792,6 +862,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
       }
     };
     performWait(run);
+    dispose(session);
   }
   
   private void verifyInactiveException(Exception ex) {

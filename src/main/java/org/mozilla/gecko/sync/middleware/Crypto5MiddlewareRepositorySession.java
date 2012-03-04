@@ -43,10 +43,10 @@ import java.util.concurrent.ExecutorService;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
-import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -183,7 +183,7 @@ public class Crypto5MiddlewareRepositorySession extends MiddlewareRepositorySess
 
   @Override
   public void fetch(String[] guids,
-                    RepositorySessionFetchRecordsDelegate delegate) {
+                    RepositorySessionFetchRecordsDelegate delegate) throws InactiveSessionException {
     inner.fetch(guids, makeUnwrappingDelegate(delegate));
   }
 

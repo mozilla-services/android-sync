@@ -33,22 +33,29 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepositorySession;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class TestCrypto5MiddlewareRepositorySession {
-  public WaitHelper getTestWaiter() {
+  public static WaitHelper getTestWaiter() {
     return WaitHelper.getTestWaiter();
   }
 
-  public void performWait(Runnable runnable) {
+  public static void performWait(Runnable runnable) {
     getTestWaiter().performWait(runnable);
   }
 
-  protected void performNotify(InactiveSessionException e) {
+  protected static void performNotify(InactiveSessionException e) {
     final AssertionFailedError failed = new AssertionFailedError("Inactive session.");
+    failed.initCause(e);
+    getTestWaiter().performNotify(failed);
+  }
+
+  protected static void performNotify(InvalidSessionTransitionException e) {
+    final AssertionFailedError failed = new AssertionFailedError("Invalid session transition.");
     failed.initCause(e);
     getTestWaiter().performNotify(failed);
   }
@@ -89,13 +96,17 @@ public class TestCrypto5MiddlewareRepositorySession {
             self.cmwSession = (Crypto5MiddlewareRepositorySession)session;
             assertSame(RepositorySession.SessionStatus.UNSTARTED, cmwSession.getStatus());
 
-            session.begin(new ExpectSuccessRepositorySessionBeginDelegate(getTestWaiter()) {
-              @Override
-              public void onBeginSucceeded(RepositorySession _session) {
-                assertSame(self.cmwSession, _session);
-                runnable.run();
-              }
-            });
+            try {
+              session.begin(new ExpectSuccessRepositorySessionBeginDelegate(getTestWaiter()) {
+                @Override
+                public void onBeginSucceeded(RepositorySession _session) {
+                  assertSame(self.cmwSession, _session);
+                  runnable.run();
+                }
+              });
+            } catch (InvalidSessionTransitionException e) {
+              TestCrypto5MiddlewareRepositorySession.performNotify(e);
+            }
           }
         }, null);
       }
@@ -206,7 +217,11 @@ public class TestCrypto5MiddlewareRepositorySession {
     final ExpectSuccessRepositorySessionFetchRecordsDelegate fetchRecordsDelegate = new ExpectSuccessRepositorySessionFetchRecordsDelegate(getTestWaiter());
     runInOnBeginSucceeded(new Runnable() {
       @Override public void run() {
-        cmwSession.fetch(new String[] { record1.guid }, fetchRecordsDelegate);
+        try {
+          cmwSession.fetch(new String[] { record1.guid }, fetchRecordsDelegate);
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
       }
     });
     performWait(onThreadRunnable(new Runnable() {

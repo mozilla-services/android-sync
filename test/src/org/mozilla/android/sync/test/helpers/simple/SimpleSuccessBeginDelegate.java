@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutorService;
 
 import junit.framework.AssertionFailedError;
 
-import org.mozilla.android.sync.test.AndroidBrowserRepositoryTestHelper;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 
 public abstract class SimpleSuccessBeginDelegate implements RepositorySessionBeginDelegate {
@@ -14,7 +14,7 @@ public abstract class SimpleSuccessBeginDelegate implements RepositorySessionBeg
   public void onBeginFailed(Exception ex) {
     final AssertionFailedError e = new AssertionFailedError("Begin failed: " + ex.getMessage());
     e.initCause(ex);
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
+    WaitHelper.getTestWaiter().performNotify(e);
   }
 
   @Override

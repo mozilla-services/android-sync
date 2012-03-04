@@ -109,7 +109,7 @@ public abstract class RepositorySession {
 
   public abstract void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate);
   public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
-  public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate);
+  public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate) throws InactiveSessionException;
   public abstract void fetchAll(RepositorySessionFetchRecordsDelegate delegate);
 
   /**
@@ -182,16 +182,19 @@ public abstract class RepositorySession {
    *
    */
   protected void sharedBegin() throws InvalidSessionTransitionException {
+    Logger.debug(LOG_TAG, "Shared begin.");
+    if (delegateQueue.isShutdown()) {
+      throw new InvalidSessionTransitionException(null);
+    }
+    if (storeWorkQueue.isShutdown()) {
+      throw new InvalidSessionTransitionException(null);
+    }
     this.transitionFrom(SessionStatus.UNSTARTED, SessionStatus.ACTIVE);
   }
 
-  public void begin(RepositorySessionBeginDelegate delegate) {
-    try {
-      sharedBegin();
-      delegate.deferredBeginDelegate(delegateQueue).onBeginSucceeded(this);
-    } catch (Exception e) {
-      delegate.deferredBeginDelegate(delegateQueue).onBeginFailed(e);
-    }
+  public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
+    sharedBegin();
+    delegate.deferredBeginDelegate(delegateQueue).onBeginSucceeded(this);
   }
 
   protected RepositorySessionBundle getBundle() {
@@ -233,8 +236,16 @@ public abstract class RepositorySession {
   public void abort() {
     // TODO: do something here.
     this.setStatus(SessionStatus.ABORTED);
-    storeWorkQueue.shutdown();
-    delegateQueue.shutdown();
+    try {
+      storeWorkQueue.shutdown();
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Caught exception shutting down store work queue.", e);
+    }
+    try {
+      delegateQueue.shutdown();
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Caught exception shutting down delegate queue.", e);
+    }
   }
 
   public void finish(final RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
@@ -251,6 +262,21 @@ public abstract class RepositorySession {
     Logger.info(LOG_TAG, "Shutting down work queues.");
     storeWorkQueue.shutdown();
     delegateQueue.shutdown();
+  }
+
+  /**
+   * Run the provided command if we're active and our delegate queue
+   * is not shut down.
+   *
+   * @param command
+   * @throws InactiveSessionException
+   */
+  protected synchronized void executeDelegateCommand(Runnable command)
+      throws InactiveSessionException {
+    if (!isActive() || delegateQueue.isShutdown()) {
+      throw new InactiveSessionException(null);
+    }
+    delegateQueue.execute(command);
   }
 
   public synchronized void ensureActive() throws InactiveSessionException {

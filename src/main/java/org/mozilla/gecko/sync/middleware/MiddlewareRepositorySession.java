@@ -26,7 +26,7 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
     inner.wipe(delegate);
   }
 
-  public void begin(RepositorySessionBeginDelegate delegate) {
+  public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
     inner.begin(delegate);
   }
 

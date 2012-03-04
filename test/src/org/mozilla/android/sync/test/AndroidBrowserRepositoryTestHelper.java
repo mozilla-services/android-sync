@@ -3,28 +3,59 @@
 
 package org.mozilla.android.sync.test;
 
+import static junit.framework.Assert.assertNotNull;
+
 import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectOnlySpecialFoldersDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 
 import android.content.Context;
 import android.util.Log;
 
 public class AndroidBrowserRepositoryTestHelper {
-  
-  public static WaitHelper testWaiter = WaitHelper.getTestWaiter();
-  public static AndroidBrowserRepositorySession session;
-  
-  
-  public static AndroidBrowserRepository prepareRepositorySession(final Context context,
-      final DefaultSessionCreationDelegate delegate,
-      boolean begin,
+
+  public static RepositorySession prepareRepositorySession(
+      final Context context,
+      final boolean begin,
       final AndroidBrowserRepository repository) {
-    
+
+    final WaitHelper testWaiter = WaitHelper.getTestWaiter();
+
+    final String logTag = "prepareRepositorySession";
+    class CreationDelegate extends DefaultSessionCreationDelegate {
+      private RepositorySession session;
+      synchronized void setSession(RepositorySession session) {
+        this.session = session;
+      }
+      synchronized RepositorySession getSession() {
+        return this.session;
+      }
+
+      @Override
+      public void onSessionCreated(final RepositorySession session) {
+        assertNotNull(session);
+        Log.i(logTag, "Setting session to " + session);
+        setSession(session);
+        if (begin) {
+          Log.i(logTag, "Calling session.begin on new session.");
+          // The begin callbacks will notify.
+          try {
+            session.begin(new ExpectBeginDelegate());
+          } catch (InvalidSessionTransitionException e) {
+            testWaiter.performNotify(e);
+          }
+        } else {
+          Log.i(logTag, "Notifying after setting new session.");
+          testWaiter.performNotify();
+        }
+      }
+    }
+
+    final CreationDelegate delegate = new CreationDelegate();
     try {
       Runnable runnable = new Runnable() {
         @Override
@@ -34,18 +65,19 @@ public class AndroidBrowserRepositoryTestHelper {
       };
       testWaiter.performWait(runnable);
     } catch (IllegalArgumentException ex) {
-      Log.w("prepareRepositorySession", "Caught IllegalArgumentException.");
+      Log.w(logTag, "Caught IllegalArgumentException.");
     }
-    
-    if (begin) {
-      session.begin(new ExpectBeginDelegate());
-    }
-    
-    return repository;
+
+    Log.i(logTag, "Retrieving new session.");
+    final RepositorySession session = delegate.getSession();
+    assertNotNull(session);
+
+    return session;
   }
   
-  public static void prepEmptySession(Context context, AndroidBrowserRepository repository) {
-    prepareRepositorySession(context, new SetupDelegate(), true, repository);
+  public static RepositorySession prepEmptySession(final Context context, final AndroidBrowserRepository repository) {
+    final WaitHelper testWaiter = WaitHelper.getTestWaiter();
+    final RepositorySession session = prepareRepositorySession(context, true, repository);
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -53,10 +85,11 @@ public class AndroidBrowserRepositoryTestHelper {
       }
     };
     testWaiter.performWait(runnable);
+    return session;
   }
   
-  public static void prepEmptySessionWithoutBegin(Context context, AndroidBrowserRepository repository) {
-    prepareRepositorySession(context, new SetupDelegate(), false, repository);
+  public static RepositorySession prepEmptySessionWithoutBegin(Context context, AndroidBrowserRepository repository) {
+    return prepareRepositorySession(context, false, repository);
   }
 
 }

@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -161,7 +162,7 @@ public class WBORepository extends Repository {
     }
 
     @Override
-    public void begin(RepositorySessionBeginDelegate delegate) {
+    public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
       this.wbos = ((WBORepository) repository).cloneWBOs();
       stats.begun = now();
       super.begin(delegate);
