@@ -253,6 +253,12 @@ public abstract class RepositorySession {
     delegateQueue.shutdown();
   }
 
+  public synchronized void ensureActive() throws InactiveSessionException {
+    if (!isActive()) {
+      throw new InactiveSessionException(null);
+    }
+  }
+
   public synchronized boolean isActive() {
     return status == SessionStatus.ACTIVE;
   }
