@@ -60,6 +60,14 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   protected void performNotify() {
     AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
   }
+  protected void performNotify(AssertionFailedError e) {
+    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
+  }
+  protected void performNotify(InactiveSessionException e) {
+    AssertionFailedError er = new AssertionFailedError("Inactive session.");
+    er.initCause(e);
+    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(er);
+  }
 
   protected AndroidBrowserRepositorySession getSession() {
     return AndroidBrowserRepositoryTestHelper.session;
@@ -691,21 +699,26 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     getSession().begin(new ExpectBeginFailDelegate());
   }
   
-  public void testBeginOnFinishedSession() {
+  public void testBeginOnFinishedSession() throws InactiveSessionException {
     prepEmptySession();
     AndroidBrowserRepositorySession session = getSession();
     session.finish(new ExpectFinishDelegate());
     session.begin(new ExpectBeginFailDelegate());
   }
   
-  public void testFinishOnFinishedSession() {
+  public void testFinishOnFinishedSession() throws InactiveSessionException {
     prepEmptySession();
     AndroidBrowserRepositorySession session = getSession();
     session.finish(new ExpectFinishDelegate());
-    session.finish(new ExpectFinishFailDelegate());
+    try {
+      session.finish(new ExpectFinishFailDelegate());
+    } catch (InactiveSessionException e) {
+      return;
+    }
+    fail("Should have caught InactiveSessionException.");
   }
   
-  public void testFetchOnInactiveSession() {
+  public void testFetchOnInactiveSession() throws InactiveSessionException {
     prepEmptySessionWithoutBegin();
     getSession().finish(new ExpectFinishFailDelegate());
   }
@@ -715,7 +728,12 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
     Runnable run = new Runnable() {
       @Override
       public void run() {
-        getSession().finish(new ExpectFinishDelegate());
+        try {
+          Log.i(getName(), "Finishing...");
+          getSession().finish(new ExpectFinishDelegate());
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
         getSession().fetch(new String[] { Utils.generateGuid() },
             new RepositorySessionFetchRecordsDelegate() {
               @Override
@@ -775,7 +793,7 @@ public abstract class AndroidBrowserRepositoryTest extends ActivityInstrumentati
   }
   
   private void verifyInactiveException(Exception ex) {
-    if (ex.getClass() != InactiveSessionException.class) {
+    if (!(ex instanceof InactiveSessionException)) {
       fail("Wrong exception type");
     }
   }

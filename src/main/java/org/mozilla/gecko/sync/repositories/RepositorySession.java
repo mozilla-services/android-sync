@@ -242,7 +242,7 @@ public abstract class RepositorySession {
     delegateQueue.shutdown();
   }
 
-  public void finish(final RepositorySessionFinishDelegate delegate) {
+  public void finish(final RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
     if (this.status == SessionStatus.ACTIVE) {
       this.status = SessionStatus.DONE;
       delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));

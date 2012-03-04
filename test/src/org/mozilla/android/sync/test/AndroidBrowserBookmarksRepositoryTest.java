@@ -12,6 +12,7 @@ import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.BookmarkNeedsReparentingException;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
@@ -192,7 +193,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    */
   // Insert two records missing parent, then insert their parent.
   // Make sure they end up with the correct parent on fetch.
-  public void testBasicReparenting() {
+  public void testBasicReparenting() throws InactiveSessionException {
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
@@ -203,7 +204,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   
   // Insert 3 folders and 4 bookmarks in different orders
   // and make sure they come out parented correctly
-  public void testMultipleFolderReparenting1() {
+  public void testMultipleFolderReparenting1() throws InactiveSessionException {
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
@@ -216,7 +217,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     doMultipleFolderReparentingTest(expected);
   }
   
-  public void testMultipleFolderReparenting2() {
+  public void testMultipleFolderReparenting2() throws InactiveSessionException {
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
@@ -229,7 +230,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     doMultipleFolderReparentingTest(expected);
   }
   
-  public void testMultipleFolderReparenting3() {
+  public void testMultipleFolderReparenting3() throws InactiveSessionException {
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
@@ -242,7 +243,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     doMultipleFolderReparentingTest(expected);
   }
   
-  private void doMultipleFolderReparentingTest(Record[] expected) {
+  private void doMultipleFolderReparentingTest(Record[] expected) throws InactiveSessionException {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
     doStore(session, expected);
@@ -255,7 +256,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   // put into unfiled bookmarks. Call finish() and check
   // for an error returned stating that there are still
   // records that need to be re-parented.
-  public void testFinishBeforeReparent() {
+  public void testFinishBeforeReparent() throws InactiveSessionException {
     prepSession();
     AndroidBrowserRepositorySession session = getSession();
     Record[] records = new Record[] {

@@ -74,7 +74,7 @@ public abstract class StoreTrackingRepositorySession extends RepositorySession {
   }
 
   @Override
-  public void finish(RepositorySessionFinishDelegate delegate) {
+  public void finish(RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
     super.finish(delegate);
     this.storeTracker = null;
   }

@@ -32,6 +32,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepositorySession;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
@@ -44,6 +45,12 @@ public class TestCrypto5MiddlewareRepositorySession {
 
   public void performWait(Runnable runnable) {
     getTestWaiter().performWait(runnable);
+  }
+
+  protected void performNotify(InactiveSessionException e) {
+    final AssertionFailedError failed = new AssertionFailedError("Inactive session.");
+    failed.initCause(e);
+    getTestWaiter().performNotify(failed);
   }
 
   public Runnable onThreadRunnable(Runnable runnable) {
@@ -103,7 +110,11 @@ public class TestCrypto5MiddlewareRepositorySession {
     runInOnBeginSucceeded(new Runnable() {
       @Override public void run() {
         assertSame(RepositorySession.SessionStatus.ACTIVE, cmwSession.getStatus());
-        cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        try {
+          cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
       }
     });
     assertSame(RepositorySession.SessionStatus.DONE, cmwSession.getStatus());
@@ -125,7 +136,11 @@ public class TestCrypto5MiddlewareRepositorySession {
     });
     performWait(onThreadRunnable(new Runnable() {
       @Override public void run() {
-        cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        try {
+          cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
       }
     }));
     assertEquals(0, wboRepo.wbos.size());
@@ -142,13 +157,17 @@ public class TestCrypto5MiddlewareRepositorySession {
     runInOnBeginSucceeded(new Runnable() {
       @Override public void run() {
         try {
-          cmwSession.setStoreDelegate(new ExpectSuccessRepositorySessionStoreDelegate(getTestWaiter()));
-          cmwSession.store(record);
-        } catch (NoStoreDelegateException e) {
-          getTestWaiter().performNotify(new AssertionFailedError("Should not happen."));
+          try {
+            cmwSession.setStoreDelegate(new ExpectSuccessRepositorySessionStoreDelegate(getTestWaiter()));
+            cmwSession.store(record);
+          } catch (NoStoreDelegateException e) {
+            getTestWaiter().performNotify(new AssertionFailedError("Should not happen."));
+          }
+          cmwSession.storeDone();
+          cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        } catch (InactiveSessionException e) {
+          performNotify(e);
         }
-        cmwSession.storeDone();
-        cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
       }
     });
     assertEquals(1, wboRepo.wbos.size());
@@ -192,7 +211,11 @@ public class TestCrypto5MiddlewareRepositorySession {
     });
     performWait(onThreadRunnable(new Runnable() {
       @Override public void run() {
-        cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        try {
+          cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
       }
     }));
 
@@ -230,7 +253,11 @@ public class TestCrypto5MiddlewareRepositorySession {
     });
     performWait(onThreadRunnable(new Runnable() {
       @Override public void run() {
-        cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        try {
+          cmwSession.finish(new ExpectSuccessRepositorySessionFinishDelegate(getTestWaiter()));
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
       }
     }));
 

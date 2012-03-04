@@ -154,7 +154,7 @@ public class WBORepository extends Repository {
     }
 
     @Override
-    public void finish(RepositorySessionFinishDelegate delegate) {
+    public void finish(RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
       ((WBORepository) repository).wbos = this.wbos;
       stats.finished = now();
       super.finish(delegate);

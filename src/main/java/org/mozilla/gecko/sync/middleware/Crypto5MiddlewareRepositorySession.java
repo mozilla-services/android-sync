@@ -43,6 +43,7 @@ import java.util.concurrent.ExecutorService;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
@@ -303,7 +304,7 @@ public class Crypto5MiddlewareRepositorySession extends RepositorySession {
   }
 
   @Override
-  public void finish(RepositorySessionFinishDelegate delegate) {
+  public void finish(RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
     inner.finish(new Crypto5MiddlewareRepositorySessionFinishDelegate(this, delegate));
   }
 

@@ -19,6 +19,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
@@ -378,13 +379,19 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
    * @param session
    */
   public void finishAndNotify(final RepositorySession session) {
-    session.finish(new SimpleSuccessFinishDelegate() {
-      @Override
-      public void onFinishSucceeded(RepositorySession session,
-                                    RepositorySessionBundle bundle) {
-        performNotify();
-      }
-    });
+    try {
+      session.finish(new SimpleSuccessFinishDelegate() {
+        @Override
+        public void onFinishSucceeded(RepositorySession session,
+                                      RepositorySessionBundle bundle) {
+          performNotify();
+        }
+      });
+    } catch (InactiveSessionException e) {
+      AssertionFailedError assertionFailed = new AssertionFailedError("Inactive session!");
+      assertionFailed.initCause(e);
+      performNotify(assertionFailed);
+    }
   }
 
   /**

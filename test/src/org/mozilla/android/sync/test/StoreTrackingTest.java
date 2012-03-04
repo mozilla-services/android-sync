@@ -17,6 +17,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.StubActivity;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
@@ -47,6 +48,12 @@ public class StoreTrackingTest extends
 
   protected void performNotify(AssertionFailedError e) {
     AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
+  }
+
+  protected void performNotify(InactiveSessionException e) {
+    final AssertionFailedError failed = new AssertionFailedError("Inactive session.");
+    failed.initCause(e);
+    performNotify(failed);
   }
 
   protected void performNotify() {
@@ -112,13 +119,17 @@ public class StoreTrackingTest extends
                   Log.d(getName(), "Not finishing session: record retrieved.");
                   return;
                 }
-                session.finish(new SimpleSuccessFinishDelegate() {
-                  @Override
-                  public void onFinishSucceeded(RepositorySession session,
-                                                RepositorySessionBundle bundle) {
-                    performNotify();
-                  }
-                });
+                try {
+                  session.finish(new SimpleSuccessFinishDelegate() {
+                    @Override
+                    public void onFinishSucceeded(RepositorySession session,
+                                                  RepositorySessionBundle bundle) {
+                      performNotify();
+                    }
+                  });
+                } catch (InactiveSessionException e) {
+                  performNotify(e);
+                }
               }
             });
           }
@@ -155,14 +166,18 @@ public class StoreTrackingTest extends
 
               @Override
               public void onFetchCompleted(long end) {
-                session.finish(new SimpleSuccessFinishDelegate() {
-                  @Override
-                  public void onFinishSucceeded(RepositorySession session,
-                                                RepositorySessionBundle bundle) {
-                    // Hooray!
-                    performNotify();
-                  }
-                });
+                try {
+                  session.finish(new SimpleSuccessFinishDelegate() {
+                    @Override
+                    public void onFinishSucceeded(RepositorySession session,
+                                                  RepositorySessionBundle bundle) {
+                      // Hooray!
+                      performNotify();
+                    }
+                  });
+                } catch (InactiveSessionException e) {
+                  performNotify(e);
+                }
               }
             });
           }
