@@ -50,7 +50,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
             System.out.println("Ignoring trackRecord call: this is a test!");
           }
         };
-        delegate.onSessionCreated(session);
+        delegate.deferredCreationDelegate().onSessionCreated(session);
       }
     };
   }
