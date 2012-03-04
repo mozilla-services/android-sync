@@ -20,8 +20,8 @@ public class DefaultFinishDelegate extends DefaultDelegate implements Repository
 
   @Override
   public RepositorySessionFinishDelegate deferredFinishDelegate(final ExecutorService executor) {
+    final RepositorySessionFinishDelegate self = this;
     return new RepositorySessionFinishDelegate() {
-      final RepositorySessionFinishDelegate self = this;
       @Override
       public void onFinishSucceeded(final RepositorySession session,
                                     final RepositorySessionBundle bundle) {
