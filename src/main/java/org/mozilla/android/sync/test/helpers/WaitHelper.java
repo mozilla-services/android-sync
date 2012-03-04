@@ -68,6 +68,7 @@ public class WaitHelper {
 
     public InnerError(Throwable e) {
       innerError = e;
+      this.initCause(e);
     }
   }
 
@@ -79,8 +80,12 @@ public class WaitHelper {
    */
   public static int defaultWaitTimeoutInMillis = -1;
 
-  public void trace(String message) {
+  public void info(String message) {
     Log.i(LOG_TAG, message);
+  }
+
+  public void warn(String message, Throwable e) {
+    Log.w(LOG_TAG, message, e);
   }
 
   public void performWait(Runnable action) throws WaitHelperError {
@@ -88,7 +93,7 @@ public class WaitHelper {
   }
 
   public void performWait(int waitTimeoutInMillis, Runnable action) throws WaitHelperError {
-    trace("performWait called.");
+    info("performWait called.");
 
     Result result = null;
 
@@ -96,7 +101,9 @@ public class WaitHelper {
       if (action != null) {
         try {
           action.run();
+          Log.i(LOG_TAG, "Action done.");
         } catch (Exception ex) {
+          Log.i(LOG_TAG, "Performing action threw: ", ex);
           throw new InnerError(ex);
         }
       }
@@ -106,20 +113,23 @@ public class WaitHelper {
       } else {
         result = queue.poll(waitTimeoutInMillis, TimeUnit.MILLISECONDS);
       }
+      Log.i(LOG_TAG, "Got result from queue: " + result);
     } catch (InterruptedException e) {
       // We were interrupted.
-      trace("performNotify interrupted with InterruptedException " + e);
-      throw new InterruptedError();
+      info("performNotify interrupted with InterruptedException " + e);
+      final InterruptedError interruptedError = new InterruptedError();
+      interruptedError.initCause(e);
+      throw interruptedError;
     }
 
     if (result == null) {
       // We timed out.
       throw new TimeoutError(waitTimeoutInMillis);
     } else if (result.error != null) {
+      warn("Notified with error.", result.error);
+
       // Rethrow any assertion with which we were notified.
-      InnerError innerError = new InnerError(result.error);
-      innerError.initCause(result.error);
-      throw innerError;
+      throw new InnerError(result.error);
     } else {
       // Success!
     }
@@ -127,9 +137,9 @@ public class WaitHelper {
 
   public void performNotify(final Throwable e) {
     if (e != null) {
-      trace("performNotify called with Throwable " + e);
+      warn("performNotify called with Throwable ", e);
     } else {
-      trace("performNotify called.");
+      info("performNotify called.");
     }
 
     if (!queue.offer(new Result(e))) {
