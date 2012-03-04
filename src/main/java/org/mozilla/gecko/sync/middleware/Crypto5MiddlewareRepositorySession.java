@@ -62,8 +62,7 @@ public class Crypto5MiddlewareRepositorySession extends MiddlewareRepositorySess
   private RecordFactory recordFactory;
 
   public Crypto5MiddlewareRepositorySession(RepositorySession session, Crypto5MiddlewareRepository repository, RecordFactory recordFactory) {
-    super(repository);
-    this.inner = session;
+    super(session, repository);
     this.keyBundle = repository.keyBundle;
     this.recordFactory = recordFactory;
   }

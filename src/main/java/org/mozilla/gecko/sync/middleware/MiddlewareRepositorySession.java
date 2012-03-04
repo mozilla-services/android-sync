@@ -4,21 +4,25 @@
 
 package org.mozilla.gecko.sync.middleware;
 
+import java.util.concurrent.ExecutorService;
+
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
-import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 
 public abstract class MiddlewareRepositorySession extends RepositorySession {
+  private static final String LOG_TAG = "MiddlewareSession";
+  protected final RepositorySession inner;
 
-  protected RepositorySession inner;
-
-  public MiddlewareRepositorySession(Repository repository) {
+  public MiddlewareRepositorySession(RepositorySession innerSession, MiddlewareRepository repository) {
     super(repository);
+    this.inner = innerSession;
   }
 
   @Override
@@ -26,14 +30,85 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
     inner.wipe(delegate);
   }
 
+  public class MiddlewareRepositorySessionBeginDelegate implements RepositorySessionBeginDelegate {
+
+    private MiddlewareRepositorySession outerSession;
+    private RepositorySessionBeginDelegate next;
+
+    public MiddlewareRepositorySessionBeginDelegate(MiddlewareRepositorySession outerSession, RepositorySessionBeginDelegate next) {
+      this.outerSession = outerSession;
+      this.next = next;
+    }
+
+    @Override
+    public void onBeginFailed(Exception ex) {
+      next.onBeginFailed(ex);
+    }
+
+    @Override
+    public void onBeginSucceeded(RepositorySession session) {
+      next.onBeginSucceeded(outerSession);
+    }
+
+    @Override
+    public RepositorySessionBeginDelegate deferredBeginDelegate(ExecutorService executor) {
+      final RepositorySessionBeginDelegate deferred = next.deferredBeginDelegate(executor);
+      return new RepositorySessionBeginDelegate() {
+        @Override
+        public void onBeginSucceeded(RepositorySession session) {
+          if (inner != session) {
+            Logger.warn(LOG_TAG, "Got onBeginSucceeded for session " + session + ", not our inner session!");
+          }
+          deferred.onBeginSucceeded(outerSession);
+        }
+
+        @Override
+        public void onBeginFailed(Exception ex) {
+          deferred.onBeginFailed(ex);
+        }
+
+        @Override
+        public RepositorySessionBeginDelegate deferredBeginDelegate(ExecutorService executor) {
+          return this;
+        }
+      };
+    }
+  }
+
   public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
-    inner.begin(delegate);
+    inner.begin(new MiddlewareRepositorySessionBeginDelegate(this, delegate));
+  }
+
+  public class MiddlewareRepositorySessionFinishDelegate implements RepositorySessionFinishDelegate {
+    private final MiddlewareRepositorySession outerSession;
+    private final RepositorySessionFinishDelegate next;
+
+    public MiddlewareRepositorySessionFinishDelegate(MiddlewareRepositorySession outerSession, RepositorySessionFinishDelegate next) {
+      this.outerSession = outerSession;
+      this.next = next;
+    }
+
+    @Override
+    public void onFinishFailed(Exception ex) {
+      next.onFinishFailed(ex);
+    }
+
+    @Override
+    public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
+      next.onFinishSucceeded(outerSession, bundle);
+    }
+
+    @Override
+    public RepositorySessionFinishDelegate deferredFinishDelegate(ExecutorService executor) {
+      return this;
+    }
   }
 
   @Override
   public void finish(RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
-    inner.finish(delegate);
+    inner.finish(new MiddlewareRepositorySessionFinishDelegate(this, delegate));
   }
+
 
   @Override
   public synchronized void ensureActive() throws InactiveSessionException {
@@ -68,7 +143,7 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
 
   @Override
   public void abort(RepositorySessionFinishDelegate delegate) {
-    inner.abort(delegate);
+    inner.abort(new MiddlewareRepositorySessionFinishDelegate(this, delegate));
   }
 
   @Override
@@ -86,5 +161,4 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
   public void storeDone(long storeEnd) {
     inner.storeDone(storeEnd);
   }
-
 }
