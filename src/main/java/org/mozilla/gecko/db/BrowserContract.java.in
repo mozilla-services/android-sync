@@ -178,12 +178,6 @@ public class BrowserContract {
         public static final String GUID = "guid";
     }
 
-    public static final class DeletedPasswords implements DeletedColumns {
-        private DeletedPasswords() {}
-        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/deleted-passwords";
-        public static final Uri CONTENT_URI = Uri.withAppendedPath(PASSWORDS_AUTHORITY_URI, "deleted-passwords");
-    }
-
     public static final class FormHistory {
         private FormHistory() {}
         public static final Uri CONTENT_URI = Uri.withAppendedPath(FORM_HISTORY_AUTHORITY_URI, "formhistory");

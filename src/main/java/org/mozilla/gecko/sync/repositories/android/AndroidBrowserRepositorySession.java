@@ -445,7 +445,6 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
           // We found a local dupe.
           trace("Incoming record " + record.guid + " dupes to local record " + existingRecord.guid);
-
           // Populate more expensive fields prior to reconciling.
           existingRecord = transformRecord(existingRecord);
           Record toStore = reconcileRecords(record, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);
