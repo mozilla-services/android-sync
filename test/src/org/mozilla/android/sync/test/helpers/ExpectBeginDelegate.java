@@ -15,5 +15,6 @@ public class ExpectBeginDelegate extends DefaultBeginDelegate {
   public void onBeginSucceeded(RepositorySession session) {
     Log.d("ExpectBeginDelegate", "onBeginSucceeded.");
     assertNotNull(session);
+    WaitHelper.getTestWaiter().performNotify();
   }
 }
