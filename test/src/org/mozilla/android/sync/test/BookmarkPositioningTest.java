@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import junit.framework.AssertionFailedError;
-
 import org.json.simple.JSONArray;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessBeginDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessCreationDelegate;
@@ -17,8 +15,9 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
@@ -36,19 +35,13 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<StubActivity> {
+public class BookmarkPositioningTest extends AndroidSyncTestCase {
 
-  protected static final String tag = "BookmarkPositioningTest";
-
-  public BookmarkPositioningTest() {
-    super(StubActivity.class);
-  }
+  protected static final String LOG_TAG = "BookmarkPositioningTest";
 
   public void testRetrieveFolderHasAccurateChildren() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
@@ -327,28 +320,6 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     assertFalse(tracked.contains(folderGUID));
   }
 
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
-
-  protected void performWait(Runnable runnable) throws AssertionFailedError {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performWait(runnable);
-  }
-
-  protected void performNotify() {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
-  }
-
-  protected void performNotify(AssertionFailedError e) {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
-  }
-
-  protected void notifyException(String reason, Exception ex) {
-    final AssertionFailedError e = new AssertionFailedError(reason + " : " + ex.getMessage());
-    e.initCause(ex);
-    performNotify(e);
-  }
-
   /**
    * Create and begin a new session, handing control to the delegate when started.
    * Returns when the delegate has notified.
@@ -363,7 +334,11 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
         RepositorySessionCreationDelegate delegate = new SimpleSuccessCreationDelegate() {
           @Override
           public void onSessionCreated(final RepositorySession session) {
-            session.begin(beginDelegate);
+            try {
+              session.begin(beginDelegate);
+            } catch (InvalidSessionTransitionException e) {
+              performNotify(e);
+            }
           }
         };
         repo.createSession(delegate, getApplicationContext());
@@ -378,13 +353,17 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
    * @param session
    */
   public void finishAndNotify(final RepositorySession session) {
-    session.finish(new SimpleSuccessFinishDelegate() {
-      @Override
-      public void onFinishSucceeded(RepositorySession session,
-                                    RepositorySessionBundle bundle) {
-        performNotify();
-      }
-    });
+    try {
+      session.finish(new SimpleSuccessFinishDelegate() {
+        @Override
+        public void onFinishSucceeded(RepositorySession session,
+                                      RepositorySessionBundle bundle) {
+          performNotify();
+        }
+      });
+    } catch (InactiveSessionException e) {
+      performNotify(e);
+    }
   }
 
   /**
@@ -414,7 +393,11 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
           finishAndNotify(session);
         }
       };
-      session.fetch(new String[] { guid }, fetchDelegate);
+      try {
+        session.fetch(new String[] { guid }, fetchDelegate);
+      } catch (InactiveSessionException e) {
+        performNotify("Session is inactive.", e);
+      }
     }
   }
 

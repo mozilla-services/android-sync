@@ -8,12 +8,12 @@ import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -173,8 +173,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
    */
   @SuppressWarnings("unchecked")
   public void testAddOneVisit() {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = createAndBeginSession();
     
     HistoryRecord record0 = HistoryHelpers.createHistory3();
     performWait(storeRunnable(session, record0));
@@ -199,8 +198,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   
   @SuppressWarnings("unchecked")
   public void testAddMultipleVisits() {
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = createAndBeginSession();
     
     HistoryRecord record0 = HistoryHelpers.createHistory4();
     performWait(storeRunnable(session, record0));
@@ -240,7 +238,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
 
   public void testSqlInjectPurgeDelete() {
     // Some setup.
-    prepSession();
+    createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
 
     ContentValues cv = new ContentValues();

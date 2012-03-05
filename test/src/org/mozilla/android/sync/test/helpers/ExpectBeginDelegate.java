@@ -10,10 +10,10 @@ import org.mozilla.gecko.sync.repositories.RepositorySession;
 import android.util.Log;
 
 public class ExpectBeginDelegate extends DefaultBeginDelegate {
-
   @Override
   public void onBeginSucceeded(RepositorySession session) {
     Log.d("ExpectBeginDelegate", "onBeginSucceeded.");
     assertNotNull(session);
+    performNotify();
   }
 }

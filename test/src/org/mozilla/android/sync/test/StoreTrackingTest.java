@@ -16,7 +16,8 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.StubActivity;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
@@ -27,32 +28,9 @@ import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class StoreTrackingTest extends
-    ActivityInstrumentationTestCase2<StubActivity> {
-
-  public StoreTrackingTest() {
-    super(StubActivity.class);
-  }
-
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
-
-  protected void performWait(Runnable runnable) throws AssertionFailedError {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performWait(runnable);
-  }
-
-  protected void performNotify(AssertionFailedError e) {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify(e);
-  }
-
-  protected void performNotify() {
-    AndroidBrowserRepositoryTestHelper.testWaiter.performNotify();
-  }
-
+public class StoreTrackingTest extends AndroidSyncTestCase {
   public void assertEq(Object expected, Object actual) {
     try {
       assertEquals(expected, actual);
@@ -84,45 +62,53 @@ public class StoreTrackingTest extends
       @Override
       public void onStoreCompleted(long storeEnd) {
         Log.d(getName(), "Store completed at " + storeEnd + ".");
-        session.fetch(new String[] { expectedGUID }, new SimpleSuccessFetchDelegate() {
-          @Override
-          public void onFetchedRecord(Record record) {
-            Log.d(getName(), "Hurrah! Fetched record " + record.guid);
-            assertEq(expectedGUID, record.guid);
-          }
+        try {
+          session.fetch(new String[] { expectedGUID }, new SimpleSuccessFetchDelegate() {
+            @Override
+            public void onFetchedRecord(Record record) {
+              Log.d(getName(), "Hurrah! Fetched record " + record.guid);
+              assertEq(expectedGUID, record.guid);
+            }
 
-          @Override
-          public void onFetchCompleted(final long fetchEnd) {
-            Log.d(getName(), "Fetch completed at " + fetchEnd + ".");
+            @Override
+            public void onFetchCompleted(final long fetchEnd) {
+              Log.d(getName(), "Fetch completed at " + fetchEnd + ".");
 
-            // But fetching by time returns nothing.
-            session.fetchSince(0, new SimpleSuccessFetchDelegate() {
-              private AtomicBoolean fetched = new AtomicBoolean(false);
+              // But fetching by time returns nothing.
+              session.fetchSince(0, new SimpleSuccessFetchDelegate() {
+                private AtomicBoolean fetched = new AtomicBoolean(false);
 
-              @Override
-              public void onFetchedRecord(Record record) {
-                Log.d(getName(), "Fetched record " + record.guid);
-                fetched.set(true);
-                performNotify(new AssertionFailedError("Should have fetched no record!"));
-              }
-
-              @Override
-              public void onFetchCompleted(final long fetchEnd) {
-                if (fetched.get()) {
-                  Log.d(getName(), "Not finishing session: record retrieved.");
-                  return;
+                @Override
+                public void onFetchedRecord(Record record) {
+                  Log.d(getName(), "Fetched record " + record.guid);
+                  fetched.set(true);
+                  performNotify(new AssertionFailedError("Should have fetched no record!"));
                 }
-                session.finish(new SimpleSuccessFinishDelegate() {
-                  @Override
-                  public void onFinishSucceeded(RepositorySession session,
-                                                RepositorySessionBundle bundle) {
-                    performNotify();
+
+                @Override
+                public void onFetchCompleted(final long fetchEnd) {
+                  if (fetched.get()) {
+                    Log.d(getName(), "Not finishing session: record retrieved.");
+                    return;
                   }
-                });
-              }
-            });
-          }
-        });
+                  try {
+                    session.finish(new SimpleSuccessFinishDelegate() {
+                      @Override
+                      public void onFinishSucceeded(RepositorySession session,
+                                                    RepositorySessionBundle bundle) {
+                        performNotify();
+                      }
+                    });
+                  } catch (InactiveSessionException e) {
+                    performNotify(e);
+                  }
+                }
+              });
+            }
+          });
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
       }
     };
 
@@ -142,31 +128,39 @@ public class StoreTrackingTest extends
       @Override
       public void onSessionCreated(final RepositorySession session) {
         Log.i(getName(), "Session created.");
-        session.begin(new SimpleSuccessBeginDelegate() {
-          @Override
-          public void onBeginSucceeded(final RepositorySession session) {
-            // Now we get a result.
-            session.fetchSince(0, new SimpleSuccessFetchDelegate() {
+        try {
+          session.begin(new SimpleSuccessBeginDelegate() {
+            @Override
+            public void onBeginSucceeded(final RepositorySession session) {
+              // Now we get a result.
+              session.fetchSince(0, new SimpleSuccessFetchDelegate() {
 
-              @Override
-              public void onFetchedRecord(Record record) {
-                assertEq(expectedGUID, record.guid);
-              }
+                @Override
+                public void onFetchedRecord(Record record) {
+                  assertEq(expectedGUID, record.guid);
+                }
 
-              @Override
-              public void onFetchCompleted(long end) {
-                session.finish(new SimpleSuccessFinishDelegate() {
-                  @Override
-                  public void onFinishSucceeded(RepositorySession session,
-                                                RepositorySessionBundle bundle) {
-                    // Hooray!
-                    performNotify();
+                @Override
+                public void onFetchCompleted(long end) {
+                  try {
+                    session.finish(new SimpleSuccessFinishDelegate() {
+                      @Override
+                      public void onFinishSucceeded(RepositorySession session,
+                                                    RepositorySessionBundle bundle) {
+                        // Hooray!
+                        performNotify();
+                      }
+                    });
+                  } catch (InactiveSessionException e) {
+                    performNotify(e);
                   }
-                });
-              }
-            });
-          }
-        });
+                }
+              });
+            }
+          });
+        } catch (InvalidSessionTransitionException e) {
+          performNotify(e);
+        }
       }
     };
     Runnable create = new Runnable() {
@@ -198,12 +192,16 @@ public class StoreTrackingTest extends
       @Override
       public void onSessionCreated(RepositorySession session) {
         Log.d(getName(), "Session created: " + session);
-        session.begin(new SimpleSuccessBeginDelegate() {
-          @Override
-          public void onBeginSucceeded(final RepositorySession session) {
-            doTestStoreRetrieveByGUID(r, session, expectedGUID, record);
-          }
-        });
+        try {
+          session.begin(new SimpleSuccessBeginDelegate() {
+            @Override
+            public void onBeginSucceeded(final RepositorySession session) {
+              doTestStoreRetrieveByGUID(r, session, expectedGUID, record);
+            }
+          });
+        } catch (InvalidSessionTransitionException e) {
+          performNotify(e);
+        }
       }
     };
 

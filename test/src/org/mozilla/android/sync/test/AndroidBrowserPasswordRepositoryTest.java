@@ -5,11 +5,11 @@ package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.PasswordHelpers;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -21,10 +21,12 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void setUp() {
+    assertTrue(WaitHelper.getTestWaiter().isIdle());
   }
+
   @Override
   protected void wipe() {
-    WaitHelper.getTestWaiter().performNotify();
+    assertTrue(WaitHelper.getTestWaiter().isIdle());
   }
 
   @Override
@@ -158,8 +160,7 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
       assertTrue(true);
       return;
     }
-    prepSession();
-    AndroidBrowserRepositorySession session = getSession();
+    final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, PasswordHelpers.createPassword1()));
   }
 
