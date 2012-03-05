@@ -12,6 +12,6 @@ public class ExpectFinishDelegate extends DefaultFinishDelegate {
   @Override
   public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
     Logger.info("ExpectFinishDelegate", "Finish succeeded.");
-    WaitHelper.getTestWaiter().performNotify();
+    performNotify();
   }
 }

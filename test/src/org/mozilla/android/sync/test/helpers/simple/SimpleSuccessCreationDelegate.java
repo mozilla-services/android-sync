@@ -4,20 +4,13 @@
 
 package org.mozilla.android.sync.test.helpers.simple;
 
-import junit.framework.AssertionFailedError;
-
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
-import android.util.Log;
-
-public abstract class SimpleSuccessCreationDelegate implements RepositorySessionCreationDelegate {
+public abstract class SimpleSuccessCreationDelegate extends DefaultDelegate implements RepositorySessionCreationDelegate {
   @Override
   public void onSessionCreateFailed(Exception ex) {
-    Log.w("SimpleSuccessCreationDelegate", "Session creation failed.", ex);
-    final AssertionFailedError e = new AssertionFailedError("Session creation failed: " + ex.getMessage());
-    e.initCause(ex);
-    WaitHelper.getTestWaiter().performNotify(e);
+    performNotify("Session creation failed", ex);
   }
 
   @Override

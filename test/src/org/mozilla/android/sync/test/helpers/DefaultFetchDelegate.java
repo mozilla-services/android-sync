@@ -28,7 +28,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
 
   @Override
   public void onFetchFailed(Exception ex, Record record) {
-    sharedFail("Shouldn't fail");
+    performNotify("Fetch failed.", ex);
   }
 
   @Override
@@ -41,7 +41,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected, long end) {
-    Log.i(LOG_TAG, "onDone. Test Waiter is " + testWaiter());
+    Log.i(LOG_TAG, "onDone.");
     Log.i(LOG_TAG, "End timestamp is " + end);
     Log.i(LOG_TAG, "Expected is " + expected);
     Log.i(LOG_TAG, "Records is " + records);
@@ -64,7 +64,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
           if (expect == null) {
             Log.d(LOG_TAG, "Failing.");
             fail("Do not expect to get back a record with guid: " + record.guid);
-            testWaiter().performNotify();
+            performNotify();
           }
           Log.d(LOG_TAG, "Checking equality.");
           try {
@@ -77,13 +77,13 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
       }
       assertEquals(expected.size(), expectedCount);
       Log.i(LOG_TAG, "Notifying success.");
-      testWaiter().performNotify();
+      performNotify();
     } catch (AssertionFailedError e) {
       Log.e(LOG_TAG, "Notifying assertion failure.");
-      testWaiter().performNotify(e);
+      performNotify(e);
     } catch (Exception e) {
       Log.e(LOG_TAG, "Fucking no.");
-      testWaiter().performNotify();
+      performNotify();
     }
   }
   

@@ -11,12 +11,12 @@ public class DefaultFinishDelegate extends DefaultDelegate implements Repository
 
   @Override
   public void onFinishFailed(Exception ex) {
-    sharedFail("Finish failed");
+    performNotify("Finish failed", ex);
   }
 
   @Override
   public void onFinishSucceeded(RepositorySession session, RepositorySessionBundle bundle) {
-    sharedFail("Hit default finish delegate");
+    performNotify("Hit default finish delegate", null);
   }
 
   @Override

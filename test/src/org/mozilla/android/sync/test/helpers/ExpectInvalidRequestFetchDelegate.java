@@ -24,6 +24,6 @@ public class ExpectInvalidRequestFetchDelegate extends DefaultFetchDelegate {
   }
   
   private void onDone() {
-    testWaiter().performNotify();
+    performNotify();
   }
 }
