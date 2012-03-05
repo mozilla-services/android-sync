@@ -157,7 +157,7 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
       assertTrue(true);
       return;
     }
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, PasswordHelpers.createPassword1()));
   }
 

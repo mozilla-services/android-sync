@@ -173,7 +173,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
    */
   @SuppressWarnings("unchecked")
   public void testAddOneVisit() {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     
     HistoryRecord record0 = HistoryHelpers.createHistory3();
     performWait(storeRunnable(session, record0));
@@ -198,7 +198,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   
   @SuppressWarnings("unchecked")
   public void testAddMultipleVisits() {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     
     HistoryRecord record0 = HistoryHelpers.createHistory4();
     performWait(storeRunnable(session, record0));
@@ -238,7 +238,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
 
   public void testSqlInjectPurgeDelete() {
     // Some setup.
-    prepSession();
+    createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
 
     ContentValues cv = new ContentValues();

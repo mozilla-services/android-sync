@@ -22,6 +22,7 @@ import org.mozilla.android.sync.test.helpers.ExpectInvalidRequestFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectManyStoredDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoreCompletedDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
+import org.mozilla.android.sync.test.helpers.SessionTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
@@ -66,24 +67,15 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     helper = getDataAccessor();
     wipe();
   }
-  
-  protected RepositorySession prepSession() {
-    return SessionTestHelper.prepareRepositorySession(
-        getApplicationContext(),
-        true,
-        getRepository());
-    // Clear old data.
-    //wipe();
-  }
-  
-  protected RepositorySession prepEmptySession() {
-    return SessionTestHelper.prepEmptySession(
+
+  protected RepositorySession createSession() {
+    return SessionTestHelper.createSession(
         getApplicationContext(),
         getRepository());
   }
-  
-  protected RepositorySession prepEmptySessionWithoutBegin() {
-    return SessionTestHelper.prepEmptySessionWithoutBegin(
+
+  protected RepositorySession createAndBeginSession() {
+    return SessionTestHelper.createAndBeginSession(
         getApplicationContext(),
         getRepository());
   }
@@ -287,16 +279,13 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * Test abstractions
    */
   protected void basicStoreTest(Record record) {
-    final RepositorySession session = prepSession();    
+    final RepositorySession session = createAndBeginSession();    
     performWait(storeRunnable(session, record));
   }
   
   protected void basicFetchAllTest(Record[] expected) {
     Log.i("rnewman", "Starting testFetchAll.");
-    RepositorySession session = SessionTestHelper.prepareRepositorySession(
-        getApplicationContext(),
-        true,
-        getRepository());
+    RepositorySession session = createAndBeginSession();
     Log.i("rnewman", "Prepared.");
 
     helper.dumpDB();
@@ -312,7 +301,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    */
   // Input: 4 records; 2 which are to be cleaned, 2 which should remain after the clean
   protected void cleanMultipleRecords(Record delete0, Record delete1, Record keep0, Record keep1, Record keep2) {
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
     doStore(session, new Record[] {
         delete0, delete1, keep0, keep1, keep2
     });
@@ -345,7 +334,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * Tests for guidsSince
    */
   protected void guidsSinceReturnMultipleRecords(Record record0, Record record1) {
-    RepositorySession session = prepEmptySession();
+    RepositorySession session = createAndBeginSession();
     long timestamp = System.currentTimeMillis();
 
     String[] expected = new String[2];
@@ -360,7 +349,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   protected void guidsSinceReturnNoRecords(Record record0) {
-    RepositorySession session = prepEmptySession();
+    RepositorySession session = createAndBeginSession();
 
     //  Store 1 record in the past.
     performWait(storeRunnable(session, record0));
@@ -374,7 +363,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * Tests for fetchSince
    */  
   protected void fetchSinceOneRecord(Record record0, Record record1) {
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
 
     performWait(storeRunnable(session, record0));
     long timestamp = System.currentTimeMillis();
@@ -402,7 +391,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   protected void fetchSinceReturnNoRecords(Record record) {
-    RepositorySession session = prepEmptySession();
+    RepositorySession session = createAndBeginSession();
     
     performWait(storeRunnable(session, record));
 
@@ -413,7 +402,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   protected void fetchOneRecordByGuid(Record record0, Record record1) {
-    RepositorySession session = prepEmptySession();
+    RepositorySession session = createAndBeginSession();
     
     Record[] store = new Record[] { record0, record1 };
     performWait(storeManyRunnable(session, store));
@@ -426,7 +415,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   
   protected void fetchMultipleRecordsByGuids(Record record0,
       Record record1, Record record2) {
-    RepositorySession session = prepEmptySession();
+    RepositorySession session = createAndBeginSession();
 
     Record[] store = new Record[] { record0, record1, record2 };
     performWait(storeManyRunnable(session, store));
@@ -438,7 +427,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   protected void fetchNoRecordByGuid(Record record) {
-    RepositorySession session = prepEmptySession();
+    RepositorySession session = createAndBeginSession();
     
     performWait(storeRunnable(session, record));
     performWait(fetchRunnable(session,
@@ -451,7 +440,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * Test wipe
    */
   protected void doWipe(final Record record0, final Record record1) {
-    final RepositorySession session = prepEmptySession();
+    final RepositorySession session = createAndBeginSession();
     final Runnable run = new Runnable() {
       @Override
       public void run() {
@@ -520,7 +509,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * record has not been modified since last sync.
    */
   protected void remoteNewerTimeStamp(Record local, Record remote) {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
 
     // Record existing and hasn't changed since before lastSync.
     // Automatically will be assigned lastModified = current time.
@@ -545,7 +534,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * we just take newer (local) record)
    */
   protected void localNewerTimeStamp(Record local, Record remote) {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
 
     performWait(storeRunnable(session, local));
 
@@ -567,7 +556,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * Insert a record that is marked as deleted, remote has newer timestamp
    */
   protected void deleteRemoteNewer(Record local, Record remote) {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     
     // Record existing and hasn't changed since before lastSync.
     // Automatically will be assigned lastModified = current time.
@@ -592,7 +581,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   // and then sync was enabled and this record existed on another sync'd device).
   public void storeIdenticalExceptGuid(Record record0) {
     Log.i("storeIdenticalExceptGuid", "Started.");
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     Log.i("storeIdenticalExceptGuid", "Session is " + session);
     performWait(storeRunnable(session, record0));
     Log.i("storeIdenticalExceptGuid", "Stored record0.");
@@ -630,7 +619,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    */
   protected void deleteLocalNewer(Record local, Record remote) {
     Log.d("deleteLocalNewer", "Begin.");
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
 
     Log.d("deleteLocalNewer", "Storing local...");
     performWait(storeRunnable(session, local));
@@ -664,7 +653,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * Insert a record that is marked as deleted, record never existed locally
    */
   protected void deleteRemoteLocalNonexistent(Record remote) {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     
     long timestamp = 1000000000;
     
@@ -694,7 +683,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   public void testStoreNullRecord() {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     try {
       session.setStoreDelegate(new DefaultStoreDelegate());
       session.store(null);
@@ -706,28 +695,28 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   public void testFetchNoGuids() {
-    final RepositorySession session = prepEmptySession();
+    final RepositorySession session = createAndBeginSession();
     performWait(fetchRunnable(session, new String[] {}, new ExpectInvalidRequestFetchDelegate()));
     dispose(session);
   }
   
   public void testFetchNullGuids() {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepEmptySession();
+    final RepositorySession session = createAndBeginSession();
     performWait(fetchRunnable(session, null, new ExpectInvalidRequestFetchDelegate()));
     dispose(session);
   }
   
   public void testBeginOnNewSession() {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepEmptySessionWithoutBegin();
+    final RepositorySession session = createSession();
     performWait(beginRunnable(session, new ExpectBeginDelegate()));
     dispose(session);
   }
   
   public void testBeginOnRunningSession() {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepEmptySession();
+    final RepositorySession session = createAndBeginSession();
     try {
       session.begin(new ExpectBeginFailDelegate());
     } catch (InvalidSessionTransitionException e) {
@@ -739,7 +728,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   
   public void testBeginOnFinishedSession() throws InactiveSessionException {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepEmptySession();
+    final RepositorySession session = createAndBeginSession();
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
     try {
       session.begin(new ExpectBeginFailDelegate());
@@ -757,7 +746,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   
   public void testFinishOnFinishedSession() throws InactiveSessionException {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepEmptySession();
+    final RepositorySession session = createAndBeginSession();
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
     try {
       session.finish(new ExpectFinishFailDelegate());
@@ -770,7 +759,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   
   public void testFetchOnInactiveSession() throws InactiveSessionException {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepEmptySessionWithoutBegin();
+    final RepositorySession session = createSession();
     try {
       session.fetch(new String[] { Utils.generateGuid() }, new DefaultFetchDelegate());
     } catch (InactiveSessionException e) {
@@ -783,7 +772,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
   public void testFetchOnFinishedSession() {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepEmptySession();
+    final RepositorySession session = createAndBeginSession();
     Log.i(getName(), "Finishing...");
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
     try {
@@ -797,7 +786,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   public void testGuidsSinceOnUnstartedSession() {
-    final RepositorySession session = prepEmptySessionWithoutBegin();
+    final RepositorySession session = createSession();
     Runnable run = new Runnable() {
       @Override
       public void run() {

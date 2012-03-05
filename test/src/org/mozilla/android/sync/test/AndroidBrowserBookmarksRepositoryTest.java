@@ -111,11 +111,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     BookmarkRecord bookmark1 = BookmarkHelpers.createBookmark1();
     BookmarkRecord bookmark2 = BookmarkHelpers.createBookmark2();
 
-    RepositorySession session = SessionTestHelper.prepareRepositorySession(
-        getApplicationContext(),
-        true,
-        getRepository());
-    Log.i("rnewman", "Prepared.");
+    RepositorySession session = createAndBeginSession();
 
     Record[] records = new Record[] { folder, bookmark1, bookmark2 };
     performWait(storeManyRunnable(session, records));
@@ -223,7 +219,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   */
   
   protected void basicStoreFailTest(Record record) {
-    final RepositorySession session = prepSession();    
+    final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, record, new ExpectInvalidTypeStoreDelegate()));
     dispose(session);
   }
@@ -285,7 +281,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
   
   private void doMultipleFolderReparentingTest(Record[] expected) throws InactiveSessionException {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     doStore(session, expected);
     ExpectFetchDelegate delegate = preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
@@ -313,7 +309,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    * and make sure it works as well.
    */
   public void testStoreIdenticalFoldersWithChildren() {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     Record record0 = BookmarkHelpers.createFolder1();
 
     // Get timestamp so that the conflicting folder that we store below is newer.
@@ -403,7 +399,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   public void testBasicPositioning() {
     assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createFolder1(),
@@ -441,7 +437,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   public void testSqlInjectPurgeDeleteAndUpdateByGuid() {
     assertTrue(WaitHelper.isIdle());
     // Some setup.
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
     
     ContentValues cv = new ContentValues();
@@ -522,7 +518,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   public void testSqlInjectFetch() {
     // Some setup.
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
 
     // Create and insert 4 bookmarks, last one is evil (attempts injection).
@@ -570,7 +566,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   public void testSqlInjectDelete() {
     // Some setup.
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
 
     // Create and insert 2 bookmarks, 2nd one is evil (attempts injection).
