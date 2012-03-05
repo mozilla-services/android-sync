@@ -45,6 +45,7 @@ public class BrowserContract {
     public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
 
     public static final String PASSWORDS_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.passwords";
+    public static final String DELETED_PASSWORDS_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.deleted-passwords";
     public static final Uri PASSWORDS_AUTHORITY_URI = Uri.parse("content://" + PASSWORDS_AUTHORITY);
 
     public static final String FORM_HISTORY_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.formhistory";
