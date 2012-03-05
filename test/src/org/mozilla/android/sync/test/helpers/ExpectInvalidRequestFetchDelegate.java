@@ -11,10 +11,11 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.util.Log;
 
 public class ExpectInvalidRequestFetchDelegate extends DefaultFetchDelegate {
-  
+  public static final String LOG_TAG = "ExpInvRequestFetchDel";
+
   @Override
   public void onFetchFailed(Exception ex, Record rec) {
-    Log.i("rnewman", "ExpectInvalidRequestFetchDelegate got exception " + ex);
+    Log.i(LOG_TAG, "ExpectInvalidRequestFetchDelegate got exception " + ex);
     if (ex instanceof InvalidRequestException) {
       onDone();
     } else {
@@ -23,6 +24,6 @@ public class ExpectInvalidRequestFetchDelegate extends DefaultFetchDelegate {
   }
   
   private void onDone() {
-    testWaiter().performNotify();
+    performNotify();
   }
 }

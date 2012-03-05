@@ -6,9 +6,10 @@ package org.mozilla.android.sync.test;
 import org.json.simple.JSONArray;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -58,7 +59,44 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   protected AndroidBrowserRepositoryDataAccessor getDataAccessor() {
     return new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
   }
- 
+
+  /**
+   * Hook to return an ExpectFetchDelegate, possibly with special GUIDs ignored.
+   */
+  @Override
+  public ExpectFetchDelegate preparedExpectFetchDelegate(Record[] expected) {
+    ExpectFetchDelegate delegate = new ExpectFetchDelegate(expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
+  /**
+   * Hook to return an ExpectGuidsSinceDelegate expecting only special GUIDs (if there are any).
+   */
+  public ExpectGuidsSinceDelegate preparedExpectOnlySpecialGuidsSinceDelegate() {
+    ExpectGuidsSinceDelegate delegate = new ExpectGuidsSinceDelegate(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet().toArray(new String[] {}));
+    return delegate;
+  }
+
+  /**
+   * Hook to return an ExpectGuidsSinceDelegate, possibly with special GUIDs ignored.
+   */
+  @Override
+  public ExpectGuidsSinceDelegate preparedExpectGuidsSinceDelegate(String[] expected) {
+    ExpectGuidsSinceDelegate delegate = new ExpectGuidsSinceDelegate(expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
+  /**
+   * Hook to return an ExpectFetchSinceDelegate, possibly with special GUIDs ignored.
+   */
+  public ExpectFetchSinceDelegate preparedExpectFetchSinceDelegate(long timestamp, String[] expected) {
+    ExpectFetchSinceDelegate delegate = new ExpectFetchSinceDelegate(timestamp, expected);
+    delegate.ignore.addAll(AndroidBrowserBookmarksRepositorySession.SPECIAL_GUIDS_MAP.keySet());
+    return delegate;
+  }
+
   // NOTE NOTE NOTE
   // Must store folder before records if we we are checking that the
   // records returned are the same as those sent in. If the folder isn't stored
@@ -72,16 +110,11 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     BookmarkRecord bookmark1 = BookmarkHelpers.createBookmark1();
     BookmarkRecord bookmark2 = BookmarkHelpers.createBookmark2();
 
-    RepositorySession session = AndroidBrowserRepositoryTestHelper.prepareRepositorySession(
-        getApplicationContext(),
-        true,
-        getRepository());
-    Log.i("rnewman", "Prepared.");
+    RepositorySession session = createAndBeginSession();
 
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
     Record[] records = new Record[] { folder, bookmark1, bookmark2 };
     performWait(storeManyRunnable(session, records));
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    helper.dumpDB();
 
     String[] guids = new String[] { folder.guid };
     Record[] expected = new Record[] { folder };
@@ -185,7 +218,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   */
   
   protected void basicStoreFailTest(Record record) {
-    final RepositorySession session = prepSession();    
+    final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, record, new ExpectInvalidTypeStoreDelegate()));
     dispose(session);
   }
@@ -196,7 +229,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   // Insert two records missing parent, then insert their parent.
   // Make sure they end up with the correct parent on fetch.
   public void testBasicReparenting() throws InactiveSessionException {
-    assertTrue(WaitHelper.isIdle());
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
@@ -247,9 +279,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
   
   private void doMultipleFolderReparentingTest(Record[] expected) throws InactiveSessionException {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     doStore(session, expected);
-    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
+    ExpectFetchDelegate delegate = preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
   }
@@ -275,7 +307,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    * and make sure it works as well.
    */
   public void testStoreIdenticalFoldersWithChildren() {
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     Record record0 = BookmarkHelpers.createFolder1();
 
     // Get timestamp so that the conflicting folder that we store below is newer.
@@ -285,10 +317,10 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     rec0.children = new JSONArray();
     performWait(storeRunnable(session, record0));
 
-    ExpectFetchDelegate timestampDelegate = BookmarkHelpers.preparedExpectFetchDelegate(new Record[] { rec0 });
+    ExpectFetchDelegate timestampDelegate = preparedExpectFetchDelegate(new Record[] { rec0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
 
-    BookmarkHelpers.dumpBookmarksDB(getApplicationContext());
+    helper.dumpDB();
     Record record1 = BookmarkHelpers.createBookmark1();
     Record record2 = BookmarkHelpers.createBookmark2();
     Record record3 = BookmarkHelpers.createFolder1();
@@ -314,7 +346,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     Record[] expect = new Record[] {
         bmk1, bmk2, record3
     };
-    fetchAllRunnable(session, BookmarkHelpers.preparedExpectFetchDelegate(expect));
+    fetchAllRunnable(session, preparedExpectFetchDelegate(expect));
     dispose(session);
   }
   
@@ -354,7 +386,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   @Override
   public void testCleanMultipleRecords() {
-    assertTrue(WaitHelper.isIdle());
     cleanMultipleRecords(
         BookmarkHelpers.createBookmarkInMobileFolder1(),
         BookmarkHelpers.createBookmarkInMobileFolder2(),
@@ -364,8 +395,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
 
   public void testBasicPositioning() {
-    assertTrue(WaitHelper.isIdle());
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createFolder1(),
@@ -376,7 +406,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
                                           + expected[2].guid);
     doStore(session, expected);
 
-    ExpectFetchDelegate delegate = BookmarkHelpers.preparedExpectFetchDelegate(expected);
+    ExpectFetchDelegate delegate = preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
     
     int found = 0;
@@ -401,9 +431,8 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
   
   public void testSqlInjectPurgeDeleteAndUpdateByGuid() {
-    assertTrue(WaitHelper.isIdle());
     // Some setup.
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
     
     ContentValues cv = new ContentValues();
@@ -484,7 +513,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   public void testSqlInjectFetch() {
     // Some setup.
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
 
     // Create and insert 4 bookmarks, last one is evil (attempts injection).
@@ -532,7 +561,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   public void testSqlInjectDelete() {
     // Some setup.
-    RepositorySession session = prepSession();
+    RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
 
     // Create and insert 2 bookmarks, 2nd one is evil (attempts injection).

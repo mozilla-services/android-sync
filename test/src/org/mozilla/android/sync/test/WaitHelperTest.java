@@ -13,6 +13,8 @@ import org.mozilla.gecko.sync.ThreadPool;
 
 import android.test.ActivityInstrumentationTestCase2;
 
+// Extend ActivityInstrumentationTestCase2 rather than AndroidSyncTestCase
+// since we want a fresh WaitHelper each test.
 public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivity> {
   private static final String ERROR_UNIQUE_IDENTIFIER = "error unique identifier";
 
@@ -69,6 +71,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     WaitHelper.resetTestWaiter();
     waitHelper = WaitHelper.getTestWaiter();
     resetNotifyCalled();
+  }
+
+  public void tearDown() {
+    assertTrue(waitHelper.isIdle());
   }
 
   public Runnable performNothingRunnable() {
@@ -241,11 +247,13 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
 
   public void testPerformNotifyMultipleTimesFails() {
     try {
-      waitHelper.performWait(NO_WAIT, performNotifyMultipleTimesRunnable());
+      waitHelper.performWait(NO_WAIT, performNotifyMultipleTimesRunnable()); // Not run on thread, so runnable executes before performWait looks for notifications.
     } catch (WaitHelper.MultipleNotificationsError e) {
       setPerformNotifyErrorCalled();
     }
     assertBothCalled();
+    assertFalse(waitHelper.isIdle()); // First perform notify should be hanging around.
+    waitHelper.performWait(NO_WAIT, performNothingRunnable());
   }
 
   public void testNestedWaitsAndNotifies() {

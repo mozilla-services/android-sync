@@ -16,12 +16,12 @@ public class DefaultBeginDelegate extends DefaultDelegate implements RepositoryS
 
   @Override
   public void onBeginFailed(Exception ex) {
-    sharedFail("Shouldn't fail.");
+    performNotify("Begin failed", ex);
   }
 
   @Override
   public void onBeginSucceeded(RepositorySession session) {
-    sharedFail("Default begin delegate hit.");
+    performNotify("Default begin delegate hit.", null);
   }
 
   @Override

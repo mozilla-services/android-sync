@@ -21,10 +21,12 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void setUp() {
+    assertTrue(WaitHelper.getTestWaiter().isIdle());
   }
+
   @Override
   protected void wipe() {
-    WaitHelper.getTestWaiter().performNotify();
+    assertTrue(WaitHelper.getTestWaiter().isIdle());
   }
 
   @Override
@@ -158,7 +160,7 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
       assertTrue(true);
       return;
     }
-    final RepositorySession session = prepSession();
+    final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, PasswordHelpers.createPassword1()));
   }
 

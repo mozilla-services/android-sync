@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import junit.framework.AssertionFailedError;
 
 import org.mozilla.android.sync.test.helpers.WBORepository;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessBeginDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessCreationDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;
@@ -17,7 +16,6 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
@@ -30,45 +28,10 @@ import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class StoreTrackingTest extends
-    ActivityInstrumentationTestCase2<StubActivity> {
-
-  public StoreTrackingTest() {
-    super(StubActivity.class);
-  }
-
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
-
-  protected static void performWait(Runnable runnable) throws AssertionFailedError {
-    WaitHelper.getTestWaiter().performWait(runnable);
-  }
-
-  protected static void performNotify(AssertionFailedError e) {
-    WaitHelper.getTestWaiter().performNotify(e);
-  }
-
-  protected static void performNotify(InactiveSessionException e) {
-    final AssertionFailedError failed = new AssertionFailedError("Inactive session.");
-    failed.initCause(e);
-    performNotify(failed);
-  }
-
-  protected static void performNotify(InvalidSessionTransitionException e) {
-    final AssertionFailedError failed = new AssertionFailedError("Invalid session transition.");
-    failed.initCause(e);
-    performNotify(failed);
-  }
-
-  protected static void performNotify() {
-    WaitHelper.getTestWaiter().performNotify();
-  }
-
-  public static void assertEq(Object expected, Object actual) {
+public class StoreTrackingTest extends AndroidSyncTestCase {
+  public void assertEq(Object expected, Object actual) {
     try {
       assertEquals(expected, actual);
     } catch (AssertionFailedError e) {

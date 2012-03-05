@@ -8,17 +8,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import junit.framework.AssertionFailedError;
-
 import org.json.simple.JSONArray;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessBeginDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessCreationDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -39,19 +35,13 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<StubActivity> {
+public class BookmarkPositioningTest extends AndroidSyncTestCase {
 
-  protected static final String tag = "BookmarkPositioningTest";
-
-  public BookmarkPositioningTest() {
-    super(StubActivity.class);
-  }
+  protected static final String LOG_TAG = "BookmarkPositioningTest";
 
   public void testRetrieveFolderHasAccurateChildren() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
@@ -330,28 +320,6 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
     assertFalse(tracked.contains(folderGUID));
   }
 
-  public Context getApplicationContext() {
-    return this.getInstrumentation().getTargetContext().getApplicationContext();
-  }
-
-  protected void performWait(Runnable runnable) throws AssertionFailedError {
-    WaitHelper.getTestWaiter().performWait(runnable);
-  }
-
-  protected void performNotify() {
-    WaitHelper.getTestWaiter().performNotify();
-  }
-
-  protected void performNotify(AssertionFailedError e) {
-    WaitHelper.getTestWaiter().performNotify(e);
-  }
-
-  protected void notifyException(String reason, Exception ex) {
-    final AssertionFailedError e = new AssertionFailedError(reason + " : " + ex.getMessage());
-    e.initCause(ex);
-    performNotify(e);
-  }
-
   /**
    * Create and begin a new session, handing control to the delegate when started.
    * Returns when the delegate has notified.
@@ -369,7 +337,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
             try {
               session.begin(beginDelegate);
             } catch (InvalidSessionTransitionException e) {
-              performNotify(new AssertionFailedError("Invalid session transition."));
+              performNotify(e);
             }
           }
         };
@@ -394,9 +362,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
         }
       });
     } catch (InactiveSessionException e) {
-      AssertionFailedError assertionFailed = new AssertionFailedError("Inactive session!");
-      assertionFailed.initCause(e);
-      performNotify(assertionFailed);
+      performNotify(e);
     }
   }
 
@@ -430,7 +396,7 @@ public class BookmarkPositioningTest extends ActivityInstrumentationTestCase2<St
       try {
         session.fetch(new String[] { guid }, fetchDelegate);
       } catch (InactiveSessionException e) {
-        notifyException("Session is inactive.", e);
+        performNotify("Session is inactive.", e);
       }
     }
   }

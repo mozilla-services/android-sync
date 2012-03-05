@@ -1,27 +1,24 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.android.sync.test;
+package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertNotNull;
 
-import org.mozilla.android.sync.test.helpers.DefaultSessionCreationDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectBeginDelegate;
-import org.mozilla.android.sync.test.helpers.ExpectOnlySpecialFoldersDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
+import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 
 import android.content.Context;
 import android.util.Log;
 
-public class AndroidBrowserRepositoryTestHelper {
+public class SessionTestHelper {
 
-  public static RepositorySession prepareRepositorySession(
+  protected static RepositorySession prepareRepositorySession(
       final Context context,
       final boolean begin,
-      final AndroidBrowserRepository repository) {
+      final Repository repository) {
 
     final WaitHelper testWaiter = WaitHelper.getTestWaiter();
 
@@ -74,22 +71,12 @@ public class AndroidBrowserRepositoryTestHelper {
 
     return session;
   }
-  
-  public static RepositorySession prepEmptySession(final Context context, final AndroidBrowserRepository repository) {
-    final WaitHelper testWaiter = WaitHelper.getTestWaiter();
-    final RepositorySession session = prepareRepositorySession(context, true, repository);
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        session.guidsSince(0, new ExpectOnlySpecialFoldersDelegate());
-      }
-    };
-    testWaiter.performWait(runnable);
-    return session;
-  }
-  
-  public static RepositorySession prepEmptySessionWithoutBegin(Context context, AndroidBrowserRepository repository) {
+
+  public static RepositorySession createSession(final Context context, final Repository repository) {
     return prepareRepositorySession(context, false, repository);
   }
 
+  public static RepositorySession createAndBeginSession(Context context, Repository repository) {
+    return prepareRepositorySession(context, true, repository);
+  }
 }

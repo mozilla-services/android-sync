@@ -4,20 +4,13 @@
 
 import java.util.concurrent.ExecutorService;
 
-import junit.framework.AssertionFailedError;
-
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.android.sync.test.helpers.DefaultDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 
-import android.util.Log;
-
-public abstract class SimpleSuccessStoreDelegate implements RepositorySessionStoreDelegate {
+public abstract class SimpleSuccessStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   @Override
   public void onRecordStoreFailed(Exception ex) {
-    Log.w("SimpleSuccessStoreDelegate", "Store failed.", ex);
-    final AssertionFailedError e = new AssertionFailedError("Store failed: " + ex.getMessage());
-    e.initCause(ex);
-    WaitHelper.getTestWaiter().performNotify(e);
+    performNotify("Store failed", ex);
   }
 
   @Override

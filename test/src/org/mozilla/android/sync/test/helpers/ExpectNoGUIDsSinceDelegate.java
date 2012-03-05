@@ -31,6 +31,6 @@ public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
     } catch (AssertionFailedError e) {
       err = e;
     }
-    testWaiter().performNotify(err);
+    performNotify(err);
   }
 }

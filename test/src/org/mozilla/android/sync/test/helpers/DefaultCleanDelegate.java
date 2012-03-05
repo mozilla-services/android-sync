@@ -7,12 +7,12 @@ public class DefaultCleanDelegate extends DefaultDelegate implements RepositoryS
   
   @Override
   public void onCleaned(Repository repo) {
-    sharedFail("Default begin delegate hit.");
+    performNotify("Default begin delegate hit.", null);
   }
 
   @Override
   public void onCleanFailed(Repository repo, Exception ex) {
-    sharedFail("Shouldn't fail.");
+    performNotify("Clean failed.", ex);
   }
 
 }
