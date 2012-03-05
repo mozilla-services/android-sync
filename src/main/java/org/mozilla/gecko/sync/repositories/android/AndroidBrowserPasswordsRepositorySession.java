@@ -32,7 +32,7 @@ public class AndroidBrowserPasswordsRepositorySession extends
   @Override
   protected String buildRecordString(Record record) {
     PasswordRecord rec = (PasswordRecord) record;
-    return rec.hostname + rec.formSubmitURL + rec.httpRealm + rec.username;
+    return rec.hostname + rec.formSubmitURL + rec.httpRealm + rec.encryptedUsername;
   }
 
   @Override
