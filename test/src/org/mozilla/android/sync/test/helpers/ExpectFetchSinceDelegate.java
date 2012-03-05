@@ -28,15 +28,17 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   public void onFetchCompleted(final long fetchEnd) {
     Log.i("ExpectFetchSinceDelegate", "onFetchCompleted.");
     AssertionFailedError err = null;
+    Log.i("ExpectFetchSinceDelegate", "recordsSize:" + records.size());
     try {
-
       int countSpecials = 0;
       for (Record record : records) {
+        // Check if record should be ignored.
         if (!ignore.contains(record.guid)) {
           assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
         } else {
           countSpecials++;
         }
+        // Check that record is later than timestamp-earliest.
         assertTrue(record.lastModified >= this.earliest);
       }
       assertEquals(this.expected.length, records.size() - countSpecials);
