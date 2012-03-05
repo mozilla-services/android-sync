@@ -170,7 +170,7 @@ public class WaitHelper {
     singleWaiter = new WaitHelper();
   }
 
-  public static boolean isIdle() {
-    return getTestWaiter().queue.isEmpty();
+  public boolean isIdle() {
+    return queue.isEmpty();
   }
 }

@@ -10,7 +10,6 @@ import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectInvalidTypeStoreDelegate;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -230,7 +229,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   // Insert two records missing parent, then insert their parent.
   // Make sure they end up with the correct parent on fetch.
   public void testBasicReparenting() throws InactiveSessionException {
-    assertTrue(WaitHelper.isIdle());
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
         BookmarkHelpers.createBookmark2(),
@@ -388,7 +386,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
 
   @Override
   public void testCleanMultipleRecords() {
-    assertTrue(WaitHelper.isIdle());
     cleanMultipleRecords(
         BookmarkHelpers.createBookmarkInMobileFolder1(),
         BookmarkHelpers.createBookmarkInMobileFolder2(),
@@ -398,7 +395,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
 
   public void testBasicPositioning() {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createAndBeginSession();
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
@@ -435,7 +431,6 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   }
   
   public void testSqlInjectPurgeDeleteAndUpdateByGuid() {
-    assertTrue(WaitHelper.isIdle());
     // Some setup.
     RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();

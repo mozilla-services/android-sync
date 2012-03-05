@@ -73,6 +73,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     resetNotifyCalled();
   }
 
+  public void tearDown() {
+    assertTrue(waitHelper.isIdle());
+  }
+
   public Runnable performNothingRunnable() {
     return new Runnable() {
       public void run() {
@@ -243,11 +247,13 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
 
   public void testPerformNotifyMultipleTimesFails() {
     try {
-      waitHelper.performWait(NO_WAIT, performNotifyMultipleTimesRunnable());
+      waitHelper.performWait(NO_WAIT, performNotifyMultipleTimesRunnable()); // Not run on thread, so runnable executes before performWait looks for notifications.
     } catch (WaitHelper.MultipleNotificationsError e) {
       setPerformNotifyErrorCalled();
     }
     assertBothCalled();
+    assertFalse(waitHelper.isIdle()); // First perform notify should be hanging around.
+    waitHelper.performWait(NO_WAIT, performNothingRunnable());
   }
 
   public void testNestedWaitsAndNotifies() {

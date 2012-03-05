@@ -66,6 +66,11 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   public void setUp() {
     helper = getDataAccessor();
     wipe();
+    assertTrue(WaitHelper.getTestWaiter().isIdle());
+  }
+
+  public void tearDown() {
+    assertTrue(WaitHelper.getTestWaiter().isIdle());
   }
 
   protected RepositorySession createSession() {
@@ -701,21 +706,18 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   public void testFetchNullGuids() {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createAndBeginSession();
     performWait(fetchRunnable(session, null, new ExpectInvalidRequestFetchDelegate()));
     dispose(session);
   }
   
   public void testBeginOnNewSession() {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createSession();
     performWait(beginRunnable(session, new ExpectBeginDelegate()));
     dispose(session);
   }
   
   public void testBeginOnRunningSession() {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createAndBeginSession();
     try {
       session.begin(new ExpectBeginFailDelegate());
@@ -727,7 +729,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   public void testBeginOnFinishedSession() throws InactiveSessionException {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createAndBeginSession();
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
     try {
@@ -745,7 +746,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   public void testFinishOnFinishedSession() throws InactiveSessionException {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createAndBeginSession();
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
     try {
@@ -758,7 +758,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   public void testFetchOnInactiveSession() throws InactiveSessionException {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createSession();
     try {
       session.fetch(new String[] { Utils.generateGuid() }, new DefaultFetchDelegate());
@@ -771,7 +770,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
 
   public void testFetchOnFinishedSession() {
-    assertTrue(WaitHelper.isIdle());
     final RepositorySession session = createAndBeginSession();
     Log.i(getName(), "Finishing...");
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
