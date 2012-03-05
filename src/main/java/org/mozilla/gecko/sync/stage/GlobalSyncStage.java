@@ -60,6 +60,7 @@ public interface GlobalSyncStage {
     syncTabs,
     syncBookmarks,
     syncHistory,
+    syncPasswords,
     completed,
   }
   public void execute(GlobalSession session) throws NoSuchStageException;

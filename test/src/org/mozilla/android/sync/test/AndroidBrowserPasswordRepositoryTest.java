@@ -17,7 +17,8 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserRepositoryTest {
 
   // Hacky overrides to avoid test failures until passwords lands.
-  public static boolean shouldSkip = BrowserContractHelpers.PASSWORDS_CONTENT_URI == null;
+//  public static boolean shouldSkip = BrowserContractHelpers.PASSWORDS_CONTENT_URI == null;
+  public static boolean shouldSkip = false;
 
   @Override
   public void setUp() {
