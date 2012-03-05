@@ -48,7 +48,9 @@ public class BrowserContractHelpers extends BrowserContract {
     Passwords.ENCRYPTED_USERNAME,
     Passwords.ENCRYPTED_PASSWORD,
     Passwords.ENC_TYPE,
+    Passwords.TIME_CREATED,
     Passwords.TIME_LAST_USED,
+    Passwords.TIME_PASSWORD_CHANGED,
     Passwords.TIMES_USED
   };
 

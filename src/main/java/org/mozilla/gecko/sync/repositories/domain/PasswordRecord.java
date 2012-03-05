@@ -67,12 +67,15 @@ public class PasswordRecord extends Record {
   public String httpRealm;
   // TODO these are encrypted in the passwords content provider,
   // need to figure out what we need to do here.
-  public String username;
-  public String password;
   public String usernameField;
   public String passwordField;
+  public String encryptedUsername;
+  public String encryptedPassword;
   public String encType;
+
+  public long   timeCreated;
   public long   timeLastUsed;
+  public long   timePasswordChanged;
   public long   timesUsed;
 
 
@@ -86,12 +89,16 @@ public class PasswordRecord extends Record {
     out.hostname      = this.hostname;
     out.formSubmitURL = this.formSubmitURL;
     out.httpRealm     = this.httpRealm;
-    out.username      = this.username;
-    out.password      = this.password;
+
     out.usernameField = this.usernameField;
     out.passwordField = this.passwordField;
+    out.encryptedUsername      = this.encryptedUsername;
+    out.encryptedPassword      = this.encryptedPassword;
     out.encType       = this.encType;
+
+    out.timeCreated   = this.timeCreated;
     out.timeLastUsed  = this.timeLastUsed;
+    out.timePasswordChanged = this.timePasswordChanged;
     out.timesUsed     = this.timesUsed;
 
     return out;
@@ -119,10 +126,10 @@ public class PasswordRecord extends Record {
     return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
         && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
-        && RepoUtils.stringsEqual(this.username, other.username)
-        && RepoUtils.stringsEqual(this.password, other.password)
         && RepoUtils.stringsEqual(this.usernameField, other.usernameField)
         && RepoUtils.stringsEqual(this.passwordField, other.passwordField)
+        && RepoUtils.stringsEqual(this.encryptedUsername, other.encryptedUsername)
+        && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword)
         && RepoUtils.stringsEqual(this.encType, other.encType);
   }
 
@@ -138,12 +145,14 @@ public class PasswordRecord extends Record {
     return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
         && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
-        && RepoUtils.stringsEqual(this.username, other.username)
-        && RepoUtils.stringsEqual(this.password, other.password)
         && RepoUtils.stringsEqual(this.usernameField, other.usernameField)
         && RepoUtils.stringsEqual(this.passwordField, other.passwordField)
+        && RepoUtils.stringsEqual(this.encryptedUsername, other.encryptedUsername)
+        && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword)
         && RepoUtils.stringsEqual(this.encType, other.encType)
+        && (this.timeCreated == other.timeCreated)
         && (this.timeLastUsed == other.timeLastUsed)
+        && (this.timePasswordChanged == other.timePasswordChanged)
         && (this.timesUsed == other.timesUsed);
   }
 

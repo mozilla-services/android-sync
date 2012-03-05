@@ -176,10 +176,12 @@ public class RepoUtils {
     rec.encType = getStringFromCursor(cur, BrowserContract.Passwords.ENC_TYPE);
     
     // TODO decryption of username/password here (Bug 711636)
-    rec.username = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
-    rec.password = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
-    
+    rec.encryptedUsername = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
+    rec.encryptedPassword = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
+
+    rec.timeCreated = getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED);
     rec.timeLastUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED);
+    rec.timePasswordChanged = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
     rec.timesUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED);
     
     return rec;

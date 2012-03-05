@@ -37,6 +37,7 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -55,20 +56,22 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
     PasswordRecord rec = (PasswordRecord) record;
 
     ContentValues cv = new ContentValues();
-    cv.put(PasswordColumns.GUID,            rec.guid);
-    cv.put(PasswordColumns.HOSTNAME,        rec.hostname);
-    cv.put(PasswordColumns.HTTP_REALM,      rec.httpRealm);
-    cv.put(PasswordColumns.FORM_SUBMIT_URL, rec.formSubmitURL);
-    cv.put(PasswordColumns.USERNAME_FIELD,  rec.usernameField);
-    cv.put(PasswordColumns.PASSWORD_FIELD,  rec.passwordField);
+    cv.put(BrowserContract.Passwords.GUID,            rec.guid);
+    cv.put(BrowserContract.Passwords.HOSTNAME,        rec.hostname);
+    cv.put(BrowserContract.Passwords.HTTP_REALM,      rec.httpRealm);
+    cv.put(BrowserContract.Passwords.FORM_SUBMIT_URL, rec.formSubmitURL);
+    cv.put(BrowserContract.Passwords.USERNAME_FIELD,  rec.usernameField);
+    cv.put(BrowserContract.Passwords.PASSWORD_FIELD,  rec.passwordField);
     
     // TODO Do encryption of username/password here. Bug 711636
-    cv.put(PasswordColumns.ENC_TYPE,           rec.encType);
-    cv.put(PasswordColumns.ENCRYPTED_USERNAME, rec.username);
-    cv.put(PasswordColumns.ENCRYPTED_PASSWORD, rec.password);
+    cv.put(BrowserContract.Passwords.ENC_TYPE,           rec.encType);
+    cv.put(BrowserContract.Passwords.ENCRYPTED_USERNAME, rec.encryptedUsername);
+    cv.put(BrowserContract.Passwords.ENCRYPTED_PASSWORD, rec.encryptedPassword);
     
-    cv.put(PasswordColumns.TIMES_USED,     rec.timesUsed);
-    cv.put(PasswordColumns.TIME_LAST_USED, rec.timeLastUsed);
+    cv.put(BrowserContract.Passwords.TIME_CREATED,   rec.timeCreated);
+    cv.put(BrowserContract.Passwords.TIME_LAST_USED, rec.timeLastUsed);
+    cv.put(BrowserContract.Passwords.TIME_PASSWORD_CHANGED, rec.timePasswordChanged);
+    cv.put(BrowserContract.Passwords.TIMES_USED,     rec.timesUsed);
     return cv;
   }
 
