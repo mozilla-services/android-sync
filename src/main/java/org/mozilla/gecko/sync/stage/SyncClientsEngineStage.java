@@ -19,9 +19,9 @@ import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.WBORequestDelegate;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
@@ -127,7 +127,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
-  public class ClientUploadDelegate implements SyncStorageRequestDelegate {
+  public class ClientUploadDelegate extends WBORequestDelegate {
     protected static final String LOG_TAG = "ClientUploadDelegate";
 
     @Override
@@ -164,6 +164,16 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     public void handleRequestError(Exception ex) {
       Logger.info(LOG_TAG, "Client upload error. Aborting sync.");
       session.abort(ex, "Client upload failed.");
+    }
+
+    @Override
+    public KeyBundle keyBundle() {
+      try {
+        return session.keyForCollection(COLLECTION_NAME);
+      } catch (NoCollectionKeysSetException e) {
+        session.abort(e, "No collection keys set.");
+        return null;
+      }
     }
   }
 
@@ -206,7 +216,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     String encryptionFailure = "Couldn't encrypt new client record.";
     CryptoRecord cryptoRecord = localClient.getEnvelope();
     try {
-      cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
+      cryptoRecord.keyBundle = clientUploadDelegate.keyBundle();
       cryptoRecord.encrypt();
       this.wipeAndStore(localClient);
       this.uploadClientRecord(cryptoRecord);
