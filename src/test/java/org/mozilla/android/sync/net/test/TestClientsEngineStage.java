@@ -123,7 +123,8 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
       super(clusterURL, username, password, syncKeyBundle, callback);
     }
   
-    public ClientsDataDelegate getClientsDataDelegate() {
+    @Override
+    public ClientsDataDelegate getClientsDelegate() {
       return clientsDataDelegate;
     }
   }
