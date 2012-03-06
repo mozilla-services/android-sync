@@ -48,7 +48,6 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
 
   @Before
   public void setup() {
-    clientDownloadDelegate = new TestClientDownloadDelegate();
     MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
 
     try {
@@ -68,6 +67,11 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     clientsDataDelegate = new MockClientsDataDelegate();
     localClient = new ClientRecord(clientsDataDelegate.getAccountGUID());
     db = new MockClientsDatabaseAccessor();
+  }
+
+  @Override
+  protected ClientDownloadDelegate makeClientDownloadDelegate() {
+    return new TestClientDownloadDelegate();
   }
 
   @Override
@@ -205,7 +209,7 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   }
 
   private CryptoRecord cryptoFromClient(ClientRecord record) {
-    CryptoRecord cryptoRecord = record.getPayload();
+    CryptoRecord cryptoRecord = record.getEnvelope();
     cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
     try {
       cryptoRecord.encrypt();

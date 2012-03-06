@@ -25,7 +25,7 @@ public class TestClientRecord extends AndroidTestCase{
   public void testGetPayload() {
     // Test ClientRecord.getPayload().
     ClientRecord record = new ClientRecord();
-    CryptoRecord cryptoRecord = record.getPayload();
+    CryptoRecord cryptoRecord = record.getEnvelope();
     assertEquals(record.guid, cryptoRecord.payload.get("id"));
     assertEquals(null, cryptoRecord.payload.get("collection"));
     assertEquals(null, cryptoRecord.payload.get("lastModified"));
@@ -37,7 +37,7 @@ public class TestClientRecord extends AndroidTestCase{
   public void testInitFromPayload() {
     // Test ClientRecord.initFromPayload() in ClientRecordFactory.
     ClientRecord record1 = new ClientRecord();
-    CryptoRecord cryptoRecord = record1.getPayload();
+    CryptoRecord cryptoRecord = record1.getEnvelope();
     ClientRecordFactory factory = new ClientRecordFactory();
     ClientRecord record2 = (ClientRecord) factory.createRecord(cryptoRecord);
     assertEquals(cryptoRecord.payload.get("id"), record2.guid);

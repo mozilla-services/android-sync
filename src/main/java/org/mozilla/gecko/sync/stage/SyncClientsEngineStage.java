@@ -172,7 +172,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     init();
 
     if (shouldDownload()) {
-      clientDownloadDelegate = new ClientDownloadDelegate();
       downloadClientRecords();   // Will kick off upload, too…
     } else {
       // Upload if necessary.
@@ -204,7 +203,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     // Generate CryptoRecord from ClientRecord to upload.
     String encryptionFailure = "Couldn't encrypt new client record.";
-    CryptoRecord cryptoRecord = localClient.getPayload();
+    CryptoRecord cryptoRecord = localClient.getEnvelope();
     try {
       cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
       cryptoRecord.encrypt();
@@ -219,6 +218,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
   protected void downloadClientRecords() {
     shouldWipe = true;
+    clientDownloadDelegate = makeClientDownloadDelegate();
 
     try {
       URI getURI = session.config.collectionURI(COLLECTION_NAME, true);
@@ -241,6 +241,10 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
     }
+  }
+
+  protected ClientDownloadDelegate makeClientDownloadDelegate() {
+    return new ClientDownloadDelegate();
   }
 
   protected void wipeAndStore(ClientRecord record) {

@@ -19,7 +19,7 @@ public class ClientRecordFactory extends RecordFactory {
     String type = (String) p.get("type");
 
     ClientRecord r = new ClientRecord(guid, name, type);
-    r.initFromPayload((CryptoRecord) record);
+    r.initFromEnvelope((CryptoRecord) record);
     return r;
   }
 }

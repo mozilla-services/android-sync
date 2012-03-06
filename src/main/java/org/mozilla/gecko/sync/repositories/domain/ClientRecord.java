@@ -4,9 +4,7 @@
 
 package org.mozilla.gecko.sync.repositories.domain;
 
-import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -51,32 +49,13 @@ public class ClientRecord extends Record {
   public final String type;
 
   @Override
-  public void initFromPayload(CryptoRecord payload) {
-    ExtendedJSONObject p = payload.payload;
-    this.checkGUIDs(p);
-
-    this.lastModified = payload.lastModified;
-    this.collection   = payload.collection;
-    final Object del = p.get("deleted");
-    if (del instanceof Boolean) {
-      this.deleted = (Boolean) del;
-    }
-  }
+  protected void initFromPayload(ExtendedJSONObject payload) {}
 
   @Override
-  public CryptoRecord getPayload() {
-    CryptoRecord rec = new CryptoRecord(this);
-    rec.payload = new ExtendedJSONObject();
-    Logger.debug(LOG_TAG, "Getting payload for client record " + this.guid + " (" + this.guid.length() + ").");
-
-    if (this.deleted) {
-      rec.payload.put("deleted", true);
-    } else {
-      putPayload(rec, "id",   this.guid);
-      putPayload(rec, "name", this.name);
-      putPayload(rec, "type", this.type);
-    }
-    return rec;
+  protected void populatePayload(ExtendedJSONObject payload) {
+    putPayload(payload, "id",   this.guid);
+    putPayload(payload, "name", this.name);
+    putPayload(payload, "type", this.type);
   }
 
   public boolean equals(Object o) {
