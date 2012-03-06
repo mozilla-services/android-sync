@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -22,7 +23,11 @@ import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
+import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -46,13 +51,23 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   private ArrayList<ClientRecord> expectedClients = new ArrayList<ClientRecord>();
   private ArrayList<ClientRecord> downloadedClients = new ArrayList<ClientRecord>();
 
+  // For test purposes.
+  private ClientRecord lastComputedLocalClientRecord;
+
+  @Override
+  protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
+    lastComputedLocalClientRecord = super.newLocalClientRecord(delegate);
+    return lastComputedLocalClientRecord;
+  }
+
   @Before
   public void setup() {
     MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
 
     try {
-      session = new MockGlobalSession(TEST_SERVER, USERNAME, PASSWORD,
-          new KeyBundle(USERNAME, SYNC_KEY), callback);
+      final KeyBundle bundle = new KeyBundle(USERNAME, SYNC_KEY);
+      session = new MockClientsGlobalSession(TEST_SERVER, USERNAME, PASSWORD,
+                                             bundle, callback);
       session.config.setClusterURL(TEST_SERVER);
       session.setCollectionKeys(CollectionKeys.generateCollectionKeys());
     } catch (Exception e) {
@@ -64,8 +79,6 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   @Before
   @Override
   public void init() {
-    clientsDataDelegate = new MockClientsDataDelegate();
-    localClient = new ClientRecord(clientsDataDelegate.getAccountGUID());
     db = new MockClientsDatabaseAccessor();
   }
 
@@ -92,6 +105,27 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   public void checkAndUpload() {
     clientUploadDelegate = new MockClientUploadDelegate();
     super.checkAndUpload();
+  }
+
+  public static class MockClientsGlobalSession extends MockGlobalSession {
+    private ClientsDataDelegate clientsDataDelegate = new MockClientsDataDelegate();
+  
+    public MockClientsGlobalSession(String clusterURL,
+                                    String username,
+                                    String password,
+                                    KeyBundle syncKeyBundle,
+                                    GlobalSessionCallback callback)
+        throws SyncConfigurationException,
+               IllegalArgumentException,
+               IOException,
+               ParseException,
+               NonObjectJSONException {
+      super(clusterURL, username, password, syncKeyBundle, callback);
+    }
+  
+    public ClientsDataDelegate getClientsDataDelegate() {
+      return clientsDataDelegate;
+    }
   }
 
   public class TestClientDownloadDelegate extends ClientDownloadDelegate {
@@ -161,6 +195,54 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     }
   }
 
+  public class UploadMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      try {
+        CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
+        cryptoRecord.keyBundle = session.keyForCollection(COLLECTION_NAME);
+        ClientRecord r = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
+  
+        // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.
+        // So its value is null and is set here so ClientRecord.equals() may be used.
+        r.collection = lastComputedLocalClientRecord.collection;
+        assertTrue(lastComputedLocalClientRecord.equals(r));
+      } catch (Exception e) {
+        fail("Error handling uploaded client record in UploadMockServer.");
+      }
+      super.handle(request, response);
+    }
+  }
+
+  public class DownloadMockServer extends MockServer {
+    @Override
+    public void handle(Request request, Response response) {
+      try {
+        PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/newlines");
+        for (int i = 0; i < 5; i++) {
+          ClientRecord record = new ClientRecord();
+          expectedClients.add(record);
+          CryptoRecord cryptoRecord = cryptoFromClient(record);
+          bodyStream.print(cryptoRecord.toJSONString() + "\n");
+        }
+        bodyStream.close();
+      } catch (IOException e) {
+        fail("Error handling downloaded client records in DownloadMockServer.");
+      }
+    }
+  }
+
+  private CryptoRecord cryptoFromClient(ClientRecord record) {
+    CryptoRecord cryptoRecord = record.getEnvelope();
+    cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
+    try {
+      cryptoRecord.encrypt();
+    } catch (Exception e) {
+      fail("Cannot encrypt client record.");
+    }
+    return cryptoRecord;
+  }
+
   @Test
   public void testWipeAndStoreShouldNotWipe() {
     assertFalse(shouldWipe);
@@ -184,57 +266,9 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     ((MockClientsDatabaseAccessor)db).resetVars();
   }
 
-  public class UploadMockServer extends MockServer {
-    @Override
-    public void handle(Request request, Response response) {
-      try {
-        CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
-        cryptoRecord.keyBundle = session.keyForCollection(COLLECTION_NAME);
-        ClientRecord r = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
-
-        // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.
-        // So its value is null and is set here so ClientRecord.equals() may be used.
-        r.collection = localClient.collection;
-        assertTrue(localClient.equals(r));
-      } catch (Exception e) {
-        fail("Error handling uploaded client record in UploadMockServer.");
-      }
-      super.handle(request, response);
-    }
-  }
-
   @Test
   public void testCheckAndUploadClientRecord() {
     this.checkAndUpload();
-  }
-
-  private CryptoRecord cryptoFromClient(ClientRecord record) {
-    CryptoRecord cryptoRecord = record.getEnvelope();
-    cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
-    try {
-      cryptoRecord.encrypt();
-    } catch (Exception e) {
-      fail("Cannot encrypt client record.");
-    }
-    return cryptoRecord;
-  }
-
-  public class DownloadMockServer extends MockServer {
-    @Override
-    public void handle(Request request, Response response) {
-      try {
-        PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/newlines");
-        for (int i = 0; i < 5; i++) {
-          ClientRecord record = new ClientRecord();
-          expectedClients.add(record);
-          CryptoRecord cryptoRecord = cryptoFromClient(record);
-          bodyStream.print(cryptoRecord.toJSONString() + "\n");
-        }
-        bodyStream.close();
-      } catch (IOException e) {
-        fail("Error handling downloaded client records in DownloadMockServer.");
-      }
-    }
   }
 
   @Test

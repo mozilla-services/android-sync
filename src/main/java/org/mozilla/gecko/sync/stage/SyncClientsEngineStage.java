@@ -40,9 +40,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected ClientsDatabaseAccessor db;
 
   // Account/Profile info
-  protected ClientRecord localClient;
   protected boolean shouldWipe;
-  protected ClientsDataDelegate clientsDataDelegate;
 
   /**
    * The following two delegates, ClientDownloadDelegate and ClientUploadDelegate
@@ -72,7 +70,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     public void handleRequestSuccess(SyncStorageResponse response) {
       try {
         clientUploadDelegate = new ClientUploadDelegate();
-        clientsDataDelegate.setClientsCount(db.clientsCount());
+        session.getClientsDelegate().setClientsCount(db.clientsCount());
         checkAndUpload();
       } finally {
         // Close the database to clear cached readableDatabase/writableDatabase
@@ -189,9 +187,16 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
+  protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
+    final String ourGUID = delegate.getAccountGUID();
+    final String ourName = delegate.getClientName();
+
+    ClientRecord r = new ClientRecord(ourGUID);
+    r.name = ourName;
+    return r;    
+  }
+
   protected void init() {
-    clientsDataDelegate = session.getClientsDelegate();
-    localClient = new ClientRecord(clientsDataDelegate.getAccountGUID(), clientsDataDelegate.getClientName());
     db = new ClientsDatabaseAccessor(session.getContext());
   }
 
@@ -214,6 +219,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     // Generate CryptoRecord from ClientRecord to upload.
     String encryptionFailure = "Couldn't encrypt new client record.";
+    ClientRecord localClient  = newLocalClientRecord(session.getClientsDelegate());
     CryptoRecord cryptoRecord = localClient.getEnvelope();
     try {
       cryptoRecord.keyBundle = clientUploadDelegate.keyBundle();
