@@ -25,7 +25,7 @@ public class MockGlobalSession extends GlobalSession {
   public MockGlobalSession(String clusterURL, String username, String password,
 				  KeyBundle syncKeyBundle, GlobalSessionCallback callback)
     throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
-    super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, null, syncKeyBundle, callback, /* context */ null, null);
+    super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, null, syncKeyBundle, callback, /* context */ null, null, null);
   }
 
   /*
@@ -59,5 +59,6 @@ public class MockGlobalSession extends GlobalSession {
     stages.put(Stage.fetchMetaGlobal,         new MockServerSyncStage());
     stages.put(Stage.ensureKeysStage,         new MockServerSyncStage());
     stages.put(Stage.ensureClusterURL,        new MockServerSyncStage());
+    stages.put(Stage.syncClientsEngine,       new MockServerSyncStage());
   }
 }
