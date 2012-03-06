@@ -213,6 +213,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
   protected void checkAndUpload() {
     if (!shouldUpload()) {
+      Logger.trace(LOG_TAG, "Not uploading client record.");
       session.advance();
       return;
     }
@@ -242,6 +243,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
       SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI);
       request.delegate = clientDownloadDelegate;
+
+      Logger.trace(LOG_TAG, "Downloading client records.");
       request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
