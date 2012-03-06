@@ -81,7 +81,9 @@ public class ClientsDatabaseAccessor {
     String accountGUID = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_ACCOUNT_GUID);
     String clientName = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_NAME);
     String clientType = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_TYPE);
-    ClientRecord record = new ClientRecord(accountGUID, clientName, clientType);
+    ClientRecord record = new ClientRecord(accountGUID);
+    record.name = clientName;
+    record.type = clientType;
     return record;
   }
 

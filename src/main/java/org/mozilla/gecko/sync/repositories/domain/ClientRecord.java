@@ -10,46 +10,37 @@ import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.setup.Constants;
 
 public class ClientRecord extends Record {
-  private static final String LOG_TAG = "ClientRecord";
 
   public static final String COLLECTION_NAME = "clients";
 
-  public ClientRecord(String guid, String name, String type, String collection, long lastModified,
-      boolean deleted) {
+  public ClientRecord(String guid, String collection, long lastModified, boolean deleted) {
     super(guid, collection, lastModified, deleted);
-    this.name = name;
-    this.type = type;
   }
 
-  public ClientRecord(String guid, String name, String type, String collection, long lastModified) {
-    this(guid, name, type, collection, lastModified, false);
+  public ClientRecord(String guid, String collection, long lastModified) {
+    this(guid, collection, lastModified, false);
   }
 
-  public ClientRecord(String guid, String name, String type, String collection) {
-    this(guid, name, type, collection, 0, false);
-  }
-
-  public ClientRecord(String guid, String name, String type) {
-    this(guid, name, type, COLLECTION_NAME, 0, false);
-  }
-
-  public ClientRecord(String guid, String name) {
-    this(guid, name, Constants.CLIENT_TYPE, COLLECTION_NAME, 0, false);
+  public ClientRecord(String guid, String collection) {
+    this(guid, collection, 0, false);
   }
 
   public ClientRecord(String guid) {
-    this(guid, Constants.DEFAULT_CLIENT_NAME, Constants.CLIENT_TYPE, COLLECTION_NAME, 0, false);
+    this(guid, COLLECTION_NAME, 0, false);
   }
 
   public ClientRecord() {
-    this(Utils.generateGuid(), Constants.DEFAULT_CLIENT_NAME, Constants.CLIENT_TYPE, COLLECTION_NAME, 0, false);
+    this(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
 
-  public final String name;
-  public final String type;
+  public String name = Constants.DEFAULT_CLIENT_NAME;
+  public String type = Constants.CLIENT_TYPE;
 
   @Override
-  protected void initFromPayload(ExtendedJSONObject payload) {}
+  protected void initFromPayload(ExtendedJSONObject payload) {
+    this.name = (String) payload.get("name");
+    this.type = (String) payload.get("type");
+  }
 
   @Override
   protected void populatePayload(ExtendedJSONObject payload) {
@@ -73,11 +64,12 @@ public class ClientRecord extends Record {
 
   @Override
   public Record copyWithIDs(String guid, long androidID) {
-    ClientRecord out = new ClientRecord(guid, this.name, this.type,
-        this.collection, this.lastModified, this.deleted);
+    ClientRecord out = new ClientRecord(guid, this.collection, this.lastModified, this.deleted);
     out.androidID = androidID;
     out.sortIndex = this.sortIndex;
 
+    out.name = this.name;
+    out.type = this.type;
     return out;
   }
 
