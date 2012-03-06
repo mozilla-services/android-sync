@@ -172,7 +172,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     init();
 
     if (shouldDownload()) {
-      downloadClientRecords();   // Will kick off upload, too…
+      downloadClientRecords();   // Will kick off upload, too‚Ä¶
     } else {
       // Upload if necessary.
     }
