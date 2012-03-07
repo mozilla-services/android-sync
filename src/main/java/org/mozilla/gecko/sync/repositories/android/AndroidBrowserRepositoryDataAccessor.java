@@ -65,10 +65,20 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   /**
    * Produce a <code>ContentValues</code> instance that represents the provided <code>Record</code>.
    *
-   * @param record The <code>Record</code> to be converted.
+   * @param record
+   *          The <code>Record</code> to be converted.
    * @return The <code>ContentValues</code> corresponding to <code>record</code>.
    */
-  protected abstract ContentValues getContentValues(Record record);
+  protected abstract ContentValues getContentValuesForInsert(Record record);
+
+  /**
+   * Produce a <code>ContentValues</code> instance that represents the provided <code>Record</code>.
+   *
+   * @param record
+   *          The <code>Record</code> to be converted.
+   * @return The <code>ContentValues</code> corresponding to <code>record</code>.
+   */
+  protected abstract ContentValues getContentValuesForUpdate(Record record);
 
   protected abstract Uri getUri();
 
@@ -127,7 +137,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   public void update(String guid, Record newRecord) {
     String where  = BrowserContract.SyncColumns.GUID + " = ?";
     String[] args = new String[] { guid };
-    ContentValues cv = getContentValues(newRecord);
+    ContentValues cv = getContentValuesForUpdate(newRecord);
     int updated = context.getContentResolver().update(getUri(), cv, where, args);
     if (updated != 1) {
       Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + guid);
@@ -135,7 +145,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
 
   public Uri insert(Record record) {
-    ContentValues cv = getContentValues(record);
+    ContentValues cv = getContentValuesForInsert(record);
     return context.getContentResolver().insert(getUri(), cv);
   }
 

@@ -34,7 +34,6 @@ public class AndroidBrowserHistoryDataAccessor extends
     return BrowserContractHelpers.HISTORY_CONTENT_URI;
   }
 
-  @Override
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
     HistoryRecord rec = (HistoryRecord) record;
@@ -57,6 +56,16 @@ public class AndroidBrowserHistoryDataAccessor extends
       cv.put(BrowserContract.History.VISITS, Long.toString(visits.size()));
     }
     return cv;
+  }
+
+  protected ContentValues getContentValuesForInsert(Record record) {
+    // Timestamps set by ContentProvider.
+    return getContentValues(record);
+  }
+
+  protected ContentValues getContentValuesForUpdate(Record record) {
+    // Timestamps set by ContentProvider.
+    return getContentValues(record);
   }
 
   @Override

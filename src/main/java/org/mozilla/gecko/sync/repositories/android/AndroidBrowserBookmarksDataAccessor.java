@@ -185,7 +185,6 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return(RepoUtils.getAndroidIdFromUri(insert(record)));
   }
 
-  @Override
   protected ContentValues getContentValues(Record record) {
     ContentValues cv = new ContentValues();
     BookmarkRecord rec = (BookmarkRecord) record;
@@ -210,6 +209,16 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     // Note that we don't set the modified timestamp: we allow the
     // content provider to do that for us.
     return cv;
+  }
+
+  protected ContentValues getContentValuesForInsert(Record record) {
+    // Timestamps set by ContentProvider.
+    return getContentValues(record);
+  }
+
+  protected ContentValues getContentValuesForUpdate(Record record) {
+    // Timestamps set by ContentProvider.
+    return getContentValues(record);
   }
 
   /**
