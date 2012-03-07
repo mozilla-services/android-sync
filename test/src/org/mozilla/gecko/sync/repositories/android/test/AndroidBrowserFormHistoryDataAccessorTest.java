@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import org.mozilla.android.sync.test.helpers.FormHistoryHelpers;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserFormHistoryDataAccessor;
@@ -19,9 +20,9 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
 public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumentationTestCase2<StubActivity> {
+  protected static final String LOG_TAG = "SyncFormHistDAccessTest";
 
   protected AndroidBrowserFormHistoryDataAccessor accessor = null;
-  protected static final String LOG_TAG = "SyncFormHistDAccessTest";
 
   public AndroidBrowserFormHistoryDataAccessorTest() {
     super(StubActivity.class);
@@ -32,7 +33,10 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   }
 
   public void setUp() {
+    Logger.debug(LOG_TAG, "FormHistory tables before wipe...");
     accessor = new AndroidBrowserFormHistoryDataAccessor(getApplicationContext());
+    accessor.dumpDB();
+    Logger.debug(LOG_TAG, "FormHistory tables before wipe... DONE");
     accessor.wipe();
   }
 
@@ -55,6 +59,16 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
         cur.close();
       }
     }
+  }
+
+  public void testWipe() throws NullCursorException {
+    doInsertRecords(new FormHistoryRecord[] {FormHistoryHelpers.createFormHistory1(), FormHistoryHelpers.createFormHistory2()});
+    accessor.wipe();
+    accessor.dumpDB();
+
+    Cursor cur = accessor.fetchAll();
+    assertEquals(0, cur.getCount());
+    cur.close();
   }
 
   public void testInsert() throws NullCursorException {
