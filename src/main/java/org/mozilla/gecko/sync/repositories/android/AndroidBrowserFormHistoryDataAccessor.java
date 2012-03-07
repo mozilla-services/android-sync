@@ -113,7 +113,7 @@ public class AndroidBrowserFormHistoryDataAccessor extends
   }
 
   public FormHistoryRecord logFormHistory(FormHistoryRecord record) {
-    record.log(LOG_TAG());
+    record.log(LOG_TAG);
     return record;
   }
 }
