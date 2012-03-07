@@ -63,7 +63,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   protected abstract String[] getAllColumns();
 
   /**
-   * Convert a <code>Record</code> into a <code>ContentValues</code>.
+   * Produce a <code>ContentValues</code> instance that represents the provided <code>Record</code>.
    *
    * @param record The <code>Record</code> to be converted.
    * @return The <code>ContentValues</code> corresponding to <code>record</code>.
@@ -94,7 +94,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public void wipe() {
     Uri uri = getUri();
-    Logger.info(LOG_TAG, "wiping: " + uri);
+    Logger.debug(LOG_TAG, "Wiping: " + uri);
     context.getContentResolver().delete(uri, null, null);
   }
 
