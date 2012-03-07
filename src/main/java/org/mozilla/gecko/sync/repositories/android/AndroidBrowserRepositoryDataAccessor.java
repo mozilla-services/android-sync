@@ -38,6 +38,8 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import java.util.ArrayList;
+
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
@@ -50,10 +52,10 @@ import android.net.Uri;
 
 public abstract class AndroidBrowserRepositoryDataAccessor {
 
-  private static final String[] GUID_COLUMNS = new String[] { BrowserContract.SyncColumns.GUID };
+  protected static final String[] GUID_COLUMNS = new String[] { BrowserContract.SyncColumns.GUID };
   protected Context context;
   protected static String LOG_TAG = "BrowserDataAccessor";
-  private final RepoUtils.QueryHelper queryHelper;
+  protected final RepoUtils.QueryHelper queryHelper;
 
   public AndroidBrowserRepositoryDataAccessor(Context context) {
     this.context = context;
@@ -61,9 +63,45 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
 
   protected abstract String[] getAllColumns();
+  /**
+   * Override this to add timestamps to an about-to-be-inserted record.
+   * @param values The <code>ContentValues</code> to be inserted.
+   * @param record The <code>Record</code> that <code>values</code> was generated from.
+   */
+
+  /**
+   * Convert a <code>Record</code> into a <code>ContentValues</code>.
+   *
+   * @param record The <code>Record</code> to be converted.
+   * @return The <code>ContentValues</code> corresponding to <code>record</code>.
+   */
   protected abstract ContentValues getContentValues(Record record);
+
+  /**
+   * Override this to add timestamps to an about-to-be-inserted record.
+   *
+   * @param values The <code>ContentValues</code> to be inserted.
+   * @param record The <code>Record</code> that <code>values</code> was generated from.
+   */
+  protected void addTimestampsForInsert(ContentValues values, Record record) {
+    // By default, let the Content Provider update timestamps for about-to-be-inserted records.
+  }
+
+  /**
+   * Override this to add timestamps to an about-to-be-updated record.
+   *
+   * @param values The <code>ContentValues</code> to be inserted.
+   * @param record The <code>Record</code> that <code>values</code> was generated from.
+   */
+  protected void addTimestampsForUpdate(ContentValues values, Record record) {
+    // By default, let the Content Provider update timestamps for about-to-be-updated records.
+  }
+
   protected abstract Uri getUri();
 
+  /**
+   * Dump all the records in raw format.
+   */
   public void dumpDB() {
     Cursor cur = null;
     try {
@@ -86,24 +124,33 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     Logger.info(LOG_TAG, "wiping: " + uri);
     context.getContentResolver().delete(uri, null, null);
   }
-  
-  public void purgeDeleted() throws NullCursorException {
-    String where = BrowserContract.SyncColumns.IS_DELETED + "= 1";
-    Cursor cur = queryHelper.safeQuery(".purgeDeleted", GUID_COLUMNS, where, null, null);
 
+  public ArrayList<String> deletedGuids() throws NullCursorException {
+    String where = BrowserContract.SyncColumns.IS_DELETED + "= 1";
+    Cursor cur = queryHelper.safeQuery(".deletedGuids", GUID_COLUMNS, where, null, null);
+
+    ArrayList<String> deletedGuids = new ArrayList<String>();
     try {
       if (!cur.moveToFirst()) {
-        return;
+        return deletedGuids;
       }
       while (!cur.isAfterLast()) {
-        delete(RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID));
+        String deletedGuid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+        deletedGuids.add(deletedGuid);
         cur.moveToNext();
       }
     } finally {
       cur.close();
     }
+    return deletedGuids;
   }
-  
+
+  public void purgeDeleted() throws NullCursorException {
+    for (String deletedGuid : deletedGuids()) {
+      delete(deletedGuid);
+    }
+  }
+
   protected void delete(String guid) {
     String where  = BrowserContract.SyncColumns.GUID + " = ?";
     String[] args = new String[] { guid };
@@ -112,21 +159,35 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     if (deleted == 1) {
       return;
     }
-    Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows for guid " + guid);
+    Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows (for guid " + guid);
+  }
+
+  public void delete(Record record) {
+    delete(record.guid);
   }
 
   public void update(String guid, Record newRecord) {
+    ContentValues cv = getContentValues(newRecord);
+    addTimestampsForInsert(cv, newRecord);
+    updateByGuid(guid, cv);
+  }
+
+  public void updateByGuid(String guid, ContentValues cv) {
     String where  = BrowserContract.SyncColumns.GUID + " = ?";
     String[] args = new String[] { guid };
-    ContentValues cv = getContentValues(newRecord);
+
     int updated = context.getContentResolver().update(getUri(), cv, where, args);
-    if (updated != 1) {
-      Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + guid);
+    if (updated == 1) {
+      return;
+    } else {
+      Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows (for guid " + guid);
+      throw new RuntimeException();
     }
   }
 
   public Uri insert(Record record) {
     ContentValues cv = getContentValues(record);
+    addTimestampsForInsert(cv, record);
     return context.getContentResolver().insert(getUri(), cv);
   }
 
@@ -140,7 +201,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   public Cursor fetchAll() throws NullCursorException {
     return queryHelper.safeQuery(".fetchAll", getAllColumns(), null, null, null);
   }
-  
+
   /**
    * Fetch GUIDs for records modified since the provided timestamp.
    * The caller is responsible for closing the cursor.
@@ -196,27 +257,5 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     }
     builder.append(")");
     return builder.toString();
-  }
-
-  public void delete(Record record) {
-    String where  = BrowserContract.SyncColumns.GUID + " = ?";
-    String[] args = new String[] { record.guid };
-
-    int deleted = context.getContentResolver().delete(getUri(), where, args);
-    if (deleted == 1) {
-      return;
-    }
-    Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows for guid " + record.guid);
-  }
-
-  public void updateByGuid(String guid, ContentValues cv) {
-    String where  = BrowserContract.SyncColumns.GUID + " = ?";
-    String[] args = new String[] { guid };
-
-    int updated = context.getContentResolver().update(getUri(), cv, where, args);
-    if (updated == 1) {
-      return;
-    }
-    Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + guid);
   }
 }
