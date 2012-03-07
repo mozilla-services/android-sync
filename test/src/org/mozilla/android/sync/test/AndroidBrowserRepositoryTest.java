@@ -311,8 +311,8 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
     // force two record to appear deleted
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
-    db.delete(delete0);
-    db.delete(delete1);
+    db.deleteGuid(delete0.guid);
+    db.deleteGuid(delete1.guid);
 
     final DefaultCleanDelegate delegate = new DefaultCleanDelegate() {
       public void onCleaned(Repository repo) {

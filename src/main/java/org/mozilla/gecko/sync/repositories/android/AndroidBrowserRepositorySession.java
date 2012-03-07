@@ -491,7 +491,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   protected void storeRecordDeletion(final Record record) {
     // TODO: we ought to mark the record as deleted rather than deleting it,
     // in order to support syncing to multiple destinations. Bug 722607.
-    dbHelper.delete(record);      // TODO: mm?
+    dbHelper.deleteGuid(record.guid); // TODO: mm?
     delegate.onRecordStoreSucceeded(record);
   }
 

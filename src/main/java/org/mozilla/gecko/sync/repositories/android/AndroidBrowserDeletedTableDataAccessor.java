@@ -51,7 +51,7 @@ public abstract class AndroidBrowserDeletedTableDataAccessor extends
 
   protected void delete(String guid) {
     addToDeletedTable(guid, System.currentTimeMillis());
-    super.delete(guid);
+    super.deleteGuid(guid);
   }
 
   @Override

@@ -165,7 +165,7 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
     FormHistoryRecord rec2 = FormHistoryHelpers.createFormHistory2();
     accessor.insert(rec2);
 
-    accessor.delete(rec1);
+    accessor.deleteGuid(rec1.guid);
 
     // Check that we have the second record, and exactly one record.
     doFetch(rec2);
@@ -192,8 +192,8 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
     // Now delete multiple records and check we purge them all successfully.
     FormHistoryRecord rec3 = FormHistoryHelpers.createFormHistory3();
     accessor.insert(rec3);
-    accessor.delete(rec2);
-    accessor.delete(rec3);
+    accessor.deleteGuid(rec2.guid);
+    accessor.deleteGuid(rec3.guid);
     cur = accessor.fetchAll();
     assertEquals(0, cur.getCount());
     cur.close();

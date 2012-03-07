@@ -115,10 +115,11 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
   }
 
   @Override
-  protected void delete(String guid) {
+  public int deleteGuid(String guid) {
     Log.d(LOG_TAG, "Deleting record " + guid);
-    super.delete(guid);
+    int deleted = super.deleteGuid(guid);
     dataExtender.delete(guid);
+    return deleted;
   }
 
   public void closeExtender() {

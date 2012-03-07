@@ -147,23 +147,19 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public void purgeDeleted() throws NullCursorException {
     for (String deletedGuid : deletedGuids()) {
-      delete(deletedGuid);
+      deleteGuid(deletedGuid);
     }
   }
 
-  protected void delete(String guid) {
+  public int deleteGuid(String guid) {
     String where  = BrowserContract.SyncColumns.GUID + " = ?";
     String[] args = new String[] { guid };
 
     int deleted = context.getContentResolver().delete(getUri(), where, args);
-    if (deleted == 1) {
-      return;
+    if (deleted != 1) {
+      Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows for guid " + guid);
     }
-    Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows (for guid " + guid);
-  }
-
-  public void delete(Record record) {
-    delete(record.guid);
+    return deleted;
   }
 
   public void update(String guid, Record newRecord) {
