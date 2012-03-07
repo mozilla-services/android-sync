@@ -9,6 +9,8 @@ import static junit.framework.Assert.assertTrue;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicLong;
 
+import junit.framework.AssertionFailedError;
+
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class ExpectManyStoredDelegate extends DefaultStoreDelegate {
@@ -26,14 +28,22 @@ public class ExpectManyStoredDelegate extends DefaultStoreDelegate {
 
   @Override
   public void onStoreCompleted(long storeEnd) {
-    assertEquals(stored.get(), expectedGUIDs.size());
-    System.out.println("Notifying in onStoreCompleted.");
-    performNotify();
+    try {
+      assertEquals(expectedGUIDs.size(), stored.get());
+      System.out.println("Notifying in onStoreCompleted.");
+      performNotify();
+    } catch (AssertionFailedError e) {
+      performNotify(e);
+    }
   }
 
   @Override
   public void onRecordStoreSucceeded(Record record) {
-    assertTrue(expectedGUIDs.contains(record.guid));
+    try {
+      assertTrue(expectedGUIDs.contains(record.guid));
+    } catch (AssertionFailedError e) {
+      performNotify(e);
+    }
     stored.incrementAndGet();
   }
 }
