@@ -85,6 +85,7 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
     final String guidAscending = BrowserContract.Clients.GUID + " ASC";
     Cursor cursor = clientsClient.query(uri, null, since, nowArg, guidAscending);
 
+    int deleted = -1;
     assertNotNull(cursor);
     try {
       assertTrue(cursor.moveToFirst());
@@ -109,8 +110,8 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
     } finally {
       cursor.close();
 
-      int deleted = clientsClient.delete(uri, null, null);
-      assertEquals(2, deleted);
+      deleted = clientsClient.delete(uri, null, null);
     }
+    assertEquals(2, deleted);
   }
 }
