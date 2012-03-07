@@ -4,11 +4,7 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
-import java.util.ArrayList;
-
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.sync.repositories.NullCursorException;
-import org.mozilla.gecko.sync.repositories.android.RepoUtils.QueryHelper;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -18,14 +14,12 @@ import android.database.Cursor;
 import android.net.Uri;
 
 public class AndroidBrowserFormHistoryDataAccessor extends
-    AndroidBrowserDeletedTableDataAccessor {
+    AndroidBrowserRepositoryDataAccessor {
 
   private static final String LOG_TAG = "FormHistoryDataAccessor";
 
-  QueryHelper deletedQueryHelper;
   public AndroidBrowserFormHistoryDataAccessor(Context context) {
     super(context);
-    this.deletedQueryHelper = new RepoUtils.QueryHelper(context, getDeletedUri(), LOG_TAG);
   }
 
   @Override
@@ -34,13 +28,13 @@ public class AndroidBrowserFormHistoryDataAccessor extends
   }
 
   @Override
-  protected Uri getDeletedUri() {
-    return BrowserContractHelpers.DELETED_FORM_HISTORY_CONTENT_URI;
+  protected String[] getAllColumns() {
+    return BrowserContractHelpers.FormHistoryColumns;
   }
 
   @Override
-  protected String[] getAllColumns() {
-    return BrowserContractHelpers.FormHistoryColumns;
+  public void purgeDeleted() {
+    // Do nothing, since this table holds no deleted records.
   }
 
   @Override
@@ -75,24 +69,6 @@ public class AndroidBrowserFormHistoryDataAccessor extends
   protected void addTimestampsForUpdate(ContentValues values, Record record) {
     long now = System.currentTimeMillis();
     values.put(BrowserContract.FormHistory.LAST_USED,  1000 * now); // Fennec works in microseconds.
-  }
-
-  public ArrayList<String> deletedGuids() throws NullCursorException {
-    Cursor cur = deletedQueryHelper.safeQuery(".deletedGuids", GUID_COLUMNS, null, null, null);
-    ArrayList<String> deletedGuids = new ArrayList<String>();
-    try {
-      if (!cur.moveToFirst()) {
-        return deletedGuids;
-      }
-      while (!cur.isAfterLast()) {
-        String deletedGuid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-        deletedGuids.add(deletedGuid);
-        cur.moveToNext();
-      }
-    } finally {
-      cur.close();
-    }
-    return deletedGuids;
   }
 
   // Create a FormHistoryRecord object from a cursor on a row with a moz_formhistory record in it
