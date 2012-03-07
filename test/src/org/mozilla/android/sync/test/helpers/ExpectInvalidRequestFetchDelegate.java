@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import static junit.framework.Assert.fail;
-
 import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -19,7 +17,7 @@ public class ExpectInvalidRequestFetchDelegate extends DefaultFetchDelegate {
     if (ex instanceof InvalidRequestException) {
       onDone();
     } else {
-      fail("Wrong exception");
+      performNotify("Expected InvalidRequestException but got ", ex);
     }
   }
   

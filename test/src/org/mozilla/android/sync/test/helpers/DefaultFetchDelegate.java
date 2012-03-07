@@ -62,20 +62,18 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
         if (!ignore.contains(record.guid)) {
           Record expect = expected.get(record.guid);
           if (expect == null) {
-            Log.d(LOG_TAG, "Failing.");
-            fail("Do not expect to get back a record with guid: " + record.guid);
-            performNotify();
+            fail("Do not expect to get back a record with guid: " + record.guid); // Caught below
           }
           Log.d(LOG_TAG, "Checking equality.");
           try {
-            assertTrue(expect.equalPayloads(record));
+            assertTrue(expect.equalPayloads(record)); // Caught below
           } catch (Exception e) {
             Log.e(LOG_TAG, "ONOZ!", e);
           }
           Log.d(LOG_TAG, "Checked equality.");
         }
       }
-      assertEquals(expected.size(), expectedCount);
+      assertEquals(expected.size(), expectedCount); // Caught below
       Log.i(LOG_TAG, "Notifying success.");
       performNotify();
     } catch (AssertionFailedError e) {
