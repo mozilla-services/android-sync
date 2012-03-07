@@ -4,6 +4,9 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.FormHistoryHelpers;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserDeletedFormHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserFormHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserFormHistoryRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
@@ -15,6 +18,8 @@ import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.util.Log;
 
 public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
 
@@ -42,9 +47,20 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
     };
   }
 
+  protected void wipe() {
+    Log.i(LOG_TAG, "Wiping...");
+    getDataAccessor().wipe();
+    getDeletedAccessor().wipe();
+    Log.i(LOG_TAG, "Wiping... DONE");
+  }
+
   @Override
   protected AndroidBrowserRepositoryDataAccessor getDataAccessor() {
     return new AndroidBrowserFormHistoryDataAccessor(getApplicationContext());
+  }
+
+  protected AndroidBrowserRepositoryDataAccessor getDeletedAccessor() {
+    return new AndroidBrowserDeletedFormHistoryDataAccessor(getApplicationContext());
   }
 
   @Override
@@ -59,6 +75,29 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
     basicFetchAllTest(expected);
   }
 
+  public Record[] insertRegularAndDeletedRecords() {
+    Record[] expected = new Record[2];
+    expected[0] = FormHistoryHelpers.createFormHistory1();
+    expected[1] = FormHistoryHelpers.createDeletedFormHistory2();
+    getDataAccessor().insert(expected[0]);
+    getDeletedAccessor().insert(expected[1]);
+    return expected;
+  }
+
+  /**
+   * Ensure that fetchAll returns deleted records.
+   */
+  public void testDELDELFetchAll() {
+    if (shouldSkip) {
+      assertTrue(true);
+      return;
+    }
+    Record[] expected = insertRegularAndDeletedRecords();
+
+    AndroidBrowserRepositorySession session = (AndroidBrowserRepositorySession)createAndBeginSession();
+    performWait(fetchAllRunnable(session, expected));
+  }
+
   @Override
   public void testGuidsSinceReturnMultipleRecords() {
     if (shouldSkip) {
@@ -68,6 +107,20 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
     FormHistoryRecord record0 = FormHistoryHelpers.createFormHistory3();
     FormHistoryRecord record1 = FormHistoryHelpers.createFormHistory2();
     guidsSinceReturnMultipleRecords(record0, record1);
+  }
+
+  public void testDELDELGuidsSinceReturnMultipleRecords() {
+    if (shouldSkip) {
+      assertTrue(true);
+      return;
+    }
+    long timestamp = System.currentTimeMillis();
+
+    Record[] expected = insertRegularAndDeletedRecords();
+
+    AndroidBrowserRepositorySession session = (AndroidBrowserRepositorySession)createAndBeginSession();
+    String [] expectedGuids = new String[] { expected[0].guid, expected[1].guid };
+    performWait(guidsSinceRunnable(session, timestamp, expectedGuids));
   }
 
   @Override
@@ -89,6 +142,25 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
                         FormHistoryHelpers.createFormHistory2());
   }
 
+  /**
+   * Ensure fetch since returns deleted records.
+   */
+  public void testDELDELFetchSinceOneRecord() {
+    if (shouldSkip) {
+      assertTrue(true);
+      return;
+    }
+    RepositorySession session = createAndBeginSession();
+
+    long after0 = System.currentTimeMillis();
+    Record[] expected = insertRegularAndDeletedRecords();
+
+    String[] expectedBoth = new String[] { expected[0].guid, expected[1].guid };
+    performWait(fetchSinceRunnable(session, after0, expectedBoth));
+
+    dispose(session);
+  }
+
   @Override
   public void testFetchSinceReturnNoRecords() {
     if (shouldSkip) {
@@ -96,6 +168,23 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
       return;
     }
     fetchSinceReturnNoRecords(FormHistoryHelpers.createFormHistory2());
+  }
+
+  /**
+   * Ensure fetchSince filters deleted records.
+   */
+  public void testDELDELFetchSinceReturnNoRecords() {
+    if (shouldSkip) {
+      assertTrue(true);
+      return;
+    }
+    insertRegularAndDeletedRecords();
+
+    RepositorySession session = createAndBeginSession();
+    long timestamp = System.currentTimeMillis();
+
+    performWait(fetchSinceRunnable(session, timestamp + 2000, new String[] {}));
+    dispose(session);
   }
 
   @Override
@@ -108,6 +197,7 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
                          FormHistoryHelpers.createFormHistory2());
   }
 
+
   @Override
   public void testFetchMultipleRecordsByGuids() {
     if (shouldSkip) {
@@ -118,6 +208,19 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
     FormHistoryRecord record1 = FormHistoryHelpers.createFormHistory2();
     FormHistoryRecord record2 = FormHistoryHelpers.createFormHistory3();
     fetchMultipleRecordsByGuids(record0, record1, record2);
+  }
+
+  public void testDELDELFetchMultipleRecordsByGuids() {
+    if (shouldSkip) {
+      assertTrue(true);
+      return;
+    }
+    Record[] expected = insertRegularAndDeletedRecords();
+    String[] expectedGuids = new String[] { expected[0].guid, expected[1].guid };
+
+    RepositorySession session = createAndBeginSession();
+    performWait(fetchRunnable(session, expectedGuids, expected));
+    dispose(session);
   }
 
   @Override
@@ -135,7 +238,37 @@ public class AndroidBrowserFormHistoryRepositoryTest extends AndroidBrowserRepos
       assertTrue(true);
       return;
     }
-    doWipe(FormHistoryHelpers.createFormHistory2(), FormHistoryHelpers.createFormHistory3());
+    doWipe(FormHistoryHelpers.createFormHistory1(), FormHistoryHelpers.createFormHistory2());
+  }
+
+  /**
+   * Ensure that wipe kills deleted records.
+   */
+  public void testDELDELWipe() throws NullCursorException {
+    if (shouldSkip) {
+      assertTrue(true);
+      return;
+    }
+
+    doWipe(FormHistoryHelpers.createFormHistory1(), FormHistoryHelpers.createFormHistory2());
+
+    Cursor cur = null;
+    try {
+      cur = getDataAccessor().fetchAll();
+      assertEquals(0, cur.getCount());
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
+    try {
+      cur = getDeletedAccessor().fetchAll();
+      assertEquals(0, cur.getCount());
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
   }
 
   @Override

@@ -495,6 +495,16 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     delegate.onRecordStoreSucceeded(record);
   }
 
+  /**
+   * Insert a <b>new</b> record.
+   *
+   * @param record A <code>Record</code> with a GUID not currently present in the database.
+   * @return <code>record</code> with updated <code>androidID</code>.
+   *
+   * @throws NoGuidForIdException
+   * @throws NullCursorException
+   * @throws ParentNotFoundException
+   */
   protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
     Uri recordURI = dbHelper.insert(toStore);

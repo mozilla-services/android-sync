@@ -115,6 +115,14 @@ public class FormHistoryRecord extends Record {
       Logger.debug(LOG_TAG, "super.equalPayloads returned false.");
       return false;
     }
+
+    if (this.deleted) {
+      // FormHistoryRecord's are equal if they are both deleted (which
+      // they are, since super.equalPayloads is true) and have the
+      // same GUID.
+      return (this.guid.equals(other.guid));
+    }
+
     return RepoUtils.stringsEqual(this.fieldName,  other.fieldName) &&
            RepoUtils.stringsEqual(this.fieldValue, other.fieldValue);
   }

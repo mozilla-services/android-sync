@@ -8,21 +8,20 @@ import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserFormHistoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserDeletedFormHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
-public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumentationTestCase2<StubActivity> {
-  protected static final String LOG_TAG = "SyncFormHistDAccessTest";
+public class AndroidBrowserDeletedFormHistoryDataAccessorTest extends ActivityInstrumentationTestCase2<StubActivity> {
+  protected static final String LOG_TAG = "SyncDelFormHistDAccTest";
 
-  protected AndroidBrowserFormHistoryDataAccessor accessor = null;
+  protected AndroidBrowserDeletedFormHistoryDataAccessor accessor = null;
 
-  public AndroidBrowserFormHistoryDataAccessorTest() {
+  public AndroidBrowserDeletedFormHistoryDataAccessorTest() {
     super(StubActivity.class);
   }
 
@@ -31,10 +30,10 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   }
 
   public void setUp() {
-    Logger.debug(LOG_TAG, "FormHistory tables before wipe...");
-    accessor = new AndroidBrowserFormHistoryDataAccessor(getApplicationContext());
+    Logger.debug(LOG_TAG, "DeletedFormHistory tables before wipe...");
+    accessor = new AndroidBrowserDeletedFormHistoryDataAccessor(getApplicationContext());
     accessor.dumpDB();
-    Logger.debug(LOG_TAG, "FormHistory tables before wipe... DONE");
+    Logger.debug(LOG_TAG, "DeletedFormHistory tables before wipe... DONE");
     accessor.wipe();
   }
 
@@ -44,12 +43,7 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
       cur = accessor.fetch(new String[] { expected.guid });
       assertEquals(1, cur.getCount());
       cur.moveToFirst();
-      assertEquals(expected.fieldName,  cur.getString(cur.getColumnIndexOrThrow(BrowserContract.FormHistory.FIELD_NAME)));
-      assertEquals(expected.fieldValue, cur.getString(cur.getColumnIndexOrThrow(BrowserContract.FormHistory.VALUE)));
-      // XXX
-      // assertEquals(expected.fennecTimesUsed, cur.getLong(cur.getColumnIndexOrThrow(BrowserContract.FormHistory.TIMES_USED)));
-      // assertEquals(expected.fennecFirstUsed, cur.getLong(cur.getColumnIndexOrThrow(BrowserContract.FormHistory.FIRST_USED)));
-      // assertEquals(expected.fennecLastUsed,  cur.getLong(cur.getColumnIndexOrThrow(BrowserContract.FormHistory.LAST_USED)));
+      assertEquals(expected.guid,  cur.getString(cur.getColumnIndexOrThrow(BrowserContract.FormHistory.GUID)));
     } catch (NullCursorException e) {
       fail("Caught NullCursorException");
     } finally {
@@ -60,7 +54,7 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   }
 
   public void testWipe() throws NullCursorException {
-    doInsertRecords(new FormHistoryRecord[] {FormHistoryHelpers.createFormHistory1(), FormHistoryHelpers.createFormHistory2()});
+    doInsertRecords(new FormHistoryRecord[] {FormHistoryHelpers.createDeletedFormHistory1(), FormHistoryHelpers.createDeletedFormHistory2()});
     accessor.wipe();
     accessor.dumpDB();
 
@@ -70,11 +64,11 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   }
 
   public void testInsert() throws NullCursorException {
-    FormHistoryRecord rec = FormHistoryHelpers.createFormHistory1();
+    FormHistoryRecord rec = FormHistoryHelpers.createDeletedFormHistory1();
     accessor.insert(rec);
     doFetch(rec);
 
-    accessor.insert(FormHistoryHelpers.createFormHistory2());
+    accessor.insert(FormHistoryHelpers.createDeletedFormHistory2());
     Cursor cur = accessor.fetchAll();
     assertEquals(2, cur.getCount());
     cur.close();
@@ -87,8 +81,8 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   }
 
   public void testFetchAll() throws NullCursorException {
-    FormHistoryRecord rec1 = FormHistoryHelpers.createFormHistory1();
-    FormHistoryRecord rec2 = FormHistoryHelpers.createFormHistory2();
+    FormHistoryRecord rec1 = FormHistoryHelpers.createDeletedFormHistory1();
+    FormHistoryRecord rec2 = FormHistoryHelpers.createDeletedFormHistory2();
     doInsertRecords(new FormHistoryRecord[]{rec1, rec2});
 
     Cursor cur = accessor.fetchAll();
@@ -97,8 +91,8 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   }
 
   public void testFetch() throws NullCursorException {
-    FormHistoryRecord rec1 = FormHistoryHelpers.createFormHistory1();
-    FormHistoryRecord rec2 = FormHistoryHelpers.createFormHistory2();
+    FormHistoryRecord rec1 = FormHistoryHelpers.createDeletedFormHistory1();
+    FormHistoryRecord rec2 = FormHistoryHelpers.createDeletedFormHistory2();
     doInsertRecords(new FormHistoryRecord[]{rec1, rec2});
 
     doFetch(rec1);
@@ -108,12 +102,12 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   public void testFetchSince() throws NullCursorException {
     long after0 = System.currentTimeMillis();
 
-    FormHistoryRecord rec1 = FormHistoryHelpers.createFormHistory1();
+    FormHistoryRecord rec1 = FormHistoryHelpers.createDeletedFormHistory1();
     doInsertRecords(new FormHistoryRecord[]{rec1});
 
     long after1 = System.currentTimeMillis();
 
-    FormHistoryRecord rec2 = FormHistoryHelpers.createFormHistory2();
+    FormHistoryRecord rec2 = FormHistoryHelpers.createDeletedFormHistory2();
     doInsertRecords(new FormHistoryRecord[]{rec2});
 
     long after2 = System.currentTimeMillis();
@@ -137,22 +131,15 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
   }
 
   public void testUpdate() throws NullCursorException {
-    FormHistoryRecord rec1 = FormHistoryHelpers.createFormHistory1();
+    FormHistoryRecord rec1 = FormHistoryHelpers.createDeletedFormHistory1();
     accessor.insert(rec1);
 
-    FormHistoryRecord rec2 = FormHistoryHelpers.createFormHistory2();
+    FormHistoryRecord rec2 = FormHistoryHelpers.createDeletedFormHistory2();
     accessor.insert(rec2);
 
     rec1.fieldName = "newFieldName";
     accessor.update(rec1.guid, rec1);
     doFetch(rec1);
     doFetch(rec2); // Should not be changed.
-
-    rec2.fieldName = "anotherNewFieldName";
-    ContentValues cv = new ContentValues();
-    cv.put(BrowserContract.FormHistory.FIELD_NAME, rec2.fieldName);
-    accessor.updateByGuid(rec2.guid, cv);
-    doFetch(rec2);
-    doFetch(rec1); // Should not be changed.
   }
 }

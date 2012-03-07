@@ -14,20 +14,30 @@ import android.database.Cursor;
 
 public class AndroidBrowserFormHistoryRepositorySession extends AndroidBrowserRepositorySession {
 
+  public AndroidBrowserFormHistoryDataAccessor regularAccessor;
+  public AndroidBrowserDeletedFormHistoryDataAccessor deletedAccessor;
+
   public AndroidBrowserFormHistoryRepositorySession(Repository repository, Context context) {
     super(repository);
-    dbHelper = new AndroidBrowserFormHistoryDataAccessor(context);
-    dbHelper.dumpDB();
+    regularAccessor = new AndroidBrowserFormHistoryDataAccessor(context);
+    deletedAccessor = new AndroidBrowserDeletedFormHistoryDataAccessor(context);
+    dbHelper = new AndroidBrowserMergeDataAccessor(context, regularAccessor, deletedAccessor);
   }
 
   @Override
   protected Record retrieveDuringStore(Cursor cur) {
-    return ((AndroidBrowserFormHistoryDataAccessor)dbHelper).formHistoryFromMirrorCursor(cur);
+    return retrieveDuringFetch(cur);
   }
 
   @Override
   protected Record retrieveDuringFetch(Cursor cur) {
-    return ((AndroidBrowserFormHistoryDataAccessor)dbHelper).formHistoryFromMirrorCursor(cur);
+    if (cur.getColumnCount() == BrowserContractHelpers.DeletedColumns.length) {
+      FormHistoryRecord record = new FormHistoryRecord();
+      deletedAccessor.updateRecordFromMirrorCursor(record, cur);
+      return record;
+    }
+
+    return regularAccessor.formHistoryFromMirrorCursor(cur);
   }
 
   @Override

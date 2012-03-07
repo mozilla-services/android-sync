@@ -41,4 +41,16 @@ public class FormHistoryHelpers {
     record.fieldValue     = "fieldValue5";
     return record;
   }
+
+  public static FormHistoryRecord createDeletedFormHistory1() {
+    FormHistoryRecord record = createFormHistory1();
+    record.deleted = true;
+    return record;
+  }
+
+  public static FormHistoryRecord createDeletedFormHistory2() {
+    FormHistoryRecord record = createFormHistory2();
+    record.deleted = true;
+    return record;
+  }
 }
