@@ -40,7 +40,19 @@ public class TabsRecord extends Record {
       String title      = obj.getString("title");
       String icon       = obj.getString("icon");
       JSONArray history = obj.getArray("urlHistory");
-      long lastUsed     = obj.getLong("lastUsed");
+
+      // Last used is inexplicably a string in seconds. Most of the time.
+      long lastUsed = 0;
+      Object lU = obj.get("lastUsed");
+      if (lU instanceof Number) {
+        lastUsed = ((Long) lU) * 1000L;
+      } else if (lU instanceof String) {
+        try {
+          lastUsed = Long.parseLong((String) lU, 10) * 1000L;
+        } catch (NumberFormatException e) {
+          Logger.debug(LOG_TAG, "Invalid number format in lastUsed: " + lU);
+        }
+      }
       return new Tab(title, icon, history, lastUsed);
     }
 
@@ -50,7 +62,7 @@ public class TabsRecord extends Record {
       o.put("title", title);
       o.put("icon", icon);
       o.put("urlHistory", history);
-      o.put("lastUsed", lastUsed);
+      o.put("lastUsed", this.lastUsed / 1000);
       return o;
     }
   }

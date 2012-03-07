@@ -9,10 +9,14 @@ import static org.junit.Assert.assertTrue;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
+import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 public class TestRecord {
 
@@ -135,5 +139,29 @@ public class TestRecord {
     object.put("type", 1L);
     object.put("date", time * 1000);
     return object;
+  }
+
+  @Test
+  public void testTabParsing() throws ParseException, NonArrayJSONException {
+    String json = "{\"title\":\"mozilla-central mozilla/browser/base/content/syncSetup.js\"," +
+                  " \"urlHistory\":[\"http://mxr.mozilla.org/mozilla-central/source/browser/base/content/syncSetup.js#72\"]," +
+                  " \"icon\":\"http://mxr.mozilla.org/mxr.png\"," +
+                  " \"lastUsed\":\"1306374531\"}";
+    JSONParser p = new JSONParser();
+    Tab tab = Tab.fromJSONObject((JSONObject) p.parse(json));
+    assertEquals("mozilla-central mozilla/browser/base/content/syncSetup.js", tab.title);
+    assertEquals("http://mxr.mozilla.org/mxr.png", tab.icon);
+    assertEquals("http://mxr.mozilla.org/mozilla-central/source/browser/base/content/syncSetup.js#72", tab.history.get(0));
+    assertEquals(1306374531000L, tab.lastUsed);
+
+    String zeroJSON = "{\"title\":\"a\"," +
+        " \"urlHistory\":[\"http://example.com\"]," +
+        " \"icon\":\"\"," +
+        " \"lastUsed\":0}";
+    Tab zero = Tab.fromJSONObject((JSONObject) p.parse(zeroJSON));
+    assertEquals("a", zero.title);
+    assertEquals("", zero.icon);
+    assertEquals("http://example.com", zero.history.get(0));
+    assertEquals(0L, zero.lastUsed);
   }
 }
