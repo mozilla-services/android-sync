@@ -41,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
+import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.util.EntityUtils;
@@ -78,7 +79,12 @@ public abstract class SyncResourceDelegate implements ResourceDelegate {
   }
 
   /**
-   * Best-effort attempt to ensure that the entity has been fully consumed.
+   * Best-effort attempt to ensure that the entity has been fully consumed and
+   * that the underlying stream has been closed.
+   *
+   * This releases the connection back to the connection pool.
+   *
+   * @param entity The HttpEntity to be consumed.
    */
   public static void consumeEntity(HttpEntity entity) {
     try {
@@ -88,6 +94,24 @@ public abstract class SyncResourceDelegate implements ResourceDelegate {
     }
   }
 
+  public static void consumeEntity(HttpResponse response) {
+    consumeEntity(response.getEntity());
+  }
+
+  public static void consumeEntity(SyncStorageResponse response) {
+    if (response.httpResponse() != null) {
+      consumeEntity(response.httpResponse());
+    }
+  }
+
+  /**
+   * Best-effort attempt to ensure that the reader has been fully consumed, so
+   * that the underlying stream will be closed.
+   *
+   * This should allow the connection to be released back to the connection pool.
+   *
+   * @param reader The BufferedReader to be consumed.
+   */
   public static void consumeReader(BufferedReader reader) {
     try {
       while ((reader.readLine()) != null) {
