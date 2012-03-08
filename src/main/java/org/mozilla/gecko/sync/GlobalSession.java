@@ -21,6 +21,7 @@ import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
@@ -354,12 +355,14 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
 
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
+        SyncResourceDelegate.consumeEntity(response); // We don't need the response at all.
         keyUploadDelegate.onKeysUploaded();
       }
 
       @Override
       public void handleRequestFailure(SyncStorageResponse response) {
         self.interpretHTTPFailure(response.httpResponse());
+        SyncResourceDelegate.consumeEntity(response); // The exception thrown should not need the body of the response.
         keyUploadDelegate.onKeyUploadFailed(new HTTPFailureException(response));
       }
 
@@ -609,6 +612,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
 
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
+        SyncResourceDelegate.consumeEntity(response);
         wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
       }
 
@@ -617,6 +621,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
         Log.w(LOG_TAG, "Got request failure " + response.getStatusCode() + " in wipeServer.");
         // Process HTTP failures here to pick up backoffs, etc.
         self.interpretHTTPFailure(response.httpResponse());
+        SyncResourceDelegate.consumeEntity(response); // The exception thrown should not need the body of the response.
         wipeDelegate.onWipeFailed(new HTTPFailureException(response));
       }
 
