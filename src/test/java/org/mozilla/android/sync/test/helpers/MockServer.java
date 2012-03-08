@@ -13,6 +13,17 @@ import org.simpleframework.http.Response;
 import org.simpleframework.http.core.Container;
 
 public class MockServer implements Container {
+  public int statusCode = 200;
+  public String body = "Hello World";
+
+  public MockServer() {
+  }
+
+  public MockServer(int statusCode, String body) {
+    this.statusCode = statusCode;
+    this.body = body;
+  }
+
   public String expectedBasicAuthHeader;
   protected PrintStream handleBasicHeaders(Request request, Response response, int code, String contentType) throws IOException {
     PrintStream bodyStream = response.getPrintStream();
@@ -44,6 +55,6 @@ public class MockServer implements Container {
     }
   }
   public void handle(Request request, Response response) {
-    this.handle(request, response, 200, "Hello World");
+    this.handle(request, response, statusCode, body);
   }
 }
