@@ -14,6 +14,8 @@ import java.net.URI;
 import java.util.ArrayList;
 
 import org.json.simple.parser.ParseException;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -33,9 +35,12 @@ import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
+
+import ch.boye.httpclientandroidlib.HttpStatus;
 
 public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
@@ -265,9 +270,56 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
       return timestamp;
   }
 
+  private void performFailingUpload() {
+    // performNotify() occurs in MockGlobalSessionCallback.
+    testWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        clientUploadDelegate = new MockFailureClientUploadDelegate(data);
+        checkAndUpload();
+      }
+    });
+  }
+
   /**
    * Tests
    */
+  @Test
+  public void testShouldUploadNoCommandsToProcess() throws NullCursorException {
+    // shouldUpload() returns true.
+    assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(commandsProcessedShouldUpload);
+    assertTrue(shouldUpload());
+
+    // Set the timestamp to be a little earlier than refresh time,
+    // so shouldUpload() returns false.
+    setRecentClientRecordTimestamp();
+    assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUpload());
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testShouldUploadProcessCommands() throws NullCursorException {
+    // shouldUpload() returns false since array is size 0 and
+    // it has not been long enough yet to require an upload.
+    processCommands(new JSONArray());
+    setRecentClientRecordTimestamp();
+    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUpload());
+
+    // shouldUpload() returns true since array is size 1 even though
+    // it has not been long enough yet to require an upload.
+    JSONArray commands = new JSONArray();
+    commands.add(new JSONObject());
+    processCommands(commands);
+    setRecentClientRecordTimestamp();
+    assertEquals(1, commands.size());
+    assertTrue(commandsProcessedShouldUpload);
+    assertTrue(shouldUpload());
+  }
+
   @Test
   public void testWipeAndStoreShouldNotWipe() {
     assertFalse(shouldWipe);
@@ -336,5 +388,93 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertEquals(0, uploadAttemptsCount);
     assertTrue(callback.calledSuccess);
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
+  }
+
+  /**
+   * The following 8 tests are for ClientUploadDelegate.handleRequestFailure().
+   * for the varying values of uploadAttemptsCount, commandsProcessedShouldUpload,
+   * and the type of server error.
+   *
+   * The first 4 are for 412 Precondition Failures.
+   * The second 4 represent the functionality given any other type of variable.
+   */
+  @Test
+  public void testHandle412UploadFailureLowCount() {
+    assertFalse(commandsProcessedShouldUpload);
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    assertEquals(0, uploadAttemptsCount);
+    performFailingUpload();
+    assertEquals(0, uploadAttemptsCount);
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandle412UploadFailureHighCount() {
+    assertFalse(commandsProcessedShouldUpload);
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandle412UploadFailureLowCountWithCommand() {
+    commandsProcessedShouldUpload = true;
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    assertEquals(0, uploadAttemptsCount);
+    performFailingUpload();
+    assertEquals(0, uploadAttemptsCount);
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandle412UploadFailureHighCountWithCommand() {
+    commandsProcessedShouldUpload = true;
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureLowCount() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    assertFalse(commandsProcessedShouldUpload);
+    assertEquals(0, uploadAttemptsCount);
+    performFailingUpload();
+    assertEquals(0, uploadAttemptsCount);
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureHighCount() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    assertFalse(commandsProcessedShouldUpload);
+    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureHighCountWithCommands() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    commandsProcessedShouldUpload = true;
+    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureMaxAttempts() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    commandsProcessedShouldUpload = true;
+    assertEquals(0, uploadAttemptsCount);
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount);
+    assertTrue(callback.calledError);
   }
 }
