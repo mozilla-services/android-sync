@@ -39,6 +39,7 @@
 package org.mozilla.gecko.sync.syncadapter;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
@@ -80,6 +81,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   private static final String  PREFS_EARLIEST_NEXT_SYNC = "earliestnextsync";
   private static final String  PREFS_INVALIDATE_AUTH_TOKEN = "invalidateauthtoken";
+  private static final String  PREFS_CLUSTER_URL_IS_STALE = "clusterurlisstale";
 
   private static final int     SHARED_PREFERENCES_MODE = 0;
   private static final int     BACKOFF_PAD_SECONDS = 5;
@@ -216,6 +218,17 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   @Override
   public boolean shouldBackOff() {
+    if (wantNodeAssignment()) {
+      /*
+       * We recently had a 401 and we aborted the last sync. We should kick off
+       * another sync to fetch a new node/weave cluster URL, since ours is
+       * stale. If we have a user authentication error, the next sync will
+       * determine that and will stop requesting node assignment, so this will
+       * only force one abnormally scheduled sync.
+       */
+      return false;
+    }
+
     return delayMilliseconds() > 0;
   }
 
@@ -447,5 +460,39 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       mAccountManager.setUserData(localAccount, Constants.NUM_CLIENTS, clientsCount);
     }
     return Integer.parseInt(clientsCount);
+  }
+
+  public synchronized boolean getClusterURLIsStale() {
+    SharedPreferences sharedPreferences = mContext.getSharedPreferences("sync.prefs.global", SHARED_PREFERENCES_MODE);
+    return sharedPreferences.getBoolean(PREFS_CLUSTER_URL_IS_STALE, false);
+  }
+
+  public synchronized void setClusterURLIsStale(boolean clusterURLIsStale) {
+    SharedPreferences sharedPreferences = mContext.getSharedPreferences("sync.prefs.global", SHARED_PREFERENCES_MODE);
+    Editor edit = sharedPreferences.edit();
+    edit.putBoolean(PREFS_CLUSTER_URL_IS_STALE, clusterURLIsStale);
+    edit.commit();
+  }
+
+  @Override
+  public boolean wantNodeAssignment() {
+    return getClusterURLIsStale();
+  }
+
+  @Override
+  public void informNodeAuthenticationFailed(GlobalSession session, URI failedClusterURL) {
+    // TODO: communicate to the user interface that we need a new user password!
+    // TODO: only freshen the cluster URL (better yet, forget the cluster URL) after the user has provided new credentials.
+    setClusterURLIsStale(false);
+  }
+
+  @Override
+  public void informNodeAssigned(GlobalSession session, URI oldClusterURL, URI newClusterURL) {
+    setClusterURLIsStale(false);
+  }
+
+  @Override
+  public void informMaybeNodeReassigned(GlobalSession session, URI oldClusterURL) {
+    setClusterURLIsStale(true);
   }
 }

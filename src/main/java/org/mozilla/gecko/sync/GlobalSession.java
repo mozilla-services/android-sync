@@ -92,7 +92,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
   protected Map<Stage, GlobalSyncStage> stages;
   public Stage currentState = Stage.idle;
 
-  private GlobalSessionCallback callback;
+  public GlobalSessionCallback callback;
   private Context context;
   private ClientsDataDelegate clientsDelegate;
 
@@ -341,8 +341,16 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     if (backoff > 0) {
       callback.requestBackoff(backoff);
     }
-  }
 
+    if (response.getStatusLine().getStatusCode() == 401) {
+      /*
+       * Alert our callback we have a 401 on a cluster URL. This GlobalSession
+       * will fail, but the next one will fetch a new cluster URL and will
+       * distinguish between "node reassignment" and "user password changed".
+       */
+      callback.informMaybeNodeReassigned(this, config.getClusterURL());
+    }
+  }
 
   public void fetchMetaGlobal(MetaGlobalDelegate callback) throws URISyntaxException {
     if (this.config.metaGlobal == null) {
