@@ -9,26 +9,37 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
 
 public class HTTPServerTestHelper {
-  private static final int TEST_PORT = 15325;
+  private static final String LOG_TAG = "HTTPServerTestHelper";
+  private int port;
+
+  public HTTPServerTestHelper(int port) {
+    this.port = port;
+  }
 
   public Connection connection;
   public MockServer server;
 
   public MockServer startHTTPServer(MockServer server) {
+    Logger.LOG_TO_STDOUT = true; // No sense hiding information when we know we're testing.
+    BaseResource.rewriteLocalhost = false; // No sense rewriting when we're running the unit tests.
+    SyncResourceDelegate.connectionTimeoutInMillis = 1000; // No sense waiting a long time for a local connection.
+
     try {
-      System.out.println("Starting HTTP server...");
+      Logger.info(LOG_TAG, "Starting HTTP server on port " + port + "...");
       this.server = server;
       connection = new SocketConnection(server);
-      SocketAddress address = new InetSocketAddress(TEST_PORT);
+      SocketAddress address = new InetSocketAddress(port);
       connection.connect(address);
-      System.out.println("Done starting.");
+      Logger.info(LOG_TAG, "Starting HTTP server on port " + port + "... DONE");
     } catch (IOException ex) {
-      System.err.println("Error starting test HTTP server.");
-      ex.printStackTrace();
+      Logger.error(LOG_TAG, "Error starting HTTP server on port " + port + "... DONE", ex);
       fail(ex.toString());
     }
     return server;
@@ -39,18 +50,15 @@ public class HTTPServerTestHelper {
   }
 
   public void stopHTTPServer() {
-    System.out.println("Stopping HTTP server.");
+    Logger.info(LOG_TAG, "Stopping HTTP server on port " + port + "...");
     try {
       connection.close();
       server = null;
       connection = null;
-      System.out.println("Done stopping.");
+      Logger.info(LOG_TAG, "Stopping HTTP server on port " + port + "... DONE");
     } catch (IOException ex) {
-      System.err.println("Error stopping test HTTP server.");
+      Logger.error(LOG_TAG, "Error stopping HTTP server on port " + port + "... DONE", ex);
       fail(ex.toString());
     }
-  }
-
-  public HTTPServerTestHelper() {
   }
 }

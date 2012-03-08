@@ -21,6 +21,8 @@ import ch.boye.httpclientandroidlib.util.EntityUtils;
  *
  */
 public abstract class SyncResourceDelegate implements ResourceDelegate {
+  public static int connectionTimeoutInMillis = 1000 * 30;     // Wait 30s for a connection to open.
+  public static int socketTimeoutInMillis     = 1000 * 5 * 60; // Wait 5 minutes for data.
 
   protected Resource resource;
   public SyncResourceDelegate(Resource resource) {
@@ -29,11 +31,12 @@ public abstract class SyncResourceDelegate implements ResourceDelegate {
 
   @Override
   public int connectionTimeout() {
-    return 30 * 1000;             // Wait 30s for a connection to open.
+    return connectionTimeoutInMillis;
   }
+
   @Override
   public int socketTimeout() {
-    return 5 * 60 * 1000;         // Wait 5 minutes for data.
+    return socketTimeoutInMillis;
   }
 
   @Override

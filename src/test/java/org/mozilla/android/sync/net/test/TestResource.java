@@ -28,7 +28,7 @@ public class TestResource {
 
   static String            USER_PASS    = "john:password";
   static String            EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
-  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
 
   class BaseTestResourceDelegate extends BaseResourceDelegate {
     @Override

@@ -30,7 +30,7 @@ public class TestMetaGlobal {
 
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   public static final String META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  private HTTPServerTestHelper data    = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data    = new HTTPServerTestHelper(TEST_PORT);
 
   @Before
   public void setUp() {
