@@ -43,6 +43,7 @@ import java.net.URISyntaxException;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -54,6 +55,8 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.Server11Repository;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
+
+import ch.boye.httpclientandroidlib.HttpResponse;
 
 import android.util.Log;
 
@@ -179,7 +182,13 @@ public abstract class ServerSyncStage implements
   public void onSynchronizeFailed(Synchronizer synchronizer,
                                   Exception lastException, String reason) {
     Log.i(LOG_TAG, "onSynchronizeFailed: " + reason);
-    session.abort(lastException, reason);
+
+    // This failure could be due to a 503 or a 401 and it could have headers.
+    if (lastException instanceof HTTPFailureException) {
+      session.handleHTTPError(((HTTPFailureException)lastException).response, reason);
+    } else {
+      session.abort(lastException, reason);
+    }
   }
 
   @Override
