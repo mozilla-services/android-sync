@@ -114,7 +114,7 @@ public class TestSyncStorageRequest {
     public void handleRequestFailure(SyncStorageResponse res) {
       assertTrue(!res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("Retry-After"));
-      assertEquals(res.retryAfter(), 3001);
+      assertEquals(res.retryAfterInSeconds(), 3001);
       try {
         String responseMessage = res.getErrorMessage();
         String expectedMessage = EXPECTED_RETRY_AFTER_ERROR_MESSAGE;
@@ -154,7 +154,7 @@ public class TestSyncStorageRequest {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.httpResponse().containsHeader("X-Weave-Backoff"));
-      assertEquals(res.weaveBackoff(), 1801);
+      assertEquals(res.weaveBackoffInSeconds(), 1801);
       super.handleRequestSuccess(res);
     }
   }

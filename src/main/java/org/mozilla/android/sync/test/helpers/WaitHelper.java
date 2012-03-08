@@ -129,7 +129,9 @@ public class WaitHelper {
       warn("Notified with error.", result.error);
 
       // Rethrow any assertion with which we were notified.
-      throw new InnerError(result.error);
+      InnerError innerError = new InnerError(result.error);
+      innerError.initCause(result.error); // Eclipse prints the stack trace of the cause.
+      throw innerError;
     } else {
       // Success!
     }
