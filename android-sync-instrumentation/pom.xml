@@ -17,6 +17,7 @@
 
   <properties>
     <project.basedir>../test</project.basedir>
+    <failIfNoTests>false</failIfNoTests>
   </properties>
 
   <dependencies>
