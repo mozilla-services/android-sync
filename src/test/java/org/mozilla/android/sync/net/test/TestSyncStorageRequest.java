@@ -17,6 +17,7 @@ import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
@@ -51,6 +52,7 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         e.printStackTrace();
       }
+      SyncResourceDelegate.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
@@ -69,6 +71,7 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         fail("Got exception fetching error message.");
       }
+      SyncResourceDelegate.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
@@ -122,10 +125,11 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         fail("Got exception fetching error message.");
       }
+      SyncResourceDelegate.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
-  
+
   public class RetryAfterMockServer extends MockServer {
     @Override
     public void handle(Request request, Response response) {
