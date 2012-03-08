@@ -17,6 +17,7 @@ import org.mozilla.android.sync.test.helpers.BaseResourceDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 
 import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -38,6 +39,7 @@ public class TestResource {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
+      SyncResourceDelegate.consumeEntity(response);
       fail("Should not occur.");
     }
 
@@ -66,6 +68,7 @@ public class TestResource {
     @Override
     public void handleHttpResponse(HttpResponse response) {
       assertEquals(response.getStatusLine().getStatusCode(), 200);
+      SyncResourceDelegate.consumeEntity(response);
       data.stopHTTPServer();
     }
   }

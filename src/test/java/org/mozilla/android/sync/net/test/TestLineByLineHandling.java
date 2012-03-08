@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -86,6 +87,7 @@ public class TestLineByLineHandling {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       Log.i(LOG_TAG, "Got request failure: " + response);
+      SyncResourceDelegate.consumeEntity(response);
       fail("Should not be called.");
     }
 
