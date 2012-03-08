@@ -54,12 +54,14 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   protected static final String[] GUID_COLUMNS = new String[] { BrowserContract.SyncColumns.GUID };
   protected Context context;
-  protected static String LOG_TAG = "BrowserDataAccessor";
+  protected String LOG_TAG() {
+    return "BrowserDataAccessor";
+  }
   protected final RepoUtils.QueryHelper queryHelper;
 
   public AndroidBrowserRepositoryDataAccessor(Context context) {
     this.context = context;
-    this.queryHelper = new RepoUtils.QueryHelper(context, getUri(), LOG_TAG);
+    this.queryHelper = new RepoUtils.QueryHelper(context, getUri(), LOG_TAG());
   }
 
   protected abstract String[] getAllColumns();
@@ -121,8 +123,9 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public void wipe() {
     Uri uri = getUri();
-    Logger.info(LOG_TAG, "wiping: " + uri);
+    Logger.info(LOG_TAG(), "Wiping: " + uri + "...");
     context.getContentResolver().delete(uri, null, null);
+    Logger.info(LOG_TAG(), "Wiping: " + uri + "... DONE");
   }
 
   public ArrayList<String> deletedGuids() throws NullCursorException {
@@ -146,9 +149,11 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
 
   public void purgeDeleted() throws NullCursorException {
+    Logger.info(LOG_TAG(), "purgeDeleted...");
     for (String deletedGuid : deletedGuids()) {
       delete(deletedGuid);
     }
+    Logger.info(LOG_TAG(), "purgeDeleted... DONE");
   }
 
   protected void delete(String guid) {
@@ -159,7 +164,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     if (deleted == 1) {
       return;
     }
-    Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows (for guid " + guid);
+    Logger.warn(LOG_TAG(), "Unexpectedly deleted " + deleted + " rows (for guid " + guid);
   }
 
   public void delete(Record record) {
@@ -167,9 +172,11 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   }
 
   public void update(String guid, Record newRecord) {
+    Logger.info(LOG_TAG(), "Updating record with guid " + guid + "...");
     ContentValues cv = getContentValues(newRecord);
     addTimestampsForInsert(cv, newRecord);
     updateByGuid(guid, cv);
+    Logger.info(LOG_TAG(), "Updating record with guid " + guid + "... DONE");
   }
 
   public void updateByGuid(String guid, ContentValues cv) {
@@ -180,15 +187,18 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     if (updated == 1) {
       return;
     } else {
-      Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows (for guid " + guid);
+      Logger.warn(LOG_TAG(), "Unexpectedly updated " + updated + " rows (for guid " + guid);
       throw new RuntimeException();
     }
   }
 
   public Uri insert(Record record) {
+    Logger.info(LOG_TAG(), "Inserting record with guid " + record.guid + "...");
     ContentValues cv = getContentValues(record);
     addTimestampsForInsert(cv, record);
-    return context.getContentResolver().insert(getUri(), cv);
+    Uri ret = context.getContentResolver().insert(getUri(), cv);
+    Logger.info(LOG_TAG(), "Inserting record with guid " + record.guid + "... DONE");
+    return ret;
   }
 
   /**

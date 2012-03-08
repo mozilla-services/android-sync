@@ -21,12 +21,14 @@ import android.net.Uri;
 public class AndroidBrowserFormHistoryDataAccessor extends
     AndroidBrowserDeletedTableDataAccessor {
 
-  private static final String LOG_TAG = "FormHistoryDataAccessor";
+  protected String LOG_TAG() {
+    return "FormHistoryDataAccessor";
+  }
 
   QueryHelper deletedQueryHelper;
   public AndroidBrowserFormHistoryDataAccessor(Context context) {
     super(context);
-    this.deletedQueryHelper = new RepoUtils.QueryHelper(context, getDeletedUri(), LOG_TAG);
+    this.deletedQueryHelper = new RepoUtils.QueryHelper(context, getDeletedUri(), LOG_TAG());
   }
 
   @Override

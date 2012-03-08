@@ -21,7 +21,9 @@ import android.net.Uri;
 
 public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositoryDataAccessor {
 
-  private static final String LOG_TAG = "BookmarksDataAccessor";
+  protected String LOG_TAG() {
+    return "BookmarksDataAccessor";
+  }
 
   /*
    * Fragments of SQL to make our lives easier.
@@ -59,7 +61,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
 
   public AndroidBrowserBookmarksDataAccessor(Context context) {
     super(context);
-    this.queryHelper = new RepoUtils.QueryHelper(context, getUri(), LOG_TAG);
+    this.queryHelper = new RepoUtils.QueryHelper(context, getUri(), LOG_TAG());
   }
 
   @Override
@@ -74,7 +76,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
   @Override
   public void wipe() {
     Uri uri = getUri();
-    Logger.info(LOG_TAG, "wiping (except for special guids): " + uri);
+    Logger.info(LOG_TAG(), "wiping (except for special guids): " + uri);
     context.getContentResolver().delete(uri, EXCLUDE_SPECIAL_GUIDS_WHERE_CLAUSE, null);
   }
 
@@ -93,7 +95,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    *        A sequence of GUID strings.
    */
   public int updatePositions(ArrayList<String> childArray) {
-    Logger.debug(LOG_TAG, "Updating positions for " + childArray.size() + " items.");
+    Logger.debug(LOG_TAG(), "Updating positions for " + childArray.size() + " items.");
     String[] args = childArray.toArray(new String[childArray.size()]);
     return context.getContentResolver().update(getPositionsUri(), new ContentValues(), null, args);
   }
@@ -102,7 +104,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    * Bump the modified time of a record by ID.
    */
   public int bumpModified(long id, long modified) {
-    Logger.debug(LOG_TAG, "Bumping modified for " + id + " to " + modified);
+    Logger.debug(LOG_TAG(), "Bumping modified for " + id + " to " + modified);
     String where = BrowserContract.Bookmarks._ID + " = ?";
     String[] selectionArgs = new String[] { String.valueOf(id) };
     ContentValues values = new ContentValues();
@@ -157,7 +159,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       if (statuses.containsKey(guid)) {
         if (statuses.get(guid)) {
           // Undelete.
-          Logger.info(LOG_TAG, "Undeleting special GUID " + guid);
+          Logger.info(LOG_TAG(), "Undeleting special GUID " + guid);
           ContentValues cv = new ContentValues();
           cv.put(BrowserContract.SyncColumns.IS_DELETED, 0);
           updateByGuid(guid, cv);
@@ -165,15 +167,15 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       } else {
         // Insert.
         if (guid.equals("mobile")) {
-          Logger.info(LOG_TAG, "No mobile folder. Inserting one.");
+          Logger.info(LOG_TAG(), "No mobile folder. Inserting one.");
           mobileRoot = insertSpecialFolder("mobile", 0);
         } else if (guid.equals("places")) {
           // This is awkward.
-          Logger.info(LOG_TAG, "No places root. Inserting one under mobile (" + mobileRoot + ").");
+          Logger.info(LOG_TAG(), "No places root. Inserting one under mobile (" + mobileRoot + ").");
           desktopRoot = insertSpecialFolder("places", mobileRoot);
         } else {
           // unfiled, menu, toolbar.
-          Logger.info(LOG_TAG, "No " + guid + " root. Inserting one under places (" + desktopRoot + ").");
+          Logger.info(LOG_TAG(), "No " + guid + " root. Inserting one under places (" + desktopRoot + ").");
           insertSpecialFolder(guid, desktopRoot);
         }
       }

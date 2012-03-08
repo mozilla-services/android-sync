@@ -20,12 +20,14 @@ import android.net.Uri;
 public abstract class AndroidBrowserDeletedTableDataAccessor extends
     AndroidBrowserRepositoryDataAccessor {
 
-  private static final String LOG_TAG = "DelTableDataAccessor";
+  protected String LOG_TAG() {
+    return "DelTableDataAccessor";
+  }
 
   QueryHelper deletedQueryHelper;
   public AndroidBrowserDeletedTableDataAccessor(Context context) {
     super(context);
-    this.deletedQueryHelper = new RepoUtils.QueryHelper(context, getDeletedUri(), LOG_TAG);
+    this.deletedQueryHelper = new RepoUtils.QueryHelper(context, getDeletedUri(), LOG_TAG());
   }
 
   abstract protected Uri getDeletedUri();
@@ -57,7 +59,7 @@ public abstract class AndroidBrowserDeletedTableDataAccessor extends
   @Override
   public void purgeDeleted() throws NullCursorException {
     Uri deletedUri = getDeletedUri();
-    Logger.info(LOG_TAG, "purgeDeleted: " + deletedUri);
+    Logger.info(LOG_TAG(), "purgeDeleted: " + deletedUri);
     context.getContentResolver().delete(deletedUri, null, null);
   }
 

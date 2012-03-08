@@ -49,6 +49,9 @@ import android.net.Uri;
 import android.util.Log;
 
 public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryDataAccessor {
+  protected String LOG_TAG() {
+    return "HistoryDataAccessor";
+  }
 
   private AndroidBrowserHistoryDataExtender dataExtender;
 
@@ -98,9 +101,9 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
   @Override
   public Uri insert(Record record) {
     HistoryRecord rec = (HistoryRecord) record;
-    Log.d(LOG_TAG, "Storing visits for " + record.guid);
+    Log.d(LOG_TAG(), "Storing visits for " + record.guid);
     dataExtender.store(record.guid, rec.visits);
-    Log.d(LOG_TAG, "Storing record " + record.guid);
+    Log.d(LOG_TAG(), "Storing record " + record.guid);
     return super.insert(record);
   }
 
@@ -108,7 +111,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
   public void update(String oldGUID, Record newRecord) {
     HistoryRecord rec = (HistoryRecord) newRecord;
     String newGUID = newRecord.guid;
-    Log.d(LOG_TAG, "Storing visits for " + newGUID + ", replacing " + oldGUID);
+    Log.d(LOG_TAG(), "Storing visits for " + newGUID + ", replacing " + oldGUID);
     dataExtender.delete(oldGUID);
     dataExtender.store(newGUID, rec.visits);
     super.update(oldGUID, newRecord);
@@ -116,7 +119,7 @@ public class AndroidBrowserHistoryDataAccessor extends AndroidBrowserRepositoryD
 
   @Override
   protected void delete(String guid) {
-    Log.d(LOG_TAG, "Deleting record " + guid);
+    Log.d(LOG_TAG(), "Deleting record " + guid);
     super.delete(guid);
     dataExtender.delete(guid);
   }

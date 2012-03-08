@@ -46,6 +46,9 @@ import android.content.Context;
 import android.net.Uri;
 
 public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositoryDataAccessor {
+  protected String LOG_TAG() {
+    return "PasswordsDataAccessor";
+  }
 
   public AndroidBrowserPasswordsDataAccessor(Context context) {
     super(context);

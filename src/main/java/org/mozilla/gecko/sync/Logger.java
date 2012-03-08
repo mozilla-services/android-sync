@@ -21,7 +21,11 @@ import android.util.Log;
 public class Logger {
 
   // For extra debugging.
-  public static boolean LOG_PERSONAL_INFORMATION = false;
+  public static boolean LOG_PERSONAL_INFORMATION = true;
+
+  // For easier debugging.
+  public static boolean LOG_ONLY_ONE_LOGTAG = true;
+  public static final String LOG_UNIQUE_LOGTAG = "FxSync";
 
   // If true, log to System.out as well as using Android's Log.* calls.
   public static boolean LOG_TO_STDOUT = false;
@@ -118,6 +122,11 @@ public class Logger {
   }
 
   public static synchronized void error(String logTag, String message, Throwable error) {
+    if (LOG_ONLY_ONE_LOGTAG) {
+      message = logTag + ":: " + message;
+      logTag = LOG_UNIQUE_LOGTAG;
+    }
+
     logToStdout(logTag, " :: ERROR: ", message);
     if (shouldLogError(logTag)) {
       Log.e(logTag, message, error);
@@ -129,6 +138,11 @@ public class Logger {
   }
 
   public static synchronized void warn(String logTag, String message, Throwable error) {
+    if (LOG_ONLY_ONE_LOGTAG) {
+      message = logTag + ":: " + message;
+      logTag = LOG_UNIQUE_LOGTAG;
+    }
+
     logToStdout(logTag, " :: WARN: ", message);
     if (shouldLogWarn(logTag)) {
       Log.w(logTag, message, error);
@@ -136,6 +150,11 @@ public class Logger {
   }
 
   public static synchronized void info(String logTag, String message) {
+    if (LOG_ONLY_ONE_LOGTAG) {
+      message = logTag + ":: " + message;
+      logTag = LOG_UNIQUE_LOGTAG;
+    }
+
     logToStdout(logTag, " :: INFO: ", message);
     if (shouldLogInfo(logTag)) {
       Log.i(logTag, message);
@@ -147,6 +166,11 @@ public class Logger {
   }
 
   public static synchronized void debug(String logTag, String message, Throwable error) {
+    if (LOG_ONLY_ONE_LOGTAG) {
+      message = logTag + ":: " + message;
+      logTag = LOG_UNIQUE_LOGTAG;
+    }
+
     logToStdout(logTag, " :: DEBUG: ", message);
     if (shouldLogDebug(logTag)) {
       Log.d(logTag, message, error);
@@ -154,6 +178,11 @@ public class Logger {
   }
 
   public static synchronized void trace(String logTag, String message) {
+    if (LOG_ONLY_ONE_LOGTAG) {
+      message = logTag + ":: " + message;
+      logTag = LOG_UNIQUE_LOGTAG;
+    }
+
     logToStdout(logTag, " :: TRACE: ", message);
     if (shouldLogVerbose(logTag)) {
       Log.v(logTag, message);
