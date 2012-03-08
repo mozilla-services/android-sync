@@ -17,16 +17,17 @@ public class AndroidBrowserFormHistoryRepositorySession extends AndroidBrowserRe
   public AndroidBrowserFormHistoryRepositorySession(Repository repository, Context context) {
     super(repository);
     dbHelper = new AndroidBrowserFormHistoryDataAccessor(context);
+    dbHelper.dumpDB();
   }
 
   @Override
   protected Record retrieveDuringStore(Cursor cur) {
-    return AndroidBrowserFormHistoryDataAccessor.formHistoryFromMirrorCursor(cur);
+    return ((AndroidBrowserFormHistoryDataAccessor)dbHelper).formHistoryFromMirrorCursor(cur);
   }
 
   @Override
   protected Record retrieveDuringFetch(Cursor cur) {
-    return AndroidBrowserFormHistoryDataAccessor.formHistoryFromMirrorCursor(cur);
+    return ((AndroidBrowserFormHistoryDataAccessor)dbHelper).formHistoryFromMirrorCursor(cur);
   }
 
   @Override

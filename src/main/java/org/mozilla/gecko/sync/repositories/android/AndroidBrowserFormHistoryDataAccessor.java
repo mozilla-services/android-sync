@@ -97,7 +97,7 @@ public class AndroidBrowserFormHistoryDataAccessor extends
   }
 
   // Create a FormHistoryRecord object from a cursor on a row with a moz_formhistory record in it
-  public static FormHistoryRecord formHistoryFromMirrorCursor(Cursor cur) {
+  public FormHistoryRecord formHistoryFromMirrorCursor(Cursor cur) {
     String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "formhistory";
     // long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
@@ -113,16 +113,16 @@ public class AndroidBrowserFormHistoryDataAccessor extends
     return logFormHistory(rec);
   }
 
-  public static FormHistoryRecord logFormHistory(FormHistoryRecord rec) {
+  public FormHistoryRecord logFormHistory(FormHistoryRecord rec) {
     try {
-      Logger.debug(LOG_TAG, "Returning form history record " + rec.guid + " (" + rec.androidID + ")");
-      Logger.debug(LOG_TAG, "> Last modified: " + rec.lastModified);
+      Logger.debug(LOG_TAG(), "Returning form history record " + rec.guid + " (" + rec.androidID + ")");
+      Logger.debug(LOG_TAG(), "> Last modified: " + rec.lastModified);
       if (Logger.LOG_PERSONAL_INFORMATION) {
-        Logger.pii(LOG_TAG, "> Field name:    " + rec.fieldName);
-        Logger.pii(LOG_TAG, "> Field value:   " + rec.fieldValue);
+        Logger.pii(LOG_TAG(), "> Field name:    " + rec.fieldName);
+        Logger.pii(LOG_TAG(), "> Field value:   " + rec.fieldValue);
       }
     } catch (Exception e) {
-      Logger.debug(LOG_TAG, "Exception logging form history record " + rec, e);
+      Logger.debug(LOG_TAG(), "Exception logging form history record " + rec, e);
     }
     return rec;
   }
