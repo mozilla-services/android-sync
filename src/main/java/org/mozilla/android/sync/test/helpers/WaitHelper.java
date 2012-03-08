@@ -68,7 +68,10 @@ public class WaitHelper {
 
     public InnerError(Throwable e) {
       innerError = e;
-      this.initCause(e);
+      if (e != null) {
+        // Eclipse prints the stack trace of the cause.
+        this.initCause(e);
+      }
     }
   }
 
@@ -130,7 +133,6 @@ public class WaitHelper {
 
       // Rethrow any assertion with which we were notified.
       InnerError innerError = new InnerError(result.error);
-      innerError.initCause(result.error); // Eclipse prints the stack trace of the cause.
       throw innerError;
     } else {
       // Success!
