@@ -46,7 +46,7 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   private static final String PASSWORD  = "password";
   private static final String SYNC_KEY  = "abcdeabcdeabcdeabcdeabcdea";
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
   private int numRecordsFromGetRequest = 0;
 
   private ArrayList<ClientRecord> expectedClients = new ArrayList<ClientRecord>();

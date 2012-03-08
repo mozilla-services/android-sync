@@ -35,7 +35,7 @@ public class TestSyncStorageRequest {
   // Corresponds to rnewman+testandroid@mozilla.com.
   private static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
 
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
