@@ -26,7 +26,7 @@ should be documented with what it does.
     <module name="NeedBraces"/>
     <module name="RightCurly"/>
 
-    <!-- Class Deisgn. http://checkstyle.sourceforge.net/config_design.html -->
+    <!-- Class Design. http://checkstyle.sourceforge.net/config_design.html -->
     <module name="DesignForExtension"/>
     <module name="FinalClass"/>
     <module name="HideUtilityClassConstructor"/>
@@ -60,7 +60,9 @@ should be documented with what it does.
     <module name="UnusedImports"/>
 
     <!-- Javadoc. See http://checkstyle.sourceforge.net/config_javadoc.html -->
-    <module name="JavadocMethod"/>
+    <!--
+         <module name="JavadocMethod"/>
+      -->
     <module name="JavadocStyle"/>
     <module name="JavadocType"/>
     <module name="JavadocVariable"/>
