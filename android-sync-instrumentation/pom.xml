@@ -44,7 +44,7 @@
       <groupId>org.mozilla.gecko</groupId>
       <artifactId>android-sync-app</artifactId>
       <version>${project.version}</version>
-      <type>apk</type>
+      <type>pom</type>
     </dependency>
 
     <dependency>
