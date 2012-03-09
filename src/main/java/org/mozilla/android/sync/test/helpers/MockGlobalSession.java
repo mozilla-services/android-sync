@@ -54,6 +54,7 @@ public class MockGlobalSession extends GlobalSession {
     // Fake whatever stages we don't want to run.
     stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
     stages.put(Stage.syncHistory,             new MockServerSyncStage());
+    stages.put(Stage.syncTabs,                new MockServerSyncStage());
     stages.put(Stage.fetchInfoCollections,    new MockServerSyncStage());
     stages.put(Stage.fetchMetaGlobal,         new MockServerSyncStage());
     stages.put(Stage.ensureKeysStage,         new MockServerSyncStage());
