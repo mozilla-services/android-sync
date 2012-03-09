@@ -58,11 +58,34 @@
 
   <build>
     <finalName>${project.artifactId}</finalName>
-
     <sourceDirectory>../test/src</sourceDirectory>
-    <!-- <testSourceDirectory>../test/src/test/java</testSourceDirectory> -->
 
     <plugins>
+      <!--
+        For some reason, when compiling under Jenkins the compiler
+        doesn't see some of the main app's compiled classes.
+        Fix this by adding part of its source tree to the build.
+        -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>../src/main/java/org/mozilla/android/</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>com.jayway.maven.plugins.android.generation2</groupId>
         <artifactId>android-maven-plugin</artifactId>
