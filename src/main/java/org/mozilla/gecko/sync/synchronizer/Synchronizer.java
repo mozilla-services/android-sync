@@ -45,20 +45,26 @@ import android.content.Context;
 import android.util.Log;
 
 /**
- * This, sunshine, is where the magic happens.
+ * I perform a sync.
  *
- * I hope for all our sakes that it's bug-free.
+ * Initialize me by calling `load` with a SynchronizerConfiguration.
  *
- * @author rnewman
+ * Start synchronizing by calling `synchronize` with a SynchronizerDelegate. I
+ * provide coarse-grained feedback by calling my delegate's callback methods.
  *
+ * I always call exactly one of my delegate's `onSynchronized` or
+ * `onSynchronizeFailed` callback methods. In addition, I call
+ * `onSynchronizeAborted` before `onSynchronizeFailed` when I encounter a fetch,
+ * store, or session error while synchronizing.
+ *
+ * After synchronizing, call `save` to get back a SynchronizerConfiguration with
+ * updated bundle information.
  */
 public class Synchronizer {
 
   /**
-   * Wrap a SynchronizerDelegate in a SynchronizerSessionDelegate.
-   * Also handle communication of bundled data.
-   *
-   * @author rnewman
+   * I translate the fine-grained feedback of a SynchronizerSessionDelegate into
+   * the coarse-grained feedback of a SynchronizerDelegate.
    */
   public class SynchronizerDelegateSessionDelegate implements
       SynchronizerSessionDelegate {
@@ -126,6 +132,9 @@ public class Synchronizer {
   public RepositorySessionBundle bundleA;
   public RepositorySessionBundle bundleB;
 
+  /**
+   * Start synchronizing, calling delegate's callback methods.
+   */
   public void synchronize(Context context, SynchronizerDelegate delegate) {
     SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);
     SynchronizerSession session = new SynchronizerSession(this, sessionDelegate);
@@ -137,7 +146,13 @@ public class Synchronizer {
     return new SynchronizerConfiguration(syncID, bundleA, bundleB);
   }
 
-  // Not thread-safe.
+  /**
+   * Set my repository session bundles from a SynchronizerConfiguration.
+   *
+   * This method is not thread-safe.
+   *
+   * @param config
+   */
   public void load(SynchronizerConfiguration config) {
     bundleA = config.remoteBundle;
     bundleB = config.localBundle;
