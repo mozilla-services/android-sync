@@ -16,7 +16,6 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 
 public class MockGlobalSession extends GlobalSession {
 

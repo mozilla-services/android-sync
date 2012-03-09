@@ -134,9 +134,8 @@ public class WaitHelper {
       // Rethrow any assertion with which we were notified.
       InnerError innerError = new InnerError(result.error);
       throw innerError;
-    } else {
-      // Success!
     }
+    // Success!
   }
 
   public void performNotify(final Throwable e) {

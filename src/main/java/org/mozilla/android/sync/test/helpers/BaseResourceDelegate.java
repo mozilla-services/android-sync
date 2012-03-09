@@ -20,7 +20,6 @@ public abstract class BaseResourceDelegate implements ResourceDelegate {
 
   @Override
   public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
-    return;
   }
 
   @Override

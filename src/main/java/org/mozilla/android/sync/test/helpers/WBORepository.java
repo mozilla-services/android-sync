@@ -139,7 +139,6 @@ public class WBORepository extends Repository {
       wbos.put(record.guid, record);
       trackRecord(record);
       delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
-      return;
     }
 
     @Override
