@@ -52,4 +52,10 @@ public abstract class CachedSQLiteOpenHelper extends SQLiteOpenHelper {
     }
     super.close();
   }
+
+  // Used for testing.
+  public boolean isClosed() {
+    return readableDatabase == null &&
+           writableDatabase == null;
+  }
 }
