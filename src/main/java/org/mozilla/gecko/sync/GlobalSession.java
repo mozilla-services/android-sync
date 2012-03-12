@@ -68,16 +68,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   /*
    * Key accessors.
    */
-  public void setCollectionKeys(CollectionKeys k) {
-    config.setCollectionKeys(k);
-  }
-  @Override
-  public CollectionKeys getCollectionKeys() {
-    return config.collectionKeys;
-  }
-  @Override
-  public KeyBundle keyForCollection(String collection) throws NoCollectionKeysSetException {
-    return config.keyForCollection(collection);
+  public KeyBundle keyBundleForCollection(String collection) throws NoCollectionKeysSetException {
+    return config.getCollectionKeys().keyBundleForCollection(collection);
   }
 
   /*
@@ -269,7 +261,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     return this.getContext().getSharedPreferences(name, mode);
   }
 
-  @Override
   public Context getContext() {
     return this.context;
   }

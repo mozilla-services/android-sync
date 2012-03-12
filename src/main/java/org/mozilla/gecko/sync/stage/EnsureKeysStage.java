@@ -80,7 +80,7 @@ public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDeleg
     }
 
     Logger.trace(LOG_TAG, "Setting keys.");
-    session.setCollectionKeys(k);
+    session.config.setCollectionKeys(k);
     session.advance();
   }
 

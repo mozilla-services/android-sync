@@ -82,7 +82,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
       final KeyBundle bundle = new KeyBundle(USERNAME, SYNC_KEY);
       session = new MockClientsGlobalSession(TEST_SERVER, USERNAME, PASSWORD, bundle, callback);
       session.config.setClusterURL(new URI(TEST_SERVER));
-      session.setCollectionKeys(CollectionKeys.generateCollectionKeys());
+      session.config.setCollectionKeys(CollectionKeys.generateCollectionKeys());
     } catch (Exception e) {
       e.printStackTrace();
       fail("Unexpected failure in session.");
@@ -209,7 +209,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     public void handle(Request request, Response response) {
       try {
         CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
-        cryptoRecord.keyBundle = session.keyForCollection(COLLECTION_NAME);
+        cryptoRecord.keyBundle = session.keyBundleForCollection(COLLECTION_NAME);
         uploadedRecord = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
   
         // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.

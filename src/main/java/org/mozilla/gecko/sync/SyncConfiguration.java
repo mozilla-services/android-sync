@@ -258,14 +258,8 @@ public class SyncConfiguration implements CredentialsSource {
     return username + ":" + password;
   }
 
-  @Override
   public CollectionKeys getCollectionKeys() {
     return collectionKeys;
-  }
-
-  @Override
-  public KeyBundle keyForCollection(String collection) throws NoCollectionKeysSetException {
-    return getCollectionKeys().keyBundleForCollection(collection);
   }
 
   public void setCollectionKeys(CollectionKeys k) {
