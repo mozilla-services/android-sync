@@ -10,6 +10,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.ArrayList;
 
 import org.json.simple.parser.ParseException;
@@ -66,9 +67,8 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
 
     try {
       final KeyBundle bundle = new KeyBundle(USERNAME, SYNC_KEY);
-      session = new MockClientsGlobalSession(TEST_SERVER, USERNAME, PASSWORD,
-                                             bundle, callback);
-      session.config.setClusterURL(TEST_SERVER);
+      session = new MockClientsGlobalSession(TEST_SERVER, USERNAME, PASSWORD, bundle, callback);
+      session.config.setClusterURL(new URI(TEST_SERVER));
       session.setCollectionKeys(CollectionKeys.generateCollectionKeys());
     } catch (Exception e) {
       e.printStackTrace();

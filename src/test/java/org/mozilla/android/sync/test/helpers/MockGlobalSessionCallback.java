@@ -5,6 +5,8 @@ package org.mozilla.android.sync.test.helpers;
 
 import static org.junit.Assert.assertEquals;
 
+import java.net.URI;
+
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
@@ -24,8 +26,16 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   public int stageCounter = Stage.values().length - 1; // Exclude starting state.
   public boolean calledSuccess = false;
   public boolean calledError = false;
+  public Exception calledErrorException = null;
   public boolean calledAborted = false;
   public boolean calledRequestBackoff = false;
+  public boolean calledInformNodeAuthenticationFailed = false;
+  public boolean calledInformNodeAssigned = false;
+  public boolean calledInformUnauthorizedResponse = false;
+  public URI calledInformNodeAuthenticationFailedClusterURL = null;
+  public URI calledInformNodeAssignedOldClusterURL = null;
+  public URI calledInformNodeAssignedNewClusterURL = null;
+  public URI calledInformUnauthorizedResponseClusterURL = null;
   public long weaveBackoff = -1;
 
   @Override
@@ -43,9 +53,8 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
 
   @Override
   public void handleError(GlobalSession globalSession, Exception ex) {
-    System.out.println("Error in MockGlobalSessionCallback.");
-    ex.printStackTrace();
     this.calledError = true;
+    this.calledErrorException = ex;
     this.testWaiter().performNotify();
   }
 
@@ -62,7 +71,31 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
+  public void informNodeAuthenticationFailed(GlobalSession session, URI clusterURL) {
+    this.calledInformNodeAuthenticationFailed = true;
+    this.calledInformNodeAuthenticationFailedClusterURL = clusterURL;
+  }
+
+  @Override
+  public void informNodeAssigned(GlobalSession session, URI oldClusterURL, URI newClusterURL) {
+    this.calledInformNodeAssigned = true;
+    this.calledInformNodeAssignedOldClusterURL = oldClusterURL;
+    this.calledInformNodeAssignedNewClusterURL = newClusterURL;
+  }
+
+  @Override
+  public void informUnauthorizedResponse(GlobalSession session, URI clusterURL) {
+    this.calledInformUnauthorizedResponse = true;
+    this.calledInformUnauthorizedResponseClusterURL = clusterURL;
+  }
+
+  @Override
   public boolean shouldBackOff() {
+    return false;
+  }
+
+  @Override
+  public boolean wantNodeAssignment() {
     return false;
   }
 }
