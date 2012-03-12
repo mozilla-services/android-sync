@@ -4,6 +4,7 @@
 package org.mozilla.android.sync.stage.test;
 
 import java.io.IOException;
+import java.net.URI;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
@@ -50,12 +51,32 @@ public class TestGlobalSession extends AndroidSyncTestCase {
     }
 
     @Override
+    public void informNodeAuthenticationFailed(GlobalSession session, URI clusterURL) {
+      fail("Not expecting informNodeAuthenticationFailed.");
+    }
+
+    @Override
+    public void informNodeAssigned(GlobalSession session, URI oldClusterURL, URI newClusterURL) {
+      fail("Not expecting informNodeReassigned.");
+    }
+
+    @Override
+    public void informUnauthorizedResponse(GlobalSession session, URI clusterURL) {
+      fail("Not expecting informUnauthorizedResponse.");
+    }
+
+    @Override
     public void handleAborted(GlobalSession globalSession, String reason) {
       fail("Not expecting abort.");
     }
 
     @Override
     public boolean shouldBackOff() {
+      return false;
+    }
+
+    @Override
+    public boolean wantNodeAssignment() {
       return false;
     }
   }
