@@ -80,7 +80,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
             BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
             String server = reader.readLine();
             callbackDelegate.handleSuccess(server);
-            SyncResourceDelegate.consumeReader(reader);
+            BaseResource.consumeReader(reader);
             reader.close();
           } catch (IllegalStateException e) {
             callbackDelegate.handleError(e);
@@ -95,7 +95,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
           // No other acceptable states.
           callbackDelegate.handleFailure(response);
         }
-        SyncResourceDelegate.consumeEntity(response.getEntity());
+        BaseResource.consumeEntity(response.getEntity());
       }
 
       @Override
