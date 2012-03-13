@@ -4,13 +4,16 @@
 
 package org.mozilla.gecko.sync.repositories.domain;
 
+import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.setup.Constants;
 
 public class ClientRecord extends Record {
-
+  protected static final String LOG_TAG = "ClientRecord";
   public static final String COLLECTION_NAME = "clients";
 
   public ClientRecord(String guid, String collection, long lastModified, boolean deleted) {
@@ -35,11 +38,27 @@ public class ClientRecord extends Record {
 
   public String name = Constants.DEFAULT_CLIENT_NAME;
   public String type = Constants.CLIENT_TYPE;
+  public JSONArray commands;
 
   @Override
   protected void initFromPayload(ExtendedJSONObject payload) {
     this.name = (String) payload.get("name");
     this.type = (String) payload.get("type");
+
+    try {
+      commands = payload.getArray("commands");
+    } catch (NonArrayJSONException e) {
+      Logger.debug(LOG_TAG, "Got non-array commands in client record " + guid, e);
+      commands = null;
+    }
+  }
+
+  public ClientRecord(String guid, String name, String type, JSONArray commands, String collection, long lastModified,
+      boolean deleted) {
+    super(guid, collection, lastModified, deleted);
+    this.name = name;
+    this.type = type;
+    this.commands = commands;
   }
 
   @Override

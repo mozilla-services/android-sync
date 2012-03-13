@@ -369,4 +369,12 @@ public class SyncConfiguration implements CredentialsSource {
   public Editor getEditor() {
     return this.getPrefs().edit();
   }
+
+  public void persistServerClientRecordTimestamp(long timestamp) {
+    getEditor().putLong("serverClientRecordTimestamp", timestamp).commit();
+  }
+
+  public long getPersistedServerClientRecordTimestamp() {
+    return getPrefs().getLong("serverClientRecordTimestamp", 0);
+  }
 }
