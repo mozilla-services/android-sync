@@ -63,7 +63,7 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
             InputStream content = response.getEntity().getContent();
             BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
             String inUse = reader.readLine();
-            SyncResourceDelegate.consumeReader(reader);
+            BaseResource.consumeReader(reader);
             reader.close();
             // Removed Logger.debug inUse, because stalling.
             if (inUse.equals("1")) { // Username exists.
@@ -80,7 +80,7 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
         default: // No other response is acceptable.
           callbackDelegate.handleFailure();
         }
-        SyncResourceDelegate.consumeEntity(response.getEntity());
+        BaseResource.consumeEntity(response.getEntity());
       }
 
       @Override

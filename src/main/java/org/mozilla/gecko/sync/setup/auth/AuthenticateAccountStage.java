@@ -12,10 +12,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.util.Base64;
@@ -56,7 +56,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
         try {
           BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
           Logger.warn(LOG_TAG, "content: " + reader.readLine());
-          SyncResourceDelegate.consumeReader(reader);
+          BaseResource.consumeReader(reader);
         } catch (IllegalStateException e) {
           Logger.debug(LOG_TAG, "Error reading content.", e);
         } catch (RuntimeException e) {
@@ -92,7 +92,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
         // Make reference to request, to abort if necessary.
         httpRequest = request;
         client.log.enableDebug(true);
-        request.setHeader(new BasicHeader("User-Agent", SyncStorageRequest.USER_AGENT));
+        request.setHeader(new BasicHeader("User-Agent", GlobalConstants.USER_AGENT));
         // Host header is not set for some reason, so do it explicitly.
         try {
           URI authServerUri = new URI(authRequestUrl);
@@ -116,7 +116,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
         default:
           callbackDelegate.handleFailure(response);
         }
-        SyncResourceDelegate.consumeEntity(response.getEntity());
+        BaseResource.consumeEntity(response.getEntity());
         Logger.warn(LOG_TAG, "released entity.");
       }
 
