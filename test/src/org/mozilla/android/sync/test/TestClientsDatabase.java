@@ -13,9 +13,15 @@ import android.database.Cursor;
 import android.test.AndroidTestCase;
 
 public class TestClientsDatabase extends AndroidTestCase {
-  public void testStoreAndFetch() {
-    ClientsDatabase db = new ClientsDatabase(mContext);
+
+  protected ClientsDatabase db;
+
+  public void setUp() {
+    db = new ClientsDatabase(mContext);
     db.wipe();
+  }
+
+  public void testStoreAndFetch() {
     ClientRecord record = new ClientRecord();
     String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
     db.store(profileConst, record);
@@ -42,13 +48,10 @@ public class TestClientsDatabase extends AndroidTestCase {
       if (cur != null) {
         cur.close();
       }
-      db.close();
     }
   }
 
   public void testDelete() {
-    ClientsDatabase db = new ClientsDatabase(mContext);
-    db.wipe();
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
     String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
@@ -84,13 +87,10 @@ public class TestClientsDatabase extends AndroidTestCase {
       if (cur != null) {
         cur.close();
       }
-      db.close();
     }
   }
 
   public void testWipe() {
-    ClientsDatabase db = new ClientsDatabase(mContext);
-    db.wipe();
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
     String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
@@ -123,7 +123,6 @@ public class TestClientsDatabase extends AndroidTestCase {
       if (cur != null) {
         cur.close();
       }
-      db.close();
     }
   }
 }

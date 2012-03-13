@@ -31,6 +31,10 @@ public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
     extender.wipe();
   }
 
+  public void tearDown() {
+    extender.close();
+  }
+
   public void testStoreFetch() throws NullCursorException, NonObjectJSONException, IOException, ParseException {
     String guid = Utils.generateGuid();
     extender.store(Utils.generateGuid(), null);
@@ -87,7 +91,6 @@ public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
       if (cur != null) {
         cur.close();
       }
-      extender.close();
     }
   }
 
@@ -114,7 +117,6 @@ public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
       if (cur != null) {
         cur.close();
       }
-      extender.close();
     }
   }
 }
