@@ -178,13 +178,13 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     public void handleRequestSuccess(SyncStorageResponse response) {
       assertTrue(response.wasSuccessful());
       // Make sure we consume the entity, so we can reuse the connection.
-      SyncResourceDelegate.consumeEntity(response);
+      BaseResource.consumeEntity(response);
       data.stopHTTPServer();
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      SyncResourceDelegate.consumeEntity(response);
+      BaseResource.consumeEntity(response);
       fail("Should not fail.");
       data.stopHTTPServer();
     }

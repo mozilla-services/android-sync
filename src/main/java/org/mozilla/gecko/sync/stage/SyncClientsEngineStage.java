@@ -16,7 +16,7 @@ import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -66,7 +66,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      SyncResourceDelegate.consumeEntity(response); // We don't need the response at all.
+      BaseResource.consumeEntity(response); // We don't need the response at all.
       try {
         clientUploadDelegate = new ClientUploadDelegate();
         session.getClientsDelegate().setClientsCount(db.clientsCount());
@@ -80,7 +80,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      SyncResourceDelegate.consumeEntity(response); // We don't need the response at all, and any exception handling shouldn't need the response body.
+      BaseResource.consumeEntity(response); // We don't need the response at all, and any exception handling shouldn't need the response body.
       try {
         Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
         session.abort(new HTTPFailureException(response), "Client download failed.");
@@ -141,14 +141,14 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      SyncResourceDelegate.consumeEntity(response);
+      BaseResource.consumeEntity(response);
       session.advance();
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
-      SyncResourceDelegate.consumeEntity(response); // The exception thrown should need the response body.
+      BaseResource.consumeEntity(response); // The exception thrown should need the response body.
       session.abort(new HTTPFailureException(response), "Client upload failed.");
     }
 

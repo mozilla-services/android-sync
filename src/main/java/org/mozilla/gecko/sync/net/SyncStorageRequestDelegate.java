@@ -18,7 +18,7 @@ public interface SyncStorageRequestDelegate {
    * SyncStorageResourceDelegate implementers <b>must</b> ensure that the HTTP
    * responses underlying SyncStorageResponses are fully consumed to ensure that
    * connections are returned to the pool, for example by calling
-   * <code>SyncResourceDelegate.consumeEntity(response)</code>.
+   * <code>BaseResource.consumeEntity(response)</code>.
    */
   void handleRequestSuccess(SyncStorageResponse response);
 
@@ -29,7 +29,7 @@ public interface SyncStorageRequestDelegate {
    * SyncStorageResourceDelegate implementers <b>must</b> ensure that the HTTP
    * responses underlying SyncStorageResponses are fully consumed to ensure that
    * connections are returned to the pool, for example by calling
-   * <code>SyncResourceDelegate.consumeEntity(response)</code>.
+   * <code>BaseResource.consumeEntity(response)</code>.
    */
   void handleRequestFailure(SyncStorageResponse response);
 

@@ -81,7 +81,7 @@ public class TestServer11RepositorySession {
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
-      SyncResourceDelegate.consumeEntity(res);
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }

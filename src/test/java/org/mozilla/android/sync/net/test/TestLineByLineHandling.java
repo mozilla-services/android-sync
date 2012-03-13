@@ -87,7 +87,7 @@ public class TestLineByLineHandling {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       Log.i(LOG_TAG, "Got request failure: " + response);
-      SyncResourceDelegate.consumeEntity(response);
+      BaseResource.consumeEntity(response);
       fail("Should not be called.");
     }
 

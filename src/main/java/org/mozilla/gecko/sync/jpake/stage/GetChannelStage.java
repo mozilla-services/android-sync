@@ -103,7 +103,7 @@ public class GetChannelStage extends JPakeStage {
           }
           callbackDelegate.handleSuccess(channel);
         } finally {
-          SyncResourceDelegate.consumeEntity(response);
+          BaseResource.consumeEntity(response);
         }
       }
 

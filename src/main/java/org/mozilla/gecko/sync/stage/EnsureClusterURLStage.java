@@ -101,7 +101,7 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
             HttpEntity entity = response.getEntity();
             if (entity == null) {
               delegate.handleThrottled();
-              SyncResourceDelegate.consumeEntity(response);
+              BaseResource.consumeEntity(response);
               return;
             }
             String output = null;
@@ -109,15 +109,15 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
               InputStream content = entity.getContent();
               BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
               output = reader.readLine();
-              SyncResourceDelegate.consumeReader(reader);
+              BaseResource.consumeReader(reader);
               reader.close();
             } catch (IllegalStateException e) {
               delegate.handleError(e);
-              SyncResourceDelegate.consumeEntity(response);
+              BaseResource.consumeEntity(response);
               return;
             } catch (IOException e) {
               delegate.handleError(e);
-              SyncResourceDelegate.consumeEntity(response);
+              BaseResource.consumeEntity(response);
               return;
             }
 
@@ -147,10 +147,10 @@ public class EnsureClusterURLStage implements GlobalSyncStage {
             delegate.handleFailure(response);
           }
         } finally {
-          SyncResourceDelegate.consumeEntity(response);
+          BaseResource.consumeEntity(response);
         }
 
-        SyncResourceDelegate.consumeEntity(response);
+        BaseResource.consumeEntity(response);
       }
 
       @Override
