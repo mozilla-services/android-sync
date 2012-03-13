@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import org.junit.Test;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
@@ -58,13 +58,13 @@ public class TestWBOCollectionRequestDelegate {
           }
         }
       } finally {
-        SyncResourceDelegate.consumeEntity(response);
+        BaseResource.consumeEntity(response);
       }
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      SyncResourceDelegate.consumeEntity(response);
+      BaseResource.consumeEntity(response);
       fail("Should not fail.");
     }
 

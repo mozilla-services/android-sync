@@ -39,7 +39,7 @@ public class TestResource {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
-      SyncResourceDelegate.consumeEntity(response);
+      BaseResource.consumeEntity(response);
       fail("Should not occur.");
     }
 
@@ -68,7 +68,7 @@ public class TestResource {
     @Override
     public void handleHttpResponse(HttpResponse response) {
       assertEquals(response.getStatusLine().getStatusCode(), 200);
-      SyncResourceDelegate.consumeEntity(response);
+      BaseResource.consumeEntity(response);
       data.stopHTTPServer();
     }
   }

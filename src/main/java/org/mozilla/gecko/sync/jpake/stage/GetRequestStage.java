@@ -150,7 +150,7 @@ public class GetRequestStage extends JPakeStage {
           }
         } finally {
           // Clean up.
-          SyncResourceDelegate.consumeEntity(response);
+          BaseResource.consumeEntity(response);
         }
       }
 

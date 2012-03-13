@@ -123,7 +123,7 @@ public class PutRequestStage extends JPakeStage {
             callbackDelegate.handleFailure(Constants.JPAKE_ERROR_SERVER);
           }
         } finally {
-          SyncResourceDelegate.consumeEntity(response);
+          BaseResource.consumeEntity(response);
         }
       }
 

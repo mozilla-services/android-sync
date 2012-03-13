@@ -52,7 +52,7 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         e.printStackTrace();
       }
-      SyncResourceDelegate.consumeEntity(res);
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
@@ -71,7 +71,7 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         fail("Got exception fetching error message.");
       }
-      SyncResourceDelegate.consumeEntity(res);
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
@@ -125,7 +125,7 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         fail("Got exception fetching error message.");
       }
-      SyncResourceDelegate.consumeEntity(res);
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
