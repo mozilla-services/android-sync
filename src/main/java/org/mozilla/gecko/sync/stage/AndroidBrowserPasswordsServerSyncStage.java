@@ -15,7 +15,7 @@ import org.mozilla.gecko.sync.repositories.domain.PasswordRecordFactory;
 public class AndroidBrowserPasswordsServerSyncStage extends ServerSyncStage {
 
   private static final String PASSWORDS_SORT          = "index";
-  private static final long   PASSWORDS_REQUEST_LIMIT = 250;
+  private static final long   PASSWORDS_REQUEST_LIMIT = 100;
 
   @Override
   public void execute(org.mozilla.gecko.sync.GlobalSession session) throws NoSuchStageException {

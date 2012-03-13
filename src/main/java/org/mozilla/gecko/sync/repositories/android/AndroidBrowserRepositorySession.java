@@ -28,6 +28,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 /**
  * You'll notice that all delegate calls *either*:
@@ -135,6 +136,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
   protected void checkDatabase() throws ProfileDatabaseException, NullCursorException {
     Logger.info(LOG_TAG, "BEGIN: checking database.");
+    Log.d(LOG_TAG, "db Uri:" + dbHelper.getUri());
     try {
       dbHelper.fetch(new String[] { "none" }).close();
       Logger.info(LOG_TAG, "END: checking database.");

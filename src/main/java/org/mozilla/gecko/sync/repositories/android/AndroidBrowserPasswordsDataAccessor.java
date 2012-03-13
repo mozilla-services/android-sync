@@ -36,10 +36,10 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
     cv.put(BrowserContract.Passwords.ENCRYPTED_USERNAME, rec.encryptedUsername);
     cv.put(BrowserContract.Passwords.ENCRYPTED_PASSWORD, rec.encryptedPassword);
     
-    cv.put(BrowserContract.Passwords.TIME_CREATED,   rec.timeCreated);
-    cv.put(BrowserContract.Passwords.TIME_LAST_USED, rec.timeLastUsed);
+    cv.put(BrowserContract.Passwords.TIME_CREATED,          rec.timeCreated);
+    cv.put(BrowserContract.Passwords.TIME_LAST_USED,        rec.timeLastUsed);
     cv.put(BrowserContract.Passwords.TIME_PASSWORD_CHANGED, rec.timePasswordChanged);
-    cv.put(BrowserContract.Passwords.TIMES_USED,     rec.timesUsed);
+    cv.put(BrowserContract.Passwords.TIMES_USED,            rec.timesUsed);
     return cv;
   }
 

@@ -27,7 +27,7 @@ public class BrowserContractHelpers extends BrowserContract {
   public static final Uri HISTORY_CONTENT_URI              = withSyncAndDeleted(History.CONTENT_URI);
   public static final Uri SCHEMA_CONTENT_URI               = withSyncAndDeleted(Schema.CONTENT_URI);
   public static final Uri PASSWORDS_CONTENT_URI            = withSyncAndDeleted(Passwords.CONTENT_URI);
-  public static final Uri DELETED_PASSWORDS_CONTENT_URI    = withSyncAndDeleted(DeletedPasswords.CONTENT_URI);
+//  public static final Uri DELETED_PASSWORDS_CONTENT_URI    = withSyncAndDeleted(DeletedPasswords.CONTENT_URI);
 
   public static final String[] PasswordColumns = new String[] {
     CommonColumns._ID,
