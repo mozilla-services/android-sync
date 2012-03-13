@@ -168,10 +168,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource {
     stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
 
     // TODO: more stages.
+    stages.put(Stage.syncPasswords,           new AndroidBrowserPasswordsServerSyncStage());
     stages.put(Stage.syncTabs,                new FennecTabsServerSyncStage());
     stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
     stages.put(Stage.syncHistory,             new AndroidBrowserHistoryServerSyncStage());
-    stages.put(Stage.syncPasswords,           new AndroidBrowserPasswordsServerSyncStage());
     stages.put(Stage.completed,               new CompletedStage());
   }
 
