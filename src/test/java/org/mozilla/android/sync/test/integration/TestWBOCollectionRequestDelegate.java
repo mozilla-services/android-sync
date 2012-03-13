@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import org.junit.Test;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
@@ -43,22 +44,27 @@ public class TestWBOCollectionRequestDelegate {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      System.out.println("WBOs: " + this.wbos.size());
-      assertTrue(13 < wbos.size());
-      for (CryptoRecord record : this.wbos) {
-        try {
-          // TODO: make this an actual test. Return data locally.
-          CryptoRecord decrypted = (CryptoRecord)(record.decrypt());
-          System.out.println(decrypted.payload.toJSONString());
-        } catch (Exception e) {
-          e.printStackTrace();
-          fail("Decryption failed.");
+      try {
+        System.out.println("WBOs: " + this.wbos.size());
+        assertTrue(13 < wbos.size());
+        for (CryptoRecord record : this.wbos) {
+          try {
+            // TODO: make this an actual test. Return data locally.
+            CryptoRecord decrypted = (CryptoRecord)(record.decrypt());
+            System.out.println(decrypted.payload.toJSONString());
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("Decryption failed.");
+          }
         }
+      } finally {
+        BaseResource.consumeEntity(response);
       }
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      BaseResource.consumeEntity(response);
       fail("Should not fail.");
     }
 

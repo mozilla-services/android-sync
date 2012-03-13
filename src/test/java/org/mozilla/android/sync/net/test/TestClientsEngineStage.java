@@ -46,7 +46,7 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   private static final String PASSWORD  = "password";
   private static final String SYNC_KEY  = "abcdeabcdeabcdeabcdeabcdea";
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
   private int numRecordsFromGetRequest = 0;
 
   private ArrayList<ClientRecord> expectedClients = new ArrayList<ClientRecord>();
@@ -178,12 +178,13 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     public void handleRequestSuccess(SyncStorageResponse response) {
       assertTrue(response.wasSuccessful());
       // Make sure we consume the entity, so we can reuse the connection.
-      SyncResourceDelegate.consumeEntity(response.httpResponse().getEntity());
+      BaseResource.consumeEntity(response);
       data.stopHTTPServer();
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      BaseResource.consumeEntity(response);
       fail("Should not fail.");
       data.stopHTTPServer();
     }

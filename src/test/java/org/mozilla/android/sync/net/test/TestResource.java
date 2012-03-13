@@ -17,6 +17,7 @@ import org.mozilla.android.sync.test.helpers.BaseResourceDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 
 import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -28,7 +29,7 @@ public class TestResource {
 
   static String            USER_PASS    = "john:password";
   static String            EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
-  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
 
   class BaseTestResourceDelegate extends BaseResourceDelegate {
     @Override
@@ -38,6 +39,7 @@ public class TestResource {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
+      BaseResource.consumeEntity(response);
       fail("Should not occur.");
     }
 
@@ -66,6 +68,7 @@ public class TestResource {
     @Override
     public void handleHttpResponse(HttpResponse response) {
       assertEquals(response.getStatusLine().getStatusCode(), 200);
+      BaseResource.consumeEntity(response);
       data.stopHTTPServer();
     }
   }
