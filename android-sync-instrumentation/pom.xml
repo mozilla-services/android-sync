@@ -41,6 +41,15 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- APK: so our dep gets installed. -->
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <type>apk</type>
+    </dependency>
+
+    <!-- POM: so we have access to the source. -->
     <dependency>
       <groupId>org.mozilla.gecko</groupId>
       <artifactId>android-sync-app</artifactId>
@@ -48,6 +57,7 @@
       <type>pom</type>
     </dependency>
 
+    <!-- JAR: so we have access to dependencies and other sources. -->
     <dependency>
       <groupId>org.mozilla.gecko</groupId>
       <artifactId>android-sync-app</artifactId>
@@ -80,7 +90,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>../src/main/java/org/mozilla/android/</source>
+                <source>../src/main/java/org/mozilla/</source>
               </sources>
             </configuration>
           </execution>
