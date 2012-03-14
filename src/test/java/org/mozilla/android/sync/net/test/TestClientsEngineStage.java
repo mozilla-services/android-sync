@@ -370,7 +370,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
   @Test
   public void testCheckAndUploadClientRecord() {
-    uploadAttemptsCount = 5;
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     assertFalse(commandsProcessedShouldUpload);
     assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
     currentUploadMockServer = new UploadMockServer();
@@ -385,7 +385,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     // Test ClientUploadDelegate.handleRequestSuccess().
     assertTrue(lastComputedLocalClientRecord.equals(uploadedRecord));
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     assertTrue(callback.calledSuccess);
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
   }
@@ -402,9 +402,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandle412UploadFailureLowCount() {
     assertFalse(commandsProcessedShouldUpload);
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -412,9 +412,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandle412UploadFailureHighCount() {
     assertFalse(commandsProcessedShouldUpload);
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
-    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
-    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -422,9 +422,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandle412UploadFailureLowCountWithCommand() {
     commandsProcessedShouldUpload = true;
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -432,9 +432,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandle412UploadFailureHighCountWithCommand() {
     commandsProcessedShouldUpload = true;
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
-    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
-    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -442,9 +442,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandleMiscUploadFailureLowCount() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
     assertFalse(commandsProcessedShouldUpload);
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -452,9 +452,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandleMiscUploadFailureHighCount() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
     assertFalse(commandsProcessedShouldUpload);
-    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
-    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -462,9 +462,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandleMiscUploadFailureHighCountWithCommands() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
     commandsProcessedShouldUpload = true;
-    uploadAttemptsCount = MAX_UPLOAD_FAILURE_COUNT + 1;
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
-    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount);
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -472,9 +472,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testHandleMiscUploadFailureMaxAttempts() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
     commandsProcessedShouldUpload = true;
-    assertEquals(0, uploadAttemptsCount);
+    assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
-    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount);
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 }

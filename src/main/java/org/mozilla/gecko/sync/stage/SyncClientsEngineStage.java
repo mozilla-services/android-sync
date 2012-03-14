@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync.stage;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.sync.CryptoRecord;
@@ -42,9 +43,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected ClientDownloadDelegate clientDownloadDelegate;
   protected ClientsDatabaseAccessor db;
 
-  protected boolean shouldWipe;
-  protected boolean commandsProcessedShouldUpload;
-  protected int uploadAttemptsCount = 0;
+  protected volatile boolean shouldWipe;
+  protected volatile boolean commandsProcessedShouldUpload;
+  protected final AtomicInteger uploadAttemptsCount = new AtomicInteger();
 
   /**
    * The following two delegates, ClientDownloadDelegate and ClientUploadDelegate
@@ -162,7 +163,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       commandsProcessedShouldUpload = false;
-      uploadAttemptsCount = 0;
+      uploadAttemptsCount.set(0);
       session.config.persistServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
 
       BaseResource.consumeEntity(response);
@@ -177,8 +178,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // commands uploaded to our record. We must download and process them first.
       if (!commandsProcessedShouldUpload ||
           statusCode == HttpStatus.SC_PRECONDITION_FAILED ||
-          uploadAttemptsCount >= MAX_UPLOAD_FAILURE_COUNT) {
-        Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
+          uploadAttemptsCount.get() >= MAX_UPLOAD_FAILURE_COUNT) {
+        Logger.debug(LOG_TAG, "Client upload failed. Aborting sync.");
         BaseResource.consumeEntity(response); // The exception thrown should need the response body.
         session.abort(new HTTPFailureException(response), "Client upload failed.");
         return;
@@ -187,7 +188,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // commandsProcessedShouldUpload == true &&
       // statusCode != 412 &&
       // uploadAttemptCount < MAX_UPLOAD_FAILURE_COUNT
-      uploadAttemptsCount++;
+      uploadAttemptsCount.getAndIncrement();
       checkAndUpload();
     }
 
