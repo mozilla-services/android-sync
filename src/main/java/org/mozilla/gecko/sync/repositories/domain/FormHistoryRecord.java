@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.sync.repositories.domain;
 
-import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
@@ -20,7 +19,9 @@ import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 public class FormHistoryRecord extends Record {
   private static final String LOG_TAG = "FormHistoryRecord";
 
-  public static final String COLLECTION_NAME = "formhistory";
+  public static final String  COLLECTION_NAME = "formhistory";
+  private static final String PAYLOAD_NAME    = "name";
+  private static final String PAYLOAD_VALUE   = "value";
 
   /**
    * The name of the saved form field.
@@ -76,14 +77,14 @@ public class FormHistoryRecord extends Record {
 
   @Override
   public void populatePayload(ExtendedJSONObject payload) {
-    putPayload(payload, BrowserContract.FormHistory.FIELD_NAME, this.fieldName);
-    putPayload(payload, BrowserContract.FormHistory.VALUE,      this.fieldValue);
+    putPayload(payload, PAYLOAD_NAME,  this.fieldName);
+    putPayload(payload, PAYLOAD_VALUE, this.fieldValue);
   }
 
   @Override
   public void initFromPayload(ExtendedJSONObject payload) {
-    this.fieldName  = (String) payload.get(BrowserContract.FormHistory.FIELD_NAME);
-    this.fieldValue = (String) payload.get(BrowserContract.FormHistory.VALUE);
+    this.fieldName  = (String) payload.get(PAYLOAD_NAME);
+    this.fieldValue = (String) payload.get(PAYLOAD_VALUE);
   }
 
   /**
@@ -117,7 +118,6 @@ public class FormHistoryRecord extends Record {
     return RepoUtils.stringsEqual(this.fieldName,  other.fieldName) &&
            RepoUtils.stringsEqual(this.fieldValue, other.fieldValue);
   }
-}
 
   public FormHistoryRecord log(String logTag) {
     try {
@@ -132,3 +132,4 @@ public class FormHistoryRecord extends Record {
     }
     return this;
   }
+}

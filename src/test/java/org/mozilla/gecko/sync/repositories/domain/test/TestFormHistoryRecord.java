@@ -7,7 +7,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
@@ -24,8 +23,8 @@ public class TestFormHistoryRecord {
   public void testGetPayload() {
     FormHistoryRecord fr = FormHistoryRecord.withIdFieldNameAndValue(0, "username", "aUsername");
     CryptoRecord rec = fr.getEnvelope();
-    assertEquals("username",  rec.payload.get(BrowserContract.FormHistory.FIELD_NAME));
-    assertEquals("aUsername", rec.payload.get(BrowserContract.FormHistory.VALUE));
+    assertEquals("username",  rec.payload.get("name"));
+    assertEquals("aUsername", rec.payload.get("value"));
   }
 
   @Test
