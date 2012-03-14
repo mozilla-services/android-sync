@@ -136,11 +136,6 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
   }
 
-  /**
-   * Upload & Download Delegates
-   *
-   * @author Marina Samuel
-   */
   public class TestSuccessClientDownloadDelegate extends TestClientDownloadDelegate {
     public TestSuccessClientDownloadDelegate(HTTPServerTestHelper data) {
       super(data);
@@ -209,11 +204,6 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
   }
 
-  /**
-   * Mock Servers
-   *
-   * @author Marina Samuel
-   */
   public class UploadMockServer extends MockServer {
     @Override
     public void handle(Request request, Response response) {
@@ -250,9 +240,6 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
   }
 
-  /**
-   * Helper Methods
-   */
   private CryptoRecord cryptoFromClient(ClientRecord record) {
     CryptoRecord cryptoRecord = record.getEnvelope();
     cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
@@ -281,9 +268,6 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     });
   }
 
-  /**
-   * Tests
-   */
   @Test
   public void testShouldUploadNoCommandsToProcess() throws NullCursorException {
     // shouldUpload() returns true.

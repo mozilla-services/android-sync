@@ -187,6 +187,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         return;
       }
 
+      // Preconditions:
       // commandsProcessedShouldUpload == true &&
       // statusCode != 412 &&
       // uploadAttemptCount < MAX_UPLOAD_FAILURE_COUNT
@@ -269,7 +270,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     // Generate CryptoRecord from ClientRecord to upload.
     String encryptionFailure = "Couldn't encrypt new client record.";
-    ClientRecord localClient  = newLocalClientRecord(session.getClientsDelegate());
+    ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
     CryptoRecord cryptoRecord = localClient.getEnvelope();
     try {
       cryptoRecord.keyBundle = clientUploadDelegate.keyBundle();
