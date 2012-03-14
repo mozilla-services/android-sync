@@ -18,9 +18,10 @@ public class Constants {
   public static final String NUM_CLIENTS          = "account.numClients";
 
   // Constants for client records.
-  public static final String PROFILE_ID          = "default";     // Generic profile id for now, until multiple profiles are implemented.
-  public static final String CLIENT_TYPE         = "mobile";
-  public static final String DEFAULT_CLIENT_NAME = "Default Name";
+  public static final String PROFILE_ID              = "default";     // Generic profile id for now, until multiple profiles are implemented.
+  public static final String CLIENT_TYPE             = "mobile";
+  public static final String DEFAULT_CLIENT_NAME     = "Default Name";
+  public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";
 
   // Constants for Activities.
   public static final String INTENT_EXTRA_IS_SETUP = "isSetup";
