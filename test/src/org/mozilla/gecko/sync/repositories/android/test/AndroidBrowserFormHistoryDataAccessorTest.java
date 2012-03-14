@@ -57,6 +57,17 @@ public class AndroidBrowserFormHistoryDataAccessorTest extends ActivityInstrumen
     }
   }
 
+  public void testWipe() throws NullCursorException {
+    accessor.dumpDB();
+    doInsertRecords(new FormHistoryRecord[] {FormHistoryHelpers.createFormHistory1(), FormHistoryHelpers.createFormHistory2()});
+    accessor.wipe();
+    accessor.dumpDB();
+
+    Cursor cur = accessor.fetchAll();
+    assertEquals(0, cur.getCount());
+    cur.close();
+  }
+
   public void testInsert() throws NullCursorException {
     FormHistoryRecord rec = FormHistoryHelpers.createFormHistory1();
     accessor.insert(rec);
