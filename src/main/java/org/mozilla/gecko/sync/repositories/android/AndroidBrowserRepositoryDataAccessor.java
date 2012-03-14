@@ -174,7 +174,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
   public void update(String guid, Record newRecord) {
     Logger.info(LOG_TAG(), "Updating record with guid " + guid + "...");
     ContentValues cv = getContentValues(newRecord);
-    addTimestampsForInsert(cv, newRecord);
+    addTimestampsForUpdate(cv, newRecord);
     updateByGuid(guid, cv);
     Logger.info(LOG_TAG(), "Updating record with guid " + guid + "... DONE");
   }
