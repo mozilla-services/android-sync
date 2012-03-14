@@ -4,23 +4,12 @@
 
 package org.mozilla.gecko.sync.stage;
 
-import java.net.URISyntaxException;
-
-import org.mozilla.gecko.sync.repositories.ConstrainedServer11Repository;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsRepository;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecordFactory;
 
 public class AndroidBrowserPasswordsServerSyncStage extends ServerSyncStage {
-
-  private static final String PASSWORDS_SORT          = "index";
-  private static final long   PASSWORDS_REQUEST_LIMIT = 100;
-
-  @Override
-  public void execute(org.mozilla.gecko.sync.GlobalSession session) throws NoSuchStageException {
-    super.execute(session);
-  }
 
   @Override
   protected String getCollection() {
@@ -34,16 +23,6 @@ public class AndroidBrowserPasswordsServerSyncStage extends ServerSyncStage {
   @Override
   protected Repository getLocalRepository() {
     return new AndroidBrowserPasswordsRepository();
-  }
-
-  @Override
-  protected Repository getRemoteRepository() throws URISyntaxException {
-    return new ConstrainedServer11Repository(session.config.getClusterURLString(),
-                                             session.config.username,
-                                             getCollection(),
-                                             session,
-                                             PASSWORDS_REQUEST_LIMIT,
-                                             PASSWORDS_SORT);
   }
 
   @Override
