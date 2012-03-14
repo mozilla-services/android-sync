@@ -118,3 +118,17 @@ public class FormHistoryRecord extends Record {
            RepoUtils.stringsEqual(this.fieldValue, other.fieldValue);
   }
 }
+
+  public FormHistoryRecord log(String logTag) {
+    try {
+      Logger.debug(logTag, "Returning form history record " + guid + " (" + androidID + ")");
+      Logger.debug(logTag, "> Last modified: " + lastModified);
+      if (Logger.LOG_PERSONAL_INFORMATION) {
+        Logger.pii(logTag, "> Field name:    " + fieldName);
+        Logger.pii(logTag, "> Field value:   " + fieldValue);
+      }
+    } catch (Exception e) {
+      Logger.debug(logTag, "Exception logging form history record " + this, e);
+    }
+    return this;
+  }
