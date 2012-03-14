@@ -120,7 +120,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       try {
         r = (ClientRecord) factory.createRecord(record.decrypt());
         ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
-        if (r.guid == localClient.guid) {
+        if (r.guid.equals(localClient.guid)) {
           processCommands(r.commands);
         }
         RepoUtils.logClient(r);
@@ -244,10 +244,14 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected boolean shouldUpload() {
+    if (commandsProcessedShouldUpload) {
+      return true;
+    }
+
     long now = System.currentTimeMillis();
     long lastUpload = session.config.getPersistedServerClientRecordTimestamp();   // Defaults to 0.
     long age = now - lastUpload;
-    return commandsProcessedShouldUpload || age >= CLIENTS_TTL_REFRESH;
+    return age >= CLIENTS_TTL_REFRESH;
   }
 
   protected void processCommands(JSONArray commands) {
