@@ -33,10 +33,10 @@ import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
 import ch.boye.httpclientandroidlib.HttpStatus;
 
 public class SyncClientsEngineStage implements GlobalSyncStage {
-  protected static final String LOG_TAG = "SyncClientsEngineStage";
-  protected static final String COLLECTION_NAME = "clients";
-  protected static final int CLIENTS_TTL_REFRESH = 604800000; // 7 days
-  protected static final int MAX_UPLOAD_FAILURE_COUNT = 5;
+  public static final String LOG_TAG = "SyncClientsEngineStage";
+  public static final String COLLECTION_NAME = "clients";
+  public static final int CLIENTS_TTL_REFRESH = 604800000; // 7 days
+  public static final int MAX_UPLOAD_FAILURE_COUNT = 5;
 
   protected GlobalSession session;
   protected final ClientRecordFactory factory = new ClientRecordFactory();
