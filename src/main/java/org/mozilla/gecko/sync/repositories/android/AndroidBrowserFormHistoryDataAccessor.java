@@ -113,17 +113,8 @@ public class AndroidBrowserFormHistoryDataAccessor extends
     return logFormHistory(rec);
   }
 
-  public FormHistoryRecord logFormHistory(FormHistoryRecord rec) {
-    try {
-      Logger.debug(LOG_TAG(), "Returning form history record " + rec.guid + " (" + rec.androidID + ")");
-      Logger.debug(LOG_TAG(), "> Last modified: " + rec.lastModified);
-      if (Logger.LOG_PERSONAL_INFORMATION) {
-        Logger.pii(LOG_TAG(), "> Field name:    " + rec.fieldName);
-        Logger.pii(LOG_TAG(), "> Field value:   " + rec.fieldValue);
-      }
-    } catch (Exception e) {
-      Logger.debug(LOG_TAG(), "Exception logging form history record " + rec, e);
-    }
-    return rec;
+  public FormHistoryRecord logFormHistory(FormHistoryRecord record) {
+    record.log(LOG_TAG());
+    return record;
   }
 }
