@@ -7,7 +7,6 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils.QueryHelper;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
