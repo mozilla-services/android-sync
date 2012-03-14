@@ -53,14 +53,6 @@ public class ClientRecord extends Record {
     }
   }
 
-  public ClientRecord(String guid, String name, String type, JSONArray commands, String collection, long lastModified,
-      boolean deleted) {
-    super(guid, collection, lastModified, deleted);
-    this.name = name;
-    this.type = type;
-    this.commands = commands;
-  }
-
   @Override
   protected void populatePayload(ExtendedJSONObject payload) {
     putPayload(payload, "id",   this.guid);
