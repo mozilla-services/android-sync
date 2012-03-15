@@ -14,6 +14,8 @@ import java.net.URI;
 import java.util.ArrayList;
 
 import org.json.simple.parser.ParseException;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -22,6 +24,8 @@ import org.mozilla.android.sync.test.helpers.MockClientsDatabaseAccessor;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.android.sync.test.helpers.MockSyncClientsEngineStage;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -30,14 +34,15 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
-import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
-public class TestClientsEngineStage extends SyncClientsEngineStage {
+import ch.boye.httpclientandroidlib.HttpStatus;
+
+public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
   private static final int TEST_PORT      = 15325;
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
@@ -54,6 +59,14 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
 
   // For test purposes.
   private ClientRecord lastComputedLocalClientRecord;
+  private ClientRecord uploadedRecord;
+  private MockServer currentUploadMockServer;
+  private MockServer currentDownloadMockServer;
+  private MockGlobalSessionCallback callback;
+
+  protected WaitHelper testWaiter() {
+    return WaitHelper.getTestWaiter();
+  }
 
   @Override
   protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
@@ -63,7 +76,7 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
 
   @Before
   public void setup() {
-    MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    callback = new MockGlobalSessionCallback();
 
     try {
       final KeyBundle bundle = new KeyBundle(USERNAME, SYNC_KEY);
@@ -84,27 +97,21 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
 
   @Override
   protected ClientDownloadDelegate makeClientDownloadDelegate() {
-    return new TestClientDownloadDelegate();
+    return clientDownloadDelegate;
   }
 
   @Override
   protected void downloadClientRecords() {
     BaseResource.rewriteLocalhost = false;
-    data.startHTTPServer(new DownloadMockServer());
+    data.startHTTPServer(currentDownloadMockServer);
     super.downloadClientRecords();
   }
 
   @Override
   protected void uploadClientRecord(CryptoRecord record) {
     BaseResource.rewriteLocalhost = false;
-    data.startHTTPServer(new UploadMockServer());
+    data.startHTTPServer(currentUploadMockServer);
     super.uploadClientRecord(record);
-  }
-
-  @Override
-  public void checkAndUpload() {
-    clientUploadDelegate = new MockClientUploadDelegate();
-    super.checkAndUpload();
   }
 
   public static class MockClientsGlobalSession extends MockGlobalSession {
@@ -129,19 +136,9 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     }
   }
 
-  public class TestClientDownloadDelegate extends ClientDownloadDelegate {
-    @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
-      data.stopHTTPServer();
-      assertTrue(response.wasSuccessful());
-
-      assertEquals(expectedClients.size(), numRecordsFromGetRequest);
-      for (int i = 0; i < downloadedClients.size(); i++) {
-        assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
-      }
-
-      super.handleRequestSuccess(response);
-      assertEquals(Stage.idle, session.currentState);
+  public class TestSuccessClientDownloadDelegate extends TestClientDownloadDelegate {
+    public TestSuccessClientDownloadDelegate(HTTPServerTestHelper data) {
+      super(data);
     }
 
     @Override
@@ -149,7 +146,6 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
       super.handleRequestFailure(response);
       assertTrue(((MockClientsDatabaseAccessor)db).closed);
       fail("Should not error.");
-      data.stopHTTPServer();
     }
 
     @Override
@@ -157,7 +153,6 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
       super.handleRequestError(ex);
       assertTrue(((MockClientsDatabaseAccessor)db).closed);
       fail("Should not fail.");
-      data.stopHTTPServer();
     }
 
     @Override
@@ -173,27 +168,39 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     }
   }
 
-  public class MockClientUploadDelegate extends ClientUploadDelegate {
-    @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
-      assertTrue(response.wasSuccessful());
-      // Make sure we consume the entity, so we can reuse the connection.
-      BaseResource.consumeEntity(response);
-      data.stopHTTPServer();
+  public class MockSuccessClientUploadDelegate extends MockClientUploadDelegate {
+    public MockSuccessClientUploadDelegate(HTTPServerTestHelper data) {
+      super(data);
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      BaseResource.consumeEntity(response);
-      fail("Should not fail.");
-      data.stopHTTPServer();
+      super.handleRequestFailure(response);
+      fail("Should not error.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
-      ex.printStackTrace();
-      fail("Should not error.");
-      data.stopHTTPServer();
+      super.handleRequestError(ex);
+      fail("Should not fail.");
+    }
+  }
+
+  public class MockFailureClientUploadDelegate extends MockClientUploadDelegate {
+    public MockFailureClientUploadDelegate(HTTPServerTestHelper data) {
+      super(data);
+    }
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse response) {
+      super.handleRequestSuccess(response);
+      fail("Should not succeed.");
+    }
+
+    @Override
+    public void handleRequestError(Exception ex) {
+      super.handleRequestError(ex);
+      fail("Should not fail.");
     }
   }
 
@@ -203,12 +210,11 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
       try {
         CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
         cryptoRecord.keyBundle = session.keyForCollection(COLLECTION_NAME);
-        ClientRecord r = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
+        uploadedRecord = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
   
         // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.
         // So its value is null and is set here so ClientRecord.equals() may be used.
-        r.collection = lastComputedLocalClientRecord.collection;
-        assertTrue(lastComputedLocalClientRecord.equals(r));
+        uploadedRecord.collection = lastComputedLocalClientRecord.collection;
       } catch (Exception e) {
         fail("Error handling uploaded client record in UploadMockServer.");
       }
@@ -245,6 +251,59 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
     return cryptoRecord;
   }
 
+  private long setRecentClientRecordTimestamp() {
+    long timestamp = System.currentTimeMillis() - (CLIENTS_TTL_REFRESH - 1000);
+    session.config.persistServerClientRecordTimestamp(timestamp);
+      return timestamp;
+  }
+
+  private void performFailingUpload() {
+    // performNotify() occurs in MockGlobalSessionCallback.
+    testWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        clientUploadDelegate = new MockFailureClientUploadDelegate(data);
+        checkAndUpload();
+      }
+    });
+  }
+
+  @Test
+  public void testShouldUploadNoCommandsToProcess() throws NullCursorException {
+    // shouldUpload() returns true.
+    assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(commandsProcessedShouldUpload);
+    assertTrue(shouldUpload());
+
+    // Set the timestamp to be a little earlier than refresh time,
+    // so shouldUpload() returns false.
+    setRecentClientRecordTimestamp();
+    assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUpload());
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testShouldUploadProcessCommands() throws NullCursorException {
+    // shouldUpload() returns false since array is size 0 and
+    // it has not been long enough yet to require an upload.
+    processCommands(new JSONArray());
+    setRecentClientRecordTimestamp();
+    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUpload());
+
+    // shouldUpload() returns true since array is size 1 even though
+    // it has not been long enough yet to require an upload.
+    JSONArray commands = new JSONArray();
+    commands.add(new JSONObject());
+    processCommands(commands);
+    setRecentClientRecordTimestamp();
+    assertEquals(1, commands.size());
+    assertTrue(commandsProcessedShouldUpload);
+    assertTrue(shouldUpload());
+  }
+
   @Test
   public void testWipeAndStoreShouldNotWipe() {
     assertFalse(shouldWipe);
@@ -269,12 +328,137 @@ public class TestClientsEngineStage extends SyncClientsEngineStage {
   }
 
   @Test
-  public void testCheckAndUploadClientRecord() {
-    this.checkAndUpload();
+  public void testDownloadClientRecord() {
+    // Make sure no upload occurs after a download so we can
+    // test download in isolation.
+    long initialTimestamp = setRecentClientRecordTimestamp();
+    assertFalse(commandsProcessedShouldUpload);
+
+    currentDownloadMockServer = new DownloadMockServer();
+    // performNotify() occurs in MockGlobalSessionCallback.
+    testWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        clientDownloadDelegate = new TestSuccessClientDownloadDelegate(data);
+        downloadClientRecords();
+      }
+    });
+
+    assertEquals(expectedClients.size(), numRecordsFromGetRequest);
+    for (int i = 0; i < downloadedClients.size(); i++) {
+      assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
+    }
+    assertEquals(initialTimestamp, session.config.getPersistedServerClientRecordTimestamp());
+    assertTrue(((MockClientsDatabaseAccessor)db).closed);
   }
 
   @Test
-  public void testDownloadClientRecord() {
-    this.downloadClientRecords();
+  public void testCheckAndUploadClientRecord() {
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
+    assertFalse(commandsProcessedShouldUpload);
+    assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
+    currentUploadMockServer = new UploadMockServer();
+    // performNotify() occurs in MockGlobalSessionCallback.
+    testWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        clientUploadDelegate = new MockSuccessClientUploadDelegate(data);
+        checkAndUpload();
+      }
+    });
+
+    // Test ClientUploadDelegate.handleRequestSuccess().
+    assertTrue(lastComputedLocalClientRecord.equals(uploadedRecord));
+    assertEquals(0, uploadAttemptsCount.get());
+    assertTrue(callback.calledSuccess);
+    assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
+  }
+
+  /**
+   * The following 8 tests are for ClientUploadDelegate.handleRequestFailure().
+   * for the varying values of uploadAttemptsCount, commandsProcessedShouldUpload,
+   * and the type of server error.
+   *
+   * The first 4 are for 412 Precondition Failures.
+   * The second 4 represent the functionality given any other type of variable.
+   */
+  @Test
+  public void testHandle412UploadFailureLowCount() {
+    assertFalse(commandsProcessedShouldUpload);
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    assertEquals(0, uploadAttemptsCount.get());
+    performFailingUpload();
+    assertEquals(0, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandle412UploadFailureHighCount() {
+    assertFalse(commandsProcessedShouldUpload);
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandle412UploadFailureLowCountWithCommand() {
+    commandsProcessedShouldUpload = true;
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    assertEquals(0, uploadAttemptsCount.get());
+    performFailingUpload();
+    assertEquals(0, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandle412UploadFailureHighCountWithCommand() {
+    commandsProcessedShouldUpload = true;
+    currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureLowCount() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    assertFalse(commandsProcessedShouldUpload);
+    assertEquals(0, uploadAttemptsCount.get());
+    performFailingUpload();
+    assertEquals(0, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureHighCount() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    assertFalse(commandsProcessedShouldUpload);
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureHighCountWithCommands() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    commandsProcessedShouldUpload = true;
+    uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
+  }
+
+  @Test
+  public void testHandleMiscUploadFailureMaxAttempts() {
+    currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
+    commandsProcessedShouldUpload = true;
+    assertEquals(0, uploadAttemptsCount.get());
+    performFailingUpload();
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
+    assertTrue(callback.calledError);
   }
 }

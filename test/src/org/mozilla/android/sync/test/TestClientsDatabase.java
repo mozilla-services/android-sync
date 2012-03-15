@@ -5,9 +5,9 @@ package org.mozilla.android.sync.test;
 
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabase;
+import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
-import org.mozilla.gecko.sync.setup.Constants;
 
 import android.database.Cursor;
 import android.test.AndroidTestCase;
@@ -17,7 +17,7 @@ public class TestClientsDatabase extends AndroidTestCase {
     ClientsDatabase db = new ClientsDatabase(mContext);
     db.wipe();
     ClientRecord record = new ClientRecord();
-    String profileConst = Constants.PROFILE_ID;
+    String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
     db.store(profileConst, record);
 
     Cursor cur = null;
@@ -51,7 +51,7 @@ public class TestClientsDatabase extends AndroidTestCase {
     db.wipe();
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
-    String profileConst = Constants.PROFILE_ID;
+    String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
 
     db.store(profileConst, record1);
     db.store(profileConst, record2);
@@ -93,7 +93,7 @@ public class TestClientsDatabase extends AndroidTestCase {
     db.wipe();
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
-    String profileConst = Constants.PROFILE_ID;
+    String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
 
     db.store(profileConst, record1);
     db.store(profileConst, record2);
