@@ -171,6 +171,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
+      Logger.debug(LOG_TAG, "Upload succeeded.");
       commandsProcessedShouldUpload = false;
       uploadAttemptsCount.set(0);
       session.config.persistServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
@@ -193,7 +194,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         session.abort(new HTTPFailureException(response), "Client upload failed.");
         return;
       }
-
+      Logger.trace(LOG_TAG, "Retrying upload…");
       // Preconditions:
       // commandsProcessedShouldUpload == true &&
       // statusCode != 412 &&
@@ -280,7 +281,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
   protected void checkAndUpload() {
     if (!shouldUpload()) {
-      Logger.trace(LOG_TAG, "Not uploading client record.");
+      Logger.debug(LOG_TAG, "Not uploading client record.");
       session.advance();
       return;
     }
@@ -318,6 +319,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected void uploadClientRecord(CryptoRecord record) {
+    Logger.debug(LOG_TAG, "Uploading client record " + record.guid);
     try {
       URI putURI = session.config.wboURI(COLLECTION_NAME, record.guid);
 
