@@ -7,7 +7,6 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
-import org.mozilla.gecko.sync.setup.Constants;
 
 import android.test.AndroidTestCase;
 
@@ -19,7 +18,7 @@ public class TestClientRecord extends AndroidTestCase{
     assertEquals(0, record.lastModified);
     assertEquals(false, record.deleted);
     assertEquals("Default Name", record.name);
-    assertEquals(Constants.CLIENT_TYPE, record.type);
+    assertEquals(ClientRecord.CLIENT_TYPE, record.type);
   }
 
   public void testGetPayload() {
@@ -72,7 +71,7 @@ public class TestClientRecord extends AndroidTestCase{
     record3.name = "New Name";
 
     ClientRecord record4 = new ClientRecord(Utils.generateGuid());
-    record4.name = Constants.DEFAULT_CLIENT_NAME;
+    record4.name = ClientRecord.DEFAULT_CLIENT_NAME;
     record4.type = "desktop";
 
     assertTrue(record2.equals(record1));
