@@ -23,8 +23,6 @@ import org.mozilla.gecko.sync.repositories.Server11Repository;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
-import android.util.Log;
-
 /**
  * Fetch from a server collection into a local repository, encrypting
  * and decrypting along the way.
@@ -138,7 +136,7 @@ public abstract class ServerSyncStage implements
 
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
-    Log.d(LOG_TAG, "onSynchronized.");
+    Logger.debug(LOG_TAG, "onSynchronized.");
     synchronizer.save().persist(session.config.getBranch(bundlePrefix()));
     session.advance();
   }
@@ -146,7 +144,7 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronizeFailed(Synchronizer synchronizer,
                                   Exception lastException, String reason) {
-    Log.i(LOG_TAG, "onSynchronizeFailed: " + reason);
+    Logger.info(LOG_TAG, "onSynchronizeFailed: " + reason);
 
     // This failure could be due to a 503 or a 401 and it could have headers.
     if (lastException instanceof HTTPFailureException) {
@@ -158,7 +156,7 @@ public abstract class ServerSyncStage implements
 
   @Override
   public void onSynchronizeAborted(Synchronizer synchronize) {
-    Log.i(LOG_TAG, "onSynchronizeAborted.");
+    Logger.info(LOG_TAG, "onSynchronizeAborted.");
     session.abort(null, "Synchronization was aborted.");
   }
 }

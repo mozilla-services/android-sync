@@ -54,20 +54,20 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 /**
  * A Sync crypto record has:
  *
- * * a collection of fields which are not encrypted (id and collection)
- * * a set of metadata fields (index, modified, ttl)
- * * a payload, which is encrypted and decrypted on request.
+ * <ul>
+ * <li>a collection of fields which are not encrypted (id and collection);</il>
+ * <li>a set of metadata fields (index, modified, ttl);</il>
+ * <li>a payload, which is encrypted and decrypted on request.</il>
+ * </ul>
  *
  * The payload flips between being a blob of JSON with hmac/IV/ciphertext
  * attributes and the cleartext itself.
  *
- * Until there's some benefit to the abstraction, we're simply going to
- * call this CryptoRecord.
+ * Until there's some benefit to the abstraction, we're simply going to call
+ * this <code>CryptoRecord</code>.
  *
- * CryptoRecord uses CryptoInfo to do the actual encryption and decryption.
- *
- * @author rnewman
- *
+ * <code>CryptoRecord</code> uses <code>CryptoInfo</code> to do the actual
+ * encryption and decryption.
  */
 public class CryptoRecord extends Record {
 
