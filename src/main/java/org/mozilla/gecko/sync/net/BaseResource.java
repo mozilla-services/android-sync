@@ -37,7 +37,6 @@ import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
 import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
 import ch.boye.httpclientandroidlib.impl.auth.BasicScheme;
-import ch.boye.httpclientandroidlib.impl.client.AbstractHttpClient;
 import ch.boye.httpclientandroidlib.impl.client.BasicAuthCache;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -108,13 +107,9 @@ public class BaseResource implements Resource {
 
   /**
    * Apply the provided credentials string to the provided request.
-   * @param credentials
-   *        A string, "user:pass".
-   * @param client
-   * @param request
-   * @param context
+   * @param credentials a string, "user:pass".
    */
-  private static void applyCredentials(String credentials, AbstractHttpClient client, HttpUriRequest request, HttpContext context) {
+  private static void applyCredentials(String credentials, HttpUriRequest request, HttpContext context) {
     addAuthCacheToContext(request, context);
 
     Credentials creds = new UsernamePasswordCredentials(credentials);
@@ -129,15 +124,14 @@ public class BaseResource implements Resource {
    * @throws KeyManagementException
    */
   private void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
-    ClientConnectionManager connectionManager = getConnectionManager();
     context = new BasicHttpContext();
-    client = new DefaultHttpClient(connectionManager);
+    client = new DefaultHttpClient(getConnectionManager());
 
     // TODO: Eventually we should use Apache HttpAsyncClient. It's not out of alpha yet.
     // Until then, we synchronously make the request, then invoke our delegate's callback.
     String credentials = delegate.getCredentials();
     if (credentials != null) {
-      BaseResource.applyCredentials(credentials, client, request, context);
+      BaseResource.applyCredentials(credentials, request, context);
     }
 
     HttpParams params = client.getParams();
@@ -162,6 +156,7 @@ public class BaseResource implements Resource {
     }
   }
 
+  // Call within a synchronized block on connManagerMonitor.
   private static ClientConnectionManager enableTLSConnectionManager() throws KeyManagementException, NoSuchAlgorithmException  {
     SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(null, null, new SecureRandom());
