@@ -5,8 +5,10 @@ package org.mozilla.android.sync.test;
 
 import org.json.simple.JSONObject;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
@@ -14,6 +16,7 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryReposito
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -25,7 +28,7 @@ import android.content.Context;
 import android.database.Cursor;
 
 public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
-  
+
   @Override
   protected AndroidBrowserRepository getRepository() {
 
@@ -314,5 +317,42 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     Cursor cur = context.getContentResolver().query(BrowserContractHelpers.HISTORY_CONTENT_URI,
         BrowserContractHelpers.HistoryColumns, null, null, null);
     return cur;
+  }
+
+  public void testDataExtenderIsClosedBeforeBegin() {
+    // Create a session but don't begin() it.
+    final AndroidBrowserRepositorySession session = (AndroidBrowserRepositorySession) createSession();
+    AndroidBrowserHistoryDataAccessor db = (AndroidBrowserHistoryDataAccessor) session.getDBHelper();
+
+    // Confirm dataExtender is closed before beginning session.
+    assertTrue(db.getHistoryDataExtender().isClosed());
+  }
+
+  public void testDataExtenderIsClosedAfterFinish() throws InactiveSessionException {
+    final AndroidBrowserHistoryRepositorySession session = (AndroidBrowserHistoryRepositorySession) createAndBeginSession();
+    AndroidBrowserHistoryDataAccessor db = (AndroidBrowserHistoryDataAccessor) session.getDBHelper();
+
+    // Perform an action that opens the dataExtender.
+    HistoryRecord h1 = HistoryHelpers.createHistory1();
+    db.insert(h1);
+    assertFalse(db.getHistoryDataExtender().isClosed());
+
+    // Check dataExtender is closed upon finish.
+    performWait(finishRunnable(session, new ExpectFinishDelegate()));
+    assertTrue(db.getHistoryDataExtender().isClosed());
+  }
+
+  public void testDataExtenderIsClosedAfterAbort() throws InactiveSessionException {
+    final AndroidBrowserHistoryRepositorySession session = (AndroidBrowserHistoryRepositorySession) createAndBeginSession();
+    AndroidBrowserHistoryDataAccessor db = (AndroidBrowserHistoryDataAccessor) session.getDBHelper();
+
+    // Perform an action that opens the dataExtender.
+    HistoryRecord h1 = HistoryHelpers.createHistory1();
+    db.insert(h1);
+    assertFalse(db.getHistoryDataExtender().isClosed());
+
+    // Check dataExtender is closed upon abort.
+    session.abort();
+    assertTrue(db.getHistoryDataExtender().isClosed());
   }
 }
