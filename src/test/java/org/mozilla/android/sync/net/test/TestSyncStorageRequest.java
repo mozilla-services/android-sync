@@ -17,7 +17,6 @@ import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
