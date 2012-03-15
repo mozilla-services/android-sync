@@ -125,6 +125,9 @@ public class BaseResource implements Resource {
    */
   private void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
     context = new BasicHttpContext();
+
+    // We could reuse these client instances, except that we mess around
+    // with their parameters… so we'd need a pool of some kind.
     client = new DefaultHttpClient(getConnectionManager());
 
     // TODO: Eventually we should use Apache HttpAsyncClient. It's not out of alpha yet.
@@ -248,7 +251,7 @@ public class BaseResource implements Resource {
   public static void consumeEntity(HttpEntity entity) {
     try {
       EntityUtils.consume(entity);
-    } catch (Exception e) {
+    } catch (IOException e) {
       // Doesn't matter.
     }
   }
@@ -264,7 +267,13 @@ public class BaseResource implements Resource {
    *          The HttpResponse to be consumed.
    */
   public static void consumeEntity(HttpResponse response) {
-    consumeEntity(response.getEntity());
+    if (response == null) {
+      return;
+    }
+    try {
+      EntityUtils.consume(response.getEntity());
+    } catch (IOException e) {
+    }
   }
 
   /**
@@ -278,9 +287,10 @@ public class BaseResource implements Resource {
    *          The SyncStorageResponse to be consumed.
    */
   public static void consumeEntity(SyncStorageResponse response) {
-    if (response.httpResponse() != null) {
-      consumeEntity(response.httpResponse());
+    if (response.httpResponse() == null) {
+      return;
     }
+    consumeEntity(response.httpResponse());
   }
 
   /**
@@ -293,10 +303,9 @@ public class BaseResource implements Resource {
    */
   public static void consumeReader(BufferedReader reader) {
     try {
-      while ((reader.readLine()) != null) {
-      }
+      reader.close();
     } catch (IOException e) {
-      return;
+      // Do nothing.
     }
   }
 }
