@@ -60,6 +60,10 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
    *
    */
   public class ClientDownloadDelegate extends WBOCollectionRequestDelegate {
+
+    // We use this on each WBO, so lift it out.
+    final ClientsDataDelegate clientsDelegate = session.getClientsDelegate();
+
     @Override
     public String credentials() {
       return session.credentials();
@@ -74,21 +78,19 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       BaseResource.consumeEntity(response); // We don't need the response at all.
+      final int clientsCount;
       try {
-        // If we processed commands, then the last upload of our record was
-        // not by us and we should update our local timestamp.
-        if (commandsProcessedShouldUpload) {
-          session.config.persistServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
-        }
-
-        clientUploadDelegate = new ClientUploadDelegate();
-        session.getClientsDelegate().setClientsCount(db.clientsCount());
-        checkAndUpload();
+        clientsCount = db.clientsCount();
       } finally {
         // Close the database to clear cached readableDatabase/writableDatabase
         // after we've completed our last transaction (db.store()).
         db.close();
       }
+
+      // TODO: persist the response timestamp to know whether to download next time (Bug 726055).
+      clientUploadDelegate = new ClientUploadDelegate();
+      clientsDelegate.setClientsCount(clientsCount);
+      checkAndUpload();
     }
 
     @Override
@@ -119,7 +121,13 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       ClientRecord r;
       try {
         r = (ClientRecord) factory.createRecord(record.decrypt());
-        if (session.getClientsDelegate().isLocalGUID(r.guid)) {
+        if (clientsDelegate.isLocalGUID(r.guid)) {
+          // Oh hey! Our record is on the server. This is the authoritative
+          // server timestamp, so let's hang on to it to decide whether we
+          // need to upload.
+          session.config.persistServerClientRecordTimestamp(r.lastModified);
+
+          // Process commands.
           processCommands(r.commands);
         }
         RepoUtils.logClient(r);
@@ -246,8 +254,12 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       return true;
     }
 
-    long now = System.currentTimeMillis();
     long lastUpload = session.config.getPersistedServerClientRecordTimestamp();   // Defaults to 0.
+    if (lastUpload == 0) {
+      return true;
+    }
+
+    long now = System.currentTimeMillis();
     long age = now - lastUpload;
     return age >= CLIENTS_TTL_REFRESH;
   }
