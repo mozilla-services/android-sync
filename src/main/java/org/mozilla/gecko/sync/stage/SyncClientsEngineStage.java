@@ -119,8 +119,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       ClientRecord r;
       try {
         r = (ClientRecord) factory.createRecord(record.decrypt());
-        ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
-        if (r.guid.equals(localClient.guid)) {
+        if (session.getClientsDelegate().isLocalGUID(r.guid)) {
           processCommands(r.commands);
         }
         RepoUtils.logClient(r);

@@ -36,4 +36,9 @@ public class MockClientsDataDelegate implements ClientsDataDelegate {
   public synchronized int getClientsCount() {
     return clientsCount;
   }
+
+  @Override
+  public boolean isLocalGUID(String guid) {
+    return getAccountGUID().equals(guid);
+  }
 }
