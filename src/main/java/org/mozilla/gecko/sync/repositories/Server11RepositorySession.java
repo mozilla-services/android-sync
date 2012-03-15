@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.JSONArray;
@@ -117,6 +118,8 @@ public class Server11RepositorySession extends RepositorySession {
     // So that we can clean up.
     private SyncStorageCollectionRequest request;
 
+    public AtomicInteger numRecordsProcessed = new AtomicInteger(0);
+
     public void setRequest(SyncStorageCollectionRequest request) {
       this.request = request;
     }
@@ -150,12 +153,28 @@ public class Server11RepositorySession extends RepositorySession {
       final long normalizedTimestamp = getNormalizedTimestamp(response);
       Logger.debug(LOG_TAG, "Fetch completed. Timestamp is " + normalizedTimestamp);
 
+      final AtomicInteger numRecordsExpected = new AtomicInteger(-1);
+      try {
+        numRecordsExpected.set(response.weaveRecords());
+      } catch (NumberFormatException e) {
+        // We just won't verify.
+      }
+
       // When we're done processing other events, finish.
       workTracker.delayWorkItem(new Runnable() {
         @Override
         public void run() {
-          Logger.debug(LOG_TAG, "Delayed onFetchCompleted running.");
-          // TODO: verify number of returned records.
+          int expected = numRecordsExpected.get();
+          int gotten = numRecordsProcessed.get();
+          if (expected >= 0 && expected != gotten) {
+            Logger.debug(LOG_TAG, "Expected "
+                + expected + " records but got "
+                + gotten + " records, failing.");
+            delegate.onFetchFailed(null, null);
+            return;
+          }
+          Logger.debug(LOG_TAG, "Expected and got "
+              + expected + " records, running delayed onFetchCompleted.");
           delegate.onFetchCompleted(normalizedTimestamp);
         }
       });
@@ -186,6 +205,7 @@ public class Server11RepositorySession extends RepositorySession {
       workTracker.incrementOutstanding();
       try {
         delegate.onFetchedRecord(record);
+        numRecordsProcessed.incrementAndGet();
       } catch (Exception ex) {
         Logger.warn(LOG_TAG, "Got exception calling onFetchedRecord with WBO.", ex);
         // TODO: handle this better.
