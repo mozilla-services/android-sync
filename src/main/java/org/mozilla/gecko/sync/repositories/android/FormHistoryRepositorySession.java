@@ -434,6 +434,75 @@ public class FormHistoryRepositorySession extends
     return cv;
   }
 
+  protected Object recordsBufferMonitor = new Object();
+  protected ArrayList<ContentValues> recordsBuffer = new ArrayList<ContentValues>();
+  private static final int INSERT_ITEM_THRESHOLD = 5;
+
+  protected void enqueueRegularRecord(Record record) {
+    synchronized (recordsBufferMonitor) {
+      if (recordsBuffer.size() >= INSERT_ITEM_THRESHOLD) {
+        // Insert the existing contents, then enqueue.
+        flushInsertQueue();
+      }
+      // Store the ContentValues, rather than the record.
+      recordsBuffer.add(contentValuesForRegularRecord(record));
+    }
+  }
+
+  public class RecordInsertRunnable implements Runnable {
+    ContentValues[] queue;
+
+    public RecordInsertRunnable(ArrayList<ContentValues> queue) {
+      ContentValues[] values = new ContentValues[queue.size()];
+      this.queue = queue.toArray(values);
+    }
+
+    @Override
+    public void run() {
+      if (queue == null || queue.length == 0) {
+        Logger.debug(LOG_TAG, "No form history items to insert: RecordInsertRunnable returning immediately.");
+        return;
+      }
+
+      try {
+        Logger.debug(LOG_TAG, "Inserting " + queue.length + " form history items...");
+        long before = System.currentTimeMillis();
+        formsProvider.bulkInsert(FORM_HISTORY_CONTENT_URI, queue);
+        long after = System.currentTimeMillis();
+        Logger.debug(LOG_TAG, "Inserting " + queue.length + " form history items... DONE (" + (after - before) + " milliseconds).");
+      } catch (RemoteException e) {
+        // TODO: REALLY HANDLE THIS ERROR by making this not be a Runnable and handling errors inline.
+        e.printStackTrace();
+      }
+    }
+  }
+
+  // Should always be called from storeWorkQueue.
+  protected void flushInsertQueue() {
+    synchronized (recordsBufferMonitor) {
+      if (recordsBuffer.size() > 0) {
+        final ArrayList<ContentValues> outgoing = recordsBuffer;
+        recordsBuffer = new ArrayList<ContentValues>();
+        new RecordInsertRunnable(outgoing).run();
+      }
+    }
+  }
+
+  @Override
+  public void storeDone() {
+    Runnable command = new Runnable() {
+      @Override
+      public void run() {
+        Logger.debug(LOG_TAG, "Checking for residual form history items to insert.");
+        synchronized (recordsBufferMonitor) {
+          flushInsertQueue();
+        }
+        storeDone(now()); // XXX?
+      }
+    };
+    storeWorkQueue.execute(command);
+  }
+
   /**
    * Called when a regular record with locally unknown GUID has been fetched
    * from the server.
@@ -443,10 +512,9 @@ public class FormHistoryRepositorySession extends
    * @param record The regular <code>Record</code> from the server.
    * @throws RemoteException
    */
-  protected void insertNewRegularRecord(Record rawRecord)
+  protected void insertNewRegularRecord(Record record)
       throws RemoteException {
-    ContentValues cv = contentValuesForRegularRecord(rawRecord);
-    formsProvider.insert(FORM_HISTORY_CONTENT_URI, cv);
+    enqueueRegularRecord(record);
   }
 
   /**
