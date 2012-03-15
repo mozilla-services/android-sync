@@ -17,17 +17,23 @@ import android.test.AndroidTestCase;
 public class TestClientsDatabaseAccessor extends AndroidTestCase {
 
   public class StubbedClientsDatabaseAccessor extends ClientsDatabaseAccessor {
-
     public StubbedClientsDatabaseAccessor(Context mContext) {
       super(mContext);
     }
   }
 
-  public void testStoreArrayListAndFetch() throws NullCursorException {
-    StubbedClientsDatabaseAccessor db =
-        new StubbedClientsDatabaseAccessor(mContext);
-    db.wipe();
+  StubbedClientsDatabaseAccessor db;
 
+  public void setUp() {
+    db = new StubbedClientsDatabaseAccessor(mContext);
+    db.wipe();
+  }
+
+  public void tearDown() {
+    db.close();
+  }
+
+  public void testStoreArrayListAndFetch() throws NullCursorException {
     ArrayList<ClientRecord> list = new ArrayList<ClientRecord>();
     ClientRecord record1 = new ClientRecord(Utils.generateGuid());
     ClientRecord record2 = new ClientRecord(Utils.generateGuid());
@@ -50,10 +56,6 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
   }
 
   public void testNumClients() {
-    StubbedClientsDatabaseAccessor db =
-        new StubbedClientsDatabaseAccessor(mContext);
-    db.wipe();
-
     final int COUNT = 5;
     ArrayList<ClientRecord> list = new ArrayList<ClientRecord>();
     for (int i = 0; i < 5; i++) {
@@ -64,10 +66,6 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
   }
 
   public void testFetchAll() throws NullCursorException {
-    StubbedClientsDatabaseAccessor db =
-        new StubbedClientsDatabaseAccessor(mContext);
-    db.wipe();
-
     ArrayList<ClientRecord> list = new ArrayList<ClientRecord>();
     ClientRecord record1 = new ClientRecord(Utils.generateGuid());
     ClientRecord record2 = new ClientRecord(Utils.generateGuid());
