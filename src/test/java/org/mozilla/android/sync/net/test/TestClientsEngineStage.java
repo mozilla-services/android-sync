@@ -448,7 +448,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     commandsProcessedShouldUpload = true;
     uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
-    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 
@@ -458,7 +458,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     commandsProcessedShouldUpload = true;
     assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
-    assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
+    assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
   }
 }

@@ -179,7 +179,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // commands uploaded to our record. We must download and process them first.
       if (!commandsProcessedShouldUpload ||
           statusCode == HttpStatus.SC_PRECONDITION_FAILED ||
-          uploadAttemptsCount.get() >= MAX_UPLOAD_FAILURE_COUNT) {
+          uploadAttemptsCount.incrementAndGet() > MAX_UPLOAD_FAILURE_COUNT) {
         Logger.debug(LOG_TAG, "Client upload failed. Aborting sync.");
         BaseResource.consumeEntity(response); // The exception thrown should need the response body.
         session.abort(new HTTPFailureException(response), "Client upload failed.");
@@ -190,7 +190,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // commandsProcessedShouldUpload == true &&
       // statusCode != 412 &&
       // uploadAttemptCount < MAX_UPLOAD_FAILURE_COUNT
-      uploadAttemptsCount.getAndIncrement();
       checkAndUpload();
     }
 
