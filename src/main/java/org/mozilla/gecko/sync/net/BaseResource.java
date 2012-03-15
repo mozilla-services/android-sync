@@ -147,6 +147,7 @@ public class BaseResource implements Resource {
     HttpParams params = client.getParams();
     HttpConnectionParams.setConnectionTimeout(params, delegate.connectionTimeout());
     HttpConnectionParams.setSoTimeout(params, delegate.socketTimeout());
+    HttpConnectionParams.setStaleCheckingEnabled(params, false);
     HttpProtocolParams.setContentCharset(params, charset);
     HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
     delegate.addHeaders(request, client);
