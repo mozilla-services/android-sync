@@ -87,6 +87,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         db.close();
       }
 
+      Logger.debug(LOG_TAG, "Database contains " + clientsCount + " clients.");
+      Logger.debug(LOG_TAG, "Server response asserts " + response.weaveRecords() + " records.");
+
       // TODO: persist the response timestamp to know whether to download next time (Bug 726055).
       clientUploadDelegate = new ClientUploadDelegate();
       clientsDelegate.setClientsCount(clientsCount);
