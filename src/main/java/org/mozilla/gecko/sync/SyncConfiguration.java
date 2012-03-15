@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.setup.Constants;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -190,6 +189,8 @@ public class SyncConfiguration implements CredentialsSource {
   // Behavior is undefined if the PrefsSource is switched out in flight.
   public String          prefsPath;
   public PrefsSource     prefsSource;
+
+  public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";
 
   /**
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
@@ -372,10 +373,10 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   public void persistServerClientRecordTimestamp(long timestamp) {
-    getEditor().putLong(Constants.CLIENT_RECORD_TIMESTAMP, timestamp).commit();
+    getEditor().putLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, timestamp).commit();
   }
 
   public long getPersistedServerClientRecordTimestamp() {
-    return getPrefs().getLong(Constants.CLIENT_RECORD_TIMESTAMP, 0);
+    return getPrefs().getLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, 0);
   }
 }

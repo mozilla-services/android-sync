@@ -10,11 +10,17 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
-import org.mozilla.gecko.sync.setup.Constants;
 
 public class ClientRecord extends Record {
-  protected static final String LOG_TAG = "ClientRecord";
-  public static final String COLLECTION_NAME = "clients";
+  private static final String LOG_TAG = "ClientRecord";
+
+  public static final String CLIENT_TYPE         = "mobile";
+  public static final String COLLECTION_NAME     = "clients";
+  public static final String DEFAULT_CLIENT_NAME = "Default Name";
+
+  public String name = ClientRecord.DEFAULT_CLIENT_NAME;
+  public String type = ClientRecord.CLIENT_TYPE;
+  public JSONArray commands;
 
   public ClientRecord(String guid, String collection, long lastModified, boolean deleted) {
     super(guid, collection, lastModified, deleted);
@@ -35,10 +41,6 @@ public class ClientRecord extends Record {
   public ClientRecord() {
     this(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
-
-  public String name = Constants.DEFAULT_CLIENT_NAME;
-  public String type = Constants.CLIENT_TYPE;
-  public JSONArray commands;
 
   @Override
   protected void initFromPayload(ExtendedJSONObject payload) {
