@@ -7,6 +7,7 @@ import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataExtender;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabase;
+import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -33,7 +34,7 @@ public class TestCachedSQLiteOpenHelper extends AndroidTestCase {
     // clientsDB gracefully does its thing and closes.
     clientsDB.wipe();
     ClientRecord record = new ClientRecord();
-    String profileConst = Constants.PROFILE_ID;
+    String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
     clientsDB.store(profileConst, record);
     clientsDB.close();
 
