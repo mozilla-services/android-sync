@@ -286,13 +286,12 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     // Generate CryptoRecord from ClientRecord to upload.
-    String encryptionFailure = "Couldn't encrypt new client record.";
-    ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
-    CryptoRecord cryptoRecord = localClient.getEnvelope();
+    final String encryptionFailure = "Couldn't encrypt new client record.";
+    final ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
     try {
+      CryptoRecord cryptoRecord = localClient.getEnvelope();
       cryptoRecord.keyBundle = clientUploadDelegate.keyBundle();
       cryptoRecord.encrypt();
-      this.wipeAndStore(localClient);
       this.uploadClientRecord(cryptoRecord);
     } catch (UnsupportedEncodingException e) {
       session.abort(e, encryptionFailure + " Unsupported encoding.");
