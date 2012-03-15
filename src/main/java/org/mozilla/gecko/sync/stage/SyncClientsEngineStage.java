@@ -259,6 +259,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       return true;
     }
 
+    // Note the opportunity for clock drift problems here.
+    // TODO: if we track download times, we can use the timestamp of most
+    // recent download response instead of the current time.
     long now = System.currentTimeMillis();
     long age = now - lastUpload;
     return age >= CLIENTS_TTL_REFRESH;
