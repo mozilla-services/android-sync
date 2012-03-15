@@ -24,6 +24,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.UnexpectedJSONException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
+import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -237,11 +238,85 @@ public class Server11RepositorySession extends RepositorySession {
     return b.substring(0, b.length() - 1);
   }
 
+  public class RequestGuidsDelegateAdapter extends SyncStorageCollectionRequestDelegate {
+    public ArrayList<String> guids = new ArrayList<String>();
+
+    public RepositorySessionGuidsSinceDelegate delegate = null;
+
+    public RequestGuidsDelegateAdapter(RepositorySessionGuidsSinceDelegate delegate) {
+      this.delegate = delegate;
+    }
+
+    // So that we can clean up.
+    private SyncStorageCollectionRequest request;
+
+    public void setRequest(SyncStorageCollectionRequest request) {
+      this.request = request;
+    }
+
+    private void removeRequestFromPending() {
+      if (this.request == null) {
+        return;
+      }
+      pending.remove(this.request);
+      this.request = null;
+    }
+
+    @Override
+    public void handleRequestProgress(String progress) {
+      guids.add(progress);
+    }
+
+    @Override
+    public String credentials() {
+      return serverRepository.credentialsSource.credentials();
+    }
+
+    @Override
+    public String ifUnmodifiedSince() {
+      return null;
+    }
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse response) {
+      Logger.debug(LOG_TAG, "guidsSince done.");
+      String[] guidsArray = new String[guids.size()];
+      guids.toArray(guidsArray);
+      delegate.onGuidsSinceSucceeded(guidsArray);
+    }
+
+    @Override
+    public void handleRequestFailure(SyncStorageResponse response) {
+      this.handleRequestError(new HTTPFailureException(response));
+    }
+
+    @Override
+    public void handleRequestError(Exception ex) {
+      removeRequestFromPending();
+      Logger.warn(LOG_TAG, "guidsSince got error.", ex);
+      delegate.onGuidsSinceFailed(ex);
+    }
+  }
+
   @Override
   public void guidsSince(long timestamp,
                          RepositorySessionGuidsSinceDelegate delegate) {
-    // TODO Auto-generated method stub
+    URI collectionURI;
+    try {
+      String sort = serverRepository.getDefaultSort();
+      collectionURI = serverRepository.collectionURI(false, timestamp, -1, sort, null);
+    } catch (URISyntaxException e) {
+      delegate.onGuidsSinceFailed(e);
+      return;
+    }
 
+    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
+    RequestGuidsDelegateAdapter adapter = new RequestGuidsDelegateAdapter(delegate);
+    // So it can clean up.
+    adapter.setRequest(request);
+    request.delegate = adapter;
+    pending.add(request);
+    request.get();
   }
 
   protected void fetchWithParameters(long newer,
@@ -260,14 +335,6 @@ public class Server11RepositorySession extends RepositorySession {
     delegate.setRequest(request);
     pending.add(request);
     request.get();
-  }
-
-  public void fetchSince(long timestamp, long limit, String sort, RepositorySessionFetchRecordsDelegate delegate) {
-    try {
-      this.fetchWithParameters(timestamp, limit, true, sort, null, new RequestFetchDelegateAdapter(delegate));
-    } catch (URISyntaxException e) {
-      delegate.onFetchFailed(e, null);
-    }
   }
 
   @Override
