@@ -64,4 +64,9 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
   protected RecordFactory getRecordFactory() {
     return new FormHistoryRecordFactory();
   }
+
+  @Override
+  public boolean isEnabled() {
+    return false;
+  }
 }
