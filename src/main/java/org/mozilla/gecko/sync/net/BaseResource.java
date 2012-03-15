@@ -56,9 +56,13 @@ import ch.boye.httpclientandroidlib.util.EntityUtils;
 public class BaseResource implements Resource {
   private static final String ANDROID_LOOPBACK_IP = "10.0.2.2";
 
+  private static final int MAX_TOTAL_CONNECTIONS     = 20;
+  private static final int MAX_CONNECTIONS_PER_ROUTE = 10;
+
   public static boolean rewriteLocalhost = true;
 
   private static final String LOG_TAG = "BaseResource";
+
   protected URI uri;
   protected BasicHttpContext context;
   protected DefaultHttpClient client;
@@ -168,6 +172,9 @@ public class BaseResource implements Resource {
     schemeRegistry.register(new Scheme("https", 443, sf));
     schemeRegistry.register(new Scheme("http", 80, new PlainSocketFactory()));
     ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager(schemeRegistry);
+
+    cm.setMaxTotal(MAX_TOTAL_CONNECTIONS);
+    cm.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_ROUTE);
     connManager = cm;
     return cm;
   }
