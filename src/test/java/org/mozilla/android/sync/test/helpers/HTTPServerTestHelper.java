@@ -55,6 +55,8 @@ public class HTTPServerTestHelper {
       connection.close();
       server = null;
       connection = null;
+      Logger.info(LOG_TAG, "Closing connection pool...");
+      BaseResource.shutdownConnectionManager();
       Logger.info(LOG_TAG, "Stopping HTTP server on port " + port + "... DONE");
     } catch (IOException ex) {
       Logger.error(LOG_TAG, "Error stopping HTTP server on port " + port + "... DONE", ex);
