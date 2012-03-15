@@ -14,12 +14,15 @@ import java.security.SecureRandom;
 
 import javax.net.ssl.SSLContext;
 
+import org.mozilla.gecko.sync.Logger;
+
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.HttpVersion;
 import ch.boye.httpclientandroidlib.auth.Credentials;
 import ch.boye.httpclientandroidlib.auth.UsernamePasswordCredentials;
+import ch.boye.httpclientandroidlib.client.AuthCache;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
@@ -27,6 +30,7 @@ import ch.boye.httpclientandroidlib.client.methods.HttpPost;
 import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
+import ch.boye.httpclientandroidlib.client.protocol.ClientContext;
 import ch.boye.httpclientandroidlib.conn.ClientConnectionManager;
 import ch.boye.httpclientandroidlib.conn.scheme.PlainSocketFactory;
 import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
@@ -34,6 +38,7 @@ import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
 import ch.boye.httpclientandroidlib.impl.auth.BasicScheme;
 import ch.boye.httpclientandroidlib.impl.client.AbstractHttpClient;
+import ch.boye.httpclientandroidlib.impl.client.BasicAuthCache;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.impl.conn.tsccm.ThreadSafeClientConnManager;
 import ch.boye.httpclientandroidlib.params.HttpConnectionParams;
@@ -42,8 +47,6 @@ import ch.boye.httpclientandroidlib.params.HttpProtocolParams;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 import ch.boye.httpclientandroidlib.protocol.HttpContext;
 import ch.boye.httpclientandroidlib.util.EntityUtils;
-
-import org.mozilla.gecko.sync.Logger;
 
 /**
  * Provide simple HTTP access to a Sync server or similar.
@@ -95,6 +98,15 @@ public class BaseResource implements Resource {
   }
 
   /**
+   * This shuts up HttpClient, which will otherwise debug log about there
+   * being no auth cache in the context.
+   */
+  private static void addAuthCacheToContext(HttpUriRequest request, HttpContext context) {
+    AuthCache authCache = new BasicAuthCache();                // Not thread safe.
+    context.setAttribute(ClientContext.AUTH_CACHE, authCache);
+  }
+
+  /**
    * Apply the provided credentials string to the provided request.
    * @param credentials
    *        A string, "user:pass".
@@ -103,6 +115,8 @@ public class BaseResource implements Resource {
    * @param context
    */
   private static void applyCredentials(String credentials, AbstractHttpClient client, HttpUriRequest request, HttpContext context) {
+    addAuthCacheToContext(request, context);
+
     Credentials creds = new UsernamePasswordCredentials(credentials);
     Header header = BasicScheme.authenticate(creds, "US-ASCII", false);
     request.addHeader(header);
