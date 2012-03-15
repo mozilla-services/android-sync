@@ -8,13 +8,16 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.JSONArray;
+import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.DelayedWorkTracker;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -71,6 +74,8 @@ public class Server11RepositorySession extends RepositorySession {
     // So that we can clean up.
     private SyncStorageCollectionRequest request;
 
+    public AtomicInteger numRecordsProcessed = new AtomicInteger(0);
+
     public void setRequest(SyncStorageCollectionRequest request) {
       this.request = request;
     }
@@ -105,15 +110,40 @@ public class Server11RepositorySession extends RepositorySession {
       final long normalizedTimestamp = response.getNormalizedTimestamp();
       Logger.debug(LOG_TAG, "Fetch completed. Timestamp is " + normalizedTimestamp);
 
+      final AtomicInteger numRecordsExpected = new AtomicInteger(-1);
+      try {
+        numRecordsExpected.set(response.weaveRecords());
+      } catch (NumberFormatException e) {
+        // We just won't verify.
+      }
+
       // When we're done processing other events, finish.
       workTracker.delayWorkItem(new Runnable() {
         @Override
         public void run() {
-          Logger.debug(LOG_TAG, "Delayed onFetchCompleted running.");
-          // TODO: verify number of returned records.
-          delegate.onFetchCompleted(normalizedTimestamp);
+          finish(numRecordsExpected.get(), numRecordsProcessed.get(), normalizedTimestamp);
         }
       });
+    }
+
+    /**
+     * Called after a successful request.
+     *
+     * @param expected The number of records expected, based on the server's response.
+     * @param gotten The number of records received and processed.
+     * @param end The timestamp of the server's response.
+     */
+    public void finish(int expected, int gotten, long end) {
+      if (expected >= 0 && expected != gotten) {
+        Logger.debug(LOG_TAG, "Expected "
+            + expected + " records but got "
+            + gotten + " records, failing.");
+        delegate.onFetchFailed(null, null);
+        return;
+      }
+
+      Logger.debug(LOG_TAG, "Expected and got " + expected + " records; running delayed onFetchCompleted.");
+      delegate.onFetchCompleted(end);
     }
 
     @Override
@@ -142,6 +172,7 @@ public class Server11RepositorySession extends RepositorySession {
       workTracker.incrementOutstanding();
       try {
         delegate.onFetchedRecord(record);
+        numRecordsProcessed.incrementAndGet();
       } catch (Exception ex) {
         Logger.warn(LOG_TAG, "Got exception calling onFetchedRecord with WBO.", ex);
         // TODO: handle this better.
@@ -151,7 +182,6 @@ public class Server11RepositorySession extends RepositorySession {
       }
     }
   }
-
 
   Server11Repository serverRepository;
   AtomicLong uploadTimestamp = new AtomicLong(0);
@@ -173,6 +203,25 @@ public class Server11RepositorySession extends RepositorySession {
     serverRepository = (Server11Repository) repository;
   }
 
+  /**
+   * URL-encode the provided string. If the input is null,
+   * the empty string is returned.
+   *
+   * @param in the string to encode.
+   * @return a URL-encoded version of the input.
+   */
+  protected static String encode(String in) {
+    if (in == null) {
+      return "";
+    }
+    try {
+      return URLEncoder.encode(in, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // Will never occur.
+      return null;
+    }
+  }
+
   private String flattenIDs(String[] guids) {
     // Consider using Utils.toDelimitedString if and when the signature changes
     // to Collection<String> guids.
@@ -184,7 +233,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
     StringBuilder b = new StringBuilder();
     for (String guid : guids) {
-      b.append(guid);
+      b.append(encode(guid));
       b.append(",");
     }
     return b.substring(0, b.length() - 1);
@@ -216,7 +265,11 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestProgress(String progress) {
-      guids.add(progress);
+      try {
+        guids.add((String) ExtendedJSONObject.parse(progress));
+      } catch (IOException e) {
+      } catch (ParseException e) {
+      }
     }
 
     @Override
@@ -312,7 +365,9 @@ public class Server11RepositorySession extends RepositorySession {
     // TODO: watch out for URL length limits!
     try {
       String ids = flattenIDs(guids);
-      this.fetchWithParameters(-1, -1, true, "index", ids, new RequestFetchDelegateAdapter(delegate));
+      long limit = -1;
+      String sort = serverRepository.getDefaultSort();
+      this.fetchWithParameters(-1, limit, true, sort, ids, new RequestFetchDelegateAdapter(delegate));
     } catch (URISyntaxException e) {
       delegate.onFetchFailed(e, null);
     }
