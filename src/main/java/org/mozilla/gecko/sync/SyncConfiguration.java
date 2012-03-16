@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -232,7 +233,9 @@ public class SyncConfiguration implements CredentialsSource {
       syncID = prefs.getString("syncID", null);
       Logger.info(LOG_TAG, "Set syncID from bundle: " + syncID);
     }
-    // TODO: MetaGlobal, password, infoCollections, collectionKeys.
+    // We don't set crypto/keys here because we need the syncKeyBundle to decrypt the JSON
+    // and we won't have it on construction.
+    // TODO: MetaGlobal, password, infoCollections.
   }
 
   public void persistToPrefs() {
@@ -372,5 +375,16 @@ public class SyncConfiguration implements CredentialsSource {
 
   public long getPersistedServerClientRecordTimestamp() {
     return getPrefs().getLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, 0);
+  }
+
+  public void purgeCryptoKeys() {
+    if (collectionKeys != null) {
+      collectionKeys.clear();
+    }
+    persistedCryptoKeys().purge();
+  }
+
+  public PersistedCrypto5Keys persistedCryptoKeys() {
+    return new PersistedCrypto5Keys(getPrefs(), syncKeyBundle);
   }
 }
