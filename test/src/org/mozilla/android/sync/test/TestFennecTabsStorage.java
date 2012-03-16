@@ -66,6 +66,9 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
     final Uri uri = BrowserContract.Clients.CONTENT_URI;
     final ContentProviderClient clientsClient = getClientsClient();
 
+    // Have to ensure that it's empty…
+    clientsClient.delete(uri, null, null);
+
     final long now = System.currentTimeMillis();
     final ContentValues first = new ContentValues();
     final ContentValues second = new ContentValues();
@@ -108,9 +111,9 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
       assertFalse(cursor.moveToNext());
     } finally {
       cursor.close();
-
-      int deleted = clientsClient.delete(uri, null, null);
-      assertEquals(2, deleted);
     }
+
+    int deleted = clientsClient.delete(uri, null, null);
+    assertEquals(2, deleted);
   }
 }
