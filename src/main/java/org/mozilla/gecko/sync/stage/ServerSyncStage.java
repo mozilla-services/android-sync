@@ -17,11 +17,16 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.HttpResponseObserver;
+import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.Server11Repository;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
+
+import ch.boye.httpclientandroidlib.HttpResponse;
 
 /**
  * Fetch from a server collection into a local repository, encrypting
@@ -32,7 +37,8 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
  */
 public abstract class ServerSyncStage implements
     GlobalSyncStage,
-    SynchronizerDelegate {
+    SynchronizerDelegate,
+    HttpResponseObserver {
 
   protected GlobalSession session;
   protected String LOG_TAG = "ServerSyncStage";
@@ -129,6 +135,9 @@ public abstract class ServerSyncStage implements
       session.abort(e, "Invalid persisted JSON for config.");
       return;
     }
+
+    installAsHttpResponseObserver(); // Uninstalled by SynchronizerDelegate callbacks.
+
     Logger.debug(LOG_TAG, "Invoking synchronizer.");
     synchronizer.synchronize(session.getContext(), this);
     Logger.debug(LOG_TAG, "Reached end of execute.");
@@ -136,8 +145,25 @@ public abstract class ServerSyncStage implements
 
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
-    Logger.debug(LOG_TAG, "onSynchronized.");
-    synchronizer.save().persist(session.config.getBranch(bundlePrefix()));
+    Logger.info(LOG_TAG, "onSynchronized.");
+
+    uninstallAsHttpResponseObserver();
+
+    if (largestBackoffObserved > 0) {
+      requestBackoff(largestBackoffObserved);
+      if (!continueAfterBackoff(largestBackoffObserved)) {
+        return;
+      }
+    }
+
+    SynchronizerConfiguration synchronizerConfiguration = synchronizer.save();
+    if (synchronizerConfiguration != null) {
+      synchronizerConfiguration.persist(session.config.getBranch(bundlePrefix()));
+    } else {
+      Logger.warn(LOG_TAG, "Didn't get configuration from synchronizer after success");
+    }
+
+    Logger.info(LOG_TAG, "Advancing session.");
     session.advance();
   }
 
@@ -145,6 +171,12 @@ public abstract class ServerSyncStage implements
   public void onSynchronizeFailed(Synchronizer synchronizer,
                                   Exception lastException, String reason) {
     Logger.info(LOG_TAG, "onSynchronizeFailed: " + reason);
+
+    uninstallAsHttpResponseObserver();
+
+    if (largestBackoffObserved > 0) {
+      requestBackoff(largestBackoffObserved);
+    }
 
     // This failure could be due to a 503 or a 401 and it could have headers.
     if (lastException instanceof HTTPFailureException) {
@@ -157,6 +189,84 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronizeAborted(Synchronizer synchronize) {
     Logger.info(LOG_TAG, "onSynchronizeAborted.");
+
+    uninstallAsHttpResponseObserver();
+
+    if (largestBackoffObserved > 0) {
+      requestBackoff(largestBackoffObserved);
+    }
+
     session.abort(null, "Synchronization was aborted.");
+  }
+
+  /**
+   * The longest backoff observed to date; -1 means no backoff observed.
+   */
+  protected long largestBackoffObserved = -1;
+
+  /**
+   * Override this in subclasses. Called regardless of status (success, failure,
+   * or error) if backoff was requested.
+   *
+   * By default, requestBackoff from callback.
+   *
+   * @param backoff
+   *          The requested backoff in milliseconds.
+   */
+  public void requestBackoff(long backoff) {
+    Logger.info(LOG_TAG, "Requesting backoff of " + backoff + " milliseconds.");
+    session.callback.requestBackoff(backoff);
+  }
+
+  /**
+   * Override this in subclasses. Called after successful synchronization if a
+   * backoff was requested to determine whether to continue.
+   *
+   * By default, abort and return <code>false</code> to not continue.
+   *
+   * @param backoff
+   *          The requested backoff in milliseconds.
+   * @return <code>true</code> to advance session and <code>false</code> to not
+   *         advance session. Implementor is responsible for aborting, etc!
+   */
+  protected boolean continueAfterBackoff(long backoff) {
+    Logger.info(LOG_TAG, "Not continuing after backoff of " + backoff + " milliseconds requested.");
+    session.abort(null, "Aborting due to backoff request.");
+    return false;
+  }
+
+  /**
+   * Reset any observed backoff and start observing HTTP responses for backoff
+   * requests.
+   */
+  protected synchronized void installAsHttpResponseObserver() {
+    Logger.debug(LOG_TAG, "Installing " + this + " as BaseResource HttpResponseObserver.");
+    BaseResource.setHttpResponseObserver(this);
+    largestBackoffObserved = -1;
+  }
+
+  /**
+   * Stop observing HttpResponses for backoff requests.
+   */
+  protected synchronized void uninstallAsHttpResponseObserver() {
+    Logger.debug(LOG_TAG, "Uninstalling " + this + " as BaseResource HttpResponseObserver.");
+    BaseResource.setHttpResponseObserver(null);
+  }
+
+  /**
+   * Observe all HTTP response for backoff requests on all status codes, not just errors.
+   */
+  @Override
+  public void observeHttpResponse(HttpResponse response) {
+    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
+    if (responseBackoff <= 0) {
+      return;
+    }
+
+    Logger.debug(LOG_TAG, "Observed " + responseBackoff + " millisecond backoff request.");
+    synchronized (this) {
+      if (responseBackoff > largestBackoffObserved)
+        largestBackoffObserved = responseBackoff;
+    }
   }
 }
