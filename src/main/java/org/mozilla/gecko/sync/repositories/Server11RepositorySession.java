@@ -85,7 +85,7 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      Logger.info(LOG_TAG, "Fetch done.");
+      Logger.debug(LOG_TAG, "Fetch done.");
 
       long normalizedTimestamp = -1;
       try {
@@ -125,7 +125,7 @@ public class Server11RepositorySession extends RepositorySession {
       workTracker.delayWorkItem(new Runnable() {
         @Override
         public void run() {
-          Logger.info(LOG_TAG, "Running onFetchFailed.");
+          Logger.debug(LOG_TAG, "Running onFetchFailed.");
           delegate.onFetchFailed(ex, null);
         }
       });
@@ -326,7 +326,7 @@ public class Server11RepositorySession extends RepositorySession {
     public RecordUploadRunnable(RepositorySessionStoreDelegate storeDelegate,
                                 ArrayList<byte[]> outgoing,
                                 long byteCount) {
-      Logger.info(LOG_TAG, "Preparing RecordUploadRunnable for " +
+      Logger.debug(LOG_TAG, "Preparing RecordUploadRunnable for " +
                      outgoing.size() + " records (" +
                      byteCount + " bytes).");
       this.outgoing  = outgoing;
@@ -345,7 +345,7 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      Logger.info(LOG_TAG, "POST of " + outgoing.size() + " records done.");
+      Logger.debug(LOG_TAG, "POST of " + outgoing.size() + " records done.");
 
       ExtendedJSONObject body;
       try {
@@ -356,7 +356,7 @@ public class Server11RepositorySession extends RepositorySession {
         return;
       }
       long modified = body.getTimestamp("modified");
-      Logger.info(LOG_TAG, "POST request success. Modified timestamp: " + modified);
+      Logger.debug(LOG_TAG, "POST request success. Modified timestamp: " + modified);
 
       try {
         JSONArray          success = body.getArray("success");
@@ -444,7 +444,7 @@ public class Server11RepositorySession extends RepositorySession {
     public void run() {
       if (outgoing == null ||
           outgoing.size() == 0) {
-        Logger.info(LOG_TAG, "No items: RecordUploadRunnable returning immediately.");
+        Logger.debug(LOG_TAG, "No items: RecordUploadRunnable returning immediately.");
         return;
       }
 
