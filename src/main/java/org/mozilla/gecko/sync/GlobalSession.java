@@ -36,7 +36,7 @@ import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
 import org.mozilla.gecko.sync.stage.CompletedStage;
 import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
-import org.mozilla.gecko.sync.stage.EnsureKeysStage;
+import org.mozilla.gecko.sync.stage.EnsureCrypto5KeysStage;
 import org.mozilla.gecko.sync.stage.FennecTabsServerSyncStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
@@ -184,7 +184,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
-    stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
+    stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage());
     stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
 
     // TODO: more stages.

@@ -21,8 +21,8 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
-public class EnsureKeysStage implements GlobalSyncStage, SyncStorageRequestDelegate, KeyUploadDelegate {
-  private static final String LOG_TAG = "EnsureKeysStage";
+public class EnsureCrypto5KeysStage implements GlobalSyncStage, SyncStorageRequestDelegate, KeyUploadDelegate {
+  private static final String LOG_TAG = "EnsureC5KeysStage";
   private GlobalSession session;
   private boolean retrying = false;
 
