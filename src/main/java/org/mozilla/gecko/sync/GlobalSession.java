@@ -552,54 +552,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
             Logger.warn(LOG_TAG, "Got error uploading new meta/global.", e);
             freshStartDelegate.onFreshStartFailed(e);
           }
-
-          @Override
-          public MetaGlobalDelegate deferred() {
-            final MetaGlobalDelegate self = this;
-            return new MetaGlobalDelegate() {
-
-              @Override
-              public void handleSuccess(final MetaGlobal global, final SyncStorageResponse response) {
-                ThreadPool.run(new Runnable() {
-                  @Override
-                  public void run() {
-                    self.handleSuccess(global, response);
-                  }});
-              }
-
-              @Override
-              public void handleMissing(final MetaGlobal global, final SyncStorageResponse response) {
-                ThreadPool.run(new Runnable() {
-                  @Override
-                  public void run() {
-                    self.handleMissing(global, response);
-                  }});
-              }
-
-              @Override
-              public void handleFailure(final SyncStorageResponse response) {
-                ThreadPool.run(new Runnable() {
-                  @Override
-                  public void run() {
-                    self.handleFailure(response);
-                  }});
-              }
-
-              @Override
-              public void handleError(final Exception e) {
-                ThreadPool.run(new Runnable() {
-                  @Override
-                  public void run() {
-                    self.handleError(e);
-                  }});
-              }
-
-              @Override
-              public MetaGlobalDelegate deferred() {
-                return this;
-              }
-            };
-          }
         });
       }
 

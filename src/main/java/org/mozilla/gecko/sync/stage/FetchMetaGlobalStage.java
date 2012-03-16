@@ -72,12 +72,6 @@ public class FetchMetaGlobalStage implements GlobalSyncStage {
     public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
       session.processMissingMetaGlobal(global);
     }
-
-    @Override
-    public MetaGlobalDelegate deferred() {
-      // TODO: defer!
-      return this;
-    }
   }
 
   @Override

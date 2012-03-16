@@ -53,12 +53,6 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   protected String metaURL;
   protected String credentials;
 
-  public boolean isModified;
-  protected boolean isNew;
-
-  // Fetched object.
-  private CryptoRecord record;
-
   // Fields.
   protected ExtendedJSONObject  engines;
   protected Long                storageVersion;
@@ -104,51 +98,52 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     }
   }
 
-  private CryptoRecord ensureRecord() {
-    if (this.record == null) {
-      this.record = new CryptoRecord(new ExtendedJSONObject());
-    }
-    return this.record;
+  protected ExtendedJSONObject asRecordContents() {
+    ExtendedJSONObject json = new ExtendedJSONObject();
+    json.put("storageVersion", storageVersion);
+    json.put("engines", engines);
+    json.put("syncID", syncID);
+    return json;
   }
 
-  protected void setRecord(ExtendedJSONObject obj) throws IOException, ParseException, NonObjectJSONException {
-    this.record = CryptoRecord.fromJSONRecord(obj);
+  public CryptoRecord asCryptoRecord() {
+    ExtendedJSONObject payload = this.asRecordContents();
+    CryptoRecord record = new CryptoRecord(payload);
+    record.collection = "meta";
+    record.guid       = "global";
+    record.deleted    = false;
+    return record;
   }
 
-  private void unpack(SyncStorageResponse response) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
-    this.setRecord(response.jsonObjectBody());
+  public void setFromRecord(CryptoRecord record) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
     Log.i(LOG_TAG, "meta/global is " + record.payload.toJSONString());
-    this.isModified = false;
     this.storageVersion = (Long) record.payload.get("storageVersion");
-    this.engines  = record.payload.getObject("engines");
+    this.engines = record.payload.getObject("engines");
     this.syncID = (String) record.payload.get("syncID");
   }
 
   public Long getStorageVersion() {
     return this.storageVersion;
   }
+
   public void setStorageVersion(Long version) {
     this.storageVersion = version;
-    this.ensureRecord().payload.put("storageVersion", version);
-    this.isModified = true;
   }
 
   public ExtendedJSONObject getEngines() {
     return engines;
   }
+
   public void setEngines(ExtendedJSONObject engines) {
     this.engines = engines;
-    this.ensureRecord().payload.put("engines", engines);
-    this.isModified = true;
   }
 
   public String getSyncID() {
     return syncID;
   }
+
   public void setSyncID(String syncID) {
     this.syncID = syncID;
-    this.ensureRecord().payload.put("syncID", syncID);
-    this.isModified = true;
   }
 
   // SyncStorageRequestDelegate methods for fetching.
@@ -169,7 +164,6 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   }
 
   private void handleUploadSuccess(SyncStorageResponse response) {
-    this.isModified = false;
     this.callback.handleSuccess(this, response);
     this.callback = null;
   }
@@ -177,7 +171,8 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   private void handleDownloadSuccess(SyncStorageResponse response) {
     if (response.wasSuccessful()) {
       try {
-        this.unpack(response);
+        CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
+        this.setFromRecord(record);
         this.callback.handleSuccess(this, response);
         this.callback = null;
       } catch (Exception e) {
