@@ -8,16 +8,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.GeneralSecurityException;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.android.sync.test.helpers.BaseResourceDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockResourceDelegate;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -25,64 +22,12 @@ import org.mozilla.gecko.sync.net.HttpResponseObserver;
 
 import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class TestResource {
   private static final int    TEST_PORT   = 15325;
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
-  static String            USER_PASS    = "john:password";
-  static String            EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
   private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
-
-  class BaseTestResourceDelegate extends BaseResourceDelegate {
-    @Override
-    public String getCredentials() {
-      return null;
-    }
-
-    @Override
-    public void handleHttpResponse(HttpResponse response) {
-      BaseResource.consumeEntity(response);
-      try {
-        fail("Should not happen.");
-      } catch (Exception e) {
-        WaitHelper.getTestWaiter().performNotify(e);
-      }
-    }
-
-    @Override
-    public void handleHttpProtocolException(ClientProtocolException e) {
-      WaitHelper.getTestWaiter().performNotify(e);
-    }
-
-    @Override
-    public void handleHttpIOException(IOException e) {
-      WaitHelper.getTestWaiter().performNotify(e);
-    }
-
-    @Override
-    public void handleTransportException(GeneralSecurityException e) {
-      WaitHelper.getTestWaiter().performNotify(e);
-    }
-  }
-
-  private class TrivialTestResourceDelegate extends BaseTestResourceDelegate {
-    public boolean handledHttpResponse = false;
-
-    @Override
-    public String getCredentials() {
-      return USER_PASS;
-    }
-
-    @Override
-    public void handleHttpResponse(HttpResponse response) {
-      handledHttpResponse = true;
-      assertEquals(response.getStatusLine().getStatusCode(), 200);
-      BaseResource.consumeEntity(response);
-      WaitHelper.getTestWaiter().performNotify();
-    }
-  }
 
   @Before
   public void setUp() {
@@ -98,9 +43,9 @@ public class TestResource {
     assertEquals("http://10.0.2.2:5000/foo/bar", r.getURI().toASCIIString());
   }
 
-  public TrivialTestResourceDelegate doGet() throws URISyntaxException {
+  public MockResourceDelegate doGet() throws URISyntaxException {
     final BaseResource r = new BaseResource(TEST_SERVER + "/foo/bar");
-    TrivialTestResourceDelegate delegate = new TrivialTestResourceDelegate();
+    MockResourceDelegate delegate = new MockResourceDelegate();
     r.delegate = delegate;
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
@@ -114,8 +59,8 @@ public class TestResource {
   @Test
   public void testTrivialFetch() throws URISyntaxException {
     MockServer server = data.startHTTPServer();
-    server.expectedBasicAuthHeader = EXPECT_BASIC;
-    TrivialTestResourceDelegate delegate = doGet();
+    server.expectedBasicAuthHeader = MockResourceDelegate.EXPECT_BASIC;
+    MockResourceDelegate delegate = doGet();
     assertTrue(delegate.handledHttpResponse);
     data.stopHTTPServer();
   }
