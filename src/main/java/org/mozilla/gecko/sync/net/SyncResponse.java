@@ -200,7 +200,7 @@ public class SyncResponse {
    * @return A number of milliseconds, or -1 if neither the 'Retry-After' or
    *         'X-Weave-Backoff' header was present.
    */
-  public int totalBackoffInMilliseconds() {
+  public long totalBackoffInMilliseconds() {
     int retryAfterInSeconds = -1;
     try {
       retryAfterInSeconds = retryAfterInSeconds();
@@ -213,7 +213,7 @@ public class SyncResponse {
     } catch (NumberFormatException e) {
     }
 
-    int totalBackoff = Math.max(retryAfterInSeconds, weaveBackoffInSeconds);
+    long totalBackoff = (long) Math.max(retryAfterInSeconds, weaveBackoffInSeconds);
     if (totalBackoff < 0) {
       return -1;
     } else {
