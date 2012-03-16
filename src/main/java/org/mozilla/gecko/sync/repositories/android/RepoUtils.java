@@ -261,4 +261,18 @@ public class RepoUtils {
       cur.moveToPosition(originalPosition);
     }
   }
+
+  public static String computeSQLInClause(int items, String field) {
+    StringBuilder builder = new StringBuilder(field);
+    builder.append(" IN (");
+    int i = 0;
+    for (; i < items - 1; ++i) {
+      builder.append("?, ");
+    }
+    if (i < items) {
+      builder.append("?");
+    }
+    builder.append(")");
+    return builder.toString();
+  }
 }

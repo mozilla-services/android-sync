@@ -7,7 +7,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import android.util.Log;
+import org.mozilla.gecko.sync.Logger;
 
 /**
  * Implements waiting for asynchronous test events.
@@ -83,20 +83,12 @@ public class WaitHelper {
    */
   public static int defaultWaitTimeoutInMillis = -1;
 
-  public void info(String message) {
-    Log.i(LOG_TAG, message);
-  }
-
-  public void warn(String message, Throwable e) {
-    Log.w(LOG_TAG, message, e);
-  }
-
   public void performWait(Runnable action) throws WaitHelperError {
     this.performWait(defaultWaitTimeoutInMillis, action);
   }
 
   public void performWait(int waitTimeoutInMillis, Runnable action) throws WaitHelperError {
-    info("performWait called.");
+    Logger.debug(LOG_TAG, "performWait called.");
 
     Result result = null;
 
@@ -104,9 +96,9 @@ public class WaitHelper {
       if (action != null) {
         try {
           action.run();
-          Log.i(LOG_TAG, "Action done.");
+          Logger.debug(LOG_TAG, "Action done.");
         } catch (Exception ex) {
-          Log.i(LOG_TAG, "Performing action threw: ", ex);
+          Logger.debug(LOG_TAG, "Performing action threw: " + ex.getMessage());
           throw new InnerError(ex);
         }
       }
@@ -116,10 +108,10 @@ public class WaitHelper {
       } else {
         result = queue.poll(waitTimeoutInMillis, TimeUnit.MILLISECONDS);
       }
-      Log.i(LOG_TAG, "Got result from queue: " + result);
+      Logger.debug(LOG_TAG, "Got result from queue: " + result);
     } catch (InterruptedException e) {
       // We were interrupted.
-      info("performNotify interrupted with InterruptedException " + e);
+      Logger.debug(LOG_TAG, "performNotify interrupted with InterruptedException " + e);
       final InterruptedError interruptedError = new InterruptedError();
       interruptedError.initCause(e);
       throw interruptedError;
@@ -129,7 +121,7 @@ public class WaitHelper {
       // We timed out.
       throw new TimeoutError(waitTimeoutInMillis);
     } else if (result.error != null) {
-      warn("Notified with error.", result.error);
+      Logger.debug(LOG_TAG, "Notified with error: " + result.error.getMessage());
 
       // Rethrow any assertion with which we were notified.
       InnerError innerError = new InnerError(result.error);
@@ -140,9 +132,9 @@ public class WaitHelper {
 
   public void performNotify(final Throwable e) {
     if (e != null) {
-      warn("performNotify called with Throwable ", e);
+      Logger.debug(LOG_TAG, "performNotify called with Throwable: " + e.getMessage());
     } else {
-      info("performNotify called.");
+      Logger.debug(LOG_TAG, "performNotify called.");
     }
 
     if (!queue.offer(new Result(e))) {
