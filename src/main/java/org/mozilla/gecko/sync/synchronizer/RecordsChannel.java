@@ -102,7 +102,8 @@ class RecordsChannel implements
   }
 
   /**
-   * Attempt to abort an outstanding fetch. Finish both sessions.
+   * Attempt to abort an outstanding fetch. Finish both sessions, and
+   * halt the consumer if it exists.
    */
   public void abort() {
     if (source.isActive()) {
@@ -111,7 +112,12 @@ class RecordsChannel implements
     if (sink.isActive()) {
       sink.abort();
     }
-    this.consumer.halt();
+
+    toProcess.clear();
+    if (consumer == null) {
+      return;
+    }
+    consumer.halt();
   }
 
   /**
