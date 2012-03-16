@@ -349,14 +349,24 @@ public class Server11RepositorySession extends RepositorySession {
 
       ExtendedJSONObject body;
       try {
-        body = response.jsonObjectBody();
+        body = response.jsonObjectBody(); // jsonObjectBody() throws or returns non-null.
       } catch (Exception e) {
         Logger.error(LOG_TAG, "Got exception parsing POST success body.", e);
         // TODO
         return;
       }
-      long modified = body.getTimestamp("modified");
-      Logger.debug(LOG_TAG, "POST request success. Modified timestamp: " + modified);
+
+      // Be defensive when logging timestamp.
+      if (body.containsKey("modified")) {
+        Long modified = body.getTimestamp("modified");
+        if (modified != null) {
+          Logger.debug(LOG_TAG, "POST request success. Modified timestamp: " + modified.longValue());
+        } else {
+          Logger.warn(LOG_TAG, "POST success body contains malformed 'modified': " + body.toJSONString());
+        }
+      } else {
+        Logger.warn(LOG_TAG, "POST success body does not contain key 'modified': " + body.toJSONString());
+      }
 
       try {
         JSONArray          success = body.getArray("success");
