@@ -437,9 +437,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     if (!remoteSyncID.equals(localSyncID)) {
       // Sync ID has changed. Reset timestamps and fetch new keys.
       resetClient(null);
-      if (config.collectionKeys != null) {
-        config.collectionKeys.clear();
-      }
+      config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
       // TODO TODO TODO
     }
@@ -490,7 +488,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void onWiped(long timestamp) {
         session.resetClient(null);
-        session.config.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
+        session.config.purgeCryptoKeys();
         session.config.persistToPrefs();
 
         MetaGlobal mg = new MetaGlobal(metaURL, credentials);

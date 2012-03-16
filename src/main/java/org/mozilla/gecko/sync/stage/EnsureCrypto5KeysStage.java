@@ -9,13 +9,14 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
@@ -23,21 +24,70 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class EnsureCrypto5KeysStage implements GlobalSyncStage, SyncStorageRequestDelegate, KeyUploadDelegate {
   private static final String LOG_TAG = "EnsureC5KeysStage";
-  private GlobalSession session;
-  private boolean retrying = false;
+  private static final String CRYPTO_COLLECTION = "crypto";
+  protected GlobalSession session;
+  protected boolean retrying = false;
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
     this.session = session;
 
-    // TODO: decide whether we need to do this work.
+    InfoCollections infoCollections = session.config.infoCollections;
+    if (infoCollections == null) {
+      session.abort(null, "No info/collections set in EnsureKeysStage.");
+      return;
+    }
+
+    if (!updateNeeded(infoCollections)) {
+      // Try to use our local collection keys for this session.
+      Logger.info(LOG_TAG, "Trying to use persisted collection keys for this session.");
+      CollectionKeys keys = session.config.persistedCryptoKeys().keys();
+      if (keys != null) {
+        Logger.info(LOG_TAG, "Using persisted collection keys for this session.");
+        session.config.setCollectionKeys(keys);
+        session.advance();
+        return;
+      }
+      Logger.info(LOG_TAG, "Failed to use persisted collection keys for this session.");
+    }
+
+    // We need an update: fetch or upload keys as necessary.
+    Logger.info(LOG_TAG, "Fetching fresh collection keys for this session.");
     try {
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI("crypto", "keys"));
+      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
       request.delegate = this;
       request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
     }
+  }
+
+  /**
+   * Test if we need to update crypto/keys, based on the fetched
+   * info/collections record.
+   *
+   * @param infoCollections
+   *          The <code>InfoCollections</code> instance fetched from the storage
+   *          server.
+   */
+  protected boolean updateNeeded(InfoCollections infoCollections) {
+    long lastModified = session.config.persistedCryptoKeys().lastModified();
+    Logger.trace(LOG_TAG, "Testing for updateNeeded. Local last modified is " + lastModified + ".");
+
+    // No local record of modification time? Need an update.
+    if (lastModified <= 0) {
+      return true;
+    }
+
+    // No keys on the server? We need an update. The server fetch will fail and
+    // then we will upload new keys.
+    Long serverLastModified = infoCollections.getTimestamp(CRYPTO_COLLECTION);
+    if (serverLastModified == null) {
+      return true;
+    }
+
+    // Otherwise, we need an update if our modification time is stale.
+    return (serverLastModified.longValue() > lastModified);
   }
 
   @Override
@@ -79,8 +129,14 @@ public class EnsureCrypto5KeysStage implements GlobalSyncStage, SyncStorageReque
       return;
     }
 
-    Logger.trace(LOG_TAG, "Setting keys.");
+    // New keys! Persist keys and server timestamp.
+    Logger.info(LOG_TAG, "Setting fetched keys for this session.");
     session.config.setCollectionKeys(k);
+    Logger.trace(LOG_TAG, "Persisting fetched keys and last modified.");
+    session.config.persistedCryptoKeys().persistKeys(k);
+    // Bump local lastModified to server lastModified if possible.
+    session.config.persistedCryptoKeys().persistLastModified(response.normalizedWeaveTimestamp()); // XXX is this the same as info/collections?
+
     session.advance();
   }
 
@@ -128,6 +184,7 @@ public class EnsureCrypto5KeysStage implements GlobalSyncStage, SyncStorageReque
   public void onKeysUploaded() {
     Logger.debug(LOG_TAG, "New keys uploaded. Starting stage again to fetch them.");
     try {
+      retrying = true;
       this.execute(this.session);
     } catch (NoSuchStageException e) {
       session.abort(e, "No such stage.");
