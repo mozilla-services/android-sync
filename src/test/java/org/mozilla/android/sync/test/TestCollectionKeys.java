@@ -92,7 +92,8 @@ public class TestCollectionKeys {
     JSONArray defaultKey = (JSONArray) rec.payload.get("default");
 
     assertSame(Base64.decodeBase64((String) (defaultKey.get(0))), ck1.defaultKeyBundle().getEncryptionKey());
-    CollectionKeys ck2 = CollectionKeys.fromCryptoRecord(rec, null);
+    CollectionKeys ck2 = new CollectionKeys();
+    ck2.setKeyPairsFromWBO(rec, null);
     assertSame(ck1.defaultKeyBundle().getEncryptionKey(), ck2.defaultKeyBundle().getEncryptionKey());
   }
 
@@ -108,7 +109,8 @@ public class TestCollectionKeys {
     unencrypted.keyBundle = syncKeyBundle;
     CryptoRecord encrypted = unencrypted.encrypt();
 
-    CollectionKeys ckDecrypted = CollectionKeys.fromCryptoRecord(encrypted, syncKeyBundle);
+    CollectionKeys ckDecrypted = new CollectionKeys();
+    ckDecrypted.setKeyPairsFromWBO(encrypted, syncKeyBundle);
 
     // Compare decrypted keys to the keys that were set upon creation
     assertArrayEquals(ck.defaultKeyBundle().getEncryptionKey(), ckDecrypted.defaultKeyBundle().getEncryptionKey());

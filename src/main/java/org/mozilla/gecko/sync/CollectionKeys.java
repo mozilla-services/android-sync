@@ -104,24 +104,6 @@ public class CollectionKeys {
   }
 
   /**
-   * Return a <code>CollectionKeys</code> with the given key bundle and data
-   * (possibly decrypted) from the given record.
-   *
-   * @param keys
-   *          A "crypto/keys" <code>CryptoRecord</code>, encrypted with
-   *          <code>syncKeyBundle</code> if <code>syncKeyBundle</code> is non-null.
-   * @param syncKeyBundle
-   *          If non-null, the sync key bundle to decrypt <code>keys</code> with.
-   * @return
-   *          The <code>CollectionKeys</code> object corresponding to <code>keys</code>.
-   */
-  public static CollectionKeys fromCryptoRecord(CryptoRecord keys, KeyBundle syncKeyBundle) throws CryptoException, IOException, ParseException, NonObjectJSONException {
-    CollectionKeys ck = new CollectionKeys();
-    ck.setKeyPairsFromWBO(keys, syncKeyBundle);
-    return ck;
-  }
-
-  /**
    * Set my key bundle and collection keys with the given key bundle and data
    * (possibly decrypted) from the given record.
    *
