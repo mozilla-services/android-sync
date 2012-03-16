@@ -111,6 +111,7 @@ class RecordsChannel implements
     if (sink.isActive()) {
       sink.abort();
     }
+    this.consumer.halt();
   }
 
   /**
