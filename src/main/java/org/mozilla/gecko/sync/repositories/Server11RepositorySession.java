@@ -59,6 +59,34 @@ public class Server11RepositorySession extends RepositorySession {
   private static final int PER_BATCH_OVERHEAD    = 5 - PER_RECORD_OVERHEAD;
 
   /**
+   * Return the X-Weave-Timestamp header from <code>response</code>, or the
+   * current time if it is missing.
+   * <p>
+   * <b>Warning:</b> this can cause the timestamp of <code>response</code> to
+   * cross domains (from server clock to local clock), which could cause records
+   * to be skipped on account of clock drift. This should never happen, because
+   * <i>every</i> server response should have a well-formed X-Weave-Timestamp
+   * header.
+   *
+   * @param response
+   *          The <code>SyncStorageResponse</code> to interrogate.
+   * @return Normalized timestamp in milliseconds.
+   */
+  public static long getNormalizedTimestamp(SyncStorageResponse response) {
+    long normalizedTimestamp = -1;
+    try {
+      normalizedTimestamp = response.normalizedWeaveTimestamp();
+    } catch (NumberFormatException e) {
+      Logger.warn(LOG_TAG, "Malformed X-Weave-Timestamp header received.", e);
+    }
+    if (-1 == normalizedTimestamp) {
+      Logger.warn(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
+      normalizedTimestamp = System.currentTimeMillis();
+    }
+    return normalizedTimestamp;
+  }
+
+  /**
    * Convert HTTP request delegate callbacks into fetch callbacks within the
    * context of this RepositorySession.
    *
@@ -87,19 +115,8 @@ public class Server11RepositorySession extends RepositorySession {
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.debug(LOG_TAG, "Fetch done.");
 
-      long normalizedTimestamp = -1;
-      try {
-        normalizedTimestamp = response.normalizedWeaveTimestamp();
-      } catch (NumberFormatException e) {
-        Logger.warn(LOG_TAG, "Malformed X-Weave-Timestamp header received.", e);
-      }
-      if (-1 == normalizedTimestamp) {
-        Logger.warn(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
-        normalizedTimestamp = new Date().getTime();
-      }
-
+      final long normalizedTimestamp = getNormalizedTimestamp(response);
       Logger.debug(LOG_TAG, "Fetch completed. Timestamp is " + normalizedTimestamp);
-      final long ts = normalizedTimestamp;
 
       // When we're done processing other events, finish.
       workTracker.delayWorkItem(new Runnable() {
@@ -107,7 +124,7 @@ public class Server11RepositorySession extends RepositorySession {
         public void run() {
           Logger.debug(LOG_TAG, "Delayed onFetchCompleted running.");
           // TODO: verify number of returned records.
-          delegate.onFetchCompleted(ts);
+          delegate.onFetchCompleted(normalizedTimestamp);
         }
       });
     }
@@ -376,9 +393,9 @@ public class Server11RepositorySession extends RepositorySession {
           Logger.debug(LOG_TAG, "Successful records: " + success.toString());
           // TODO: how do we notify without the whole record?
 
-          long ts = response.normalizedWeaveTimestamp();
-          Logger.debug(LOG_TAG, "Passing back upload X-Weave-Timestamp: " + ts);
-          bumpUploadTimestamp(ts);
+          long normalizedTimestamp = getNormalizedTimestamp(response);
+          Logger.debug(LOG_TAG, "Passing back upload X-Weave-Timestamp: " + normalizedTimestamp);
+          bumpUploadTimestamp(normalizedTimestamp);
         }
         if ((failed != null) &&
             (failed.object.size() > 0)) {
