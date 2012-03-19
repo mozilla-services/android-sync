@@ -38,6 +38,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
   public class SyncCollectionResourceDelegate extends
       SyncStorageResourceDelegate {
 
+    private static final String CONTENT_TYPE_INCREMENTAL = "application/newlines";
     SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
       super(request);
     }
@@ -45,7 +46,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
     @Override
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       super.addHeaders(request, client);
-      request.setHeader("Accept", "application/newlines");
+      request.setHeader("Accept", CONTENT_TYPE_INCREMENTAL);
       // Caller is responsible for setting full=1.
     }
 
@@ -58,7 +59,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
 
       HttpEntity entity = response.getEntity();
       Header contentType = entity.getContentType();
-      if (!contentType.getValue().startsWith("application/newlines")) {
+      if (!contentType.getValue().startsWith(CONTENT_TYPE_INCREMENTAL)) {
         // Not incremental!
         super.handleHttpResponse(response);
         return;
