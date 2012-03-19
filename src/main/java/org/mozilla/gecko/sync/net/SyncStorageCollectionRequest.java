@@ -39,6 +39,8 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
       SyncStorageResourceDelegate {
 
     private static final String CONTENT_TYPE_INCREMENTAL = "application/newlines";
+    private static final int FETCH_BUFFER_SIZE = 16 * 1024;   // 16K chars.
+
     SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
       super(request);
     }
@@ -77,8 +79,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
       BufferedReader br = null;
       try {
         content = entity.getContent();
-        int bufSize = 1024 * 1024;         // 1MB. TODO: lift and consider.
-        br = new BufferedReader(new InputStreamReader(content), bufSize);
+        br = new BufferedReader(new InputStreamReader(content), FETCH_BUFFER_SIZE);
         String line;
 
         // This relies on connection timeouts at the HTTP layer.
