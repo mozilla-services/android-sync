@@ -469,6 +469,14 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     return children;
   }
 
+
+  protected void updateRow(ContentValues values) {
+    Uri uri = BrowserContractHelpers.BOOKMARKS_CONTENT_URI;
+    final String where = BrowserContract.Bookmarks.GUID + " = ?";
+    final String[] args = new String[] { values.getAsString(BrowserContract.Bookmarks.GUID) };
+    getApplicationContext().getContentResolver().update(uri, values, where, args);
+  }
+
   protected Uri insertRow(ContentValues values) {
     Uri uri = BrowserContractHelpers.BOOKMARKS_CONTENT_URI;
     return getApplicationContext().getContentResolver().insert(uri, values);
@@ -477,27 +485,30 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   protected ContentValues fennecMobileRecordWithoutTitle() {
     ContentValues values = new ContentValues();
     values.put(BrowserContract.SyncColumns.GUID, "mobile");
-    values.put(BrowserContract.Bookmarks.IS_FOLDER, 1);
-    values.put(BrowserContract.Bookmarks.POSITION, 0);
 
     long now = System.currentTimeMillis();
     values.put(BrowserContract.Bookmarks.DATE_CREATED, now);
     values.put(BrowserContract.Bookmarks.DATE_MODIFIED, now);
+    values.putNull(BrowserContract.Bookmarks.TITLE);
 
     return values;
   }
 
   protected long setUpFennecMobileRecordWithoutTitle() {
+    ContentResolver cr = getApplicationContext().getContentResolver();
     ContentValues values = fennecMobileRecordWithoutTitle();
-    return RepoUtils.getAndroidIdFromUri(insertRow(values));
+    updateRow(values);
+    return fennecGetMobileBookmarksFolderId(cr);
   }
 
   protected long setUpFennecMobileRecord() {
+    ContentResolver cr = getApplicationContext().getContentResolver();
     ContentValues values = fennecMobileRecordWithoutTitle();
     values.put(BrowserContract.Bookmarks.PARENT, 0);
     String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_mobile);
     values.put(BrowserContract.Bookmarks.TITLE, title);
-    return RepoUtils.getAndroidIdFromUri(insertRow(values));
+    updateRow(values);
+    return fennecGetMobileBookmarksFolderId(cr);
   }
 
   //
@@ -581,8 +592,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
 
   protected void wipe() {
     Log.d(getName(), "Wiping.");
-    final ContentResolver cr = getApplicationContext().getContentResolver();
-    cr.delete(BrowserContractHelpers.BOOKMARKS_CONTENT_URI, null, null);
+    getDataAccessor().wipe();
   }
 
   protected void assertChildrenAreOrdered(AndroidBrowserBookmarksRepository repo, String guid, Record[] expected) {
