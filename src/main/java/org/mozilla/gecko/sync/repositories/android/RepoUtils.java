@@ -169,6 +169,7 @@ public class RepoUtils {
     long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
     boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
     PasswordRecord rec = new PasswordRecord(guid, collection, lastModified, deleted);
+    rec.id = getStringFromCursor(cur, BrowserContract.Passwords.ID);
     rec.hostname = getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);
     rec.httpRealm = getStringFromCursor(cur, BrowserContract.Passwords.HTTP_REALM);
     rec.formSubmitURL = getStringFromCursor(cur, BrowserContract.Passwords.FORM_SUBMIT_URL);

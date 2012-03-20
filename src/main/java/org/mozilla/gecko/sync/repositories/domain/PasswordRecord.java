@@ -62,6 +62,7 @@ public class PasswordRecord extends Record {
     super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
 
+  public String id;
   public String hostname;
   public String formSubmitURL;
   public String httpRealm;
@@ -86,6 +87,7 @@ public class PasswordRecord extends Record {
     out.sortIndex = this.sortIndex;
 
     // Copy HistoryRecord fields.
+    out.id            = this.id;
     out.hostname      = this.hostname;
     out.formSubmitURL = this.formSubmitURL;
     out.httpRealm     = this.httpRealm;
@@ -142,7 +144,8 @@ public class PasswordRecord extends Record {
     if (!super.equalPayloads(other)) {
       return false;
     }
-    return RepoUtils.stringsEqual(this.hostname, other.hostname)
+    return RepoUtils.stringsEqual(this.id, other.id)
+        && RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
         && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
         && RepoUtils.stringsEqual(this.usernameField, other.usernameField)

@@ -165,6 +165,15 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
    * @throws NullCursorException
    */
   public Cursor fetchSince(long timestamp) throws NullCursorException {
+    Logger.debug(LOG_TAG, "all columns:");
+    for (String s : getAllColumns()) {
+      Logger.debug(LOG_TAG, s);
+    }
+    Logger.debug(LOG_TAG, "where:" + dateModifiedWhere(timestamp));
+    Cursor cursor = queryHelper.safeQuery(".fetchSince",
+        getAllColumns(),
+        dateModifiedWhere(timestamp),
+        null, null);
     return queryHelper.safeQuery(".fetchSince",
                                  getAllColumns(),
                                  dateModifiedWhere(timestamp),
@@ -181,6 +190,7 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
    */
   public Cursor fetch(String guids[]) throws NullCursorException {
     String where = computeSQLInClause(guids.length, "guid");
+    Logger.debug(LOG_TAG, where);
     return queryHelper.safeQuery(".fetch", getAllColumns(), where, guids, null);
   }
 

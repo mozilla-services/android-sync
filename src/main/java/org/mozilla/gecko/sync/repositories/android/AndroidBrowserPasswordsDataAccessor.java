@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync.repositories.android;
 
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.db.BrowserContract.Passwords;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -57,5 +58,10 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
   public Uri insert(Record record) {
     Log.i(LOG_TAG, "Storing password record " + record.guid);
     return super.insert(record);
+  }
+
+  @Override
+  public String dateModifiedWhere(long timestamp) {
+    return Passwords.TIME_PASSWORD_CHANGED + " >= " + Long.toString(timestamp);
   }
 }
