@@ -10,7 +10,6 @@ import org.mozilla.gecko.sync.repositories.android.ClientsDatabase;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
-import org.mozilla.gecko.sync.setup.Constants;
 
 import android.database.Cursor;
 import android.test.AndroidTestCase;

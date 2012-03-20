@@ -102,8 +102,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    */
   public static String[] SPECIAL_GUIDS = new String[] {
     // Mobile and desktop places roots have to come first.
-    "mobile",
     "places",
+    "mobile",
     "toolbar",
     "menu",
     "unfiled"
