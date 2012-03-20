@@ -123,4 +123,8 @@ public class BrowserContractHelpers extends BrowserContract {
     }
     return found.intValue();
   }
+
+  public static boolean isSupportedType(String type) {
+    return BOOKMARK_TYPE_STRING_TO_CODE.containsKey(type);
+  }
 }
