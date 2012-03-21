@@ -144,6 +144,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       @Override
       public void run() {
         session.setStoreDelegate(delegate);
+        Log.i("liuche", "STORING:" + records.length);
         try {
           for (Record record : records) {
             session.store(record);
@@ -293,6 +294,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     RepositorySession session = createAndBeginSession();
     Log.i("rnewman", "Prepared.");
 
+    Log.i("liuche", "helper is null? " + (helper == null));
     helper.dumpDB();
     performWait(storeManyRunnable(session, expected));
 
@@ -370,26 +372,19 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   protected void fetchSinceOneRecord(Record record0, Record record1) {
     RepositorySession session = createAndBeginSession();
 
+    long after0 = System.currentTimeMillis();
     performWait(storeRunnable(session, record0));
-    long timestamp = System.currentTimeMillis();
-    Log.i("fetchSinceOneRecord", "Entering synchronized section. Timestamp " + timestamp);
-    synchronized(this) {
-      try {
-        wait(1000);
-      } catch (InterruptedException e) {
-        Log.w("fetchSinceOneRecord", "Interrupted.", e);
-      }
-    }
-    Log.i("fetchSinceOneRecord", "Storing.");
+
+    long after1 = System.currentTimeMillis();
     performWait(storeRunnable(session, record1));
 
     Log.i("fetchSinceOneRecord", "Fetching record 1.");
     String[] expectedOne = new String[] { record1.guid };
-    performWait(fetchSinceRunnable(session, timestamp + 10, expectedOne));
+    performWait(fetchSinceRunnable(session, after1, expectedOne));
 
     Log.i("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
     String[] expectedBoth = new String[] { record0.guid, record1.guid };
-    performWait(fetchSinceRunnable(session, timestamp - 3000, expectedBoth));
+    performWait(fetchSinceRunnable(session, after0, expectedBoth));
 
     Log.i("fetchSinceOneRecord", "Done.");
     dispose(session);

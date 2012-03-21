@@ -18,7 +18,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
 
 public class RepoUtils {
 
@@ -166,9 +165,9 @@ public class RepoUtils {
     
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "passwords";
-    long lastModified = getLongFromCursor(cur, BrowserContract.SyncColumns.DATE_MODIFIED);
-    boolean deleted = getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1 ? true : false;
-    PasswordRecord rec = new PasswordRecord(guid, collection, lastModified, deleted);
+    // lastModified and deleted - double check if correct?
+    long lastModified = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
+    PasswordRecord rec = new PasswordRecord(guid, collection, lastModified, false);
     rec.id = getStringFromCursor(cur, BrowserContract.Passwords.ID);
     rec.hostname = getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);
     rec.httpRealm = getStringFromCursor(cur, BrowserContract.Passwords.HTTP_REALM);
@@ -181,6 +180,11 @@ public class RepoUtils {
     rec.encryptedUsername = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
     rec.encryptedPassword = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
 
+    // Microseconds from Fennec to milliseconds in Sync.
+//    rec.timeCreated = getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED) / 1000;
+//    rec.timeLastUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED) / 1000;
+//    rec.timePasswordChanged = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED) / 1000;
+//    rec.timesUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED) / 1000;
     rec.timeCreated = getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED);
     rec.timeLastUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED);
     rec.timePasswordChanged = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);

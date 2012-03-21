@@ -70,6 +70,8 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
           try {
             assertTrue(expect.equalPayloads(record));
           } catch (Exception e) {
+            Log.e(LOG_TAG, "expected: " + expect.toString());
+            Log.e(LOG_TAG, "record: " + record.toString());
             Log.e(LOG_TAG, "ONOZ!", e);
           }
           Log.d(LOG_TAG, "Checked equality.");

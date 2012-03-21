@@ -221,12 +221,14 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       try {
         try {
           if (!cursor.moveToFirst()) {
+            Log.i(LOG_TAG, "cursor empty");
             delegate.onFetchCompleted(end);
             return;
           }
           while (!cursor.isAfterLast()) {
             Record r = retrieveDuringFetch(cursor);
             if (r != null) {
+              Log.i(LOG_TAG, "retrievedRecord:" + r);
               if (filter == null || !filter.excludeRecord(r)) {
                 Logger.trace(LOG_TAG, "Processing record " + r.guid);
                 delegate.onFetchedRecord(transformRecord(r));
@@ -282,6 +284,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
       try {
         Cursor cursor = dbHelper.fetch(guids);
+        Log.d(LOG_TAG, "cursor == null? " + (cursor == null));
         this.fetchFromCursor(cursor, filter, end);
       } catch (NullCursorException e) {
         delegate.onFetchFailed(e, null);
@@ -325,6 +328,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
       try {
         Cursor cursor = dbHelper.fetchSince(since);
+        Log.d(LOG_TAG, "fetchFromCursor:" + cursor);
         this.fetchFromCursor(cursor, filter, end);
       } catch (NullCursorException e) {
         delegate.onFetchFailed(e, null);

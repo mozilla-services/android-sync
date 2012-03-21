@@ -170,10 +170,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
       Logger.debug(LOG_TAG, s);
     }
     Logger.debug(LOG_TAG, "where:" + dateModifiedWhere(timestamp));
-    Cursor cursor = queryHelper.safeQuery(".fetchSince",
-        getAllColumns(),
-        dateModifiedWhere(timestamp),
-        null, null);
     return queryHelper.safeQuery(".fetchSince",
                                  getAllColumns(),
                                  dateModifiedWhere(timestamp),

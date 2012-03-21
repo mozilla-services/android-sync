@@ -62,6 +62,7 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
 
   @Override
   public String dateModifiedWhere(long timestamp) {
-    return Passwords.TIME_PASSWORD_CHANGED + " >= " + Long.toString(timestamp);
+    // Convert Fennec microseconds to milliseconds for Sync.
+    return Passwords.TIME_PASSWORD_CHANGED + " >= " + Long.toString(timestamp * 1000);
   }
 }

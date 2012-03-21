@@ -45,6 +45,15 @@ public class PasswordRecord extends Record {
 
   public static final String COLLECTION_NAME = "passwords";
 
+  // Payload strings.
+  public static final String PAYLOAD_HOSTNAME = "hostname";
+  public static final String PAYLOAD_FORM_SUBMIT_URL = "formSubmitURL";
+  public static final String PAYLOAD_HTTP_REALM = "httpRealm";
+  public static final String PAYLOAD_USERNAME = "username";
+  public static final String PAYLOAD_PASSWORD = "password";
+  public static final String PAYLOAD_USERNAME_FIELD = "usernameField";
+  public static final String PAYLOAD_PASSWORD_FIELD = "passwordField";
+
   public PasswordRecord(String guid, String collection, long lastModified,
       boolean deleted) {
     super(guid, collection, lastModified, deleted);
@@ -108,14 +117,26 @@ public class PasswordRecord extends Record {
 
   @Override
   public void initFromPayload(ExtendedJSONObject payload) {
-    // TODO: implement.
+    this.hostname = payload.getString(PAYLOAD_HOSTNAME);
+    this.formSubmitURL = payload.getString(PAYLOAD_FORM_SUBMIT_URL);
+    this.httpRealm = payload.getString(PAYLOAD_HTTP_REALM);
+    this.encryptedUsername = payload.getString(PAYLOAD_USERNAME);
+    this.encryptedPassword = payload.getString(PAYLOAD_PASSWORD);
+    this.usernameField = payload.getString(PAYLOAD_USERNAME_FIELD);
+    this.passwordField = payload.getString(PAYLOAD_PASSWORD_FIELD);
   }
 
   @Override
   public void populatePayload(ExtendedJSONObject payload) {
-    // TODO: implement.
+    putPayload(payload, PAYLOAD_HOSTNAME, this.hostname);
+    putPayload(payload, PAYLOAD_FORM_SUBMIT_URL, this.formSubmitURL);
+    putPayload(payload, PAYLOAD_HTTP_REALM, this.httpRealm);
+    putPayload(payload, PAYLOAD_USERNAME, this.encryptedUsername);
+    putPayload(payload, PAYLOAD_PASSWORD, this.encryptedPassword);
+    putPayload(payload, PAYLOAD_USERNAME_FIELD, this.usernameField);
+    putPayload(payload, PAYLOAD_PASSWORD_FIELD, this.passwordField);
   }
-  
+
   @Override
   public boolean congruentWith(Object o) {
     if (o == null || !(o instanceof PasswordRecord)) {
@@ -140,12 +161,10 @@ public class PasswordRecord extends Record {
     if (o == null || !(o instanceof PasswordRecord)) {
       return false;
     }
+
     PasswordRecord other = (PasswordRecord) o;
-    if (!super.equalPayloads(other)) {
-      return false;
-    }
-    return RepoUtils.stringsEqual(this.id, other.id)
-        && RepoUtils.stringsEqual(this.hostname, other.hostname)
+
+    return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
         && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
         && RepoUtils.stringsEqual(this.usernameField, other.usernameField)
@@ -157,6 +176,24 @@ public class PasswordRecord extends Record {
         && (this.timeLastUsed == other.timeLastUsed)
         && (this.timePasswordChanged == other.timePasswordChanged)
         && (this.timesUsed == other.timesUsed);
+  }
+
+  @Override
+  public String toString() {
+    return "PasswordRecord {"
+        + "id: " + this.id + ", "
+        + "hostname: " + this.hostname + ", "
+        + "formSubmitURL: " + this.formSubmitURL + ", "
+        + "httpRealm: " + this.httpRealm + ", "
+        + "usernameField: " + this.usernameField + ", "
+        + "passwordField: " + this.passwordField + ", "
+        + "encryptedUsername: " + this.encryptedUsername + ", "
+        + "encryptedPassword: " + this.encryptedPassword + ", "
+        + "encType: " + this.encType + ", "
+        + "timeCreated: " + this.timeCreated + ", "
+        + "timeLastUsed: " + this.timeLastUsed + ", "
+        + "timePasswordChanged: " + this.timePasswordChanged + ", "
+        + "timesUsed: " + this.timesUsed;
   }
 
 }

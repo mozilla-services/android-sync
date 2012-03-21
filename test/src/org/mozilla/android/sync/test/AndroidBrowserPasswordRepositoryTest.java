@@ -10,7 +10,6 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsDataAc
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
-import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -19,6 +18,7 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
   // Hacky overrides to avoid test failures until passwords lands.
 //  public static boolean shouldSkip = BrowserContractHelpers.PASSWORDS_CONTENT_URI == null;
   public static boolean shouldSkip = false;
+  public static boolean shouldSkipDeleted = true;
 
   @Override
   public void setUp() {
@@ -229,7 +229,7 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testCleanMultipleRecords() {
-    if (shouldSkip) {
+    if (shouldSkip || shouldSkipDeleted) {
       assertTrue(true);
       return;
     }
