@@ -41,6 +41,8 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
+import android.util.Log;
+
 public class PasswordRecord extends Record {
 
   public static final String COLLECTION_NAME = "passwords";
@@ -101,16 +103,16 @@ public class PasswordRecord extends Record {
     out.formSubmitURL = this.formSubmitURL;
     out.httpRealm     = this.httpRealm;
 
-    out.usernameField = this.usernameField;
-    out.passwordField = this.passwordField;
-    out.encryptedUsername      = this.encryptedUsername;
-    out.encryptedPassword      = this.encryptedPassword;
-    out.encType       = this.encType;
+    out.usernameField       = this.usernameField;
+    out.passwordField       = this.passwordField;
+    out.encryptedUsername   = this.encryptedUsername;
+    out.encryptedPassword   = this.encryptedPassword;
+    out.encType             = this.encType;
 
-    out.timeCreated   = this.timeCreated;
-    out.timeLastUsed  = this.timeLastUsed;
+    out.timeCreated         = this.timeCreated;
+    out.timeLastUsed        = this.timeLastUsed;
     out.timePasswordChanged = this.timePasswordChanged;
-    out.timesUsed     = this.timesUsed;
+    out.timesUsed           = this.timesUsed;
 
     return out;
   }
@@ -163,6 +165,8 @@ public class PasswordRecord extends Record {
     }
 
     PasswordRecord other = (PasswordRecord) o;
+    Log.d("PasswordRecord", "thisRecord:" + this.toString());
+    Log.d("PasswordRecord", "otherRecord:" + o.toString());
 
     return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
@@ -172,7 +176,8 @@ public class PasswordRecord extends Record {
         && RepoUtils.stringsEqual(this.encryptedUsername, other.encryptedUsername)
         && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword)
         && RepoUtils.stringsEqual(this.encType, other.encType)
-        && (this.timeCreated == other.timeCreated)
+        // Desktop sync never sets timeCreated so this isn't relevant for sync records.
+        // && (this.timeCreated == other.timeCreated)
         && (this.timeLastUsed == other.timeLastUsed)
         && (this.timePasswordChanged == other.timePasswordChanged)
         && (this.timesUsed == other.timesUsed);
@@ -181,7 +186,6 @@ public class PasswordRecord extends Record {
   @Override
   public String toString() {
     return "PasswordRecord {"
-        + "id: " + this.id + ", "
         + "hostname: " + this.hostname + ", "
         + "formSubmitURL: " + this.formSubmitURL + ", "
         + "httpRealm: " + this.httpRealm + ", "

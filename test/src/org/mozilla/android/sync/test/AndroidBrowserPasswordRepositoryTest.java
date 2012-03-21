@@ -4,7 +4,6 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.android.sync.test.helpers.PasswordHelpers;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserPasswordsRepository;
@@ -13,46 +12,11 @@ import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataA
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.util.Log;
+
 public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserRepositoryTest {
 
   // Hacky overrides to avoid test failures until passwords lands.
-//  public static boolean shouldSkip = BrowserContractHelpers.PASSWORDS_CONTENT_URI == null;
-  public static boolean shouldSkip = false;
-  public static boolean shouldSkipDeleted = true;
-
-  @Override
-  public void setUp() {
-    assertTrue(WaitHelper.getTestWaiter().isIdle());
-  }
-
-  @Override
-  protected void wipe() {
-    assertTrue(WaitHelper.getTestWaiter().isIdle());
-  }
-
-  @Override
-  public void testCreateSessionNullContext() {}
-  @Override
-  public void testStoreNullRecord() {}
-  @Override
-  public void testFetchNullGuids() {}
-  @Override
-  public void testFetchNoGuids() {}
-  @Override
-  public void testBeginOnNewSession() {}
-  @Override
-  public void testBeginOnRunningSession() {}
-  @Override
-  public void testBeginOnFinishedSession() {}
-  @Override
-  public void testFetchOnFinishedSession() {}
-  @Override
-  public void testFetchOnInactiveSession() {}
-  @Override
-  public void testFinishOnFinishedSession() {}
-  @Override
-  public void testGuidsSinceOnUnstartedSession() {}
-  // End hacky overrides.
 
   @Override
   protected AndroidBrowserRepository getRepository() {
@@ -66,10 +30,6 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testFetchAll() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     Record[] expected = new Record[2];
     expected[0] = PasswordHelpers.createPassword1();
     expected[1] = PasswordHelpers.createPassword2();
@@ -78,10 +38,6 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testGuidsSinceReturnMultipleRecords() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     PasswordRecord record0 = PasswordHelpers.createPassword3();
     PasswordRecord record1 = PasswordHelpers.createPassword2(); 
     guidsSinceReturnMultipleRecords(record0, record1);
@@ -89,48 +45,49 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testGuidsSinceReturnNoRecords() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     guidsSinceReturnNoRecords(PasswordHelpers.createPassword1());
   }
 
   @Override
   public void testFetchSinceOneRecord() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
-    fetchSinceOneRecord(PasswordHelpers.createPassword1(),
-                        PasswordHelpers.createPassword2());
+    RepositorySession session = createAndBeginSession();
+
+    PasswordRecord record1 = PasswordHelpers.createPassword1();
+    // Passwords fetchSince uses timePasswordChanged, not
+    long time1 = System.currentTimeMillis();
+    record1.timePasswordChanged = time1;
+    performWait(storeRunnable(session, record1));
+
+    PasswordRecord record2 = PasswordHelpers.createPassword2();
+    long time2 = System.currentTimeMillis();
+    record2.timePasswordChanged = time2;
+    performWait(storeRunnable(session, record2));
+
+    Log.i("fetchSinceOneRecord", "Fetching record 1.");
+    String[] expectedOne = new String[] { record2.guid };
+    performWait(fetchSinceRunnable(session, time2, expectedOne));
+
+    Log.i("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
+    String[] expectedBoth = new String[] { record1.guid, record2.guid };
+    performWait(fetchSinceRunnable(session, time1, expectedBoth));
+
+    Log.i("fetchSinceOneRecord", "Done.");
+    dispose(session);
   }
 
   @Override
   public void testFetchSinceReturnNoRecords() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     fetchSinceReturnNoRecords(PasswordHelpers.createPassword2());
   }
 
   @Override
   public void testFetchOneRecordByGuid() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     fetchOneRecordByGuid(PasswordHelpers.createPassword1(),
                          PasswordHelpers.createPassword2());
   }
 
   @Override
   public void testFetchMultipleRecordsByGuids() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     PasswordRecord record0 = PasswordHelpers.createPassword1();
     PasswordRecord record1 = PasswordHelpers.createPassword2();
     PasswordRecord record2 = PasswordHelpers.createPassword3();
@@ -139,38 +96,22 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testFetchNoRecordByGuid() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     fetchNoRecordByGuid(PasswordHelpers.createPassword1());
   }
 
   @Override
   public void testWipe() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     doWipe(PasswordHelpers.createPassword2(), PasswordHelpers.createPassword3());
   }
 
   @Override
   public void testStore() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, PasswordHelpers.createPassword1()));
   }
 
   @Override
   public void testRemoteNewerTimeStamp() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     PasswordRecord local = PasswordHelpers.createPassword2();
     PasswordRecord remote = PasswordHelpers.createPassword1();
     remoteNewerTimeStamp(local, remote);
@@ -178,10 +119,6 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testLocalNewerTimeStamp() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     PasswordRecord local = PasswordHelpers.createPassword1();
     PasswordRecord remote = PasswordHelpers.createPassword2();
     localNewerTimeStamp(local, remote);
@@ -189,10 +126,6 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testDeleteRemoteNewer() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     PasswordRecord local = PasswordHelpers.createPassword1();
     PasswordRecord remote = PasswordHelpers.createPassword2();
     deleteRemoteNewer(local, remote);
@@ -200,10 +133,6 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testDeleteLocalNewer() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     PasswordRecord local = PasswordHelpers.createPassword1();
     PasswordRecord remote = PasswordHelpers.createPassword3();
     deleteLocalNewer(local, remote);
@@ -211,29 +140,17 @@ public class AndroidBrowserPasswordRepositoryTest extends AndroidBrowserReposito
 
   @Override
   public void testDeleteRemoteLocalNonexistent() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     deleteRemoteLocalNonexistent(PasswordHelpers.createPassword5());
   }
 
   @Override
   public void testStoreIdenticalExceptGuid() {
-    if (shouldSkip) {
-      assertTrue(true);
-      return;
-    }
     storeIdenticalExceptGuid(PasswordHelpers.createPassword1());
   }
 
   @Override
   public void testCleanMultipleRecords() {
-    if (shouldSkip || shouldSkipDeleted) {
-      assertTrue(true);
-      return;
-    }
-    cleanMultipleRecords(
+     cleanMultipleRecords(
         PasswordHelpers.createPassword1(),
         PasswordHelpers.createPassword2(),
         PasswordHelpers.createPassword3(),

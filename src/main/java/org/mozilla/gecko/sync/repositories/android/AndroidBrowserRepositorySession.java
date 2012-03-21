@@ -24,6 +24,7 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
+import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.database.Cursor;
@@ -393,6 +394,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           // GUID matching only: deleted records don't have a payload with which to search.
           existingRecord = retrieveByGUIDDuringStore(record.guid);
           if (record.deleted) {
+            Log.d(LOG_TAG, "PROCESSING deleted record.");
             if (existingRecord == null) {
               // We're done. Don't bother with a callback. That can change later
               // if we want it to.
@@ -434,10 +436,12 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           }
           // End deletion logic.
 
+          Log.d(LOG_TAG, "PROCESSING non-deleted record");
           // Now we're processing a non-deleted incoming record.
           if (existingRecord == null) {
             trace("Looking up match for record " + record.guid);
             existingRecord = findExistingRecord(record);
+            Log.d(LOG_TAG, "PROCESSING found record: " + existingRecord);
           }
 
           if (existingRecord == null) {
@@ -445,13 +449,14 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
             trace("No match. Inserting.");
             Record inserted = insert(record);
             trackRecord(inserted);
+            Log.d(LOG_TAG, "STORED new record");
             delegate.onRecordStoreSucceeded(inserted);
             return;
           }
 
           // We found a local dupe.
           trace("Incoming record " + record.guid + " dupes to local record " + existingRecord.guid);
-
+          Log.d(LOG_TAG, "PROCESSING found dupe");
           // Populate more expensive fields prior to reconciling.
           existingRecord = transformRecord(existingRecord);
           Record toStore = reconcileRecords(record, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);

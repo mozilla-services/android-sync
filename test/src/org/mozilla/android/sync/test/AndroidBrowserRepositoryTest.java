@@ -25,6 +25,7 @@ import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -144,7 +145,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       @Override
       public void run() {
         session.setStoreDelegate(delegate);
-        Log.i("liuche", "STORING:" + records.length);
         try {
           for (Record record : records) {
             session.store(record);
@@ -378,15 +378,15 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     long after1 = System.currentTimeMillis();
     performWait(storeRunnable(session, record1));
 
-    Log.i("fetchSinceOneRecord", "Fetching record 1.");
+    Logger.info("fetchSinceOneRecord", "Fetching record 1.");
     String[] expectedOne = new String[] { record1.guid };
     performWait(fetchSinceRunnable(session, after1, expectedOne));
 
-    Log.i("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
+    Logger.info("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
     String[] expectedBoth = new String[] { record0.guid, record1.guid };
     performWait(fetchSinceRunnable(session, after0, expectedBoth));
 
-    Log.i("fetchSinceOneRecord", "Done.");
+    Logger.info("fetchSinceOneRecord", "Done.");
     dispose(session);
   }
   
@@ -406,6 +406,8 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     
     Record[] store = new Record[] { record0, record1 };
     performWait(storeManyRunnable(session, store));
+
+
 
     String[] guids = new String[] { record0.guid };
     Record[] expected = new Record[] { record0 };

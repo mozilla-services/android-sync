@@ -166,7 +166,8 @@ public class RepoUtils {
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "passwords";
     // lastModified and deleted - double check if correct?
-    long lastModified = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
+//    long lastModified = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
+    long lastModified = 0;
     PasswordRecord rec = new PasswordRecord(guid, collection, lastModified, false);
     rec.id = getStringFromCursor(cur, BrowserContract.Passwords.ID);
     rec.hostname = getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);
@@ -180,11 +181,6 @@ public class RepoUtils {
     rec.encryptedUsername = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
     rec.encryptedPassword = getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
 
-    // Microseconds from Fennec to milliseconds in Sync.
-//    rec.timeCreated = getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED) / 1000;
-//    rec.timeLastUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED) / 1000;
-//    rec.timePasswordChanged = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED) / 1000;
-//    rec.timesUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED) / 1000;
     rec.timeCreated = getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED);
     rec.timeLastUsed = getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED);
     rec.timePasswordChanged = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
