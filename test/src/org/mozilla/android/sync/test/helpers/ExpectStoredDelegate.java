@@ -4,10 +4,10 @@
 package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import junit.framework.AssertionFailedError;
 
 import org.mozilla.gecko.sync.repositories.domain.Record;
-
-import junit.framework.AssertionFailedError;
 
 public class ExpectStoredDelegate extends DefaultStoreDelegate {
   String expectedGUID;
@@ -20,7 +20,12 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   @Override
   public synchronized void onStoreCompleted(long storeEnd) {
     System.out.println("Notifying in onStoreCompleted.");
-    performNotify();
+    try {
+      assertNotNull(storedRecord);
+      performNotify();
+    } catch (AssertionFailedError e) {
+      performNotify("GUID was not stored", e);
+    }
   }
 
   @Override

@@ -491,10 +491,20 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   protected void storeRecordDeletion(final Record record) {
     // TODO: we ought to mark the record as deleted rather than deleting it,
     // in order to support syncing to multiple destinations. Bug 722607.
-    dbHelper.delete(record);      // TODO: mm?
+    dbHelper.deleteGuid(record.guid); // TODO: mm?
     delegate.onRecordStoreSucceeded(record);
   }
 
+  /**
+   * Insert a <b>new</b> record.
+   *
+   * @param record A <code>Record</code> with a GUID not currently present in the database.
+   * @return <code>record</code> with updated <code>androidID</code>.
+   *
+   * @throws NoGuidForIdException
+   * @throws NullCursorException
+   * @throws ParentNotFoundException
+   */
   protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
     Uri recordURI = dbHelper.insert(toStore);
