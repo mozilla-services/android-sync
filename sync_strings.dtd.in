@@ -70,3 +70,6 @@
 
 <!-- Notification strings -->
 <!ENTITY sync.notification.oneaccount.label 'Only one &syncBrand.fullName.label; account is supported.'>
+
+<!-- Push tab to device strings -->
+<!ENTITY sync.pushtab.title 'Receive a Firefox Tab'>
