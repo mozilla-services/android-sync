@@ -57,10 +57,10 @@ public interface GlobalSyncStage {
     processClientCommands,
     updateEnabledEngines,
     */
-    syncPasswords,
     syncTabs,
     syncBookmarks,
     syncHistory,
+    syncPasswords,
     completed,
   }
   public void execute(GlobalSession session) throws NoSuchStageException;

@@ -168,9 +168,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
    */
   public Cursor fetchSince(long timestamp) throws NullCursorException {
     Logger.debug(LOG_TAG, "all columns:");
-    for (String s : getAllColumns()) {
-      Logger.debug(LOG_TAG, s);
-    }
     Logger.debug(LOG_TAG, "where:" + dateModifiedWhere(timestamp));
     return queryHelper.safeQuery(".fetchSince",
                                  getAllColumns(),

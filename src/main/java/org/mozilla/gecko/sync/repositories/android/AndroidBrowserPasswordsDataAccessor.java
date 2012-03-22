@@ -27,13 +27,15 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
     ContentValues cv = new ContentValues();
     cv.put(BrowserContract.Passwords.GUID,            rec.guid);
     cv.put(BrowserContract.Passwords.HOSTNAME,        rec.hostname);
-    cv.put(BrowserContract.Passwords.HTTP_REALM,      rec.httpRealm);
+    // For now, don't set httpRealm, because it can be null and Fennec SQLite doesn't handle null CV.
+    // cv.put(BrowserContract.Passwords.HTTP_REALM,      rec.httpRealm);
     cv.put(BrowserContract.Passwords.FORM_SUBMIT_URL, rec.formSubmitURL);
     cv.put(BrowserContract.Passwords.USERNAME_FIELD,  rec.usernameField);
     cv.put(BrowserContract.Passwords.PASSWORD_FIELD,  rec.passwordField);
     
     // TODO Do encryption of username/password here. Bug 711636
-    cv.put(BrowserContract.Passwords.ENC_TYPE,           rec.encType);
+    // For now, don't set encType. (same as httpRealm)
+    // cv.put(BrowserContract.Passwords.ENC_TYPE,           rec.encType);
     cv.put(BrowserContract.Passwords.ENCRYPTED_USERNAME, rec.encryptedUsername);
     cv.put(BrowserContract.Passwords.ENCRYPTED_PASSWORD, rec.encryptedPassword);
     
