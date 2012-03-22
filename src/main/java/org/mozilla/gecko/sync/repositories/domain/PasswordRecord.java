@@ -38,12 +38,14 @@
 package org.mozilla.gecko.sync.repositories.domain;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 import android.util.Log;
 
 public class PasswordRecord extends Record {
+  private static final String LOG_TAG = "PasswordRecord";
 
   public static final String COLLECTION_NAME = "passwords";
 
@@ -97,7 +99,7 @@ public class PasswordRecord extends Record {
     out.androidID = androidID;
     out.sortIndex = this.sortIndex;
 
-    // Copy HistoryRecord fields.
+    // Copy PasswordRecord fields.
     out.id            = this.id;
     out.hostname      = this.hostname;
     out.formSubmitURL = this.formSubmitURL;
@@ -168,6 +170,11 @@ public class PasswordRecord extends Record {
     Log.d("PasswordRecord", "thisRecord:" + this.toString());
     Log.d("PasswordRecord", "otherRecord:" + o.toString());
 
+    if (!super.equalPayloads(other)) {
+      Logger.debug(LOG_TAG, "super.equalPayloads returned false.");
+      return false;
+    }
+
     return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
         && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
@@ -186,6 +193,7 @@ public class PasswordRecord extends Record {
   @Override
   public String toString() {
     return "PasswordRecord {"
+        + "lastModified: " + this.lastModified + ", "
         + "hostname: " + this.hostname + ", "
         + "formSubmitURL: " + this.formSubmitURL + ", "
         + "httpRealm: " + this.httpRealm + ", "

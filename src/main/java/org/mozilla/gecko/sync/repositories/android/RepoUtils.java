@@ -165,9 +165,7 @@ public class RepoUtils {
     
     String guid = getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
     String collection = "passwords";
-    // lastModified and deleted - double check if correct?
-//    long lastModified = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
-    long lastModified = 0;
+    long lastModified = getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
     PasswordRecord rec = new PasswordRecord(guid, collection, lastModified, false);
     rec.id = getStringFromCursor(cur, BrowserContract.Passwords.ID);
     rec.hostname = getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);

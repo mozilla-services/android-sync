@@ -25,7 +25,6 @@ import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -372,21 +371,28 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   protected void fetchSinceOneRecord(Record record0, Record record1) {
     RepositorySession session = createAndBeginSession();
 
-    long after0 = System.currentTimeMillis();
     performWait(storeRunnable(session, record0));
-
-    long after1 = System.currentTimeMillis();
+    long timestamp = System.currentTimeMillis();
+    Log.i("fetchSinceOneRecord", "Entering synchronized section. Timestamp " + timestamp);
+    synchronized(this) {
+      try {
+        wait(1000);
+      } catch (InterruptedException e) {
+        Log.w("fetchSinceOneRecord", "Interrupted.", e);
+      }
+    }
+    Log.i("fetchSinceOneRecord", "Storing.");
     performWait(storeRunnable(session, record1));
 
-    Logger.info("fetchSinceOneRecord", "Fetching record 1.");
+    Log.i("fetchSinceOneRecord", "Fetching record 1.");
     String[] expectedOne = new String[] { record1.guid };
-    performWait(fetchSinceRunnable(session, after1, expectedOne));
+    performWait(fetchSinceRunnable(session, timestamp + 10, expectedOne));
 
-    Logger.info("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
+    Log.i("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
     String[] expectedBoth = new String[] { record0.guid, record1.guid };
-    performWait(fetchSinceRunnable(session, after0, expectedBoth));
+    performWait(fetchSinceRunnable(session, timestamp - 3000, expectedBoth));
 
-    Logger.info("fetchSinceOneRecord", "Done.");
+    Log.i("fetchSinceOneRecord", "Done.");
     dispose(session);
   }
   
@@ -406,8 +412,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     
     Record[] store = new Record[] { record0, record1 };
     performWait(storeManyRunnable(session, store));
-
-
 
     String[] guids = new String[] { record0.guid };
     Record[] expected = new Record[] { record0 };
@@ -643,7 +647,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     remote.deleted = true;
     Log.d("deleteLocalNewer", "Storing deleted...");
     performWait(quietStoreRunnable(session, remote));      // This appears to do a lot of work...?!
-    Log.d("deleteLocalNewer", "Stored deleted.");
+    Log.d("delteLocalNewer", "Stored deleted.");
 
     // Do a fetch and make sure that we get back the first (local) record.
     performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));

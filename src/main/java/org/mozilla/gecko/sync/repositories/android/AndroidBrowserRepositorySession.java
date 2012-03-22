@@ -24,7 +24,6 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
-import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.database.Cursor;
@@ -457,6 +456,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           // We found a local dupe.
           trace("Incoming record " + record.guid + " dupes to local record " + existingRecord.guid);
           Log.d(LOG_TAG, "PROCESSING found dupe");
+          Log.d(LOG_TAG, "Incoming record " + record.guid + " dupes to local record " + existingRecord.guid);
           // Populate more expensive fields prior to reconciling.
           existingRecord = transformRecord(existingRecord);
           Record toStore = reconcileRecords(record, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);

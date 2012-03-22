@@ -52,6 +52,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
         if (!ignore.contains(key)) {
           expectedCount++;
         }
+        Log.d(LOG_TAG, "expected: " + key);
       }
       Log.d(LOG_TAG, "Expected keys: " + expectedCount);
       for (Record record : records) {
