@@ -7,11 +7,21 @@ package org.mozilla.gecko.sync;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.simple.JSONArray;
+import org.mozilla.gecko.R;
+
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 
 public class CommandProcessor {
   private static final String LOG_TAG = "Command";
+  private static AtomicInteger currentId = new AtomicInteger();
   protected ConcurrentHashMap<String, CommandRunner> commands = new ConcurrentHashMap<String, CommandRunner>();
 
   private final static CommandProcessor processor = new CommandProcessor();
@@ -79,5 +89,28 @@ public class CommandProcessor {
       Logger.debug(LOG_TAG, "Unable to parse args array. Invalid command");
       return null;
     }
+  }
+
+  public void displayURI(String uri, String clientId, Context context) {
+    Logger.info(LOG_TAG, "Received a URI for display: " + uri + " from " + clientId);
+
+    // Get NotificationManager.
+    String ns = Context.NOTIFICATION_SERVICE;
+    NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(ns);
+
+    // Create a Notficiation.
+    int icon = R.drawable.sync_ic_launcher;
+    CharSequence notificationTitle = context.getString(R.string.sync_new_tab);
+    long when = System.currentTimeMillis();
+    Notification notification = new Notification(icon, notificationTitle, when);
+    notification.flags = Notification.FLAG_AUTO_CANCEL;
+
+    // Set pending intent associated with the notification.
+    Intent notificationIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+    PendingIntent contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
+    notification.setLatestEventInfo(context, notificationTitle, uri, contentIntent);
+
+    // Send notification.
+    mNotificationManager.notify(currentId.getAndIncrement(), notification);
   }
 }
