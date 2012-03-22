@@ -21,14 +21,21 @@ public class AndroidSyncTestCase extends ActivityInstrumentationTestCase2<StubAc
 
   public AndroidSyncTestCase() {
     super(StubActivity.class);
+    WaitHelper.resetTestWaiter();
   }
 
   public Context getApplicationContext() {
     return this.getInstrumentation().getTargetContext().getApplicationContext();
   }
 
-  public static void performWait(Runnable runnable) throws AssertionFailedError {
-    WaitHelper.getTestWaiter().performWait(runnable);
+  public static void performWait(Runnable runnable) {
+    try {
+      WaitHelper.getTestWaiter().performWait(runnable);
+    } catch (WaitHelper.InnerError e) {
+      AssertionFailedError inner = new AssertionFailedError("Caught error in performWait");
+      inner.initCause(e.innerError);
+      throw inner;
+    }
   }
 
   public static void performNotify() {

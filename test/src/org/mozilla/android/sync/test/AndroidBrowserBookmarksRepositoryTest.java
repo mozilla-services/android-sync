@@ -576,7 +576,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     Cursor cur = getAllBookmarks();
     int numBookmarks = cur.getCount();
 
-    db.delete(bmk2);
+    db.purgeGuid(bmk2.guid);
 
     // Note size of table after delete.
     cur = getAllBookmarks();
