@@ -172,7 +172,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public Object syncMonitor = new Object();
   private SyncResult syncResult;
 
-  private Account localAccount;
+  public Account localAccount;
 
   /**
    * Return the number of milliseconds until we're allowed to sync again,
