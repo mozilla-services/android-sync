@@ -91,8 +91,17 @@ public class CommandProcessor {
     }
   }
 
-  public void displayURI(String uri, String clientId, Context context) {
+  public void displayURI(List<String> args, Context context) {
+    // These two args are guaranteed to exist by trusting the client sender.
+    String uri = args.get(0);
+    String clientId = args.get(1);
+
     Logger.info(LOG_TAG, "Received a URI for display: " + uri + " from " + clientId);
+
+    String title = null;
+    if (args.size() == 3) {
+      title = args.get(2);
+    }
 
     // Get NotificationManager.
     String ns = Context.NOTIFICATION_SERVICE;
@@ -100,7 +109,10 @@ public class CommandProcessor {
 
     // Create a Notficiation.
     int icon = R.drawable.sync_ic_launcher;
-    CharSequence notificationTitle = context.getString(R.string.sync_new_tab);
+    String notificationTitle = context.getString(R.string.sync_new_tab);
+    if (title != null) {
+      notificationTitle = notificationTitle.concat(": " + title);
+    }
     long when = System.currentTimeMillis();
     Notification notification = new Notification(icon, notificationTitle, when);
     notification.flags = Notification.FLAG_AUTO_CANCEL;
