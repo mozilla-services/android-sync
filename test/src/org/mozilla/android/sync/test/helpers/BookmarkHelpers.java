@@ -207,7 +207,7 @@ public class BookmarkHelpers {
   public static BookmarkRecord createSeparator() {
     BookmarkRecord record = new BookmarkRecord();
     record.guid = Utils.generateGuid();
-    record.pos = "3";
+    record.androidPosition = 3;
     record.parentID = topFolderGuid;
     record.parentName = topFolderName;
     record.type = "separator";
