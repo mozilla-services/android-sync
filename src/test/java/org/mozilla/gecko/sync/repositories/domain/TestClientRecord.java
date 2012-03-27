@@ -1,16 +1,19 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.android.sync.test;
+package org.mozilla.gecko.sync.repositories.domain;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
-import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
 
-import android.test.AndroidTestCase;
+public class TestClientRecord {
 
-public class TestClientRecord extends AndroidTestCase{
+  @Test
   public void testEnsureDefaults() {
     // Ensure defaults.
     ClientRecord record = new ClientRecord();
@@ -21,6 +24,7 @@ public class TestClientRecord extends AndroidTestCase{
     assertEquals(ClientRecord.CLIENT_TYPE, record.type);
   }
 
+  @Test
   public void testGetPayload() {
     // Test ClientRecord.getPayload().
     ClientRecord record = new ClientRecord();
@@ -33,6 +37,7 @@ public class TestClientRecord extends AndroidTestCase{
     assertEquals(record.type, cryptoRecord.payload.get("type"));
   }
 
+  @Test
   public void testInitFromPayload() {
     // Test ClientRecord.initFromPayload() in ClientRecordFactory.
     ClientRecord record1 = new ClientRecord();
@@ -47,6 +52,7 @@ public class TestClientRecord extends AndroidTestCase{
     assertEquals(cryptoRecord.payload.get("type"), record2.type);
   }
 
+  @Test
   public void testCopyWithIDs() {
     // Test ClientRecord.copyWithIDs.
     ClientRecord record1 = new ClientRecord();
@@ -61,6 +67,7 @@ public class TestClientRecord extends AndroidTestCase{
     assertEquals(record1.type, record2.type);
   }
 
+  @Test
   public void testEquals() {
     // Test ClientRecord.equals().
     ClientRecord record1 = new ClientRecord();
