@@ -52,7 +52,9 @@ public class HTTPServerTestHelper {
   public void stopHTTPServer() {
     Logger.info(LOG_TAG, "Stopping HTTP server on port " + port + "...");
     try {
-      connection.close();
+      if (connection != null) {
+        connection.close();
+      }
       server = null;
       connection = null;
       Logger.info(LOG_TAG, "Closing connection pool...");
