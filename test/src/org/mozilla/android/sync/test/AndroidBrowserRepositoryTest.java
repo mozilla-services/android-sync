@@ -24,7 +24,6 @@ import org.mozilla.android.sync.test.helpers.ExpectStoreCompletedDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -37,7 +36,6 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSince
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.util.Log;
 
@@ -129,7 +127,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
           session.store(record);
           session.storeDone();
         } catch (NoStoreDelegateException e) {
-          fail("NoStoreDelegateException should not occur.");
+          performNotify("NoStoreDelegateException should not occur.", e);
         }
       }
     };
@@ -150,7 +148,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
           }
           session.storeDone();
         } catch (NoStoreDelegateException e) {
-          fail("NoStoreDelegateException should not occur.");
+          performNotify("NoStoreDelegateException should not occur.", e);
         }
       }
     };
@@ -310,14 +308,12 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     doStore(session, new Record[] {
         delete0, delete1, keep0, keep1, keep2
     });
-    
+
     // force two record to appear deleted
-    AndroidBrowserRepositoryDataAccessor db = getDataAccessor(); 
-    ContentValues cv = new ContentValues();
-    cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
-    db.updateByGuid(delete0.guid, cv);
-    db.updateByGuid(delete1.guid, cv);
-    
+    AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
+    db.purgeGuid(delete0.guid);
+    db.purgeGuid(delete1.guid);
+
     final DefaultCleanDelegate delegate = new DefaultCleanDelegate() {
       public void onCleaned(Repository repo) {
         performNotify();
@@ -330,11 +326,15 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
         getApplicationContext(),
         delegate);
 
-    performWait(cleanRunnable);    
+    Log.i(LOG_TAG, "Before cleanRunnable");
+    db.dumpDB();
+    performWait(cleanRunnable);
+    Log.i(LOG_TAG, "After cleanRunnable");
+    db.dumpDB();
     performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
     dispose(session);
   }
-  
+
   /*
    * Tests for guidsSince
    */
@@ -365,39 +365,36 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
 
   /*
-   * Tests for fetchSince
-   */  
+   * Tests for fetchSince.
+   *
+   * WARNING: This will most likely fail unless you disable store tracking.  See getRepository() in subclasses.
+   */
   protected void fetchSinceOneRecord(Record record0, Record record1) {
     RepositorySession session = createAndBeginSession();
 
+    long after0 = System.currentTimeMillis();
     performWait(storeRunnable(session, record0));
-    long timestamp = System.currentTimeMillis();
-    Log.i("fetchSinceOneRecord", "Entering synchronized section. Timestamp " + timestamp);
-    synchronized(this) {
-      try {
-        wait(1000);
-      } catch (InterruptedException e) {
-        Log.w("fetchSinceOneRecord", "Interrupted.", e);
-      }
-    }
-    Log.i("fetchSinceOneRecord", "Storing.");
+    long after1 = System.currentTimeMillis();
     performWait(storeRunnable(session, record1));
+
+    helper.dumpDB();
 
     Log.i("fetchSinceOneRecord", "Fetching record 1.");
     String[] expectedOne = new String[] { record1.guid };
-    performWait(fetchSinceRunnable(session, timestamp + 10, expectedOne));
+
+    performWait(fetchSinceRunnable(session, after1, expectedOne));
 
     Log.i("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
     String[] expectedBoth = new String[] { record0.guid, record1.guid };
-    performWait(fetchSinceRunnable(session, timestamp - 3000, expectedBoth));
+    performWait(fetchSinceRunnable(session, after0, expectedBoth));
 
     Log.i("fetchSinceOneRecord", "Done.");
     dispose(session);
   }
-  
+
   protected void fetchSinceReturnNoRecords(Record record) {
     RepositorySession session = createAndBeginSession();
-    
+
     performWait(storeRunnable(session, record));
 
     long timestamp = System.currentTimeMillis();
@@ -454,8 +451,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
             performNotify();
           }
           public void onWipeFailed(Exception ex) {
-            fail("wipe should have succeeded");
-            performNotify();
+            performNotify("Wipe should have succeeded", ex);
           }
           @Override
           public RepositorySessionWipeDelegate deferredWipeDelegate(final ExecutorService executor) {
@@ -791,8 +787,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
         session.guidsSince(System.currentTimeMillis(),
             new RepositorySessionGuidsSinceDelegate() {
               public void onGuidsSinceSucceeded(String[] guids) {
-                fail("Session inactive, should fail");
-                performNotify();
+                performNotify("Session inactive, should fail", null);
               }
 
               public void onGuidsSinceFailed(Exception ex) {

@@ -18,7 +18,6 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
     super(context);
   }
 
-  @Override
   protected ContentValues getContentValues(Record record) {
     PasswordRecord rec = (PasswordRecord) record;
 
@@ -29,15 +28,25 @@ public class AndroidBrowserPasswordsDataAccessor extends AndroidBrowserRepositor
     cv.put(BrowserContract.Passwords.FORM_SUBMIT_URL, rec.formSubmitURL);
     cv.put(BrowserContract.Passwords.USERNAME_FIELD,  rec.usernameField);
     cv.put(BrowserContract.Passwords.PASSWORD_FIELD,  rec.passwordField);
-    
+
     // TODO Do encryption of username/password here. Bug 711636
     cv.put(BrowserContract.Passwords.ENC_TYPE,           rec.encType);
     cv.put(BrowserContract.Passwords.ENCRYPTED_USERNAME, rec.username);
     cv.put(BrowserContract.Passwords.ENCRYPTED_PASSWORD, rec.password);
-    
+
     cv.put(BrowserContract.Passwords.TIMES_USED,     rec.timesUsed);
     cv.put(BrowserContract.Passwords.TIME_LAST_USED, rec.timeLastUsed);
     return cv;
+  }
+
+  protected ContentValues getContentValuesForInsert(Record record) {
+    // Timestamps set by ContentProvider.
+    return getContentValues(record);
+  }
+
+  protected ContentValues getContentValuesForUpdate(Record record) {
+    // Timestamps set by ContentProvider.
+    return getContentValues(record);
   }
 
   @Override
