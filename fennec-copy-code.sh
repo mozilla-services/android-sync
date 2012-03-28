@@ -59,8 +59,8 @@ rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/values/sync_styles.xml $ANDROID/base/resources/values/
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
-rsync -a strings.xml.in $SYNC/
-rsync -a sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
+rsync -a strings/strings.xml.in $SYNC/
+rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
 
 echo "res/values/sync_styles.xml " > $SYNC/android-values-resources.mn
 find res/layout         -name '*.xml' > $SYNC/android-layout-resources.mn
