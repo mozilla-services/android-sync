@@ -53,7 +53,6 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
         if (!ignore.contains(key)) {
           expectedCount++;
         }
-        Log.d(LOG_TAG, "expected: " + key);
       }
       Log.d(LOG_TAG, "Expected keys: " + expectedCount);
       for (Record record : records) {
@@ -70,8 +69,6 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
           try {
             assertTrue(expect.equalPayloads(record)); // Caught below
           } catch (Exception e) {
-            Log.e(LOG_TAG, "expected: " + expect.toString());
-            Log.e(LOG_TAG, "record: " + record.toString());
             Log.e(LOG_TAG, "ONOZ!", e);
           }
           Log.d(LOG_TAG, "Checked equality.");

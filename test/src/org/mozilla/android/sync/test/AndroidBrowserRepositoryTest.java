@@ -293,7 +293,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     RepositorySession session = createAndBeginSession();
     Log.i("rnewman", "Prepared.");
 
-    Log.i("liuche", "helper is null? " + (helper == null));
     helper.dumpDB();
     performWait(storeManyRunnable(session, expected));
 
@@ -647,7 +646,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     remote.deleted = true;
     Log.d("deleteLocalNewer", "Storing deleted...");
     performWait(quietStoreRunnable(session, remote));      // This appears to do a lot of work...?!
-    Log.d("delteLocalNewer", "Stored deleted.");
 
     // Do a fetch and make sure that we get back the first (local) record.
     performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));
