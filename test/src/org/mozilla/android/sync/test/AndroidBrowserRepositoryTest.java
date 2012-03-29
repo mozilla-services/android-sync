@@ -31,7 +31,6 @@ import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
@@ -63,6 +62,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     }
   }
 
+  @Override
   public void setUp() {
     helper = getDataAccessor();
     wipe();
@@ -86,10 +86,9 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
 
   protected void dispose(RepositorySession session) {
-    if (session == null) {
-      return;
+    if (session != null) {
+      session.abort();
     }
-    session.abort();
   }
 
   /**
@@ -253,7 +252,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
 
-  protected abstract AndroidBrowserRepository getRepository();
+  protected abstract Repository getRepository();
   protected abstract AndroidBrowserRepositoryDataAccessor getDataAccessor();
   
   protected void doStore(RepositorySession session, Record[] records) {
@@ -677,7 +676,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    */
   public void testCreateSessionNullContext() {
     Log.i(LOG_TAG, "In testCreateSessionNullContext.");
-    AndroidBrowserRepository repo = getRepository();
+    Repository repo = getRepository();
     try {
       repo.createSession(new DefaultSessionCreationDelegate(), null);
       fail("Should throw.");
