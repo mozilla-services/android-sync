@@ -47,7 +47,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryDataAccessor {
 
@@ -141,7 +140,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
 
   public Uri insert(Record record) {
     ContentValues cv = getContentValues(record);
-    Log.d(LOG_TAG, "record CV: " + cv);
     return context.getContentResolver().insert(getUri(), cv);
   }
 
@@ -183,8 +181,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
    * @throws NullCursorException
    */
   public Cursor fetchSince(long timestamp) throws NullCursorException {
-    Logger.debug(LOG_TAG, "all columns:");
-    Logger.debug(LOG_TAG, "where:" + dateModifiedWhere(timestamp));
     return queryHelper.safeQuery(".fetchSince",
                                  getAllColumns(),
                                  dateModifiedWhere(timestamp),
@@ -202,7 +198,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
    */
   public Cursor fetch(String guids[]) throws NullCursorException {
     String where = computeSQLInClause(guids.length, "guid");
-    Logger.debug(LOG_TAG, where);
     return queryHelper.safeQuery(".fetch", getAllColumns(), where, guids, null);
   }
 
