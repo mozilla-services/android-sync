@@ -17,7 +17,7 @@ parser.add_argument('-x', dest='exclude_pat', default='', help='ignore source fi
 parser.add_argument('-d', dest='dry_run', action='store_true', default=False, help='do not write updated source files')
 parser.add_argument('-v', dest='verbose', action='store_true', default=False, help='verbose output')
 parser.add_argument('-s', dest='print_summary', default=True, help='print summary')
-parser.add_argument('files', nargs='+', help='files and directories to update')
+parser.add_argument('files', nargs='*', help='files and directories to update')
 
 args = parser.parse_args(sys.argv[1:])
 
