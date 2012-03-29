@@ -32,6 +32,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.util.Log;
 
 public class PasswordsRepositorySession extends
     StoreTrackingRepositorySession {
@@ -99,7 +100,8 @@ public class PasswordsRepositorySession extends
             cursor.close();
           }
         }
-        delegate.onGuidsSinceSucceeded((String[]) guids.toArray());
+        String[] guidStrings = new String[guids.size()];
+        delegate.onGuidsSinceSucceeded(guids.toArray(guidStrings));
       }
     };
     storeWorkQueue.execute(guidsSinceRunnable);
@@ -323,9 +325,11 @@ public class PasswordsRepositorySession extends
 
         // TODO: pass in timestamps?
         Logger.debug(LOG_TAG, "Replacing " + existingRecord.guid + " with record " + toStore.guid);
+        Logger.debug(LOG_TAG, "existing: " + existingRecord);
+        Logger.debug(LOG_TAG, "toStore: " + toStore);
         Record replaced = null;
         try {
-          replaced = replace(toStore, existingRecord);
+          replaced = replace(existingRecord, toStore);
         } catch (RemoteException e) {
           Logger.debug(LOG_TAG, "Record replace caused a RemoteException.");
           delegate.onRecordStoreFailed(e);
@@ -497,7 +501,7 @@ public class PasswordsRepositorySession extends
     for (int i = 0; i < items - 1; ++i) {
       builder.append(", ?");
     }
-    builder.append(")");
+    builder.append(" )");
     return builder.toString();
   }
 
@@ -543,23 +547,29 @@ public class PasswordsRepositorySession extends
     // Only check the data table.
     String dataWhere = Passwords.HOSTNAME + " = ? AND " +
                        Passwords.FORM_SUBMIT_URL + " = ? AND " +
-                       Passwords.HTTP_REALM + " = ? AND " +
+                       // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
+                       // Passwords.HTTP_REALM + " = ? AND " +
                        Passwords.ENCRYPTED_USERNAME + " = ? AND " +
                        Passwords.ENCRYPTED_PASSWORD + " = ? AND " +
                        Passwords.USERNAME_FIELD + " = ? AND " +
                        Passwords.PASSWORD_FIELD + " = ?";
+    Log.d(LOG_TAG, "where: " + dataWhere);
     String[] whereArgs = new String[] {
         record.hostname,
         record.formSubmitURL,
-        record.httpRealm,
+        // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
+        // record.httpRealm,
         record.encryptedUsername,
         record.encryptedPassword,
         record.usernameField,
         record.passwordField
     };
+    Log.d(LOG_TAG, "username: " + record.encryptedUsername + "; password: " + record.encryptedPassword);
     try {
-      cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".findRecord", getAllColumns(), dataWhere, whereArgs, null);
-      foundRecord = passwordRecordFromCursorDeleted(cursor, false);
+      cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".findRecord", null, dataWhere, whereArgs, null);
+      if (cursor != null && cursor.moveToFirst()) {
+        foundRecord = passwordRecordFromCursorDeleted(cursor, false);
+      }
       Logger.debug(LOG_TAG, "Found record: " + foundRecord);
     } catch (RemoteException e) {
       Logger.error(LOG_TAG, "Remote exception in findExistingRecord.");

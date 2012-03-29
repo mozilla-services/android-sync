@@ -119,12 +119,13 @@ public class PasswordRecord extends Record {
     }
     return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
-        && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
+        // Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
+        // && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
+        // && RepoUtils.stringsEqual(this.encType, other.encType)
         && RepoUtils.stringsEqual(this.usernameField, other.usernameField)
         && RepoUtils.stringsEqual(this.passwordField, other.passwordField)
         && RepoUtils.stringsEqual(this.encryptedUsername, other.encryptedUsername)
-        && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword)
-        && RepoUtils.stringsEqual(this.encType, other.encType);
+        && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword);
   }
 
   @Override
@@ -144,17 +145,18 @@ public class PasswordRecord extends Record {
 
     return RepoUtils.stringsEqual(this.hostname, other.hostname)
         && RepoUtils.stringsEqual(this.formSubmitURL, other.formSubmitURL)
-        && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
+        // Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
+        // && RepoUtils.stringsEqual(this.httpRealm, other.httpRealm)
+        // && RepoUtils.stringsEqual(this.encType, other.encType)
         && RepoUtils.stringsEqual(this.usernameField, other.usernameField)
         && RepoUtils.stringsEqual(this.passwordField, other.passwordField)
         && RepoUtils.stringsEqual(this.encryptedUsername, other.encryptedUsername)
-        && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword)
-        && RepoUtils.stringsEqual(this.encType, other.encType)
+        && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword);
         // Desktop sync never sets timeCreated so this isn't relevant for sync records.
         // && (this.timeCreated == other.timeCreated)
-        && (this.timeLastUsed == other.timeLastUsed)
-        && (this.timePasswordChanged == other.timePasswordChanged)
-        && (this.timesUsed == other.timesUsed);
+//        && (this.timeLastUsed == other.timeLastUsed)
+//        && (this.timePasswordChanged == other.timePasswordChanged)
+//        && (this.timesUsed == other.timesUsed);
   }
 
   @Override
