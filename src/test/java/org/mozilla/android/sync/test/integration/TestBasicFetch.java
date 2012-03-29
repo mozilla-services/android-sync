@@ -12,15 +12,17 @@ import java.net.URISyntaxException;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class TestBasicFetch {
   // TODO: switch these to be the local server, with appropriate setup.
-  static final String REMOTE_BOOKMARKS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
-  static final String REMOTE_META_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  static final String REMOTE_KEYS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/crypto/keys";
+  static final String REMOTE_BOOKMARKS_URL        = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
+  static final String REMOTE_META_URL             = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
+  static final String REMOTE_KEYS_URL             = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/crypto/keys";
+  static final String REMOTE_INFO_COLLECTIONS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/info/collections";
 
   // Corresponds to rnewman+testandroid@mozilla.com.
   static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
@@ -34,18 +36,21 @@ public class TestBasicFetch {
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
+
+      ExtendedJSONObject body = null;
       try {
-        System.out.println(res.httpResponse().getEntity().getContent()
-            .toString());
+        body = res.jsonObjectBody();
+        System.out.println(body.toJSONString());
       } catch (Exception e) {
         e.printStackTrace();
+        return;
       }
 
       if (shouldDecrypt) {
         try {
           System.out.println("Attempting decrypt.");
           CryptoRecord rec;
-          rec = CryptoRecord.fromJSONRecord(res.jsonObjectBody());
+          rec = CryptoRecord.fromJSONRecord(body);
           rec.keyBundle = new KeyBundle(USERNAME, SYNC_KEY);
           rec.decrypt();
           System.out.println(rec.payload.toJSONString());
@@ -59,8 +64,7 @@ public class TestBasicFetch {
 
   @Test
   public void testRealLiveMetaGlobal() throws URISyntaxException {
-    URI u = new URI(
-        REMOTE_META_URL);
+    URI u = new URI(REMOTE_META_URL);
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
     LiveDelegate delegate = new LiveDelegate();
     delegate._credentials = USER_PASS;
@@ -74,6 +78,16 @@ public class TestBasicFetch {
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
     LiveDelegate delegate = new LiveDelegate();
     delegate.shouldDecrypt = true;
+    delegate._credentials = USER_PASS;
+    r.delegate = delegate;
+    r.get();
+  }
+
+  @Test
+  public void testRealLiveInfoCollections() throws URISyntaxException {
+    URI u = new URI(REMOTE_INFO_COLLECTIONS_URL);
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
+    LiveDelegate delegate = new LiveDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
     r.get();

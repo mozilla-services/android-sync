@@ -35,7 +35,7 @@ import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
 import org.mozilla.gecko.sync.stage.CompletedStage;
 import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
-import org.mozilla.gecko.sync.stage.EnsureKeysStage;
+import org.mozilla.gecko.sync.stage.EnsureCrypto5KeysStage;
 import org.mozilla.gecko.sync.stage.FennecTabsServerSyncStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
@@ -68,16 +68,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   /*
    * Key accessors.
    */
-  public void setCollectionKeys(CollectionKeys k) {
-    config.setCollectionKeys(k);
-  }
-  @Override
-  public CollectionKeys getCollectionKeys() {
-    return config.collectionKeys;
-  }
-  @Override
-  public KeyBundle keyForCollection(String collection) throws NoCollectionKeysSetException {
-    return config.keyForCollection(collection);
+  public KeyBundle keyBundleForCollection(String collection) throws NoCollectionKeysSetException {
+    return config.getCollectionKeys().keyBundleForCollection(collection);
   }
 
   /*
@@ -191,7 +183,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
-    stages.put(Stage.ensureKeysStage,         new EnsureKeysStage());
+    stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage());
     stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
 
     // TODO: more stages.
@@ -269,7 +261,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     return this.getContext().getSharedPreferences(name, mode);
   }
 
-  @Override
   public Context getContext() {
     return this.context;
   }
@@ -446,9 +437,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     if (!remoteSyncID.equals(localSyncID)) {
       // Sync ID has changed. Reset timestamps and fetch new keys.
       resetClient(null);
-      if (config.collectionKeys != null) {
-        config.collectionKeys.clear();
-      }
+      config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
       // TODO TODO TODO
     }
@@ -499,7 +488,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void onWiped(long timestamp) {
         session.resetClient(null);
-        session.config.collectionKeys.clear();      // TODO: make sure we clear our keys timestamp.
+        session.config.purgeCryptoKeys();
         session.config.persistToPrefs();
 
         MetaGlobal mg = new MetaGlobal(metaURL, credentials);
