@@ -8,9 +8,6 @@ import java.io.UnsupportedEncodingException;
 
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.Logger;
-
-import android.util.Log;
 
 /**
  * Record is the abstract base class for all entries that Sync processes:
@@ -157,7 +154,6 @@ public abstract class Record {
    *        reconcile the two objects if possible.
    */
   public boolean congruentWith(Object o) {
-    Logger.debug("liuche", "checking super.congruent");
     if (!this.equalIdentifiers(o)) {
       return false;
     }
@@ -174,7 +170,6 @@ public abstract class Record {
         this.androidID  != other.androidID) {
       return false;
     }
-    Log.d("liuche", "passed super.congruent");
     return true;
   }
 

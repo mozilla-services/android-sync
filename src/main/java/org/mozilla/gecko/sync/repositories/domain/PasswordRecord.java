@@ -9,8 +9,6 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
-import android.util.Log;
-
 public class PasswordRecord extends Record {
   private static final String LOG_TAG = "PasswordRecord";
 
@@ -136,8 +134,8 @@ public class PasswordRecord extends Record {
     }
 
     PasswordRecord other = (PasswordRecord) o;
-    Log.d("PasswordRecord", "thisRecord:" + this.toString());
-    Log.d("PasswordRecord", "otherRecord:" + o.toString());
+    Logger.debug("PasswordRecord", "thisRecord:" + this.toString());
+    Logger.debug("PasswordRecord", "otherRecord:" + o.toString());
 
     if (!super.equalPayloads(other)) {
       Logger.debug(LOG_TAG, "super.equalPayloads returned false.");

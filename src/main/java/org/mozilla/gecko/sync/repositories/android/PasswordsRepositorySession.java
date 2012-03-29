@@ -32,7 +32,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
-import android.util.Log;
 
 public class PasswordsRepositorySession extends
     StoreTrackingRepositorySession {
@@ -52,7 +51,6 @@ public class PasswordsRepositorySession extends
   @Override
   public void guidsSince(final long timestamp,
       final RepositorySessionGuidsSinceDelegate delegate) {
-    Log.d(LOG_TAG, "guidsSince timestamp: " + timestamp);
      Runnable guidsSinceRunnable = new Runnable() {
      @Override
      public void run() {
@@ -111,7 +109,6 @@ public class PasswordsRepositorySession extends
   public void fetchSince(final long timestamp,
       final RepositorySessionFetchRecordsDelegate delegate) {
 
-    Log.d(LOG_TAG, "fetchSince timestamp: " + timestamp);
     if (!isActive()) {
       delegate.onFetchFailed(new InactiveSessionException(), null);
       return;
@@ -135,7 +132,6 @@ public class PasswordsRepositorySession extends
           cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetchSince",
               getAllDeletedColumns(), dateModifiedWhereDeleted(timestamp, true), null, null);
           fetchFromCursorDeleted(cursor, true, filter, delegate);
-          Log.d(LOG_TAG, "fetchCompleted.");
           delegate.onFetchCompleted(end);
 
         } catch (NullCursorException e) {
@@ -180,14 +176,12 @@ public class PasswordsRepositorySession extends
           // Fetch records from data table.
           cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".fetch",
               getAllColumns(), where, guids, null);
-          Log.d(LOG_TAG, "fetch() fetching from cursor.");
           fetchFromCursorDeleted(cursor, false, filter, delegate);
           cursor.close();
 
           // Fetch records from deleted table.
           cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetch",
               getAllDeletedColumns(), where, guids, null);
-          Log.d(LOG_TAG, "fetch() fetching from cursor.");
           fetchFromCursorDeleted(cursor, true, filter, delegate);
           delegate.onFetchCompleted(end);
 
@@ -320,8 +314,6 @@ public class PasswordsRepositorySession extends
 
         // We found a local dupe.
         trace("Incoming record " + remoteRecord.guid + " dupes to local record " + existingRecord.guid);
-        Log.d(LOG_TAG, "PROCESSING found dupe");
-        Log.d(LOG_TAG, "Incoming record " + remoteRecord.guid + " dupes to local record " + existingRecord.guid);
         Record toStore = reconcileRecords(remoteRecord, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);
 
         if (toStore == null) {
@@ -419,7 +411,6 @@ public class PasswordsRepositorySession extends
     String[] args = new String[] { origRecord.guid };
     updateTimes(newRecord);
     ContentValues cv = getContentValues(newRecord);
-    Log.d(LOG_TAG, "updating CV:" + cv);
     int updated = context.getContentResolver().update(getUriDeleted(false), cv, where, args);
     if (updated != 1) {
       Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + origRecord.guid);
@@ -476,17 +467,15 @@ public class PasswordsRepositorySession extends
   private void fetchFromCursorDeleted(Cursor cursor, boolean deleted, RecordFilter filter, RepositorySessionFetchRecordsDelegate delegate) {
 
     if (cursor == null || !cursor.moveToFirst()) {
-      Log.d(LOG_TAG, "Empty cursor.");
       // Empty cursor.
       return;
     }
     int cursorLen = cursor.getCount();
+    // Hack: cursor sometimes gets in an infinite loop when using
+    // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
     for (int i = 0; i <= cursorLen; i++) {
-      Log.d(LOG_TAG, "passwordRecordFromCursor, deleted: " + deleted);
       if (!cursor.moveToPosition(i)) {
-        // Hack: cursor sometimes gets in an infinite loop when using
-        // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
-        Log.d(LOG_TAG, "ERROR, nothing in position " + i);
+
         return;
       }
       Record r = passwordRecordFromCursorDeleted(cursor, deleted);
@@ -630,7 +619,6 @@ public class PasswordsRepositorySession extends
       rec.timePasswordChanged = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
       rec.timesUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED);
     }
-    Log.d(LOG_TAG, "FETCHED RECORD: " + rec);
     return rec;
   }
 
