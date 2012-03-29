@@ -227,8 +227,10 @@ public class CryptoRecord extends Record {
   // TODO: this only works with encrypted object, and has other limitations.
   public JSONObject toJSONObject() {
     ExtendedJSONObject o = new ExtendedJSONObject();
-    o.put(KEY_PAYLOAD, payload.toJSONString());
-    o.put(KEY_ID,      this.guid);
+    o.put(KEY_PAYLOAD,    payload.toJSONString());
+    o.put(KEY_ID,         this.guid);
+    o.put(KEY_MODIFIED,   this.lastModified);
+    o.put(KEY_COLLECTION, this.collection);
     return o.object;
   }
 
