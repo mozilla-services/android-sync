@@ -176,13 +176,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       super.handleRequestFailure(response);
-      fail("Should not error.");
+      fail("Should not fail.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
       super.handleRequestError(ex);
-      fail("Should not fail.");
+      ex.printStackTrace();
+      fail("Should not error.");
     }
   }
 
@@ -254,7 +255,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   private long setRecentClientRecordTimestamp() {
     long timestamp = System.currentTimeMillis() - (CLIENTS_TTL_REFRESH - 1000);
     session.config.persistServerClientRecordTimestamp(timestamp);
-      return timestamp;
+    return timestamp;
   }
 
   private void performFailingUpload() {
