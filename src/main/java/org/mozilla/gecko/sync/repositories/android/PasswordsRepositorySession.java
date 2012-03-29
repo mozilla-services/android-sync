@@ -53,9 +53,9 @@ public class PasswordsRepositorySession extends
   public void guidsSince(final long timestamp,
       final RepositorySessionGuidsSinceDelegate delegate) {
     Log.d(LOG_TAG, "guidsSince timestamp: " + timestamp);
-    // Runnable guidsSinceRunnable = new Runnable() {
-    // @Override
-    // public void run() {
+     Runnable guidsSinceRunnable = new Runnable() {
+     @Override
+     public void run() {
         if (!isActive()) {
           delegate.onGuidsSinceFailed(new InactiveSessionException());
           return;
@@ -102,9 +102,9 @@ public class PasswordsRepositorySession extends
           }
         }
         delegate.onGuidsSinceSucceeded((String[]) guids.toArray());
-//      }
-//    };
-//    storeWorkQueue.execute(guidsSinceRunnable);
+      }
+    };
+    storeWorkQueue.execute(guidsSinceRunnable);
   }
 
   @Override
@@ -112,28 +112,28 @@ public class PasswordsRepositorySession extends
       final RepositorySessionFetchRecordsDelegate delegate) {
 
     Log.d(LOG_TAG, "fetchSince timestamp: " + timestamp);
-//    Runnable fetchSinceRunnable = new Runnable() {
-//      @Override
-//      public void run() {
-        if (!isActive()) {
-          delegate.onFetchFailed(new InactiveSessionException(), null);
-          return;
-        }
+    if (!isActive()) {
+      delegate.onFetchFailed(new InactiveSessionException(), null);
+      return;
+    }
 
-        // Checks succeeded, now fetch.
+    // Checks succeeded, now fetch.
+    final RecordFilter filter = this.storeTracker.getFilter();
+    Runnable fetchSinceRunnable = new Runnable() {
+      @Override
+      public void run() {
         Cursor cursor = null;
         long end = now();
-        RecordFilter filter = this.storeTracker.getFilter();
         try {
           // Fetch from data table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".fetchSince", getAllColumns(), dateModifiedWhereDeleted(timestamp, false), null, null);
-          Log.d(LOG_TAG, "fetchSince fetching from cursor1.");
+          cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".fetchSince",
+              getAllColumns(), dateModifiedWhereDeleted(timestamp, false), null, null);
           fetchFromCursorDeleted(cursor, false, filter, delegate);
           cursor.close();
 
           // Fetch from deleted table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetchSince", getAllDeletedColumns(), dateModifiedWhereDeleted(timestamp, true), null, null);
-          Log.d(LOG_TAG, "fetchSince fetching from cursor2.");
+          cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetchSince",
+              getAllDeletedColumns(), dateModifiedWhereDeleted(timestamp, true), null, null);
           fetchFromCursorDeleted(cursor, true, filter, delegate);
           Log.d(LOG_TAG, "fetchCompleted.");
           delegate.onFetchCompleted(end);
@@ -148,44 +148,45 @@ public class PasswordsRepositorySession extends
           Logger.info(LOG_TAG, "Closing cursor after fetch.");
           cursor.close();
         }
-//      }
-//    };
-//    storeWorkQueue.execute(fetchSinceRunnable);
+      }
+    };
+    storeWorkQueue.execute(fetchSinceRunnable);
   }
 
   @Override
   public void fetch(final String[] guids,
       final RepositorySessionFetchRecordsDelegate delegate) {
 
-//    Runnable fetchRunnable = new Runnable() {
-//
-//      @Override
-//      public void run() {
-        if (!isActive()) {
-          delegate.onFetchFailed(new InactiveSessionException(), null);
-          return;
-        }
-        if (guids == null || guids.length < 1) {
-          Logger.error(LOG_TAG, "No guids to be fetched.");
-          delegate.onFetchFailed(new InvalidRequestException(), null);
-          return;
-        }
+    if (!isActive()) {
+      delegate.onFetchFailed(new InactiveSessionException(), null);
+      return;
+    }
+    if (guids == null || guids.length < 1) {
+      Logger.error(LOG_TAG, "No guids to be fetched.");
+      delegate.onFetchFailed(new InvalidRequestException(), null);
+      return;
+    }
 
-        // Checks succeeded, now fetch.
+    // Checks succeeded, now fetch.
+    final RecordFilter filter = this.storeTracker.getFilter();
+    Runnable fetchRunnable = new Runnable() {
+      @Override
+      public void run() {
+        Cursor cursor = null;
+        long end = now();
         String where = computeSQLInClause(guids.length, "guid");
         Logger.debug(LOG_TAG, "Fetch guids where: " + where);
-        long end = now();
-        RecordFilter filter = this.storeTracker.getFilter();
-        Cursor cursor = null;
         try {
           // Fetch records from data table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".fetch", getAllColumns(), where, guids, null);
+          cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".fetch",
+              getAllColumns(), where, guids, null);
           Log.d(LOG_TAG, "fetch() fetching from cursor.");
           fetchFromCursorDeleted(cursor, false, filter, delegate);
           cursor.close();
 
           // Fetch records from deleted table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetch", getAllDeletedColumns(), where, guids, null);
+          cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetch",
+              getAllDeletedColumns(), where, guids, null);
           Log.d(LOG_TAG, "fetch() fetching from cursor.");
           fetchFromCursorDeleted(cursor, true, filter, delegate);
           delegate.onFetchCompleted(end);
@@ -202,9 +203,9 @@ public class PasswordsRepositorySession extends
             cursor.close();
           }
         }
-//      }
-//    };
-//    storeWorkQueue.execute(fetchRunnable);
+      }
+    };
+    storeWorkQueue.execute(fetchRunnable);
   }
 
 
@@ -231,9 +232,9 @@ public class PasswordsRepositorySession extends
 
     final PasswordRecord remoteRecord = (PasswordRecord) record;
 
-//    Runnable storeRunnable = new Runnable() {
-//      @Override
-//      public void run() {
+    Runnable storeRunnable = new Runnable() {
+      @Override
+      public void run() {
         if (!isActive()) {
           Logger.warn(LOG_TAG, "RepositorySession is inactive. Store failing.");
           delegate.onRecordStoreFailed(new InactiveSessionException());
@@ -345,18 +346,18 @@ public class PasswordsRepositorySession extends
                               "(" + replaced.androidID + ")");
         delegate.onRecordStoreSucceeded(replaced);
         return;
-//      }
-//    };
-//    storeWorkQueue.execute(storeRunnable);
+      }
+    };
+    storeWorkQueue.execute(storeRunnable);
   }
 
   @Override
   public void wipe(final RepositorySessionWipeDelegate delegate) {
     Logger.info(LOG_TAG, "Wiping " + getUriDeleted(false) + ", " + getUriDeleted(true));
 
-//    Runnable wipeRunnable = new Runnable() {
-//      @Override
-//      public void run() {
+    Runnable wipeRunnable = new Runnable() {
+      @Override
+      public void run() {
         if (!isActive()) {
           delegate.onWipeFailed(new InactiveSessionException());
         } else {
@@ -365,9 +366,9 @@ public class PasswordsRepositorySession extends
           context.getContentResolver().delete(getUriDeleted(true), null, null);
           delegate.onWipeSucceeded();
         }
-//      }
-//    };
-//    storeWorkQueue.execute(wipeRunnable);
+      }
+    };
+    storeWorkQueue.execute(wipeRunnable);
   }
 
   @Override
@@ -407,25 +408,28 @@ public class PasswordsRepositorySession extends
    */
   public PasswordRecord insert(PasswordRecord record) throws RemoteException {
     ContentValues cv = getContentValues(record);
-    Log.d(LOG_TAG, "insert CV: " + cv);
-    Uri insertedUri;
-//    insertedUri = passwordsProvider.insert(getUriDeleted(false), cv);
-    insertedUri = context.getContentResolver().insert(getUriDeleted(false), cv);
+    Uri insertedUri = passwordsProvider.insert(getUriDeleted(false), cv);
     record.androidID = RepoUtils.getAndroidIdFromUri(insertedUri);
+    updateTimes(record);
     return record;
   }
 
   public Record replace(Record origRecord, Record newRecord) throws RemoteException {
     String where  = Passwords.GUID + " = ?";
     String[] args = new String[] { origRecord.guid };
+    updateTimes(newRecord);
     ContentValues cv = getContentValues(newRecord);
     Log.d(LOG_TAG, "updating CV:" + cv);
     int updated = context.getContentResolver().update(getUriDeleted(false), cv, where, args);
-//    int updated = passwordsProvider.update(getUriDeleted(false), cv, where, args);
     if (updated != 1) {
       Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + origRecord.guid);
     }
     return newRecord;
+  }
+
+  private void updateTimes(Record record) {
+    PasswordRecord passwordRecord = (PasswordRecord) record;
+    passwordRecord.timePasswordChanged = now();
   }
 
   // Helper Functions.
@@ -478,8 +482,10 @@ public class PasswordsRepositorySession extends
     }
     int cursorLen = cursor.getCount();
     for (int i = 0; i <= cursorLen; i++) {
-      Log.d(LOG_TAG, "passwordFromMirrorCursor, deleted: " + deleted);
+      Log.d(LOG_TAG, "passwordRecordFromCursor, deleted: " + deleted);
       if (!cursor.moveToPosition(i)) {
+        // Hack: cursor sometimes gets in an infinite loop when using
+        // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
         Log.d(LOG_TAG, "ERROR, nothing in position " + i);
         return;
       }
@@ -492,22 +498,15 @@ public class PasswordsRepositorySession extends
           Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
         }
       }
-      Log.d(LOG_TAG, "cursorPos:" + cursor.getPosition());
-      Log.d(LOG_TAG, "cursorLen: " + cursor.getCount());
-      Log.d(LOG_TAG, "loop:cursor is afterLast: " + cursor.isAfterLast());
     }
   }
 
   // TODO: move to RepoUtils?
   protected String computeSQLInClause(int items, String field) {
     StringBuilder builder = new StringBuilder(field);
-    builder.append(" IN (");
-    int i = 0;
-    for (; i < items - 1; ++i) {
-      builder.append("?, ");
-    }
-    if (i < items) {
-      builder.append("?");
+    builder.append(" IN ( ?");
+    for (int i = 0; i < items - 1; ++i) {
+      builder.append(", ?");
     }
     builder.append(")");
     return builder.toString();
@@ -607,12 +606,12 @@ public class PasswordsRepositorySession extends
     PasswordRecord rec;
     if (deleted) {
       String guid = RepoUtils.getStringFromCursor(cur, DeletedColumns.GUID);
-      long lastModified = RepoUtils.getLongFromCursor(cur, DeletedColumns.TIME_DELETED) / 1000; // Milliseconds for sync.
+      long lastModified = RepoUtils.getLongFromCursor(cur, DeletedColumns.TIME_DELETED);
       rec = new PasswordRecord(guid, COLLECTION, lastModified, true);
       rec.androidID = RepoUtils.getLongFromCursor(cur, DeletedColumns.ID);
     } else {
       String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.GUID);
-      long lastModified = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED) / 1000; // Milliseconds for sync.
+      long lastModified = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
       rec = new PasswordRecord(guid, COLLECTION, lastModified, false);
       rec.id = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ID);
       rec.hostname = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);
@@ -626,11 +625,12 @@ public class PasswordsRepositorySession extends
       rec.encryptedUsername = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
       rec.encryptedPassword = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
 
-      rec.timeCreated = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED) / 1000; // Milliseconds.
-      rec.timeLastUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED) / 1000;
-      rec.timePasswordChanged = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED) / 1000;
+      rec.timeCreated = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED);
+      rec.timeLastUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED);
+      rec.timePasswordChanged = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
       rec.timesUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED);
     }
+    Log.d(LOG_TAG, "FETCHED RECORD: " + rec);
     return rec;
   }
 
@@ -640,6 +640,7 @@ public class PasswordsRepositorySession extends
     ContentValues cv = new ContentValues();
     cv.put(BrowserContract.Passwords.GUID,            rec.guid);
     cv.put(BrowserContract.Passwords.HOSTNAME,        rec.hostname);
+    // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
     // For now, don't set httpRealm, because it can be null and Fennec SQLite doesn't handle null CV.
     // cv.put(BrowserContract.Passwords.HTTP_REALM,      rec.httpRealm);
     cv.put(BrowserContract.Passwords.FORM_SUBMIT_URL, rec.formSubmitURL);
@@ -647,14 +648,15 @@ public class PasswordsRepositorySession extends
     cv.put(BrowserContract.Passwords.PASSWORD_FIELD,  rec.passwordField);
 
     // TODO Do encryption of username/password here. Bug 711636
+    // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
     // For now, don't set encType. (same as httpRealm)
     // cv.put(BrowserContract.Passwords.ENC_TYPE,           rec.encType);
     cv.put(BrowserContract.Passwords.ENCRYPTED_USERNAME, rec.encryptedUsername);
     cv.put(BrowserContract.Passwords.ENCRYPTED_PASSWORD, rec.encryptedPassword);
 
-    cv.put(BrowserContract.Passwords.TIME_CREATED,          rec.timeCreated * 1000);
-    cv.put(BrowserContract.Passwords.TIME_LAST_USED,        rec.timeLastUsed * 1000);
-    cv.put(BrowserContract.Passwords.TIME_PASSWORD_CHANGED, rec.timePasswordChanged * 1000);
+    cv.put(BrowserContract.Passwords.TIME_CREATED,          rec.timeCreated);
+    cv.put(BrowserContract.Passwords.TIME_LAST_USED,        rec.timeLastUsed);
+    cv.put(BrowserContract.Passwords.TIME_PASSWORD_CHANGED, rec.timePasswordChanged);
     cv.put(BrowserContract.Passwords.TIMES_USED,            rec.timesUsed);
     return cv;
   }
