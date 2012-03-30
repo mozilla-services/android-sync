@@ -191,11 +191,18 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.debug(LOG_TAG, "Upload succeeded.");
-      commandsProcessedShouldUpload = false;
-      uploadAttemptsCount.set(0);
-      session.config.persistServerClientRecordTimestamp(response.normalizedWeaveTimestamp());
+      try {
+        commandsProcessedShouldUpload = false;
+        uploadAttemptsCount.set(0);
 
-      BaseResource.consumeEntity(response);
+        long timestamp = Utils.decimalSecondsToMilliseconds(response.body().toString());
+        session.config.persistServerClientRecordTimestamp(timestamp);
+        BaseResource.consumeEntity(response);
+      } catch (Exception e) {
+        e.printStackTrace();
+        session.abort(e, "Unable to fetch timestamp.");
+        return;
+      }
       session.advance();
     }
 
