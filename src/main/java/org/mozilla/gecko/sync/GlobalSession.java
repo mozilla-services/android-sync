@@ -344,13 +344,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
-  public void fetchMetaGlobal(MetaGlobalDelegate callback) throws URISyntaxException {
-    if (this.config.metaGlobal == null) {
-      this.config.metaGlobal = new MetaGlobal(config.metaURL(), credentials());
-    }
-    this.config.metaGlobal.fetch(callback);
-  }
-
   public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
     if (this.config.infoCollections == null) {
       this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
@@ -418,6 +411,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * meta/global callbacks.
    */
   public void processMetaGlobal(MetaGlobal global) {
+    config.metaGlobal = global;
+
     Long storageVersion = global.getStorageVersion();
     if (storageVersion < STORAGE_VERSION) {
       // Outdated server.

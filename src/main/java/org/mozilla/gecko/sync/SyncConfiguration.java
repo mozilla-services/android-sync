@@ -387,4 +387,8 @@ public class SyncConfiguration implements CredentialsSource {
   public PersistedCrypto5Keys persistedCryptoKeys() {
     return new PersistedCrypto5Keys(getPrefs(), syncKeyBundle);
   }
+
+  public PersistedMetaGlobal persistedMetaGlobal() {
+    return new PersistedMetaGlobal(getPrefs());
+  }
 }
