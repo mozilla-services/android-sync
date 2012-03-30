@@ -3,7 +3,6 @@
 
 package org.mozilla.android.sync.test;
 
-import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
@@ -37,7 +36,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     assertTrue(WaitHelper.getTestWaiter().isIdle());
   }
 
-  @Test
   public void testFetchAll() {
     RepositorySession session = createAndBeginSession();
     Record[] expected = new Record[] { PasswordHelpers.createPassword1(),
@@ -50,7 +48,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testGuidsSinceReturnMultipleRecords() {
     RepositorySession session = createAndBeginSession();
 
@@ -71,7 +68,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testGuidsSinceReturnNoRecords() {
     RepositorySession session = createAndBeginSession();
 
@@ -83,7 +79,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testFetchSinceOneRecord() {
     RepositorySession session = createAndBeginSession();
 
@@ -110,7 +105,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testFetchSinceReturnNoRecords() {
    RepositorySession session = createAndBeginSession();
 
@@ -122,7 +116,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testFetchOneRecordByGuid() {
     RepositorySession session = createAndBeginSession();
     Record record = PasswordHelpers.createPassword1();
@@ -135,7 +128,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testFetchMultipleRecordsByGuids() {
     RepositorySession session = createAndBeginSession();
     PasswordRecord record1 = PasswordHelpers.createPassword1();
@@ -152,7 +144,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testFetchNoRecordByGuid() {
     RepositorySession session = createAndBeginSession();
     Record record = PasswordHelpers.createPassword1();
@@ -164,13 +155,11 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testStore() {
     final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, PasswordHelpers.createPassword1()));
   }
 
-  @Test
   public void testRemoteNewerTimeStamp() {
     final RepositorySession session = createAndBeginSession();
 
@@ -194,7 +183,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
-  @Test
   public void testLocalNewerTimeStamp() {
     final RepositorySession session = createAndBeginSession();
     // Remote record updated before local record.
@@ -219,7 +207,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
    * Store two records that are identical except for guid. Expect to find the
    * remote one after reconciling.
    */
-  @Test
   public void testStoreIdenticalExceptGuid() {
     RepositorySession session = createAndBeginSession();
     PasswordRecord record = PasswordHelpers.createPassword1();
