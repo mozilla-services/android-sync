@@ -86,6 +86,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // If we successfully downloaded all records but ours was not one of them
       // then reset the timestamp.
       if (!localAccountGUIDDownloaded) {
+        Logger.info(LOG_TAG, "Local client GUID does not exist on the server. Upload timestamp will be reset.");
         session.config.persistServerClientRecordTimestamp(0);
       }
       localAccountGUIDDownloaded = false;
@@ -140,6 +141,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       try {
         r = (ClientRecord) factory.createRecord(record.decrypt());
         if (clientsDelegate.isLocalGUID(r.guid)) {
+          Logger.info(LOG_TAG, "Local client GUID exists on server and was downloaded");
           localAccountGUIDDownloaded = true;
           // Oh hey! Our record is on the server. This is the authoritative
           // server timestamp, so let's hang on to it to decide whether we
@@ -198,6 +200,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         long timestamp = Utils.decimalSecondsToMilliseconds(response.body().toString());
         session.config.persistServerClientRecordTimestamp(timestamp);
         BaseResource.consumeEntity(response);
+
+        Logger.info(LOG_TAG, "Timestamp from body is: " + timestamp);
+        Logger.info(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
       } catch (Exception e) {
         e.printStackTrace();
         session.abort(e, "Unable to fetch timestamp.");
