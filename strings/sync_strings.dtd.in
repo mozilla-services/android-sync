@@ -70,3 +70,34 @@
 
 <!-- Notification strings -->
 <!ENTITY sync.notification.oneaccount.label 'Only one &syncBrand.fullName.label; account is supported.'>
+
+<!-- Incorrect settings and changing credentials. -->
+<!ENTITY sync.invalidemail.label 'Invalid email address'>
+<!ENTITY sync.invalidserver.label 'Please enter a valid server URL'>
+<!ENTITY sync.usernamenotavailable.label 'Already in use'>
+<!ENTITY sync.verifying.label 'Verifying…'>
+
+<!ENTITY sync.change.password.title 'Change your Password'>
+<!ENTITY sync.change.password.acceptbutton 'Change Password'>
+<!ENTITY sync.change.password.status.active 'Changing your password…'>
+<!ENTITY sync.change.password.status.success 'Your password has been changed.'>
+<!ENTITY sync.change.password.status.error 'There was an error changing your password.'>
+<!ENTITY sync.change.password.introText 'Your password must be at least 8 characters long.  It cannot be the same as either your user name or your Recovery Key.'>
+<!ENTITY change.password.warningText 'Note: All of your other devices will be unable to connect to your account once you change this password.'>
+
+<!ENTITY sync.change.recoverykey.title 'My Recovery Key'>
+<!ENTITY sync.change.recoverykey.acceptButton 'Change Recovery Key'>
+<!ENTITY sync.change.recoverykey.label   'Changing Recovery Key and uploading local data, please wait…'>
+<!ENTITY sync.change.recoverykey.error   'There was an error while changing your Recovery Key!'>
+<!ENTITY sync.change.recoverykey.success 'Your Recovery Key was successfully changed!'>
+
+<!ENTITY sync.new.password.introtext        'Your password was rejected by the server. Please update your password.'>
+<!ENTITY sync.new.password.label            'Enter your new password'>
+<!ENTITY sync.new.password.confirm          'Confirm your new password'>
+<!ENTITY sync.new.password.acceptButton     'Update Password'>
+<!ENTITY sync.new.password.status.incorrect 'Password incorrect. Please try again.'>
+
+<!ENTITY sync.new.recoverykey.title            'Update Recovery Key'>
+<!ENTITY sync.new.recoverykey.introtext        'Your Recovery Key was changed using another device. Please enter your updated Recovery Key.'>
+<!ENTITY sync.new.recoverykey.acceptbutton     'Update Recovery Key'>
+<!ENTITY sync.new.recoverykey.status.incorrect 'Recovery Key incorrect. Please try again.'>
