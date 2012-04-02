@@ -98,7 +98,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   @After
   public void teardown() {
     stubUpload = false;
-    ((MockClientsDatabaseAccessor)db).resetVars();
+    ((MockClientsDatabaseAccessor) db).resetVars();
   }
 
   @Before
@@ -160,14 +160,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       super.handleRequestFailure(response);
-      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
       fail("Should not error.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
       super.handleRequestError(ex);
-      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
       fail("Should not fail.");
     }
 
@@ -192,14 +192,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       super.handleRequestFailure(response);
-      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
       fail("Should not error.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
       super.handleRequestError(ex);
-      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
       ex.printStackTrace();
       fail("Should not fail.");
     }
@@ -374,8 +374,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertFalse(shouldWipe);
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertFalse(((MockClientsDatabaseAccessor)db).wiped);
-    assertTrue(((MockClientsDatabaseAccessor)db).storedRecord);
+    assertFalse(((MockClientsDatabaseAccessor) db).wiped);
+    assertTrue(((MockClientsDatabaseAccessor) db).storedRecord);
   }
 
   @Test
@@ -384,8 +384,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     shouldWipe = true;
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertTrue(((MockClientsDatabaseAccessor)db).wiped);
-    assertTrue(((MockClientsDatabaseAccessor)db).storedRecord);
+    assertTrue(((MockClientsDatabaseAccessor) db).wiped);
+    assertTrue(((MockClientsDatabaseAccessor) db).storedRecord);
   }
 
   @Test
@@ -408,7 +408,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     for (int i = 0; i < downloadedClients.size(); i++) {
       assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
     }
-    assertTrue(((MockClientsDatabaseAccessor)db).closed);
+    assertTrue(((MockClientsDatabaseAccessor) db).closed);
   }
 
   @Test
@@ -459,7 +459,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     // Timestamp got updated (but not reset) since we downloaded our record
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
     assertTrue(initialTimestamp < session.config.getPersistedServerClientRecordTimestamp());
-    assertTrue(((MockClientsDatabaseAccessor)db).closed);
+    assertTrue(((MockClientsDatabaseAccessor) db).closed);
   }
 
   @Test
@@ -480,7 +480,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     // Timestamp got reset since our record wasn't downloaded.
     assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
-    assertTrue(((MockClientsDatabaseAccessor)db).closed);
+    assertTrue(((MockClientsDatabaseAccessor) db).closed);
   }
 
   /**
