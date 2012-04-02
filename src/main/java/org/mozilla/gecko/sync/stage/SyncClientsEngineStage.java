@@ -197,14 +197,13 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         commandsProcessedShouldUpload = false;
         uploadAttemptsCount.set(0);
 
-        long timestamp = Utils.decimalSecondsToMilliseconds(response.body().toString());
+        long timestamp = Utils.decimalSecondsToMilliseconds(response.body());
         session.config.persistServerClientRecordTimestamp(timestamp);
         BaseResource.consumeEntity(response);
 
-        Logger.info(LOG_TAG, "Timestamp from body is: " + timestamp);
-        Logger.info(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
+        Logger.debug(LOG_TAG, "Timestamp from body is: " + timestamp);
+        Logger.debug(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
       } catch (Exception e) {
-        e.printStackTrace();
         session.abort(e, "Unable to fetch timestamp.");
         return;
       }
