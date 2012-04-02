@@ -257,6 +257,10 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         cryptoRecord.keyBundle = session.keyForCollection(COLLECTION_NAME);
         uploadedRecord = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
 
+        // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.
+        // So its value is null and is set here so ClientRecord.equals() may be used.
+        uploadedRecord.collection = lastComputedLocalClientRecord.collection;
+
         // Create response body containing current timestamp.
         uploadBodyTimestamp = Utils.millisecondsToDecimalSecondsString(System.currentTimeMillis());
         PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json");
@@ -287,6 +291,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   }
 
   public class DownloadLocalRecordMockServer extends MockServer {
+    @SuppressWarnings("unchecked")
     @Override
     public void handle(Request request, Response response) {
       try {
@@ -296,8 +301,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         // Timestamp on server is 10 seconds after local timestamp
         // (would trigger 412 if upload was attempted).
         CryptoRecord cryptoRecord = cryptoFromClient(record);
-        cryptoRecord.lastModified = (setRecentClientRecordTimestamp() + 10000) / 1000;
-        bodyStream.print(cryptoRecord.toJSONString() + "\n");
+        JSONObject object = cryptoRecord.toJSONObject();
+        object.put("modified", (setRecentClientRecordTimestamp() + 10000) / 1000);
+        bodyStream.print(object.toJSONString() + "\n");
         bodyStream.close();
       } catch (IOException e) {
         fail("Error handling downloaded client records in DownloadLocalRecordMockServer.");
