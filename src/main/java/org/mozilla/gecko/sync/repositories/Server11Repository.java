@@ -55,11 +55,11 @@ import android.content.Context;
  */
 public class Server11Repository extends Repository {
 
-  private String serverURI;
-  private String username;
-  private String collection;
-  private String collectionPath;
-  private URI collectionPathURI;
+  protected String serverURI;
+  protected String username;
+  protected String collection;
+  protected String collectionPath;
+  protected URI collectionPathURI;
   public CredentialsSource credentialsSource;
   public static final String VERSION_PATH_FRAGMENT = "1.1/";
 
