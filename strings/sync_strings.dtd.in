@@ -83,7 +83,7 @@
 <!ENTITY sync.change.password.status.success 'Your password has been changed.'>
 <!ENTITY sync.change.password.status.error 'There was an error changing your password.'>
 <!ENTITY sync.change.password.introText 'Your password must be at least 8 characters long.  It cannot be the same as either your user name or your Recovery Key.'>
-<!ENTITY change.password.warningText 'Note: All of your other devices will be unable to connect to your account once you change this password.'>
+<!ENTITY sync.change.password.warningText 'Note: All of your other devices will be unable to connect to your account once you change this password.'>
 
 <!ENTITY sync.change.recoverykey.title 'My Recovery Key'>
 <!ENTITY sync.change.recoverykey.acceptButton 'Change Recovery Key'>

@@ -76,7 +76,7 @@
   <string name="sync.change.password.status.success">&sync.change.password.status.success;</string>
   <string name="sync.change.password.status.error">&sync.change.password.status.error;</string>
   <string name="sync.change.password.introText">&sync.change.password.introText;</string>
-  <string name="change.password.warningText">&change.password.warningText;</string>
+  <string name="sync.change.password.warningText">&sync.change.password.warningText;</string>
 
   <string name="sync.change.recoverykey.title">&sync.change.recoverykey.title;</string>
   <string name="sync.change.recoverykey.acceptButton">&sync.change.recoverykey.acceptButton;</string>
