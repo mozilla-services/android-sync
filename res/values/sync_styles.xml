@@ -28,7 +28,12 @@
     <item name="android:layout_height">wrap_content</item>
     <item name="android:textSize">15dp</item>
   </style>
-  <style name="SyncLinkItem" parent="SyncTextItem">
+  <style name="SyncTextError" parent="@style/SyncTextItem">
+    <item name="android:layout_margin">10dp</item>
+    <item name="android:textSize">15dp</item>
+    <item name="android:visibility">gone</item>
+  </style>
+  <style name="SyncLinkItem" parent="@style/SyncTextItem">
     <item name="android:clickable">true</item>
     <item name="android:textColor">#ACC4D5</item>
   </style>
