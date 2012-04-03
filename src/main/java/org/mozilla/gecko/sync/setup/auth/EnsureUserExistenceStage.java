@@ -12,19 +12,21 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
+import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class EnsureUserExistenceStage implements AuthenticatorStage {
-  private final String LOG_TAG = "EnsureUserExistenceStage";
+  private final String LOG_TAG = "EnsureUserExistence";
 
   public interface EnsureUserExistenceStageDelegate {
     public void handleSuccess();
-    public void handleFailure();
+    public void handleFailure(AuthenticationResult result);
     public void handleError(Exception e);
   }
   @Override
@@ -35,17 +37,19 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
       @Override
       public void handleSuccess() {
         // User exists; now determine auth node.
+        Log.d(LOG_TAG, "handleSuccess()");
         aa.runNextStage();
       }
 
       @Override
-      public void handleFailure() {
-        aa.abort("No such user,", new Exception("No user."));
+      public void handleFailure(AuthenticationResult result) {
+        aa.abort(result, new Exception("Failure in EnsureUser"));
       }
 
       @Override
       public void handleError(Exception e) {
-        aa.abort("Error checking user existence.", e);
+        Logger.info(LOG_TAG, "Error checking for user existence.");
+        aa.abort(AuthenticationResult.FAILURE_SERVER, e);
       }
 
     };
@@ -69,17 +73,18 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
             if (inUse.equals("1")) { // Username exists.
               callbackDelegate.handleSuccess();
             } else { // User does not exist.
-              callbackDelegate.handleFailure();
+              Logger.info(LOG_TAG, "No such user.");
+              callbackDelegate.handleFailure(AuthenticationResult.FAILURE_USERNAME);
             }
-          } catch (IllegalStateException e) {
-            callbackDelegate.handleError(e);
-          } catch (IOException e) {
-            callbackDelegate.handleError(e);
+          } catch (Exception e) {
+            Logger.error(LOG_TAG, "Failure in content parsing.", e);
+            callbackDelegate.handleFailure(AuthenticationResult.FAILURE_OTHER);
           }
           break;
         default: // No other response is acceptable.
-          callbackDelegate.handleFailure();
+          callbackDelegate.handleFailure(AuthenticationResult.FAILURE_OTHER);
         }
+        Logger.debug(LOG_TAG, "Consuming entity.");
         BaseResource.consumeEntity(response.getEntity());
       }
 
@@ -99,6 +104,7 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
       }
 
     };
+    // Make request.
     AccountAuthenticator.runOnThread(new Runnable() {
 
       @Override

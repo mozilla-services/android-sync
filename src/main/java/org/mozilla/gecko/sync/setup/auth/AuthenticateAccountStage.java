@@ -48,7 +48,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       @Override
       public void handleFailure(HttpResponse response) {
         Logger.debug(LOG_TAG, "handleFailure");
-        aa.abort(response.toString(), new Exception(response.getStatusLine().getStatusCode() + " error."));
+        aa.abort(AuthenticationResult.FAILURE_OTHER, new Exception(response.getStatusLine().getStatusCode() + " error."));
         if (response.getEntity() == null) {
           // No cleanup necessary.
           return;
@@ -72,7 +72,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       @Override
       public void handleError(Exception e) {
         Logger.debug(LOG_TAG, "handleError", e);
-        aa.abort("HTTP failure.", e);
+        aa.abort(AuthenticationResult.FAILURE_OTHER, e);
       }
     };
 
