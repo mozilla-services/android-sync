@@ -61,16 +61,6 @@ public class DeferredRepositorySessionFetchRecordsDelegate implements Repository
   }
 
   @Override
-  public void onFetchSucceeded(final Record[] records, final long fetchEnd) {
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        inner.onFetchSucceeded(records, fetchEnd);
-      }
-    });       
-  }
-
-  @Override
   public void onFetchFailed(final Exception ex, final Record record) {
     executor.execute(new Runnable() {
       @Override
