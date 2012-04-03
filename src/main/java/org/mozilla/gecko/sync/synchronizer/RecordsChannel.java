@@ -173,15 +173,6 @@ class RecordsChannel implements
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records, final long fetchEnd) {
-    for (Record record : records) {
-      this.toProcess.add(record);
-    }
-    this.consumer.doNotify();
-    this.onFetchCompleted(fetchEnd);
-  }
-
-  @Override
   public void onFetchCompleted(final long fetchEnd) {
     Logger.info(LOG_TAG, "onFetchCompleted. Stopping consumer once stores are done.");
     Logger.info(LOG_TAG, "Fetch timestamp is " + fetchEnd);
