@@ -113,20 +113,20 @@ public class DecryptDataStage extends JPakeStage {
    * @throws Exception
    */
   private JSONObject getJSONObject(String jsonString) throws IOException, ParseException{
-    Reader in = new StringReader(jsonString);
+    final Reader in = new StringReader(jsonString);
     return (JSONObject) new JSONParser().parse(in);
   }
 
   private boolean checkCredentials(JSONObject creds) {
-    String accountName  = (String) creds.get(Constants.JSON_KEY_ACCOUNT);
-    String password     = (String) creds.get(Constants.JSON_KEY_PASSWORD);
-    String syncKey      = (String) creds.get(Constants.JSON_KEY_SYNCKEY);
-    String serverUrl    = (String) creds.get(Constants.JSON_KEY_SERVER);
+    final String accountName = (String) creds.get(Constants.JSON_KEY_ACCOUNT);
+    final String password    = (String) creds.get(Constants.JSON_KEY_PASSWORD);
+    final String syncKey     = (String) creds.get(Constants.JSON_KEY_SYNCKEY);
+    final String serverUrl   = (String) creds.get(Constants.JSON_KEY_SERVER);
 
     if (accountName == null || accountName.equals("") ||
-        password == null || password.equals("") ||
-        syncKey == null || syncKey.equals("") ||
-        serverUrl == null || serverUrl.equals("")) {
+        password    == null || password.equals("")    ||
+        syncKey     == null || syncKey.equals("")     ||
+        serverUrl   == null || serverUrl.equals("")) {
       return false;
     }
     return true;
