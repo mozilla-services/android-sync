@@ -85,6 +85,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
           serverInput.setText("");
         } else {
           serverInput.setVisibility(View.VISIBLE);
+          serverInput.setEnabled(true);
         }
         // Activate connectButton if necessary.
         activateView(connectButton, validateInputs());
