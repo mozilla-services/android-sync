@@ -20,8 +20,6 @@ public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       assertTrue(response.wasSuccessful());
-      // Make sure we consume the entity, so we can reuse the connection.
-      BaseResource.consumeEntity(response);
       data.stopHTTPServer();
       super.handleRequestSuccess(response);
     }

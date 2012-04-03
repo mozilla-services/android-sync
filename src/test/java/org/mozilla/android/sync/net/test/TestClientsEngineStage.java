@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import org.json.simple.parser.ParseException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -30,6 +31,7 @@ import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -60,9 +62,13 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   // For test purposes.
   private ClientRecord lastComputedLocalClientRecord;
   private ClientRecord uploadedRecord;
+  private String uploadBodyTimestamp;
+  private long uploadHeaderTimestamp;
   private MockServer currentUploadMockServer;
   private MockServer currentDownloadMockServer;
   private MockGlobalSessionCallback callback;
+
+  private boolean stubUpload = false;
 
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
@@ -89,6 +95,12 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
   }
 
+  @After
+  public void teardown() {
+    stubUpload = false;
+    ((MockClientsDatabaseAccessor) db).resetVars();
+  }
+
   @Before
   @Override
   public void init() {
@@ -110,6 +122,10 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   @Override
   protected void uploadClientRecord(CryptoRecord record) {
     BaseResource.rewriteLocalhost = false;
+    if (stubUpload) {
+      session.advance();
+      return;
+    }
     data.startHTTPServer(currentUploadMockServer);
     super.uploadClientRecord(record);
   }
@@ -144,14 +160,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       super.handleRequestFailure(response);
-      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
       fail("Should not error.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
       super.handleRequestError(ex);
-      assertTrue(((MockClientsDatabaseAccessor)db).closed);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
       fail("Should not fail.");
     }
 
@@ -168,21 +184,49 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
   }
 
-  public class MockSuccessClientUploadDelegate extends MockClientUploadDelegate {
-    public MockSuccessClientUploadDelegate(HTTPServerTestHelper data) {
+  public class TestHandleWBODownloadDelegate extends TestClientDownloadDelegate {
+    public TestHandleWBODownloadDelegate(HTTPServerTestHelper data) {
       super(data);
     }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       super.handleRequestFailure(response);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
       fail("Should not error.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
       super.handleRequestError(ex);
+      assertTrue(((MockClientsDatabaseAccessor) db).closed);
+      ex.printStackTrace();
       fail("Should not fail.");
+    }
+  }
+
+  public class MockSuccessClientUploadDelegate extends MockClientUploadDelegate {
+    public MockSuccessClientUploadDelegate(HTTPServerTestHelper data) {
+      super(data);
+    }
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse response) {
+      uploadHeaderTimestamp = response.normalizedWeaveTimestamp();
+      super.handleRequestSuccess(response);
+    }
+
+    @Override
+    public void handleRequestFailure(SyncStorageResponse response) {
+      super.handleRequestFailure(response);
+      fail("Should not fail.");
+    }
+
+    @Override
+    public void handleRequestError(Exception ex) {
+      super.handleRequestError(ex);
+      ex.printStackTrace();
+      fail("Should not error.");
     }
   }
 
@@ -208,17 +252,23 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     @Override
     public void handle(Request request, Response response) {
       try {
+        // Save uploadedRecord to test against.
         CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
         cryptoRecord.keyBundle = session.keyForCollection(COLLECTION_NAME);
         uploadedRecord = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
-  
+
         // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.
         // So its value is null and is set here so ClientRecord.equals() may be used.
         uploadedRecord.collection = lastComputedLocalClientRecord.collection;
+
+        // Create response body containing current timestamp.
+        uploadBodyTimestamp = Utils.millisecondsToDecimalSecondsString(System.currentTimeMillis());
+        PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json");
+        bodyStream.print(uploadBodyTimestamp);
+        bodyStream.close();
       } catch (Exception e) {
         fail("Error handling uploaded client record in UploadMockServer.");
       }
-      super.handle(request, response);
     }
   }
 
@@ -240,6 +290,27 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
   }
 
+  public class DownloadLocalRecordMockServer extends MockServer {
+    @SuppressWarnings("unchecked")
+    @Override
+    public void handle(Request request, Response response) {
+      try {
+        PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/newlines");
+        ClientRecord record = new ClientRecord(session.getClientsDelegate().getAccountGUID());
+
+        // Timestamp on server is 10 seconds after local timestamp
+        // (would trigger 412 if upload was attempted).
+        CryptoRecord cryptoRecord = cryptoFromClient(record);
+        JSONObject object = cryptoRecord.toJSONObject();
+        object.put("modified", (setRecentClientRecordTimestamp() + 10000) / 1000);
+        bodyStream.print(object.toJSONString() + "\n");
+        bodyStream.close();
+      } catch (IOException e) {
+        fail("Error handling downloaded client records in DownloadLocalRecordMockServer.");
+      }
+    }
+  }
+
   private CryptoRecord cryptoFromClient(ClientRecord record) {
     CryptoRecord cryptoRecord = record.getEnvelope();
     cryptoRecord.keyBundle = clientDownloadDelegate.keyBundle();
@@ -254,7 +325,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   private long setRecentClientRecordTimestamp() {
     long timestamp = System.currentTimeMillis() - (CLIENTS_TTL_REFRESH - 1000);
     session.config.persistServerClientRecordTimestamp(timestamp);
-      return timestamp;
+    return timestamp;
   }
 
   private void performFailingUpload() {
@@ -309,10 +380,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertFalse(shouldWipe);
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertFalse(((MockClientsDatabaseAccessor)db).wiped);
-    assertTrue(((MockClientsDatabaseAccessor)db).storedRecord);
-
-    ((MockClientsDatabaseAccessor)db).resetVars();
+    assertFalse(((MockClientsDatabaseAccessor) db).wiped);
+    assertTrue(((MockClientsDatabaseAccessor) db).storedRecord);
   }
 
   @Test
@@ -321,18 +390,15 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     shouldWipe = true;
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertTrue(((MockClientsDatabaseAccessor)db).wiped);
-    assertTrue(((MockClientsDatabaseAccessor)db).storedRecord);
-
-    ((MockClientsDatabaseAccessor)db).resetVars();
+    assertTrue(((MockClientsDatabaseAccessor) db).wiped);
+    assertTrue(((MockClientsDatabaseAccessor) db).storedRecord);
   }
 
   @Test
   public void testDownloadClientRecord() {
     // Make sure no upload occurs after a download so we can
     // test download in isolation.
-    long initialTimestamp = setRecentClientRecordTimestamp();
-    assertFalse(commandsProcessedShouldUpload);
+    stubUpload = true;
 
     currentDownloadMockServer = new DownloadMockServer();
     // performNotify() occurs in MockGlobalSessionCallback.
@@ -348,8 +414,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     for (int i = 0; i < downloadedClients.size(); i++) {
       assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
     }
-    assertEquals(initialTimestamp, session.config.getPersistedServerClientRecordTimestamp());
-    assertTrue(((MockClientsDatabaseAccessor)db).closed);
+    assertTrue(((MockClientsDatabaseAccessor) db).closed);
   }
 
   @Test
@@ -371,7 +436,57 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertTrue(lastComputedLocalClientRecord.equals(uploadedRecord));
     assertEquals(0, uploadAttemptsCount.get());
     assertTrue(callback.calledSuccess);
+
+    // Test body of the HTTP PUT response is persisted (and not the header).
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
+    assertEquals(Utils.decimalSecondsToMilliseconds(uploadBodyTimestamp), session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(uploadHeaderTimestamp == session.config.getPersistedServerClientRecordTimestamp());
+  }
+
+  @Test
+  public void testDownloadHasOurRecord() {
+    // Make sure no upload occurs after a download so we can
+    // test download in isolation.
+    stubUpload = true;
+
+    // We've uploaded our local record recently.
+    long initialTimestamp = setRecentClientRecordTimestamp();
+
+    currentDownloadMockServer = new DownloadLocalRecordMockServer();
+    // performNotify() occurs in MockGlobalSessionCallback.
+    testWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        clientDownloadDelegate = new TestHandleWBODownloadDelegate(data);
+        downloadClientRecords();
+      }
+    });
+
+    // Timestamp got updated (but not reset) since we downloaded our record
+    assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
+    assertTrue(initialTimestamp < session.config.getPersistedServerClientRecordTimestamp());
+    assertTrue(((MockClientsDatabaseAccessor) db).closed);
+  }
+
+  @Test
+  public void testResetTimestampOnDownload() {
+    // Make sure no upload occurs after a download so we can
+    // test download in isolation.
+    stubUpload = true;
+
+    currentDownloadMockServer = new DownloadMockServer();
+    // performNotify() occurs in MockGlobalSessionCallback.
+    testWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        clientDownloadDelegate = new TestHandleWBODownloadDelegate(data);
+        downloadClientRecords();
+      }
+    });
+
+    // Timestamp got reset since our record wasn't downloaded.
+    assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
+    assertTrue(((MockClientsDatabaseAccessor) db).closed);
   }
 
   /**
