@@ -4,8 +4,6 @@
 
 package org.mozilla.gecko.sync.setup.auth;
 
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -13,6 +11,8 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.AccountActivity;
+
+import android.util.Log;
 
 public class AccountAuthenticator {
   private final String LOG_TAG = "AccountAuthenticator";
@@ -53,13 +53,12 @@ public class AccountAuthenticator {
     // Calculate and save username hash.
     try {
       usernameHash = Utils.sha1Base32(username.toLowerCase()).toLowerCase();
-    } catch (NoSuchAlgorithmException e) {
-      abort("Username hash error.", e);
-    } catch (UnsupportedEncodingException e) {
-      abort("Username hash error.", e);
+    } catch (Exception e) {
+      abort(AuthenticationResult.FAILURE_OTHER, e);
     }
     Logger.debug(LOG_TAG, "usernameHash:" + usernameHash);
 
+    Log.d(LOG_TAG, "running first stage.");
     // Start first stage of authentication.
     runNextStage();
   }
@@ -73,15 +72,15 @@ public class AccountAuthenticator {
     }
     if (stages.size() == 0) {
       Logger.debug(LOG_TAG, "Authentication completed.");
-      activityCallback.authCallback(isSuccess);
+      activityCallback.authCallback(isSuccess ? AuthenticationResult.SUCCESS : AuthenticationResult.FAILURE_PASSWORD);
       return;
     }
     AuthenticatorStage nextStage = stages.remove();
     try {
       nextStage.execute(this);
     } catch (Exception e) {
-      Logger.warn(LOG_TAG, "Exception in stage " + nextStage);
-      abort("Stage exception.", e);
+      Logger.warn(LOG_TAG, "Unhandled exception in stage " + nextStage);
+      abort(AuthenticationResult.FAILURE_OTHER, e);
     }
   }
 
@@ -93,12 +92,12 @@ public class AccountAuthenticator {
    * @param reason
    *    Reason for abort.
    */
-  public void abort(String reason, Exception e) {
+  public void abort(AuthenticationResult result, Exception e) {
     if (isCanceled) {
       return;
     }
-    Logger.warn(LOG_TAG, reason, e);
-    activityCallback.authCallback(false);
+    Logger.warn(LOG_TAG, "Authentication failed.", e);
+    activityCallback.authCallback(result);
   }
 
   /* Helper functions */

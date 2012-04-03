@@ -51,21 +51,29 @@ public class FetchUserNodeStage implements AuthenticatorStage {
       @Override
       public void handleFailure(HttpResponse response) {
         int statusCode = response.getStatusLine().getStatusCode();
-        Logger.debug(LOG_TAG, "Failed to authenticate with status " + statusCode);
-        aa.abort(response.toString(), new Exception("HTTP " + statusCode + " error."));
+        Logger.debug(LOG_TAG, "Failed to fetch user node, with status " + statusCode);
+        aa.abort(AuthenticationResult.FAILURE_OTHER, new Exception("HTTP " + statusCode + " error."));
       }
 
       @Override
       public void handleError(Exception e) {
-        aa.abort("Error in fetching node.", e);
+        Logger.debug(LOG_TAG, "Error in fetching node.");
+        aa.abort(AuthenticationResult.FAILURE_OTHER, e);
       }
     };
     String nodeRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash + "/" + Constants.AUTH_NODE_SUFFIX;
     Logger.debug(LOG_TAG, "nodeUrl: " + nodeRequestUrl);
-    makeFetchNodeRequest(callbackDelegate, nodeRequestUrl);
+    final BaseResource httpResource = makeFetchNodeRequest(callbackDelegate, nodeRequestUrl);
+    // Make request on separate thread.
+    AccountAuthenticator.runOnThread(new Runnable() {
+      @Override
+      public void run() {
+        httpResource.get();
+      }
+    });
   }
 
-  private void makeFetchNodeRequest(final FetchNodeStageDelegate callbackDelegate, String fetchNodeUrl) throws URISyntaxException {
+  private BaseResource makeFetchNodeRequest(final FetchNodeStageDelegate callbackDelegate, String fetchNodeUrl) throws URISyntaxException {
     // Fetch node containing user.
     final BaseResource httpResource = new BaseResource(fetchNodeUrl);
     httpResource.delegate = new SyncResourceDelegate(httpResource) {
@@ -112,14 +120,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
       public void handleTransportException(GeneralSecurityException e) {
         callbackDelegate.handleError(e);
       }
-
     };
-    AccountAuthenticator.runOnThread(new Runnable() {
-
-      @Override
-      public void run() {
-        httpResource.get();
-      }
-    });
+    return httpResource;
   }
 }
