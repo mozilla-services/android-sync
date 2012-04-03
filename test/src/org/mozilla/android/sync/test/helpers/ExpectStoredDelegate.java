@@ -24,7 +24,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
       assertNotNull(storedRecord);
       performNotify();
     } catch (AssertionFailedError e) {
-      performNotify("GUID was not stored", e);
+      performNotify("GUID " + this.expectedGUID + " was not stored", e);
     }
   }
 
