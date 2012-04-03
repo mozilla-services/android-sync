@@ -19,7 +19,9 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 public class TestRecord {
@@ -29,7 +31,6 @@ public class TestRecord {
     for (int i = 0; i < 50; ++i) {
       CryptoRecord cryptoRecord = new HistoryRecord().getEnvelope();
       assertEquals(12, cryptoRecord.guid.length());
-      System.out.println(cryptoRecord.toJSONString());
     }
   }
 
@@ -224,5 +225,18 @@ public class TestRecord {
   public void testUnusualBookmarkRecords() throws NonObjectJSONException, IOException, ParseException {
     PayloadBookmarkRecord record = new PayloadBookmarkRecord();
     record.doTest();
+  }
+
+  @Test
+  public void testTTL() {
+    Record record = new HistoryRecord();
+    assertEquals(HistoryRecord.HISTORY_TTL, record.ttl);
+
+    // ClientRecords are transient, HistoryRecords are not.
+    Record clientRecord = new ClientRecord();
+    assertTrue(clientRecord.ttl < record.ttl);
+
+    CryptoRecord cryptoRecord = record.getEnvelope();
+    assertEquals(record.ttl, cryptoRecord.ttl);
   }
 }
