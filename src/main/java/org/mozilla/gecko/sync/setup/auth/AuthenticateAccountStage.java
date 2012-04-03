@@ -19,7 +19,6 @@ import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.util.Base64;
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -49,7 +48,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       @Override
       public void handleFailure(HttpResponse response) {
         Logger.debug(LOG_TAG, "handleFailure");
-        aa.abort(response.toString(), new Exception(response.getStatusLine().getStatusCode() + " error."));
+        aa.abort(AuthenticationResult.FAILURE_OTHER, new Exception(response.getStatusLine().getStatusCode() + " error."));
         if (response.getEntity() == null) {
           // No cleanup necessary.
           return;
@@ -73,14 +72,14 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       @Override
       public void handleError(Exception e) {
         Logger.debug(LOG_TAG, "handleError", e);
-        aa.abort("HTTP failure.", e);
+        aa.abort(AuthenticationResult.FAILURE_OTHER, e);
       }
     };
 
     // Calculate BasicAuth hash of username/password.
     String authHeader = makeAuthHeader(aa.usernameHash, aa.password);
     String authRequestUrl = makeAuthRequestUrl(aa.authServer, aa.usernameHash);
-    Log.d(LOG_TAG, "making auth request to: " + authRequestUrl);
+    Logger.debug(LOG_TAG, "making auth request to: " + authRequestUrl);
     authenticateAccount(callbackDelegate, authRequestUrl, authHeader);
 
   }
