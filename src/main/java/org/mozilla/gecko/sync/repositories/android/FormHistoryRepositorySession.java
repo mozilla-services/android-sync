@@ -436,54 +436,40 @@ public class FormHistoryRepositorySession extends
 
   protected Object recordsBufferMonitor = new Object();
   protected ArrayList<ContentValues> recordsBuffer = new ArrayList<ContentValues>();
-  private static final int INSERT_ITEM_THRESHOLD = 5;
+  private static final int INSERT_ITEM_THRESHOLD = 50;
 
   protected void enqueueRegularRecord(Record record) {
     synchronized (recordsBufferMonitor) {
       if (recordsBuffer.size() >= INSERT_ITEM_THRESHOLD) {
         // Insert the existing contents, then enqueue.
-        flushInsertQueue();
+        try {
+          flushInsertQueue();
+        } catch (RemoteException e) {
+          delegate.onRecordStoreFailed(e);
+          return;
+        }
       }
       // Store the ContentValues, rather than the record.
       recordsBuffer.add(contentValuesForRegularRecord(record));
     }
   }
 
-  public class RecordInsertRunnable implements Runnable {
-    ContentValues[] queue;
-
-    public RecordInsertRunnable(ArrayList<ContentValues> queue) {
-      ContentValues[] values = new ContentValues[queue.size()];
-      this.queue = queue.toArray(values);
-    }
-
-    @Override
-    public void run() {
-      if (queue == null || queue.length == 0) {
-        Logger.debug(LOG_TAG, "No form history items to insert: RecordInsertRunnable returning immediately.");
-        return;
-      }
-
-      try {
-        Logger.debug(LOG_TAG, "Inserting " + queue.length + " form history items...");
-        long before = System.currentTimeMillis();
-        formsProvider.bulkInsert(FORM_HISTORY_CONTENT_URI, queue);
-        long after = System.currentTimeMillis();
-        Logger.debug(LOG_TAG, "Inserting " + queue.length + " form history items... DONE (" + (after - before) + " milliseconds).");
-      } catch (RemoteException e) {
-        // TODO: REALLY HANDLE THIS ERROR by making this not be a Runnable and handling errors inline.
-        e.printStackTrace();
-      }
-    }
-  }
-
   // Should always be called from storeWorkQueue.
-  protected void flushInsertQueue() {
+  protected void flushInsertQueue() throws RemoteException {
     synchronized (recordsBufferMonitor) {
       if (recordsBuffer.size() > 0) {
-        final ArrayList<ContentValues> outgoing = recordsBuffer;
+        final ContentValues[] outgoing = recordsBuffer.toArray(new ContentValues[0]);
         recordsBuffer = new ArrayList<ContentValues>();
-        new RecordInsertRunnable(outgoing).run();
+
+        if (outgoing == null || outgoing.length == 0) {
+          Logger.debug(LOG_TAG, "No form history items to insert; returning immediately.");
+          return;
+        }
+
+        long before = System.currentTimeMillis();
+        formsProvider.bulkInsert(FORM_HISTORY_CONTENT_URI, outgoing);
+        long after = System.currentTimeMillis();
+        Logger.debug(LOG_TAG, "Inserted " + outgoing.length + " form history items in (" + (after - before) + " milliseconds).");
       }
     }
   }
@@ -494,10 +480,14 @@ public class FormHistoryRepositorySession extends
       @Override
       public void run() {
         Logger.debug(LOG_TAG, "Checking for residual form history items to insert.");
-        synchronized (recordsBufferMonitor) {
-          flushInsertQueue();
+        try {
+          synchronized (recordsBufferMonitor) {
+            flushInsertQueue();
+          }
+          storeDone(now());
+        } catch (RemoteException e) {
+          delegate.onRecordStoreFailed(e);
         }
-        storeDone(now()); // XXX?
       }
     };
     storeWorkQueue.execute(command);
