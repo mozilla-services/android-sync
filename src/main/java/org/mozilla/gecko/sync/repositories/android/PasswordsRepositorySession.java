@@ -19,6 +19,7 @@ import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils.QueryHelper;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
@@ -38,14 +39,18 @@ public class PasswordsRepositorySession extends
 
   private static final String LOG_TAG = "PasswordsRepoSession";
   private static String COLLECTION = "passwords";
+  private RepoUtils.QueryHelper passwordsHelper;
+  private RepoUtils.QueryHelper deletedPasswordsHelper;
+  private ContentProviderClient passwordsProvider;
 
-  private final ContentProviderClient passwordsProvider;
   private final Context context;
 
   public PasswordsRepositorySession(Repository repository, Context context) {
     super(repository);
     this.context = context;
     passwordsProvider = context.getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
+    passwordsHelper = new QueryHelper(context, getUriDeleted(false), LOG_TAG);
+    deletedPasswordsHelper = new QueryHelper(context, getUriDeleted(true), LOG_TAG);
   }
 
   @Override
@@ -67,7 +72,7 @@ public class PasswordsRepositorySession extends
           Logger.debug(LOG_TAG, "Fetching guidsSince from data table.");
 
           String[] guidCols = new String[] { Passwords.GUID };
-          cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".getGUIDsSince", guidCols, dateModifiedWhereDeleted(timestamp, false), null, null);
+          cursor = passwordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", guidCols, dateModifiedWhereDeleted(timestamp, false), null, null);
           if (cursor != null && cursor.moveToFirst()) {
             while (!cursor.isAfterLast()) {
               guids.add(RepoUtils.getStringFromCursor(cursor, Passwords.GUID));
@@ -80,7 +85,7 @@ public class PasswordsRepositorySession extends
           Logger.debug(LOG_TAG, "Fetching guidsSince from deleted table.");
 
           String[] deletedGuidCols = new String[] {DeletedColumns.GUID };
-          cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".getGUIDsSince", deletedGuidCols, dateModifiedWhereDeleted(timestamp, true), null, null);
+          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", deletedGuidCols, dateModifiedWhereDeleted(timestamp, true), null, null);
           if (cursor != null && cursor.moveToFirst()) {
             while (!cursor.isAfterLast()) {
               guids.add(RepoUtils.getStringFromCursor(cursor, DeletedColumns.GUID));
@@ -124,13 +129,13 @@ public class PasswordsRepositorySession extends
         long end = now();
         try {
           // Fetch from data table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".fetchSince",
+          cursor = passwordsHelper.safeQuery(passwordsProvider, ".fetchSince",
               getAllColumns(), dateModifiedWhereDeleted(timestamp, false), null, null);
           fetchFromCursorDeleted(cursor, false, filter, delegate);
           cursor.close();
 
           // Fetch from deleted table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetchSince",
+          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".fetchSince",
               getAllDeletedColumns(), dateModifiedWhereDeleted(timestamp, true), null, null);
           fetchFromCursorDeleted(cursor, true, filter, delegate);
           delegate.onFetchCompleted(end);
@@ -175,13 +180,13 @@ public class PasswordsRepositorySession extends
         Logger.debug(LOG_TAG, "Fetch guids where: " + where);
         try {
           // Fetch records from data table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".fetch",
+          cursor = passwordsHelper.safeQuery(passwordsProvider, ".fetch",
               getAllColumns(), where, guids, null);
           fetchFromCursorDeleted(cursor, false, filter, delegate);
           cursor.close();
 
           // Fetch records from deleted table.
-          cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".fetch",
+          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".fetch",
               getAllDeletedColumns(), where, guids, null);
           fetchFromCursorDeleted(cursor, true, filter, delegate);
           delegate.onFetchCompleted(end);
@@ -512,7 +517,7 @@ public class PasswordsRepositorySession extends
     try {
       // Check data table.
       String where = Passwords.GUID + " = ?";
-      cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".store", BrowserContractHelpers.PasswordColumns, where, guidArg, null);
+      cursor = passwordsHelper.safeQuery(passwordsProvider, ".store", BrowserContractHelpers.PasswordColumns, where, guidArg, null);
       if (cursor != null && cursor.moveToFirst()) {
           record = passwordRecordFromCursorDeleted(cursor, false);
           // Cursor will be closed in finally.
@@ -521,7 +526,7 @@ public class PasswordsRepositorySession extends
 
       // Check deleted table.
       where = DeletedPasswords.GUID + " = ?";
-      cursor = safeQuery(passwordsProvider, getUriDeleted(true), ".retrieveByGuid", BrowserContractHelpers.DeletedColumns, where, guidArg, null);
+      cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".retrieveByGuid", BrowserContractHelpers.DeletedColumns, where, guidArg, null);
       if (cursor != null && cursor.moveToFirst()) {
         record = passwordRecordFromCursorDeleted(cursor, true);
       }
@@ -551,6 +556,7 @@ public class PasswordsRepositorySession extends
                        Passwords.USERNAME_FIELD + " = ? AND " +
                        Passwords.PASSWORD_FIELD + " = ?";
     Logger.debug(LOG_TAG, "where: " + dataWhere);
+    // We can't encrypt username directly for query, so run a more general query and then filter.
     String[] whereArgs = new String[] {
           record.hostname,
           record.formSubmitURL,
@@ -560,10 +566,11 @@ public class PasswordsRepositorySession extends
           record.passwordField
       };
     try {
-      cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".findRecord", null, dataWhere, whereArgs, null);
-      if (cursor != null && cursor.moveToFirst()) {
+      cursor = passwordsHelper.safeQuery(passwordsProvider, ".findRecord", getAllColumns(), dataWhere, whereArgs, null);
+      if (cursor.moveToFirst()) {
         while (!cursor.isAfterLast()) {
           foundRecord = passwordRecordFromCursorDeleted(cursor, false);
+          // Filter query for matching username.
           if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
             Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
             return foundRecord;
@@ -659,27 +666,5 @@ public class PasswordsRepositorySession extends
     cv.put(BrowserContract.Passwords.TIME_PASSWORD_CHANGED, rec.timePasswordChanged);
     cv.put(BrowserContract.Passwords.TIMES_USED,            rec.timesUsed);
     return cv;
-  }
-
-  // shameless copying + tweaking.
-  // TODO: Lift out and refactor into RepoUtils, and propagate usage for other contentProviders.
-  private Cursor safeQuery(ContentProviderClient cp, Uri uri, String label, String[] projection,
-      String selection, String[] selectionArgs, String sortOrder) throws RemoteException, NullCursorException {
-    long queryStart = android.os.SystemClock.uptimeMillis();
-    Cursor c = cp.query(uri, projection, selection, selectionArgs, sortOrder);
-    return checkAndLogCursor(label, queryStart, c);
-  }
-
-  private Cursor checkAndLogCursor(String label, long queryStart, Cursor c) throws NullCursorException {
-    long queryEnd = android.os.SystemClock.uptimeMillis();
-    RepoUtils.queryTimeLogger(label, queryStart, queryEnd);
-    return checkNullCursor(c);
-  }
-
-  public Cursor checkNullCursor(Cursor cursor) throws NullCursorException {
-    if (cursor == null) {
-      throw new NullCursorException(null);
-    }
-    return cursor;
   }
 }
