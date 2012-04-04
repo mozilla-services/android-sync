@@ -32,7 +32,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
-import android.util.Log;
 
 public class PasswordsRepositorySession extends
     StoreTrackingRepositorySession {
@@ -549,26 +548,28 @@ public class PasswordsRepositorySession extends
                        Passwords.FORM_SUBMIT_URL + " = ? AND " +
                        // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
                        // Passwords.HTTP_REALM + " = ? AND " +
-                       Passwords.ENCRYPTED_USERNAME + " = ? AND " +
-                       Passwords.ENCRYPTED_PASSWORD + " = ? AND " +
                        Passwords.USERNAME_FIELD + " = ? AND " +
                        Passwords.PASSWORD_FIELD + " = ?";
-    Log.d(LOG_TAG, "where: " + dataWhere);
+    Logger.debug(LOG_TAG, "where: " + dataWhere);
     String[] whereArgs = new String[] {
-        record.hostname,
-        record.formSubmitURL,
-        // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
-        // record.httpRealm,
-        record.encryptedUsername,
-        record.encryptedPassword,
-        record.usernameField,
-        record.passwordField
-    };
-    Log.d(LOG_TAG, "username: " + record.encryptedUsername + "; password: " + record.encryptedPassword);
+          record.hostname,
+          record.formSubmitURL,
+          // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
+          // record.httpRealm,
+          record.usernameField,
+          record.passwordField
+      };
     try {
       cursor = safeQuery(passwordsProvider, getUriDeleted(false), ".findRecord", null, dataWhere, whereArgs, null);
       if (cursor != null && cursor.moveToFirst()) {
-        foundRecord = passwordRecordFromCursorDeleted(cursor, false);
+        while (!cursor.isAfterLast()) {
+          foundRecord = passwordRecordFromCursorDeleted(cursor, false);
+          if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
+            Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
+            return foundRecord;
+          }
+          cursor.moveToNext();
+        }
       }
       Logger.debug(LOG_TAG, "Found record: " + foundRecord);
     } catch (RemoteException e) {
@@ -582,7 +583,8 @@ public class PasswordsRepositorySession extends
         cursor.close();
       }
     }
-    return foundRecord;
+    Logger.debug(LOG_TAG, "No matching records, returning null.");
+    return null;
   }
 
   private void storeRecordDeletion(Record record) {
