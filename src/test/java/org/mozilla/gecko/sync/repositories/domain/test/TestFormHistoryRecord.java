@@ -78,4 +78,12 @@ public class TestFormHistoryRecord {
     FormHistoryRecord fr3 = (FormHistoryRecord)fr2.copyWithIDs(Utils.generateGuid(), 9999);
     assertFalse(fr2.equals(fr3));
   }
+
+  @Test
+  public void testTTL() {
+    FormHistoryRecord fr = withIdFieldNameAndValue(0, "username", "aUsername");
+    assertEquals(FormHistoryRecord.FORMS_TTL, fr.ttl);
+    CryptoRecord rec = fr.getEnvelope();
+    assertEquals(FormHistoryRecord.FORMS_TTL, rec.ttl);
+  }
 }
