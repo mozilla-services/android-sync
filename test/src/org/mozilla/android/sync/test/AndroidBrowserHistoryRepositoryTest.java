@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.ArrayList;
+
 import org.json.simple.JSONObject;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
@@ -414,5 +416,21 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     // Check dataExtender is closed upon abort.
     session.abort();
     assertTrue(db.getHistoryDataExtender().isClosed());
+  }
+
+  public void testDataAccessorBulkInsert() throws NullCursorException {
+    final AndroidBrowserHistoryRepositorySession session = (AndroidBrowserHistoryRepositorySession) createAndBeginSession();
+    AndroidBrowserHistoryDataAccessor db = (AndroidBrowserHistoryDataAccessor) session.getDBHelper();
+
+    ArrayList<HistoryRecord> records = new ArrayList<HistoryRecord>();
+    records.add(HistoryHelpers.createHistory1());
+    records.add(HistoryHelpers.createHistory2());
+    records.add(HistoryHelpers.createHistory3());
+    db.bulkInsert(records, true);
+    assertTrue(records.get(0).androidID > 0); // Special sentinel value is negative.
+
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(records.toArray(new Record[0]))));
+
+    session.abort();
   }
 }
