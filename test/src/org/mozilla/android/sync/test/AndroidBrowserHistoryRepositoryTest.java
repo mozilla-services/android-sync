@@ -10,6 +10,7 @@ import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryRepository;
@@ -169,7 +170,66 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   public void testDeleteRemoteLocalNonexistent() {
     deleteRemoteLocalNonexistent(HistoryHelpers.createHistory2());
   }
-  
+
+  /**
+   * Exists to provide access to record string logic.
+   */
+  protected class HelperHistorySession extends AndroidBrowserHistoryRepositorySession {
+    public HelperHistorySession(Repository repository, Context context) {
+      super(repository, context);
+    }
+
+    public boolean sameRecordString(HistoryRecord r1, HistoryRecord r2) {
+      return buildRecordString(r1).equals(buildRecordString(r2));
+    }
+  }
+
+  /**
+   * Verifies that two history records with the same URI but different
+   * titles will be reconciled locally.
+   */
+  public void testRecordStringCollisionAndEquality() {
+    final AndroidBrowserHistoryRepository repo = new AndroidBrowserHistoryRepository();
+    final HelperHistorySession testSession = new HelperHistorySession(repo, getApplicationContext());
+
+    final long now = RepositorySession.now();
+
+    final HistoryRecord record0 = new HistoryRecord(null, "history", now + 1, false);
+    final HistoryRecord record1 = new HistoryRecord(null, "history", now + 2, false);
+    final HistoryRecord record2 = new HistoryRecord(null, "history", now + 3, false);
+
+    record0.histURI = "http://example.com/foo";
+    record1.histURI = "http://example.com/foo";
+    record2.histURI = "http://example.com/bar";
+    record0.title = "Foo 0";
+    record1.title = "Foo 1";
+    record2.title = "Foo 2";
+
+    // Ensure that two records with the same URI produce the same record string,
+    // and two records with different URIs do not.
+    assertTrue(testSession.sameRecordString(record0, record1));
+    assertFalse(testSession.sameRecordString(record0, record2));
+
+    // Two records are congruent if they have the same URI and their
+    // identifiers match (which is why these all have null GUIDs).
+    assertTrue(record0.congruentWith(record0));
+    assertTrue(record0.congruentWith(record1));
+    assertTrue(record1.congruentWith(record0));
+    assertFalse(record0.congruentWith(record2));
+    assertFalse(record1.congruentWith(record2));
+    assertFalse(record2.congruentWith(record1));
+    assertFalse(record2.congruentWith(record0));
+
+    // None of these records are equal, because they have different titles.
+    // (Except for being equal to themselves, of course.)
+    assertTrue(record0.equalPayloads(record0));
+    assertTrue(record1.equalPayloads(record1));
+    assertTrue(record2.equalPayloads(record2));
+    assertFalse(record0.equalPayloads(record1));
+    assertFalse(record1.equalPayloads(record0));
+    assertFalse(record1.equalPayloads(record2));
+  }
+
   /*
    * Tests for adding some visits to a history record
    * and doing a fetch.
