@@ -11,11 +11,8 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.InvalidSyncKeyException;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
-<<<<<<< HEAD
-=======
 import org.mozilla.gecko.sync.setup.auth.AccountAuthenticator;
 import org.mozilla.gecko.sync.setup.auth.AuthenticationResult;
->>>>>>> Account authentication error feedback strings into UI.
 
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;

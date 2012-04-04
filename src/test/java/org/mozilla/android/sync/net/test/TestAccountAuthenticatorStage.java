@@ -49,7 +49,7 @@ public class TestAccountAuthenticatorStage {
         try {
           String responseAuth = request.getValue("Authorization");
           // Trim whitespace, HttpResponse has an extra space?
-          if (expectedBasicAuthHeader.trim().equals(responseAuth.trim())) {
+          if (expectedBasicAuthHeader.equals(responseAuth.trim())) {
             code = 200;
           } else {
             code = 401;
@@ -65,7 +65,7 @@ public class TestAccountAuthenticatorStage {
       }
     };
     authServer.expectedBasicAuthHeader = authStage.makeAuthHeader(USERNAME, PASSWORD);
-    System.out.println("expected.{" + authServer.expectedBasicAuthHeader + "}");
+    System.out.println("expected: {" + authServer.expectedBasicAuthHeader + "}");
 
     // Authentication delegate to handle HTTP responses.
     testCallback = new AuthenticateAccountStageDelegate() {
@@ -93,15 +93,14 @@ public class TestAccountAuthenticatorStage {
             public void run() {
               String authHeader = authStage.makeAuthHeader(USERNAME, PASSWORD);
               try {
-                authStage.authenticateAccount(testCallback, TEST_SERVER,
-                    authHeader);
+                authStage.authenticateAccount(testCallback, TEST_SERVER, authHeader);
               } catch (URISyntaxException e) {
                 fail("Malformed URI.");
               }
             }
           });
           } catch (InnerError e) {
-
+            fail("testWaiter inner error.");
           }
         }
       }
@@ -109,14 +108,12 @@ public class TestAccountAuthenticatorStage {
       @Override
       public void handleFailure(HttpResponse response) {
         fail("Unexpected response " + response.getStatusLine().getStatusCode());
-        serverHelper.stopHTTPServer();
       }
 
       @Override
       public void handleError(Exception e) {
         System.out.println("handleError()");
         fail("Unexpected error during authentication.");
-        serverHelper.stopHTTPServer();
       }
     };
   }
@@ -132,8 +129,7 @@ public class TestAccountAuthenticatorStage {
     testWaiter().performWait(new Runnable() {
       @Override
       public void run() {
-        // Try auth request with incorrect password.
-        // We want to fail the first time.
+        // Try auth request with incorrect password. We want to fail the first time.
         String authHeader = authStage.makeAuthHeader(USERNAME, "wrong-password");
         try {
           authStage.authenticateAccount(testCallback, TEST_SERVER, authHeader);

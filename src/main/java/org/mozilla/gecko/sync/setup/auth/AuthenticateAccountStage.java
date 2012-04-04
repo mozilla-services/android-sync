@@ -12,13 +12,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
-import android.util.Base64;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -116,18 +116,21 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       @Override
       public void handleHttpResponse(HttpResponse response) {
         int statusCode = response.getStatusLine().getStatusCode();
-        switch(statusCode) {
-        case 200:
-          callbackDelegate.handleSuccess(true);
-          break;
-        case 401:
-          callbackDelegate.handleSuccess(false);
-          break;
-        default:
-          callbackDelegate.handleFailure(response);
+        try {
+          switch (statusCode) {
+          case 200:
+            callbackDelegate.handleSuccess(true);
+            break;
+          case 401:
+            callbackDelegate.handleSuccess(false);
+            break;
+          default:
+            callbackDelegate.handleFailure(response);
+          }
+        } finally {
+          BaseResource.consumeEntity(response.getEntity());
+          Logger.info(LOG_TAG, "Released entity.");
         }
-        BaseResource.consumeEntity(response.getEntity());
-        Logger.info(LOG_TAG, "Released entity.");
       }
 
       @Override
@@ -158,7 +161,13 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
   }
 
   public String makeAuthHeader(String usernameHash, String password) {
-    return "Basic " + Base64.encodeToString((usernameHash + ":" + password).getBytes(), Base64.DEFAULT);
+    String authHeader = null;
+    try {
+      authHeader = "Basic " + Base64.encodeBase64String((usernameHash + ":" + password).getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      Logger.debug(LOG_TAG, "Unsupported encoding: UTF-8.");
+    }
+    return authHeader;
   }
 
   public String makeAuthRequestUrl(String authServer, String usernameHash) {
