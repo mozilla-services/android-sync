@@ -205,6 +205,15 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   @Override
+  public void requestBackoff(long backoff) {
+    if (backoff > 0) {
+      // Fuzz the backoff time (up to 25% more) to prevent client lock-stepping; agrees with desktop.
+      backoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
+      this.extendEarliestNextSync(System.currentTimeMillis() + backoff);
+    }
+  }
+
+  @Override
   public void onPerformSync(final Account account,
                             final Bundle extras,
                             final String authority,
@@ -406,13 +415,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public void handleStageCompleted(Stage currentState,
                                    GlobalSession globalSession) {
     Logger.info(LOG_TAG, "Stage completed: " + currentState);
-  }
-
-  @Override
-  public void requestBackoff(long backoff) {
-    if (backoff > 0) {
-      this.extendEarliestNextSync(System.currentTimeMillis() + backoff);
-    }
   }
 
   @Override
