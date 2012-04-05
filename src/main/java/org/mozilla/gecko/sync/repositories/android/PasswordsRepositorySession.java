@@ -433,7 +433,7 @@ public class PasswordsRepositorySession extends
     String[] args = new String[] { origRecord.guid };
     updateTimes(newRecord);
     ContentValues cv = getContentValues(newRecord);
-    int updated = context.getContentResolver().update(getDeletedUri(), cv, where, args);
+    int updated = context.getContentResolver().update(getDataUri(), cv, where, args);
     if (updated != 1) {
       Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + origRecord.guid);
     }
