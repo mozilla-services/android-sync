@@ -61,8 +61,8 @@ public class PasswordsRepositorySession extends
     super(repository);
     this.context = context;
     passwordsProvider = context.getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
-    passwordsHelper = new QueryHelper(context, getUriDeleted(false), LOG_TAG);
-    deletedPasswordsHelper = new QueryHelper(context, getUriDeleted(true), LOG_TAG);
+    passwordsHelper = new QueryHelper(context, getDataUri(), LOG_TAG);
+    deletedPasswordsHelper = new QueryHelper(context, getDeletedUri(), LOG_TAG);
   }
 
   @Override
@@ -84,7 +84,7 @@ public class PasswordsRepositorySession extends
           Logger.debug(LOG_TAG, "Fetching guidsSince from data table.");
 
           String[] guidCols = new String[] { Passwords.GUID };
-          cursor = passwordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", guidCols, dateModifiedWhereDeleted(timestamp, false), null, null);
+          cursor = passwordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", guidCols, dateModifiedWhere(timestamp), null, null);
           if (cursor != null && cursor.moveToFirst()) {
             while (!cursor.isAfterLast()) {
               guids.add(RepoUtils.getStringFromCursor(cursor, Passwords.GUID));
@@ -97,7 +97,7 @@ public class PasswordsRepositorySession extends
           Logger.debug(LOG_TAG, "Fetching guidsSince from deleted table.");
 
           String[] deletedGuidCols = new String[] {DeletedColumns.GUID };
-          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", deletedGuidCols, dateModifiedWhereDeleted(timestamp, true), null, null);
+          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", deletedGuidCols, dateModifiedWhereDeleted(timestamp), null, null);
           if (cursor != null && cursor.moveToFirst()) {
             while (!cursor.isAfterLast()) {
               guids.add(RepoUtils.getStringFromCursor(cursor, DeletedColumns.GUID));
@@ -142,13 +142,13 @@ public class PasswordsRepositorySession extends
         try {
           // Fetch from data table.
           cursor = passwordsHelper.safeQuery(passwordsProvider, ".fetchSince",
-              getAllColumns(), dateModifiedWhereDeleted(timestamp, false), null, null);
+              getAllColumns(), dateModifiedWhere(timestamp), null, null);
           fetchFromCursorDeleted(cursor, false, filter, delegate);
           cursor.close();
 
           // Fetch from deleted table.
           cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".fetchSince",
-              getAllDeletedColumns(), dateModifiedWhereDeleted(timestamp, true), null, null);
+              getAllDeletedColumns(), dateModifiedWhereDeleted(timestamp), null, null);
           fetchFromCursorDeleted(cursor, true, filter, delegate);
           delegate.onFetchCompleted(end);
 
@@ -367,7 +367,7 @@ public class PasswordsRepositorySession extends
 
   @Override
   public void wipe(final RepositorySessionWipeDelegate delegate) {
-    Logger.info(LOG_TAG, "Wiping " + getUriDeleted(false) + ", " + getUriDeleted(true));
+    Logger.info(LOG_TAG, "Wiping " + getDataUri() + ", " + getDeletedUri());
 
     Runnable wipeRunnable = new Runnable() {
       @Override
@@ -376,8 +376,8 @@ public class PasswordsRepositorySession extends
           delegate.onWipeFailed(new InactiveSessionException(null));
         } else {
           // Wipe both data and deleted.
-          context.getContentResolver().delete(getUriDeleted(false), null, null);
-          context.getContentResolver().delete(getUriDeleted(true), null, null);
+          context.getContentResolver().delete(getDataUri(), null, null);
+          context.getContentResolver().delete(getDeletedUri(), null, null);
           delegate.onWipeSucceeded();
         }
       }
@@ -422,7 +422,7 @@ public class PasswordsRepositorySession extends
    */
   public PasswordRecord insert(PasswordRecord record) throws RemoteException {
     ContentValues cv = getContentValues(record);
-    Uri insertedUri = passwordsProvider.insert(getUriDeleted(false), cv);
+    Uri insertedUri = passwordsProvider.insert(getDataUri(), cv);
     record.androidID = RepoUtils.getAndroidIdFromUri(insertedUri);
     updateTimes(record);
     return record;
@@ -433,7 +433,7 @@ public class PasswordsRepositorySession extends
     String[] args = new String[] { origRecord.guid };
     updateTimes(newRecord);
     ContentValues cv = getContentValues(newRecord);
-    int updated = context.getContentResolver().update(getUriDeleted(false), cv, where, args);
+    int updated = context.getContentResolver().update(getDeletedUri(), cv, where, args);
     if (updated != 1) {
       Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + origRecord.guid);
     }
@@ -446,12 +446,12 @@ public class PasswordsRepositorySession extends
   }
 
   // Helper Functions.
-  private Uri getUriDeleted(boolean deleted) {
-    if (deleted) {
-      return BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI;
-    } else {
-      return BrowserContractHelpers.PASSWORDS_CONTENT_URI;
-    }
+  private Uri getDataUri() {
+    return BrowserContractHelpers.PASSWORDS_CONTENT_URI;
+  }
+
+  private Uri getDeletedUri() {
+    return BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI;
   }
 
   private String[] getAllColumns() {
@@ -463,18 +463,23 @@ public class PasswordsRepositorySession extends
   }
 
   /**
-   * Constructs the DB query string for entry age using the appropriate
-   * time column.
+   * Constructs the DB query string for entry age for deleted records.
    *
    * @param timestamp
    * @return String DB query string for dates to fetch.
    */
-  private String dateModifiedWhereDeleted(long timestamp, boolean deleted) {
-    if (deleted) {
-      return DeletedColumns.TIME_DELETED + " >= " + Long.toString(timestamp);
-    } else {
-      return Passwords.TIME_PASSWORD_CHANGED + " >= " + Long.toString(timestamp);
-    }
+  private String dateModifiedWhereDeleted(long timestamp) {
+    return DeletedColumns.TIME_DELETED + " >= " + Long.toString(timestamp);
+  }
+
+  /**
+   * Constructs the DB query string for entry age for (undeleted) records.
+   *
+   * @param timestamp
+   * @return String DB query string for dates to fetch.
+   */
+  private String dateModifiedWhere(long timestamp) {
+    return Passwords.TIME_PASSWORD_CHANGED + " >= " + Long.toString(timestamp);
   }
 
   /**
@@ -500,7 +505,7 @@ public class PasswordsRepositorySession extends
 
         return;
       }
-      Record r = passwordRecordFromCursorDeleted(cursor, deleted);
+      Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
       if (r != null) {
         if (filter == null || !filter.excludeRecord(r)) {
         Logger.debug(LOG_TAG, "Fetched record " + r);
@@ -533,7 +538,7 @@ public class PasswordsRepositorySession extends
       String where = Passwords.GUID + " = ?";
       cursor = passwordsHelper.safeQuery(passwordsProvider, ".store", BrowserContractHelpers.PasswordColumns, where, guidArg, null);
       if (cursor != null && cursor.moveToFirst()) {
-          record = passwordRecordFromCursorDeleted(cursor, false);
+          record = passwordRecordFromCursor(cursor);
           // Cursor will be closed in finally.
           return record;
       }
@@ -542,7 +547,7 @@ public class PasswordsRepositorySession extends
       where = DeletedPasswords.GUID + " = ?";
       cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".retrieveByGuid", BrowserContractHelpers.DeletedColumns, where, guidArg, null);
       if (cursor != null && cursor.moveToFirst()) {
-        record = passwordRecordFromCursorDeleted(cursor, true);
+        record = deletedPasswordRecordFromCursor(cursor);
       }
 
     } catch (RemoteException e) {
@@ -583,7 +588,7 @@ public class PasswordsRepositorySession extends
       cursor = passwordsHelper.safeQuery(passwordsProvider, ".findRecord", getAllColumns(), dataWhere, whereArgs, null);
       if (cursor.moveToFirst()) {
         while (!cursor.isAfterLast()) {
-          foundRecord = passwordRecordFromCursorDeleted(cursor, false);
+          foundRecord = passwordRecordFromCursor(cursor);
           // Filter query for matching username.
           if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
             Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
@@ -621,37 +626,41 @@ public class PasswordsRepositorySession extends
    * @return
    *        PasswordRecord populated from Cursor.
    */
-  private PasswordRecord passwordRecordFromCursorDeleted(Cursor cur, boolean deleted) {
+  private PasswordRecord passwordRecordFromCursor(Cursor cur) {
     if (cur == null || !cur.moveToFirst()) {
       return null;
     }
-    PasswordRecord rec;
-    if (deleted) {
-      String guid = RepoUtils.getStringFromCursor(cur, DeletedColumns.GUID);
-      long lastModified = RepoUtils.getLongFromCursor(cur, DeletedColumns.TIME_DELETED);
-      rec = new PasswordRecord(guid, COLLECTION, lastModified, true);
-      rec.androidID = RepoUtils.getLongFromCursor(cur, DeletedColumns.ID);
-    } else {
-      String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.GUID);
-      long lastModified = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
-      rec = new PasswordRecord(guid, COLLECTION, lastModified, false);
-      rec.id = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ID);
-      rec.hostname = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);
-      rec.httpRealm = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.HTTP_REALM);
-      rec.formSubmitURL = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.FORM_SUBMIT_URL);
-      rec.usernameField = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.USERNAME_FIELD);
-      rec.passwordField = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.PASSWORD_FIELD);
-      rec.encType = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENC_TYPE);
+    String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.GUID);
+    long lastModified = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
 
-      // TODO decryption of username/password here (Bug 711636)
-      rec.encryptedUsername = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
-      rec.encryptedPassword = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
+    PasswordRecord rec = new PasswordRecord(guid, COLLECTION, lastModified, false);
+    rec.id = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ID);
+    rec.hostname = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.HOSTNAME);
+    rec.httpRealm = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.HTTP_REALM);
+    rec.formSubmitURL = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.FORM_SUBMIT_URL);
+    rec.usernameField = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.USERNAME_FIELD);
+    rec.passwordField = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.PASSWORD_FIELD);
+    rec.encType = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENC_TYPE);
 
-      rec.timeCreated = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED);
-      rec.timeLastUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED);
-      rec.timePasswordChanged = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
-      rec.timesUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED);
+    // TODO decryption of username/password here (Bug 711636)
+    rec.encryptedUsername = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_USERNAME);
+    rec.encryptedPassword = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.ENCRYPTED_PASSWORD);
+
+    rec.timeCreated = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_CREATED);
+    rec.timeLastUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_LAST_USED);
+    rec.timePasswordChanged = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIME_PASSWORD_CHANGED);
+    rec.timesUsed = RepoUtils.getLongFromCursor(cur, BrowserContract.Passwords.TIMES_USED);
+    return rec;
+  }
+
+  private PasswordRecord deletedPasswordRecordFromCursor(Cursor cur) {
+    if (cur == null || !cur.moveToFirst()) {
+      return null;
     }
+    String guid = RepoUtils.getStringFromCursor(cur, DeletedColumns.GUID);
+    long lastModified = RepoUtils.getLongFromCursor(cur, DeletedColumns.TIME_DELETED);
+    PasswordRecord rec = new PasswordRecord(guid, COLLECTION, lastModified, true);
+    rec.androidID = RepoUtils.getLongFromCursor(cur, DeletedColumns.ID);
     return rec;
   }
 
