@@ -12,16 +12,13 @@ import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
-
-import android.content.ContentProviderClient;
-import android.content.Context;
-import android.net.Uri;
 
 /**
  * A <code>RepositorySession</code> is created and used thusly:
@@ -88,15 +85,6 @@ public abstract class RepositorySession {
   public abstract void fetchSince(long timestamp, RepositorySessionFetchRecordsDelegate delegate);
   public abstract void fetch(String[] guids, RepositorySessionFetchRecordsDelegate delegate) throws InactiveSessionException;
   public abstract void fetchAll(RepositorySessionFetchRecordsDelegate delegate);
-
-  protected ContentProviderClient getContentProvider(final Context context, final Uri uri) throws NoContentProviderException {
-
-    ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(uri);
-    if (client == null) {
-      throw new NoContentProviderException(uri);
-    }
-    return client;
-  }
 
   /**
    * Override this if you wish to short-circuit a sync when you know --

@@ -20,6 +20,7 @@ import org.mozilla.gecko.sync.repositories.RecordFilter;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils.QueryHelper;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
@@ -36,6 +37,17 @@ import android.os.RemoteException;
 
 public class PasswordsRepositorySession extends
     StoreTrackingRepositorySession {
+
+  public static class PasswordsRepository extends Repository {
+    @Override
+    public void createSession(RepositorySessionCreationDelegate delegate,
+        Context context) {
+      PasswordsRepositorySession session = new PasswordsRepositorySession(PasswordsRepository.this, context);
+      final RepositorySessionCreationDelegate deferredCreationDelegate = delegate.deferredCreationDelegate();
+      deferredCreationDelegate.onSessionCreated(session);
+    }
+
+  }
 
   private static final String LOG_TAG = "PasswordsRepoSession";
   private static String COLLECTION = "passwords";
@@ -60,7 +72,7 @@ public class PasswordsRepositorySession extends
      @Override
      public void run() {
         if (!isActive()) {
-          delegate.onGuidsSinceFailed(new InactiveSessionException());
+          delegate.onGuidsSinceFailed(new InactiveSessionException(null));
           return;
         }
 
@@ -116,7 +128,7 @@ public class PasswordsRepositorySession extends
       final RepositorySessionFetchRecordsDelegate delegate) {
 
     if (!isActive()) {
-      delegate.onFetchFailed(new InactiveSessionException(), null);
+      delegate.onFetchFailed(new InactiveSessionException(null), null);
       return;
     }
 
@@ -148,7 +160,9 @@ public class PasswordsRepositorySession extends
           delegate.onFetchFailed(e, null);
         } finally {
           Logger.info(LOG_TAG, "Closing cursor after fetch.");
-          cursor.close();
+          if (cursor != null) {
+            cursor.close();
+          }
         }
       }
     };
@@ -160,7 +174,7 @@ public class PasswordsRepositorySession extends
       final RepositorySessionFetchRecordsDelegate delegate) {
 
     if (!isActive()) {
-      delegate.onFetchFailed(new InactiveSessionException(), null);
+      delegate.onFetchFailed(new InactiveSessionException(null), null);
       return;
     }
     if (guids == null || guids.length < 1) {
@@ -237,7 +251,7 @@ public class PasswordsRepositorySession extends
       public void run() {
         if (!isActive()) {
           Logger.warn(LOG_TAG, "RepositorySession is inactive. Store failing.");
-          delegate.onRecordStoreFailed(new InactiveSessionException());
+          delegate.onRecordStoreFailed(new InactiveSessionException(null));
           return;
         }
 
@@ -359,7 +373,7 @@ public class PasswordsRepositorySession extends
       @Override
       public void run() {
         if (!isActive()) {
-          delegate.onWipeFailed(new InactiveSessionException());
+          delegate.onWipeFailed(new InactiveSessionException(null));
         } else {
           // Wipe both data and deleted.
           context.getContentResolver().delete(getUriDeleted(false), null, null);

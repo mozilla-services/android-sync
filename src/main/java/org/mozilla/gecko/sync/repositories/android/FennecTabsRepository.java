@@ -22,6 +22,7 @@ import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
 import android.content.ContentProviderClient;
 import android.content.ContentValues;
 import android.content.Context;
+import android.net.Uri;
 import android.os.RemoteException;
 
 public class FennecTabsRepository extends Repository {
@@ -40,6 +41,15 @@ public class FennecTabsRepository extends Repository {
 
     private final ContentProviderClient tabsProvider;
     private final ContentProviderClient clientsProvider;
+
+    protected ContentProviderClient getContentProvider(final Context context, final Uri uri) throws NoContentProviderException {
+
+      ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(uri);
+      if (client == null) {
+        throw new NoContentProviderException(uri);
+      }
+      return client;
+    }
 
     protected void releaseProviders() {
       try {

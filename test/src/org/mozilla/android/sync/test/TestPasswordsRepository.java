@@ -14,7 +14,6 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
-import org.mozilla.gecko.sync.repositories.PasswordsRepository;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
@@ -249,7 +248,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
      * Override this chain in order to avoid our test code having to create two
      * sessions all the time. Don't track records, so they filtering doesn't happen.
      */
-    return new PasswordsRepository() {
+    return new PasswordsRepositorySession.PasswordsRepository() {
       @Override
       public void createSession(RepositorySessionCreationDelegate delegate,
           Context context) {
