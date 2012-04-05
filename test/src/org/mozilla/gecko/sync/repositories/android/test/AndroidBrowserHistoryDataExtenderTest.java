@@ -1,14 +1,16 @@
 /* Any copyright is dedicated to the Public Domain.
-http://creativecommons.org/publicdomain/zero/1.0/ */
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.gecko.sync.repositories.android.test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -16,6 +18,7 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserHistoryDataExtender;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
+import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 
 import android.database.Cursor;
 import android.util.Log;
@@ -117,6 +120,21 @@ public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
       if (cur != null) {
         cur.close();
       }
+    }
+  }
+
+  public void testBulkInsert() throws NullCursorException {
+    ArrayList<HistoryRecord> records = new ArrayList<HistoryRecord>();
+    records.add(HistoryHelpers.createHistory1());
+    records.add(HistoryHelpers.createHistory2());
+    records.add(HistoryHelpers.createHistory3());
+    extender.bulkInsert(records);
+
+    for (HistoryRecord record : records) {
+      HistoryRecord toCompare = (HistoryRecord) record.copyWithIDs(record.guid, record.androidID);
+      toCompare.visits = extender.visitsForGUID(record.guid);
+      assertEquals(record.visits.size(), toCompare.visits.size());
+      assertTrue(record.equals(toCompare));
     }
   }
 }
