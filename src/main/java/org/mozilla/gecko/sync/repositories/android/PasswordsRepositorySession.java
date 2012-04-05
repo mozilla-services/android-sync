@@ -589,7 +589,9 @@ public class PasswordsRepositorySession extends
       if (cursor.moveToFirst()) {
         while (!cursor.isAfterLast()) {
           foundRecord = passwordRecordFromCursor(cursor);
-          // Filter query for matching username.
+          // NOTE: We don't directly query for username because the username/password values are encrypted in the db.
+          // We don't have the keys for encrypting our query, so we run a more general query and then filter the
+          // the returned records for a matching username.
           if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
             Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
             return foundRecord;
