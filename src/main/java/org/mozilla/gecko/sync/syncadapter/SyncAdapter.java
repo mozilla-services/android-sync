@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync.syncadapter;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +44,17 @@ import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.os.Handler;
 
+/**
+ * There are two sync schedules to keep in mind.
+ * <ol>
+ * <li>Android will ask us to sync regularly. We can control Android by
+ * setting <code>syncResult.delayUntil</code> to a number of seconds in the
+ * future.</li>
+ * <li>We have our internal sync schedule. This depends on server back off
+ * requests, whether the cluster URL is stale, whether a new client has been
+ * recently added, etc.</li>
+ * </ol>
+ */
 public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback, ClientsDataDelegate {
   private static final String  LOG_TAG = "SyncAdapter";
 
@@ -51,9 +63,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   private static final String  PREFS_CLUSTER_URL_IS_STALE = "clusterurlisstale";
 
   private static final int     SHARED_PREFERENCES_MODE = 0;
-  private static final int     BACKOFF_PAD_SECONDS = 5;
-  public  static final int     MULTI_DEVICE_INTERVAL_MILLISECONDS = 5 * 60 * 1000;         // 5 minutes.
+  public  static final int     MULTI_DEVICE_INTERVAL_MILLISECONDS =        5 * 60 * 1000;  // 5 minutes.
   public  static final int     SINGLE_DEVICE_INTERVAL_MILLISECONDS = 24 * 60 * 60 * 1000;  // 24 hours.
+  public  static final int     SHORT_ANDROID_DELAY_UNTIL  =      30; // 30 seconds.
+  public  static final int     NORMAL_ANDROID_DELAY_UNTIL = 60 * 02; // 2 minutes.
 
   private final AccountManager mAccountManager;
   private final Context        mContext;
@@ -69,27 +82,92 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     return mContext.getSharedPreferences("sync.prefs.global", SHARED_PREFERENCES_MODE);
   }
 
+  private SharedPreferences getUserPrefs() {
+    if (username == null) {
+      throw new IllegalArgumentException("Null username in getUserPrefs.");
+    }
+    if (serverURL == null) {
+      throw new IllegalArgumentException("Null serverURL in getUserPrefs.");
+    }
+
+    try {
+      return Utils.getSharedPreferences(mContext, username, serverURL);
+    } catch (NoSuchAlgorithmException e) {
+      Logger.error(LOG_TAG, "Got exception fetching user shared preferences.", e);
+      throw new RuntimeException(e);
+    } catch (UnsupportedEncodingException e) {
+      Logger.error(LOG_TAG, "Got exception fetching user shared preferences.", e);
+      throw new RuntimeException(e);
+    }
+  }
+
   /**
    * Backoff.
    */
-  public synchronized long getEarliestNextSync() {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
-    return sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0);
+  protected synchronized long getEarliestNextSync() {
+    return getUserPrefs().getLong(PREFS_EARLIEST_NEXT_SYNC, 0);
   }
-  public synchronized void setEarliestNextSync(long next) {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
-    Editor edit = sharedPreferences.edit();
-    edit.putLong(PREFS_EARLIEST_NEXT_SYNC, next);
-    edit.commit();
+
+  protected synchronized void setEarliestNextSync(long next) {
+    getUserPrefs().edit().putLong(PREFS_EARLIEST_NEXT_SYNC, next).commit();
   }
-  public synchronized void extendEarliestNextSync(long next) {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
-    if (sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0) >= next) {
+
+  public synchronized void extendEarliestNextSync(long until) {
+    SharedPreferences sharedPreferences = getUserPrefs();
+    if (sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0) >= until) {
       return;
     }
-    Editor edit = sharedPreferences.edit();
-    edit.putLong(PREFS_EARLIEST_NEXT_SYNC, next);
-    edit.commit();
+    sharedPreferences.edit().putLong(PREFS_EARLIEST_NEXT_SYNC, until).commit();
+  }
+
+  public synchronized void doNotSyncForAtLeast(long delay) {
+    long now = System.currentTimeMillis();
+    extendEarliestNextSync(now + delay);
+  }
+
+  public long timeUntilNextSync() {
+    long earliestNextSync = getEarliestNextSync();
+    long now = System.currentTimeMillis();
+    return Math.max(0, earliestNextSync - now);
+  }
+
+  /**
+   * There are two sync schedules to keep in mind, and this method updates the
+   * Android schedule.
+   * @see SyncAdapter
+   */
+  protected void scheduleNextAndroidSync() {
+    long nowSeconds = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+    if (getClusterURLIsStale()) {
+      Logger.info(LOG_TAG, "Scheduling next Android sync to happen immediately, " +
+          "since we want a fresh node assignment.");
+      syncResult.delayUntil = nowSeconds + SHORT_ANDROID_DELAY_UNTIL;
+      return;
+    }
+
+    syncResult.delayUntil = nowSeconds + NORMAL_ANDROID_DELAY_UNTIL;
+    Logger.info(LOG_TAG, "Scheduling next Android sync to happen in "
+        + NORMAL_ANDROID_DELAY_UNTIL + " seconds, at " + syncResult.delayUntil + " seconds.");
+  }
+
+  /**
+   * There are two sync schedules to keep in mind, and this method updates our
+   * internal schedule.
+   * @see SyncAdapter
+   */
+  protected void scheduleNextSync() {
+    if (getClusterURLIsStale()) {
+      Logger.info(LOG_TAG, "Scheduling next sync to happen immediately, " +
+          "since we want a fresh node assignment.");
+      setEarliestNextSync(0); // We want to get the new cluster URL ASAP.
+      return;
+    }
+
+    long delay = getSyncInterval();
+    Logger.info(LOG_TAG, "Scheduling next sync to happen in "
+        + delay + " milliseconds.");
+    doNotSyncForAtLeast(delay);
   }
 
   public synchronized boolean getShouldInvalidateAuthToken() {
@@ -102,6 +180,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     edit.remove(PREFS_INVALIDATE_AUTH_TOKEN);
     edit.commit();
   }
+
   public synchronized void setShouldInvalidateAuthToken() {
     SharedPreferences sharedPreferences = getGlobalPrefs();
     Editor edit = sharedPreferences.edit();
@@ -172,25 +251,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   public Object syncMonitor = new Object();
   private SyncResult syncResult;
-
+  private String username;
+  private String serverURL;
   public Account localAccount;
-
-  /**
-   * Return the number of milliseconds until we're allowed to sync again,
-   * or 0 if now is fine.
-   */
-  public long delayMilliseconds() {
-    long earliestNextSync = getEarliestNextSync();
-    if (earliestNextSync <= 0) {
-      return 0;
-    }
-    long now = System.currentTimeMillis();
-    return Math.max(0, earliestNextSync - now);
-  }
 
   @Override
   public boolean shouldBackOff() {
-    if (wantNodeAssignment()) {
+    if (getClusterURLIsStale()) {
       /*
        * We recently had a 401 and we aborted the last sync. We should kick off
        * another sync to fetch a new node/weave cluster URL, since ours is
@@ -201,7 +268,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       return false;
     }
 
-    return delayMilliseconds() > 0;
+    return timeUntilNextSync() > 0;
   }
 
   @Override
@@ -209,7 +276,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     if (backoff > 0) {
       // Fuzz the backoff time (up to 25% more) to prevent client lock-stepping; agrees with desktop.
       backoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
-      this.extendEarliestNextSync(System.currentTimeMillis() + backoff);
+      doNotSyncForAtLeast(backoff);
     }
   }
 
@@ -220,19 +287,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
     Utils.reseedSharedRandom(); // Make sure we don't work with the same random seed for too long.
-
-    boolean force = (extras != null) && (extras.getBoolean("force", false));
-    long delay = delayMilliseconds();
-    if (delay > 0) {
-      if (force) {
-        Logger.info(LOG_TAG, "Forced sync: overruling remaining backoff of " + delay + "ms.");
-      } else {
-        Logger.info(LOG_TAG, "Not syncing: must wait another " + delay + "ms.");
-        long remainingSeconds = delay / 1000;
-        syncResult.delayUntil = remainingSeconds + BACKOFF_PAD_SECONDS;
-        return;
-      }
-    }
 
     // TODO: don't clear the auth token unless we have a sync error.
     Logger.info(LOG_TAG, "Got onPerformSync. Extras bundle is " + extras);
@@ -308,9 +362,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       Logger.info(LOG_TAG, "Waiting on sync monitor.");
       try {
         syncMonitor.wait();
-        long next = System.currentTimeMillis() + getSyncInterval();
-        Logger.info(LOG_TAG, "Setting minimum next sync time to " + next);
-        extendEarliestNextSync(next);
+        Logger.info(LOG_TAG, "Sync monitor notified.");
       } catch (InterruptedException e) {
         Logger.debug(LOG_TAG, "Waiting on sync monitor interrupted.", e);
       } finally {
@@ -318,7 +370,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         stale.shutdown();
       }
     }
- }
+  }
 
   public int getSyncInterval() {
     int clientsCount = this.getClientsCount();
@@ -353,10 +405,26 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                                         AlreadySyncingException,
                                         IOException, ParseException,
                                         NonObjectJSONException {
-    Logger.info(LOG_TAG, "Performing sync.");
     this.syncResult   = syncResult;
     this.localAccount = account;
+    this.username     = username;
+    this.serverURL    = serverURL;
 
+    if (shouldBackOff()) {
+      boolean force = (extras != null) && (extras.getBoolean("force", false));
+      if (!force) {
+        long delay = getEarliestNextSync() - System.currentTimeMillis();
+        Logger.info(LOG_TAG, "Not syncing: must wait another " + delay + " milliseconds.");
+        // Schedule the next Android sync, don't change our internal sync
+        // schedule at all, and don't actually run the sync.
+        scheduleNextAndroidSync();
+        notifyMonitor();
+        return;
+      }
+      Logger.info(LOG_TAG, "Forcing sync.");
+    }
+
+    Logger.info(LOG_TAG, "Performing sync.");
     // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
                                                     serverURL, username, password, prefsPath,
@@ -378,12 +446,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     Logger.info(LOG_TAG, "GlobalSession indicated error. Flagging auth token as invalid, just in case.");
     setShouldInvalidateAuthToken();
     this.updateStats(globalSession, ex);
+    scheduleNextSync();
+    scheduleNextAndroidSync();
     notifyMonitor();
   }
 
   @Override
   public void handleAborted(GlobalSession globalSession, String reason) {
     Logger.warn(LOG_TAG, "Sync aborted: " + reason);
+    scheduleNextSync();
+    scheduleNextAndroidSync();
     notifyMonitor();
   }
 
@@ -408,6 +480,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     Logger.info(LOG_TAG, "GlobalSession indicated success.");
     Logger.info(LOG_TAG, "Prefs target: " + globalSession.config.prefsPath);
     globalSession.config.persistToPrefs();
+    scheduleNextSync();
+    scheduleNextAndroidSync();
     notifyMonitor();
   }
 
@@ -468,12 +542,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   public synchronized boolean getClusterURLIsStale() {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getUserPrefs();
     return sharedPreferences.getBoolean(PREFS_CLUSTER_URL_IS_STALE, false);
   }
 
   public synchronized void setClusterURLIsStale(boolean clusterURLIsStale) {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getUserPrefs();
     Editor edit = sharedPreferences.edit();
     edit.putBoolean(PREFS_CLUSTER_URL_IS_STALE, clusterURLIsStale);
     edit.commit();
