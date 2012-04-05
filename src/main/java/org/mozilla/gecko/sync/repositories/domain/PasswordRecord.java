@@ -138,6 +138,15 @@ public class PasswordRecord extends Record {
     Logger.debug("PasswordRecord", "thisRecord:" + this.toString());
     Logger.debug("PasswordRecord", "otherRecord:" + o.toString());
 
+    if (this.deleted) {
+      if (other.deleted) {
+        // Deleted records are equal if their guids match.
+        return RepoUtils.stringsEqual(this.guid, other.guid);
+      }
+      // One record is deleted, the other is not. Not equal.
+      return false;
+    }
+
     if (!super.equalPayloads(other)) {
       Logger.debug(LOG_TAG, "super.equalPayloads returned false.");
       return false;
@@ -153,10 +162,6 @@ public class PasswordRecord extends Record {
         && RepoUtils.stringsEqual(this.encryptedUsername, other.encryptedUsername)
         && RepoUtils.stringsEqual(this.encryptedPassword, other.encryptedPassword);
         // Desktop sync never sets timeCreated so this isn't relevant for sync records.
-        // && (this.timeCreated == other.timeCreated)
-//        && (this.timeLastUsed == other.timeLastUsed)
-//        && (this.timePasswordChanged == other.timePasswordChanged)
-//        && (this.timesUsed == other.timesUsed);
   }
 
   @Override
