@@ -18,3 +18,17 @@
             android:name="org.mozilla.gecko.sync.setup.activities.SetupFailureActivity" />
         <activity
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />
+        <activity
+            android:icon="@drawable/sync_ic_launcher"
+            android:label="@string/sync_app_name"
+            android:configChanges="orientation"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:taskAffinity="org.mozilla.gecko.sync.setup"
+            android:name="org.mozilla.gecko.sync.setup.activities.SendTabActivity" >
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+        </activity>
