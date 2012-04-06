@@ -101,3 +101,7 @@
 <!ENTITY sync.new.recoverykey.introtext        'Your Recovery Key was changed using another device. Please enter your updated Recovery Key.'>
 <!ENTITY sync.new.recoverykey.acceptbutton     'Update Recovery Key'>
 <!ENTITY sync.new.recoverykey.status.incorrect 'Recovery Key incorrect. Please try again.'>
+
+<!-- Push tab to device strings -->
+<!ENTITY sync.title.send.tab.label 'Send Tab To Devices'>
+<!ENTITY sync.button.send.label 'Send'>
