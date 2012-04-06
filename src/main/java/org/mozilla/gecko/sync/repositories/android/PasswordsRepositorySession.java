@@ -46,7 +46,6 @@ public class PasswordsRepositorySession extends
       final RepositorySessionCreationDelegate deferredCreationDelegate = delegate.deferredCreationDelegate();
       deferredCreationDelegate.onSessionCreated(session);
     }
-
   }
 
   private static final String LOG_TAG = "PasswordsRepoSession";
@@ -63,6 +62,7 @@ public class PasswordsRepositorySession extends
     passwordsProvider = context.getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
     passwordsHelper = new QueryHelper(context, getDataUri(), LOG_TAG);
     deletedPasswordsHelper = new QueryHelper(context, getDeletedUri(), LOG_TAG);
+    dumpDbs();
   }
 
   @Override
@@ -319,6 +319,7 @@ public class PasswordsRepositorySession extends
         if (existingRecord == null) {
           // The record is new.
           trace("No match. Inserting.");
+          Logger.debug(LOG_TAG, "Didn't find matching record. Inserting.");
           Record inserted = null;
           try {
             inserted = insert(remoteRecord);
@@ -334,6 +335,7 @@ public class PasswordsRepositorySession extends
 
         // We found a local dupe.
         trace("Incoming record " + remoteRecord.guid + " dupes to local record " + existingRecord.guid);
+        Logger.debug(LOG_TAG, "remote " + remoteRecord + " dupes to " + existingRecord);
         Record toStore = reconcileRecords(remoteRecord, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);
 
         if (toStore == null) {
@@ -421,28 +423,37 @@ public class PasswordsRepositorySession extends
    * @throws RemoteException
    */
   public PasswordRecord insert(PasswordRecord record) throws RemoteException {
+    record.timePasswordChanged = now();
+    // TODO: are these necessary for Fennec autocomplete?
+    // record.timesUsed = 1;
+    // record.timeLastUsed = now();
     ContentValues cv = getContentValues(record);
     Uri insertedUri = passwordsProvider.insert(getDataUri(), cv);
     record.androidID = RepoUtils.getAndroidIdFromUri(insertedUri);
-    updateTimes(record);
     return record;
   }
 
   public Record replace(Record origRecord, Record newRecord) throws RemoteException {
+    PasswordRecord newPasswordRecord = (PasswordRecord) newRecord;
+    PasswordRecord origPasswordRecord = (PasswordRecord) origRecord;
     String where  = Passwords.GUID + " = ?";
     String[] args = new String[] { origRecord.guid };
-    updateTimes(newRecord);
-    ContentValues cv = getContentValues(newRecord);
+
+    propagateTimes(newPasswordRecord, origPasswordRecord);
+    ContentValues cv = getContentValues(newPasswordRecord);
     int updated = context.getContentResolver().update(getDataUri(), cv, where, args);
     if (updated != 1) {
-      Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + origRecord.guid);
+      Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + origPasswordRecord.guid);
     }
     return newRecord;
   }
 
-  private void updateTimes(Record record) {
-    PasswordRecord passwordRecord = (PasswordRecord) record;
-    passwordRecord.timePasswordChanged = now();
+  // When replacing a record, propagate the times.
+  private void propagateTimes(PasswordRecord toRecord, PasswordRecord fromRecord) {
+    toRecord.timePasswordChanged = now();
+    toRecord.timeCreated = fromRecord.timeCreated;
+    toRecord.timeLastUsed = fromRecord.timeLastUsed;
+    toRecord.timesUsed = fromRecord.timesUsed;
   }
 
   // Helper Functions.
@@ -502,14 +513,13 @@ public class PasswordsRepositorySession extends
     // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
     for (int i = 0; i <= cursorLen; i++) {
       if (!cursor.moveToPosition(i)) {
-
         return;
       }
       Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
       if (r != null) {
         if (filter == null || !filter.excludeRecord(r)) {
-        Logger.debug(LOG_TAG, "Fetched record " + r);
-        delegate.onFetchedRecord(r);
+          Logger.debug(LOG_TAG, "Fetched record " + r);
+          delegate.onFetchedRecord(r);
         } else {
           Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
         }
@@ -586,20 +596,30 @@ public class PasswordsRepositorySession extends
       };
     try {
       cursor = passwordsHelper.safeQuery(passwordsProvider, ".findRecord", getAllColumns(), dataWhere, whereArgs, null);
-      if (cursor.moveToFirst()) {
-        while (!cursor.isAfterLast()) {
-          foundRecord = passwordRecordFromCursor(cursor);
-          // NOTE: We don't directly query for username because the username/password values are encrypted in the db.
-          // We don't have the keys for encrypting our query, so we run a more general query and then filter the
-          // the returned records for a matching username.
-          if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
-            Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
-            return foundRecord;
-          }
-          cursor.moveToNext();
+      if (!cursor.moveToFirst()) {
+        // Empty cursor.
+        return null;
+      }
+      int cursorLen = cursor.getCount();
+      // Hack: cursor sometimes gets in an infinite loop when using
+      // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
+      for (int i = 0; i <= cursorLen; i++) {
+        if (!cursor.moveToPosition(i)) {
+          return null;
+        }
+        Logger.debug(LOG_TAG, "find cursor at pos " + i);
+        foundRecord = passwordRecordFromCursor(cursor);
+        // NOTE: We don't directly query for username because the
+        // username/password values are encrypted in the db.
+        // We don't have the keys for encrypting our query, so we run a more
+        // general query and then filter the
+        // the returned records for a matching username.
+        Logger.debug(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
+        if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
+          Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
+          return foundRecord;
         }
       }
-      Logger.debug(LOG_TAG, "Found record: " + foundRecord);
     } catch (RemoteException e) {
       Logger.error(LOG_TAG, "Remote exception in findExistingRecord.");
       delegate.onRecordStoreFailed(e);
@@ -691,5 +711,30 @@ public class PasswordsRepositorySession extends
     cv.put(BrowserContract.Passwords.TIME_PASSWORD_CHANGED, rec.timePasswordChanged);
     cv.put(BrowserContract.Passwords.TIMES_USED,            rec.timesUsed);
     return cv;
+  }
+
+  private void dumpDbs() {
+    Logger.debug(LOG_TAG, "passwordsProvider: ");
+      try {
+        Cursor cursor = passwordsHelper.safeQuery(passwordsProvider, ".dumpDBs", getAllColumns(), dateModifiedWhere(0), null, null);
+        RepoUtils.dumpCursor(cursor);
+      } catch (NullCursorException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (RemoteException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    Logger.debug(LOG_TAG, "deletedPasswordsProvider: ");
+      try {
+        Cursor cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".dumpDBs", getAllDeletedColumns(), dateModifiedWhereDeleted(0), null, null);
+        RepoUtils.dumpCursor(cursor);
+      } catch (NullCursorException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (RemoteException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
   }
 }
