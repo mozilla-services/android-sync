@@ -5,6 +5,7 @@
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -80,6 +81,7 @@ public class TestAccountAuthenticatorStage {
         if (isSuccess) {
           // Succeed on retry (after failing first attempt).
           assertEquals(1, numFailedTries);
+//          innerWaitTester.performNotify();
           testWaiter().performNotify();
         } else {
           numFailedTries++;
@@ -91,21 +93,21 @@ public class TestAccountAuthenticatorStage {
 
           // Failed on first try as expected, retry request with correct
           // credentials.
-          try {
-          testWaiter().performWait(new Runnable() {
-            @Override
-            public void run() {
+//          try {
+//          innerWaitTester.performWait(new Runnable() {
+//            @Override
+//            public void run() {
               String authHeader = authStage.makeAuthHeader(USERNAME, PASSWORD);
               try {
                 authStage.authenticateAccount(testCallback, TEST_SERVER, authHeader);
               } catch (URISyntaxException e) {
                 fail("Malformed URI.");
               }
-            }
-          });
-          } catch (InnerError e) {
-            fail("testWaiter inner error.");
-          }
+//            }
+//          });
+//          } catch (InnerError e) {
+//            fail("testWaiter inner error.");
+//          }
         }
       }
 
@@ -120,11 +122,16 @@ public class TestAccountAuthenticatorStage {
         fail("Unexpected error during authentication.");
       }
     };
+    assertTrue(testWaiter().isIdle());
+//    assertTrue(innerWaitTester.isIdle());
+    
   }
 
   @After
   public void cleanup() {
     serverHelper.stopHTTPServer();
+    assertTrue(testWaiter().isIdle());
+//    assertTrue(innerWaitTester.isIdle());
   }
 
   @Test
