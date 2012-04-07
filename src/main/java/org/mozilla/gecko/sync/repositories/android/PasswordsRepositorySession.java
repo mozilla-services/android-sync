@@ -494,7 +494,7 @@ public class PasswordsRepositorySession extends
   }
 
   /**
-   * Helper function to process records from a fetch* cursor.
+   * Helper function to process records from a fetch* cursor. Caller is responsible for closing cursor.
    * @param cursor
             fetch* cursor.
    * @param deleted
@@ -508,13 +508,12 @@ public class PasswordsRepositorySession extends
       // Empty cursor.
       return;
     }
-    int cursorLen = cursor.getCount();
-    // Hack: cursor sometimes gets in an infinite loop when using
-    // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
-    for (int i = 0; i <= cursorLen; i++) {
-      if (!cursor.moveToPosition(i)) {
-        return;
-      }
+    int counter = 0;
+    while (!cursor.isAfterLast()) {
+      Logger.debug(LOG_TAG, "cursorCount(): " + cursor.getCount());
+      Logger.debug(LOG_TAG, "cursorPosition(): " + cursor.getPosition());
+      Logger.debug(LOG_TAG, "counter: " + counter++);
+
       Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
       if (r != null) {
         if (filter == null || !filter.excludeRecord(r)) {
@@ -524,7 +523,28 @@ public class PasswordsRepositorySession extends
           Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
         }
       }
+      // Advance cursor.
+      cursor.moveToNext();
     }
+
+    // TODO: remove hack to get around infinite looping when fixed.
+//    int cursorLen = cursor.getCount();
+//    // Hack: cursor sometimes gets in an infinite loop when using
+//    // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
+//    for (int i = 0; i <= cursorLen; i++) {
+//      if (!cursor.moveToPosition(i)) {
+//        return;
+//      }
+//      Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
+//      if (r != null) {
+//        if (filter == null || !filter.excludeRecord(r)) {
+//          Logger.debug(LOG_TAG, "Fetched record " + r);
+//          delegate.onFetchedRecord(r);
+//        } else {
+//          Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
+//        }
+//      }
+//    }
   }
 
   // TODO: move to RepoUtils?
@@ -600,14 +620,12 @@ public class PasswordsRepositorySession extends
         // Empty cursor.
         return null;
       }
-      int cursorLen = cursor.getCount();
-      // Hack: cursor sometimes gets in an infinite loop when using
-      // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
-      for (int i = 0; i <= cursorLen; i++) {
-        if (!cursor.moveToPosition(i)) {
-          return null;
-        }
-        Logger.debug(LOG_TAG, "find cursor at pos " + i);
+      int counter = 0;
+      while (!cursor.isAfterLast()) {
+        Logger.debug(LOG_TAG, "cursorCount(): " + cursor.getCount());
+        Logger.debug(LOG_TAG, "cursorPosition(): " + cursor.getPosition());
+        Logger.debug(LOG_TAG, "counter: " + counter++);
+
         foundRecord = passwordRecordFromCursor(cursor);
         // NOTE: We don't directly query for username because the
         // username/password values are encrypted in the db.
@@ -619,7 +637,30 @@ public class PasswordsRepositorySession extends
           Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
           return foundRecord;
         }
+        cursor.moveToNext();
       }
+      
+      // TODO: remove hack to prevent infinite loops.
+//      int cursorLen = cursor.getCount();
+//      // Hack: cursor sometimes gets in an infinite loop when using
+//      // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
+//      for (int i = 0; i <= cursorLen; i++) {
+//        if (!cursor.moveToPosition(i)) {
+//          return null;
+//        }
+//        Logger.debug(LOG_TAG, "find cursor at pos " + i);
+//        foundRecord = passwordRecordFromCursor(cursor);
+//        // NOTE: We don't directly query for username because the
+//        // username/password values are encrypted in the db.
+//        // We don't have the keys for encrypting our query, so we run a more
+//        // general query and then filter the
+//        // the returned records for a matching username.
+//        Logger.debug(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
+//        if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
+//          Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
+//          return foundRecord;
+//        }
+//      }
     } catch (RemoteException e) {
       Logger.error(LOG_TAG, "Remote exception in findExistingRecord.");
       delegate.onRecordStoreFailed(e);
