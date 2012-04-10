@@ -144,7 +144,45 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
       cv.put(BrowserContract.Bookmarks.POSITION, position);
     }
     updateByGuid(guid, cv);
-  } 
+  }
+
+  protected Map<String, Long> idsForGUIDs(String[] guids) throws NullCursorException {
+    final String where = RepoUtils.computeSQLInClause(guids.length, BrowserContract.Bookmarks.GUID);
+    Cursor c = queryHelper.safeQuery(".idsForGUIDs", GUID_AND_ID, where, guids, null);
+    HashMap<String, Long> out = new HashMap<String, Long>();
+    if (!c.moveToFirst()) {
+      return out;
+    }
+    final int guidIndex = c.getColumnIndexOrThrow(BrowserContract.Bookmarks.GUID);
+    final int idIndex = c.getColumnIndexOrThrow(BrowserContract.Bookmarks._ID);
+    while (!c.isAfterLast()) {
+      out.put(c.getString(guidIndex), c.getLong(idIndex));
+      c.moveToNext();
+    }
+    return out;
+  }
+
+  /**
+   * Move the children of each source folder to the destination folder.
+   * Bump the modified time of each child.
+   * The caller should bump the modified time of the destination if desired.
+   *
+   * @param from the source folders.
+   * @param to the destination folder.
+   * @return the number of updated rows.
+   */
+  protected int moveChildren(String[] fromIDs, long to) {
+    long now = System.currentTimeMillis();
+    long pos = -1;
+
+    ContentValues cv = new ContentValues();
+    cv.put(BrowserContract.Bookmarks.PARENT, to);
+    cv.put(BrowserContract.Bookmarks.DATE_MODIFIED, now);
+    cv.put(BrowserContract.Bookmarks.POSITION, pos);
+
+    final String where = RepoUtils.computeSQLInClause(fromIDs.length, BrowserContract.Bookmarks.PARENT);
+    return context.getContentResolver().update(getUri(), cv, where, fromIDs);
+  }
   
   /*
    * Verify that all special GUIDs are present and that they aren't marked as deleted.
