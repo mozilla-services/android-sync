@@ -4,9 +4,12 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
+import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ListView;
 
@@ -23,7 +26,7 @@ public class SendTabActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.sync_send_tab);
 
-    arrayAdapter = new ClientRecordArrayAdapter(this, R.layout.sync_list_item, getDeviceMap());
+    arrayAdapter = new ClientRecordArrayAdapter(this, R.layout.sync_list_item, getClientArray());
 
     listview = (ListView) findViewById(R.id.device_list);
     listview.setAdapter(arrayAdapter);
@@ -34,17 +37,16 @@ public class SendTabActivity extends Activity {
   }
 
   public void sendClickHandler(View view) {
-    System.out.println("Send was clicked");
     String[] guids = arrayAdapter.getCheckedGUIDs();
 
-    for (int i = 0; i < guids.length; i++) {
-      System.out.println("GUID: " + guids[i]);
-    }
+    String guidsString = TextUtils.join(", ", guids);
+    Logger.debug(LOG_TAG, "Sending to "  + guids.length + " clients with guids " + guidsString + ".");
+
     Bundle extras = this.getIntent().getExtras();
     uri = extras.getString(Intent.EXTRA_TEXT);
     title = extras.getString(Intent.EXTRA_SUBJECT);
-    System.out.println("URI: " + uri);
-    System.out.println("TITLE: " + title);
+    Logger.pii(LOG_TAG, "Sending title: " + title);
+    Logger.pii(LOG_TAG, "Sending uri:   " + uri);
   }
 
   public void enableSend(boolean shouldEnable) {
@@ -53,13 +55,13 @@ public class SendTabActivity extends Activity {
     sendButton.setClickable(shouldEnable);
   }
 
-  protected Object[] getDeviceMap() {
+  protected ClientRecord[] getClientArray() {
     ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(this.getApplicationContext());
 
     try {
-      return db.fetchAll().values().toArray();
+      return db.fetchAll().values().toArray(new ClientRecord[0]);
     } catch (NullCursorException e) {
-      Logger.debug(LOG_TAG, "NullCursorException while populating device list.");
+      Logger.warn(LOG_TAG, "NullCursorException while populating device array.", e);
       return null;
     } finally {
       db.close();

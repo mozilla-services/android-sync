@@ -14,14 +14,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class ClientRecordArrayAdapter extends ArrayAdapter<Object> {
-  public static final String LOG_TAG = "ClientRecordArrayAdapter";
-  private Object[] clientRecordList;
+  public static final String LOG_TAG = "ClientRecArrAdapter";
+  private ClientRecord[] clientRecordList;
   private boolean[] checkedItems;
   private int numCheckedGUIDs;
   private SendTabActivity sendTabActivity;
 
   public ClientRecordArrayAdapter(Context context, int textViewResourceId,
-      Object[] clientRecordList) {
+      ClientRecord[] clientRecordList) {
     super(context, textViewResourceId, clientRecordList);
     this.sendTabActivity = (SendTabActivity) context;
     this.clientRecordList = clientRecordList;
@@ -35,7 +35,7 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<Object> {
     setSelectable(view, true);
     view.setBackgroundResource(android.R.drawable.menuitem_background);
 
-    final ClientRecord clientRecord = (ClientRecord) clientRecordList[position];
+    final ClientRecord clientRecord = clientRecordList[position];
     ImageView clientType = (ImageView) view.findViewById(R.id.img);
     TextView clientName = (TextView) view.findViewById(R.id.client_name);
     CheckBox checkbox = (CheckBox) view.findViewById(R.id.check);
@@ -71,14 +71,10 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<Object> {
     String[] guids = new String[numCheckedGUIDs];
     for (int i = 0, j = 0; i < checkedItems.length; i++) {
       if (checkedItems[i]) {
-        guids[j++] = ((ClientRecord) clientRecordList[i]).guid;
+        guids[j++] = clientRecordList[i].guid;
       }
     }
     return guids;
-  }
-
-  public int getNumCheckedGUIDs() {
-    return numCheckedGUIDs;
   }
 
   private int getImage(ClientRecord record) {
