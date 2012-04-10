@@ -79,10 +79,13 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     context.getContentResolver().delete(uri, EXCLUDE_SPECIAL_GUIDS_WHERE_CLAUSE, null);
   }
 
+  private String[] GUID_AND_ID = new String[] { BrowserContract.Bookmarks.GUID,
+                                                BrowserContract.Bookmarks._ID };
+
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
     // Exclude "places" and "tags", in case they've ended up in the DB.
     String where = BOOKMARK_IS_FOLDER + " AND " + GUID_NOT_TAGS_OR_PLACES;
-    return queryHelper.safeQuery(".getGuidsIDsForFolders", null, where, null, null);
+    return queryHelper.safeQuery(".getGuidsIDsForFolders", GUID_AND_ID, where, null, null);
   }
 
   /**
