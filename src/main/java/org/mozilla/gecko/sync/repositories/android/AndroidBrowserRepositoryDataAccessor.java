@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import java.util.List;
+
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
@@ -176,5 +178,39 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
       return;
     }
     Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + guid);
+  }
+
+  /**
+   * Insert records.
+   * <p>
+   * This inserts all the records (using <code>ContentProvider.bulkInsert</code>),
+   * but does <b>not</b> update the <code>androidID</code> of each record.
+   *
+   * @param records
+   *          The records to insert.
+   * @throws NullCursorException
+   */
+  public void bulkInsert(List<Record> records) throws NullCursorException {
+    if (records.isEmpty()) {
+      Logger.debug(LOG_TAG, "No records to insert, returning.");
+    }
+
+    int size = records.size();
+    ContentValues[] cvs = new ContentValues[size];
+    int index = 0;
+    for (Record record : records) {
+      cvs[index] = getContentValues(record);
+      index += 1;
+    }
+
+    // First update the history records.
+    int inserted = context.getContentResolver().bulkInsert(getUri(), cvs);
+    if (inserted == size) {
+      Logger.debug(LOG_TAG, "Inserted " + inserted + " records, as expected.");
+    } else {
+      Logger.debug(LOG_TAG, "Inserted " +
+                   inserted + " records but expected " +
+                   size     + " records.");
+    }
   }
 }
