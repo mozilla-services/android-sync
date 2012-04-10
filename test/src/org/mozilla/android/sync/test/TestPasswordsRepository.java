@@ -209,6 +209,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
   public void testStoreIdenticalExceptGuid() {
     RepositorySession session = createAndBeginSession();
     PasswordRecord record = PasswordHelpers.createPassword1();
+    record.guid = "before1";
     Log.d(LOG_TAG, "record1.guid: " + record.guid);
     Log.d(LOG_TAG, "record1: " + record);
     // Store record.
@@ -221,6 +222,24 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(storeRunnable(session, record));
 
     performWait(fetchAllRunnable(session, new Record[] { record }));
+    cleanup(session);
+
+    session = createAndBeginSession();
+
+    PasswordRecord record2 = PasswordHelpers.createPassword2();
+    record2.guid = "before2";
+    Log.d(LOG_TAG, "record1.guid: " + record2.guid);
+    Log.d(LOG_TAG, "record1: " + record2);
+    // Store record.
+    performWait(storeRunnable(session, record2));
+
+    // Store same record, but with different guid.
+    record2.guid = Utils.generateGuid();
+    Log.d(LOG_TAG, "record2.guid: " + record2.guid);
+    Log.d(LOG_TAG, "record2: " + record2);
+    performWait(storeRunnable(session, record2));
+
+    performWait(fetchAllRunnable(session, new Record[] { record, record2 }));
     cleanup(session);
   }
 
