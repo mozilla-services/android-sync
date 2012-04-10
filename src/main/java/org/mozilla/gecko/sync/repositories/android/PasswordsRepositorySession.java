@@ -714,27 +714,28 @@ public class PasswordsRepositorySession extends
   }
 
   private void dumpDbs() {
-    Logger.debug(LOG_TAG, "passwordsProvider: ");
-      try {
-        Cursor cursor = passwordsHelper.safeQuery(passwordsProvider, ".dumpDBs", getAllColumns(), dateModifiedWhere(0), null, null);
-        RepoUtils.dumpCursor(cursor);
-      } catch (NullCursorException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (RemoteException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+    Cursor cursor = null;
+    try {
+      // Dump passwords.
+      Logger.debug(LOG_TAG, "passwordsProvider: ");
+      cursor = passwordsHelper.safeQuery(passwordsProvider, ".dumpDBs", getAllColumns(), dateModifiedWhere(0), null, null);
+      RepoUtils.dumpCursor(cursor);
+      cursor.close();
+
+      // Dump deleted passwords.
+      Logger.debug(LOG_TAG, "deletedPasswordsProvider: ");
+      cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".dumpDBs", getAllDeletedColumns(), dateModifiedWhereDeleted(0), null, null);
+      RepoUtils.dumpCursor(cursor);
+
+    } catch (NullCursorException e) {
+      Logger.debug(LOG_TAG, "NullCursor in dumping DBs.");
+    } catch (RemoteException e) {
+      Logger.debug(LOG_TAG, "RemoteException in dumping DBs.");
+    } finally {
+      if (cursor != null) {
+        cursor.close();
       }
-    Logger.debug(LOG_TAG, "deletedPasswordsProvider: ");
-      try {
-        Cursor cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".dumpDBs", getAllDeletedColumns(), dateModifiedWhereDeleted(0), null, null);
-        RepoUtils.dumpCursor(cursor);
-      } catch (NullCursorException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (RemoteException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+    }
+
   }
 }
