@@ -321,6 +321,118 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   }
 
   /**
+   * Exercise the deletion of folders when their children have not been
+   * marked as deleted. In a database with constraints, this would fail
+   * if we simply deleted the records, so we move them first.
+   */
+  public void testFolderDeletionOrphansChildren() {
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+
+    long now = System.currentTimeMillis();
+
+    // Add a folder and four children.
+    final String folderGUID = "eaaaaaaaafff";
+    BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now -5, false);
+    BookmarkRecord bookmarkA = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now -1, false);
+    BookmarkRecord bookmarkB = new BookmarkRecord("baaaaaaaabbb", "bookmarks", now -3, false);
+    BookmarkRecord bookmarkC = new BookmarkRecord("daaaaaaaaccc", "bookmarks", now -7, false);
+    BookmarkRecord bookmarkD = new BookmarkRecord("baaaaaaaaddd", "bookmarks", now -4, false);
+
+    folder.children   = childrenFromRecords(bookmarkA, bookmarkB, bookmarkC, bookmarkD);
+    folder.sortIndex  = 150;
+    folder.title      = "Test items";
+    folder.parentID   = "toolbar";
+    folder.parentName = "Bookmarks Toolbar";
+    folder.type       = "folder";
+
+    bookmarkA.parentID    = folderGUID;
+    bookmarkA.bookmarkURI = "http://example.com/A";
+    bookmarkA.title       = "Title A";
+    bookmarkA.type        = "bookmark";
+
+    bookmarkB.parentID    = folderGUID;
+    bookmarkB.bookmarkURI = "http://example.com/B";
+    bookmarkB.title       = "Title B";
+    bookmarkB.type        = "bookmark";
+
+    bookmarkC.parentID    = folderGUID;
+    bookmarkC.bookmarkURI = "http://example.com/C";
+    bookmarkC.title       = "Title C";
+    bookmarkC.type        = "bookmark";
+
+    bookmarkD.parentID    = folderGUID;
+    bookmarkD.bookmarkURI = "http://example.com/D";
+    bookmarkD.title       = "Title D";
+    bookmarkD.type        = "bookmark";
+
+    BookmarkRecord[] abfcd = new BookmarkRecord[5];
+    BookmarkRecord[] justFolder = new BookmarkRecord[1];
+    abfcd[0] = bookmarkA;
+    abfcd[1] = bookmarkB;
+    abfcd[2] = folder;
+    abfcd[3] = bookmarkC;
+    abfcd[4] = bookmarkD;
+
+    justFolder[0] = folder;
+
+    final String[] abcdGUIDs   = new String[] { bookmarkA.guid, bookmarkB.guid, bookmarkC.guid, bookmarkD.guid };
+    final Record[] abcdRecords = new Record[] { bookmarkA, bookmarkB, bookmarkC, bookmarkD };
+
+    wipe();
+    Log.d(getName(), "Storing A, B, folder, C, D...");
+    storeRecordsInSession(repo, abfcd, null);
+
+    // Verify that it worked.
+    long folderID = storedIDs.get(folderGUID);
+    assertChildrenAreOrdered(repo, folderGUID, abcdRecords);
+    assertChildrenAreDirect(folderID, abcdGUIDs);
+
+    now = System.currentTimeMillis();
+
+    // Add one child to unsorted bookmarks.
+    BookmarkRecord unsortedA = new BookmarkRecord("yiamunsorted", "bookmarks", now, false);
+    unsortedA.parentID = "unfiled";
+    unsortedA.title    = "Unsorted A";
+    unsortedA.type     = "bookmark";
+    unsortedA.androidPosition = 0;
+
+    BookmarkRecord[] ua = new BookmarkRecord[1];
+    ua[0] = unsortedA;
+
+    storeRecordsInSession(repo, ua, null);
+
+    // Ensure that the database is in this state.
+    assertChildrenAreOrdered(repo, "unfiled", ua);
+
+    // Delete the second child, the folder, and then the third child.
+    bookmarkB.bookmarkURI  = bookmarkC.bookmarkURI  = folder.bookmarkURI  = null;
+    bookmarkB.deleted      = bookmarkC.deleted      = folder.deleted      = true;
+    bookmarkB.title        = bookmarkC.title        = folder.title        = null;
+
+    // Nulling the type of folder is very important: it verifies
+    // that the session can behave correctly according to local type.
+    bookmarkB.type = bookmarkC.type = folder.type = null;
+
+    bookmarkB.lastModified = bookmarkC.lastModified = folder.lastModified = now = System.currentTimeMillis();
+
+    BookmarkRecord[] deletions = new BookmarkRecord[] { bookmarkB, folder, bookmarkC };
+    storeRecordsInSession(repo, deletions, null);
+
+    // Verify that the unsorted bookmarks folder contains its child and the
+    // first and fourth children of the now-deleted folder.
+    // Also verify that the folder is gone.
+    ContentResolver cr = getApplicationContext().getContentResolver();
+    long unsortedID = fennecGetFolderId(cr, "unfiled");
+    long toolbarID  = fennecGetFolderId(cr, "toolbar");
+    String[] expected = new String[] { unsortedA.guid, bookmarkA.guid, bookmarkD.guid };
+
+    // This will trigger positioning.
+    assertChildrenAreUnordered(repo, "unfiled", new Record[] { unsortedA, bookmarkA, bookmarkD });
+    assertChildrenAreDirect(unsortedID, expected);
+    assertChildrenAreDirect(toolbarID, new String[] {});
+  }
+
+  /**
    * Create and begin a new session, handing control to the delegate when started.
    * Returns when the delegate has notified.
    *
@@ -519,13 +631,13 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     return uri.buildUpon().appendQueryParameter(BrowserContract.PARAM_PROFILE, defaultProfile).build();
   }
 
-  private long fennecGetMobileBookmarksFolderId(ContentResolver cr) {
+  private long fennecGetFolderId(ContentResolver cr, String guid) {
     Cursor c = null;
     try {
       c = cr.query(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI),
           new String[] { BrowserContract.Bookmarks._ID },
           BrowserContract.Bookmarks.GUID + " = ?",
-          new String[] { BrowserContract.Bookmarks.MOBILE_FOLDER_GUID },
+          new String[] { guid },
           null);
 
       if (c.moveToFirst()) {
@@ -537,6 +649,10 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
         c.close();
       }
     }
+  }
+
+  private long fennecGetMobileBookmarksFolderId(ContentResolver cr) {
+    return fennecGetFolderId(cr, BrowserContract.Bookmarks.MOBILE_FOLDER_GUID);
   }
 
   public void fennecAddBookmark(String title, String uri) {
@@ -634,6 +750,11 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
       fail("Got null cursor.");
     }
     try {
+      if (guids == null || guids.length == 0) {
+        assertFalse(cur.moveToFirst());
+        return;
+      }
+
       assertTrue(cur.moveToFirst());
       int i = 0;
       final int guidCol = cur.getColumnIndex(BrowserContract.SyncColumns.GUID);
@@ -649,7 +770,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
         ++i;
         cur.moveToNext();
       }
-      assertEquals(i, guids.length);
+      assertEquals(guids.length, i);
     } finally {
       cur.close();
     }
