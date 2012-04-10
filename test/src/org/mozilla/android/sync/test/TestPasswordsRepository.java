@@ -243,6 +243,47 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     cleanup(session);
   }
 
+  /*
+   * Store two records that are identical except for guid when they both point
+   * to the same site and there are multiple records for that site. Expect to
+   * find the remote one after reconciling.
+   */
+  public void testStoreIdenticalExceptGuidOnSameSite() {
+    RepositorySession session = createAndBeginSession();
+    PasswordRecord record1 = PasswordHelpers.createPassword1();
+    record1.encryptedUsername = "original";
+    record1.guid = "before1";
+    Log.d(LOG_TAG, "record1.guid: " + record1.guid);
+    Log.d(LOG_TAG, "record1: " + record1);
+    PasswordRecord record2 = PasswordHelpers.createPassword1();
+    record2.encryptedUsername = "different";
+    record1.guid = "before2";
+    Log.d(LOG_TAG, "record2.guid: " + record2.guid);
+    Log.d(LOG_TAG, "record2: " + record2);
+    // Store records.
+    performWait(storeRunnable(session, record1));
+    performWait(storeRunnable(session, record2));
+    performWait(fetchAllRunnable(session, new Record[] { record1, record2 }));
+
+    cleanup(session);
+    session = createAndBeginSession();
+
+    // Store same records, but with different guids.
+    record1.guid = Utils.generateGuid();
+    Log.d(LOG_TAG, "new record1.guid: " + record1.guid);
+    Log.d(LOG_TAG, "new record1: " + record1);
+    performWait(storeRunnable(session, record1));
+    performWait(fetchAllRunnable(session, new Record[] { record1, record2 }));
+
+    record2.guid = Utils.generateGuid();
+    Log.d(LOG_TAG, "new record2.guid: " + record2.guid);
+    Log.d(LOG_TAG, "new record2: " + record2);
+    performWait(storeRunnable(session, record2));
+    performWait(fetchAllRunnable(session, new Record[] { record1, record2 }));
+
+    cleanup(session);
+  }
+
   // Helper methods.
   private RepositorySession createAndBeginSession() {
     return SessionTestHelper.createAndBeginSession(
