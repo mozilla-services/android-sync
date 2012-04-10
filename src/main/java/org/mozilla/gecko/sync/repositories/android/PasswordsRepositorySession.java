@@ -603,7 +603,7 @@ public class PasswordsRepositorySession extends
       int cursorLen = cursor.getCount();
       // Hack: cursor sometimes gets in an infinite loop when using
       // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
-      for (int i = 0; i <= cursorLen; i++) {
+      for (int i = 0; i < cursorLen; i++) {
         if (!cursor.moveToPosition(i)) {
           return null;
         }
