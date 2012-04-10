@@ -5,7 +5,9 @@
 package org.mozilla.gecko.sync.repositories.android;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.db.BrowserContract;
@@ -105,6 +107,21 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     Logger.debug(LOG_TAG, "Updating positions for " + size + " items.");
     String[] args = childArray.toArray(new String[size]);
     return context.getContentResolver().update(getPositionsUri(), new ContentValues(), null, args);
+  }
+
+  public int bumpModifiedByGUID(Collection<String> ids, long modified) {
+    final int size = ids.size();
+    if (size == 0) {
+      return 0;
+    }
+
+    Logger.debug(LOG_TAG, "Bumping modified for " + size + " items to " + modified);
+    String where = RepoUtils.computeSQLInClause(size, BrowserContract.Bookmarks.GUID);
+    String[] selectionArgs = ids.toArray(new String[size]);
+    ContentValues values = new ContentValues();
+    values.put(BrowserContract.Bookmarks.DATE_MODIFIED, modified);
+
+    return context.getContentResolver().update(getUri(), values, where, selectionArgs);
   }
 
   /**
