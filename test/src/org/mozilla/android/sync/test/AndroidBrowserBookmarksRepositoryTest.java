@@ -46,8 +46,8 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
         AndroidBrowserBookmarksRepositorySession session;
         session = new AndroidBrowserBookmarksRepositorySession(this, context) {
           @Override
-          protected synchronized void trackRecord(Record record) {
-            System.out.println("Ignoring trackRecord call: this is a test!");
+          protected synchronized void trackGUID(String guid) {
+            System.out.println("Ignoring trackGUID call: this is a test!");
           }
         };
         delegate.deferredCreationDelegate().onSessionCreated(session);
