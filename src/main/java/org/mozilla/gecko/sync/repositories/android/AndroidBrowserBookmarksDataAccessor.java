@@ -97,8 +97,13 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    *        A sequence of GUID strings.
    */
   public int updatePositions(ArrayList<String> childArray) {
-    Logger.debug(LOG_TAG, "Updating positions for " + childArray.size() + " items.");
-    String[] args = childArray.toArray(new String[childArray.size()]);
+    final int size = childArray.size();
+    if (size == 0) {
+      return 0;
+    }
+
+    Logger.debug(LOG_TAG, "Updating positions for " + size + " items.");
+    String[] args = childArray.toArray(new String[size]);
     return context.getContentResolver().update(getPositionsUri(), new ContentValues(), null, args);
   }
 
