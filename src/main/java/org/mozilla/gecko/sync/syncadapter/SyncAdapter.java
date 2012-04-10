@@ -50,7 +50,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   private static final String  PREFS_INVALIDATE_AUTH_TOKEN = "invalidateauthtoken";
   private static final String  PREFS_CLUSTER_URL_IS_STALE = "clusterurlisstale";
 
-  private static final int     SHARED_PREFERENCES_MODE = 0;
   private static final int     BACKOFF_PAD_SECONDS = 5;
   public  static final int     MULTI_DEVICE_INTERVAL_MILLISECONDS = 5 * 60 * 1000;         // 5 minutes.
   public  static final int     SINGLE_DEVICE_INTERVAL_MILLISECONDS = 24 * 60 * 60 * 1000;  // 24 hours.
@@ -65,25 +64,30 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     mAccountManager = AccountManager.get(context);
   }
 
-  private SharedPreferences getGlobalPrefs() {
-    return mContext.getSharedPreferences("sync.prefs.global", SHARED_PREFERENCES_MODE);
+  private SharedPreferences prefs = null;
+
+  /**
+   * Preferences specific to the current account.
+   */
+  private SharedPreferences getPrefs() {
+    return prefs;
   }
 
   /**
    * Backoff.
    */
   public synchronized long getEarliestNextSync() {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     return sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0);
   }
   public synchronized void setEarliestNextSync(long next) {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     Editor edit = sharedPreferences.edit();
     edit.putLong(PREFS_EARLIEST_NEXT_SYNC, next);
     edit.commit();
   }
   public synchronized void extendEarliestNextSync(long next) {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     if (sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0) >= next) {
       return;
     }
@@ -93,17 +97,17 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   public synchronized boolean getShouldInvalidateAuthToken() {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     return sharedPreferences.getBoolean(PREFS_INVALIDATE_AUTH_TOKEN, false);
   }
   public synchronized void clearShouldInvalidateAuthToken() {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     Editor edit = sharedPreferences.edit();
     edit.remove(PREFS_INVALIDATE_AUTH_TOKEN);
     edit.commit();
   }
   public synchronized void setShouldInvalidateAuthToken() {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     Editor edit = sharedPreferences.edit();
     edit.putBoolean(PREFS_INVALIDATE_AUTH_TOKEN, true);
     edit.commit();
@@ -212,6 +216,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final SyncResult syncResult) {
     Utils.reseedSharedRandom(); // Make sure we don't work with the same random seed for too long.
 
+    // Install prefs as early as possible; needed for backoff.
+    try {
+      String username  = account.name;
+      String serverURL = mAccountManager.getUserData(account, Constants.OPTION_SERVER);
+      prefs = Utils.getSharedPreferences(mContext, username, serverURL);
+    } catch (Exception e) {
+      handleException(e, syncResult);
+      return;
+    }
+
     boolean force = (extras != null) && (extras.getBoolean("force", false));
     long delay = delayMilliseconds();
     if (delay > 0) {
@@ -302,6 +316,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         long next = System.currentTimeMillis() + getSyncInterval();
         Log.i(LOG_TAG, "Setting minimum next sync time to " + next);
         extendEarliestNextSync(next);
+        prefs = null;
       } catch (InterruptedException e) {
         Log.i(LOG_TAG, "Waiting on sync monitor interrupted.", e);
       } finally {
@@ -458,12 +473,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   public synchronized boolean getClusterURLIsStale() {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     return sharedPreferences.getBoolean(PREFS_CLUSTER_URL_IS_STALE, false);
   }
 
   public synchronized void setClusterURLIsStale(boolean clusterURLIsStale) {
-    SharedPreferences sharedPreferences = getGlobalPrefs();
+    SharedPreferences sharedPreferences = getPrefs();
     Editor edit = sharedPreferences.edit();
     edit.putBoolean(PREFS_CLUSTER_URL_IS_STALE, clusterURLIsStale);
     edit.commit();
