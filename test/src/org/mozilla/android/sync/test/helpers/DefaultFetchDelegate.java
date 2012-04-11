@@ -45,6 +45,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
     Log.i(LOG_TAG, "End timestamp is " + end);
     Log.i(LOG_TAG, "Expected is " + expected);
     Log.i(LOG_TAG, "Records is " + records);
+    Set<String> foundGuids = new HashSet<String>();
     try {
       int expectedCount = 0;
       int expectedFound = 0;
@@ -61,6 +62,9 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
 
         // Ignore special GUIDs (e.g., for bookmarks).
         if (!ignore.contains(record.guid)) {
+          if (foundGuids.contains(record.guid)) {
+            fail("Found duplicate guid " + record.guid);
+          }
           Record expect = expected.get(record.guid);
           if (expect == null) {
             fail("Do not expect to get back a record with guid: " + record.guid); // Caught below
@@ -73,6 +77,8 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
           }
           Log.d(LOG_TAG, "Checked equality.");
           expectedFound += 1;
+          // Track record once we've found it.
+          foundGuids.add(record.guid);
         }
       }
       assertEquals(expectedCount, expectedFound); // Caught below
