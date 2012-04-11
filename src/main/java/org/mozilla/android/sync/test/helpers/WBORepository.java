@@ -54,9 +54,9 @@ public class WBORepository extends Repository {
     }
 
     @Override
-    protected synchronized void trackRecord(Record record) {
+    protected synchronized void trackGUID(String guid) {
       if (wboRepository.shouldTrack()) {
-        super.trackRecord(record);
+        super.trackGUID(guid);
       }
     }
 

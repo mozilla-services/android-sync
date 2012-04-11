@@ -45,7 +45,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
   protected AndroidBrowserRepositoryDataAccessor helper;
 
-  protected static String LOG_TAG = "AndroidBrowserRepositoryTest";
+  protected static String LOG_TAG = "BrowserRepositoryTest";
 
   protected void wipe() {
     Log.i(LOG_TAG, "Wiping.");
