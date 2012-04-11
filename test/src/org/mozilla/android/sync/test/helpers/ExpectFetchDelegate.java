@@ -11,6 +11,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.util.Log;
 
 public class ExpectFetchDelegate extends DefaultFetchDelegate {
+  private final static String LOG_TAG = "ExpectFetchDelegate";
   
   private HashMap<String, Record> expect = new HashMap<String, Record>();
   
@@ -22,21 +23,21 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
 
   @Override
   public void onFetchSucceeded(Record[] records, final long fetchEnd) {
-    Log.i("ExpectFetchDelegate", "onFetchSucceeded: " + ((records == null) ? "null" : "" + records.length) + " records.");
+    Log.i(LOG_TAG, "onFetchSucceeded: " + ((records == null) ? "null" : "" + records.length) + " records.");
     this.records.addAll(Arrays.asList(records));
     this.onFetchCompleted(fetchEnd);
   }
 
   @Override
   public void onFetchedRecord(Record record) {
-    Log.i("ExpectFetchDelegate", "onFetchedRecord: " + record.guid);
+    Log.i(LOG_TAG, "onFetchedRecord: " + record.guid);
     this.records.add(record);
   }
 
   @Override
   public void onFetchCompleted(final long fetchEnd) {
-    Log.i("ExpectFetchDelegate", "onFetchCompleted: " + fetchEnd);
-    Log.i("ExpectFetchDelegate", "Records: " + this.recordCount());
+    Log.i(LOG_TAG, "onFetchCompleted: " + fetchEnd);
+    Log.i(LOG_TAG, "Records: " + this.recordCount());
     super.onDone(this.records, this.expect, fetchEnd);
   }
 
