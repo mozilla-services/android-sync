@@ -79,7 +79,9 @@ public class FormHistoryRepositorySession extends
 
   protected void releaseProviders() {
     try {
-      formsProvider.release();
+      if (formsProvider != null) {
+        formsProvider.release();
+      }
     } catch (Exception e) {
     }
   }
