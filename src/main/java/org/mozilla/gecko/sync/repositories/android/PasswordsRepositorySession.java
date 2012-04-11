@@ -504,17 +504,10 @@ public class PasswordsRepositorySession extends
    */
   private void fetchFromCursorDeleted(Cursor cursor, boolean deleted, RecordFilter filter, RepositorySessionFetchRecordsDelegate delegate) {
 
-    if (cursor == null || !cursor.moveToFirst()) {
-      // Empty cursor.
+    if (cursor == null) {
       return;
     }
-    int cursorLen = cursor.getCount();
-    // Hack: cursor sometimes gets in an infinite loop when using
-    // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
-    for (int i = 0; i <= cursorLen; i++) {
-      if (!cursor.moveToPosition(i)) {
-        return;
-      }
+    while (cursor.moveToNext()) {
       Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
       if (r != null) {
         if (filter == null || !filter.excludeRecord(r)) {
@@ -596,18 +589,7 @@ public class PasswordsRepositorySession extends
       };
     try {
       cursor = passwordsHelper.safeQuery(passwordsProvider, ".findRecord", getAllColumns(), dataWhere, whereArgs, null);
-      if (!cursor.moveToFirst()) {
-        // Empty cursor.
-        return null;
-      }
-      int cursorLen = cursor.getCount();
-      // Hack: cursor sometimes gets in an infinite loop when using
-      // Cursor.moveToNext() and Cursor.isAfterLast() to iterate through.
-      for (int i = 0; i < cursorLen; i++) {
-        if (!cursor.moveToPosition(i)) {
-          return null;
-        }
-        Logger.debug(LOG_TAG, "find cursor at pos " + i);
+      while (cursor.moveToNext()) {
         foundRecord = passwordRecordFromCursor(cursor);
         // NOTE: We don't directly query for username because the
         // username/password values are encrypted in the db.
@@ -649,7 +631,7 @@ public class PasswordsRepositorySession extends
    *        PasswordRecord populated from Cursor.
    */
   private PasswordRecord passwordRecordFromCursor(Cursor cur) {
-    if (cur == null || !cur.moveToFirst()) {
+    if (cur.isAfterLast()) {
       return null;
     }
     String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.Passwords.GUID);
@@ -676,7 +658,7 @@ public class PasswordsRepositorySession extends
   }
 
   private PasswordRecord deletedPasswordRecordFromCursor(Cursor cur) {
-    if (cur == null || !cur.moveToFirst()) {
+    if (cur.isAfterLast()) {
       return null;
     }
     String guid = RepoUtils.getStringFromCursor(cur, DeletedColumns.GUID);
