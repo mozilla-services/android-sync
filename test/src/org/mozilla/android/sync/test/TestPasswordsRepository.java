@@ -3,6 +3,9 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
@@ -10,6 +13,7 @@ import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.android.sync.test.helpers.PasswordHelpers;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -18,11 +22,15 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.android.PasswordsRepositorySession;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.content.ContentProviderClient;
 import android.content.Context;
+import android.database.Cursor;
+import android.os.RemoteException;
 import android.util.Log;
 
 public class TestPasswordsRepository extends AndroidSyncTestCase {
@@ -389,5 +397,28 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
         }
       }
     };
+  }
+
+  public void testRawFetch() throws RemoteException {
+    RepositorySession session = createAndBeginSession();
+    Record[] expected = new Record[] { PasswordHelpers.createPassword1(),
+                                       PasswordHelpers.createPassword2() };
+
+    performWait(storeRunnable(session, expected[0]));
+    performWait(storeRunnable(session, expected[1]));
+
+    ContentProviderClient client = getApplicationContext().getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
+    Cursor cursor = client.query(BrowserContractHelpers.PASSWORDS_CONTENT_URI, null, null, null, null);
+    assertEquals(2, cursor.getCount());
+    cursor.moveToFirst();
+    Set<String> guids = new HashSet<String>();
+    while (!cursor.isAfterLast()) {
+      String guid = RepoUtils.getStringFromCursor(cursor, BrowserContract.Passwords.GUID);
+      guids.add(guid);
+      cursor.moveToNext();
+    }
+    assertEquals(2, guids.size());
+    assertTrue(guids.contains(expected[0].guid));
+    assertTrue(guids.contains(expected[1].guid));
   }
 }
