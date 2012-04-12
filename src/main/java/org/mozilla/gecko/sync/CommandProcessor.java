@@ -117,6 +117,19 @@ public class CommandProcessor {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  public void sendURIToClientForDisplay(String uri, String clientID, String title) {
+    Logger.info(LOG_TAG, "Sending URI to client: " + uri + " -> " + clientID + " (" + title + ")");
+
+    JSONArray args = new JSONArray();
+    args.add(uri);
+    args.add(session.getClientsDelegate().getAccountGUID());
+    args.add(title);
+
+    Command displayURICommand = new Command("displayURI", args);
+    this.sendCommand(clientID, displayURICommand);
+  }
+
   /**
    * Validates and sends a command to a client or all clients.
    *
