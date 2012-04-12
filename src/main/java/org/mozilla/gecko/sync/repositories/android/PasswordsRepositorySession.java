@@ -49,6 +49,7 @@ public class PasswordsRepositorySession extends
 
   private static final String LOG_TAG = "PasswordsRepoSession";
   private static String COLLECTION = "passwords";
+
   private RepoUtils.QueryHelper passwordsHelper;
   private RepoUtils.QueryHelper deletedPasswordsHelper;
   private ContentProviderClient passwordsProvider;
@@ -58,176 +59,182 @@ public class PasswordsRepositorySession extends
   public PasswordsRepositorySession(Repository repository, Context context) {
     super(repository);
     this.context = context;
-    passwordsProvider = context.getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
-    passwordsHelper = new QueryHelper(context, getDataUri(), LOG_TAG);
-    deletedPasswordsHelper = new QueryHelper(context, getDeletedUri(), LOG_TAG);
+    this.passwordsHelper        = new QueryHelper(context, BrowserContractHelpers.PASSWORDS_CONTENT_URI, LOG_TAG);
+    this.deletedPasswordsHelper = new QueryHelper(context, BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI, LOG_TAG);
+    this.passwordsProvider      = context.getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
     dumpDbs();
   }
 
+  private static final String[] GUID_COLS = new String[] { Passwords.GUID };
+  private static final String[] DELETED_GUID_COLS = new String[] { DeletedColumns.GUID };
+
+  private static final String WHERE_GUID_IS = Passwords.GUID + " = ?";
+  private static final String WHERE_DELETED_GUID_IS = DeletedPasswords.GUID + " = ?";
+
   @Override
-  public void guidsSince(final long timestamp,
-      final RepositorySessionGuidsSinceDelegate delegate) {
-     Runnable guidsSinceRunnable = new Runnable() {
-     @Override
-     public void run() {
+  public void guidsSince(final long timestamp, final RepositorySessionGuidsSinceDelegate delegate) {
+    final Runnable guidsSinceRunnable = new Runnable() {
+      @Override
+      public void run() {
+
         if (!isActive()) {
           delegate.onGuidsSinceFailed(new InactiveSessionException(null));
           return;
         }
 
-        // Checks succeeded, now get guids.
-        List<String> guids = new ArrayList<String>();
-        Cursor cursor = null;
+        // Checks succeeded, now get GUIDs.
+        final List<String> guids = new ArrayList<String>();
         try {
-          // Fetch guids from data table.
           Logger.debug(LOG_TAG, "Fetching guidsSince from data table.");
-
-          String[] guidCols = new String[] { Passwords.GUID };
-          cursor = passwordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", guidCols, dateModifiedWhere(timestamp), null, null);
-          if (cursor != null && cursor.moveToFirst()) {
-            while (!cursor.isAfterLast()) {
-              guids.add(RepoUtils.getStringFromCursor(cursor, Passwords.GUID));
-              cursor.moveToNext();
+          final Cursor data = passwordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", GUID_COLS, dateModifiedWhere(timestamp), null, null);
+          try {
+            if (data.moveToFirst()) {
+              while (!data.isAfterLast()) {
+                guids.add(RepoUtils.getStringFromCursor(data, Passwords.GUID));
+                data.moveToNext();
+              }
             }
-            cursor.close();
+          } finally {
+            data.close();
           }
 
           // Fetch guids from deleted table.
           Logger.debug(LOG_TAG, "Fetching guidsSince from deleted table.");
-
-          String[] deletedGuidCols = new String[] {DeletedColumns.GUID };
-          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", deletedGuidCols, dateModifiedWhereDeleted(timestamp), null, null);
-          if (cursor != null && cursor.moveToFirst()) {
-            while (!cursor.isAfterLast()) {
-              guids.add(RepoUtils.getStringFromCursor(cursor, DeletedColumns.GUID));
-              cursor.moveToNext();
+          final Cursor deleted = deletedPasswordsHelper.safeQuery(passwordsProvider, ".getGUIDsSince", DELETED_GUID_COLS, dateModifiedWhereDeleted(timestamp), null, null);
+          try {
+            if (deleted.moveToFirst()) {
+              while (!deleted.isAfterLast()) {
+                guids.add(RepoUtils.getStringFromCursor(deleted, DeletedColumns.GUID));
+                deleted.moveToNext();
+              }
             }
+          } finally {
+            deleted.close();
           }
-        } catch (NullCursorException e) {
-          Logger.error(LOG_TAG, "Null cursor in fetch.");
-          delegate.onGuidsSinceFailed(e);
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Exception in fetch.");
           delegate.onGuidsSinceFailed(e);
-        } finally {
-          Logger.info(LOG_TAG, "Closing cursor after fetch.");
-          if (cursor != null) {
-            cursor.close();
-          }
+          return;
         }
         String[] guidStrings = new String[guids.size()];
         delegate.onGuidsSinceSucceeded(guids.toArray(guidStrings));
       }
     };
-    storeWorkQueue.execute(guidsSinceRunnable);
+
+    delegateQueue.execute(guidsSinceRunnable);
   }
 
   @Override
-  public void fetchSince(final long timestamp,
-      final RepositorySessionFetchRecordsDelegate delegate) {
-
-    if (!isActive()) {
-      delegate.onFetchFailed(new InactiveSessionException(null), null);
-      return;
-    }
-
-    // Checks succeeded, now fetch.
+  public void fetchSince(final long timestamp, final RepositorySessionFetchRecordsDelegate delegate) {
     final RecordFilter filter = this.storeTracker.getFilter();
-    Runnable fetchSinceRunnable = new Runnable() {
+    final Runnable fetchSinceRunnable = new Runnable() {
       @Override
       public void run() {
-        Cursor cursor = null;
-        long end = now();
+        if (!isActive()) {
+          delegate.onFetchFailed(new InactiveSessionException(null), null);
+          return;
+        }
+
+        final long end = now();
         try {
           // Fetch from data table.
-          cursor = passwordsHelper.safeQuery(passwordsProvider, ".fetchSince",
-              getAllColumns(), dateModifiedWhere(timestamp), null, null);
-          fetchFromCursorDeleted(cursor, false, filter, delegate);
-          cursor.close();
+          Cursor data = passwordsHelper.safeQuery(passwordsProvider, ".fetchSince",
+                                                  getAllColumns(),
+                                                  dateModifiedWhere(timestamp),
+                                                  null, null);
+          if (!fetchAndCloseCursorDeleted(data, false, filter, delegate)) {
+            return;
+          }
 
           // Fetch from deleted table.
-          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".fetchSince",
-              getAllDeletedColumns(), dateModifiedWhereDeleted(timestamp), null, null);
-          fetchFromCursorDeleted(cursor, true, filter, delegate);
-          delegate.onFetchCompleted(end);
+          Cursor deleted = deletedPasswordsHelper.safeQuery(passwordsProvider, ".fetchSince",
+                                                            getAllDeletedColumns(),
+                                                            dateModifiedWhereDeleted(timestamp),
+                                                            null, null);
+          if (!fetchAndCloseCursorDeleted(deleted, true, filter, delegate)) {
+            return;
+          }
 
-        } catch (NullCursorException e) {
-          Logger.error(LOG_TAG, "Null cursor in fetch.");
-          delegate.onFetchFailed(e, null);
+          // Success!
+          try {
+            delegate.onFetchCompleted(end);
+          } catch (Exception e) {
+            Logger.error(LOG_TAG, "Delegate fetch completed callback failed.", e);
+            // Don't call failure callback.
+            return;
+          }
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Exception in fetch.");
           delegate.onFetchFailed(e, null);
-        } finally {
-          Logger.info(LOG_TAG, "Closing cursor after fetch.");
-          if (cursor != null) {
-            cursor.close();
-          }
         }
       }
     };
-    storeWorkQueue.execute(fetchSinceRunnable);
+
+    delegateQueue.execute(fetchSinceRunnable);
   }
 
   @Override
-  public void fetch(final String[] guids,
-      final RepositorySessionFetchRecordsDelegate delegate) {
-
-    if (!isActive()) {
-      delegate.onFetchFailed(new InactiveSessionException(null), null);
-      return;
-    }
+  public void fetch(final String[] guids, final RepositorySessionFetchRecordsDelegate delegate) {
     if (guids == null || guids.length < 1) {
       Logger.error(LOG_TAG, "No guids to be fetched.");
-      delegate.onFetchFailed(new InvalidRequestException(), null);
+      final long end = now();
+      delegateQueue.execute(new Runnable() {
+        @Override
+        public void run() {
+          delegate.onFetchCompleted(end);
+        }
+      });
       return;
     }
 
     // Checks succeeded, now fetch.
     final RecordFilter filter = this.storeTracker.getFilter();
-    Runnable fetchRunnable = new Runnable() {
+    final Runnable fetchRunnable = new Runnable() {
       @Override
       public void run() {
-        Cursor cursor = null;
-        long end = now();
-        String where = computeSQLInClause(guids.length, "guid");
-        Logger.debug(LOG_TAG, "Fetch guids where: " + where);
+        if (!isActive()) {
+          delegate.onFetchFailed(new InactiveSessionException(null), null);
+          return;
+        }
+
+        final long end = now();
+        final String where = RepoUtils.computeSQLInClause(guids.length, "guid");
+        Logger.trace(LOG_TAG, "Fetch guids where: " + where);
+
         try {
           // Fetch records from data table.
-          cursor = passwordsHelper.safeQuery(passwordsProvider, ".fetch",
-              getAllColumns(), where, guids, null);
-          fetchFromCursorDeleted(cursor, false, filter, delegate);
-          cursor.close();
+          Cursor data = passwordsHelper.safeQuery(passwordsProvider, ".fetch",
+                                                  getAllColumns(),
+                                                  where, guids, null);
+          if (!fetchAndCloseCursorDeleted(data, false, filter, delegate)) {
+            return;
+          }
 
           // Fetch records from deleted table.
-          cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".fetch",
-              getAllDeletedColumns(), where, guids, null);
-          fetchFromCursorDeleted(cursor, true, filter, delegate);
+          Cursor deleted = deletedPasswordsHelper.safeQuery(passwordsProvider, ".fetch",
+                                                            getAllDeletedColumns(),
+                                                            where, guids, null);
+          if (!fetchAndCloseCursorDeleted(deleted, true, filter, delegate)) {
+            return;
+          }
+
           delegate.onFetchCompleted(end);
 
-        } catch (NullCursorException e) {
-          Logger.error(LOG_TAG, "Null cursor in fetch.");
-          delegate.onFetchFailed(e, null);
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Exception in fetch.");
           delegate.onFetchFailed(e, null);
-        } finally {
-          Logger.info(LOG_TAG, "Closing cursor after fetch.");
-          if (cursor != null) {
-            cursor.close();
-          }
         }
       }
     };
-    storeWorkQueue.execute(fetchRunnable);
-  }
 
+    delegateQueue.execute(fetchRunnable);
+  }
 
   @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
     fetchSince(0, delegate);
   }
 
-  // TODO: lift out of AndroidBrowserRepoSession. Used pretty much wholesale.
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
     if (delegate == null) {
@@ -245,7 +252,7 @@ public class PasswordsRepositorySession extends
 
     final PasswordRecord remoteRecord = (PasswordRecord) record;
 
-    Runnable storeRunnable = new Runnable() {
+    final Runnable storeRunnable = new Runnable() {
       @Override
       public void run() {
         if (!isActive()) {
@@ -254,13 +261,24 @@ public class PasswordsRepositorySession extends
           return;
         }
 
-        String guid = remoteRecord.guid;
+        final String guid = remoteRecord.guid;
         if (guid == null) {
           delegate.onRecordStoreFailed(new RuntimeException("Can't store record with null GUID."));
           return;
         }
 
-        PasswordRecord existingRecord = retrieveByGuid(guid);
+        PasswordRecord existingRecord;
+        try {
+          existingRecord = retrieveByGUID(guid);
+        } catch (NullCursorException e) {
+          // Indicates a serious problem.
+          delegate.onRecordStoreFailed(e);
+          return;
+        } catch (RemoteException e) {
+          delegate.onRecordStoreFailed(e);
+          return;
+        }
+
         long lastLocalRetrieval  = 0;      // lastSyncTimestamp?
         long lastRemoteRetrieval = 0;      // TODO: adjust for clock skew.
         boolean remotelyModified = remoteRecord.lastModified > lastRemoteRetrieval;
@@ -368,19 +386,25 @@ public class PasswordsRepositorySession extends
 
   @Override
   public void wipe(final RepositorySessionWipeDelegate delegate) {
-    Logger.info(LOG_TAG, "Wiping " + getDataUri() + ", " + getDeletedUri());
+    Logger.info(LOG_TAG, "Wiping " + BrowserContractHelpers.PASSWORDS_CONTENT_URI + ", " + BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI);
 
     Runnable wipeRunnable = new Runnable() {
       @Override
       public void run() {
         if (!isActive()) {
           delegate.onWipeFailed(new InactiveSessionException(null));
-        } else {
-          // Wipe both data and deleted.
-          context.getContentResolver().delete(getDataUri(), null, null);
-          context.getContentResolver().delete(getDeletedUri(), null, null);
-          delegate.onWipeSucceeded();
+          return;
         }
+
+        // Wipe both data and deleted.
+        try {
+          context.getContentResolver().delete(BrowserContractHelpers.PASSWORDS_CONTENT_URI, null, null);
+          context.getContentResolver().delete(BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI, null, null);
+        } catch (Exception e) {
+          delegate.onWipeFailed(e);
+          return;
+        }
+        delegate.onWipeSucceeded();
       }
     };
     storeWorkQueue.execute(wipeRunnable);
@@ -398,23 +422,17 @@ public class PasswordsRepositorySession extends
     super.finish(delegate);
   }
 
-  public void deleteGuid(String guid) {
-    String wherePasswords  = Passwords.GUID + " = ?";
-    String whereDeleted = DeletedPasswords.GUID + " = ?";
-    String[] args = new String[] { guid };
+  public void deleteGUID(String guid) throws RemoteException {
+    final String[] args = new String[] { guid };
 
-    try {
-      int deleted = passwordsProvider.delete(BrowserContractHelpers.PASSWORDS_CONTENT_URI, wherePasswords, args);
-      deleted += passwordsProvider.delete(BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI, whereDeleted, args);
-      if (deleted == 1) {
-        return;
-      }
-      Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows for guid " + guid);
-    } catch (RemoteException e) {
-      Logger.error(LOG_TAG, "Remote Exception in password delete.");
-      delegate.onRecordStoreFailed(e);
+    int deleted = passwordsProvider.delete(BrowserContractHelpers.PASSWORDS_CONTENT_URI, WHERE_GUID_IS, args) +
+                  passwordsProvider.delete(BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI, WHERE_DELETED_GUID_IS, args);
+    if (deleted == 1) {
+      return;
     }
+    Logger.warn(LOG_TAG, "Unexpectedly deleted " + deleted + " rows for guid " + guid);
   }
+
   /**
    * Insert record and return the record with its updated androidId set.
    * @param record
@@ -427,7 +445,7 @@ public class PasswordsRepositorySession extends
     // record.timesUsed = 1;
     // record.timeLastUsed = now();
     ContentValues cv = getContentValues(record);
-    Uri insertedUri = passwordsProvider.insert(getDataUri(), cv);
+    Uri insertedUri = passwordsProvider.insert(BrowserContractHelpers.PASSWORDS_CONTENT_URI, cv);
     record.androidID = RepoUtils.getAndroidIdFromUri(insertedUri);
     return record;
   }
@@ -435,12 +453,12 @@ public class PasswordsRepositorySession extends
   public Record replace(Record origRecord, Record newRecord) throws RemoteException {
     PasswordRecord newPasswordRecord = (PasswordRecord) newRecord;
     PasswordRecord origPasswordRecord = (PasswordRecord) origRecord;
-    String where  = Passwords.GUID + " = ?";
-    String[] args = new String[] { origRecord.guid };
-
     propagateTimes(newPasswordRecord, origPasswordRecord);
     ContentValues cv = getContentValues(newPasswordRecord);
-    int updated = context.getContentResolver().update(getDataUri(), cv, where, args);
+
+    final String[] args = new String[] { origRecord.guid };
+
+    int updated = context.getContentResolver().update(BrowserContractHelpers.PASSWORDS_CONTENT_URI, cv, WHERE_GUID_IS, args);
     if (updated != 1) {
       Logger.warn(LOG_TAG, "Unexpectedly updated " + updated + " rows for guid " + origPasswordRecord.guid);
     }
@@ -448,27 +466,18 @@ public class PasswordsRepositorySession extends
   }
 
   // When replacing a record, propagate the times.
-  private void propagateTimes(PasswordRecord toRecord, PasswordRecord fromRecord) {
+  private static void propagateTimes(PasswordRecord toRecord, PasswordRecord fromRecord) {
     toRecord.timePasswordChanged = now();
-    toRecord.timeCreated = fromRecord.timeCreated;
+    toRecord.timeCreated  = fromRecord.timeCreated;
     toRecord.timeLastUsed = fromRecord.timeLastUsed;
-    toRecord.timesUsed = fromRecord.timesUsed;
+    toRecord.timesUsed    = fromRecord.timesUsed;
   }
 
-  // Helper Functions.
-  private Uri getDataUri() {
-    return BrowserContractHelpers.PASSWORDS_CONTENT_URI;
-  }
-
-  private Uri getDeletedUri() {
-    return BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI;
-  }
-
-  private String[] getAllColumns() {
+  private static String[] getAllColumns() {
     return BrowserContractHelpers.PasswordColumns;
   }
 
-  private String[] getAllDeletedColumns() {
+  private static String[] getAllDeletedColumns() {
     return BrowserContractHelpers.DeletedColumns;
   }
 
@@ -478,7 +487,7 @@ public class PasswordsRepositorySession extends
    * @param timestamp
    * @return String DB query string for dates to fetch.
    */
-  private String dateModifiedWhereDeleted(long timestamp) {
+  private static String dateModifiedWhereDeleted(long timestamp) {
     return DeletedColumns.TIME_DELETED + " >= " + Long.toString(timestamp);
   }
 
@@ -488,12 +497,16 @@ public class PasswordsRepositorySession extends
    * @param timestamp
    * @return String DB query string for dates to fetch.
    */
-  private String dateModifiedWhere(long timestamp) {
+  private static String dateModifiedWhere(long timestamp) {
     return Passwords.TIME_PASSWORD_CHANGED + " >= " + Long.toString(timestamp);
   }
 
+
   /**
-   * Helper function to process records from a fetch* cursor.
+   * Fetch from the cursor with the given parameters, invoking
+   * delegate callbacks and closing the cursor.
+   * Returns true on success, false if failure was signaled.
+   *
    * @param cursor
             fetch* cursor.
    * @param deleted
@@ -501,103 +514,99 @@ public class PasswordsRepositorySession extends
    * @param delegate
    *        FetchRecordsDelegate to process records.
    */
-  private void fetchFromCursorDeleted(Cursor cursor, boolean deleted, RecordFilter filter, RepositorySessionFetchRecordsDelegate delegate) {
-
+  private static boolean fetchAndCloseCursorDeleted(final Cursor cursor,
+                                                    final boolean deleted,
+                                                    final RecordFilter filter,
+                                                    final RepositorySessionFetchRecordsDelegate delegate) {
     if (cursor == null) {
-      return;
+      return true;
     }
-    while (cursor.moveToNext()) {
-      Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
-      if (r != null) {
-        if (filter == null || !filter.excludeRecord(r)) {
-          Logger.debug(LOG_TAG, "Fetched record " + r);
-          delegate.onFetchedRecord(r);
-        } else {
-          Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
+
+    try {
+      while (cursor.moveToNext()) {
+        Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
+        if (r != null) {
+          if (filter == null || !filter.excludeRecord(r)) {
+            Logger.debug(LOG_TAG, "Fetched record " + r);
+            delegate.onFetchedRecord(r);
+          } else {
+            Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
+          }
         }
       }
-    }
-  }
-
-  // TODO: move to RepoUtils?
-  protected String computeSQLInClause(int items, String field) {
-    StringBuilder builder = new StringBuilder(field);
-    builder.append(" IN ( ?");
-    for (int i = 0; i < items - 1; ++i) {
-      builder.append(", ?");
-    }
-    builder.append(" )");
-    return builder.toString();
-  }
-
-  private PasswordRecord retrieveByGuid(String guid) {
-    PasswordRecord record = null;
-    String[] guidArg = new String[] { guid };
-
-    Cursor cursor = null;
-    try {
-      // Check data table.
-      String where = Passwords.GUID + " = ?";
-      cursor = passwordsHelper.safeQuery(passwordsProvider, ".store", BrowserContractHelpers.PasswordColumns, where, guidArg, null);
-      if (cursor != null && cursor.moveToFirst()) {
-          record = passwordRecordFromCursor(cursor);
-          // Cursor will be closed in finally.
-          return record;
-      }
-
-      // Check deleted table.
-      where = DeletedPasswords.GUID + " = ?";
-      cursor = deletedPasswordsHelper.safeQuery(passwordsProvider, ".retrieveByGuid", BrowserContractHelpers.DeletedColumns, where, guidArg, null);
-      if (cursor != null && cursor.moveToFirst()) {
-        record = deletedPasswordRecordFromCursor(cursor);
-      }
-
-    } catch (RemoteException e) {
-      Logger.error(LOG_TAG, "RemoteException on deleted check for store.");
-      delegate.onRecordStoreFailed(e);
-    } catch (NullCursorException e) {
-      Logger.error(LOG_TAG, "Null cursor on deleted check for store.");
-      delegate.onRecordStoreFailed(e);
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Exception in fetch.");
+      delegate.onFetchFailed(e, null);
+      return false;
     } finally {
-      if (cursor != null) {
-        cursor.close();
-      }
+      cursor.close();
     }
-    return record;
+
+    return true;
   }
+
+  private PasswordRecord retrieveByGUID(String guid) throws NullCursorException, RemoteException {
+    final String[] guidArg = new String[] { guid };
+
+    // Check data table.
+    final Cursor data = passwordsHelper.safeQuery(passwordsProvider, ".store", BrowserContractHelpers.PasswordColumns, WHERE_GUID_IS, guidArg, null);
+    try {
+      if (data.moveToFirst()) {
+        return passwordRecordFromCursor(data);
+      }
+    } finally {
+      data.close();
+    }
+
+    // Check deleted table.
+    final Cursor deleted = deletedPasswordsHelper.safeQuery(passwordsProvider, ".retrieveByGuid", BrowserContractHelpers.DeletedColumns, WHERE_DELETED_GUID_IS, guidArg, null);
+    try {
+      if (deleted.moveToFirst()) {
+        return deletedPasswordRecordFromCursor(deleted);
+      }
+    } finally {
+      deleted.close();
+    }
+
+    return null;
+  }
+
+  // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
+  // Passwords.HTTP_REALM + " = ? AND " +
+  private static final String WHERE_RECORD_DATA =
+    Passwords.HOSTNAME        + " = ? AND " +
+    Passwords.FORM_SUBMIT_URL + " = ? AND " +
+    Passwords.USERNAME_FIELD  + " = ? AND " +
+    Passwords.PASSWORD_FIELD  + " = ?";
 
   private PasswordRecord findExistingRecord(PasswordRecord record) {
     PasswordRecord foundRecord = null;
     Cursor cursor = null;
     // Only check the data table.
-    String dataWhere = Passwords.HOSTNAME + " = ? AND " +
-                       Passwords.FORM_SUBMIT_URL + " = ? AND " +
-                       // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
-                       // Passwords.HTTP_REALM + " = ? AND " +
-                       Passwords.USERNAME_FIELD + " = ? AND " +
-                       Passwords.PASSWORD_FIELD + " = ?";
-    Logger.debug(LOG_TAG, "where: " + dataWhere);
     // We can't encrypt username directly for query, so run a more general query and then filter.
-    String[] whereArgs = new String[] {
-          record.hostname,
-          record.formSubmitURL,
-          // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
-          // record.httpRealm,
-          record.usernameField,
-          record.passwordField
-      };
+    final String[] whereArgs = new String[] {
+      record.hostname,
+      record.formSubmitURL,
+      record.usernameField,
+      record.passwordField
+
+      // TODO: Bug 738347 - SQLiteBridge does not check for nulls in ContentValues.
+      // record.httpRealm
+    };
+
     try {
-      cursor = passwordsHelper.safeQuery(passwordsProvider, ".findRecord", getAllColumns(), dataWhere, whereArgs, null);
+      cursor = passwordsHelper.safeQuery(passwordsProvider, ".findRecord", getAllColumns(), WHERE_RECORD_DATA, whereArgs, null);
       while (cursor.moveToNext()) {
         foundRecord = passwordRecordFromCursor(cursor);
-        // NOTE: We don't directly query for username because the
+
+        // We don't directly query for username because the
         // username/password values are encrypted in the db.
-        // We don't have the keys for encrypting our query, so we run a more
-        // general query and then filter the
+        // We don't have the keys for encrypting our query,
+        // so we run a more general query and then filter
         // the returned records for a matching username.
-        Logger.debug(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
+        Logger.trace(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
         if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
-          Logger.debug(LOG_TAG, "Found matching record: " + foundRecord);
+          Logger.trace(LOG_TAG, "Found matching record: " + foundRecord);
           return foundRecord;
         }
       }
@@ -617,9 +626,16 @@ public class PasswordsRepositorySession extends
   }
 
   private void storeRecordDeletion(Record record) {
-    deleteGuid(record.guid);
+    try {
+      deleteGUID(record.guid);
+    } catch (RemoteException e) {
+      Logger.error(LOG_TAG, "RemoteException in password delete.");
+      delegate.onRecordStoreFailed(e);
+      return;
+    }
     delegate.onRecordStoreSucceeded(record);
   }
+
   /**
    * Make a PasswordRecord from a Cursor.
    * @param cur
@@ -629,7 +645,7 @@ public class PasswordsRepositorySession extends
    * @return
    *        PasswordRecord populated from Cursor.
    */
-  private PasswordRecord passwordRecordFromCursor(Cursor cur) {
+  private static PasswordRecord passwordRecordFromCursor(Cursor cur) {
     if (cur.isAfterLast()) {
       return null;
     }
@@ -656,7 +672,7 @@ public class PasswordsRepositorySession extends
     return rec;
   }
 
-  private PasswordRecord deletedPasswordRecordFromCursor(Cursor cur) {
+  private static PasswordRecord deletedPasswordRecordFromCursor(Cursor cur) {
     if (cur.isAfterLast()) {
       return null;
     }
@@ -667,7 +683,7 @@ public class PasswordsRepositorySession extends
     return rec;
   }
 
-  private ContentValues getContentValues(Record record) {
+  private static ContentValues getContentValues(Record record) {
     PasswordRecord rec = (PasswordRecord) record;
 
     ContentValues cv = new ContentValues();
@@ -717,6 +733,5 @@ public class PasswordsRepositorySession extends
         cursor.close();
       }
     }
-
   }
 }
