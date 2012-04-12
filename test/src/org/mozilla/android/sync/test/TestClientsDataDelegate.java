@@ -3,12 +3,16 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.concurrent.TimeUnit;
+
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -16,21 +20,53 @@ public class TestClientsDataDelegate extends AndroidSyncTestCase {
   private Context context;
   private ClientsDataDelegate clientsDelegate;
   private AccountManager accountManager;
-  private final Account account = new Account("blah@mozilla.com", Constants.ACCOUNTTYPE_SYNC);;
+  private Account account = null;
   private final Bundle userbundle = new Bundle();
+  public int numAccountsBefore;
 
   public void setUp() {
     context = getApplicationContext();
     accountManager = AccountManager.get(context);
     clientsDelegate = new SyncAdapter(context, false);
 
+    // If Android accounts get added while a test runs, this could race, but
+    // that's unlikely -- and this is test code.
+    numAccountsBefore = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    account = new Account("testAccount@mozilla.com", Constants.ACCOUNTTYPE_SYNC);
     ((SyncAdapter)clientsDelegate).localAccount = account;
-    accountManager.addAccountExplicitly(account, "", userbundle);
+    assertTrue(accountManager.addAccountExplicitly(account, "", userbundle));
   }
 
   public void tearDown() {
     // Cleanup.
     clientsDelegate.setClientsCount(0);
+    if (account != null) {
+      deleteAccount(account);
+      account = null;
+    }
+    int numAccountsAfter = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    assertEquals(numAccountsBefore, numAccountsAfter);
+  }
+
+  public void deleteAccount(final Account account) {
+    final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() { 
+      @Override
+      public void run(AccountManagerFuture<Boolean> future) {
+        try {
+          future.getResult(5L, TimeUnit.SECONDS);
+          performNotify();
+        } catch (Exception e) {
+          performNotify(e);
+        }
+      }
+    };
+
+    performWait(new Runnable() {
+      @Override
+      public void run() {
+        accountManager.removeAccount(account, callback, null);
+      }
+    });
   }
 
   public void testGetAccountGUID() {
