@@ -4,11 +4,15 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.json.simple.JSONArray;
+import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
@@ -39,10 +43,14 @@ public class ClientsDatabaseAccessor {
     }
   }
 
-  public ClientRecord fetch(String accountGUID) throws NullCursorException {
+  public void store(String accountGUID, Command command) throws NullCursorException {
+    db.store(accountGUID, command.commandType, command.args.toJSONString());
+  }
+
+  public ClientRecord fetchClient(String accountGUID) throws NullCursorException {
     Cursor cur = null;
     try {
-      cur = db.fetch(accountGUID, getProfileId());
+      cur = db.fetchClientsCursor(accountGUID, getProfileId());
 
       if (cur == null || !cur.moveToFirst()) {
         return null;
@@ -55,11 +63,11 @@ public class ClientsDatabaseAccessor {
     }
   }
 
-  public Map<String, ClientRecord> fetchAll() throws NullCursorException {
+  public Map<String, ClientRecord> fetchAllClients() throws NullCursorException {
     HashMap<String, ClientRecord> map = new HashMap<String, ClientRecord>();
     Cursor cur = null;
     try {
-      cur = db.fetchAll();
+      cur = db.fetchAllClients();
       if (cur == null || !cur.moveToFirst()) {
         return Collections.unmodifiableMap(map);
       }
@@ -77,6 +85,50 @@ public class ClientsDatabaseAccessor {
     }
   }
 
+  public List<Command> fetchAllCommands() throws NullCursorException {
+    List<Command> commands = new ArrayList<Command>();
+    Cursor cur = null;
+    try {
+      cur = db.fetchAllCommands();
+      if (cur == null || !cur.moveToFirst()) {
+        return Collections.unmodifiableList(commands);
+      }
+      while(!cur.isAfterLast()) {
+        Command command = commandFromCursor(cur);
+        commands.add(command);
+        cur.moveToNext();
+      }
+
+      return Collections.unmodifiableList(commands);
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
+  }
+
+  public List<Command> fetchCommandsForClient(String accountGUID) throws NullCursorException {
+    List<Command> commands = new ArrayList<Command>();
+    Cursor cur = null;
+    try {
+      cur = db.fetchCommandsForClient(accountGUID);
+      if (cur == null || !cur.moveToFirst()) {
+        return Collections.unmodifiableList(commands);
+      }
+      while(!cur.isAfterLast()) {
+        Command command = commandFromCursor(cur);
+        commands.add(command);
+        cur.moveToNext();
+      }
+
+      return Collections.unmodifiableList(commands);
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
+  }
+
   protected ClientRecord recordFromCursor(Cursor cur) {
     String accountGUID = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_ACCOUNT_GUID);
     String clientName = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_NAME);
@@ -87,10 +139,16 @@ public class ClientsDatabaseAccessor {
     return record;
   }
 
+  protected Command commandFromCursor(Cursor cur) {
+    String commandType = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_COMMAND);
+    JSONArray commandArgs = RepoUtils.getJSONArrayFromCursor(cur, ClientsDatabase.COL_ARGS);
+    return new Command(commandType, commandArgs);
+  }
+
   public int clientsCount() {
     Cursor cur;
     try {
-      cur = db.fetchAll();
+      cur = db.fetchAllClients();
     } catch (NullCursorException e) {
       return 0;
     }
@@ -105,8 +163,16 @@ public class ClientsDatabaseAccessor {
     return ClientsDatabaseAccessor.PROFILE_ID;
   }
 
-  public void wipe() {
-    db.wipe();
+  public void deleteCommands(String accountGUID) {
+    db.deleteCommands(accountGUID);
+  }
+
+  public void wipeDB() {
+    db.wipeDB();
+  }
+
+  public void wipeClientsTable() {
+    db.wipeClientsTable();
   }
 
   public void close() {
