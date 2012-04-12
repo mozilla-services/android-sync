@@ -167,9 +167,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   protected void registerCommands() {
-    CommandProcessor processor = CommandProcessor.getProcessor();
+    final CommandProcessor processor = CommandProcessor.getProcessor();
+    processor.registerSession(this);
 
-    processor.registerCommand("resetEngine", new CommandRunner() {
+    processor.registerCommand("resetEngine", new CommandRunner(1) {
       @Override
       public void executeCommand(List<String> args) {
         HashSet<String> names = new HashSet<String>();
@@ -178,7 +179,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     });
 
-    processor.registerCommand("resetAll", new CommandRunner() {
+    processor.registerCommand("resetAll", new CommandRunner(0) {
       @Override
       public void executeCommand(List<String> args) {
         resetAllStages();
@@ -201,10 +202,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     });
 
-    processor.registerCommand("displayURI", new CommandRunner() {
+    processor.registerCommand("displayURI", new CommandRunner(3) {
       @Override
       public void executeCommand(List<String> args) {
-        CommandProcessor.getProcessor().displayURI(args, getContext());
+        processor.displayURI(args, getContext());
       }
     });
   }

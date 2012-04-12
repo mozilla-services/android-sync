@@ -6,6 +6,10 @@ package org.mozilla.gecko.sync;
 
 import java.util.List;
 
-public interface CommandRunner {
-  public void executeCommand(List<String> args);
+public abstract class CommandRunner {
+  public final int argCount;
+  public CommandRunner(int argCount) {
+    this.argCount = argCount;
+  }
+  public abstract void executeCommand(List<String> args);
 }
