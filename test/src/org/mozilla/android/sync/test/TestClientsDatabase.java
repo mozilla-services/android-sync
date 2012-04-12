@@ -55,6 +55,72 @@ public class TestClientsDatabase extends AndroidTestCase {
     }
   }
 
+  public void testStoreAndFetchSpecificCommands() {
+    String accountGUID = Utils.generateGuid();
+    ArrayList<String> args = new ArrayList<String>();
+    args.add("URI of Page");
+    args.add("Sender GUID");
+    args.add("Title of Page");
+    String jsonArgs = JSONArray.toJSONString(args);
+
+    Cursor cur = null;
+    try {
+      db.store(accountGUID, "displayURI", jsonArgs);
+
+      // This row should not show up in the fetch.
+      args.add("Another arg.");
+      db.store(accountGUID, "displayURI", JSONArray.toJSONString(args));
+
+      // Test stored item gets fetched correctly.
+      cur = db.fetchSpecificCommand(accountGUID, "displayURI", jsonArgs);
+      assertTrue(cur.moveToFirst());
+      assertEquals(1, cur.getCount());
+
+      String guid = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_ACCOUNT_GUID);
+      String commandType = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_COMMAND);
+      String fetchedArgs = RepoUtils.getStringFromCursor(cur, ClientsDatabase.COL_ARGS);
+
+      assertEquals(accountGUID, guid);
+      assertEquals("displayURI", commandType);
+      assertEquals(jsonArgs, fetchedArgs);
+    } catch (NullCursorException e) {
+      fail("Should not have NullCursorException");
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
+  }
+
+  public void testFetchCommandsForClient() {
+    String accountGUID = Utils.generateGuid();
+    ArrayList<String> args = new ArrayList<String>();
+    args.add("URI of Page");
+    args.add("Sender GUID");
+    args.add("Title of Page");
+    String jsonArgs = JSONArray.toJSONString(args);
+
+    Cursor cur = null;
+    try {
+      db.store(accountGUID, "displayURI", jsonArgs);
+
+      // This row should ALSO show up in the fetch.
+      args.add("Another arg.");
+      db.store(accountGUID, "displayURI", JSONArray.toJSONString(args));
+
+      // Test both stored items with the same GUID but different command are fetched.
+      cur = db.fetchCommandsForClient(accountGUID);
+      assertTrue(cur.moveToFirst());
+      assertEquals(2, cur.getCount());
+    } catch (NullCursorException e) {
+      fail("Should not have NullCursorException");
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
+  }
+
   public void testDelete() {
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
