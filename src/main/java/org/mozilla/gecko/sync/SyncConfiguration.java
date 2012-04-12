@@ -203,7 +203,7 @@ public class SyncConfiguration implements CredentialsSource {
     this.loadFromPrefs(getPrefs());
   }
 
-  public SharedPreferences getPrefs() {
+  protected SharedPreferences getPrefs() {
     Logger.debug(LOG_TAG, "Returning prefs for " + prefsPath);
     return prefsSource.getPrefs(prefsPath, Utils.SHARED_PREFERENCES_MODE);
   }
@@ -242,7 +242,7 @@ public class SyncConfiguration implements CredentialsSource {
     this.persistToPrefs(this.getPrefs());
   }
 
-  public void persistToPrefs(SharedPreferences prefs) {
+  protected void persistToPrefs(SharedPreferences prefs) {
     Editor edit = prefs.edit();
     if (clusterURL == null) {
       edit.remove("clusterURL");
@@ -365,16 +365,16 @@ public class SyncConfiguration implements CredentialsSource {
   /**
    * Used for direct management of related prefs.
    */
-  public Editor getEditor() {
+  protected Editor getEditor() {
     return this.getPrefs().edit();
   }
 
   public void persistServerClientRecordTimestamp(long timestamp) {
-    getEditor().putLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, timestamp).commit();
+    getEditor().putLong(CLIENT_RECORD_TIMESTAMP, timestamp).commit();
   }
 
   public long getPersistedServerClientRecordTimestamp() {
-    return getPrefs().getLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, 0);
+    return getPrefs().getLong(CLIENT_RECORD_TIMESTAMP, 0);
   }
 
   public void purgeCryptoKeys() {

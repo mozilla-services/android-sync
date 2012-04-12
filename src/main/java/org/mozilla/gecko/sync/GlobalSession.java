@@ -614,6 +614,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * cached records.
    */
   private void resetClient(String[] engines) {
+    try {
+      String serverURL = config.serverURL.toASCIIString();
+      Utils.purgeSharedPreferences(context, config.username, serverURL);
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Got exception clearing preferences.", e);
+    }
+
     if (engines == null) {
       // Set `engines` to be *all* the engines.
     }

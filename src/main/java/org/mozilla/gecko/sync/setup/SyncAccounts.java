@@ -104,12 +104,7 @@ public class SyncAccounts {
     Logger.debug(LOG_TAG, "Finished setting syncables.");
 
     // TODO: correctly implement Sync Options.
-    Logger.info(LOG_TAG, "Clearing preferences for this account.");
-    try {
-      Utils.getSharedPreferences(context, username, serverURL).edit().clear().commit();
-    } catch (Exception e) {
-      Logger.error(LOG_TAG, "Could not clear prefs path!", e);
-    }
+    Utils.purgeSharedPreferences(context, username, serverURL);
 
     final Intent intent = new Intent();
     intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, username);

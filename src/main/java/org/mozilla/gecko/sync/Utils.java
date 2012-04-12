@@ -54,6 +54,7 @@ import java.util.TreeMap;
 import org.json.simple.JSONArray;
 import org.mozilla.apache.commons.codec.binary.Base32;
 import org.mozilla.apache.commons.codec.binary.Base64;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -215,15 +216,51 @@ public class Utils {
     return new Base32().encodeAsString(sha1(utf8)).toLowerCase(Locale.US);
   }
 
+  /**
+   * Return the persisted preferences path for a specific account.
+   *
+   * @param username Plain username, e.g., "user@mozilla.com".
+   */
   public static String getPrefsPath(String username, String serverURL)
     throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    return "sync.prefs." + sha1Base32(serverURL + ":" + username);
+    return "sync.prefs." + sha1Base32(serverURL + ":" + KeyBundle.usernameFromAccount(username));
   }
 
+  /**
+   * Return the persisted preferences for a specific account.
+   *
+   * @param username Plain username, e.g., "user@mozilla.com".
+   */
   public static SharedPreferences getSharedPreferences(Context context, String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
     String prefsPath = getPrefsPath(username, serverURL);
-    Logger.debug(LOG_TAG, "Shared preferences: " + prefsPath);
+    Logger.debug(LOG_TAG, "Shared preferences for username " + username + " and serverURL " + serverURL + ": " + prefsPath);
     return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
+  }
+
+  /**
+   * Purge the persisted preferences for a specific account.
+   *
+   * @param username Plain username, e.g., "user@mozilla.com".
+   * @return <code>true</code> on success; <code>false</code> on error.
+   */
+  public static boolean purgeSharedPreferences(Context context, String username, String serverURL) {
+    String prefsPath = null;
+    try {
+      prefsPath = getPrefsPath(username, serverURL);
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Got exception clearing preferences.", e);
+      return false;
+    }
+
+    try {
+      context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE).edit().clear().commit();
+      Logger.info(LOG_TAG, "Cleared preferences " + prefsPath + ".");
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Got exception clearing preferences " + prefsPath + ".", e);
+      return false;
+    }
+
+    return true;
   }
 
   public static void addToIndexBucketMap(TreeMap<Long, ArrayList<String>> map, long index, String value) {
