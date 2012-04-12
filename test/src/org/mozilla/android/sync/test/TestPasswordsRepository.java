@@ -52,7 +52,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(storeRunnable(session, expected[1]));
 
     performWait(fetchAllRunnable(session, expected));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testGuidsSinceReturnMultipleRecords() {
@@ -72,7 +72,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
 
     Logger.info("guidsSinceMultiple", "Getting guids since " + timestamp + "; expecting " + expected.length);
     performWait(guidsSinceRunnable(session, timestamp, expected));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testGuidsSinceReturnNoRecords() {
@@ -83,7 +83,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
 
     String[] expected = {};
     performWait(guidsSinceRunnable(session, System.currentTimeMillis() + 1000, expected));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testFetchSinceOneRecord() {
@@ -109,7 +109,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(fetchSinceRunnable(session, timeModified1 - 10, expectedBoth));
 
     Log.i("fetchSinceOneRecord", "Done.");
-    cleanup(session);
+    dispose(session);
   }
 
   public void testFetchSinceReturnNoRecords() {
@@ -120,7 +120,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     long timestamp = System.currentTimeMillis();
 
     performWait(fetchSinceRunnable(session, timestamp + 2000, new String[] {}));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testFetchOneRecordByGuid() {
@@ -132,7 +132,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     String[] guids = new String[] { record.guid };
     Record[] expected = new Record[] { record };
     performWait(fetchRunnable(session, guids, expected));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testFetchMultipleRecordsByGuids() {
@@ -148,7 +148,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     String[] guids = new String[] { record1.guid, record2.guid };
     Record[] expected = new Record[] { record1, record2 };
     performWait(fetchRunnable(session, guids, expected));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testFetchNoRecordByGuid() {
@@ -159,12 +159,13 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(fetchRunnable(session,
                               new String[] { Utils.generateGuid() },
                               new Record[] {}));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testStore() {
     final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, PasswordHelpers.createPassword1()));
+    dispose(session);
   }
 
   public void testRemoteNewerTimeStamp() {
@@ -187,7 +188,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
 
     // Make a fetch, expecting only the newer (remote) record.
     performWait(fetchAllRunnable(session, new Record[] { remote }));
-    cleanup(session);
+    dispose(session);
   }
 
   public void testLocalNewerTimeStamp() {
@@ -207,7 +208,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
 
     // Make a fetch, expecting only the newer (local) record.
     performWait(fetchAllRunnable(session, new Record[] { local }));
-    cleanup(session);
+    dispose(session);
   }
 
   /*
@@ -215,7 +216,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
    * remote one after reconciling.
    */
   public void testStoreIdenticalExceptGuid() {
-    RepositorySession session = createAndBeginSession();
+    final RepositorySession session = createAndBeginSession();
     PasswordRecord record = PasswordHelpers.createPassword1();
     record.guid = "before1";
     Log.d(LOG_TAG, "record1.guid: " + record.guid);
@@ -230,7 +231,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(storeRunnable(session, record));
 
     performWait(fetchAllRunnable(session, new Record[] { record }));
-    cleanup(session);
+    dispose(session);
 
     session = createAndBeginSession();
 
@@ -248,7 +249,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(storeRunnable(session, record2));
 
     performWait(fetchAllRunnable(session, new Record[] { record, record2 }));
-    cleanup(session);
+    dispose(session);
   }
 
   /*
@@ -273,7 +274,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(storeRunnable(session, record2));
     performWait(fetchAllRunnable(session, new Record[] { record1, record2 }));
 
-    cleanup(session);
+    dispose(session);
     session = createAndBeginSession();
 
     // Store same records, but with different guids.
@@ -289,114 +290,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     performWait(storeRunnable(session, record2));
     performWait(fetchAllRunnable(session, new Record[] { record1, record2 }));
 
-    cleanup(session);
-  }
-
-  // Helper methods.
-  private RepositorySession createAndBeginSession() {
-    return SessionTestHelper.createAndBeginSession(
-        getApplicationContext(),
-        getRepository());
-  }
-
-  public void wipe() {
-    Context context = getApplicationContext();
-    context.getContentResolver().delete(BrowserContractHelpers.PASSWORDS_CONTENT_URI, null, null);
-    context.getContentResolver().delete(BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI, null, null);
-  }
-
-  private void cleanup(RepositorySession session) {
-    if (session != null) {
-      session.abort();
-    }
-  }
-
-  private Repository getRepository() {
-    /**
-     * Override this chain in order to avoid our test code having to create two
-     * sessions all the time. Don't track records, so they filtering doesn't happen.
-     */
-    return new PasswordsRepositorySession.PasswordsRepository() {
-      @Override
-      public void createSession(RepositorySessionCreationDelegate delegate,
-          Context context) {
-        PasswordsRepositorySession session;
-        session = new PasswordsRepositorySession(this, context) {
-          @Override
-          protected synchronized void trackRecord(Record record) {
-            System.out.println("Ignoring trackRecord call: this is a test!");
-          }
-        };
-        delegate.onSessionCreated(session);
-      }
-    };
-  }
-
-  private long updatePassword(String password, PasswordRecord record, long timestamp) {
-    record.encryptedPassword = password;
-    long modifiedTime = System.currentTimeMillis();
-    record.timePasswordChanged = record.lastModified = modifiedTime;
-    return modifiedTime;
-  }
-
-  private long updatePassword(String password, PasswordRecord record) {
-    return updatePassword(password, record, System.currentTimeMillis());
-  }
-
-  // Runnable Helpers.
-  private Runnable storeRunnable(final RepositorySession session, final Record record) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        session.setStoreDelegate(new ExpectStoredDelegate(record.guid));
-        try {
-          session.store(record);
-          session.storeDone();
-        } catch (NoStoreDelegateException e) {
-          fail("NoStoreDelegateException should not occur.");
-        }
-      }
-    };
-  }
-
-  public static Runnable fetchAllRunnable(final RepositorySession session, final Record[] records) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        session.fetchAll(new ExpectFetchDelegate(records));
-      }
-    };
-  }
-
-  public Runnable guidsSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        session.guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
-      }
-    };
-  }
-
-  public Runnable fetchSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        session.fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, expected));
-      }
-    };
-  }
-
-  public Runnable fetchRunnable(final RepositorySession session, final String[] guids, final Record[] expected) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          session.fetch(guids, new ExpectFetchDelegate(expected));
-        } catch (InactiveSessionException e) {
-          performNotify(e);
-        }
-      }
-    };
+    dispose(session);
   }
 
   public void testRawFetch() throws RemoteException {
@@ -417,8 +311,117 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
       guids.add(guid);
       cursor.moveToNext();
     }
+    cursor.close();
     assertEquals(2, guids.size());
     assertTrue(guids.contains(expected[0].guid));
     assertTrue(guids.contains(expected[1].guid));
+    dispose(session);
+  }
+
+  // Helper methods.
+  private RepositorySession createAndBeginSession() {
+    return SessionTestHelper.createAndBeginSession(
+        getApplicationContext(),
+        getRepository());
+  }
+
+  private Repository getRepository() {
+    /**
+     * Override this chain in order to avoid our test code having to create two
+     * sessions all the time. Don't track records, so they filtering doesn't happen.
+     */
+    return new PasswordsRepositorySession.PasswordsRepository() {
+      @Override
+      public void createSession(RepositorySessionCreationDelegate delegate,
+          Context context) {
+        PasswordsRepositorySession session;
+        session = new PasswordsRepositorySession(this, context) {
+          @Override
+          protected synchronized void trackGUID(String guid) {
+            System.out.println("Ignoring trackGUID call: this is a test!");
+          }
+        };
+        delegate.onSessionCreated(session);
+      }
+    };
+  }
+
+  private void wipe() {
+    Context context = getApplicationContext();
+    context.getContentResolver().delete(BrowserContractHelpers.PASSWORDS_CONTENT_URI, null, null);
+    context.getContentResolver().delete(BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI, null, null);
+  }
+
+  private static void dispose(RepositorySession session) {
+    if (session != null) {
+      session.abort();
+    }
+  }
+
+  private static long updatePassword(String password, PasswordRecord record, long timestamp) {
+    record.encryptedPassword = password;
+    long modifiedTime = System.currentTimeMillis();
+    record.timePasswordChanged = record.lastModified = modifiedTime;
+    return modifiedTime;
+  }
+
+  private static long updatePassword(String password, PasswordRecord record) {
+    return updatePassword(password, record, System.currentTimeMillis());
+  }
+
+  // Runnable Helpers.
+  private static Runnable storeRunnable(final RepositorySession session, final Record record) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.setStoreDelegate(new ExpectStoredDelegate(record.guid));
+        try {
+          session.store(record);
+          session.storeDone();
+        } catch (NoStoreDelegateException e) {
+          fail("NoStoreDelegateException should not occur.");
+        }
+      }
+    };
+  }
+
+  private static Runnable fetchAllRunnable(final RepositorySession session, final Record[] records) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.fetchAll(new ExpectFetchDelegate(records));
+      }
+    };
+  }
+
+  private static Runnable guidsSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.guidsSince(timestamp, new ExpectGuidsSinceDelegate(expected));
+      }
+    };
+  }
+
+  private static Runnable fetchSinceRunnable(final RepositorySession session, final long timestamp, final String[] expected) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.fetchSince(timestamp, new ExpectFetchSinceDelegate(timestamp, expected));
+      }
+    };
+  }
+
+  private static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final Record[] expected) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          session.fetch(guids, new ExpectFetchDelegate(expected));
+        } catch (InactiveSessionException e) {
+          performNotify(e);
+        }
+      }
+    };
   }
 }
