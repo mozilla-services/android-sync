@@ -155,26 +155,27 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   protected void registerCommands() {
-    CommandProcessor processor = CommandProcessor.getProcessor();
+    final CommandProcessor processor = CommandProcessor.getProcessor();
+    processor.registerSession(this);
 
-    processor.registerCommand("resetEngine", new CommandRunner() {
+    processor.registerCommand("resetEngine", new CommandRunner(1) {
       @Override
       public void executeCommand(List<String> args) {
         resetClient(new String[] { args.get(0) });
       }
     });
 
-    processor.registerCommand("resetAll", new CommandRunner() {
+    processor.registerCommand("resetAll", new CommandRunner(0) {
       @Override
       public void executeCommand(List<String> args) {
         resetClient(null);
       }
     });
 
-    processor.registerCommand("displayURI", new CommandRunner() {
+    processor.registerCommand("displayURI", new CommandRunner(3) {
       @Override
       public void executeCommand(List<String> args) {
-        CommandProcessor.getProcessor().displayURI(args, getContext());
+        processor.displayURI(args, getContext());
       }
     });
   }

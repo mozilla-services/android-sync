@@ -6,11 +6,15 @@ package org.mozilla.gecko.sync;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
+import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -22,6 +26,7 @@ import android.net.Uri;
 public class CommandProcessor {
   private static final String LOG_TAG = "Command";
   private static AtomicInteger currentId = new AtomicInteger();
+  private GlobalSession session;
   protected ConcurrentHashMap<String, CommandRunner> commands = new ConcurrentHashMap<String, CommandRunner>();
 
   private final static CommandProcessor processor = new CommandProcessor();
@@ -32,16 +37,29 @@ public class CommandProcessor {
 
   public static class Command {
     public final String commandType;
-    public final List<String> args;
+    public final JSONArray args;
 
-    public Command(String commandType, List<String> args) {
+    public Command(String commandType, JSONArray args) {
       this.commandType = commandType;
       this.args = args;
+    }
+
+    public List<String> getArgsList() {
+      ArrayList<String> argsList = new ArrayList<String>(args.size());
+
+      for (int i = 0; i < args.size(); i++) {
+        argsList.add(args.get(i).toString());
+      }
+      return argsList;
     }
   }
 
   public void registerCommand(String commandType, CommandRunner command) {
     commands.put(commandType, command);
+  }
+
+  public void registerSession(GlobalSession session) {
+    this.session = session;
   }
 
   public void processCommand(ExtendedJSONObject unparsedCommand) {
@@ -57,7 +75,7 @@ public class CommandProcessor {
       return;
     }
 
-    executableCommand.executeCommand(command.args);
+    executableCommand.executeCommand(command.getArgsList());
   }
 
   /**
@@ -78,13 +96,8 @@ public class CommandProcessor {
       if (unparsedArgs == null) {
         return null;
       }
-      ArrayList<String> args = new ArrayList<String>(unparsedArgs.size());
 
-      for (int i = 0; i < unparsedArgs.size(); i++) {
-        args.add(unparsedArgs.get(i).toString());
-      }
-
-      return new Command(type, args);
+      return new Command(type, unparsedArgs);
     } catch (NonArrayJSONException e) {
       Logger.debug(LOG_TAG, "Unable to parse args array. Invalid command");
       return null;
