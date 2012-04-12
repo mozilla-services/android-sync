@@ -31,7 +31,6 @@ import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
-import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserRepositoryDataAccessor;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
@@ -42,12 +41,9 @@ import android.content.Context;
 import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
-
-  protected AndroidBrowserRepositoryDataAccessor helper;
-
   protected static String LOG_TAG = "BrowserRepositoryTest";
 
-  protected void wipe() {
+  protected static void wipe(AndroidBrowserRepositoryDataAccessor helper) {
     Log.i(LOG_TAG, "Wiping.");
     try {
       helper.wipe();
@@ -63,10 +59,12 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     }
   }
 
+  @Override
   public void setUp() {
-    helper = getDataAccessor();
-    wipe();
+    AndroidBrowserRepositoryDataAccessor helper = getDataAccessor();
+    wipe(helper);
     assertTrue(WaitHelper.getTestWaiter().isIdle());
+    closeDataAccessor(helper);
   }
 
   public void tearDown() {
@@ -85,11 +83,10 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
         getRepository());
   }
 
-  protected void dispose(RepositorySession session) {
-    if (session == null) {
-      return;
+  protected static void dispose(RepositorySession session) {
+    if (session != null) {
+      session.abort();
     }
-    session.abort();
   }
 
   /**
@@ -120,7 +117,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     return new ExpectFetchSinceDelegate(timestamp, expected);
   }
 
-  public Runnable storeRunnable(final RepositorySession session, final Record record, final DefaultStoreDelegate delegate) {
+  public static Runnable storeRunnable(final RepositorySession session, final Record record, final DefaultStoreDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -135,11 +132,11 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
 
-  public Runnable storeRunnable(final RepositorySession session, final Record record) {
+  public static Runnable storeRunnable(final RepositorySession session, final Record record) {
     return storeRunnable(session, record, new ExpectStoredDelegate(record.guid));
   }
 
-  public Runnable storeManyRunnable(final RepositorySession session, final Record[] records, final DefaultStoreDelegate delegate) {
+  public static Runnable storeManyRunnable(final RepositorySession session, final Record[] records, final DefaultStoreDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -156,7 +153,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
 
-  public Runnable storeManyRunnable(final RepositorySession session, final Record[] records) {
+  public static Runnable storeManyRunnable(final RepositorySession session, final Record[] records) {
     return storeManyRunnable(session, records, new ExpectManyStoredDelegate(records));
   }
 
@@ -167,7 +164,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * @param record
    * @return
    */
-  public Runnable quietStoreRunnable(final RepositorySession session, final Record record) {
+  public static Runnable quietStoreRunnable(final RepositorySession session, final Record record) {
     return storeRunnable(session, record, new ExpectStoreCompletedDelegate());
   }
 
@@ -184,7 +181,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
 
-  public Runnable finishRunnable(final RepositorySession session, final DefaultFinishDelegate delegate) {
+  public static Runnable finishRunnable(final RepositorySession session, final DefaultFinishDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -228,7 +225,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
   
-  public Runnable fetchRunnable(final RepositorySession session, final String[] guids, final DefaultFetchDelegate delegate) {
+  public static Runnable fetchRunnable(final RepositorySession session, final String[] guids, final DefaultFetchDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -244,7 +241,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     return fetchRunnable(session, guids, preparedExpectFetchDelegate(expected));
   }
   
-  public Runnable cleanRunnable(final Repository repository, final boolean success, final Context context, final DefaultCleanDelegate delegate) {
+  public static Runnable cleanRunnable(final Repository repository, final boolean success, final Context context, final DefaultCleanDelegate delegate) {
     return new Runnable() {
       @Override
       public void run() {
@@ -253,10 +250,10 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     };
   }
 
-  protected abstract AndroidBrowserRepository getRepository();
+  protected abstract Repository getRepository();
   protected abstract AndroidBrowserRepositoryDataAccessor getDataAccessor();
   
-  protected void doStore(RepositorySession session, Record[] records) {
+  protected static void doStore(RepositorySession session, Record[] records) {
     performWait(storeManyRunnable(session, records));
   }
   
@@ -293,11 +290,14 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     RepositorySession session = createAndBeginSession();
     Log.i("rnewman", "Prepared.");
 
+    AndroidBrowserRepositoryDataAccessor helper = getDataAccessor();
     helper.dumpDB();
     performWait(storeManyRunnable(session, expected));
 
     helper.dumpDB();
     performWait(fetchAllRunnable(session, expected));
+
+    closeDataAccessor(helper);
     dispose(session);
   }
   
@@ -311,7 +311,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
         delete0, delete1, keep0, keep1, keep2
     });
     
-    // force two record to appear deleted
+    // Force two records to appear deleted.
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor(); 
     ContentValues cv = new ContentValues();
     cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
@@ -332,6 +332,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
     performWait(cleanRunnable);    
     performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(new Record[] { keep0, keep1, keep2})));
+    closeDataAccessor(db);
     dispose(session);
   }
   
@@ -646,7 +647,6 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     remote.deleted = true;
     Log.d("deleteLocalNewer", "Storing deleted...");
     performWait(quietStoreRunnable(session, remote));      // This appears to do a lot of work...?!
-    Log.d("deleteLocalNewer", "Stored deleted.");
 
     // Do a fetch and make sure that we get back the first (local) record.
     performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));
@@ -678,7 +678,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    */
   public void testCreateSessionNullContext() {
     Log.i(LOG_TAG, "In testCreateSessionNullContext.");
-    AndroidBrowserRepository repo = getRepository();
+    Repository repo = getRepository();
     try {
       repo.createSession(new DefaultSessionCreationDelegate(), null);
       fail("Should throw.");
@@ -806,9 +806,12 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     dispose(session);
   }
 
-  private void verifyInactiveException(Exception ex) {
+  private static void verifyInactiveException(Exception ex) {
     if (!(ex instanceof InactiveSessionException)) {
       fail("Wrong exception type");
     }
+  }
+
+  protected void closeDataAccessor(AndroidBrowserRepositoryDataAccessor dataAccessor) {
   }
 }

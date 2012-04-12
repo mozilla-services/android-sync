@@ -60,6 +60,14 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   }
 
   @Override
+  protected void closeDataAccessor(AndroidBrowserRepositoryDataAccessor dataAccessor) {
+    if (!(dataAccessor instanceof AndroidBrowserHistoryDataAccessor)) {
+      throw new IllegalArgumentException("Only expecting a history data accessor.");
+    }
+    ((AndroidBrowserHistoryDataAccessor) dataAccessor).closeExtender();
+  }
+
+  @Override
   public void testFetchAll() {
     Record[] expected = new Record[2];
     expected[0] = HistoryHelpers.createHistory3();
@@ -250,7 +258,8 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     long newVisitTime = System.currentTimeMillis();
     cv.put(BrowserContract.History.VISITS, visits);
     cv.put(BrowserContract.History.DATE_LAST_VISITED, newVisitTime);
-    getDataAccessor().updateByGuid(record0.guid, cv);
+    final AndroidBrowserRepositoryDataAccessor dataAccessor = getDataAccessor();
+    dataAccessor.updateByGuid(record0.guid, cv);
     
     // Add expected visit to record for verification.
     JSONObject expectedVisit = new JSONObject();
@@ -259,6 +268,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     record0.visits.add(expectedVisit);
     
     performWait(fetchRunnable(session, new String[] { record0.guid }, new ExpectFetchDelegate(new Record[] { record0 })));
+    closeDataAccessor(dataAccessor);
   }
   
   @SuppressWarnings("unchecked")
@@ -275,7 +285,8 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     long newVisitTime = System.currentTimeMillis();
     cv.put(BrowserContract.History.VISITS, visits);
     cv.put(BrowserContract.History.DATE_LAST_VISITED, newVisitTime);
-    getDataAccessor().updateByGuid(record0.guid, cv);
+    final AndroidBrowserRepositoryDataAccessor dataAccessor = getDataAccessor();
+    dataAccessor.updateByGuid(record0.guid, cv);
 
     // Now shift to microsecond timing for visits.
     long newMicroVisitTime = newVisitTime * 1000;
@@ -299,78 +310,84 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
 
     Record fetched = delegate.records.get(0);
     assertTrue(record0.equalPayloads(fetched));
+    closeDataAccessor(dataAccessor);
   }
 
   public void testSqlInjectPurgeDelete() {
     // Some setup.
-    createAndBeginSession();
-    AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
+    RepositorySession session = createAndBeginSession();
+    final AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
 
-    ContentValues cv = new ContentValues();
-    cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
-
-    // Create and insert 2 history entries, 2nd one is evil (attempts injection).
-    HistoryRecord h1 = HistoryHelpers.createHistory1();
-    HistoryRecord h2 = HistoryHelpers.createHistory2();
-    h2.guid = "' or '1'='1";
-
-    db.insert(h1);
-    db.insert(h2);
-
-    // Test 1 - updateByGuid() handles evil history entries correctly.
-    db.updateByGuid(h2.guid, cv);
-
-    // Query history table.
-    Cursor cur = getAllHistory();
-    int numHistory = cur.getCount();
-
-    // Ensure only the evil history entry is marked for deletion.
     try {
-      cur.moveToFirst();
-      while (!cur.isAfterLast()) {
-        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+      ContentValues cv = new ContentValues();
+      cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
 
-        if (guid.equals(h2.guid)) {
-          assertTrue(deleted);
-        } else {
-          assertFalse(deleted);
+      // Create and insert 2 history entries, 2nd one is evil (attempts injection).
+      HistoryRecord h1 = HistoryHelpers.createHistory1();
+      HistoryRecord h2 = HistoryHelpers.createHistory2();
+      h2.guid = "' or '1'='1";
+
+      db.insert(h1);
+      db.insert(h2);
+
+      // Test 1 - updateByGuid() handles evil history entries correctly.
+      db.updateByGuid(h2.guid, cv);
+
+      // Query history table.
+      Cursor cur = getAllHistory();
+      int numHistory = cur.getCount();
+
+      // Ensure only the evil history entry is marked for deletion.
+      try {
+        cur.moveToFirst();
+        while (!cur.isAfterLast()) {
+          String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+          boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+
+          if (guid.equals(h2.guid)) {
+            assertTrue(deleted);
+          } else {
+            assertFalse(deleted);
+          }
+          cur.moveToNext();
         }
-        cur.moveToNext();
+      } finally {
+        cur.close();
+      }
+
+      // Test 2 - Ensure purgeDelete()'s call to delete() deletes only 1 record.
+      try {
+        db.purgeDeleted();
+      } catch (NullCursorException e) {
+        e.printStackTrace();
+      }
+
+      cur = getAllHistory();
+      int numHistoryAfterDeletion = cur.getCount();
+
+      // Ensure we have only 1 deleted row.
+      assertEquals(numHistoryAfterDeletion, numHistory - 1);
+
+      // Ensure only the evil history is deleted.
+      try {
+        cur.moveToFirst();
+        while (!cur.isAfterLast()) {
+          String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
+          boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
+
+          if (guid.equals(h2.guid)) {
+            fail("Evil guid was not deleted!");
+          } else {
+            assertFalse(deleted);
+          }
+          cur.moveToNext();
+        }
+      } finally {
+        cur.close();
       }
     } finally {
-      cur.close();
-    }
-
-    // Test 2 - Ensure purgeDelete()'s call to delete() deletes only 1 record.
-    try {
-      db.purgeDeleted();
-    } catch (NullCursorException e) {
-      e.printStackTrace();
-    }
-
-    cur = getAllHistory();
-    int numHistoryAfterDeletion = cur.getCount();
-
-    // Ensure we have only 1 deleted row.
-    assertEquals(numHistoryAfterDeletion, numHistory - 1);
-
-    // Ensure only the evil history is deleted.
-    try {
-      cur.moveToFirst();
-      while (!cur.isAfterLast()) {
-        String guid = RepoUtils.getStringFromCursor(cur, BrowserContract.SyncColumns.GUID);
-        boolean deleted = RepoUtils.getLongFromCursor(cur, BrowserContract.SyncColumns.IS_DELETED) == 1;
-
-        if (guid.equals(h2.guid)) {
-          fail("Evil guid was not deleted!");
-        } else {
-          assertFalse(deleted);
-        }
-        cur.moveToNext();
-      }
-    } finally {
-      cur.close();
+      closeDataAccessor(db);
+      session.abort();
     }
   }
 
@@ -379,6 +396,21 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     Cursor cur = context.getContentResolver().query(BrowserContractHelpers.HISTORY_CONTENT_URI,
         BrowserContractHelpers.HistoryColumns, null, null, null);
     return cur;
+  }
+
+  public void testDataAccessorBulkInsert() throws NullCursorException {
+    final AndroidBrowserHistoryRepositorySession session = (AndroidBrowserHistoryRepositorySession) createAndBeginSession();
+    AndroidBrowserHistoryDataAccessor db = (AndroidBrowserHistoryDataAccessor) session.getDBHelper();
+
+    ArrayList<HistoryRecord> records = new ArrayList<HistoryRecord>();
+    records.add(HistoryHelpers.createHistory1());
+    records.add(HistoryHelpers.createHistory2());
+    records.add(HistoryHelpers.createHistory3());
+    db.bulkInsert(records, true);
+    assertTrue(records.get(0).androidID > 0); // Special sentinel value is negative.
+
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(records.toArray(new Record[0]))));
+    session.abort();
   }
 
   public void testDataExtenderIsClosedBeforeBegin() {
@@ -416,21 +448,5 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     // Check dataExtender is closed upon abort.
     session.abort();
     assertTrue(db.getHistoryDataExtender().isClosed());
-  }
-
-  public void testDataAccessorBulkInsert() throws NullCursorException {
-    final AndroidBrowserHistoryRepositorySession session = (AndroidBrowserHistoryRepositorySession) createAndBeginSession();
-    AndroidBrowserHistoryDataAccessor db = (AndroidBrowserHistoryDataAccessor) session.getDBHelper();
-
-    ArrayList<HistoryRecord> records = new ArrayList<HistoryRecord>();
-    records.add(HistoryHelpers.createHistory1());
-    records.add(HistoryHelpers.createHistory2());
-    records.add(HistoryHelpers.createHistory3());
-    db.bulkInsert(records, true);
-    assertTrue(records.get(0).androidID > 0); // Special sentinel value is negative.
-
-    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(records.toArray(new Record[0]))));
-
-    session.abort();
   }
 }
