@@ -104,6 +104,54 @@ public class CommandProcessor {
     }
   }
 
+  public void sendCommand(String clientID, Command command) {
+    Logger.info(LOG_TAG, "In sendCommand.");
+    CommandRunner commandData = commands.get(command.commandType);
+
+    // Don't send commands that we don't know about.
+    if (commandData == null) {
+      Logger.error(LOG_TAG, "Unknown command to send: " + command);
+      return;
+    }
+    // Don't send a command with the wrong number of arguments.
+    else if (command.args == null || command.args.size() != commandData.argCount) {
+      Logger.error(LOG_TAG, "Expected " + commandData.argCount + " args for '" +
+                   command + "', but got " + command.args);
+      return;
+    }
+
+    if (clientID != null) {
+      this.sendCommandToClient(clientID, command);
+      return;
+    }
+
+    ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(session.getContext());
+    Map<String, ClientRecord> clientMap;
+    try {
+      clientMap = db.fetchAllClients();
+      for (ClientRecord client : clientMap.values()) {
+        this.sendCommandToClient(client.guid, command);
+      }
+    } catch (NullCursorException e) {
+      Logger.error(LOG_TAG, "NullCursorException when fetching all GUIDs");
+    } finally {
+      db.close();
+    }
+  }
+
+  protected void sendCommandToClient(String clientID, Command command) {
+    Logger.info(LOG_TAG, "Sending " + command.commandType + " to " + clientID);
+
+    ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(session.getContext());
+    try {
+      db.store(clientID, command);
+    } catch (NullCursorException e) {
+      Logger.error(LOG_TAG, "NullCursorException: Unable to send command.");
+    } finally {
+      db.close();
+    }
+  }
+
   public void displayURI(List<String> args, Context context) {
     // These two args are guaranteed to exist by trusting the client sender.
     String uri = args.get(0);
