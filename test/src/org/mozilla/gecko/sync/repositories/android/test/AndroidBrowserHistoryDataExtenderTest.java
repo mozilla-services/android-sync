@@ -127,6 +127,17 @@ public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
     ArrayList<HistoryRecord> records = new ArrayList<HistoryRecord>();
     records.add(HistoryHelpers.createHistory1());
     records.add(HistoryHelpers.createHistory2());
+    extender.bulkInsert(records);
+
+    for (HistoryRecord record : records) {
+      HistoryRecord toCompare = (HistoryRecord) record.copyWithIDs(record.guid, record.androidID);
+      toCompare.visits = extender.visitsForGUID(record.guid);
+      assertEquals(record.visits.size(), toCompare.visits.size());
+      assertTrue(record.equals(toCompare));
+    }
+
+    // Now insert existing records, changing one, and add another record.
+    records.get(0).title = "test";
     records.add(HistoryHelpers.createHistory3());
     extender.bulkInsert(records);
 
