@@ -60,6 +60,8 @@ public class BrowserContract {
     public static final String PARAM_IS_SYNC = "sync";
     public static final String PARAM_SHOW_DELETED = "show_deleted";
     public static final String PARAM_IS_TEST = "test";
+    public static final String PARAM_INSERT_IF_NEEDED = "insert_if_needed";
+    public static final String PARAM_INCREMENT_VISITS = "increment_visits";
 
     public interface CommonColumns {
         public static final String _ID = "_id";
@@ -105,6 +107,7 @@ public class BrowserContract {
         private Bookmarks() {}
 
         public static final int FIXED_ROOT_ID = 0;
+        public static final int FAKE_DESKTOP_FOLDER_ID = -1;
 
         public static final String MOBILE_FOLDER_GUID = "mobile";
         public static final String PLACES_FOLDER_GUID = "places";
@@ -112,6 +115,7 @@ public class BrowserContract {
         public static final String TAGS_FOLDER_GUID = "tags";
         public static final String TOOLBAR_FOLDER_GUID = "toolbar";
         public static final String UNFILED_FOLDER_GUID = "unfiled";
+        public static final String FAKE_DESKTOP_FOLDER_GUID = "desktop";
 
         public static final int TYPE_FOLDER = 0;
         public static final int TYPE_BOOKMARK = 1;
@@ -155,6 +159,17 @@ public class BrowserContract {
         public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "schema");
 
         public static final String VERSION = "version";
+    }
+
+    public static final class Control {
+        private Control() {}
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "control");
+
+        // Check if history was completely migrated, do a bunch if it wasn't.
+        public static final String ENSURE_HISTORY_MIGRATED = "ensure_history_migrated";
+        // Check if bookmarks were completely migrated, migrate them if not.
+        public static final String ENSURE_BOOKMARKS_MIGRATED = "ensure_bookmarks_migrated";
     }
 
     public static final class Passwords {
