@@ -7,11 +7,14 @@ package org.mozilla.gecko.sync.stage;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CommandProcessor;
+import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -54,6 +57,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected volatile boolean shouldWipe;
   protected volatile boolean commandsProcessedShouldUpload;
   protected final AtomicInteger uploadAttemptsCount = new AtomicInteger();
+  protected final List<ClientRecord> toUpload = new ArrayList<ClientRecord>();
 
   public SyncClientsEngineStage(GlobalSession session) {
     if (session == null) {
@@ -117,6 +121,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       session.config.persistServerClientsTimestamp(response.normalizedWeaveTimestamp());
       BaseResource.consumeEntity(response);
 
+      // Wipe the clients table if it still hasn't been wiped but needs to be.
+      wipeAndStore(null);
+
       // If we successfully downloaded all records but ours was not one of them
       // then reset the timestamp.
       if (!localAccountGUIDDownloaded) {
@@ -140,6 +147,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // TODO: persist the response timestamp to know whether to download next time (Bug 726055).
       clientUploadDelegate = new ClientUploadDelegate();
       clientsDelegate.setClientsCount(clientsCount);
+      uploadRemoteRecords();
       checkAndUpload();
     }
 
@@ -180,13 +188,16 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
           localAccountGUIDDownloaded = true;
           session.config.persistServerClientRecordTimestamp(r.lastModified);
           processCommands(r.commands);
+        } else {
+          // Only need to store record if it isn't our local one.
+          wipeAndStore(r);
+          addCommands(r);
         }
         RepoUtils.logClient(r);
       } catch (Exception e) {
         session.abort(e, "Exception handling client WBO.");
         return;
       }
-      wipeAndStore(r);
     }
 
     @Override
@@ -210,16 +221,15 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       return session.credentials();
     }
 
-    private void setUploadDetails(ClientRecord record, long serverClientRecordTimestamp) {
-      currentlyUploadingRecordTimestamp = serverClientRecordTimestamp;
+    private void setUploadDetails(ClientRecord record) {
+      // Use the timestamp for the whole collection per Sync storage 1.1 spec.
+      currentlyUploadingRecordTimestamp = session.config.getPersistedServerClientsTimestamp();
       currentlyUploadingClientRecord = record;
     }
 
     @Override
     public String ifUnmodifiedSince() {
-      // Use the timestamp for the whole collection per Sync storage 1.1 spec.
-      Long timestampInMilliseconds = session.config.getPersistedServerClientsTimestamp();
-      Logger.info(LOG_TAG, "Timestamp: " + timestampInMilliseconds);
+      Long timestampInMilliseconds = currentlyUploadingRecordTimestamp;
 
       // It's the first upload so we don't care about X-If-Unmodified-Since.
       if (timestampInMilliseconds == 0) {
@@ -376,6 +386,40 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  protected void addCommands(ClientRecord record) throws NullCursorException {
+    Logger.trace(LOG_TAG, "Adding commands to " + record.guid);
+    List<Command> commands = db.fetchCommandsForClient(record.guid);
+
+    if (commands == null || commands.size() <= 0) {
+      Logger.trace(LOG_TAG, "No commands to add.");
+      return;
+    }
+
+    for (Command command : commands) {
+      JSONObject jsonCommand = new JSONObject();
+      jsonCommand.put("command", command.commandType);
+      jsonCommand.put("args", command.args);
+      if (record.commands == null) {
+        record.commands = new JSONArray();
+      }
+      record.commands.add(jsonCommand);
+    }
+    toUpload.add(record);
+  }
+
+  protected void uploadRemoteRecords() {
+    Logger.trace(LOG_TAG, "In uploadRemoteRecords. Uploading " + toUpload.size() + " records" );
+    for (ClientRecord record : toUpload) {
+      Logger.trace(LOG_TAG, "Record " + record.guid + " is being uploaded" );
+      clientUploadDelegate.setUploadDetails(record);
+
+      // TODO: Perform one upload at a time since we cannot share the upload delegate.
+      // Have a delegate per upload or synchronize all delegate methods.
+      encryptAndUpload(record);
+    }
+  }
+
   protected void checkAndUpload() {
     if (!shouldUpload()) {
       Logger.debug(LOG_TAG, "Not uploading client record.");
@@ -384,7 +428,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     final ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
-    clientUploadDelegate.setUploadDetails(null, session.config.getPersistedServerClientRecordTimestamp());
+    clientUploadDelegate.setUploadDetails(null);
     encryptAndUpload(localClient);
   }
 
