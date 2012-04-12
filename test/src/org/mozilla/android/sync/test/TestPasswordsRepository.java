@@ -216,7 +216,7 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
    * remote one after reconciling.
    */
   public void testStoreIdenticalExceptGuid() {
-    final RepositorySession session = createAndBeginSession();
+    RepositorySession session = createAndBeginSession();
     PasswordRecord record = PasswordHelpers.createPassword1();
     record.guid = "before1";
     Log.d(LOG_TAG, "record1.guid: " + record.guid);
