@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.simple.parser.ParseException;
 import org.json.simple.JSONArray;
@@ -19,6 +20,7 @@ import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.android.sync.test.helpers.CommandHelpers;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockClientsDataDelegate;
 import org.mozilla.android.sync.test.helpers.MockClientsDatabaseAccessor;
@@ -32,6 +34,7 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -575,5 +578,25 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     performFailingUpload();
     assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
+  }
+
+  class TestAddCommandsMockClientsDatabaseAccessor extends MockClientsDatabaseAccessor {
+    @Override
+    public List<Command> fetchCommandsForClient(String accountGUID) throws NullCursorException {
+      List<Command> commands = new ArrayList<Command>();
+      commands.add(CommandHelpers.getCommand1());
+      commands.add(CommandHelpers.getCommand2());
+      commands.add(CommandHelpers.getCommand3());
+      commands.add(CommandHelpers.getCommand4());
+      return commands;
+    }
+  }
+
+  @Test
+  public void testAddCommands() throws NullCursorException {
+    db = new TestAddCommandsMockClientsDatabaseAccessor();
+    this.addCommands(new ClientRecord());
+    assertEquals(1, toUpload.size());
+    assertEquals(4, toUpload.get(0).commands.size());
   }
 }

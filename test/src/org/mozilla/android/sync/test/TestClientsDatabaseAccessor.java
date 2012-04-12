@@ -59,6 +59,33 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
     assertFalse(record3.equals(r3));
   }
 
+  public void testStoreAndFetchCommandsForClient() {
+    String accountGUID1 = Utils.generateGuid();
+    String accountGUID2 = Utils.generateGuid();
+
+    Command command1 = CommandHelpers.getCommand1();
+    Command command2 = CommandHelpers.getCommand2();
+    Command command3 = CommandHelpers.getCommand3();
+
+    Cursor cur = null;
+    try {
+      db.store(accountGUID1, command1);
+      db.store(accountGUID1, command2);
+      db.store(accountGUID2, command3);
+
+      List<Command> commands = db.fetchCommandsForClient(accountGUID1);
+      assertEquals(2, commands.size());
+      assertEquals(1, commands.get(0).args.size());
+      assertEquals(1, commands.get(1).args.size());
+    } catch (NullCursorException e) {
+      fail("Should not have NullCursorException");
+    } finally {
+      if (cur != null) {
+        cur.close();
+      }
+    }
+  }
+
   public void testNumClients() {
     final int COUNT = 5;
     ArrayList<ClientRecord> list = new ArrayList<ClientRecord>();
