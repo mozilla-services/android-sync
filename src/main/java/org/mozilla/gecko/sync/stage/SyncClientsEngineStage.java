@@ -202,16 +202,24 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
   public class ClientUploadDelegate extends WBORequestDelegate {
     protected static final String LOG_TAG = "ClientUploadDelegate";
+    public Long currentlyUploadingRecordTimestamp;
+    public ClientRecord currentlyUploadingClientRecord;
 
     @Override
     public String credentials() {
       return session.credentials();
     }
 
+    private void setUploadDetails(ClientRecord record, long serverClientRecordTimestamp) {
+      currentlyUploadingRecordTimestamp = serverClientRecordTimestamp;
+      currentlyUploadingClientRecord = record;
+    }
+
     @Override
     public String ifUnmodifiedSince() {
       // Use the timestamp for the whole collection per Sync storage 1.1 spec.
       Long timestampInMilliseconds = session.config.getPersistedServerClientsTimestamp();
+      Logger.info(LOG_TAG, "Timestamp: " + timestampInMilliseconds);
 
       // It's the first upload so we don't care about X-If-Unmodified-Since.
       if (timestampInMilliseconds == 0) {
@@ -224,13 +232,18 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.debug(LOG_TAG, "Upload succeeded.");
-      try {
-        commandsProcessedShouldUpload = false;
-        uploadAttemptsCount.set(0);
 
-        // Persist the timestamp for the record we just uploaded,
-        // and bump the collection timestamp, too.
-        long timestamp = response.normalizedWeaveTimestamp();
+      commandsProcessedShouldUpload = false;
+      uploadAttemptsCount.set(0);
+
+      // This is the case when we are NOT currently uploading our local record.
+      if (currentlyUploadingClientRecord != null) {
+        clearRecord(currentlyUploadingClientRecord);
+        return;
+      }
+
+      try {
+        long timestamp = Utils.decimalSecondsToMilliseconds(response.body());
         session.config.persistServerClientRecordTimestamp(timestamp);
         session.config.persistServerClientsTimestamp(timestamp);
         BaseResource.consumeEntity(response);
@@ -370,11 +383,17 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       return;
     }
 
+    final ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
+    clientUploadDelegate.setUploadDetails(null, session.config.getPersistedServerClientRecordTimestamp());
+    encryptAndUpload(localClient);
+  }
+
+  protected void encryptAndUpload(ClientRecord recordToUpload) {
     // Generate CryptoRecord from ClientRecord to upload.
     final String encryptionFailure = "Couldn't encrypt new client record.";
-    final ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
+
     try {
-      CryptoRecord cryptoRecord = localClient.getEnvelope();
+      CryptoRecord cryptoRecord = recordToUpload.getEnvelope();
       cryptoRecord.keyBundle = clientUploadDelegate.keyBundle();
       cryptoRecord.encrypt();
       this.uploadClientRecord(cryptoRecord);
@@ -382,6 +401,15 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       session.abort(e, encryptionFailure + " Unsupported encoding.");
     } catch (CryptoException e) {
       session.abort(e, encryptionFailure);
+    }
+  }
+
+  public void clearRecord(ClientRecord record) {
+    try {
+      toUpload.remove(record);
+      db.deleteCommands(record.guid);
+    } finally {
+      db.close();
     }
   }
 
