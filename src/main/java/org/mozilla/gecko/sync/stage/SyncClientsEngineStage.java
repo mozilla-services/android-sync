@@ -28,6 +28,7 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.gecko.sync.net.WBORequestDelegate;
+import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
@@ -423,9 +424,11 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected void wipeAndStore(ClientRecord record) {
     ClientsDatabaseAccessor db = getClientsDatabaseAccessor();
     if (shouldWipe) {
-      db.wipe();
+      db.wipeClientsTable();
       shouldWipe = false;
     }
-    db.store(record);
+    if (record != null) {
+      db.store(record);
+    }
   }
 }

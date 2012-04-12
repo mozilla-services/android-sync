@@ -475,7 +475,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertFalse(shouldWipe);
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertFalse(getMockDataAccessor().wiped);
+    assertFalse(getMockDataAccessor().clientsTableWiped);
     assertTrue(getMockDataAccessor().storedRecord);
   }
 
@@ -485,7 +485,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     shouldWipe = true;
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertTrue(getMockDataAccessor().wiped);
+    assertTrue(getMockDataAccessor().clientsTableWiped);
     assertTrue(getMockDataAccessor().storedRecord);
   }
 

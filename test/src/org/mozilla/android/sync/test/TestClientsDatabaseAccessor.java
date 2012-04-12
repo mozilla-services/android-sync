@@ -4,14 +4,18 @@
 package org.mozilla.android.sync.test;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import org.mozilla.android.sync.test.helpers.CommandHelpers;
+import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.test.AndroidTestCase;
 
 public class TestClientsDatabaseAccessor extends AndroidTestCase {
@@ -26,7 +30,7 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
 
   public void setUp() {
     db = new StubbedClientsDatabaseAccessor(mContext);
-    db.wipe();
+    db.wipeDB();
   }
 
   public void tearDown() {
@@ -43,9 +47,9 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
     list.add(record2);
     db.store(list);
 
-    ClientRecord r1 = db.fetch(record1.guid);
-    ClientRecord r2 = db.fetch(record2.guid);
-    ClientRecord r3 = db.fetch(record3.guid);
+    ClientRecord r1 = db.fetchClient(record1.guid);
+    ClientRecord r2 = db.fetchClient(record2.guid);
+    ClientRecord r3 = db.fetchClient(record3.guid);
 
     assertNotNull(r1);
     assertNotNull(r2);
@@ -75,13 +79,13 @@ public class TestClientsDatabaseAccessor extends AndroidTestCase {
 
     boolean thrown = false;
     try {
-      Map<String, ClientRecord> records =  db.fetchAll();
+      Map<String, ClientRecord> records =  db.fetchAllClients();
 
       assertNotNull(records);
       assertEquals(0, records.size());
 
       db.store(list);
-      records = db.fetchAll();
+      records = db.fetchAllClients();
       assertNotNull(records);
       assertEquals(2, records.size());
       assertTrue(record1.equals(records.get(record1.guid)));

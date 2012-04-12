@@ -27,7 +27,11 @@ public class TestCommandProcessor extends CommandProcessor {
   public static final String wellFormedCommand = "{\"args\":[\"https://bugzilla.mozilla.org/show_bug.cgi?id=731341\",\"PKsljsuqYbGg\"],\"command\":\"displayURI\"}";
 
   private boolean commandExecuted;
-  public class MockCommandRunner implements CommandRunner {
+  public class MockCommandRunner extends CommandRunner {
+    public MockCommandRunner(int argCount) {
+      super(argCount);
+    }
+
     @Override
     public void executeCommand(List<String> args) {
       commandExecuted = true;
@@ -37,7 +41,7 @@ public class TestCommandProcessor extends CommandProcessor {
   @Test
   public void testRegisterCommand() throws NonObjectJSONException, IOException, ParseException {
     assertNull(commands.get(commandType));
-    this.registerCommand(commandType, new MockCommandRunner());
+    this.registerCommand(commandType, new MockCommandRunner(1));
     assertNotNull(commands.get(commandType));
   }
 
@@ -45,7 +49,7 @@ public class TestCommandProcessor extends CommandProcessor {
   public void testProcessRegisteredCommand() throws NonObjectJSONException, IOException, ParseException {
     commandExecuted = false;
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(wellFormedCommand);
-    this.registerCommand(commandType, new MockCommandRunner());
+    this.registerCommand(commandType, new MockCommandRunner(1));
     this.processCommand(unparsedCommand);
     assertTrue(commandExecuted);
   }
@@ -61,7 +65,7 @@ public class TestCommandProcessor extends CommandProcessor {
   @Test
   public void testProcessInvalidCommand() throws NonObjectJSONException, IOException, ParseException {
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(commandWithNoType);
-    this.registerCommand(commandType, new MockCommandRunner());
+    this.registerCommand(commandType, new MockCommandRunner(1));
     this.processCommand(unparsedCommand);
     assertFalse(commandExecuted);
   }
