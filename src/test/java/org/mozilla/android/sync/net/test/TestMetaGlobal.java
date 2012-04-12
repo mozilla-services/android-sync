@@ -4,17 +4,21 @@
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+
+import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.MetaGlobal;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -32,6 +36,8 @@ public class TestMetaGlobal {
   public static final String META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
   private HTTPServerTestHelper data    = new HTTPServerTestHelper(TEST_PORT);
 
+  public static final String TEST_META_GLOBAL_RESPONSE = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
+
   @Before
   public void setUp() {
     Log.i("TestMetaGlobal", "Faking SSL context.");
@@ -41,11 +47,9 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalModified() {
+  public void testMetaGlobalSyncID() {
     MetaGlobal g = new MetaGlobal(META_URL, USER_PASS);
-    assertFalse(g.isModified);
     g.setSyncID("foobar");
-    assertTrue(g.isModified);
     assertEquals(g.getSyncID(), "foobar");
   }
 
@@ -86,11 +90,6 @@ public class TestMetaGlobal {
       missingResponse = response;
       WaitHelper.getTestWaiter().performNotify();
     }
-
-    @Override
-    public MetaGlobalDelegate deferred() {
-      return this;
-    }
   }
 
   public MockMetaGlobalFetchDelegate doFetch(final MetaGlobal global) {
@@ -109,9 +108,7 @@ public class TestMetaGlobal {
   public void testMetaGlobalMissingFetch() {
     MockServer missingMetaGlobalServer = new MockServer(404, "{}");
     final MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
-    assertFalse(global.isModified);
     global.setSyncID(TEST_SYNC_ID);
-    assertTrue(global.isModified);
     assertEquals(TEST_SYNC_ID, global.getSyncID());
 
     data.startHTTPServer(missingMetaGlobalServer);
@@ -120,14 +117,12 @@ public class TestMetaGlobal {
 
     assertTrue(delegate.missingCalled);
     assertEquals(404, delegate.missingResponse.getStatusCode());
-    assertTrue(delegate.missingGlobal.isModified);
     assertEquals(TEST_SYNC_ID, delegate.missingGlobal.getSyncID());
   }
 
   @Test
   public void testMetaGlobalExistingFetch() {
-    String body = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
-    MockServer existingMetaGlobalServer = new MockServer(200, body);
+    MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_RESPONSE);
     MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     assertNull(global.getSyncID());
     assertNull(global.getEngines());
@@ -139,11 +134,31 @@ public class TestMetaGlobal {
 
     assertTrue(delegate.successCalled);
     assertEquals(200, delegate.successResponse.getStatusCode());
-    assertFalse(global.isModified);
     assertEquals("zPSQTm7WBVWB", global.getSyncID());
     assertTrue(global.getEngines() instanceof ExtendedJSONObject);
     assertEquals(new Long(5), global.getStorageVersion());
   }
 
+
+  @Test
+  public void testMetaGlobalSetFromRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
+    assertEquals("zPSQTm7WBVWB", mg.getSyncID());
+    assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
+    assertEquals(new Long(5), mg.getStorageVersion());
+  }
+
+  @Test
+  public void testMetaGlobalAsCryptoRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
+    CryptoRecord rec = mg.asCryptoRecord();
+    assertEquals("global", rec.guid);
+    mg.setFromRecord(rec);
+    assertEquals("zPSQTm7WBVWB", mg.getSyncID());
+    assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
+    assertEquals(new Long(5), mg.getStorageVersion());
+  }
   // TODO: upload test.
 }
