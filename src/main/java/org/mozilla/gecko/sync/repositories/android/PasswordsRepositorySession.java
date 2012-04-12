@@ -13,7 +13,6 @@ import org.mozilla.gecko.db.BrowserContract.DeletedPasswords;
 import org.mozilla.gecko.db.BrowserContract.Passwords;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
-import org.mozilla.gecko.sync.repositories.InvalidRequestException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.RecordFilter;
