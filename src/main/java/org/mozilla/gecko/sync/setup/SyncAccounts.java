@@ -7,6 +7,8 @@ package org.mozilla.gecko.sync.setup;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
+import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -59,10 +61,14 @@ public class SyncAccounts {
     public final Context context;
     public final AccountManager accountManager;
 
-    public final String username;
-    public final String syncKey;
-    public final String password;
-    public final String serverURL;
+
+    public final String username; // services.sync.account
+    public final String syncKey; // in password manager: "chrome://weave (Mozilla Services Password)"
+    public final String password; // in password manager: "chrome://weave (Mozilla Services Encryption Passphrase)"
+    public final String serverURL; // services.sync.serverURL
+    public final String clusterURL; // services.sync.clusterURL
+    public final String clientName; // services.sync.client.name
+    public final String clientGuid; // services.sync.client.GUID
 
     /**
      * Encapsulate the parameters needed to create a new Firefox Sync account.
@@ -80,9 +86,20 @@ public class SyncAccounts {
      *          the desired password; cannot be null.
      * @param serverURL
      *          the server URL to use; if null, use the default.
+     * @param clusterURL
+     *          the cluster URL to use; if null, a fresh cluster URL will be
+     *          retrieved from the server during the next sync.
+     * @param clientName
+     *          the client name; if null, a fresh client record will be uploaded
+     *          to the server during the next sync.
+     * @param clientGuid
+     *          the client GUID; if null, a fresh client record will be uploaded
+     *          to the server during the next sync.
      */
     public SyncAccountParameters(Context context, AccountManager accountManager,
-        String username, String syncKey, String password, String serverURL) {
+        String username, String syncKey, String password,
+        String serverURL, String clusterURL,
+        String clientName, String clientGuid) {
       if (context == null) {
         throw new IllegalArgumentException("Null context passed to SyncAccountParameters constructor.");
       }
@@ -101,6 +118,14 @@ public class SyncAccounts {
       this.syncKey = syncKey;
       this.password = password;
       this.serverURL = serverURL;
+      this.clusterURL = clusterURL;
+      this.clientName = clientName;
+      this.clientGuid = clientGuid;
+    }
+
+    public SyncAccountParameters(Context context, AccountManager accountManager,
+        String username, String syncKey, String password, String serverURL) {
+      this(context, accountManager, username, syncKey, password, serverURL, null, null, null);
     }
   }
 
@@ -142,20 +167,20 @@ public class SyncAccounts {
     final String username  = syncAccount.username;
     final String syncKey   = syncAccount.syncKey;
     final String password  = syncAccount.password;
-    final String serverURL = syncAccount.serverURL;
+    final String serverURL = (syncAccount.serverURL == null) ?
+        DEFAULT_SERVER : syncAccount.serverURL;
+
     Logger.debug(LOG_TAG, "Using account manager " + accountManager);
+    if (!RepoUtils.stringsEqual(syncAccount.serverURL, DEFAULT_SERVER)) {
+      Logger.info(LOG_TAG, "Setting explicit server URL: " + serverURL);
+    }
 
     final Account account = new Account(username, Constants.ACCOUNTTYPE_SYNC);
     final Bundle userbundle = new Bundle();
 
     // Add sync key and server URL.
     userbundle.putString(Constants.OPTION_SYNCKEY, syncKey);
-    if (serverURL != null) {
-      Logger.info(LOG_TAG, "Setting explicit server URL: " + serverURL);
-      userbundle.putString(Constants.OPTION_SERVER, serverURL);
-    } else {
-      userbundle.putString(Constants.OPTION_SERVER, DEFAULT_SERVER);
-    }
+    userbundle.putString(Constants.OPTION_SERVER, serverURL);
     Logger.debug(LOG_TAG, "Adding account for " + Constants.ACCOUNTTYPE_SYNC);
     boolean result = false;
     try {
@@ -174,19 +199,14 @@ public class SyncAccounts {
       }
     }
 
-    Logger.debug(LOG_TAG, "Account: " + account + " added successfully? " + result);
     if (!result) {
-      Logger.error(LOG_TAG, "Failed to add account!");
+      Logger.error(LOG_TAG, "Failed to add account " + account + "!");
       return null;
     }
+    Logger.debug(LOG_TAG, "Account " + account + " added successfully.");
 
-    // Set components to sync (default: all).
-    ContentResolver.setMasterSyncAutomatically(true);
-
-    String authority = BrowserContract.AUTHORITY;
-    Logger.debug(LOG_TAG, "Setting authority " + authority + " to sync automatically.");
-    ContentResolver.setSyncAutomatically(account, authority, true);
-    ContentResolver.setIsSyncable(account, authority, 1);
+    setSyncAutomatically(account);
+    setClientRecord(context, accountManager, account, syncAccount.clientName, syncAccount.clientGuid);
 
     // TODO: add other ContentProviders as needed (e.g. passwords)
     // TODO: for each, also add to res/xml to make visible in account settings

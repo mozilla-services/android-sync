@@ -9,6 +9,7 @@ import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
+import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -181,5 +182,20 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
+  }
+
+  public void testClientRecord() {
+    final String TEST_NAME = "testName";
+    final String TEST_GUID = "testGuid";
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, null, null, TEST_NAME, TEST_GUID);
+    account = SyncAccounts.createSyncAccount(syncAccount);
+    assertNotNull(account);
+
+    SyncAdapter syncAdapter = new SyncAdapter(context, false);
+    syncAdapter.localAccount = account;
+
+    assertEquals(TEST_GUID, syncAdapter.getAccountGUID());
+    assertEquals(TEST_NAME, syncAdapter.getClientName());
   }
 }
