@@ -15,20 +15,17 @@ import android.net.Uri;
 
 /**
  * This class provides an interface to Fenec's control content provider, which
- * exposes some of Fennec's internal state.
+ * exposes some of Fennec's internal state, particularly around migrations.
  */
 public class FennecControlHelper {
-  public static String LOG_TAG = "FennecControlHelper";
-
-  protected static Uri FENNEC_CONTROL_URI = Control.CONTENT_URI;
+  private static final String LOG_TAG = "FennecControlHelper";
 
   protected ContentProviderClient providerClient;
   protected final RepoUtils.QueryHelper queryHelper;
 
-  public FennecControlHelper(Context context)
-      throws NoContentProviderException {
+  public FennecControlHelper(Context context) throws NoContentProviderException {
     providerClient = acquireContentProvider(context);
-    queryHelper = new RepoUtils.QueryHelper(context, FENNEC_CONTROL_URI, LOG_TAG);
+    queryHelper = new RepoUtils.QueryHelper(context, Control.CONTENT_URI, LOG_TAG);
   }
 
   /**
@@ -37,19 +34,22 @@ public class FennecControlHelper {
    * The caller is responsible for releasing the client.
    *
    * @param context The application context.
-   * @return The <code>ContentProviderClient</code>.
+   * @return The <code>ContentProviderClient</code>. Never null.
    * @throws NoContentProviderException
    */
   public static ContentProviderClient acquireContentProvider(final Context context)
       throws NoContentProviderException {
-    Uri uri = FENNEC_CONTROL_URI;
-    ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(uri);
+    final Uri uri = Control.CONTENT_URI;
+    final ContentProviderClient client = context.getContentResolver().acquireContentProviderClient(uri);
     if (client == null) {
       throw new NoContentProviderException(uri);
     }
     return client;
   }
 
+  /**
+   * After invoking this method, this instance should be discarded.
+   */
   public void releaseProviders() {
     try {
       if (providerClient != null) {
@@ -60,57 +60,72 @@ public class FennecControlHelper {
     providerClient = null;
   }
 
-  // Only used for testing.
-  public ContentProviderClient getFormsProvider() {
-    return providerClient;
+  @Override
+  protected void finalize() throws Throwable {
+    this.releaseProviders();
+    super.finalize();
   }
 
-  protected static String[] HISTORY_MIGRATION_COLUMNS = new String[] { Control.ENSURE_HISTORY_MIGRATED };
-  protected static String[] BOOKMARKS_MIGRATION_COLUMNS = new String[] { Control.ENSURE_BOOKMARKS_MIGRATED };
+  private static String[] HISTORY_MIGRATION_COLUMNS = new String[] { Control.ENSURE_HISTORY_MIGRATED };
+  private static String[] BOOKMARKS_MIGRATION_COLUMNS = new String[] { Control.ENSURE_BOOKMARKS_MIGRATED };
 
-  protected boolean isColumnMigrated(String column) {
-    String[] columns = new String[] { column };
-    Cursor cursor = null;
+  /**
+   * Pass in a unit array. Returns true if the named column is
+   * finished migrating; false otherwise.
+   *
+   * @param columns an array of a single string, which should be one of the
+   *                permitted control values.
+   * @return true if the named column is finished migrating; false otherwise.
+   */
+  protected boolean isColumnMigrated(final String[] columns) {
     try {
-      cursor = queryHelper.safeQuery(providerClient, ".isColumnMigrated(" + column + ")", columns, null, null, null);
-      if (!cursor.moveToFirst()) {
-        return false;
-      }
-      int value = RepoUtils.getIntFromCursor(cursor, column);
-      return value > 0;
-    } catch (Exception e) {
-      Logger.warn(LOG_TAG, "Caught exception checking if Fennec has migrated column " + column + ".", e);
-      return false;
-    } finally {
-      if (cursor != null) {
+      final Cursor cursor = queryHelper.safeQuery(providerClient, ".isColumnMigrated(" + columns[0] + ")",
+                                                  columns, null, null, null);
+      try {
+        if (!cursor.moveToFirst()) {
+          return false;
+        }
+
+        // This is why we require a unit array.
+        return cursor.getInt(0) > 0;
+      } finally {
         cursor.close();
       }
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Caught exception checking if Fennec has migrated column " + columns[0] + ".", e);
+      return false;
     }
   }
 
-  protected static boolean isColumnMigrated(Context context, String column) {
+  /**
+   * @param context the context to use when querying.
+   * @param columns an array of a single string, which should be one of the
+   *                permitted control values.
+   * @return true if the named column is finished migrating; false otherwise.
+   */
+  protected static boolean isColumnMigrated(Context context, String[] columns) {
     if (context == null) {
       return false;
     }
-    FennecControlHelper control = null;
+
     try {
-      control = new FennecControlHelper(context);
-      return control.isColumnMigrated(column);
-    } catch (Exception e) {
-      Logger.warn(LOG_TAG, "Caught exception checking if Fennec has migrated column " + column + ".", e);
-      return false;
-    } finally {
-      if (control != null) {
+      final FennecControlHelper control = new FennecControlHelper(context);
+      try {
+        return control.isColumnMigrated(columns);
+      } finally {
         control.releaseProviders();
       }
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Caught exception checking if Fennec has migrated column " + columns[0] + ".", e);
+      return false;
     }
   }
 
   public static boolean isHistoryMigrated(Context context) {
-    return isColumnMigrated(context, Control.ENSURE_HISTORY_MIGRATED);
+    return isColumnMigrated(context, HISTORY_MIGRATION_COLUMNS);
   }
 
   public static boolean areBookmarksMigrated(Context context) {
-    return isColumnMigrated(context, Control.ENSURE_BOOKMARKS_MIGRATED);
+    return isColumnMigrated(context, BOOKMARKS_MIGRATION_COLUMNS);
   }
 }
