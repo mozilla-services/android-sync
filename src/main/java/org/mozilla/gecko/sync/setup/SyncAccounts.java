@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.setup;
 
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
@@ -14,6 +15,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,7 +28,7 @@ import android.util.Log;
  */
 public class SyncAccounts {
 
-  private final static String DEFAULT_SERVER = "https://auth.services.mozilla.com/";
+  public final static String DEFAULT_SERVER = "https://auth.services.mozilla.com/";
   private static final String LOG_TAG = "SyncAccounts";
   private static final String GLOBAL_LOG_TAG = "FxSync";
 
@@ -215,7 +217,11 @@ public class SyncAccounts {
     // TODO: correctly implement Sync Options.
     Logger.info(LOG_TAG, "Clearing preferences for this account.");
     try {
-      Utils.getSharedPreferences(context, username, serverURL).edit().clear().commit();
+      SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit().clear();
+      if (syncAccount.clusterURL != null) {
+        editor.putString(SyncConfiguration.PREF_CLUSTER_URL, syncAccount.clusterURL);
+      }
+      editor.commit();
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Could not clear prefs path!", e);
     }

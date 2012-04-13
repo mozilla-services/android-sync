@@ -3,9 +3,14 @@
 
 package org.mozilla.gecko.sync.setup.test;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
@@ -16,6 +21,7 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.content.Context;
+import android.content.SharedPreferences;
 
 public class TestSyncAccounts extends AndroidSyncTestCase {
   private static final String TEST_USERNAME  = "testAccount@mozilla.com";
@@ -184,7 +190,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     assertEquals(before, afterDelete);
   }
 
-  public void testClientRecord() {
+  public void testClientRecord() throws NoSuchAlgorithmException, UnsupportedEncodingException {
     final String TEST_NAME = "testName";
     final String TEST_GUID = "testGuid";
     syncAccount = new SyncAccountParameters(context, null,
@@ -197,5 +203,34 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
     assertEquals(TEST_GUID, syncAdapter.getAccountGUID());
     assertEquals(TEST_NAME, syncAdapter.getClientName());
+
+    // Let's verify that clusterURL is correctly not set.
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, SyncAccounts.DEFAULT_SERVER);
+    String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
+    assertNull(clusterURL);
+  }
+
+  public void testClusterURL() throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    final String TEST_SERVER_URL = "test.server.url/";
+    final String TEST_CLUSTER_URL = "test.cluster.url/";
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVER_URL, TEST_CLUSTER_URL, null, null);
+    account = SyncAccounts.createSyncAccount(syncAccount);
+    assertNotNull(account);
+
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVER_URL);
+    String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
+    assertNotNull(clusterURL);
+    assertEquals(TEST_CLUSTER_URL, clusterURL);
+
+    SyncAdapter syncAdapter = new SyncAdapter(context, false);
+    syncAdapter.localAccount = account;
+
+    // Let's verify that client name and GUID are not set (and the default is returned).
+    String guid = syncAdapter.getAccountGUID();
+    assertNotNull(guid);
+    String name = syncAdapter.getClientName();
+    assertNotNull(name);
+    assertTrue(name.startsWith(GlobalConstants.PRODUCT_NAME));
   }
 }
