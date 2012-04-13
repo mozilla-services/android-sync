@@ -41,6 +41,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -98,7 +99,22 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     return e;
   }
 
+  protected StringEntity jsonEntity(JSONArray body) throws UnsupportedEncodingException {
+    StringEntity e = new StringEntity(body.toJSONString(), "UTF-8");
+    e.setContentType("application/json");
+    return e;
+  }
+
   public void post(JSONObject body) {
+    // Let's do this the trivial way for now.
+    try {
+      this.resource.post(jsonEntity(body));
+    } catch (UnsupportedEncodingException e) {
+      this.delegate.handleRequestError(e);
+    }
+  }
+
+  public void post(JSONArray body) {
     // Let's do this the trivial way for now.
     try {
       this.resource.post(jsonEntity(body));

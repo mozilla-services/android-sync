@@ -163,16 +163,16 @@ public class ClientsDatabaseAccessor {
     return ClientsDatabaseAccessor.PROFILE_ID;
   }
 
-  public void deleteCommands(String accountGUID) {
-    db.deleteCommands(accountGUID);
-  }
-
   public void wipeDB() {
     db.wipeDB();
   }
 
   public void wipeClientsTable() {
     db.wipeClientsTable();
+  }
+
+  public void wipeCommandsTable() {
+    db.wipeCommandsTable();
   }
 
   public void close() {

@@ -185,16 +185,16 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   public class ClientUploadDelegate extends WBORequestDelegate {
     protected static final String LOG_TAG = "ClientUploadDelegate";
     public Long currentlyUploadingRecordTimestamp;
-    public ClientRecord currentlyUploadingClientRecord;
+    public boolean currentlyUploadingLocalRecord;
 
     @Override
     public String credentials() {
       return session.credentials();
     }
 
-    private void setUploadDetails(ClientRecord record, long serverClientRecordTimestamp) {
+    private void setUploadDetails(boolean isLocalRecord, long serverClientRecordTimestamp) {
       currentlyUploadingRecordTimestamp = serverClientRecordTimestamp;
-      currentlyUploadingClientRecord = record;
+      currentlyUploadingLocalRecord = isLocalRecord;
     }
 
     @Override
@@ -217,8 +217,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       uploadAttemptsCount.set(0);
 
       // This is the case when we are NOT currently uploading our local record.
-      if (currentlyUploadingClientRecord != null) {
-        clearRecord(currentlyUploadingClientRecord);
+      if (!currentlyUploadingLocalRecord) {
+        clearRecords();
         return;
       }
 
@@ -246,6 +246,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
           statusCode == HttpStatus.SC_PRECONDITION_FAILED ||
           uploadAttemptsCount.incrementAndGet() > MAX_UPLOAD_FAILURE_COUNT) {
         Logger.debug(LOG_TAG, "Client upload failed. Aborting sync.");
+        if (!currentlyUploadingLocalRecord) {
+          clearRecords(); // These will be redownloaded.
+        }
         BaseResource.consumeEntity(response); // The exception thrown should need the response body.
         session.abort(new HTTPFailureException(response), "Client upload failed.");
         return;
@@ -361,16 +364,37 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     toUpload.add(record);
   }
 
+  @SuppressWarnings("unchecked")
   protected void uploadRemoteRecords() {
     Logger.trace(LOG_TAG, "In uploadRemoteRecords. Uploading " + toUpload.size() + " records" );
+
+    if (toUpload.size() == 0) {
+      return;
+    }
+
+    if (toUpload.size() == 1) {
+      Logger.info(LOG_TAG, "Only 1 remote record to upload.");
+      ClientRecord record = toUpload.get(0);
+      CryptoRecord cryptoRecord = encryptClientRecord(record);
+      clientUploadDelegate.setUploadDetails(false, record.lastModified);
+      this.uploadClientRecord(cryptoRecord);
+      return;
+    }
+
+    JSONArray cryptoRecords = new JSONArray();
+    long latestLastModified = 0;
     for (ClientRecord record : toUpload) {
       Logger.trace(LOG_TAG, "Record " + record.guid + " is being uploaded" );
-      clientUploadDelegate.setUploadDetails(record, record.lastModified);
+      if (record.lastModified > latestLastModified) {
+        latestLastModified = record.lastModified;
+      }
 
-      // TODO: Perform one upload at a time since we cannot share the upload delegate.
-      // Have a delegate per upload or synchronize all delegate methods.
-      encryptAndUpload(record);
+      CryptoRecord cryptoRecord = encryptClientRecord(record);
+      cryptoRecords.add(cryptoRecord.toJSONObject());
     }
+    clientUploadDelegate.setUploadDetails(false, latestLastModified);
+    Logger.info(LOG_TAG, "cryptoRecords size: " + cryptoRecords.size());
+    this.uploadClientRecords(cryptoRecords);
   }
 
   protected void checkAndUpload() {
@@ -381,30 +405,33 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     final ClientRecord localClient = newLocalClientRecord(session.getClientsDelegate());
-    clientUploadDelegate.setUploadDetails(null, session.config.getPersistedServerClientRecordTimestamp());
-    encryptAndUpload(localClient);
+    clientUploadDelegate.setUploadDetails(true, session.config.getPersistedServerClientRecordTimestamp());
+    CryptoRecord cryptoRecord = encryptClientRecord(localClient);
+    if (cryptoRecord != null) {
+      this.uploadClientRecord(cryptoRecord);
+    }
   }
 
-  protected void encryptAndUpload(ClientRecord recordToUpload) {
+  protected CryptoRecord encryptClientRecord(ClientRecord recordToUpload) {
     // Generate CryptoRecord from ClientRecord to upload.
     final String encryptionFailure = "Couldn't encrypt new client record.";
 
     try {
       CryptoRecord cryptoRecord = recordToUpload.getEnvelope();
       cryptoRecord.keyBundle = clientUploadDelegate.keyBundle();
-      cryptoRecord.encrypt();
-      this.uploadClientRecord(cryptoRecord);
+      return cryptoRecord.encrypt();
     } catch (UnsupportedEncodingException e) {
       session.abort(e, encryptionFailure + " Unsupported encoding.");
     } catch (CryptoException e) {
       session.abort(e, encryptionFailure);
     }
+    return null;
   }
 
-  public void clearRecord(ClientRecord record) {
+  public void clearRecords() {
     try {
-      toUpload.remove(record);
-      db.deleteCommands(record.guid);
+      db.wipeCommandsTable();
+      toUpload.clear();
     } finally {
       db.close();
     }
@@ -424,6 +451,21 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
+    }
+  }
+
+  protected void uploadClientRecords(JSONArray records) {
+    Logger.trace(LOG_TAG, "Uploading client records " + records.toJSONString());
+    try {
+      URI putURI = session.config.collectionURI(COLLECTION_NAME, false);
+
+      SyncStorageRecordRequest request = new SyncStorageRecordRequest(putURI);
+      request.delegate = clientUploadDelegate;
+      request.post(records);
+    } catch (URISyntaxException e) {
+      session.abort(e, "Invalid URI.");
+    } catch (Exception e) {
+      session.abort(e, "Unable to parse body.");
     }
   }
 

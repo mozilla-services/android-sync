@@ -133,6 +133,16 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     super.uploadClientRecord(record);
   }
 
+  @Override
+  protected void uploadClientRecords(JSONArray records) {
+    BaseResource.rewriteLocalhost = false;
+    if (stubUpload) {
+      return;
+    }
+    data.startHTTPServer(currentUploadMockServer);
+    super.uploadClientRecords(records);
+  }
+
   public static class MockClientsGlobalSession extends MockGlobalSession {
     private ClientsDataDelegate clientsDataDelegate = new MockClientsDataDelegate();
   
