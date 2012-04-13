@@ -79,6 +79,12 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     return stringEntity(toPOST.toJSONString());
   }
 
+  protected StringEntity jsonEntity(JSONArray body) throws UnsupportedEncodingException {
+    StringEntity e = new StringEntity(body.toJSONString(), "UTF-8");
+    e.setContentType("application/json");
+    return e;
+  }
+
   @SuppressWarnings("unchecked")
   public void post(JSONObject body) {
     // Let's do this the trivial way for now.
@@ -87,6 +93,15 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     toPOST.add(body);
     try {
       this.resource.post(jsonEntity(toPOST));
+    } catch (UnsupportedEncodingException e) {
+      this.delegate.handleRequestError(e);
+    }
+  }
+
+  public void post(JSONArray body) {
+    // Let's do this the trivial way for now.
+    try {
+      this.resource.post(jsonEntity(body));
     } catch (UnsupportedEncodingException e) {
       this.delegate.handleRequestError(e);
     }

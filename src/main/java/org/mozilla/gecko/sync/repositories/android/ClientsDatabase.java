@@ -95,6 +95,12 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
     createClientsTable(db);
   }
 
+  public void wipeCommandsTable() {
+    SQLiteDatabase db = this.getCachedWritableDatabase();
+    db.execSQL("DROP TABLE IF EXISTS " + TBL_COMMANDS);
+    createCommandsTable(db);
+  }
+
   // If a record with given GUID exists, we'll update it,
   // otherwise we'll insert it.
   public void store(String profileId, ClientRecord record) {
@@ -194,12 +200,5 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
 
     SQLiteDatabase db = this.getCachedWritableDatabase();
     db.delete(TBL_CLIENTS, TBL_CLIENTS_KEY, args);
-  }
-
-  public void deleteCommands(String accountGUID) {
-    String[] args = new String[] { accountGUID };
-
-    SQLiteDatabase db = this.getCachedWritableDatabase();
-    db.delete(TBL_COMMANDS, TBL_COMMANDS_GUID_QUERY, args);
   }
 }
