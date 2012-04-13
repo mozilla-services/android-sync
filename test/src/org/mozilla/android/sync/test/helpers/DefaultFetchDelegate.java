@@ -31,15 +31,6 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
     performNotify("Fetch failed.", ex);
   }
 
-  @Override
-  public void onFetchSucceeded(Record[] records, final long fetchEnd) {
-    Log.d(LOG_TAG, "onFetchSucceeded");
-    for (Record record : records) {
-      this.records.add(record);
-    }
-    this.onFetchCompleted(fetchEnd);
-  }
-
   protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected, long end) {
     Log.i(LOG_TAG, "onDone.");
     Log.i(LOG_TAG, "End timestamp is " + end);

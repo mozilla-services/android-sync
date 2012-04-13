@@ -1,6 +1,7 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */package org.mozilla.android.sync.test.helpers.simple;
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
+package org.mozilla.android.sync.test.helpers.simple;
 
 import java.util.concurrent.ExecutorService;
 
@@ -13,14 +14,6 @@ public abstract class SimpleSuccessFetchDelegate extends DefaultDelegate impleme
   @Override
   public void onFetchFailed(Exception ex, Record record) {
     performNotify("Fetch failed", ex);
-  }
-
-  @Override
-  public void onFetchSucceeded(Record[] records, long end) {
-    for (Record record : records) {
-      this.onFetchedRecord(record);
-    }
-    this.onFetchCompleted(end);
   }
 
   @Override
