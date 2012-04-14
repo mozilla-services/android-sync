@@ -42,4 +42,10 @@ public class PasswordsServerSyncStage extends ServerSyncStage {
     }
   }
 
+  @Override
+  protected boolean isEnabled() {
+    // Disabled until Bug 744816 (Fennec crashes in concurrent access of
+    // password db) is fixed.
+    return false;
+  }
 }
