@@ -69,18 +69,28 @@ public class TestClientsDataDelegate extends AndroidSyncTestCase {
     });
   }
 
-  public void testGetAccountGUID() {
+  public void testAccountGUID() {
     // Test getAccountGUID() saved the value it returned the first time.
     String accountGUID = clientsDelegate.getAccountGUID();
     assertNotNull(accountGUID);
     assertEquals(accountGUID, clientsDelegate.getAccountGUID());
+
+    // Test setting the GUID.
+    final String TEST_GUID = "testGuid";
+    SyncAdapter.setAccountGUID(accountManager, account, TEST_GUID);
+    assertEquals(TEST_GUID, clientsDelegate.getAccountGUID());
   }
 
-  public void testGetClientName() {
+  public void testClientName() {
     // Test getClientName() saved the value it returned the first time.
     String clientName = clientsDelegate.getClientName();
     assertNotNull(clientName);
     assertEquals(clientName, clientsDelegate.getClientName());
+
+    // Test setting the name.
+    final String TEST_NAME = "testName";
+    SyncAdapter.setClientName(accountManager, account, TEST_NAME);
+    assertEquals(TEST_NAME, clientsDelegate.getClientName());
   }
 
   public void testClientsCount() {
