@@ -37,13 +37,13 @@ public class FormHistoryRepositorySession extends
     StoreTrackingRepositorySession {
   public static String LOG_TAG = "FormHistoryRepoSess";
 
-  protected static Uri FORM_HISTORY_CONTENT_URI = BrowserContractHelpers.FORM_HISTORY_CONTENT_URI;
-  protected static Uri DELETED_FORM_HISTORY_CONTENT_URI = BrowserContractHelpers.DELETED_FORM_HISTORY_CONTENT_URI;
-
   /**
    * Number of records to insert in one batch.
    */
-  protected static final int INSERT_ITEM_THRESHOLD = 200;
+  public static final int INSERT_ITEM_THRESHOLD = 200;
+
+  private static Uri FORM_HISTORY_CONTENT_URI = BrowserContractHelpers.FORM_HISTORY_CONTENT_URI;
+  private static Uri DELETED_FORM_HISTORY_CONTENT_URI = BrowserContractHelpers.DELETED_FORM_HISTORY_CONTENT_URI;
 
   public static class FormHistoryRepository extends Repository {
 
@@ -177,7 +177,7 @@ public class FormHistoryRepositorySession extends
     delegateQueue.execute(command);
   }
 
-  protected FormHistoryRecord retrieveDuringFetch(Cursor cursor) {
+  protected static FormHistoryRecord retrieveDuringFetch(final Cursor cursor) {
     // A simple and efficient way to distinguish two tables.
     if (cursor.getColumnCount() == BrowserContractHelpers.FormHistoryColumns.length) {
       return formHistoryRecordFromCursor(cursor);
@@ -186,7 +186,7 @@ public class FormHistoryRepositorySession extends
     }
   }
 
-  protected FormHistoryRecord formHistoryRecordFromCursor(Cursor cursor) {
+  protected static FormHistoryRecord formHistoryRecordFromCursor(final Cursor cursor) {
     String guid = RepoUtils.getStringFromCursor(cursor, FormHistory.GUID);
     String collection = "forms";
     FormHistoryRecord record = new FormHistoryRecord(guid, collection, 0, false);
@@ -201,7 +201,7 @@ public class FormHistoryRepositorySession extends
     return record;
   }
 
-  protected FormHistoryRecord deletedFormHistoryRecordFromCursor(Cursor cursor) {
+  protected static FormHistoryRecord deletedFormHistoryRecordFromCursor(final Cursor cursor) {
     String guid = RepoUtils.getStringFromCursor(cursor, DeletedFormHistory.GUID);
     String collection = "forms";
     FormHistoryRecord record = new FormHistoryRecord(guid, collection, 0, false);
@@ -215,7 +215,7 @@ public class FormHistoryRepositorySession extends
     return record;
   }
 
-  protected void fetchFromCursor(Cursor cursor, RecordFilter filter, final RepositorySessionFetchRecordsDelegate delegate)
+  protected static void fetchFromCursor(final Cursor cursor, final RecordFilter filter, final RepositorySessionFetchRecordsDelegate delegate)
       throws NullCursorException {
     Logger.debug(LOG_TAG, "Fetch from cursor");
     if (cursor == null) {
@@ -277,12 +277,12 @@ public class FormHistoryRepositorySession extends
     delegateQueue.execute(command);
   }
 
-  protected String regularBetween(long start, long end) {
+  protected static String regularBetween(long start, long end) {
     return FormHistory.FIRST_USED + " >= " + Long.toString(1000 * start) + " AND " +
            FormHistory.FIRST_USED + " <= " + Long.toString(1000 * end); // Microseconds.
   }
 
-  protected String deletedBetween(long start, long end) {
+  protected static String deletedBetween(long start, long end) {
     return DeletedFormHistory.TIME_DELETED + " >= " + Long.toString(start) + " AND " +
            DeletedFormHistory.TIME_DELETED + " <= " + Long.toString(end); // Milliseconds.
   }
@@ -418,8 +418,7 @@ public class FormHistoryRepositorySession extends
    *          The local <code>Record</code> to replace.
    * @throws RemoteException
    */
-  protected void deleteExistingRecord(Record existingRecord)
-      throws RemoteException {
+  protected void deleteExistingRecord(Record existingRecord) throws RemoteException {
     if (existingRecord.deleted) {
       formsProvider.delete(DELETED_FORM_HISTORY_CONTENT_URI, GUID_IS, new String[] { existingRecord.guid });
       return;
@@ -427,7 +426,7 @@ public class FormHistoryRepositorySession extends
     formsProvider.delete(FORM_HISTORY_CONTENT_URI, GUID_IS, new String[] { existingRecord.guid });
   }
 
-  protected ContentValues contentValuesForRegularRecord(Record rawRecord) {
+  protected static ContentValues contentValuesForRegularRecord(Record rawRecord) {
     if (rawRecord.deleted) {
       throw new IllegalArgumentException("Deleted record passed to insertNewRegularRecord.");
     }
@@ -450,7 +449,7 @@ public class FormHistoryRepositorySession extends
         // Insert the existing contents, then enqueue.
         try {
           flushInsertQueue();
-        } catch (RemoteException e) {
+        } catch (Exception e) {
           delegate.onRecordStoreFailed(e);
           return;
         }
@@ -491,7 +490,7 @@ public class FormHistoryRepositorySession extends
             flushInsertQueue();
           }
           storeDone(now());
-        } catch (RemoteException e) {
+        } catch (Exception e) {
           delegate.onRecordStoreFailed(e);
         }
       }
