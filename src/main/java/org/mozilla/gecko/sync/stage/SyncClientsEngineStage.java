@@ -114,7 +114,13 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // TODO: persist the response timestamp to know whether to download next time (Bug 726055).
       clientUploadDelegate = new ClientUploadDelegate();
       clientsDelegate.setClientsCount(clientsCount);
-      uploadRemoteRecords();
+
+      // If we upload remote records, checkAndUpload() will be called upon
+      // upload success in the delegate. Otherwise call checkAndUpload() now.
+      if (toUpload.size() > 0) {
+        uploadRemoteRecords();
+        return;
+      }
       checkAndUpload();
     }
 
@@ -219,6 +225,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // This is the case when we are NOT currently uploading our local record.
       if (!currentlyUploadingLocalRecord) {
         clearRecords();
+        checkAndUpload();
         return;
       }
 
@@ -367,10 +374,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   @SuppressWarnings("unchecked")
   protected void uploadRemoteRecords() {
     Logger.trace(LOG_TAG, "In uploadRemoteRecords. Uploading " + toUpload.size() + " records" );
-
-    if (toUpload.size() == 0) {
-      return;
-    }
 
     if (toUpload.size() == 1) {
       Logger.info(LOG_TAG, "Only 1 remote record to upload.");
