@@ -629,7 +629,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Reset our state. Clear our sync ID, reset each engine, drop any
    * cached records.
    */
-  private void resetClient(String[] engines) {
+  public void resetClient(String[] engines) {
     if (engines == null) {
       // Set `engines` to be *all* the engines.
     }
