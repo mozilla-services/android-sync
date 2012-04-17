@@ -56,7 +56,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
 
   @Override
   public void execute() throws NoSuchStageException {
-    InfoCollections infoCollections = session.config.infoCollections;
+    InfoCollections infoCollections = session.getInfoCollections();
     if (infoCollections == null) {
       session.abort(null, "No info/collections set in FetchMetaGlobalStage.");
       return;

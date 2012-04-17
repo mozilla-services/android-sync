@@ -25,17 +25,10 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   // Fields.
   // Rather than storing decimal/double timestamps, as provided by the
   // server, we convert immediately to milliseconds since epoch.
-  private HashMap<String, Long> timestamps;
-
-  public HashMap<String, Long> getTimestamps() {
-    if (this.timestamps == null) {
-      throw new IllegalStateException("No record fetched.");
-    }
-    return this.timestamps;
-  }
+  private final HashMap<String, Long> timestamps;
 
   public Long getTimestamp(String collection) {
-    return this.getTimestamps().get(collection);
+    return timestamps.get(collection);
   }
 
   /**
@@ -69,12 +62,13 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   private InfoCollectionsDelegate callback;
 
   public InfoCollections(String metaURL, String credentials) {
+    timestamps = new HashMap<String, Long>();
     this.infoURL     = metaURL;
     this.credentials = credentials;
   }
 
   public void fetch(InfoCollectionsDelegate callback) {
-    if (this.timestamps == null) {
+    if (timestamps.isEmpty()) {
       this.callback = callback;
       this.doFetch();
       return;
@@ -127,7 +121,8 @@ public class InfoCollections implements SyncStorageRequestDelegate {
       }
       Log.w(LOG_TAG, "Skipping info/collections entry for " + key);
     }
-    this.timestamps = map;
+    this.timestamps.clear();
+    this.timestamps.putAll(map);
   }
 
   // SyncStorageRequestDelegate methods for fetching.
