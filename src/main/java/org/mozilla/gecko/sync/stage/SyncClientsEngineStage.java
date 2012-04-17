@@ -390,9 +390,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     commandsProcessedShouldUpload = true;
     CommandProcessor processor = CommandProcessor.getProcessor();
 
-    // TODO: Bug 715792 - Process commands here.
-    for (int i = 0; i < commands.size(); i++) {
-      processor.processCommand(new ExtendedJSONObject((JSONObject) commands.get(i)));
+    for (Object o : commands) {
+      processor.processCommand(new ExtendedJSONObject((JSONObject) o));
     }
   }
 
@@ -502,11 +501,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
-<<<<<<< HEAD
-  /**
-   * Upload a client record via HTTP POST to the parent collection.
-   */
-=======
   protected void uploadClientRecords(JSONArray records) {
     Logger.trace(LOG_TAG, "Uploading client records " + records.toJSONString());
     try {
@@ -522,7 +516,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
->>>>>>> Bug 739416 - Part 9: Send all remote records together.
+  /**
+   * Upload a client record via HTTP POST to the parent collection.
+   */
   protected void uploadClientRecord(CryptoRecord record) {
     Logger.debug(LOG_TAG, "Uploading client record " + record.guid);
     try {
