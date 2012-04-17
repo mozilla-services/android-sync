@@ -91,14 +91,12 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
 
   public void wipeClientsTable() {
     SQLiteDatabase db = this.getCachedWritableDatabase();
-    db.execSQL("DROP TABLE IF EXISTS " + TBL_CLIENTS);
-    createClientsTable(db);
+    db.execSQL("DELETE FROM " + TBL_CLIENTS);
   }
 
   public void wipeCommandsTable() {
     SQLiteDatabase db = this.getCachedWritableDatabase();
-    db.execSQL("DROP TABLE IF EXISTS " + TBL_COMMANDS);
-    createCommandsTable(db);
+    db.execSQL("DELETE FROM " + TBL_COMMANDS);
   }
 
   // If a record with given GUID exists, we'll update it,
