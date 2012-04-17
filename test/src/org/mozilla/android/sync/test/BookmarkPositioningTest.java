@@ -25,7 +25,6 @@ import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -34,6 +33,7 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
@@ -679,7 +679,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
 
     if (updated == 0) {
       Uri insert = cr.insert(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI), values);
-      long idFromUri = RepoUtils.getAndroidIdFromUri(insert);
+      long idFromUri = ContentUris.parseId(insert);
       Log.i(getName(), "Inserted " + uri + " as " + idFromUri);
       Log.i(getName(), "Position is " + getPosition(idFromUri));
     }
