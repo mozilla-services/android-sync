@@ -117,8 +117,22 @@ public class CommandProcessor {
     }
   }
 
+  /**
+   * Validates and sends a command to a client or all clients.
+   *
+   * Calling this does not actually sync the command data to the server. If the
+   * client already has the command/args pair, it won't receive a duplicate
+   * command.
+   *
+   * @param clientID
+   *        Client ID to send command to. If null, send to all remote
+   *        clients.
+   * @param command
+   *        Command to invoke on remote clients
+   */
   public void sendCommand(String clientID, Command command) {
-    Logger.info(LOG_TAG, "In sendCommand.");
+    Logger.debug(LOG_TAG, "In sendCommand.");
+
     CommandRunner commandData = commands.get(command.commandType);
 
     // Don't send commands that we don't know about.
