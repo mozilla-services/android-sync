@@ -255,7 +255,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
       // This is the case when we are NOT currently uploading our local record.
       if (!currentlyUploadingLocalRecord) {
-        clearRecords();
+        clearRecordsToUpload();
         checkAndUpload();
         return;
       }
@@ -287,7 +287,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
         Logger.debug(LOG_TAG, "Client upload failed. Aborting sync.");
         if (!currentlyUploadingLocalRecord) {
-          clearRecords(); // These will be redownloaded.
+          clearRecordsToUpload(); // These will be redownloaded.
         }
         BaseResource.consumeEntity(response); // The exception thrown should need the response body.
         session.abort(new HTTPFailureException(response), "Client upload failed.");
@@ -478,7 +478,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     return null;
   }
 
-  public void clearRecords() {
+  public void clearRecordsToUpload() {
     try {
       db.wipeCommandsTable();
       toUpload.clear();
