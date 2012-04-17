@@ -343,9 +343,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     commandsProcessedShouldUpload = true;
     CommandProcessor processor = CommandProcessor.getProcessor();
 
-    // TODO: Bug 715792 - Process commands here.
-    for (int i = 0; i < commands.size(); i++) {
-      processor.processCommand(new ExtendedJSONObject((JSONObject)commands.get(i)));
+    for (Object o : commands) {
+      processor.processCommand(new ExtendedJSONObject((JSONObject) o));
     }
   }
 
