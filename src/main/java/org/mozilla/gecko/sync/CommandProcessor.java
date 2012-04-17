@@ -140,8 +140,9 @@ public class CommandProcessor {
       Logger.error(LOG_TAG, "Unknown command to send: " + command);
       return;
     }
+
     // Don't send a command with the wrong number of arguments.
-    else if (command.args == null || command.args.size() != commandData.argCount) {
+    if (!commandData.argumentsAreValid(command.getArgsList())) {
       Logger.error(LOG_TAG, "Expected " + commandData.argCount + " args for '" +
                    command + "', but got " + command.args);
       return;
