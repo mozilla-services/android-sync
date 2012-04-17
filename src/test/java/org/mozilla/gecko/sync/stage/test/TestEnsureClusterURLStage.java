@@ -39,9 +39,6 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
 public class TestEnsureClusterURLStage {
-  @SuppressWarnings("unused")
-  private static final String  LOG_TAG          = "TEnsureClusterURLS";
-
   private static final int     TEST_PORT        = 15325;
   private static final String  TEST_SERVER      = "http://localhost:" + TEST_PORT + "/";
   private static final String  TEST_OLD_CLUSTER_URL = TEST_SERVER + "cluster/old/";
