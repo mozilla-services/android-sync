@@ -346,6 +346,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
+  public InfoCollections getInfoCollections() {
+    return this.config.infoCollections;
+  }
+
   public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
     if (this.config.infoCollections == null) {
       this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
@@ -353,6 +357,15 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.config.infoCollections.fetch(callback);
   }
 
+  /**
+   * Upload new crypto/keys.
+   *
+   * @param keysRecord
+   *          new keys record; will be encrypted with
+   *          <code>config.syncKeyBundle</code>.
+   * @param keyUploadDelegate
+   *          a delegate.
+   */
   public void uploadKeys(CryptoRecord keysRecord,
                          final KeyUploadDelegate keyUploadDelegate) {
     SyncStorageRecordRequest request;

@@ -33,7 +33,7 @@ public class EnsureCrypto5KeysStage implements GlobalSyncStage, SyncStorageReque
   public void execute(GlobalSession session) throws NoSuchStageException {
     this.session = session;
 
-    InfoCollections infoCollections = session.config.infoCollections;
+    InfoCollections infoCollections = session.getInfoCollections();
     if (infoCollections == null) {
       session.abort(null, "No info/collections set in EnsureCrypto5KeysStage.");
       return;
