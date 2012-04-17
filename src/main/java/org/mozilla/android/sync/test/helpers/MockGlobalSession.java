@@ -22,8 +22,8 @@ public class MockGlobalSession extends GlobalSession {
   public MockSharedPreferences prefs;
 
   public MockGlobalSession(String clusterURL, String username, String password,
-				  KeyBundle syncKeyBundle, GlobalSessionCallback callback)
-    throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
+      KeyBundle syncKeyBundle, GlobalSessionCallback callback)
+          throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
     super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, null, syncKeyBundle, callback, /* context */ null, null, null);
   }
 

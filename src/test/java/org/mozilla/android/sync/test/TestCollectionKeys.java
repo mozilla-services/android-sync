@@ -11,6 +11,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
@@ -115,5 +116,34 @@ public class TestCollectionKeys {
     // Compare decrypted keys to the keys that were set upon creation
     assertArrayEquals(ck.defaultKeyBundle().getEncryptionKey(), ckDecrypted.defaultKeyBundle().getEncryptionKey());
     assertArrayEquals(ck.defaultKeyBundle().getHMACKey(), ckDecrypted.defaultKeyBundle().getHMACKey());
+  }
+
+  @Test
+  public void testDifferences() throws CryptoException {
+    KeyBundle kb1 = KeyBundle.withRandomKeys();
+    KeyBundle kb2 = KeyBundle.withRandomKeys();
+    KeyBundle kb3 = KeyBundle.withRandomKeys();
+    CollectionKeys a = CollectionKeys.generateCollectionKeys();
+    CollectionKeys b = CollectionKeys.generateCollectionKeys();
+    Set<String> diffs;
+
+    a.setKeyBundleForCollection("1", kb1);
+    b.setKeyBundleForCollection("1", kb1);
+    diffs = CollectionKeys.differences(a, b);
+    assertTrue(diffs.isEmpty());
+
+    a.setKeyBundleForCollection("2", kb2);
+    diffs = CollectionKeys.differences(a, b);
+    assertArrayEquals(new String[] { "2" }, diffs.toArray(new String[diffs.size()]));
+
+    b.setKeyBundleForCollection("3", kb3);
+    diffs = CollectionKeys.differences(a, b);
+    assertEquals(2, diffs.size());
+    assertTrue(diffs.contains("2"));
+    assertTrue(diffs.contains("3"));
+
+    b.setKeyBundleForCollection("1", KeyBundle.withRandomKeys());
+    diffs = CollectionKeys.differences(a, b);
+    assertEquals(3, diffs.size());
   }
 }

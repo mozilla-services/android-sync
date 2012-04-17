@@ -52,7 +52,7 @@ public class FetchMetaGlobalStage implements GlobalSyncStage {
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
-    InfoCollections infoCollections = session.config.infoCollections;
+    InfoCollections infoCollections = session.getInfoCollections();
     if (infoCollections == null) {
       session.abort(null, "No info/collections set in FetchMetaGlobalStage.");
       return;

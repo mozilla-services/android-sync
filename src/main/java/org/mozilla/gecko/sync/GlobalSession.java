@@ -346,6 +346,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
+  public InfoCollections getInfoCollections() {
+    return this.config.infoCollections;
+  }
+
   public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
     if (this.config.infoCollections == null) {
       this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
@@ -353,7 +357,15 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.config.infoCollections.fetch(callback);
   }
 
-  public void uploadKeys(CryptoRecord keysRecord,
+  /**
+   * Upload new crypto/keys.
+   *
+   * @param keys
+   *          new keys.
+   * @param keyUploadDelegate
+   *          a delegate.
+   */
+  public void uploadKeys(final CollectionKeys keys,
                          final KeyUploadDelegate keyUploadDelegate) {
     SyncStorageRecordRequest request;
     final GlobalSession self = this;
@@ -374,7 +386,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response); // We don't need the response at all.
-        keyUploadDelegate.onKeysUploaded();
+        keyUploadDelegate.onKeysUploaded(keys, response.normalizedWeaveTimestamp());
       }
 
       @Override
@@ -395,8 +407,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     };
 
-    keysRecord.setKeyBundle(config.syncKeyBundle);
+    CryptoRecord keysRecord;
     try {
+      keysRecord = keys.asCryptoRecord();
+      keysRecord.setKeyBundle(config.syncKeyBundle);
       keysRecord.encrypt();
     } catch (UnsupportedEncodingException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
@@ -404,7 +418,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     } catch (CryptoException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
+    } catch (NoCollectionKeysSetException e) {
+      // Should not occur.
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
     }
+
     request.put(keysRecord);
   }
 
@@ -507,9 +526,9 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
             // Generate and upload new keys.
             try {
-              session.uploadKeys(CollectionKeys.generateCollectionKeys().asCryptoRecord(), new KeyUploadDelegate() {
+              session.uploadKeys(CollectionKeys.generateCollectionKeys(), new KeyUploadDelegate() {
                 @Override
-                public void onKeysUploaded() {
+                public void onKeysUploaded(CollectionKeys keys, long timestamp) {
                   // Now we can download them.
                   freshStartDelegate.onFreshStart();
                 }
@@ -520,9 +539,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
                   freshStartDelegate.onFreshStartFailed(e);
                 }
               });
-            } catch (NoCollectionKeysSetException e) {
-              Log.e(LOG_TAG, "Got exception generating new keys.", e);
-              freshStartDelegate.onFreshStartFailed(e);
             } catch (CryptoException e) {
               Log.e(LOG_TAG, "Got exception generating new keys.", e);
               freshStartDelegate.onFreshStartFailed(e);
@@ -613,7 +629,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Reset our state. Clear our sync ID, reset each engine, drop any
    * cached records.
    */
-  private void resetClient(String[] engines) {
+  public void resetClient(String[] engines) {
     if (engines == null) {
       // Set `engines` to be *all* the engines.
     }

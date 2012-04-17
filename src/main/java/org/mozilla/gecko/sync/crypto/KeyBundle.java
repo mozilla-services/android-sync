@@ -47,6 +47,7 @@ import javax.crypto.Mac;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.Utils;
 import java.security.InvalidKeyException;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class KeyBundle {
@@ -177,5 +178,15 @@ public class KeyBundle {
 
     public void setHMACKey(byte[] hmacKey) {
         this.hmacKey = hmacKey;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof KeyBundle)) {
+        return false;
+      }
+      KeyBundle other = (KeyBundle) o;
+      return Arrays.equals(other.encryptionKey, this.encryptionKey) &&
+             Arrays.equals(other.hmacKey, this.hmacKey);
     }
 }
