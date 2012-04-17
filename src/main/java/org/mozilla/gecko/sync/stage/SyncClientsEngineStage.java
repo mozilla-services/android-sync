@@ -40,9 +40,10 @@ import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
 import ch.boye.httpclientandroidlib.HttpStatus;
 
 public class SyncClientsEngineStage implements GlobalSyncStage {
-  public static final String LOG_TAG = "SyncClientsEngineStage";
-  public static final String COLLECTION_NAME = "clients";
-  public static final int CLIENTS_TTL_REFRESH = 604800000; // 7 days
+  private static final String LOG_TAG = "SyncClientsEngineStage";
+
+  public static final String COLLECTION_NAME       = "clients";
+  public static final int CLIENTS_TTL_REFRESH      = 604800000;   // 7 days in milliseconds.
   public static final int MAX_UPLOAD_FAILURE_COUNT = 5;
 
   protected GlobalSession session;
@@ -234,8 +235,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         session.config.persistServerClientRecordTimestamp(timestamp);
         BaseResource.consumeEntity(response);
 
-        Logger.debug(LOG_TAG, "Timestamp from body is: " + timestamp);
-        Logger.debug(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
+        Logger.trace(LOG_TAG, "Timestamp from body is: " + timestamp);
+        Logger.trace(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
       } catch (Exception e) {
         session.abort(e, "Unable to fetch timestamp.");
         return;
@@ -252,6 +253,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       if (!commandsProcessedShouldUpload ||
           statusCode == HttpStatus.SC_PRECONDITION_FAILED ||
           uploadAttemptsCount.incrementAndGet() > MAX_UPLOAD_FAILURE_COUNT) {
+
         Logger.debug(LOG_TAG, "Client upload failed. Aborting sync.");
         if (!currentlyUploadingLocalRecord) {
           clearRecords(); // These will be redownloaded.
@@ -353,7 +355,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.trace(LOG_TAG, "Adding commands to " + record.guid);
     List<Command> commands = db.fetchCommandsForClient(record.guid);
 
-    if (commands == null || commands.size() <= 0) {
+    if (commands == null || commands.size() == 0) {
       Logger.trace(LOG_TAG, "No commands to add.");
       return;
     }
