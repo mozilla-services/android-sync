@@ -142,18 +142,14 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
       cv.put(COL_ARGS, args);
     }
 
-    Cursor cur = null;
+    Cursor cur = this.fetchSpecificCommand(accountGUID, command, args);
     try {
-      cur = this.fetchSpecificCommand(accountGUID, command, args);
-
-      if (cur != null && cur.moveToFirst()) {
+      if (cur.moveToFirst()) {
         Logger.debug(LOG_TAG, "Command already exists in database.");
         return;
       }
     } finally {
-      if (cur != null) {
-        cur.close();
-      }
+      cur.close();
     }
 
     long rowId = db.insert(TBL_COMMANDS, null, cv);

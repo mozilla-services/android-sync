@@ -154,9 +154,8 @@ public class CommandProcessor {
     }
 
     ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(session.getContext());
-    Map<String, ClientRecord> clientMap;
     try {
-      clientMap = db.fetchAllClients();
+      Map<String, ClientRecord> clientMap = db.fetchAllClients();
       for (ClientRecord client : clientMap.values()) {
         this.sendCommandToClient(client.guid, command);
       }
