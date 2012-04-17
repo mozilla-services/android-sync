@@ -360,13 +360,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   /**
    * Upload new crypto/keys.
    *
-   * @param keysRecord
-   *          new keys record; will be encrypted with
-   *          <code>config.syncKeyBundle</code>.
+   * @param keys
+   *          new keys.
    * @param keyUploadDelegate
    *          a delegate.
    */
-  public void uploadKeys(CryptoRecord keysRecord,
+  public void uploadKeys(final CollectionKeys keys,
                          final KeyUploadDelegate keyUploadDelegate) {
     SyncStorageRecordRequest request;
     final GlobalSession self = this;
@@ -387,7 +386,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response); // We don't need the response at all.
-        keyUploadDelegate.onKeysUploaded();
+        keyUploadDelegate.onKeysUploaded(keys, response.normalizedWeaveTimestamp());
       }
 
       @Override
@@ -408,8 +407,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     };
 
-    keysRecord.setKeyBundle(config.syncKeyBundle);
+    CryptoRecord keysRecord;
     try {
+      keysRecord = keys.asCryptoRecord();
+      keysRecord.setKeyBundle(config.syncKeyBundle);
       keysRecord.encrypt();
     } catch (UnsupportedEncodingException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
@@ -417,7 +418,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     } catch (CryptoException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
+    } catch (NoCollectionKeysSetException e) {
+      // Should not occur.
+      keyUploadDelegate.onKeyUploadFailed(e);
+      return;
     }
+
     request.put(keysRecord);
   }
 
@@ -520,9 +526,9 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
             // Generate and upload new keys.
             try {
-              session.uploadKeys(CollectionKeys.generateCollectionKeys().asCryptoRecord(), new KeyUploadDelegate() {
+              session.uploadKeys(CollectionKeys.generateCollectionKeys(), new KeyUploadDelegate() {
                 @Override
-                public void onKeysUploaded() {
+                public void onKeysUploaded(CollectionKeys keys, long timestamp) {
                   // Now we can download them.
                   freshStartDelegate.onFreshStart();
                 }
@@ -533,9 +539,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
                   freshStartDelegate.onFreshStartFailed(e);
                 }
               });
-            } catch (NoCollectionKeysSetException e) {
-              Log.e(LOG_TAG, "Got exception generating new keys.", e);
-              freshStartDelegate.onFreshStartFailed(e);
             } catch (CryptoException e) {
               Log.e(LOG_TAG, "Got exception generating new keys.", e);
               freshStartDelegate.onFreshStartFailed(e);
