@@ -457,9 +457,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           if (existingRecord == null) {
             // The record is new.
             trace("No match. Inserting.");
-            Record inserted = insert(record);
-            trackRecord(inserted);
-            delegate.onRecordStoreSucceeded(inserted);
+            insert(record);
             return;
           }
 
@@ -531,16 +529,16 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     delegate.onRecordStoreSucceeded(record);
   }
 
-  protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
     Uri recordURI = dbHelper.insert(toStore);
-    long id = ContentUris.parseId(recordURI);
-    Logger.debug(LOG_TAG, "Inserted as " + id);
+    toStore.androidID = ContentUris.parseId(recordURI);
 
-    toStore.androidID = id;
     updateBookkeeping(toStore);
-    Logger.debug(LOG_TAG, "insert() returning record " + toStore.guid);
-    return toStore;
+    trackRecord(toStore);
+    delegate.onRecordStoreSucceeded(toStore);
+
+    Logger.debug(LOG_TAG, "Inserted record with guid " + toStore.guid + " as androidID " + toStore.androidID);
   }
 
   protected Record replace(Record newRecord, Record existingRecord) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {

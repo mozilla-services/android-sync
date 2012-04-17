@@ -148,17 +148,16 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
    *
    * @param record
    *          A <code>Record</code> with a GUID that is not present locally.
-   * @return The <code>Record</code> to be inserted. <b>Warning:</b> the
-   *         <code>androidID</code> is not valid! It will be set after the
-   *         records are flushed to the database.
    */
   @Override
-  protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     HistoryRecord toStore = (HistoryRecord) prepareRecord(record);
     toStore.androidID = -111; // Hopefully this special value will make it easy to catch future errors.
     updateBookkeeping(toStore); // Does not use androidID -- just GUID -> String map.
+    trackRecord(toStore);
+    delegate.onRecordStoreSucceeded(toStore); // Technically this is too early.
+
     enqueueNewRecord(toStore);
-    return toStore;
   }
 
   /**
