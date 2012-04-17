@@ -48,7 +48,7 @@ public class TestBasicFetch {
 
       if (shouldDecrypt) {
         try {
-          System.out.println("Attempting decrypt.");
+          System.out.println("Attempting to decrypt.");
           CryptoRecord rec;
           rec = CryptoRecord.fromJSONRecord(body);
           rec.keyBundle = new KeyBundle(USERNAME, SYNC_KEY);
