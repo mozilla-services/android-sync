@@ -152,7 +152,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // If we upload remote records, checkAndUpload() will be called upon
       // upload success in the delegate. Otherwise call checkAndUpload() now.
       if (toUpload.size() > 0) {
-        uploadRemoteRecords();
+        uploadRemoteRecords(response.normalizedWeaveTimestamp());
         return;
       }
       checkAndUpload();
@@ -419,7 +419,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   @SuppressWarnings("unchecked")
-  protected void uploadRemoteRecords() {
+  protected void uploadRemoteRecords(long timestamp) {
     Logger.trace(LOG_TAG, "In uploadRemoteRecords. Uploading " + toUpload.size() + " records" );
 
     if (toUpload.size() == 1) {
@@ -432,12 +432,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     JSONArray cryptoRecords = new JSONArray();
-    long latestLastModified = 0;
     for (ClientRecord record : toUpload) {
       Logger.trace(LOG_TAG, "Record " + record.guid + " is being uploaded" );
-      if (record.lastModified > latestLastModified) {
-        latestLastModified = record.lastModified;
-      }
 
       CryptoRecord cryptoRecord = encryptClientRecord(record);
       cryptoRecords.add(cryptoRecord.toJSONObject());
