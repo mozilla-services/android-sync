@@ -93,13 +93,13 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
    * Helper for turning a JSON object into a payload.
    * @throws UnsupportedEncodingException
    */
-  protected StringEntity jsonEntity(JSONObject body) throws UnsupportedEncodingException {
+  protected static StringEntity jsonEntity(JSONObject body) throws UnsupportedEncodingException {
     StringEntity e = new StringEntity(body.toJSONString(), "UTF-8");
     e.setContentType("application/json");
     return e;
   }
 
-  protected StringEntity jsonEntity(JSONArray body) throws UnsupportedEncodingException {
+  protected static StringEntity jsonEntity(JSONArray body) throws UnsupportedEncodingException {
     StringEntity e = new StringEntity(body.toJSONString(), "UTF-8");
     e.setContentType("application/json");
     return e;

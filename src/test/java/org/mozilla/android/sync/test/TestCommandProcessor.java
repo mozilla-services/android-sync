@@ -27,6 +27,7 @@ public class TestCommandProcessor extends CommandProcessor {
   public static final String wellFormedCommand = "{\"args\":[\"https://bugzilla.mozilla.org/show_bug.cgi?id=731341\",\"PKsljsuqYbGg\"],\"command\":\"displayURI\"}";
 
   private boolean commandExecuted;
+
   public class MockCommandRunner extends CommandRunner {
     public MockCommandRunner(int argCount) {
       super(argCount);
@@ -73,19 +74,19 @@ public class TestCommandProcessor extends CommandProcessor {
   @Test
   public void testParseCommandNoType() throws NonObjectJSONException, IOException, ParseException {
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(commandWithNoType);
-    assertNull(this.parseCommand(unparsedCommand));
+    assertNull(CommandProcessor.parseCommand(unparsedCommand));
   }
 
   @Test
   public void testParseCommandNoArgs() throws NonObjectJSONException, IOException, ParseException {
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(commandWithNoArgs);
-    assertNull(this.parseCommand(unparsedCommand));
+    assertNull(CommandProcessor.parseCommand(unparsedCommand));
   }
 
   @Test
   public void testParseWellFormedCommand() throws NonObjectJSONException, IOException, ParseException {
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(wellFormedCommand);
-    Command parsedCommand = this.parseCommand(unparsedCommand);
+    Command parsedCommand = CommandProcessor.parseCommand(unparsedCommand);
     assertNotNull(parsedCommand);
     assertEquals(2, parsedCommand.args.size());
     assertEquals(commandType, parsedCommand.commandType);
