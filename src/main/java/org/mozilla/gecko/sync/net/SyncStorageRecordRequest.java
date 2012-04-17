@@ -79,7 +79,7 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     return stringEntity(toPOST.toJSONString());
   }
 
-  protected StringEntity jsonEntity(JSONArray body) throws UnsupportedEncodingException {
+  protected static StringEntity jsonEntity(JSONArray body) throws UnsupportedEncodingException {
     StringEntity e = new StringEntity(body.toJSONString(), "UTF-8");
     e.setContentType("application/json");
     return e;

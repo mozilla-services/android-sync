@@ -98,7 +98,7 @@ public class CommandProcessor {
    * @return - null if command is invalid, else return ParsedCommand with
    *           no null attributes.
    */
-  protected Command parseCommand(ExtendedJSONObject unparsedCommand) {
+  protected static Command parseCommand(ExtendedJSONObject unparsedCommand) {
     String type = (String) unparsedCommand.get("command");
     if (type == null) {
       return null;

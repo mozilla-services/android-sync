@@ -56,7 +56,7 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
     createCommandsTable(db);
   }
 
-  public void createClientsTable(SQLiteDatabase db) {
+  public static void createClientsTable(SQLiteDatabase db) {
     String createClientsTableSql = "CREATE TABLE " + TBL_CLIENTS + " ("
         + COL_ACCOUNT_GUID + " TEXT, "
         + COL_PROFILE + " TEXT, "
@@ -66,7 +66,7 @@ public class ClientsDatabase extends CachedSQLiteOpenHelper {
     db.execSQL(createClientsTableSql);
   }
 
-  public void createCommandsTable(SQLiteDatabase db) {
+  public static void createCommandsTable(SQLiteDatabase db) {
     String createCommandsTableSql = "CREATE TABLE " + TBL_COMMANDS + " ("
         + COL_ACCOUNT_GUID + " TEXT, "
         + COL_COMMAND + " TEXT, "
