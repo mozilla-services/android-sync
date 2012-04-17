@@ -133,17 +133,17 @@ public class ClientsDatabaseAccessor {
   }
 
   public int clientsCount() {
-    Cursor cur;
     try {
-      cur = db.fetchAllClients();
+      final Cursor cur = db.fetchAllClients();
+      try {
+        return cur.getCount();
+      } finally {
+        cur.close();
+      }
     } catch (NullCursorException e) {
       return 0;
     }
-    try {
-      return cur.getCount();
-    } finally {
-      cur.close();
-    }
+
   }
 
   private String getProfileId() {
