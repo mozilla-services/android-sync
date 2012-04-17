@@ -36,8 +36,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   public static final int DEFAULT_DELETION_FLUSH_THRESHOLD = 50;
   // TODO: synchronization for these.
-  private HashMap<String, Long> guidToID = new HashMap<String, Long>();
-  private HashMap<Long, String> idToGuid = new HashMap<Long, String>();
+  private HashMap<String, Long> parentGuidToIDMap = new HashMap<String, Long>();
+  private HashMap<Long, String> parentIDToGuidMap = new HashMap<Long, String>();
 
   /**
    * Some notes on reparenting/reordering.
@@ -218,13 +218,13 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   private String getGUIDForID(long androidID) {
-    String guid = idToGuid.get(androidID);
+    String guid = parentIDToGuidMap.get(androidID);
     trace("  " + androidID + " => " + guid);
     return guid;
   }
 
   private long getIDForGUID(String guid) {
-    Long id = guidToID.get(guid);
+    Long id = parentGuidToIDMap.get(guid);
     if (id == null) {
       Logger.warn(LOG_TAG, "Couldn't find local ID for GUID " + guid);
       return -1;
@@ -410,7 +410,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     if (androidParentGUID == null) {
       Logger.debug(LOG_TAG, "No parent GUID for record " + recordGUID + " with parent " + androidParentID);
       // If the parent has been stored and somehow has a null GUID, throw an error.
-      if (idToGuid.containsKey(androidParentID)) {
+      if (parentIDToGuidMap.containsKey(androidParentID)) {
         Logger.error(LOG_TAG, "Have the parent android ID for the record but the parent's GUID wasn't found.");
         throw new NoGuidForIdException(null);
       }
@@ -471,7 +471,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       return null;
     }
 
-    long androidID = guidToID.get(recordGUID);
+    long androidID = parentGuidToIDMap.get(recordGUID);
     JSONArray childArray = getChildrenArray(androidID, persist);
     if (childArray == null) {
       return null;
@@ -533,15 +533,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     // Fake our root.
     Logger.debug(LOG_TAG, "Tracking places root as ID 0.");
-    idToGuid.put(0L, "places");
-    guidToID.put("places", 0L);
+    parentIDToGuidMap.put(0L, "places");
+    parentGuidToIDMap.put("places", 0L);
     try {
       cur.moveToFirst();
       while (!cur.isAfterLast()) {
         String guid = getGUID(cur);
         long id = RepoUtils.getLongFromCursor(cur, BrowserContract.Bookmarks._ID);
-        guidToID.put(guid, id);
-        idToGuid.put(id, guid);
+        parentGuidToIDMap.put(guid, id);
+        parentIDToGuidMap.put(id, guid);
         Logger.debug(LOG_TAG, "GUID " + guid + " maps to " + id);
         cur.moveToNext();
       }
@@ -641,8 +641,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    * @param bmk
    */
   private void handleParenting(BookmarkRecord bmk) {
-    if (guidToID.containsKey(bmk.parentID)) {
-      bmk.androidParentID = guidToID.get(bmk.parentID);
+    if (parentGuidToIDMap.containsKey(bmk.parentID)) {
+      bmk.androidParentID = parentGuidToIDMap.get(bmk.parentID);
 
       // Might as well set a basic position from the downloaded children array.
       JSONArray children = parentToChildArray.get(bmk.parentID);
@@ -654,7 +654,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       }
     }
     else {
-      bmk.androidParentID = guidToID.get("unfiled");
+      bmk.androidParentID = parentGuidToIDMap.get("unfiled");
       ArrayList<String> children;
       if (missingParentToChildren.containsKey(bmk.parentID)) {
         children = missingParentToChildren.get(bmk.parentID);
@@ -689,8 +689,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // Mappings between ID and GUID.
     // TODO: update our persisted children arrays!
     // TODO: if our Android ID just changed, replace parents for all of our children.
-    guidToID.put(bmk.guid,      bmk.androidID);
-    idToGuid.put(bmk.androidID, bmk.guid);
+    parentGuidToIDMap.put(bmk.guid,      bmk.androidID);
+    parentIDToGuidMap.put(bmk.androidID, bmk.guid);
 
     JSONArray childArray = bmk.children;
 
