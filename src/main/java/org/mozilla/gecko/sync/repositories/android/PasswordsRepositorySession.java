@@ -691,7 +691,7 @@ public class PasswordsRepositorySession extends
     cv.put(BrowserContract.Passwords.PASSWORD_FIELD,  rec.passwordField);
 
     // TODO Do encryption of username/password here. Bug 711636
-     cv.put(BrowserContract.Passwords.ENC_TYPE,           rec.encType);
+    cv.put(BrowserContract.Passwords.ENC_TYPE,           rec.encType);
     cv.put(BrowserContract.Passwords.ENCRYPTED_USERNAME, rec.encryptedUsername);
     cv.put(BrowserContract.Passwords.ENCRYPTED_PASSWORD, rec.encryptedPassword);
 
