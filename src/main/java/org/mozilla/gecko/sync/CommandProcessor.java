@@ -179,29 +179,29 @@ public class CommandProcessor {
     }
   }
 
-  public void displayURI(List<String> args, Context context) {
-    // These two args are guaranteed to exist by trusting the client sender.
-    String uri = args.get(0);
-    String clientId = args.get(1);
+  public static void displayURI(final List<String> args, final Context context) {
+    // We trust the client sender that these exist.
+    final String uri = args.get(0);
+    final String clientId = args.get(1);
 
-    Logger.info(LOG_TAG, "Received a URI for display: " + uri + " from " + clientId);
+    Logger.pii(LOG_TAG, "Received a URI for display: " + uri + " from " + clientId);
 
     String title = null;
     if (args.size() == 3) {
       title = args.get(2);
     }
 
-    // Get NotificationManager.
-    String ns = Context.NOTIFICATION_SERVICE;
-    NotificationManager mNotificationManager = (NotificationManager)context.getSystemService(ns);
+    final String ns = Context.NOTIFICATION_SERVICE;
+    final NotificationManager notificationManager = (NotificationManager) context.getSystemService(ns);
 
-    // Create a Notficiation.
-    int icon = R.drawable.sync_ic_launcher;
+    // Create a Notificiation.
+    final int icon = R.drawable.sync_ic_launcher;
     String notificationTitle = context.getString(R.string.sync_new_tab);
     if (title != null) {
       notificationTitle = notificationTitle.concat(": " + title);
     }
-    long when = System.currentTimeMillis();
+
+    final long when = System.currentTimeMillis();
     Notification notification = new Notification(icon, notificationTitle, when);
     notification.flags = Notification.FLAG_AUTO_CANCEL;
 
@@ -211,6 +211,6 @@ public class CommandProcessor {
     notification.setLatestEventInfo(context, notificationTitle, uri, contentIntent);
 
     // Send notification.
-    mNotificationManager.notify(currentId.getAndIncrement(), notification);
+    notificationManager.notify(currentId.getAndIncrement(), notification);
   }
 }
