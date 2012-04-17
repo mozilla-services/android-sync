@@ -423,11 +423,14 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.trace(LOG_TAG, "In uploadRemoteRecords. Uploading " + toUpload.size() + " records" );
 
     if (toUpload.size() == 1) {
-      Logger.info(LOG_TAG, "Only 1 remote record to upload.");
+      Logger.debug(LOG_TAG, "Only 1 remote record to upload.");
+      Logger.debug(LOG_TAG, "Record last mod: " + record.lastModified);
       ClientRecord record = toUpload.get(0);
       CryptoRecord cryptoRecord = encryptClientRecord(record);
-      clientUploadDelegate.setUploadDetails(false);
-      this.uploadClientRecord(cryptoRecord);
+      if (cryptoRecord != null) {
+        clientUploadDelegate.setUploadDetails(false);
+        this.uploadClientRecord(cryptoRecord);
+      }
       return;
     }
 
