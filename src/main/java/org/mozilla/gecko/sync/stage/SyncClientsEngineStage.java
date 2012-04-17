@@ -360,9 +360,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     for (Command command : commands) {
-      JSONObject jsonCommand = new JSONObject();
-      jsonCommand.put("command", command.commandType);
-      jsonCommand.put("args", command.args);
+      JSONObject jsonCommand = command.asJSONObject();
       if (record.commands == null) {
         record.commands = new JSONArray();
       }

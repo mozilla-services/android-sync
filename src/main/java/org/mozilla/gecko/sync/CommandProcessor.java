@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
@@ -51,6 +52,14 @@ public class CommandProcessor {
         argsList.add(args.get(i).toString());
       }
       return argsList;
+    }
+
+    @SuppressWarnings("unchecked")
+    public JSONObject asJSONObject() {
+      JSONObject out = new JSONObject();
+      out.put("command", this.commandType);
+      out.put("args", this.args);
+      return out;
     }
   }
 
