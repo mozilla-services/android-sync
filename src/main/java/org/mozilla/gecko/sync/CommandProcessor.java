@@ -39,19 +39,23 @@ public class CommandProcessor {
   public static class Command {
     public final String commandType;
     public final JSONArray args;
+    private List<String> argsList;
 
     public Command(String commandType, JSONArray args) {
       this.commandType = commandType;
       this.args = args;
     }
 
-    public List<String> getArgsList() {
-      ArrayList<String> argsList = new ArrayList<String>(args.size());
+    public synchronized List<String> getArgsList() {
+      if (argsList == null) {
+        ArrayList<String> argsList = new ArrayList<String>(args.size());
 
-      for (int i = 0; i < args.size(); i++) {
-        argsList.add(args.get(i).toString());
+        for (int i = 0; i < args.size(); i++) {
+          argsList.add(args.get(i).toString());
+        }
+        this.argsList = argsList;
       }
-      return argsList;
+      return this.argsList;
     }
 
     @SuppressWarnings("unchecked")
