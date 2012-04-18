@@ -1,7 +1,10 @@
 package org.mozilla.gecko.sync.setup.activities;
 
+import java.util.List;
+
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.CommandProcessor;
+import org.mozilla.gecko.sync.CommandRunner;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
@@ -38,6 +41,7 @@ public class SendTabActivity extends Activity {
     super.onResume();
 
     redirectIfNoSyncAccount();
+    registerDisplayURICommand();
 
     setContentView(R.layout.sync_send_tab);
     arrayAdapter = new ClientRecordArrayAdapter(this, R.layout.sync_list_item, getClientArray());
@@ -48,6 +52,16 @@ public class SendTabActivity extends Activity {
     listview.setTextFilterEnabled(true);
     listview.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     enableSend(false);
+  }
+
+  private void registerDisplayURICommand() {
+    final CommandProcessor processor = CommandProcessor.getProcessor();
+    processor.registerCommand("displayURI", new CommandRunner(3) {
+      @Override
+      public void executeCommand(List<String> args) {
+        CommandProcessor.displayURI(args, getApplicationContext());
+      }
+    });
   }
 
   private void redirectIfNoSyncAccount() {
