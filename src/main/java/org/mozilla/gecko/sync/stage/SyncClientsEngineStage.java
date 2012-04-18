@@ -261,6 +261,14 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
+  @Override
+  public void resetLocal() {
+    // Clear timestamps and local data.
+    session.config.persistServerClientRecordTimestamp(0L);
+    session.getClientsDelegate().setClientsCount(0);
+    db.wipe();
+  }
+
   protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
     final String ourGUID = delegate.getAccountGUID();
     final String ourName = delegate.getClientName();
