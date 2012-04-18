@@ -33,4 +33,5 @@ public interface GlobalSyncStage {
   }
 
   public void execute(GlobalSession session) throws NoSuchStageException;
+  public void resetLocal();
 }
