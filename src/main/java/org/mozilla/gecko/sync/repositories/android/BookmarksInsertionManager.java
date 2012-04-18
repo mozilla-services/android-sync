@@ -114,11 +114,11 @@ public abstract class BookmarksInsertionManager {
       return;
     }
     Logger.debug(LOG_TAG, "Incremental flush called with " + num + " records; flushing.");
-    flushAll(System.currentTimeMillis());
+    flushReadyToWrite();
   }
 
-  public void flushAll(long timestamp) {
-    Logger.debug(LOG_TAG, "Full flush called with " + readyToWrite.size() + " records; flushing all.");
+  public void flushReadyToWrite() {
+    Logger.debug(LOG_TAG, "Flush ready to write called with " + readyToWrite.size() + " records; flushing all.");
 
     if (readyToWrite.isEmpty()) {
       return;
@@ -149,6 +149,17 @@ public abstract class BookmarksInsertionManager {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public void flushAll(long timestamp) {
+    int num = 0;
+    for (ArrayList<BookmarkRecord> records : waitingForParent.values()) {
+      readyToWrite.addAll(records);
+      num += records.size();
+    }
+    Logger.debug(LOG_TAG, "Flush all called with " + readyToWrite.size() + " ready records " +
+        "and " + num + " records without known parents; flushing all.");
+    flushReadyToWrite();
   }
 
   /**
