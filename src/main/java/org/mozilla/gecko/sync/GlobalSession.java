@@ -8,7 +8,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,9 +35,7 @@ import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
-import org.mozilla.gecko.sync.stage.FormHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
-import org.mozilla.gecko.sync.stage.PasswordsServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
 import org.mozilla.gecko.sync.stage.CompletedStage;
 import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
@@ -41,9 +43,11 @@ import org.mozilla.gecko.sync.stage.EnsureCrypto5KeysStage;
 import org.mozilla.gecko.sync.stage.FennecTabsServerSyncStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
+import org.mozilla.gecko.sync.stage.FormHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
+import org.mozilla.gecko.sync.stage.PasswordsServerSyncStage;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 
 import android.content.Context;
@@ -152,6 +156,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
     registerCommands();
     prepareStages();
+
+    // TODO: data-driven plan for the sync, referring to prepareStages.
   }
 
   protected void registerCommands() {
@@ -160,14 +166,16 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     processor.registerCommand("resetEngine", new CommandRunner() {
       @Override
       public void executeCommand(List<String> args) {
-        resetClient(new String[] { args.get(0) });
+        HashSet<String> names = new HashSet<String>();
+        names.add(args.get(0));
+        resetStagesByName(names);
       }
     });
 
     processor.registerCommand("resetAll", new CommandRunner() {
       @Override
       public void executeCommand(List<String> args) {
-        resetClient(null);
+        resetAllStages();
       }
     });
 
@@ -180,7 +188,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   protected void prepareStages() {
-    stages = new HashMap<Stage, GlobalSyncStage>();
+    HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>();
+
     stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
     stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
@@ -188,16 +197,22 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage());
     stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
 
-    // TODO: more stages.
     stages.put(Stage.syncTabs,                new FennecTabsServerSyncStage());
     stages.put(Stage.syncPasswords,           new PasswordsServerSyncStage());
     stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
     stages.put(Stage.syncHistory,             new AndroidBrowserHistoryServerSyncStage());
     stages.put(Stage.syncFormHistory,         new FormHistoryServerSyncStage());
+
     stages.put(Stage.completed,               new CompletedStage());
+
+    this.stages = Collections.unmodifiableMap(stages);
   }
 
-  protected GlobalSyncStage getStageByName(Stage next) throws NoSuchStageException {
+  public GlobalSyncStage getSyncStageByName(String name) throws NoSuchStageException {
+    return getSyncStageByName(Stage.byName(name));
+  }
+
+  public GlobalSyncStage getSyncStageByName(Stage next) throws NoSuchStageException {
     GlobalSyncStage stage = stages.get(next);
     if (stage == null) {
       throw new NoSuchStageException(next);
@@ -205,7 +220,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     return stage;
   }
 
-  protected Collection<GlobalSyncStage> getSyncStagesByEnum(Collection<Stage> enums) {
+  public Collection<GlobalSyncStage> getSyncStagesByEnum(Collection<Stage> enums) {
     ArrayList<GlobalSyncStage> out = new ArrayList<GlobalSyncStage>();
     for (Stage name : enums) {
       try {
@@ -218,7 +233,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     return out;
   }
 
-  protected Collection<GlobalSyncStage> getSyncStagesByName(Collection<String> names) {
+  public Collection<GlobalSyncStage> getSyncStagesByName(Collection<String> names) {
     ArrayList<GlobalSyncStage> out = new ArrayList<GlobalSyncStage>();
     for (String name : names) {
       try {
@@ -258,7 +273,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     Stage next = nextStage(this.currentState);
     GlobalSyncStage nextStage;
     try {
-      nextStage = this.getStageByName(next);
+      nextStage = this.getSyncStageByName(next);
     } catch (NoSuchStageException e) {
       this.abort(e, "No such stage " + next);
       return;
@@ -461,10 +476,9 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     String localSyncID = this.getSyncID();
     if (!remoteSyncID.equals(localSyncID)) {
       // Sync ID has changed. Reset timestamps and fetch new keys.
-      resetClient(null);
+      resetAllStages();
       config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
-      // TODO TODO TODO
     }
     config.persistToPrefs();
     advance();
@@ -512,7 +526,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
       @Override
       public void onWiped(long timestamp) {
-        session.resetClient(null);
+        session.resetAllStages();
         session.config.purgeCryptoKeys();
         session.config.persistToPrefs();
 
@@ -584,8 +598,25 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
         freshStartDelegate.onFreshStartFailed(e);
       }
     });
-
   }
+
+  // Note that we do not yet implement wipeRemote: it's only necessary for
+  // first sync options.
+  // -- reset local stages, wipe server for each stage *except* clients
+  //    (stages only, not whole server!), send wipeEngine commands to each client.
+  //
+  // Similarly for startOver (because we don't receive that notification).
+  // -- remove client data from server, reset local stages, clear keys, reset
+  //    backoff, clear all prefs, discard credentials.
+  //
+  // Change passphrase: wipe entire server, reset client to force upload, sync.
+  //
+  // When an engine is disabled: wipe its collections on the server, reupload
+  // meta/global.
+  //
+  // On syncing each stage: if server has engine version 0 or old, wipe server,
+  // reset client to prompt reupload.
+  // If sync ID mismatch: take that syncID and reset client.
 
   private void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
     SyncStorageRequest request;
@@ -635,16 +666,37 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     request.delete();
   }
 
-  /**
-   * Reset our state. Clear our sync ID, reset each engine, drop any
-   * cached records.
-   */
-  private void resetClient(String[] engines) {
-    if (engines == null) {
-      // Set `engines` to be *all* the engines.
+  public void resetAllStages() {
+    Logger.info(LOG_TAG, "Resetting all stages.");
+    // Includes "clients".
+    this.resetStagesByEnum(Stage.getNamedStages());
+  }
+
+  public static void resetStages(Collection<GlobalSyncStage> stages) {
+    for (GlobalSyncStage stage : stages) {
+      try {
+        Logger.info(LOG_TAG, "Resetting " + stage);
+        stage.resetLocal();
+      } catch (Exception e) {
+        Logger.error(LOG_TAG, "Ignoring reset failure for stage " + stage, e);
+      }
     }
-    // TODO: futz with config?!
-    // TODO: engines?!
+  }
+
+  public void resetStagesByEnum(Collection<Stage> stages) {
+    GlobalSession.resetStages(this.getSyncStagesByEnum(stages));
+  }
+
+  public void resetStagesByName(Collection<String> names) {
+    for (String name : names) {
+      try {
+        GlobalSyncStage stage = this.getSyncStageByName(name);
+        Logger.info(LOG_TAG, "Resetting " + name + "(" + stage + ")");
+        stage.resetLocal();
+      } catch (NoSuchStageException e) {
+        Logger.warn(LOG_TAG, "Cannot reset stage " + name + ": no such stage.");
+      }
+    }
   }
 
   /**
