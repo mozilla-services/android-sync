@@ -1,10 +1,11 @@
 package org.mozilla.gecko.sync.repositories.android.test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,16 +15,25 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
 public class TestBookmarksInsertionManager {
   public BookmarksInsertionManager manager;
-  public ArrayList<String> insertions;
+  public ArrayList<String[]> insertions;
 
   @Before
   public void setUp() {
     Logger.LOG_TO_STDOUT = true;
-    insertions = new ArrayList<String>();
+    insertions = new ArrayList<String[]>();
     manager = new BookmarksInsertionManager(3) {
       @Override
       protected void insert(BookmarkRecord record) throws Exception {
-        insertions.add(record.guid);
+        insertions.add(new String[] { record.guid });
+      }
+
+      @Override
+      protected void bulkInsert(List<BookmarkRecord> records) throws Exception {
+        ArrayList<String> guids = new ArrayList<String>();
+        for (BookmarkRecord record : records) {
+          guids.add(record.guid);
+        }
+        insertions.add(guids.toArray(new String[guids.size()]));
       }
     };
   }
@@ -56,13 +66,13 @@ public class TestBookmarksInsertionManager {
     assertTrue(insertions.isEmpty());
     manager.insertRecord(folder);
     manager.dumpState();
-    assertEquals(3, insertions.size());
+    assertEquals(2, insertions.size());
     manager.flushAll(0);
     manager.dumpState();
     assertTrue(manager.isClear());
-    assertEquals(3, insertions.size());
-    assertArrayEquals(new String[] { "folder", "child1", "child2" },
-        insertions.toArray(new String[insertions.size()]));
+    assertEquals(2, insertions.size());
+    assertArrayEquals(new String[] { "folder" }, insertions.get(0));
+    assertArrayEquals(new String[] { "child1", "child2" }, insertions.get(1));
   }
 
   @Test
@@ -79,34 +89,35 @@ public class TestBookmarksInsertionManager {
     assertEquals(0, insertions.size());
     manager.insertRecord(child2);
     manager.dumpState();
-    assertEquals(3, insertions.size());
+    assertEquals(2, insertions.size());
     manager.flushAll(0);
     manager.dumpState();
     assertTrue(manager.isClear());
-    assertEquals(3, insertions.size());
-    assertArrayEquals(new String[] { "folder", "child1", "child2" },
-        insertions.toArray(new String[insertions.size()]));
+    assertEquals(2, insertions.size());
+    assertArrayEquals(new String[] { "folder" }, insertions.get(0));
+    assertArrayEquals(new String[] { "child1", "child2" }, insertions.get(1));
   }
 
   @Test
   public void testFolderAfterFolder() {
-    BookmarkRecord folder1 = folder("folder1", "mobile");
-    BookmarkRecord child1 = bookmark("child1", "folder1");
-    BookmarkRecord child2 = bookmark("child2", "folder1");
-    BookmarkRecord folder2 = folder("folder2", "folder1");
-    BookmarkRecord child3 = bookmark("child3", "folder2");
-    BookmarkRecord child4 = bookmark("child4", "folder2");
+    manager.insertRecord(bookmark("child1", "folder1"));
+    assertEquals(0, insertions.size());
+    manager.insertRecord(folder("folder1", "mobile"));
+    assertEquals(0, insertions.size());
+    manager.insertRecord(bookmark("child3", "folder2"));
+    assertEquals(0, insertions.size());
+    manager.insertRecord(folder("folder2", "folder1"));
+    assertEquals(3, insertions.size()); // 2 folders and 1 regular record.
+    manager.insertRecord(bookmark("child2", "folder1"));
+    manager.insertRecord(bookmark("child4", "folder2"));
+    assertEquals(3, insertions.size());
 
-    manager.insertRecord(child1);
-    manager.insertRecord(folder1);
-    manager.insertRecord(child3);
-    manager.insertRecord(folder2);
-    manager.insertRecord(child2);
-    manager.insertRecord(child4);
     manager.flushAll(0);
     assertTrue(manager.isClear());
-    assertEquals(6, insertions.size());
-    assertArrayEquals(new String[] { "folder1", "child1", "folder2", "child3", "child2", "child4" },
-        insertions.toArray(new String[insertions.size()]));
+    assertEquals(4, insertions.size());
+    assertArrayEquals(new String[] { "folder1" }, insertions.get(0));
+    assertArrayEquals(new String[] { "folder2" }, insertions.get(1));
+    assertArrayEquals(new String[] { "child1", "child3" }, insertions.get(2));
+    assertArrayEquals(new String[] { "child2", "child4" }, insertions.get(3));
   }
 }

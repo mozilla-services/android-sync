@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -118,8 +119,19 @@ public abstract class BookmarksInsertionManager {
 
   public void flushAll(long timestamp) {
     Logger.debug(LOG_TAG, "Full flush called with " + readyToWrite.size() + " records; flushing all.");
+
+    if (readyToWrite.isEmpty()) {
+      return;
+    }
+
+    // Write folders first.
+    ArrayList<BookmarkRecord> nonFolders = new ArrayList<BookmarkRecord>();
     for (BookmarkRecord record : readyToWrite) {
-      // XXX folders first?
+      if (!record.isFolder()) {
+        nonFolders.add(record);
+        continue;
+      }
+      // Folders are inserted one at a time.
       try {
         insert(record);
       } catch (Exception e) {
@@ -127,6 +139,16 @@ public abstract class BookmarksInsertionManager {
       }
     }
     readyToWrite.clear();
+
+    if (nonFolders.isEmpty()) {
+      return;
+    }
+
+    try {
+      bulkInsert(nonFolders);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -193,4 +215,5 @@ public abstract class BookmarksInsertionManager {
   }
 
   protected abstract void insert(BookmarkRecord record) throws Exception;
+  protected abstract void bulkInsert(List<BookmarkRecord> records) throws Exception;
 }
