@@ -24,7 +24,7 @@ import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
-public class EnsureClusterURLStage implements GlobalSyncStage {
+public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
   public interface ClusterURLFetchDelegate {
     /**
      * 200 - Success.

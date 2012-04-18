@@ -4,11 +4,12 @@
 
 package org.mozilla.gecko.sync.stage;
 
-import org.mozilla.gecko.sync.GlobalSession;
-
-public class CheckPreconditionsStage extends AbstractNonRepositorySyncStage {
+/**
+ * This is simply a stage that is not responsible for synchronizing repositories.
+ */
+public abstract class AbstractNonRepositorySyncStage implements GlobalSyncStage {
   @Override
-  public void execute(GlobalSession session) throws NoSuchStageException {
-    session.advance();
+  public void resetLocal() {
+    // Do nothing.
   }
 }

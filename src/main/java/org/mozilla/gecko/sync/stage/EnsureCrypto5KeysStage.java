@@ -23,7 +23,10 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
-public class EnsureCrypto5KeysStage implements GlobalSyncStage, SyncStorageRequestDelegate, KeyUploadDelegate {
+public class EnsureCrypto5KeysStage
+extends AbstractNonRepositorySyncStage
+implements SyncStorageRequestDelegate, KeyUploadDelegate {
+
   private static final String LOG_TAG = "EnsureC5KeysStage";
   private static final String CRYPTO_COLLECTION = "crypto";
   protected GlobalSession session;

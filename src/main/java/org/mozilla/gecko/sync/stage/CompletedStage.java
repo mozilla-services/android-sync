@@ -6,7 +6,7 @@ package org.mozilla.gecko.sync.stage;
 
 import org.mozilla.gecko.sync.GlobalSession;
 
-public class CompletedStage implements GlobalSyncStage {
+public class CompletedStage extends AbstractNonRepositorySyncStage {
 
   @Override
   public void execute(GlobalSession session) throws NoSuchStageException {
@@ -14,5 +14,4 @@ public class CompletedStage implements GlobalSyncStage {
     // TODO: call clean() on each Repository in the sync constellation.
     session.completeSync();
   }
-
 }
