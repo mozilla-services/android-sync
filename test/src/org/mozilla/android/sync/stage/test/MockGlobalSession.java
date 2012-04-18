@@ -59,6 +59,11 @@ public class MockGlobalSession extends GlobalSession {
 
   public class MockStage implements GlobalSyncStage {
     @Override
+    public void resetLocal() {
+      // Do nothing.
+    }
+
+    @Override
     public void execute(GlobalSession session) {
       session.advance();
     }
