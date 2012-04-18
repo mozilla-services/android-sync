@@ -156,7 +156,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   protected void registerCommands() {
     final CommandProcessor processor = CommandProcessor.getProcessor();
-    processor.registerSession(this);
 
     processor.registerCommand("resetEngine", new CommandRunner(1) {
       @Override

@@ -23,6 +23,8 @@ public class SendTabActivity extends Activity {
   public static final String LOG_TAG = "SendTabActivity";
   private ListView listview;
   private ClientRecordArrayAdapter arrayAdapter;
+  private AccountManager accountManager;
+  private Account localAccount;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -49,11 +51,12 @@ public class SendTabActivity extends Activity {
   }
 
   private void redirectIfNoSyncAccount() {
-    AccountManager mAccountManager = AccountManager.get(getApplicationContext());
-    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    accountManager = AccountManager.get(getApplicationContext());
+    Account[] accts = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
 
     // A Sync account exists.
     if (accts.length > 0) {
+      localAccount = accts[0];
       return;
     }
 
@@ -61,6 +64,16 @@ public class SendTabActivity extends Activity {
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
     finish();
+  }
+
+  /**
+   * @return Return null if there is no account set up. Return the account GUID otherwise.
+   */
+  private String getAccountGUID() {
+    if (accountManager == null || localAccount == null) {
+      return null;
+    }
+    return accountManager.getUserData(localAccount, Constants.ACCOUNT_GUID);
   }
 
   public void sendClickHandler(View view) {
@@ -77,7 +90,7 @@ public class SendTabActivity extends Activity {
       @Override
       public void run() {
         for (int i = 0; i < guids.length; i++) {
-          processor.sendURIToClientForDisplay(uri, guids[i], title);
+          processor.sendURIToClientForDisplay(uri, guids[i], title, getAccountGUID(), getApplicationContext());
         }
       }
     }.start();
@@ -99,7 +112,6 @@ public class SendTabActivity extends Activity {
     });
 
     dialog.show();
-    //dialog.setFeatureDrawableResource(Window.FEATURE_LEFT_ICON, android.R.drawable.ic_menu_send);
   }
 
   public void enableSend(boolean shouldEnable) {
