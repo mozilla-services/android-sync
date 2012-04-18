@@ -77,6 +77,14 @@ public abstract class ServerSyncStage implements
     return this.getCollection() + ".";
   }
 
+  protected SynchronizerConfiguration getConfig() throws NonObjectJSONException, IOException, ParseException {
+    return new SynchronizerConfiguration(session.config.getBranch(bundlePrefix()));
+  }
+
+  protected void persistConfig(SynchronizerConfiguration synchronizerConfiguration) {
+    synchronizerConfiguration.persist(session.config.getBranch(bundlePrefix()));
+  }
+
   public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException, URISyntaxException, NonObjectJSONException, IOException, ParseException {
     Repository remote = wrappedServerRepo();
 
@@ -84,12 +92,29 @@ public abstract class ServerSyncStage implements
     synchronizer.repositoryA = remote;
     synchronizer.repositoryB = this.getLocalRepository();
 
-    SynchronizerConfiguration config = new SynchronizerConfiguration(session.config.getBranch(bundlePrefix()));
+    SynchronizerConfiguration config = this.getConfig();
     synchronizer.load(config);
 
     // TODO: should wipe in either direction?
     // TODO: syncID?!
     return synchronizer;
+  }
+
+  @Override
+  public void resetLocal() {
+    // Clear both timestamps.
+    SynchronizerConfiguration config;
+    try {
+      config = this.getConfig();
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Unable to reset " + this + ": fetching config failed.", e);
+      return;
+    }
+
+    config.localBundle.setTimestamp(0L);
+    config.remoteBundle.setTimestamp(0L);
+    Logger.info(LOG_TAG, "Reset timestamps for " + this);
+    persistConfig(config);
   }
 
   @Override
@@ -141,7 +166,7 @@ public abstract class ServerSyncStage implements
 
     SynchronizerConfiguration synchronizerConfiguration = synchronizer.save();
     if (synchronizerConfiguration != null) {
-      synchronizerConfiguration.persist(session.config.getBranch(bundlePrefix()));
+      persistConfig(synchronizerConfiguration);
     } else {
       Logger.warn(LOG_TAG, "Didn't get configuration from synchronizer after success");
     }
