@@ -205,6 +205,32 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     return stage;
   }
 
+  protected Collection<GlobalSyncStage> getSyncStagesByEnum(Collection<Stage> enums) {
+    ArrayList<GlobalSyncStage> out = new ArrayList<GlobalSyncStage>();
+    for (Stage name : enums) {
+      try {
+        GlobalSyncStage stage = this.getSyncStageByName(name);
+        out.add(stage);
+      } catch (NoSuchStageException e) {
+        Logger.warn(LOG_TAG, "Unable to find stage with name " + name);
+      }
+    }
+    return out;
+  }
+
+  protected Collection<GlobalSyncStage> getSyncStagesByName(Collection<String> names) {
+    ArrayList<GlobalSyncStage> out = new ArrayList<GlobalSyncStage>();
+    for (String name : names) {
+      try {
+        GlobalSyncStage stage = this.getSyncStageByName(name);
+        out.add(stage);
+      } catch (NoSuchStageException e) {
+        Logger.warn(LOG_TAG, "Unable to find stage with name " + name);
+      }
+    }
+    return out;
+  }
+
   /**
    * Advance and loop around the stages of a sync.
    * @param current
