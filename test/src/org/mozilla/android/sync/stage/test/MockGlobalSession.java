@@ -66,6 +66,11 @@ public class MockGlobalSession extends GlobalSession {
     }
 
     @Override
+    public void wipeLocal() {
+      this.resetLocal();
+    }
+
+    @Override
     public void execute(GlobalSession session) {
       session.advance();
     }

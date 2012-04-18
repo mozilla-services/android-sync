@@ -269,6 +269,12 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     db.wipe();
   }
 
+  @Override
+  public void wipeLocal() throws Exception {
+    // Nothing more to do.
+    this.resetLocal();
+  }
+
   protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
     final String ourGUID = delegate.getAccountGUID();
     final String ourName = delegate.getClientName();

@@ -78,4 +78,5 @@ public interface GlobalSyncStage {
 
   public void execute(GlobalSession session) throws NoSuchStageException;
   public void resetLocal();
+  public void wipeLocal() throws Exception;
 }

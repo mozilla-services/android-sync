@@ -12,4 +12,9 @@ public abstract class AbstractNonRepositorySyncStage implements GlobalSyncStage 
   public void resetLocal() {
     // Do nothing.
   }
+
+  @Override
+  public void wipeLocal() {
+    // Do nothing.
+  }
 }

@@ -179,6 +179,22 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     });
 
+    processor.registerCommand("wipeEngine", new CommandRunner() {
+      @Override
+      public void executeCommand(List<String> args) {
+        HashSet<String> names = new HashSet<String>();
+        names.add(args.get(0));
+        wipeStagesByName(names);
+      }
+    });
+
+    processor.registerCommand("wipeAll", new CommandRunner() {
+      @Override
+      public void executeCommand(List<String> args) {
+        wipeAllStages();
+      }
+    });
+
     processor.registerCommand("displayURI", new CommandRunner() {
       @Override
       public void executeCommand(List<String> args) {
@@ -664,6 +680,31 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     };
     request.delete();
+  }
+
+  public void wipeAllStages() {
+    Logger.info(LOG_TAG, "Wiping all stages.");
+    // Includes "clients".
+    this.wipeStagesByEnum(Stage.getNamedStages());
+  }
+
+  public static void wipeStages(Collection<GlobalSyncStage> stages) {
+    for (GlobalSyncStage stage : stages) {
+      try {
+        Logger.info(LOG_TAG, "Wiping " + stage);
+        stage.wipeLocal();
+      } catch (Exception e) {
+        Logger.error(LOG_TAG, "Ignoring wipe failure for stage " + stage, e);
+      }
+    }
+  }
+
+  public void wipeStagesByEnum(Collection<Stage> stages) {
+    GlobalSession.wipeStages(this.getSyncStagesByEnum(stages));
+  }
+
+  public void wipeStagesByName(Collection<String> names) {
+    GlobalSession.wipeStages(this.getSyncStagesByName(names));
   }
 
   public void resetAllStages() {
