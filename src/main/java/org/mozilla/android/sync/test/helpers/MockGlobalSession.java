@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -26,7 +27,7 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
   }
 
   @Override
-  public boolean engineIsEnabled(String engine) {
+  public boolean engineIsEnabled(String engine, EngineSettings engineSettings) {
     return false;
   }
 

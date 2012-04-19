@@ -55,7 +55,9 @@ public abstract class ServerSyncStage implements
    * @throws MetaGlobalException
    */
   protected boolean isEnabled() throws MetaGlobalException {
-    return session.engineIsEnabled(this.getEngineName());
+    // TODO: pass EngineSettings here to check syncID and storage version.
+    // Catch the subclasses of MetaGlobalException to trigger various resets and wipes.
+    return session.engineIsEnabled(this.getEngineName(), null);
   }
 
   protected abstract String getCollection();

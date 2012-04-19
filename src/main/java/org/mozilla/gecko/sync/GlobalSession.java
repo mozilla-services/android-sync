@@ -754,21 +754,40 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Otherwise, returns true if there is an entry for this engine in the
    * meta/global "engines" object.
    *
-   * @param engineName
+   * @param engineName the name to check (e.g., "bookmarks").
+   * @param engineSettings
+   *        if non-null, verify that the server engine settings are congruent
+   *        with this, throwing the appropriate MetaGlobalException if not.
    * @return
    *        true if the engine with the provided name is present in the
-   *        meta/global "engines" object.
+   *        meta/global "engines" object, and verification passed.
    *
    * @throws MetaGlobalException
    */
-  public boolean engineIsEnabled(String engineName) throws MetaGlobalException {
+  public boolean engineIsEnabled(String engineName, EngineSettings engineSettings) throws MetaGlobalException {
     if (this.config.metaGlobal == null) {
       throw new MetaGlobalNotSetException();
     }
     if (this.config.metaGlobal.engines == null) {
       throw new MetaGlobalMissingEnginesException();
     }
-    return this.config.metaGlobal.engines.get(engineName) != null;
+    ExtendedJSONObject engineEntry;
+    try {
+      engineEntry = this.config.metaGlobal.engines.getObject(engineName);
+    } catch (NonObjectJSONException e) {
+      Logger.error(LOG_TAG, "Engine field for " + engineName + " in meta/global is not an object.");
+      throw new MetaGlobalMissingEnginesException();
+    }
+
+    if (engineEntry == null) {
+      Logger.debug(LOG_TAG, "Engine " + engineName + " not enabled: no meta/global entry.");
+      return false;
+    }
+
+    if (engineSettings != null) {
+      MetaGlobal.verifyEngineSettings(engineEntry, engineSettings);
+    }
+    return true;
   }
 
   public ClientsDataDelegate getClientsDelegate() {
