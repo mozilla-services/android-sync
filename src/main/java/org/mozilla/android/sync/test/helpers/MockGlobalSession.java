@@ -4,6 +4,8 @@
 package org.mozilla.android.sync.test.helpers;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -11,6 +13,7 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 
@@ -30,6 +33,8 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
   @Override
   protected void prepareStages() {
     super.prepareStages();
+    HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
+
     // Fake whatever stages we don't want to run.
     stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
     stages.put(Stage.syncHistory,             new MockServerSyncStage());
@@ -39,5 +44,7 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
     stages.put(Stage.ensureKeysStage,         new MockServerSyncStage());
     stages.put(Stage.ensureClusterURL,        new MockServerSyncStage());
     stages.put(Stage.syncClientsEngine,       new MockServerSyncStage());
+
+    this.stages = Collections.unmodifiableMap(stages);
   }
 }

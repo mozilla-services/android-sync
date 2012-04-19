@@ -10,6 +10,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
@@ -18,6 +20,7 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -28,6 +31,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
+import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -148,7 +152,9 @@ public class TestEnsureClusterURLStage {
       @Override
       public void prepareStages() {
         super.prepareStages();
+        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
         stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
+        this.stages = Collections.unmodifiableMap(stages);
       }
     };
 
@@ -190,7 +196,9 @@ public class TestEnsureClusterURLStage {
       @Override
       public void prepareStages() {
         super.prepareStages();
+        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
         stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
+        this.stages = Collections.unmodifiableMap(stages);
       }
     };
 
@@ -236,7 +244,9 @@ public class TestEnsureClusterURLStage {
       @Override
       public void prepareStages() {
         super.prepareStages();
+        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
         stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
+        this.stages = Collections.unmodifiableMap(stages);
       }
     };
 
@@ -285,7 +295,9 @@ public class TestEnsureClusterURLStage {
       @Override
       public void prepareStages() {
         super.prepareStages();
+        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
         stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
+        this.stages = Collections.unmodifiableMap(stages);
       }
     };
 

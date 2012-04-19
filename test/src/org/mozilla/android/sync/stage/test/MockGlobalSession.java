@@ -4,6 +4,8 @@
 package org.mozilla.android.sync.stage.test;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -72,6 +74,8 @@ public class MockGlobalSession extends GlobalSession {
   @Override
   protected void prepareStages() {
     super.prepareStages();
+    HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
+
     // Fake whatever stages we don't want to run.
     stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
     stages.put(Stage.syncHistory,             new MockServerSyncStage());
@@ -80,6 +84,8 @@ public class MockGlobalSession extends GlobalSession {
     stages.put(Stage.ensureKeysStage,         new MockStage());
     stages.put(Stage.ensureClusterURL,        new MockStage());
     stages.put(Stage.syncClientsEngine,       new MockStage());
+
+    this.stages = Collections.unmodifiableMap(stages);
   }
 
   @Override

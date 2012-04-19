@@ -12,6 +12,8 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashMap;
 
 import junit.framework.AssertionFailedError;
 
@@ -35,6 +37,7 @@ import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
+import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -87,7 +90,9 @@ public class TestGlobalSession {
     @Override
     protected void prepareStages() {
       super.prepareStages();
+      HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
       stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage());
+      this.stages = Collections.unmodifiableMap(stages);
     }
   }
 
@@ -244,7 +249,9 @@ public class TestGlobalSession {
       @Override
       protected void prepareStages() {
         super.prepareStages();
+        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
         stages.put(Stage.syncBookmarks, stage);
+        this.stages = Collections.unmodifiableMap(stages);
       }
     };
 
