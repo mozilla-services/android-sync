@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
 /**
@@ -20,23 +19,18 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
  * from within a store runnable.
  */
 public abstract class BookmarksInsertionManager {
-  private static final String LOG_TAG = "BookmarkInsert";
-
-  // private RepositorySessionStoreDelegate delegate;
+  public static final String LOG_TAG = "BookmarkInsert";
+  public static boolean DEBUG = false;
 
   private final int flushThreshold;
 
-  private final HashSet<String> knownFolders = new HashSet<String>();
+  private final HashSet<String> writtenFolders = new HashSet<String>();
   private final ArrayList<BookmarkRecord> readyToWrite = new ArrayList<BookmarkRecord>();
   private final HashMap<String, ArrayList<BookmarkRecord>> waitingForParent = new HashMap<String, ArrayList<BookmarkRecord>>();
 
   /**
    * Create an instance to be used for tracking insertions in a bookmarks
    * repository session.
-   *
-   * @param dataAccessor
-   *        Used to effect database changes.
-   *        XXX TODO
    *
    * @param flushThreshold
    *        When this many non-folder records have been stored for insertion,
@@ -47,67 +41,72 @@ public abstract class BookmarksInsertionManager {
     this.clear();
   }
 
-  /**
-   * Set the delegate to use for callbacks.
-   * If not invoked, no callbacks will be submitted.
-   *
-   * @param delegate a delegate, which should already be a delayed delegate.
-   */
-  public void setDelegate(RepositorySessionStoreDelegate delegate) {
-    // XXX this.delegate = delegate;
-  }
-
-
-  protected void addRecordWithUnknownParent(BookmarkRecord record) {
+  protected void addRecordWithUnwrittenParent(BookmarkRecord record) {
     if (!waitingForParent.containsKey(record.parentID)) {
       waitingForParent.put(record.parentID, new ArrayList<BookmarkRecord>());
     }
     waitingForParent.get(record.parentID).add(record);
   }
 
-  protected void insertFolder(BookmarkRecord record) {
-    Logger.debug(LOG_TAG, "Inserting folder with guid " + record.guid);
-    if (!knownFolders.contains(record.parentID)) {
-      Logger.debug(LOG_TAG, "Folder has unknown parent with guid " + record.parentID + "; keeping until we see the parent.");
-      addRecordWithUnknownParent(record);
-      return;
-    }
-
-    Logger.debug(LOG_TAG, "Folder has known parent with guid " + record.parentID + "; adding to insertion queue.");
+  protected void recursivelyAddRecordAndChildren(BookmarkRecord record) {
+    Logger.debug(LOG_TAG, "Record has known parent with guid " + record.parentID + "; adding to insertion queue.");
     readyToWrite.add(record);
 
-    knownFolders.add(record.guid);
+    if (record.isFolder()) {
+      writtenFolders.add(record.guid);
+    }
+
     ArrayList<BookmarkRecord> children = waitingForParent.get(record.guid);
+    waitingForParent.remove(record.guid);
     if (children == null) {
       return;
     }
-    waitingForParent.remove(record.guid);
-    readyToWrite.addAll(children);
+    for (BookmarkRecord child : children) {
+      recursivelyAddRecordAndChildren(child);
+    }
+  }
+
+  protected void enqueueFolder(BookmarkRecord record) {
+    Logger.debug(LOG_TAG, "Inserting folder with guid " + record.guid);
+    if (!writtenFolders.contains(record.parentID)) {
+      Logger.debug(LOG_TAG, "Folder has unknown parent with guid " + record.parentID + "; keeping until we see the parent.");
+      addRecordWithUnwrittenParent(record);
+      return;
+    }
+
+    // Parent is known; add as much of the tree as this roots.
+    recursivelyAddRecordAndChildren(record);
     incrementalFlush();
   }
 
-  public void insertRecord(BookmarkRecord record) {
-    if (record.isFolder()) {
-      insertFolder(record);
-      return;
-    }
-    Logger.debug(LOG_TAG, "Inserting bookmark with guid " + record.guid);
+  public void enqueueRecord(BookmarkRecord record) {
+    try {
+      if (record.isFolder()) {
+        enqueueFolder(record);
+        return;
+      }
+      Logger.debug(LOG_TAG, "Inserting bookmark with guid " + record.guid);
 
-    if (!knownFolders.contains(record.parentID)) {
-      Logger.debug(LOG_TAG, "Bookmark has unknown parent with guid " + record.parentID + "; keeping until we see the parent.");
-      addRecordWithUnknownParent(record);
-      return;
-    }
+      if (!writtenFolders.contains(record.parentID)) {
+        Logger.debug(LOG_TAG, "Bookmark has unknown parent with guid " + record.parentID + "; keeping until we see the parent.");
+        addRecordWithUnwrittenParent(record);
+        return;
+      }
 
-    Logger.debug(LOG_TAG, "Bookmark has known parent with guid " + record.parentID + "; adding to insertion queue.");
-    readyToWrite.add(record);
-    incrementalFlush();
+      Logger.debug(LOG_TAG, "Bookmark has known parent with guid " + record.parentID + "; adding to insertion queue.");
+      readyToWrite.add(record);
+      incrementalFlush();
+    } finally {
+      if (DEBUG) {
+        dumpState();
+      }
+    }
   }
 
   /**
    * Flush insertions that can be easily taken care of right now.
    */
-  public void incrementalFlush() {
+  protected void incrementalFlush() {
     int num = readyToWrite.size();
     if (num < flushThreshold) {
       Logger.debug(LOG_TAG, "Incremental flush called with " + num + " < " + flushThreshold + " records; not flushing.");
@@ -117,7 +116,7 @@ public abstract class BookmarksInsertionManager {
     flushReadyToWrite();
   }
 
-  public void flushReadyToWrite() {
+  protected void flushReadyToWrite() {
     Logger.debug(LOG_TAG, "Flush ready to write called with " + readyToWrite.size() + " records; flushing all.");
 
     if (readyToWrite.isEmpty()) {
@@ -133,19 +132,30 @@ public abstract class BookmarksInsertionManager {
       }
       // Folders are inserted one at a time.
       try {
-        insert(record);
+        insertFolder(record);
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
+
+    int num = readyToWrite.size() - nonFolders.size();
+    Logger.debug(LOG_TAG, "Flush ready to write wrote " + num +
+          " folders and will bulkInsert " + nonFolders.size() + " non-folders.");
     readyToWrite.clear();
 
     if (nonFolders.isEmpty()) {
       return;
     }
 
+    // bulkInsert non folders in batches.
+    int start = 0;
     try {
-      bulkInsert(nonFolders);
+      while (start < nonFolders.size()) {
+        int end = Math.min(start + flushThreshold, nonFolders.size());
+        List<BookmarkRecord> batch = nonFolders.subList(start, end);
+        bulkInsertNonFolders(batch);
+        start = start + flushThreshold;
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -160,6 +170,9 @@ public abstract class BookmarksInsertionManager {
     Logger.debug(LOG_TAG, "Flush all called with " + readyToWrite.size() + " ready records " +
         "and " + num + " records without known parents; flushing all.");
     flushReadyToWrite();
+    if (DEBUG) {
+      dumpState();
+    }
   }
 
   /**
@@ -175,9 +188,9 @@ public abstract class BookmarksInsertionManager {
       "unfiled"
     };
 
-    knownFolders.clear();
+    writtenFolders.clear();
     for (String guid : SPECIAL_GUIDS) {
-      knownFolders.add(guid);
+      writtenFolders.add(guid);
     }
     readyToWrite.clear();
     waitingForParent.clear();
@@ -219,12 +232,12 @@ public abstract class BookmarksInsertionManager {
     String[] waitingGuids = waits.toArray(new String[waits.size()]);
     String waiting = join(", ", waitingGuids);
 
-    String[] knownGuids = knownFolders.toArray(new String[knownFolders.size()]);
+    String[] knownGuids = writtenFolders.toArray(new String[writtenFolders.size()]);
     String known = join(", ", knownGuids);
 
-    System.out.println("Q=(" + ready + "), W = (" + waiting + "), P=(" + known + ")");
+    Logger.debug(LOG_TAG, "Q=(" + ready + "), W = (" + waiting + "), P=(" + known + ")");
   }
 
-  protected abstract void insert(BookmarkRecord record) throws Exception;
-  protected abstract void bulkInsert(List<BookmarkRecord> records) throws Exception;
+  protected abstract void insertFolder(BookmarkRecord record) throws Exception;
+  protected abstract void bulkInsertNonFolders(List<BookmarkRecord> records) throws Exception;
 }

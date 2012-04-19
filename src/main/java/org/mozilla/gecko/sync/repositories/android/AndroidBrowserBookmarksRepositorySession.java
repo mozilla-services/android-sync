@@ -30,8 +30,10 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelega
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 
 public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
 
@@ -553,27 +555,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       cur.close();
     }
     deletionManager = new BookmarksDeletionManager(dataAccessor, DEFAULT_DELETION_FLUSH_THRESHOLD);
+    insertionManager = new AndroidBrowserBookmarksInsertionManager(DEFAULT_INSERTION_FLUSH_THRESHOLD);
 
-    final AndroidBrowserBookmarksRepositorySession self = this;
-    insertionManager = new BookmarksInsertionManager(DEFAULT_INSERTION_FLUSH_THRESHOLD) {
-      @Override
-      protected void insert(BookmarkRecord record) throws Exception {
-        self.superInsert(record); // XXX hack!
-      }
-
-      @Override
-      protected void bulkInsert(List<BookmarkRecord> records) throws Exception {
-        for (BookmarkRecord record : records) {
-          self.superInsert(record);
-        }
-      }
-    };
     Logger.debug(LOG_TAG, "Done with initial setup of bookmarks session.");
     super.begin(delegate);
-  }
-
-  protected void superInsert(BookmarkRecord record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    super.insert(record);
   }
 
   @Override
@@ -600,9 +585,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     if (deletionManager != null) {
       deletionManager.setDelegate(delegate);
-    }
-    if (insertionManager != null) {
-      insertionManager.setDelegate(delegate);
     }
   }
 
@@ -755,10 +737,46 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    * <li>Updates... Just apply when they arrive.</li>
    * </ul>
    */
+  public class AndroidBrowserBookmarksInsertionManager extends BookmarksInsertionManager{
+    public AndroidBrowserBookmarksInsertionManager(int flushThreshold) {
+      super(flushThreshold);
+    }
+
+    @Override
+    protected void insertFolder(BookmarkRecord record) throws Exception {
+      // A folder that is *not* deleted needs its androidID updated, so that
+      // updateBookkeeping can re-parent, etc.
+      Record toStore = prepareRecord(record);
+      Uri recordURI = dbHelper.insert(toStore);
+      toStore.androidID = ContentUris.parseId(recordURI);
+      Logger.debug(LOG_TAG, "Inserted folder with guid " + toStore.guid + " as androidID " + toStore.androidID);
+
+      updateBookkeeping(toStore);
+      trackRecord(toStore);
+      delegate.onRecordStoreSucceeded(toStore);
+    }
+
+    @Override
+    protected void bulkInsertNonFolders(List<BookmarkRecord> records) throws Exception {
+      // All of these records are *not* deleted and *not* folders, so we don't
+      // need to update androidID at all!
+      ArrayList<Record> toStores = new ArrayList<Record>();
+      for (Record record : records) {
+        Record toStore = (BookmarkRecord) prepareRecord(record);
+        updateBookkeeping(toStore);
+        trackRecord(toStore);
+        delegate.onRecordStoreSucceeded(toStore);
+        toStores.add(toStore);
+      }
+
+      dataAccessor.bulkInsert(toStores);
+    }
+  }
+
   @Override
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     try {
-      insertionManager.insertRecord((BookmarkRecord) record);
+      insertionManager.enqueueRecord((BookmarkRecord) record);
     } catch (Exception e) {
       throw new NullCursorException(e);
     }
