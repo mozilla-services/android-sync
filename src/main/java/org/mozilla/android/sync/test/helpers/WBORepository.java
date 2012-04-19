@@ -39,6 +39,9 @@ public class WBORepository extends Repository {
   // Access to stats is not guarded.
   public WBORepositoryStats stats;
 
+  // Whether or not to increment the timestamp of stored records.
+  public final boolean bumpTimestamps;
+
   public class WBORepositorySession extends StoreTrackingRepositorySession {
 
     private WBORepository wboRepository;
@@ -47,6 +50,7 @@ public class WBORepository extends Repository {
 
     public WBORepositorySession(WBORepository repository) {
       super(repository);
+
       wboRepository = repository;
       wbos          = new ConcurrentHashMap<String, Record>();
       stats         = new WBORepositoryStats();
@@ -122,8 +126,9 @@ public class WBORepository extends Repository {
       if (delegate == null) {
         throw new NoStoreDelegateException();
       }
+      final long now = now();
       if (stats.storeBegan < 0) {
-        stats.storeBegan = now();
+        stats.storeBegan = now;
       }
       Record existing = wbos.get(record.guid);
       Logger.debug(LOG_TAG, "Existing record is " + (existing == null ? "<null>" : (existing.guid + ", " + existing)));
@@ -136,8 +141,15 @@ public class WBORepository extends Repository {
       if (existing != null) {
         Logger.debug(LOG_TAG, "Replacing local record.");
       }
-      wbos.put(record.guid, record);
-      trackRecord(record);
+
+      // Store a copy of the record with an updated modified time.
+      Record toStore = record.copyWithIDs(record.guid, record.androidID);
+      if (bumpTimestamps) {
+        toStore.lastModified = now;
+      }
+      wbos.put(record.guid, toStore);
+
+      trackRecord(toStore);
       delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
     }
 
@@ -148,21 +160,25 @@ public class WBORepository extends Repository {
         return;
       }
 
+      Logger.info(LOG_TAG, "Wiping WBORepositorySession.");
       this.wbos = new ConcurrentHashMap<String, Record>();
-      ((WBORepository) this.repository).wbos = new ConcurrentHashMap<String, Record>();
+
+      // Wipe immediately for the convenience of test code.
+      wboRepository.wbos = new ConcurrentHashMap<String, Record>();
       delegate.deferredWipeDelegate(delegateExecutor).onWipeSucceeded();
     }
 
     @Override
     public void finish(RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
-      ((WBORepository) repository).wbos = this.wbos;
+      Logger.info(LOG_TAG, "Finishing WBORepositorySession: handing back " + this.wbos.size() + " WBOs.");
+      wboRepository.wbos = this.wbos;
       stats.finished = now();
       super.finish(delegate);
     }
 
     @Override
     public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
-      this.wbos = ((WBORepository) repository).cloneWBOs();
+      this.wbos = wboRepository.cloneWBOs();
       stats.begun = now();
       super.begin(delegate);
     }
@@ -181,9 +197,14 @@ public class WBORepository extends Repository {
 
   public ConcurrentHashMap<String, Record> wbos;
 
-  public WBORepository() {
+  public WBORepository(boolean bumpTimestamps) {
     super();
-    wbos = new ConcurrentHashMap<String, Record>();
+    this.bumpTimestamps = bumpTimestamps;
+    this.wbos = new ConcurrentHashMap<String, Record>();
+  }
+
+  public WBORepository() {
+    this(false);
   }
 
   public synchronized boolean shouldTrack() {
