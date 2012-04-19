@@ -6,7 +6,6 @@ package org.mozilla.android.sync.test.helpers;
 import java.io.IOException;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -14,33 +13,13 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 
-public class MockGlobalSession extends GlobalSession {
-
-  public MockSharedPreferences prefs;
+public class MockGlobalSession extends MockPrefsGlobalSession {
 
   public MockGlobalSession(String clusterURL, String username, String password,
 				  KeyBundle syncKeyBundle, GlobalSessionCallback callback)
     throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
     super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, null, syncKeyBundle, callback, /* context */ null, null, null);
-  }
-
-  /*
-   * PrefsSource methods.
-   */
-  @Override
-  public SharedPreferences getPrefs(String name, int mode) {
-    if (prefs == null) {
-      prefs = new MockSharedPreferences();
-    }
-    return prefs;
-  }
-
-  @Override
-  public Context getContext() {
-    return null;
   }
 
   @Override
