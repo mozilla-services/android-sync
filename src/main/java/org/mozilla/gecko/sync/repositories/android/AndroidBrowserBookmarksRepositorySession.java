@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.json.simple.JSONArray;
@@ -555,7 +556,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       cur.close();
     }
     deletionManager = new BookmarksDeletionManager(dataAccessor, DEFAULT_DELETION_FLUSH_THRESHOLD);
-    insertionManager = new AndroidBrowserBookmarksInsertionManager(DEFAULT_INSERTION_FLUSH_THRESHOLD);
+    insertionManager = new AndroidBrowserBookmarksInsertionManager(DEFAULT_INSERTION_FLUSH_THRESHOLD,
+        parentGuidToIDMap.keySet());
 
     Logger.debug(LOG_TAG, "Done with initial setup of bookmarks session.");
     super.begin(delegate);
@@ -721,25 +723,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
   }
 
-  /**
-   * <ul>
-   * <li>Folder inserts where the parent is known. Do these immediately, because
-   * they allow other records to be inserted. Requires bookkeeping updates. On
-   * insert, flush the next set.</li>
-   * <li>Regular inserts where the parent is known. These can happen whenever.
-   * Batch for speed.</li>
-   * <li>Records where the parent is not known. These can be flushed out when
-   * the parent is known, or entered as orphans. This can be a queue earlier in
-   * the process, so they don't get assigned to Unsorted. Feed into the main
-   * batch when the parent arrives.</li>
-   * <li>Deletions. Always done at the end so that orphaning is minimized. Batch
-   * folders and non-folders separately for the same reason. [[already done]]</li>
-   * <li>Updates... Just apply when they arrive.</li>
-   * </ul>
-   */
   public class AndroidBrowserBookmarksInsertionManager extends BookmarksInsertionManager{
-    public AndroidBrowserBookmarksInsertionManager(int flushThreshold) {
-      super(flushThreshold);
+    public AndroidBrowserBookmarksInsertionManager(int flushThreshold, Set<String> writtenFolders) {
+      super(flushThreshold, writtenFolders);
     }
 
     @Override
@@ -872,6 +858,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       try {
         // Clear our queued deletions.
         deletionManager.clear();
+        // Clearing the insertion manager is not supported yet. To clear, you need
+        // to reset the set of written folder GUIDs, which will need to be re-computed.
         super.run();
       } catch (Exception ex) {
         delegate.onWipeFailed(ex);

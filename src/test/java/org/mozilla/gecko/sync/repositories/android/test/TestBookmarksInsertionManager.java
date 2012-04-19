@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.gecko.sync.repositories.android.test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -5,11 +8,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.BookmarksInsertionManager;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
@@ -21,7 +27,10 @@ public class TestBookmarksInsertionManager {
   public void setUp() {
     Logger.LOG_TO_STDOUT = true;
     insertions = new ArrayList<String[]>();
-    manager = new BookmarksInsertionManager(3) {
+    Set<String> writtenFolders = new HashSet<String>();
+    writtenFolders.add("mobile");
+
+    manager = new BookmarksInsertionManager(3, writtenFolders) {
       @Override
       protected void insertFolder(BookmarkRecord record) throws Exception {
         Logger.debug(BookmarksInsertionManager.LOG_TAG, "Inserted folder (" + record.guid + ").");
@@ -36,7 +45,7 @@ public class TestBookmarksInsertionManager {
         }
         String[] guidList = guids.toArray(new String[guids.size()]);
         insertions.add(guidList);
-        Logger.debug(BookmarksInsertionManager.LOG_TAG, "Inserted non-folders (" + BookmarksInsertionManager.join(", ", guidList) + ").");
+        Logger.debug(BookmarksInsertionManager.LOG_TAG, "Inserted non-folders (" + Utils.join(", ", guidList) + ").");
       }
     };
     BookmarksInsertionManager.DEBUG = true;

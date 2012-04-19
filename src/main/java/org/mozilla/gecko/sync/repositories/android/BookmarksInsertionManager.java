@@ -8,13 +8,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 
 /**
- * Queue up insertions.
- *
+ * Queue up insertions:
+ * <ul>
+ * <li>Folder inserts where the parent is known. Do these immediately, because
+ * they allow other records to be inserted. Requires bookkeeping updates. On
+ * insert, flush the next set.</li>
+ * <li>Regular inserts where the parent is known. These can happen whenever.
+ * Batch for speed.</li>
+ * <li>Records where the parent is not known. These can be flushed out when the
+ * parent is known, or entered as orphans. This can be a queue earlier in the
+ * process, so they don't get assigned to Unsorted. Feed into the main batch
+ * when the parent arrives.</li>
+ * </ul>
+ * <p>
+ * Deletions are always done at the end so that orphaning is minimized, and
+ * that's why we are batching folders and non-folders separately.
+ * <p>
+ * Updates are always applied as they arrive.
+ * <p>
  * Note that this class is not thread safe. This should be fine: call it only
  * from within a store runnable.
  */
@@ -35,10 +53,12 @@ public abstract class BookmarksInsertionManager {
    * @param flushThreshold
    *        When this many non-folder records have been stored for insertion,
    *        an incremental flush occurs.
+   * @param writtenFolders
+   *        The GUIDs of all the folders already written to the database.
    */
-  public BookmarksInsertionManager(int flushThreshold) {
+  public BookmarksInsertionManager(int flushThreshold, Set<String> writtenFolders) {
     this.flushThreshold = flushThreshold;
-    this.clear();
+    this.writtenFolders.addAll(writtenFolders);
   }
 
   protected void addRecordWithUnwrittenParent(BookmarkRecord record) {
@@ -175,43 +195,9 @@ public abstract class BookmarksInsertionManager {
     }
   }
 
-  /**
-   * Clear state in case of redundancy (e.g., wipe).
-   */
-  public void clear() {
-    String[] SPECIAL_GUIDS = new String[] {
-      // XXX Mobile and desktop places roots have to come first.
-      "places",
-      "mobile",
-      "toolbar",
-      "menu",
-      "unfiled"
-    };
-
-    writtenFolders.clear();
-    for (String guid : SPECIAL_GUIDS) {
-      writtenFolders.add(guid);
-    }
-    readyToWrite.clear();
-    waitingForParent.clear();
-  }
-
   // For debugging.
   public boolean isClear() {
     return readyToWrite.isEmpty() && waitingForParent.isEmpty();
-  }
-
-  public static String join(String delimiter, String... strings) {
-    StringBuilder sb = new StringBuilder();
-    int i = 0;
-    for (String string : strings) {
-      sb.append(string);
-      i += 1;
-      if (i < strings.length) {
-        sb.append(delimiter);
-      }
-    }
-    return sb.toString();
   }
 
   // For debugging.
@@ -221,7 +207,7 @@ public abstract class BookmarksInsertionManager {
     for (BookmarkRecord record : readyToWrite) {
       readyGuids[i++] = record.guid;
     }
-    String ready = join(", ", readyGuids);
+    String ready = Utils.join(", ", readyGuids);
 
     ArrayList<String> waits = new ArrayList<String>();
     for (ArrayList<BookmarkRecord> recs : waitingForParent.values()) {
@@ -230,10 +216,10 @@ public abstract class BookmarksInsertionManager {
       }
     }
     String[] waitingGuids = waits.toArray(new String[waits.size()]);
-    String waiting = join(", ", waitingGuids);
+    String waiting = Utils.join(", ", waitingGuids);
 
     String[] knownGuids = writtenFolders.toArray(new String[writtenFolders.size()]);
-    String known = join(", ", knownGuids);
+    String known = Utils.join(", ", knownGuids);
 
     Logger.debug(LOG_TAG, "Q=(" + ready + "), W = (" + waiting + "), P=(" + known + ")");
   }
