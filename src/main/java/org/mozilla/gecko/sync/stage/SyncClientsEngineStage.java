@@ -158,6 +158,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         r = (ClientRecord) factory.createRecord(record.decrypt());
         if (clientsDelegate.isLocalGUID(r.guid)) {
           Logger.info(LOG_TAG, "Local client GUID exists on server and was downloaded");
+          Logger.info(LOG_TAG, "Local GUID timestamp: " + r.lastModified);
           localAccountGUIDDownloaded = true;
           // Oh hey! Our record is on the server. This is the authoritative
           // server timestamp, so let's hang on to it to decide whether we
@@ -168,6 +169,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
           processCommands(r.commands);
         } else {
           // Only need to store record if it isn't our local one.
+          Logger.info(LOG_TAG, "NON Local GUID timestamp: " + r.lastModified);
           wipeAndStore(r);
           addCommands(r);
         }
@@ -223,6 +225,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
       // This is the case when we are NOT currently uploading our local record.
       if (!currentlyUploadingLocalRecord) {
+        Logger.info(COLLECTION_NAME, "Not currently uploading local record");
         clearRecordsToUpload();
         checkAndUpload();
         return;
@@ -234,8 +237,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         session.config.persistServerClientRecordTimestamp(timestamp);
         BaseResource.consumeEntity(response);
 
-        Logger.trace(LOG_TAG, "Timestamp from body is: " + timestamp);
-        Logger.trace(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
+        Logger.info(LOG_TAG, "Timestamp from body is: " + timestamp);
+        Logger.info(LOG_TAG, "Timestamp from cleartext is " + currentlyUploadingRecordTimestamp);
+        Logger.info(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
       } catch (Exception e) {
         session.abort(e, "Unable to fetch timestamp.");
         return;
@@ -245,6 +249,15 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      try {
+        long timestamp = Utils.decimalSecondsToMilliseconds(response.body());
+        Logger.info(LOG_TAG, "Timestamp from body is: " + timestamp);
+        Logger.info(LOG_TAG, "Timestamp from cleartext is " + currentlyUploadingRecordTimestamp);
+        Logger.info(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
       int statusCode = response.getStatusCode();
 
       // If upload failed because of `ifUnmodifiedSince` then there are new
@@ -319,6 +332,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
   protected boolean shouldUpload() {
     if (commandsProcessedShouldUpload) {
+      Logger.info(LOG_TAG, "Commands processed should upload");
       return true;
     }
 
@@ -336,8 +350,11 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected void processCommands(JSONArray commands) {
+    Logger.info(LOG_TAG, "Commands " + commands);
+    Logger.info(LOG_TAG, "Commands being processed.");
     if (commands == null ||
         commands.size() == 0) {
+      Logger.info(LOG_TAG, "There are no commands");
       return;
     }
 
@@ -398,8 +415,10 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected void checkAndUpload() {
+    Logger.info(LOG_TAG, "In Check and Upload");
     if (!shouldUpload()) {
       Logger.debug(LOG_TAG, "Not uploading client record.");
+      Logger.info(LOG_TAG, "Not uploading client record");
       session.advance();
       return;
     }
