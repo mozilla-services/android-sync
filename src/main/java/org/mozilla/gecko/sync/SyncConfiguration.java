@@ -300,6 +300,10 @@ public class SyncConfiguration implements CredentialsSource {
            (trailingSlash ? "/storage/" : "/storage");
   }
 
+  public URI collectionURI(String collection) throws URISyntaxException {
+    return new URI(storageURL(true) + collection);
+  }
+
   public URI collectionURI(String collection, boolean full) throws URISyntaxException {
     // Do it this way to make it easier to add more params later.
     // It's pretty ugly, I'll grant.

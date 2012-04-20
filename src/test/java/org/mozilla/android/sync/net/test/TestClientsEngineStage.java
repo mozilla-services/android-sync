@@ -279,9 +279,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         uploadedRecord.collection = lastComputedLocalClientRecord.collection;
 
         // Create response body containing current timestamp.
-        uploadBodyTimestamp = Utils.millisecondsToDecimalSecondsString(System.currentTimeMillis());
         PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json");
-        bodyStream.print(uploadBodyTimestamp);
         bodyStream.close();
       } catch (Exception e) {
         fail("Error handling uploaded client record in UploadMockServer.");
