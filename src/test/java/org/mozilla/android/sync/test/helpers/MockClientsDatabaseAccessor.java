@@ -4,17 +4,21 @@
 package org.mozilla.android.sync.test.helpers;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
+import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
 public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   public boolean storedRecord = false;
-  public boolean wiped = false;
+  public boolean dbWiped = false;
+  public boolean clientsTableWiped = false;
   public boolean closed = false;
   public boolean storedArrayList = false;
+  public boolean storedCommand;
 
   @Override
   public void store(ClientRecord record) {
@@ -27,12 +31,22 @@ public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   }
 
   @Override
-  public ClientRecord fetch(String profileID) throws NullCursorException {
+  public void store(String accountGUID, Command command) throws NullCursorException {
+    storedCommand = true;
+  }
+
+  @Override
+  public ClientRecord fetchClient(String profileID) throws NullCursorException {
     return null;
   }
 
   @Override
-  public Map<String, ClientRecord> fetchAll() throws NullCursorException {
+  public Map<String, ClientRecord> fetchAllClients() throws NullCursorException {
+    return null;
+  }
+
+  @Override
+  public List<Command> fetchCommandsForClient(String accountGUID) throws NullCursorException {
     return null;
   }
 
@@ -42,8 +56,13 @@ public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   }
 
   @Override
-  public void wipe() {
-    wiped = true;
+  public void wipeDB() {
+    dbWiped = true;
+  }
+
+  @Override
+  public void wipeClientsTable() {
+    clientsTableWiped = true;
   }
 
   @Override
@@ -52,6 +71,6 @@ public class MockClientsDatabaseAccessor extends ClientsDatabaseAccessor {
   }
 
   public void resetVars() {
-    storedRecord = wiped = closed = storedArrayList = false;
+    storedRecord = dbWiped = clientsTableWiped = closed = storedArrayList = false;
   }
 }
