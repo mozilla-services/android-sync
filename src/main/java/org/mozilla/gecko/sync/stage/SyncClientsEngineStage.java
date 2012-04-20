@@ -249,8 +249,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.debug(LOG_TAG, "Upload succeeded.");
-
-      commandsProcessedShouldUpload = false;
       uploadAttemptsCount.set(0);
 
       // This is the case when we are NOT currently uploading our local record.
@@ -261,6 +259,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       }
 
       try {
+        commandsProcessedShouldUpload = false;
         long timestamp = Utils.decimalSecondsToMilliseconds(response.body());
         session.config.persistServerClientRecordTimestamp(timestamp);
         session.config.persistServerClientsTimestamp(timestamp);
