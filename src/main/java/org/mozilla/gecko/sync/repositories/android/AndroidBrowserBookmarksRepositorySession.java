@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync.repositories.android;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -723,7 +724,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
   }
 
-  public class AndroidBrowserBookmarksInsertionManager extends BookmarksInsertionManager{
+  protected final ArrayList<String> insertedGuids = new ArrayList<String>();
+
+  public class AndroidBrowserBookmarksInsertionManager extends BookmarksInsertionManager {
     public AndroidBrowserBookmarksInsertionManager(int flushThreshold, Set<String> writtenFolders) {
       super(flushThreshold, writtenFolders);
     }
@@ -740,6 +743,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       updateBookkeeping(toStore);
       trackRecord(toStore);
       delegate.onRecordStoreSucceeded(toStore);
+      insertedGuids.add(record.guid);
     }
 
     @Override
@@ -753,16 +757,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         trackRecord(toStore);
         delegate.onRecordStoreSucceeded(toStore);
         toStores.add(toStore);
+        insertedGuids.add(record.guid);
       }
 
       dataAccessor.bulkInsert(toStores);
     }
   }
 
+  protected ArrayList<String> enqueuedGuids = new ArrayList<String>();
+
   @Override
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     try {
       insertionManager.enqueueRecord((BookmarkRecord) record);
+      enqueuedGuids.add(record.guid);
     } catch (Exception e) {
       throw new NullCursorException(e);
     }
@@ -783,12 +791,35 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
   protected void flushQueues() {
     long now = now();
-    Logger.debug(LOG_TAG, "Applying insertions.");
+    Logger.debug(LOG_TAG, "Applying remaining insertions.");
     try {
       insertionManager.flushAll(now);
-      Logger.debug(LOG_TAG, "Done applying insertions.");
+      Logger.debug(LOG_TAG, "Done applying remaining insertions.");
     } catch (Exception e) {
-      Logger.error(LOG_TAG, "Unable to apply insertions.", e);
+      Logger.warn(LOG_TAG, "Unable to apply remaining insertions.", e);
+    }
+
+    if (enqueuedGuids.size() != insertedGuids.size()) {
+      Logger.warn(LOG_TAG, "Enqueued " + enqueuedGuids.size() + " records, but inserted " +
+          insertedGuids.size() + " records.");
+      Set<String> eSet = new HashSet<String>(enqueuedGuids);
+      Set<String> iSet = new HashSet<String>(insertedGuids);
+      eSet.removeAll(iSet);
+      if (eSet.isEmpty()) {
+        Logger.debug(LOG_TAG, "All enqueued guids were inserted.");
+      } else {
+        Logger.warn(LOG_TAG, "Enqueued but didn't insert the following guids: (" +
+            Utils.join(", ", eSet.toArray(new String[eSet.size()])) + ")");
+      }
+      iSet.removeAll(new HashSet<String>(enqueuedGuids));
+      if (iSet.isEmpty()) {
+        Logger.debug(LOG_TAG, "All inserted guids were enqueued.");
+      } else {
+        Logger.warn(LOG_TAG, "Inserted but didn't enqueue the following guids: (" +
+            Utils.join(", ", iSet.toArray(new String[eSet.size()])) + ")");
+      }
+    } else {
+      Logger.debug(LOG_TAG, "Enqueued and inserted " + enqueuedGuids.size() + " records.");
     }
 
     Logger.debug(LOG_TAG, "Applying deletions.");
