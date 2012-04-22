@@ -8,6 +8,7 @@ import java.net.URI;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.android.sync.test.helpers.RealPrefsMockGlobalSession;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -91,7 +92,7 @@ public class TestGlobalSession extends AndroidSyncTestCase {
     HappyCallback callback = new HappyCallback();
     Context context = getApplicationContext();
     System.out.println("Using context " + context);
-    GlobalSession session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
+    GlobalSession session = new RealPrefsMockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
     session.start();
     assertTrue(callback.calledSuccess);
   }

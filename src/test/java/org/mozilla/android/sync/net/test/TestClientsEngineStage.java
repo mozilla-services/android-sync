@@ -11,11 +11,12 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
-import org.json.simple.parser.ParseException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,15 +30,18 @@ import org.mozilla.android.sync.test.helpers.MockSyncClientsEngineStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
+import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -45,6 +49,21 @@ import org.simpleframework.http.Response;
 import ch.boye.httpclientandroidlib.HttpStatus;
 
 public class TestClientsEngineStage extends MockSyncClientsEngineStage {
+
+  public TestClientsEngineStage() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
+    super(initializeSession());
+  }
+
+  // Static so we can set it during the constructor. This is so evil.
+  private static MockGlobalSessionCallback callback;
+  private static GlobalSession initializeSession() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
+    callback = new MockGlobalSessionCallback();
+
+    GlobalSession session = new MockClientsGlobalSession(TEST_SERVER, USERNAME, PASSWORD, new KeyBundle(USERNAME, SYNC_KEY), callback);
+    session.config.setClusterURL(new URI(TEST_SERVER));
+    session.config.setCollectionKeys(CollectionKeys.generateCollectionKeys());
+    return session;
+  }
 
   private static final int TEST_PORT      = 15325;
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
@@ -66,11 +85,10 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   private long uploadHeaderTimestamp;
   private MockServer currentUploadMockServer;
   private MockServer currentDownloadMockServer;
-  private MockGlobalSessionCallback callback;
 
   private boolean stubUpload = false;
 
-  protected WaitHelper testWaiter() {
+  protected static WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
 
@@ -80,31 +98,30 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     return lastComputedLocalClientRecord;
   }
 
-  @Before
-  public void setup() {
-    callback = new MockGlobalSessionCallback();
-
-    try {
-      final KeyBundle bundle = new KeyBundle(USERNAME, SYNC_KEY);
-      session = new MockClientsGlobalSession(TEST_SERVER, USERNAME, PASSWORD, bundle, callback);
-      session.config.setClusterURL(new URI(TEST_SERVER));
-      session.config.setCollectionKeys(CollectionKeys.generateCollectionKeys());
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Unexpected failure in session.");
-    }
-  }
-
   @After
   public void teardown() {
     stubUpload = false;
-    ((MockClientsDatabaseAccessor) db).resetVars();
+    getMockDataAccessor().resetVars();
   }
 
-  @Before
   @Override
-  public void init() {
-    db = new MockClientsDatabaseAccessor();
+  public synchronized ClientsDatabaseAccessor getClientsDatabaseAccessor() {
+    if (db == null) {
+      db = new MockClientsDatabaseAccessor();
+    }
+    return db;
+  }
+
+  // For test use.
+  private MockClientsDatabaseAccessor getMockDataAccessor() {
+    return (MockClientsDatabaseAccessor) getClientsDatabaseAccessor();
+  }
+
+  private synchronized boolean mockDataAccessorIsClosed() {
+    if (db == null) {
+      return true;
+    }
+    return ((MockClientsDatabaseAccessor) db).closed;
   }
 
   @Override
@@ -160,14 +177,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       super.handleRequestFailure(response);
-      assertTrue(((MockClientsDatabaseAccessor) db).closed);
+      assertTrue(getMockDataAccessor().closed);
       fail("Should not error.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
       super.handleRequestError(ex);
-      assertTrue(((MockClientsDatabaseAccessor) db).closed);
+      assertTrue(getMockDataAccessor().closed);
       fail("Should not fail.");
     }
 
@@ -192,14 +209,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       super.handleRequestFailure(response);
-      assertTrue(((MockClientsDatabaseAccessor) db).closed);
+      assertTrue(getMockDataAccessor().closed);
       fail("Should not error.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
       super.handleRequestError(ex);
-      assertTrue(((MockClientsDatabaseAccessor) db).closed);
+      assertTrue(getMockDataAccessor().closed);
       ex.printStackTrace();
       fail("Should not fail.");
     }
@@ -380,8 +397,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertFalse(shouldWipe);
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertFalse(((MockClientsDatabaseAccessor) db).wiped);
-    assertTrue(((MockClientsDatabaseAccessor) db).storedRecord);
+    assertFalse(getMockDataAccessor().wiped);
+    assertTrue(getMockDataAccessor().storedRecord);
   }
 
   @Test
@@ -390,8 +407,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     shouldWipe = true;
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertTrue(((MockClientsDatabaseAccessor) db).wiped);
-    assertTrue(((MockClientsDatabaseAccessor) db).storedRecord);
+    assertTrue(getMockDataAccessor().wiped);
+    assertTrue(getMockDataAccessor().storedRecord);
   }
 
   @Test
@@ -414,7 +431,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     for (int i = 0; i < downloadedClients.size(); i++) {
       assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
     }
-    assertTrue(((MockClientsDatabaseAccessor) db).closed);
+    assertTrue(mockDataAccessorIsClosed());
   }
 
   @Test
@@ -465,7 +482,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     // Timestamp got updated (but not reset) since we downloaded our record
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
     assertTrue(initialTimestamp < session.config.getPersistedServerClientRecordTimestamp());
-    assertTrue(((MockClientsDatabaseAccessor) db).closed);
+    assertTrue(mockDataAccessorIsClosed());
   }
 
   @Test
@@ -486,7 +503,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     // Timestamp got reset since our record wasn't downloaded.
     assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
-    assertTrue(((MockClientsDatabaseAccessor) db).closed);
+    assertTrue(mockDataAccessorIsClosed());
   }
 
   /**

@@ -4,14 +4,18 @@
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import junit.framework.AssertionFailedError;
 
@@ -21,21 +25,25 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
+import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockResourceDelegate;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
-import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
+import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -52,8 +60,40 @@ public class TestGlobalSession {
   private final String TEST_SYNC_KEY            = "abcdeabcdeabcdeabcdeabcdea";
   private final long   TEST_BACKOFF_IN_SECONDS  = 2401;
 
-  public WaitHelper getTestWaiter() {
+  public static WaitHelper getTestWaiter() {
     return WaitHelper.getTestWaiter();
+  }
+
+  @Test
+  public void testGetSyncStagesBy() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, NoSuchStageException {
+
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    GlobalSession s = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL,
+                                                 TEST_USERNAME, TEST_PASSWORD, null,
+                                                 new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
+                                                 callback, /* context */ null, null, null);
+
+    assertTrue(s.getSyncStageByName(Stage.syncBookmarks) instanceof AndroidBrowserBookmarksServerSyncStage);
+
+    final Set<String> empty = new HashSet<String>();
+
+    final Set<String> bookmarksAndTabsNames = new HashSet<String>();
+    bookmarksAndTabsNames.add("bookmarks");
+    bookmarksAndTabsNames.add("tabs");
+
+    final Set<GlobalSyncStage> bookmarksAndTabsSyncStages = new HashSet<GlobalSyncStage>();
+    GlobalSyncStage bookmarksStage = s.getSyncStageByName("bookmarks");
+    GlobalSyncStage tabsStage = s.getSyncStageByName(Stage.syncTabs);
+    bookmarksAndTabsSyncStages.add(bookmarksStage);
+    bookmarksAndTabsSyncStages.add(tabsStage);
+
+    final Set<Stage> bookmarksAndTabsEnums = new HashSet<Stage>();
+    bookmarksAndTabsEnums.add(Stage.syncBookmarks);
+    bookmarksAndTabsEnums.add(Stage.syncTabs);
+
+    assertTrue(s.getSyncStagesByName(empty).isEmpty());
+    assertEquals(bookmarksAndTabsSyncStages, new HashSet<GlobalSyncStage>(s.getSyncStagesByName(bookmarksAndTabsNames)));
+    assertEquals(bookmarksAndTabsSyncStages, new HashSet<GlobalSyncStage>(s.getSyncStagesByEnum(bookmarksAndTabsEnums)));
   }
 
   /**
@@ -62,7 +102,6 @@ public class TestGlobalSession {
    */
   public class MockBackoffGlobalSession extends MockGlobalSession {
 
-    public MockSharedPreferences prefs;
     public long backoffInSeconds = -1;
 
     public MockBackoffGlobalSession(long backoffInSeconds,
@@ -74,8 +113,12 @@ public class TestGlobalSession {
     }
 
     public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
+      public MockBackoffFetchInfoCollectionsStage(GlobalSession session) {
+        super(session);
+      }
+
       @Override
-      public void execute(GlobalSession session) {
+      public void execute() {
         final HttpResponse response = new BasicHttpResponse(
           new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
@@ -87,7 +130,9 @@ public class TestGlobalSession {
     @Override
     protected void prepareStages() {
       super.prepareStages();
-      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage());
+      HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
+      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage(this));
+      this.stages = Collections.unmodifiableMap(stages);
     }
   }
 
@@ -226,9 +271,23 @@ public class TestGlobalSession {
       }
     };
 
-    final MockServerSyncStage stage = new MockServerSyncStage() {
+    // Hang on to this externally so we can poke at the stage.
+    final HashMap<Stage, GlobalSyncStage> stagesToRun = new HashMap<Stage, GlobalSyncStage>();
+
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
       @Override
-      public void execute(GlobalSession session) {
+      protected void prepareStages() {
+        super.prepareStages();
+        stagesToRun.putAll(this.stages);
+        this.stages = stagesToRun;
+      }
+    };
+
+    final MockServerSyncStage stage = new MockServerSyncStage(session) {
+      @Override
+      public void execute() {
         doRequest();
         if (stageShouldAdvance) {
           session.advance();
@@ -238,15 +297,7 @@ public class TestGlobalSession {
       }
     };
 
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      protected void prepareStages() {
-        super.prepareStages();
-        stages.put(Stage.syncBookmarks, stage);
-      }
-    };
+    stagesToRun.put(Stage.syncBookmarks, stage);
 
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
