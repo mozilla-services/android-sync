@@ -4,38 +4,14 @@
 package org.mozilla.android.sync.test.helpers;
 
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.repositories.RecordFactory;
-import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.stage.ServerSyncStage;
 
-public class MockServerSyncStage extends ServerSyncStage {
-  @Override
-  public boolean isEnabled() {
-    return false;
+public class MockServerSyncStage extends BaseMockServerSyncStage {
+  public MockServerSyncStage(GlobalSession session) {
+    super(session);
   }
 
   @Override
-  protected String getCollection() {
-    return null;
-  }
-
-  @Override
-  protected Repository getLocalRepository() {
-    return null;
-  }
-
-  @Override
-  protected String getEngineName() {
-    return null;
-  }
-
-  @Override
-  protected RecordFactory getRecordFactory() {
-    return null;
-  }
-
-  @Override
-  public void execute(GlobalSession session) {
+  public void execute() {
     session.advance();
   }
 }
