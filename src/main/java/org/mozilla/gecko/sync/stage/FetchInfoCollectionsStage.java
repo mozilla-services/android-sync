@@ -16,12 +16,11 @@ import android.util.Log;
 public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
   private static final String LOG_TAG = "FetchInfoCollStage";
 
-  public class StageInfoCollectionsDelegate implements InfoCollectionsDelegate {
+  public FetchInfoCollectionsStage(GlobalSession session) {
+    super(session);
+  }
 
-    private GlobalSession session;
-    public StageInfoCollectionsDelegate(GlobalSession session) {
-      this.session = session;
-    }
+  public class StageInfoCollectionsDelegate implements InfoCollectionsDelegate {
 
     @Override
     public void handleSuccess(InfoCollections global) {
@@ -44,9 +43,9 @@ public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
   }
 
   @Override
-  public void execute(GlobalSession session) throws NoSuchStageException {
+  public void execute() throws NoSuchStageException {
     try {
-      session.fetchInfoCollections(new StageInfoCollectionsDelegate(session));
+      session.fetchInfoCollections(new StageInfoCollectionsDelegate());
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
     }

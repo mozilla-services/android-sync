@@ -27,15 +27,16 @@ public class EnsureCrypto5KeysStage
 extends AbstractNonRepositorySyncStage
 implements SyncStorageRequestDelegate, KeyUploadDelegate {
 
+  public EnsureCrypto5KeysStage(GlobalSession session) {
+    super(session);
+  }
+
   private static final String LOG_TAG = "EnsureC5KeysStage";
   private static final String CRYPTO_COLLECTION = "crypto";
-  protected GlobalSession session;
   protected boolean retrying = false;
 
   @Override
-  public void execute(GlobalSession session) throws NoSuchStageException {
-    this.session = session;
-
+  public void execute() throws NoSuchStageException {
     InfoCollections infoCollections = session.config.infoCollections;
     if (infoCollections == null) {
       session.abort(null, "No info/collections set in EnsureCrypto5KeysStage.");
@@ -164,7 +165,7 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     Logger.debug(LOG_TAG, "New keys uploaded. Starting stage again to fetch them.");
     try {
       retrying = true;
-      this.execute(this.session);
+      this.execute();
     } catch (NoSuchStageException e) {
       session.abort(e, "No such stage.");
     }

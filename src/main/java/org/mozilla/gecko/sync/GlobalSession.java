@@ -206,20 +206,20 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   protected void prepareStages() {
     HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>();
 
-    stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
-    stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
-    stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
-    stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
-    stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage());
-    stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
+    stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage(this));
+    stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage(this));
+    stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage(this));
+    stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage(this));
+    stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage(this));
+    stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage(this));
 
-    stages.put(Stage.syncTabs,                new FennecTabsServerSyncStage());
-    stages.put(Stage.syncPasswords,           new PasswordsServerSyncStage());
-    stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
-    stages.put(Stage.syncHistory,             new AndroidBrowserHistoryServerSyncStage());
-    stages.put(Stage.syncFormHistory,         new FormHistoryServerSyncStage());
+    stages.put(Stage.syncTabs,                new FennecTabsServerSyncStage(this));
+    stages.put(Stage.syncPasswords,           new PasswordsServerSyncStage(this));
+    stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage(this));
+    stages.put(Stage.syncHistory,             new AndroidBrowserHistoryServerSyncStage(this));
+    stages.put(Stage.syncFormHistory,         new FormHistoryServerSyncStage(this));
 
-    stages.put(Stage.completed,               new CompletedStage());
+    stages.put(Stage.completed,               new CompletedStage(this));
 
     this.stages = Collections.unmodifiableMap(stages);
   }
@@ -297,7 +297,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.currentState = next;
     Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
     try {
-      nextStage.execute(this);
+      nextStage.execute();
     } catch (Exception ex) {
       Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
       this.abort(ex, "Uncaught exception in stage.");

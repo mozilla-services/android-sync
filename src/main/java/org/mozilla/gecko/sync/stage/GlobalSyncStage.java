@@ -10,7 +10,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.mozilla.gecko.sync.GlobalSession;
 
 public interface GlobalSyncStage {
   public static enum Stage {
@@ -76,7 +75,7 @@ public interface GlobalSyncStage {
     }
   }
 
-  public void execute(GlobalSession session) throws NoSuchStageException;
+  public void execute() throws NoSuchStageException;
   public void resetLocal();
   public void wipeLocal() throws Exception;
 }

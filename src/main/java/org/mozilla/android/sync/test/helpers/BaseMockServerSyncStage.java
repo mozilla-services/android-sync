@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
@@ -24,8 +25,8 @@ public abstract class BaseMockServerSyncStage extends ServerSyncStage {
   public String name;
   public String collection;
 
-  public BaseMockServerSyncStage() {
-    super();
+  public BaseMockServerSyncStage(GlobalSession session) {
+    super(session);
   }
 
   @Override

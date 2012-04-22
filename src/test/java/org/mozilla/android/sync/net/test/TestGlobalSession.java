@@ -113,8 +113,12 @@ public class TestGlobalSession {
     }
 
     public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
+      public MockBackoffFetchInfoCollectionsStage(GlobalSession session) {
+        super(session);
+      }
+
       @Override
-      public void execute(GlobalSession session) {
+      public void execute() {
         final HttpResponse response = new BasicHttpResponse(
           new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
@@ -127,7 +131,7 @@ public class TestGlobalSession {
     protected void prepareStages() {
       super.prepareStages();
       HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage());
+      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage(this));
       this.stages = Collections.unmodifiableMap(stages);
     }
   }
@@ -267,9 +271,23 @@ public class TestGlobalSession {
       }
     };
 
-    final MockServerSyncStage stage = new MockServerSyncStage() {
+    // Hang on to this externally so we can poke at the stage.
+    final HashMap<Stage, GlobalSyncStage> stagesToRun = new HashMap<Stage, GlobalSyncStage>();
+
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
       @Override
-      public void execute(GlobalSession session) {
+      protected void prepareStages() {
+        super.prepareStages();
+        stagesToRun.putAll(this.stages);
+        this.stages = stagesToRun;
+      }
+    };
+
+    final MockServerSyncStage stage = new MockServerSyncStage(session) {
+      @Override
+      public void execute() {
         doRequest();
         if (stageShouldAdvance) {
           session.advance();
@@ -279,17 +297,7 @@ public class TestGlobalSession {
       }
     };
 
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      protected void prepareStages() {
-        super.prepareStages();
-        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.syncBookmarks, stage);
-        this.stages = Collections.unmodifiableMap(stages);
-      }
-    };
+    stagesToRun.put(Stage.syncBookmarks, stage);
 
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {

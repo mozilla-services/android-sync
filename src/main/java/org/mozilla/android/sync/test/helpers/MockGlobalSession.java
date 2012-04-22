@@ -37,14 +37,14 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
     HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
 
     // Fake whatever stages we don't want to run.
-    stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
-    stages.put(Stage.syncHistory,             new MockServerSyncStage());
-    stages.put(Stage.syncTabs,                new MockServerSyncStage());
-    stages.put(Stage.fetchInfoCollections,    new MockServerSyncStage());
-    stages.put(Stage.fetchMetaGlobal,         new MockServerSyncStage());
-    stages.put(Stage.ensureKeysStage,         new MockServerSyncStage());
-    stages.put(Stage.ensureClusterURL,        new MockServerSyncStage());
-    stages.put(Stage.syncClientsEngine,       new MockServerSyncStage());
+    stages.put(Stage.syncBookmarks,           new MockServerSyncStage(this));
+    stages.put(Stage.syncHistory,             new MockServerSyncStage(this));
+    stages.put(Stage.syncTabs,                new MockServerSyncStage(this));
+    stages.put(Stage.fetchInfoCollections,    new MockServerSyncStage(this));
+    stages.put(Stage.fetchMetaGlobal,         new MockServerSyncStage(this));
+    stages.put(Stage.ensureKeysStage,         new MockServerSyncStage(this));
+    stages.put(Stage.ensureClusterURL,        new MockServerSyncStage(this));
+    stages.put(Stage.syncClientsEngine,       new MockServerSyncStage(this));
 
     this.stages = Collections.unmodifiableMap(stages);
   }

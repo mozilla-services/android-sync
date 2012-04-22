@@ -6,10 +6,15 @@ package org.mozilla.gecko.sync.stage;
 
 import org.mozilla.gecko.sync.GlobalSession;
 
+
 public class CompletedStage extends AbstractNonRepositorySyncStage {
 
+  public CompletedStage(GlobalSession session) {
+    super(session);
+  }
+
   @Override
-  public void execute(GlobalSession session) throws NoSuchStageException {
+  public void execute() throws NoSuchStageException {
     // TODO: Update tracking timestamps, close connections, etc.
     // TODO: call clean() on each Repository in the sync constellation.
     session.completeSync();

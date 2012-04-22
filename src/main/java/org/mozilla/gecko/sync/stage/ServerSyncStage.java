@@ -45,8 +45,16 @@ public abstract class ServerSyncStage implements
     GlobalSyncStage,
     SynchronizerDelegate {
 
-  protected GlobalSession session;
-  protected String LOG_TAG = "ServerSyncStage";
+  protected static final String LOG_TAG = "ServerSyncStage";
+
+  protected final GlobalSession session;
+
+  public ServerSyncStage(GlobalSession session) {
+    if (session == null) {
+      throw new IllegalArgumentException("session must not be null.");
+    }
+    this.session = session;
+  }
 
   /**
    * Override these in your subclasses.
@@ -283,11 +291,10 @@ public abstract class ServerSyncStage implements
   }
 
   @Override
-  public void execute(GlobalSession session) throws NoSuchStageException {
+  public void execute() throws NoSuchStageException {
     final String name = getEngineName();
     Logger.debug(LOG_TAG, "Starting execute for " + name);
 
-    this.session = session;
     try {
       if (!this.isEnabled()) {
         Logger.info(LOG_TAG, "Stage " + name + " disabled; skipping.");
