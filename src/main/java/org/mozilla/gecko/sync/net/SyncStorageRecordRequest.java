@@ -8,10 +8,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ThreadPool;
 
+import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 
 /**
@@ -55,20 +57,36 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     return new SyncStorageRecordResourceDelegate(request);
   }
 
-  /**
-   * Helper for turning a JSON object into a payload.
-   * @throws UnsupportedEncodingException
-   */
-  protected StringEntity jsonEntity(JSONObject body) throws UnsupportedEncodingException {
-    StringEntity e = new StringEntity(body.toJSONString(), "UTF-8");
+  protected static StringEntity stringEntity(String s) throws UnsupportedEncodingException {
+    StringEntity e = new StringEntity(s, "UTF-8");
     e.setContentType("application/json");
     return e;
   }
 
+  /**
+   * Helper for turning a JSON object into a payload.
+   * @throws UnsupportedEncodingException
+   */
+  protected static StringEntity jsonEntity(JSONObject body) throws UnsupportedEncodingException {
+    return stringEntity(body.toJSONString());
+  }
+
+  /**
+   * Helper for turning a JSON array into a payload.
+   * @throws UnsupportedEncodingException
+   */
+  protected static HttpEntity jsonEntity(JSONArray toPOST) throws UnsupportedEncodingException {
+    return stringEntity(toPOST.toJSONString());
+  }
+
+  @SuppressWarnings("unchecked")
   public void post(JSONObject body) {
     // Let's do this the trivial way for now.
+    // Note that POSTs should be an array, so we wrap here.
+    final JSONArray toPOST = new JSONArray();
+    toPOST.add(body);
     try {
-      this.resource.post(jsonEntity(body));
+      this.resource.post(jsonEntity(toPOST));
     } catch (UnsupportedEncodingException e) {
       this.delegate.handleRequestError(e);
     }
