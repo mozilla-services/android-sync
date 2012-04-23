@@ -729,15 +729,16 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   public void resetStagesByName(Collection<String> names) {
+    Collection<GlobalSyncStage> stages = new ArrayList<GlobalSyncStage>();
     for (String name : names) {
       try {
         GlobalSyncStage stage = this.getSyncStageByName(name);
-        Logger.info(LOG_TAG, "Resetting " + name + "(" + stage + ")");
-        stage.resetLocal();
+        stages.add(stage);
       } catch (NoSuchStageException e) {
         Logger.warn(LOG_TAG, "Cannot reset stage " + name + ": no such stage.");
       }
     }
+    GlobalSession.resetStages(stages);
   }
 
   /**
