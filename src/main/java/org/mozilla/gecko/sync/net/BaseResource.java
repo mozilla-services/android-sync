@@ -121,6 +121,22 @@ public class BaseResource implements Resource {
   }
 
   /**
+   * @return true iff the last request made was a PUT or POST request.
+   */
+  public boolean isPutOrPost() {
+    if (this.request == null) {
+      return false;
+    }
+    if (this.request instanceof HttpPost) {
+      return true;
+    }
+    if (this.request instanceof HttpPut) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * This shuts up HttpClient, which will otherwise debug log about there
    * being no auth cache in the context.
    */
