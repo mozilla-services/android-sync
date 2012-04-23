@@ -79,6 +79,16 @@ public class SyncStorageRequest implements Resource {
   }
 
   /**
+   * Passthrough for {@link BaseResource#isPutOrPost()}.
+   */
+  public boolean isPutOrPost() {
+    if (this.resource == null) {
+      return false;
+    }
+    return this.resource.isPutOrPost();
+  }
+
+  /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
   public class SyncStorageResourceDelegate extends SyncResourceDelegate {
@@ -99,7 +109,7 @@ public class SyncStorageRequest implements Resource {
     public void handleHttpResponse(HttpResponse response) {
       Logger.debug(LOG_TAG, "SyncStorageResourceDelegate handling response: " + response.getStatusLine() + ".");
       SyncStorageRequestDelegate d = this.request.delegate;
-      SyncStorageResponse res = new SyncStorageResponse(response);
+      SyncStorageResponse res = new SyncStorageResponse(response, this.request);
       // It is the responsibility of the delegate handlers to completely consume the response.
       if (res.wasSuccessful()) {
         d.handleRequestSuccess(res);

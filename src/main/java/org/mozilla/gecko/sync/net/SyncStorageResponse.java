@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Utils;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 
@@ -54,6 +55,15 @@ public class SyncStorageResponse extends SyncResponse {
     return body;
   }
 
+  /**
+   * Optional: the request that spawned this response.
+   */
+  private SyncStorageRequest request;
+
+  public SyncStorageResponse(HttpResponse res, SyncStorageRequest request) {
+    this(res);
+    this.request = request;
+  }
 
   public SyncStorageResponse(HttpResponse res) {
     this.response = res;
