@@ -69,6 +69,33 @@ public class SyncStorageResponse extends SyncResponse {
     this.response = res;
   }
 
+  /**
+   * For a PUT or POST request, return the largest of the body timestamp
+   * and the X-Weave-Timestamp header (Bug 740170).
+   *
+   * For a GET request, return the X-Weave-Timestamp header, as if
+   * {@link #normalizedWeaveTimestamp()} was called.
+   *
+   * @return milliseconds since the epoch, as a long, or -1 if no values
+   *         could be extracted.
+   */
+  public long normalizedTimestamp() {
+    long header = this.normalizedWeaveTimestamp();
+    if (this.request == null) {
+      return header;
+    }
+    if (this.request.isPutOrPost()) {
+      long body;
+      try {
+        body = Utils.decimalSecondsToMilliseconds(this.body());
+      } catch (Exception e) {
+        return header;
+      }
+      return Math.max(header, body);
+    }
+    return header;
+  }
+
   public String getErrorMessage() throws IllegalStateException, IOException {
     return SyncStorageResponse.getServerErrorMessage(this.body().trim());
   }
