@@ -191,7 +191,9 @@ public class SyncConfiguration implements CredentialsSource {
   public String          prefsPath;
   public PrefsSource     prefsSource;
 
-  public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";
+  public static final String CLIENTS_COLLECTION_TIMESTAMP = "serverClientsTimestamp";  // When the collection was touched.
+  public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";  // When our record was touched.
+
   public static final String PREF_CLUSTER_URL = "clusterURL";
   public static final String PREF_SYNC_ID = "syncID";
 
@@ -371,12 +373,24 @@ public class SyncConfiguration implements CredentialsSource {
     return this.getPrefs().edit();
   }
 
+  /**
+   * We persist two different clients timestamps: our own record's,
+   * and the timestamp for the collection.
+   */
   public void persistServerClientRecordTimestamp(long timestamp) {
     getEditor().putLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, timestamp).commit();
   }
 
   public long getPersistedServerClientRecordTimestamp() {
     return getPrefs().getLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, 0);
+  }
+
+  public void persistServerClientsTimestamp(long timestamp) {
+    getEditor().putLong(SyncConfiguration.CLIENTS_COLLECTION_TIMESTAMP, timestamp).commit();
+  }
+
+  public long getPersistedServerClientsTimestamp() {
+    return getPrefs().getLong(SyncConfiguration.CLIENTS_COLLECTION_TIMESTAMP, 0);
   }
 
   public void purgeCryptoKeys() {
