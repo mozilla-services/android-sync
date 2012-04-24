@@ -820,9 +820,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Logger.warn(LOG_TAG, "Enqueued but didn't insert the following guids: " +
             "(" + Utils.toCommaSeparatedString(eSet) + ")");
       }
+
       iSet.removeAll(new HashSet<String>(enqueuedGuids));
       if (iSet.isEmpty()) {
-        Logger.debug(LOG_TAG, "All inserted guids were enqueued.");
+        // Should always be the case.
       } else {
         Logger.warn(LOG_TAG, "Inserted but didn't enqueue the following guids: " +
             "(" + Utils.toCommaSeparatedString(iSet) + ")");
