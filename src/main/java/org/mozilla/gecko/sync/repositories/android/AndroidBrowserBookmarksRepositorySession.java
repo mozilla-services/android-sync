@@ -511,7 +511,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     Logger.debug(LOG_TAG, "Ignoring record with guid: " + bmk.guid + " and type: " + bmk.type);
     return true;
   }
-  
+
   @Override
   public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
     // Check for the existence of special folders
@@ -533,7 +533,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       delegate.onBeginFailed(e);
       return;
     }
-    
+
     // To deal with parent mapping of bookmarks we have to do some
     // hairy stuff. Here's the setup for it.
 
@@ -557,8 +557,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       cur.close();
     }
     deletionManager = new BookmarksDeletionManager(dataAccessor, DEFAULT_DELETION_FLUSH_THRESHOLD);
+
+    // We just crawled the database enumerating all folders; we'll start the
+    // insertion manager with exactly these folders as the known parents. From
+    // here on, there is no reference to <code>parentGuidToIDMap</code> in the
+    // insertion manager.
+    Set<String> guidsKnownBeforeInsertions = new HashSet<String>(parentGuidToIDMap.keySet());
     insertionManager = new AndroidBrowserBookmarksInsertionManager(DEFAULT_INSERTION_FLUSH_THRESHOLD,
-        parentGuidToIDMap.keySet());
+        guidsKnownBeforeInsertions);
 
     Logger.debug(LOG_TAG, "Done with initial setup of bookmarks session.");
     super.begin(delegate);
