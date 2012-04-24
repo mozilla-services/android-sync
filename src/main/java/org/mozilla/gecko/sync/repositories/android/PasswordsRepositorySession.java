@@ -446,6 +446,9 @@ public class PasswordsRepositorySession extends
     // record.timeLastUsed = now();
     ContentValues cv = getContentValues(record);
     Uri insertedUri = passwordsProvider.insert(BrowserContractHelpers.PASSWORDS_CONTENT_URI, cv);
+    if (insertedUri == null) {
+      throw new RemoteException(); // Not much to be done here, save throw.
+    }
     record.androidID = ContentUris.parseId(insertedUri);
     return record;
   }

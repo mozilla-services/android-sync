@@ -743,6 +743,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       // updateBookkeeping can re-parent, etc.
       Record toStore = prepareRecord(record);
       Uri recordURI = dbHelper.insert(toStore);
+      if (recordURI == null) {
+        throw new NullCursorException(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
+      }
       toStore.androidID = ContentUris.parseId(recordURI);
       Logger.debug(LOG_TAG, "Inserted folder with guid " + toStore.guid + " as androidID " + toStore.androidID);
 

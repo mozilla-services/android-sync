@@ -518,6 +518,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
     Uri recordURI = dbHelper.insert(toStore);
+    if (recordURI == null) {
+      throw new NullCursorException(new RuntimeException("Got null URI inserting record with guid " + record.guid));
+    }
     toStore.androidID = ContentUris.parseId(recordURI);
 
     updateBookkeeping(toStore);
