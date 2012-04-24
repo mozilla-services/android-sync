@@ -10,15 +10,16 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockClientsDataDelegate;
@@ -30,7 +31,9 @@ import org.mozilla.android.sync.test.helpers.MockSyncClientsEngineStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
@@ -266,23 +269,97 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   }
 
   public class UploadMockServer extends MockServer {
+    @SuppressWarnings("unchecked")
+    private String postBodyForRecord(ClientRecord cr) {
+      final long now = cr.lastModified;
+      final BigDecimal modified = Utils.millisecondsToDecimalSeconds(now);
+
+      System.out.println("Now is " + now + " (" + modified + ")");
+      final JSONArray idArray = new JSONArray();
+      idArray.add(cr.guid);
+
+      final JSONObject result = new JSONObject();
+      result.put("modified", modified);
+      result.put("success", idArray);
+      result.put("failed", new JSONObject());
+
+      uploadBodyTimestamp = modified.toString();
+      return result.toJSONString();
+    }
+
+    private String putBodyForRecord(ClientRecord cr) {
+      final String modified = Utils.millisecondsToDecimalSecondsString(cr.lastModified);
+      uploadBodyTimestamp = modified;
+      return modified;
+    }
+
+    protected void handleUploadPUT(Request request, Response response) throws Exception {
+      System.out.println("Handling PUT: " + request.getPath());
+
+      // Save uploadedRecord to test against.
+      CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
+      cryptoRecord.keyBundle = session.keyBundleForCollection(COLLECTION_NAME);
+      uploadedRecord = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
+
+      // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.
+      // So its value is null and is set here so ClientRecord.equals() may be used.
+      uploadedRecord.collection = lastComputedLocalClientRecord.collection;
+
+      // Create response body containing current timestamp.
+      long now = System.currentTimeMillis();
+      PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json", now);
+      uploadedRecord.lastModified = now;
+
+      bodyStream.println(putBodyForRecord(uploadedRecord));
+      bodyStream.close();
+    }
+
+    protected void handleUploadPOST(Request request, Response response) throws Exception {
+      System.out.println("Handling POST: " + request.getPath());
+      String content = request.getContent();
+      System.out.println("Content is " + content);
+      JSONArray array = (JSONArray) new JSONParser().parse(content);
+
+      System.out.println("Content is " + array);
+
+      KeyBundle keyBundle = session.keyBundleForCollection(COLLECTION_NAME);
+      if (array.size() != 1) {
+        System.out.println("Expecting only one record! Fail!");
+        PrintStream bodyStream = this.handleBasicHeaders(request, response, 400, "text/plain");
+        bodyStream.println("Expecting only one record! Fail!");
+        bodyStream.close();
+        return;
+      }
+
+      CryptoRecord r = CryptoRecord.fromJSONRecord(new ExtendedJSONObject((JSONObject) array.get(0)));
+      r.keyBundle = keyBundle;
+      ClientRecord cr = (ClientRecord) factory.createRecord(r.decrypt());
+      cr.collection = lastComputedLocalClientRecord.collection;
+      uploadedRecord = cr;
+
+      System.out.println("Record is " + cr);
+      long now = System.currentTimeMillis();
+      PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json", now);
+      cr.lastModified = now;
+      final String responseBody = postBodyForRecord(cr);
+      System.out.println("Response is " + responseBody);
+      bodyStream.println(responseBody);
+      bodyStream.close();
+    }
+
     @Override
     public void handle(Request request, Response response) {
       try {
-        // Save uploadedRecord to test against.
-        CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
-        cryptoRecord.keyBundle = session.keyBundleForCollection(COLLECTION_NAME);
-        uploadedRecord = (ClientRecord) factory.createRecord(cryptoRecord.decrypt());
-
-        // Note: collection is not saved in CryptoRecord.toJSONObject() upon upload.
-        // So its value is null and is set here so ClientRecord.equals() may be used.
-        uploadedRecord.collection = lastComputedLocalClientRecord.collection;
-
-        // Create response body containing current timestamp.
-        uploadBodyTimestamp = Utils.millisecondsToDecimalSecondsString(System.currentTimeMillis());
-        PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json");
-        bodyStream.print(uploadBodyTimestamp);
-        bodyStream.close();
+        String method = request.getMethod();
+        System.out.println("Handling " + method);
+        if (method.equalsIgnoreCase("post")) {
+          handleUploadPOST(request, response);
+        } else if (method.equalsIgnoreCase("put")) {
+          handleUploadPUT(request, response);
+        } else {
+          PrintStream bodyStream = this.handleBasicHeaders(request, response, 404, "text/plain");
+          bodyStream.close();
+        }
       } catch (Exception e) {
         fail("Error handling uploaded client record in UploadMockServer.");
       }
@@ -319,7 +396,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         // (would trigger 412 if upload was attempted).
         CryptoRecord cryptoRecord = cryptoFromClient(record);
         JSONObject object = cryptoRecord.toJSONObject();
-        object.put("modified", (setRecentClientRecordTimestamp() + 10000) / 1000);
+        final long modified = (setRecentClientRecordTimestamp() + 10000) / 1000;
+        System.out.println("Setting modified to " + modified);
+        object.put("modified", modified);
         bodyStream.print(object.toJSONString() + "\n");
         bodyStream.close();
       } catch (IOException e) {
@@ -450,14 +529,20 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     });
 
     // Test ClientUploadDelegate.handleRequestSuccess().
-    assertTrue(lastComputedLocalClientRecord.equals(uploadedRecord));
+    System.out.println("Last computed local client record: " + lastComputedLocalClientRecord.guid);
+    System.out.println("Uploaded client record: " + uploadedRecord.guid);
+    assertTrue(lastComputedLocalClientRecord.equalPayloads(uploadedRecord));
     assertEquals(0, uploadAttemptsCount.get());
     assertTrue(callback.calledSuccess);
 
-    // Test body of the HTTP PUT response is persisted (and not the header).
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
-    assertEquals(Utils.decimalSecondsToMilliseconds(uploadBodyTimestamp), session.config.getPersistedServerClientRecordTimestamp());
-    assertFalse(uploadHeaderTimestamp == session.config.getPersistedServerClientRecordTimestamp());
+
+    // Body and header are the same.
+    assertEquals(Utils.decimalSecondsToMilliseconds(uploadBodyTimestamp),
+                 session.config.getPersistedServerClientsTimestamp());
+    assertEquals(uploadedRecord.lastModified,
+                 session.config.getPersistedServerClientRecordTimestamp());
+    assertEquals(uploadHeaderTimestamp, session.config.getPersistedServerClientsTimestamp());
   }
 
   @Test

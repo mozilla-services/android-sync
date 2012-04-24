@@ -8,6 +8,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import org.mozilla.gecko.sync.Utils;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 import org.simpleframework.http.core.Container;
@@ -25,16 +26,24 @@ public class MockServer implements Container {
   }
 
   public String expectedBasicAuthHeader;
+
   protected PrintStream handleBasicHeaders(Request request, Response response, int code, String contentType) throws IOException {
+    return this.handleBasicHeaders(request, response, code, contentType, System.currentTimeMillis());
+  }
+
+  protected PrintStream handleBasicHeaders(Request request, Response response, int code, String contentType, long time) throws IOException {
+    System.out.println("< Auth header: " + request.getValue("Authorization"));
+
     PrintStream bodyStream = response.getPrintStream();
-    long time = System.currentTimeMillis();
     response.setCode(code);
     response.set("Content-Type", contentType);
     response.set("Server", "HelloWorld/1.0 (Simple 4.0)");
     response.setDate("Date", time);
     response.setDate("Last-Modified", time);
-    response.set("X-Weave-Timestamp", Long.toString(time));
-    System.out.println("Auth header: " + request.getValue("Authorization"));
+
+    final String timestampHeader = Utils.millisecondsToDecimalSecondsString(time);
+    response.set("X-Weave-Timestamp", timestampHeader);
+    System.out.println("> X-Weave-Timestamp header: " + timestampHeader);
     return bodyStream;
   }
 
