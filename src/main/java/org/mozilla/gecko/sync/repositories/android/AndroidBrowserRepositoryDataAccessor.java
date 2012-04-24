@@ -187,10 +187,12 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
    * but does <b>not</b> update the <code>androidID</code> of each record.
    *
    * @param records
-   *          The records to insert.
+   *          the records to insert.
+   * @return
+   *          the number of records actually inserted.
    * @throws NullCursorException
    */
-  public void bulkInsert(List<Record> records) throws NullCursorException {
+  public int bulkInsert(List<Record> records) throws NullCursorException {
     if (records.isEmpty()) {
       Logger.debug(LOG_TAG, "No records to insert, returning.");
     }
@@ -203,7 +205,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
       index += 1;
     }
 
-    // First update the history records.
     int inserted = context.getContentResolver().bulkInsert(getUri(), cvs);
     if (inserted == size) {
       Logger.debug(LOG_TAG, "Inserted " + inserted + " records, as expected.");
@@ -212,5 +213,6 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
                    inserted + " records but expected " +
                    size     + " records.");
     }
+    return inserted;
   }
 }

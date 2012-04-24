@@ -759,17 +759,30 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     protected void bulkInsertNonFolders(List<BookmarkRecord> records) throws Exception {
       // All of these records are *not* deleted and *not* folders, so we don't
       // need to update androidID at all!
-      ArrayList<Record> toStores = new ArrayList<Record>();
+      // TODO: persist records that fail to insert for later retry.
+      ArrayList<Record> toStores = new ArrayList<Record>(records.size());
       for (Record record : records) {
         Record toStore = (BookmarkRecord) prepareRecord(record);
-        updateBookkeeping(toStore);
-        trackRecord(toStore);
-        delegate.onRecordStoreSucceeded(toStore);
         toStores.add(toStore);
-        insertedGuids.add(record.guid);
       }
 
-      dataAccessor.bulkInsert(toStores);
+      int stored = dataAccessor.bulkInsert(toStores);
+      if (stored != toStores.size()) {
+        // Something failed; most pessimistic action is to declare that all insertions failed.
+        // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
+        for (Record failed : toStores) {
+          delegate.onRecordStoreFailed(new RuntimeException("Failed to insert non-folder with guid " + failed.guid + "."));
+        }
+        return;
+      }
+
+      // Success For All!
+      for (Record succeeded : toStores) {
+        updateBookkeeping(succeeded);
+        trackRecord(succeeded);
+        insertedGuids.add(succeeded.guid); // Mark as inserted even if delegate callback throws.
+        delegate.onRecordStoreSucceeded(succeeded);
+      }
     }
   }
 
