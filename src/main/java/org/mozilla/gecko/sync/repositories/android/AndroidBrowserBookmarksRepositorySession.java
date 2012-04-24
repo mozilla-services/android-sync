@@ -808,15 +808,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       if (eSet.isEmpty()) {
         Logger.debug(LOG_TAG, "All enqueued guids were inserted.");
       } else {
-        Logger.warn(LOG_TAG, "Enqueued but didn't insert the following guids: (" +
-            Utils.join(", ", eSet.toArray(new String[eSet.size()])) + ")");
+        Logger.warn(LOG_TAG, "Enqueued but didn't insert the following guids: " +
+            "(" + Utils.toCommaSeparatedString(eSet) + ")");
       }
       iSet.removeAll(new HashSet<String>(enqueuedGuids));
       if (iSet.isEmpty()) {
         Logger.debug(LOG_TAG, "All inserted guids were enqueued.");
       } else {
-        Logger.warn(LOG_TAG, "Inserted but didn't enqueue the following guids: (" +
-            Utils.join(", ", iSet.toArray(new String[eSet.size()])) + ")");
+        Logger.warn(LOG_TAG, "Inserted but didn't enqueue the following guids: " +
+            "(" + Utils.toCommaSeparatedString(iSet) + ")");
       }
     } else {
       Logger.debug(LOG_TAG, "Enqueued and inserted " + enqueuedGuids.size() + " records.");

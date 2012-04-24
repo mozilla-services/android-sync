@@ -45,7 +45,7 @@ public class TestBookmarksInsertionManager {
         }
         String[] guidList = guids.toArray(new String[guids.size()]);
         insertions.add(guidList);
-        Logger.debug(BookmarksInsertionManager.LOG_TAG, "Inserted non-folders (" + Utils.join(", ", guidList) + ").");
+        Logger.debug(BookmarksInsertionManager.LOG_TAG, "Inserted non-folders (" + Utils.toCommaSeparatedString(guids) + ").");
       }
     };
     BookmarksInsertionManager.DEBUG = true;

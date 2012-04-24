@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -277,16 +278,24 @@ public class Utils {
   }
 
   // Because TextUtils.join is not stubbed.
-  public static String join(String delimiter, String... strings) {
+  public static String toDelimitedString(String delimiter, Collection<String> items) {
+    if (items == null || items.size() == 0) {
+      return "";
+    }
+
     StringBuilder sb = new StringBuilder();
     int i = 0;
-    for (String string : strings) {
+    int c = items.size();
+    for (String string : items) {
       sb.append(string);
-      i += 1;
-      if (i < strings.length) {
+      if (++i < c) {
         sb.append(delimiter);
       }
     }
     return sb.toString();
+  }
+
+  public static String toCommaSeparatedString(Collection<String> items) {
+    return toDelimitedString(", ", items);
   }
 }

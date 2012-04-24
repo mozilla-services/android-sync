@@ -202,12 +202,11 @@ public abstract class BookmarksInsertionManager {
 
   // For debugging.
   public void dumpState() {
-    String[] readyGuids = new String[readyToWrite.size()];
-    int i = 0;
+    ArrayList<String> readies = new ArrayList<String>();
     for (BookmarkRecord record : readyToWrite) {
-      readyGuids[i++] = record.guid;
+      readies.add(record.guid);
     }
-    String ready = Utils.join(", ", readyGuids);
+    String ready = Utils.toCommaSeparatedString(new ArrayList<String>(readies));
 
     ArrayList<String> waits = new ArrayList<String>();
     for (ArrayList<BookmarkRecord> recs : waitingForParent.values()) {
@@ -215,11 +214,8 @@ public abstract class BookmarksInsertionManager {
         waits.add(rec.guid);
       }
     }
-    String[] waitingGuids = waits.toArray(new String[waits.size()]);
-    String waiting = Utils.join(", ", waitingGuids);
-
-    String[] knownGuids = writtenFolders.toArray(new String[writtenFolders.size()]);
-    String known = Utils.join(", ", knownGuids);
+    String waiting = Utils.toCommaSeparatedString(waits);
+    String known = Utils.toCommaSeparatedString(writtenFolders);
 
     Logger.debug(LOG_TAG, "Q=(" + ready + "), W = (" + waiting + "), P=(" + known + ")");
   }
