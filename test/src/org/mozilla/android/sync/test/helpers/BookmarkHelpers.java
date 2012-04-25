@@ -10,7 +10,7 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 public class BookmarkHelpers {
 
   private static String mobileFolderGuid = "mobile";
-  private static String mobileFolderName = "Mobile Bookmarks";
+  private static String mobileFolderName = "mobile";
   private static String topFolderGuid = Utils.generateGuid();
   private static String topFolderName = "My Top Folder";
   private static String middleFolderGuid = Utils.generateGuid();
@@ -152,7 +152,7 @@ public class BookmarkHelpers {
     record.guid = topFolderGuid;
     record.title = topFolderName;
     record.parentID = "mobile";
-    record.parentName = "Mobile Bookmarks";
+    record.parentName = "mobile";
     JSONArray children = new JSONArray();
     children.add(bmk1Guid);
     children.add(bmk2Guid);
