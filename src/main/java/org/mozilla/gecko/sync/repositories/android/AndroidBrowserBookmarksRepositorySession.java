@@ -5,10 +5,10 @@
 package org.mozilla.gecko.sync.repositories.android;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -738,25 +738,32 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
 
     @Override
-    protected void insertFolder(BookmarkRecord record) throws Exception {
+    protected boolean insertFolder(BookmarkRecord record) {
       // A folder that is *not* deleted needs its androidID updated, so that
       // updateBookkeeping can re-parent, etc.
       Record toStore = prepareRecord(record);
       Uri recordURI = dbHelper.insert(toStore);
       if (recordURI == null) {
-        throw new NullCursorException(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
+        delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
+        return false;
       }
       toStore.androidID = ContentUris.parseId(recordURI);
       Logger.debug(LOG_TAG, "Inserted folder with guid " + toStore.guid + " as androidID " + toStore.androidID);
 
-      updateBookkeeping(toStore);
+      try {
+        updateBookkeeping(toStore);
+      } catch (Exception e) {
+        delegate.onRecordStoreFailed(e);
+        return false;
+      }
       trackRecord(toStore);
       delegate.onRecordStoreSucceeded(toStore);
       insertedGuids.add(record.guid);
+      return true;
     }
 
     @Override
-    protected void bulkInsertNonFolders(List<BookmarkRecord> records) throws Exception {
+    protected void bulkInsertNonFolders(Collection<BookmarkRecord> records) {
       // All of these records are *not* deleted and *not* folders, so we don't
       // need to update androidID at all!
       // TODO: persist records that fail to insert for later retry.
@@ -766,19 +773,28 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         toStores.add(toStore);
       }
 
-      int stored = dataAccessor.bulkInsert(toStores);
-      if (stored != toStores.size()) {
-        // Something failed; most pessimistic action is to declare that all insertions failed.
-        // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
-        for (Record failed : toStores) {
-          delegate.onRecordStoreFailed(new RuntimeException("Failed to insert non-folder with guid " + failed.guid + "."));
+      try {
+        int stored = dataAccessor.bulkInsert(toStores);
+        if (stored != toStores.size()) {
+          // Something failed; most pessimistic action is to declare that all insertions failed.
+          // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
+          for (Record failed : toStores) {
+            delegate.onRecordStoreFailed(new RuntimeException("Possibly failed to bulkInsert non-folder with guid " + failed.guid + "."));
+          }
+          return;
         }
+      } catch (NullCursorException e) {
+        delegate.onRecordStoreFailed(e); // TODO: include which records failed.
         return;
       }
 
       // Success For All!
       for (Record succeeded : toStores) {
-        updateBookkeeping(succeeded);
+        try {
+          updateBookkeeping(succeeded);
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Got exception updating bookkeeping of non-folder with guid " + succeeded.guid + ".", e);
+        }
         trackRecord(succeeded);
         insertedGuids.add(succeeded.guid); // Mark as inserted even if delegate callback throws.
         delegate.onRecordStoreSucceeded(succeeded);
@@ -815,7 +831,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     long now = now();
     Logger.debug(LOG_TAG, "Applying remaining insertions.");
     try {
-      insertionManager.flushAll(now);
+      insertionManager.finishUp();
       Logger.debug(LOG_TAG, "Done applying remaining insertions.");
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Unable to apply remaining insertions.", e);

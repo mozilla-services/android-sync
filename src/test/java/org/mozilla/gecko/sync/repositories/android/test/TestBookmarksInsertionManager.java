@@ -8,8 +8,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.Before;
@@ -32,13 +32,17 @@ public class TestBookmarksInsertionManager {
 
     manager = new BookmarksInsertionManager(3, writtenFolders) {
       @Override
-      protected void insertFolder(BookmarkRecord record) throws Exception {
+      protected boolean insertFolder(BookmarkRecord record) {
+        if (record.guid == "fail") {
+          return false;
+        }
         Logger.debug(BookmarksInsertionManager.LOG_TAG, "Inserted folder (" + record.guid + ").");
         insertions.add(new String[] { record.guid });
+        return true;
       }
 
       @Override
-      protected void bulkInsertNonFolders(List<BookmarkRecord> records) throws Exception {
+      protected void bulkInsertNonFolders(Collection<BookmarkRecord> records) {
         ArrayList<String> guids = new ArrayList<String>();
         for (BookmarkRecord record : records) {
           guids.add(record.guid);
@@ -76,8 +80,8 @@ public class TestBookmarksInsertionManager {
     manager.enqueueRecord(child2);
     assertTrue(insertions.isEmpty());
     manager.enqueueRecord(folder);
-    assertEquals(2, insertions.size());
-    manager.flushAll(0);
+    assertEquals(1, insertions.size());
+    manager.finishUp();
     assertTrue(manager.isClear());
     assertEquals(2, insertions.size());
     assertArrayEquals(new String[] { "folder" }, insertions.get(0));
@@ -93,10 +97,10 @@ public class TestBookmarksInsertionManager {
     manager.enqueueRecord(child1);
     assertTrue(insertions.isEmpty());
     manager.enqueueRecord(folder);
-    assertEquals(0, insertions.size());
+    assertEquals(1, insertions.size());
     manager.enqueueRecord(child2);
-    assertEquals(2, insertions.size());
-    manager.flushAll(0);
+    assertEquals(1, insertions.size());
+    manager.finishUp();
     assertTrue(manager.isClear());
     assertEquals(2, insertions.size());
     assertArrayEquals(new String[] { "folder" }, insertions.get(0));
@@ -108,44 +112,43 @@ public class TestBookmarksInsertionManager {
     manager.enqueueRecord(bookmark("child1", "folder1"));
     assertEquals(0, insertions.size());
     manager.enqueueRecord(folder("folder1", "mobile"));
-    assertEquals(0, insertions.size());
-    manager.enqueueRecord(bookmark("child3", "folder2"));
-    assertEquals(0, insertions.size());
+    assertEquals(1, insertions.size());
+    manager.enqueueRecord(bookmark("child2", "folder2"));
+    assertEquals(1, insertions.size());
     manager.enqueueRecord(folder("folder2", "folder1"));
-    assertEquals(3, insertions.size()); // 2 folders and 1 regular record.
-    manager.enqueueRecord(bookmark("child2", "folder1"));
+    assertEquals(2, insertions.size());
+    manager.enqueueRecord(bookmark("child3", "folder1"));
     manager.enqueueRecord(bookmark("child4", "folder2"));
     assertEquals(3, insertions.size());
 
-    manager.flushAll(0);
+    manager.finishUp();
     assertTrue(manager.isClear());
     assertEquals(4, insertions.size());
     assertArrayEquals(new String[] { "folder1" }, insertions.get(0));
     assertArrayEquals(new String[] { "folder2" }, insertions.get(1));
-    assertArrayEquals(new String[] { "child1", "child3" }, insertions.get(2));
-    assertArrayEquals(new String[] { "child2", "child4" }, insertions.get(3));
+    assertArrayEquals(new String[] { "child1", "child2", "child3" }, insertions.get(2));
+    assertArrayEquals(new String[] { "child4" }, insertions.get(3));
   }
 
   @Test
   public void testFolderRecursion() {
     manager.enqueueRecord(folder("1", "mobile"));
     manager.enqueueRecord(folder("2", "1"));
+    assertEquals(2, insertions.size());
     manager.enqueueRecord(bookmark("3a", "3"));
     manager.enqueueRecord(bookmark("3b", "3"));
     manager.enqueueRecord(bookmark("3c", "3"));
-    manager.enqueueRecord(bookmark("3d", "3"));
-    manager.enqueueRecord(bookmark("3e", "3"));
     manager.enqueueRecord(bookmark("4a", "4"));
     manager.enqueueRecord(bookmark("4b", "4"));
     manager.enqueueRecord(bookmark("4c", "4"));
-    assertEquals(0, insertions.size());
+    assertEquals(2, insertions.size());
     manager.enqueueRecord(folder("3", "2"));
-    assertEquals(5, insertions.size());
+    assertEquals(4, insertions.size());
     manager.enqueueRecord(folder("4", "2"));
-    assertEquals(7, insertions.size());
+    assertEquals(6, insertions.size());
 
     assertTrue(manager.isClear());
-    manager.flushAll(0);
+    manager.finishUp();
     assertTrue(manager.isClear());
     // Folders in order.
     assertArrayEquals(new String[] { "1" }, insertions.get(0));
@@ -153,9 +156,64 @@ public class TestBookmarksInsertionManager {
     assertArrayEquals(new String[] { "3" }, insertions.get(2));
     // Then children in batches of 3.
     assertArrayEquals(new String[] { "3a", "3b", "3c" }, insertions.get(3));
-    assertArrayEquals(new String[] { "3d", "3e" }, insertions.get(4));
     // Then last folder.
-    assertArrayEquals(new String[] { "4" }, insertions.get(5));
-    assertArrayEquals(new String[] { "4a", "4b", "4c" }, insertions.get(6));
+    assertArrayEquals(new String[] { "4" }, insertions.get(4));
+    assertArrayEquals(new String[] { "4a", "4b", "4c" }, insertions.get(5));
+  }
+
+  @Test
+  public void testFailedFolderInsertion() {
+    manager.enqueueRecord(bookmark("failA", "fail"));
+    manager.enqueueRecord(bookmark("failB", "fail"));
+    assertEquals(0, insertions.size());
+    manager.enqueueRecord(folder("fail", "mobile"));
+    assertEquals(0, insertions.size());
+    manager.enqueueRecord(bookmark("failC", "fail"));
+    assertEquals(0, insertions.size());
+    manager.finishUp(); // Children inserted at the end; they will be treated as orphans.
+    assertTrue(manager.isClear());
+    assertEquals(1, insertions.size());
+    assertArrayEquals(new String[] { "failA", "failB", "failC" }, insertions.get(0));
+  }
+
+  @Test
+  public void testIncrementalFlush() {
+    manager.enqueueRecord(bookmark("a", "1"));
+    manager.enqueueRecord(bookmark("b", "1"));
+    manager.enqueueRecord(folder("1", "mobile"));
+    assertEquals(1, insertions.size());
+    manager.enqueueRecord(bookmark("c", "1"));
+    assertEquals(2, insertions.size());
+    manager.enqueueRecord(bookmark("d", "1"));
+    manager.enqueueRecord(bookmark("e", "1"));
+    manager.enqueueRecord(bookmark("f", "1"));
+    assertEquals(3, insertions.size());
+    manager.enqueueRecord(bookmark("g", "1")); // Start of new batch.
+    assertEquals(3, insertions.size());
+    manager.finishUp(); // Children inserted at the end; they will be treated as orphans.
+    assertTrue(manager.isClear());
+    assertEquals(4, insertions.size());
+    assertArrayEquals(new String[] { "1" }, insertions.get(0));
+    assertArrayEquals(new String[] { "a", "b", "c"}, insertions.get(1));
+    assertArrayEquals(new String[] { "d", "e", "f"}, insertions.get(2));
+    assertArrayEquals(new String[] { "g" }, insertions.get(3));
+  }
+
+  @Test
+  public void testFinishUp() {
+    manager.enqueueRecord(bookmark("a", "1"));
+    manager.enqueueRecord(bookmark("b", "1"));
+    manager.enqueueRecord(folder("2", "1"));
+    manager.enqueueRecord(bookmark("c", "1"));
+    manager.enqueueRecord(bookmark("d", "1"));
+    manager.enqueueRecord(folder("3", "1"));
+    assertEquals(0, insertions.size());
+    manager.finishUp(); // Children inserted at the end; they will be treated as orphans.
+    assertTrue(manager.isClear());
+    assertEquals(4, insertions.size());
+    assertArrayEquals(new String[] { "2" }, insertions.get(0));
+    assertArrayEquals(new String[] { "3" }, insertions.get(1));
+    assertArrayEquals(new String[] { "a", "b", "c"}, insertions.get(2));
+    assertArrayEquals(new String[] { "d" }, insertions.get(3)); // Don't want to miss the last insertion.
   }
 }
