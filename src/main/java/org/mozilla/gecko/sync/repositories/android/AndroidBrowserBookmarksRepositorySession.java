@@ -8,10 +8,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.json.simple.JSONArray;
@@ -25,7 +23,6 @@ import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.repositories.android.BookmarksInsertionManager;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -593,7 +590,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
     trackRecord(toStore);
     delegate.onRecordStoreSucceeded(toStore);
-    insertedGuids.add(record.guid);
     return true;
   }
 
@@ -633,7 +629,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Logger.warn(LOG_TAG, "Got exception updating bookkeeping of non-folder with guid " + succeeded.guid + ".", e);
       }
       trackRecord(succeeded);
-      insertedGuids.add(succeeded.guid); // Mark as inserted even if delegate callback throws.
       delegate.onRecordStoreSucceeded(succeeded);
     }
   }
@@ -798,14 +793,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
   }
 
-  protected final ArrayList<String> insertedGuids = new ArrayList<String>();
-  protected ArrayList<String> enqueuedGuids = new ArrayList<String>();
-
   @Override
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     try {
       insertionManager.enqueueRecord((BookmarkRecord) record);
-      enqueuedGuids.add(record.guid);
     } catch (Exception e) {
       throw new NullCursorException(e);
     }
@@ -832,30 +823,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       Logger.debug(LOG_TAG, "Done applying remaining insertions.");
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Unable to apply remaining insertions.", e);
-    }
-
-    if (enqueuedGuids.size() != insertedGuids.size()) {
-      Logger.warn(LOG_TAG, "Enqueued " + enqueuedGuids.size() + " records, but inserted " +
-          insertedGuids.size() + " records.");
-      Set<String> eSet = new HashSet<String>(enqueuedGuids);
-      Set<String> iSet = new HashSet<String>(insertedGuids);
-      eSet.removeAll(iSet);
-      if (eSet.isEmpty()) {
-        Logger.debug(LOG_TAG, "All enqueued guids were inserted.");
-      } else {
-        Logger.warn(LOG_TAG, "Enqueued but didn't insert the following guids: " +
-            "(" + Utils.toCommaSeparatedString(eSet) + ")");
-      }
-
-      iSet.removeAll(new HashSet<String>(enqueuedGuids));
-      if (iSet.isEmpty()) {
-        // Should always be the case.
-      } else {
-        Logger.warn(LOG_TAG, "Inserted but didn't enqueue the following guids: " +
-            "(" + Utils.toCommaSeparatedString(iSet) + ")");
-      }
-    } else {
-      Logger.debug(LOG_TAG, "Enqueued and inserted " + enqueuedGuids.size() + " records.");
     }
 
     Logger.debug(LOG_TAG, "Applying deletions.");
