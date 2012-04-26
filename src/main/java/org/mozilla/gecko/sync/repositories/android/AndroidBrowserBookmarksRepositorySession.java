@@ -574,15 +574,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // A folder that is *not* deleted needs its androidID updated, so that
     // updateBookkeeping can re-parent, etc.
     Record toStore = prepareRecord(record);
-    Uri recordURI = dbHelper.insert(toStore);
-    if (recordURI == null) {
-      delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
-      return false;
-    }
-    toStore.androidID = ContentUris.parseId(recordURI);
-    Logger.debug(LOG_TAG, "Inserted folder with guid " + toStore.guid + " as androidID " + toStore.androidID);
-
     try {
+      Uri recordURI = dbHelper.insert(toStore);
+      if (recordURI == null) {
+        delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
+        return false;
+      }
+      toStore.androidID = ContentUris.parseId(recordURI);
+      Logger.debug(LOG_TAG, "Inserted folder with guid " + toStore.guid + " as androidID " + toStore.androidID);
+
       updateBookkeeping(toStore);
     } catch (Exception e) {
       delegate.onRecordStoreFailed(e);
