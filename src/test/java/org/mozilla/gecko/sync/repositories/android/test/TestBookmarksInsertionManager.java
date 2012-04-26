@@ -30,9 +30,9 @@ public class TestBookmarksInsertionManager {
     Set<String> writtenFolders = new HashSet<String>();
     writtenFolders.add("mobile");
 
-    manager = new BookmarksInsertionManager(3, writtenFolders) {
+    BookmarksInsertionManager.BookmarkInserter inserter = new BookmarksInsertionManager.BookmarkInserter() {
       @Override
-      protected boolean insertFolder(BookmarkRecord record) {
+      public boolean insertFolder(BookmarkRecord record) {
         if (record.guid == "fail") {
           return false;
         }
@@ -42,7 +42,7 @@ public class TestBookmarksInsertionManager {
       }
 
       @Override
-      protected void bulkInsertNonFolders(Collection<BookmarkRecord> records) {
+      public void bulkInsertNonFolders(Collection<BookmarkRecord> records) {
         ArrayList<String> guids = new ArrayList<String>();
         for (BookmarkRecord record : records) {
           guids.add(record.guid);
@@ -52,6 +52,7 @@ public class TestBookmarksInsertionManager {
         Logger.debug(BookmarksInsertionManager.LOG_TAG, "Inserted non-folders (" + Utils.toCommaSeparatedString(guids) + ").");
       }
     };
+    manager = new BookmarksInsertionManager(3, writtenFolders, inserter);
     BookmarksInsertionManager.DEBUG = true;
   }
 

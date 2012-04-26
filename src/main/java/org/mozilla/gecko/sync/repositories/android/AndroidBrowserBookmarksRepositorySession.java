@@ -25,6 +25,7 @@ import org.mozilla.gecko.sync.repositories.NoGuidForIdException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.ParentNotFoundException;
 import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.android.BookmarksInsertionManager;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -37,7 +38,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
-public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession {
+public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepositorySession
+  implements BookmarksInsertionManager.BookmarkInserter {
 
   public static final int DEFAULT_DELETION_FLUSH_THRESHOLD = 50;
   public static final int DEFAULT_INSERTION_FLUSH_THRESHOLD = 50;
@@ -559,15 +561,82 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     deletionManager = new BookmarksDeletionManager(dataAccessor, DEFAULT_DELETION_FLUSH_THRESHOLD);
 
     // We just crawled the database enumerating all folders; we'll start the
-    // insertion manager with exactly these folders as the known parents. From
-    // here on, there is no reference to <code>parentGuidToIDMap</code> in the
-    // insertion manager.
-    Set<String> guidsKnownBeforeInsertions = new HashSet<String>(parentGuidToIDMap.keySet());
-    insertionManager = new AndroidBrowserBookmarksInsertionManager(DEFAULT_INSERTION_FLUSH_THRESHOLD,
-        guidsKnownBeforeInsertions);
+    // insertion manager with exactly these folders as the known parents (the
+    // collection is copied) in the manager constructor.
+    insertionManager = new BookmarksInsertionManager(DEFAULT_INSERTION_FLUSH_THRESHOLD, parentGuidToIDMap.keySet(), this);
 
     Logger.debug(LOG_TAG, "Done with initial setup of bookmarks session.");
     super.begin(delegate);
+  }
+
+  /**
+   * Implement method of BookmarksInsertionManager.BookmarkInserter.
+   */
+  @Override
+  public boolean insertFolder(BookmarkRecord record) {
+    // A folder that is *not* deleted needs its androidID updated, so that
+    // updateBookkeeping can re-parent, etc.
+    Record toStore = prepareRecord(record);
+    Uri recordURI = dbHelper.insert(toStore);
+    if (recordURI == null) {
+      delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
+      return false;
+    }
+    toStore.androidID = ContentUris.parseId(recordURI);
+    Logger.debug(LOG_TAG, "Inserted folder with guid " + toStore.guid + " as androidID " + toStore.androidID);
+
+    try {
+      updateBookkeeping(toStore);
+    } catch (Exception e) {
+      delegate.onRecordStoreFailed(e);
+      return false;
+    }
+    trackRecord(toStore);
+    delegate.onRecordStoreSucceeded(toStore);
+    insertedGuids.add(record.guid);
+    return true;
+  }
+
+  /**
+   * Implement method of BookmarksInsertionManager.BookmarkInserter.
+   */
+  @Override
+  public void bulkInsertNonFolders(Collection<BookmarkRecord> records) {
+    // All of these records are *not* deleted and *not* folders, so we don't
+    // need to update androidID at all!
+    // TODO: persist records that fail to insert for later retry.
+    ArrayList<Record> toStores = new ArrayList<Record>(records.size());
+    for (Record record : records) {
+      Record toStore = (BookmarkRecord) prepareRecord(record);
+      toStores.add(toStore);
+    }
+
+    try {
+      int stored = dataAccessor.bulkInsert(toStores);
+      if (stored != toStores.size()) {
+        // Something failed; most pessimistic action is to declare that all insertions failed.
+        // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
+        for (Record failed : toStores) {
+          delegate.onRecordStoreFailed(new RuntimeException("Possibly failed to bulkInsert non-folder with guid " + failed.guid + "."));
+        }
+        return;
+      }
+    } catch (NullCursorException e) {
+      delegate.onRecordStoreFailed(e); // TODO: include which records failed.
+      return;
+    }
+
+    // Success For All!
+    for (Record succeeded : toStores) {
+      try {
+        updateBookkeeping(succeeded);
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Got exception updating bookkeeping of non-folder with guid " + succeeded.guid + ".", e);
+      }
+      trackRecord(succeeded);
+      insertedGuids.add(succeeded.guid); // Mark as inserted even if delegate callback throws.
+      delegate.onRecordStoreSucceeded(succeeded);
+    }
   }
 
   @Override
@@ -731,77 +800,6 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   protected final ArrayList<String> insertedGuids = new ArrayList<String>();
-
-  public class AndroidBrowserBookmarksInsertionManager extends BookmarksInsertionManager {
-    public AndroidBrowserBookmarksInsertionManager(int flushThreshold, Set<String> writtenFolders) {
-      super(flushThreshold, writtenFolders);
-    }
-
-    @Override
-    protected boolean insertFolder(BookmarkRecord record) {
-      // A folder that is *not* deleted needs its androidID updated, so that
-      // updateBookkeeping can re-parent, etc.
-      Record toStore = prepareRecord(record);
-      Uri recordURI = dbHelper.insert(toStore);
-      if (recordURI == null) {
-        delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
-        return false;
-      }
-      toStore.androidID = ContentUris.parseId(recordURI);
-      Logger.debug(LOG_TAG, "Inserted folder with guid " + toStore.guid + " as androidID " + toStore.androidID);
-
-      try {
-        updateBookkeeping(toStore);
-      } catch (Exception e) {
-        delegate.onRecordStoreFailed(e);
-        return false;
-      }
-      trackRecord(toStore);
-      delegate.onRecordStoreSucceeded(toStore);
-      insertedGuids.add(record.guid);
-      return true;
-    }
-
-    @Override
-    protected void bulkInsertNonFolders(Collection<BookmarkRecord> records) {
-      // All of these records are *not* deleted and *not* folders, so we don't
-      // need to update androidID at all!
-      // TODO: persist records that fail to insert for later retry.
-      ArrayList<Record> toStores = new ArrayList<Record>(records.size());
-      for (Record record : records) {
-        Record toStore = (BookmarkRecord) prepareRecord(record);
-        toStores.add(toStore);
-      }
-
-      try {
-        int stored = dataAccessor.bulkInsert(toStores);
-        if (stored != toStores.size()) {
-          // Something failed; most pessimistic action is to declare that all insertions failed.
-          // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
-          for (Record failed : toStores) {
-            delegate.onRecordStoreFailed(new RuntimeException("Possibly failed to bulkInsert non-folder with guid " + failed.guid + "."));
-          }
-          return;
-        }
-      } catch (NullCursorException e) {
-        delegate.onRecordStoreFailed(e); // TODO: include which records failed.
-        return;
-      }
-
-      // Success For All!
-      for (Record succeeded : toStores) {
-        try {
-          updateBookkeeping(succeeded);
-        } catch (Exception e) {
-          Logger.warn(LOG_TAG, "Got exception updating bookkeeping of non-folder with guid " + succeeded.guid + ".", e);
-        }
-        trackRecord(succeeded);
-        insertedGuids.add(succeeded.guid); // Mark as inserted even if delegate callback throws.
-        delegate.onRecordStoreSucceeded(succeeded);
-      }
-    }
-  }
-
   protected ArrayList<String> enqueuedGuids = new ArrayList<String>();
 
   @Override

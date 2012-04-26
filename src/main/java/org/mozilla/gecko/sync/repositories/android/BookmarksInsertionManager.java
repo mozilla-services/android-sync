@@ -38,11 +38,12 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
  * Note that this class is not thread safe. This should be fine: call it only
  * from within a store runnable.
  */
-public abstract class BookmarksInsertionManager {
+public class BookmarksInsertionManager {
   public static final String LOG_TAG = "BookmarkInsert";
   public static boolean DEBUG = false;
 
-  private final int flushThreshold;
+  protected final int flushThreshold;
+  protected final BookmarkInserter inserter;
 
   /**
    * Folders that have been successfully inserted.
@@ -71,10 +72,13 @@ public abstract class BookmarksInsertionManager {
    *        an incremental flush occurs.
    * @param insertedFolders
    *        The GUIDs of all the folders already inserted into the database.
+   * @param inserter
+   *        The <code>BookmarkInsert</code> to use.
    */
-  public BookmarksInsertionManager(int flushThreshold, Set<String> insertedFolders) {
+  public BookmarksInsertionManager(int flushThreshold, Collection<String> insertedFolders, BookmarkInserter inserter) {
     this.flushThreshold = flushThreshold;
     this.insertedFolders.addAll(insertedFolders);
+    this.inserter = inserter;
   }
 
   protected void addRecordWithUnwrittenParent(BookmarkRecord record) {
@@ -95,7 +99,7 @@ public abstract class BookmarksInsertionManager {
    */
   protected void recursivelyEnqueueRecordAndChildren(BookmarkRecord record) {
     if (record.isFolder()) {
-      if (!insertFolder(record)) {
+      if (!inserter.insertFolder(record)) {
         Logger.warn(LOG_TAG, "Folder with known parent with guid " + record.parentID + " failed to insert!");
         return;
       }
@@ -192,7 +196,7 @@ public abstract class BookmarksInsertionManager {
     int end = flushThreshold;
     while (end <= num) {
       List<BookmarkRecord> batch = toWrite.subList(beg, end);
-      bulkInsertNonFolders(batch);
+      inserter.bulkInsertNonFolders(batch);
       beg += flushThreshold;
       end += flushThreshold;
     }
@@ -213,7 +217,7 @@ public abstract class BookmarksInsertionManager {
       for (BookmarkRecord record : records) {
         if (record.isFolder()) {
           numFolders += 1;
-          if (!insertFolder(record)) {
+          if (!inserter.insertFolder(record)) {
             Logger.warn(LOG_TAG, "Folder with known parent with guid " + record.parentID + " failed to insert!");
             return;
           }
@@ -229,7 +233,7 @@ public abstract class BookmarksInsertionManager {
     recordsWaitingForParent.clear();
     incrementalFlush(); // Write as many non-folder batches as possible, and then whatever is left.
     if (!nonFoldersToWrite.isEmpty()) {
-      bulkInsertNonFolders(nonFoldersToWrite);
+      inserter.bulkInsertNonFolders(nonFoldersToWrite);
       nonFoldersToWrite.clear();
     }
 
@@ -265,28 +269,30 @@ public abstract class BookmarksInsertionManager {
     Logger.debug(LOG_TAG, "Q=(" + ready + "), W = (" + waiting + "), P=(" + known + ")");
   }
 
-  /**
-   * Insert a single folder.
-   * <p>
-   * All exceptions should be caught and all delegate callbacks invoked here.
-   *
-   * @param record
-   *          the record to insert.
-   * @return
-   *          <code>true</code> if the folder was inserted; <code>false</code> otherwise.
-   */
-  protected abstract boolean insertFolder(BookmarkRecord record);
+  public interface BookmarkInserter {
+    /**
+     * Insert a single folder.
+     * <p>
+     * All exceptions should be caught and all delegate callbacks invoked here.
+     *
+     * @param record
+     *          the record to insert.
+     * @return
+     *          <code>true</code> if the folder was inserted; <code>false</code> otherwise.
+     */
+    public boolean insertFolder(BookmarkRecord record);
 
-  /**
-   * Insert many non-folders. Each non-folder's parent was already present in
-   * the database before this <code>BookmarkInsertionsManager</code> was
-   * created, or had <code>insertFolder</code> called with it as argument (and
-   * possibly was not inserted).
-   * <p>
-   * All exceptions should be caught and all delegate callbacks invoked here.
-   *
-   * @param record
-   *          the record to insert.
-   */
-  protected abstract void bulkInsertNonFolders(Collection<BookmarkRecord> records);
+    /**
+     * Insert many non-folders. Each non-folder's parent was already present in
+     * the database before this <code>BookmarkInsertionsManager</code> was
+     * created, or had <code>insertFolder</code> called with it as argument (and
+     * possibly was not inserted).
+     * <p>
+     * All exceptions should be caught and all delegate callbacks invoked here.
+     *
+     * @param record
+     *          the record to insert.
+     */
+    public void bulkInsertNonFolders(Collection<BookmarkRecord> records);
+  }
 }
