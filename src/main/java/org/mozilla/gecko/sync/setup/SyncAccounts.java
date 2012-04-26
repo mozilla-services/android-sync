@@ -268,8 +268,7 @@ public class SyncAccounts {
    * @param toEnable
    *        boolean for account activity state
    */
-  public static void enableAccounts(Context context, boolean toEnable) {
-    Account[] accounts = AccountManager.get(context).getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+  public static void enableAccounts(Account[] accounts, boolean toEnable) {
     String authority = BrowserContract.AUTHORITY;
     for (Account a : accounts) {
       Logger.debug(LOG_TAG, "Setting authority " + authority + " to " + (toEnable ? "" : "not") + "sync automatically.");

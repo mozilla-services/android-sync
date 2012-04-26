@@ -33,6 +33,7 @@ import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
+import android.accounts.Account;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
@@ -102,7 +103,7 @@ public class TestEnsureClusterURLStage {
       @Override
       public void run() {
         try {
-          EnsureClusterURLStage.fetchClusterURL(TEST_NW_URL, delegate);
+          EnsureClusterURLStage.fetchClusterURL(TEST_NW_URL, delegate, new Account[0]);
         } catch (URISyntaxException e) {
           WaitHelper.getTestWaiter().performNotify(e);
         }
