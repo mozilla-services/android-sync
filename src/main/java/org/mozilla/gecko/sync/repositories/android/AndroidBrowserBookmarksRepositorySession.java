@@ -607,8 +607,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // TODO: persist records that fail to insert for later retry.
     ArrayList<Record> toStores = new ArrayList<Record>(records.size());
     for (Record record : records) {
-      Record toStore = (BookmarkRecord) prepareRecord(record);
-      toStores.add(toStore);
+      toStores.add(prepareRecord(record));
     }
 
     try {

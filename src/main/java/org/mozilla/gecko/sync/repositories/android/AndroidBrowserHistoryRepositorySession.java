@@ -151,8 +151,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
    */
   @Override
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
-    HistoryRecord toStore = (HistoryRecord) prepareRecord(record);
-    enqueueNewRecord(toStore);
+    enqueueNewRecord((HistoryRecord) prepareRecord(record));
   }
 
   /**
