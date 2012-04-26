@@ -197,11 +197,13 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     folder.type       = "folder";
 
     bookmarkA.parentID    = folderGUID;
+    bookmarkA.parentName  = "Mobile Bookmarks";       // Using this title exercises Bug 748898.
     bookmarkA.bookmarkURI = "http://example.com/A";
     bookmarkA.title       = "Title A";
     bookmarkA.type        = "bookmark";
 
     bookmarkB.parentID    = folderGUID;
+    bookmarkB.parentName  = "mobile";
     bookmarkB.bookmarkURI = "http://example.com/B";
     bookmarkB.title       = "Title B";
     bookmarkB.type        = "bookmark";
