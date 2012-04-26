@@ -244,6 +244,12 @@ public class BookmarksInsertionManager {
     }
   }
 
+  public void clear() {
+    this.insertedFolders.clear();
+    this.nonFoldersToWrite.clear();
+    this.recordsWaitingForParent.clear();
+  }
+
   // For debugging.
   public boolean isClear() {
     return nonFoldersToWrite.isEmpty() && recordsWaitingForParent.isEmpty();

@@ -926,8 +926,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       try {
         // Clear our queued deletions.
         deletionManager.clear();
-        // Clearing the insertion manager is not supported yet. To clear, you need
-        // to reset the set of written folder GUIDs, which will need to be re-computed.
+        insertionManager.clear();
         super.run();
       } catch (Exception ex) {
         delegate.onWipeFailed(ex);
