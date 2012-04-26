@@ -211,10 +211,9 @@ public class TestBookmarksInsertionManager {
     assertEquals(0, insertions.size());
     manager.finishUp(); // Children inserted at the end; they will be treated as orphans.
     assertTrue(manager.isClear());
-    assertEquals(4, insertions.size());
+    assertEquals(3, insertions.size());
     assertArrayEquals(new String[] { "2" }, insertions.get(0));
     assertArrayEquals(new String[] { "3" }, insertions.get(1));
-    assertArrayEquals(new String[] { "a", "b", "c"}, insertions.get(2));
-    assertArrayEquals(new String[] { "d" }, insertions.get(3)); // Don't want to miss the last insertion.
+    assertArrayEquals(new String[] { "a", "b", "c", "d" }, insertions.get(2)); // Last insertion could be big.
   }
 }

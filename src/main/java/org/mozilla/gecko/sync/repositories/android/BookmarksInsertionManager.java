@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -180,8 +179,7 @@ public class BookmarksInsertionManager {
   }
 
   /**
-   * Flush non-folder insertions in batches of <code>flushThreshold</code> size,
-   * possibly not emptying the insertion queue entirely.
+   * Flush non-folder insertions; empties the insertion queue entirely.
    */
   protected void incrementalFlush() {
     int num = nonFoldersToWrite.size();
@@ -191,18 +189,8 @@ public class BookmarksInsertionManager {
     }
     Logger.debug(LOG_TAG, "Incremental flush called with " + num + " non-folders; flushing in batches of " + flushThreshold);
 
-    // bulkInsert non folders in batches.  First copy to array, then slice up array, then re-insert into ordered set.
-    ArrayList<BookmarkRecord> toWrite = new ArrayList<BookmarkRecord>(nonFoldersToWrite);
-    int beg = 0;
-    int end = flushThreshold;
-    while (end <= num) {
-      List<BookmarkRecord> batch = toWrite.subList(beg, end);
-      inserter.bulkInsertNonFolders(batch);
-      beg += flushThreshold;
-      end += flushThreshold;
-    }
+    inserter.bulkInsertNonFolders(nonFoldersToWrite);
     nonFoldersToWrite.clear();
-    nonFoldersToWrite.addAll(toWrite.subList(beg, num));
   }
 
   /**
