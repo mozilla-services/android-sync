@@ -3,12 +3,15 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
 import org.json.simple.JSONArray;
+import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessBeginDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessCreationDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFetchDelegate;
@@ -16,6 +19,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
@@ -433,6 +437,106 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   }
 
   /**
+   * A test where we expect to replace a local folder with a new folder (with a
+   * new GUID), whilst adding children to it. Verifies that replace and insert
+   * co-operate.
+   */
+  public void testInsertAndReplaceGuid() {
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+    wipe();
+
+    BookmarkRecord folder1 = BookmarkHelpers.createFolder1();
+    BookmarkRecord folder2 = BookmarkHelpers.createFolder2(); // child of folder1
+    BookmarkRecord folder3 = BookmarkHelpers.createFolder3(); // child of folder2
+    BookmarkRecord bmk1 = BookmarkHelpers.createBookmark1();  // child of folder1
+    BookmarkRecord bmk2 = BookmarkHelpers.createBookmark2();  // child of folder1
+    BookmarkRecord bmk3 = BookmarkHelpers.createBookmark3();  // child of folder2
+    BookmarkRecord bmk4 = BookmarkHelpers.createBookmark4();  // child of folder3
+
+    BookmarkRecord[] records = new BookmarkRecord[] {
+        folder1, folder2, folder3,
+        bmk1, bmk4
+    };
+    storeRecordsInSession(repo, records, null);
+
+    assertChildrenAreUnordered(repo, folder1.guid, new Record[] { bmk1, folder2 });
+    assertChildrenAreUnordered(repo, folder2.guid, new Record[] { folder3 });
+    assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
+
+    // Replace folder3 with a record with a new GUID, and add bmk4 as folder3's child.
+    long now = System.currentTimeMillis();
+    folder3.guid = Utils.generateGuid();
+    folder3.lastModified = now;
+    bmk4.title = bmk4.title + "/NEW";
+    bmk4.parentID = folder3.guid; // Incoming child knows its parent.
+    bmk4.parentName = folder3.title;
+    bmk4.lastModified = now;
+
+    // Order of store should not matter.
+    ArrayList<BookmarkRecord> changedRecords = new ArrayList<BookmarkRecord>();
+    changedRecords.add(bmk2); changedRecords.add(bmk3); changedRecords.add(bmk4); changedRecords.add(folder3);
+    Collections.shuffle(changedRecords);
+    storeRecordsInSession(repo, changedRecords.toArray(new BookmarkRecord[changedRecords.size()]), null);
+
+    assertChildrenAreUnordered(repo, folder1.guid, new Record[] { bmk1, bmk2, folder2 });
+    assertChildrenAreUnordered(repo, folder2.guid, new Record[] { bmk3, folder3 });
+    assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
+
+    assertNotNull(fetchGUID(repo, folder3.guid));
+    assertEquals(bmk4.title, fetchGUID(repo, bmk4.guid).title);
+  }
+
+  /**
+   * A test where we expect to replace a local folder with a new folder (with a
+   * new title but the same GUID), whilst adding children to it. Verifies that
+   * replace and insert co-operate.
+   */
+  public void testInsertAndReplaceTitle() {
+    AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+    wipe();
+
+    BookmarkRecord folder1 = BookmarkHelpers.createFolder1();
+    BookmarkRecord folder2 = BookmarkHelpers.createFolder2(); // child of folder1
+    BookmarkRecord folder3 = BookmarkHelpers.createFolder3(); // child of folder2
+    BookmarkRecord bmk1 = BookmarkHelpers.createBookmark1();  // child of folder1
+    BookmarkRecord bmk2 = BookmarkHelpers.createBookmark2();  // child of folder1
+    BookmarkRecord bmk3 = BookmarkHelpers.createBookmark3();  // child of folder2
+    BookmarkRecord bmk4 = BookmarkHelpers.createBookmark4();  // child of folder3
+
+    BookmarkRecord[] records = new BookmarkRecord[] {
+        folder1, folder2, folder3,
+        bmk1, bmk4
+    };
+    storeRecordsInSession(repo, records, null);
+
+    assertChildrenAreUnordered(repo, folder1.guid, new Record[] { bmk1, folder2 });
+    assertChildrenAreUnordered(repo, folder2.guid, new Record[] { folder3 });
+    assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
+
+    // Rename folder1, and add bmk2 as folder1's child.
+    long now = System.currentTimeMillis();
+    folder1.title = folder1.title + "/NEW";
+    folder1.lastModified = now;
+    bmk2.title = bmk2.title + "/NEW";
+    bmk2.parentID = folder1.guid; // Incoming child knows its parent.
+    bmk2.parentName = folder1.title;
+    bmk2.lastModified = now;
+
+    // Order of store should not matter.
+    ArrayList<BookmarkRecord> changedRecords = new ArrayList<BookmarkRecord>();
+    changedRecords.add(bmk2); changedRecords.add(bmk3); changedRecords.add(folder1);
+    Collections.shuffle(changedRecords);
+    storeRecordsInSession(repo, changedRecords.toArray(new BookmarkRecord[changedRecords.size()]), null);
+
+    assertChildrenAreUnordered(repo, folder1.guid, new Record[] { bmk1, bmk2, folder2 });
+    assertChildrenAreUnordered(repo, folder2.guid, new Record[] { bmk3, folder3 });
+    assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
+
+    assertEquals(folder1.title, fetchGUID(repo, folder1.guid).title);
+    assertEquals(bmk2.title, fetchGUID(repo, bmk2.guid).title);
+  }
+
+  /**
    * Create and begin a new session, handing control to the delegate when started.
    * Returns when the delegate has notified.
    *
@@ -564,12 +668,17 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     inBegunSession(repo, beginDelegate);
   }
 
-  public JSONArray fetchChildrenForGUID(AndroidBrowserBookmarksRepository repo,
-                                        final String guid) {
+  public BookmarkRecord fetchGUID(AndroidBrowserBookmarksRepository repo,
+      final String guid) {
     SimpleFetchOneBeginDelegate beginDelegate = new SimpleFetchOneBeginDelegate(guid);
     inBegunSession(repo, beginDelegate);
     assertTrue(beginDelegate.fetchedRecord != null);
-    return ((BookmarkRecord) (beginDelegate.fetchedRecord)).children;
+    return (BookmarkRecord) beginDelegate.fetchedRecord;
+  }
+
+  public JSONArray fetchChildrenForGUID(AndroidBrowserBookmarksRepository repo,
+      final String guid) {
+    return fetchGUID(repo, guid).children;
   }
 
   @SuppressWarnings("unchecked")
