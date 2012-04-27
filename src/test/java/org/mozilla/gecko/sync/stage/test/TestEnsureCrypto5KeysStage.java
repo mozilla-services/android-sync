@@ -90,11 +90,6 @@ public class TestEnsureCrypto5KeysStage {
       }
 
       @Override
-      public InfoCollections getInfoCollections() {
-        return infoCollections;
-      }
-
-      @Override
       public void resetStagesByEnum(Collection<Stage> stages) {
         calledResetStages = true;
         stagesReset = new ArrayList<String>();
@@ -110,6 +105,7 @@ public class TestEnsureCrypto5KeysStage {
       }
     };
     session.config.setClusterURL(new URI(TEST_CLUSTER_URL));
+    session.config.infoCollections = infoCollections;
     calledResetStages = false;
     stagesReset = null;
   }

@@ -403,10 +403,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
-  public InfoCollections getInfoCollections() {
-    return this.config.infoCollections;
-  }
-
   public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
     if (this.config.infoCollections == null) {
       this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
