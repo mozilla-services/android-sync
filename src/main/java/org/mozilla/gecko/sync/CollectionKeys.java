@@ -41,12 +41,16 @@ public class CollectionKeys {
     return this.defaultKeyBundle;
   }
 
+  public boolean keyBundleForCollectionIsNotDefault(String collection) {
+    return collectionKeyBundles.containsKey(collection);
+  }
+
   public KeyBundle keyBundleForCollection(String collection)
-                                                      throws NoCollectionKeysSetException {
+      throws NoCollectionKeysSetException {
     if (this.defaultKeyBundle == null) {
       throw new NoCollectionKeysSetException();
     }
-    if (collectionKeyBundles.containsKey(collection)) {
+    if (keyBundleForCollectionIsNotDefault(collection)) {
       return collectionKeyBundles.get(collection);
     }
     return this.defaultKeyBundle;

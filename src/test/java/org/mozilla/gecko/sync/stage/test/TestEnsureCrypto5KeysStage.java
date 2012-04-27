@@ -246,17 +246,25 @@ public class TestEnsureCrypto5KeysStage {
     assertTrue(CollectionKeys.differences(session.config.collectionKeys, keys).isEmpty());
   }
 
+  /**
+   * Change the default key but keep one collection key the same. Should reset
+   * all but that one collection.
+   */
   @Test
-  public void testDownloadResetsAllOnDifferentDefaultKey()
+  public void testDownloadResetsOnDifferentDefaultKey()
       throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException,
       IOException, ParseException, CryptoException, URISyntaxException, NoCollectionKeysSetException {
+    String TEST_COLLECTION = "bookmarks";
+
     infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
+    KeyBundle keyBundle = KeyBundle.withRandomKeys();
     assertNull(session.config.collectionKeys);
     final CollectionKeys keys = CollectionKeys.generateCollectionKeys();
+    keys.setKeyBundleForCollection(TEST_COLLECTION, keyBundle);
     session.config.persistedCryptoKeys().persistKeys(keys);
-    keys.setDefaultKeyBundle(syncKeyBundle); // Change the default key bundle.
+    keys.setDefaultKeyBundle(syncKeyBundle); // Change the default key bundle, but keep "bookmarks" the same.
 
     MockServer server = new MockServer() {
       public void handle(Request request, Response response) {
@@ -274,11 +282,13 @@ public class TestEnsureCrypto5KeysStage {
     doSession(server);
 
     assertTrue(calledResetStages);
-    Collection<String> all = new ArrayList<String>();
+    Collection<String> allButCollection = new ArrayList<String>();
     for (Stage stage : Stage.getNamedStages()) {
-      all.add(stage.name());
+      allButCollection.add(stage.getRepositoryName());
     }
-    assertTrue(stagesReset.containsAll(all));
+    allButCollection.remove(TEST_COLLECTION);
+    assertTrue(stagesReset.containsAll(allButCollection));
+    assertTrue(allButCollection.containsAll(stagesReset));
     assertTrue(callback.calledError);
   }
 

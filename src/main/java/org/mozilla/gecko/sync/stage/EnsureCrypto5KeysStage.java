@@ -88,6 +88,48 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     pck.persistLastModified(timestamp);
   }
 
+  /**
+   * Return collections where either the individual key has changed, or if the
+   * new default key is not the same as the old default key, where the
+   * collection is using the default key.
+   */
+  protected Set<String> collectionsToUpdate(CollectionKeys oldKeys, CollectionKeys newKeys) {
+    // These keys have explicitly changed; they definitely need updating.
+    Set<String> changedKeys = CollectionKeys.differences(oldKeys, newKeys);
+
+    boolean defaultKeyChanged = true; // Most pessimistic is to assume default key has changed.
+    KeyBundle newDefaultKeyBundle = null;
+    try {
+      KeyBundle oldDefaultKeyBundle = oldKeys.defaultKeyBundle();
+      newDefaultKeyBundle = newKeys.defaultKeyBundle();
+      defaultKeyChanged = !oldDefaultKeyBundle.equals(newDefaultKeyBundle);
+    } catch (NoCollectionKeysSetException e) {
+      Logger.warn(LOG_TAG, "NoCollectionKeysSetException in EnsureCrypto5KeysStage.", e);
+    }
+
+    if (newDefaultKeyBundle == null) {
+      Logger.info(LOG_TAG, "New default key not provided; returning changed individual keys.");
+      return changedKeys;
+    }
+
+    if (!defaultKeyChanged) {
+      Logger.info(LOG_TAG, "New default key is the same as old default key; returning changed individual keys.");
+      return changedKeys;
+    }
+
+    // New keys have a different default/sync key; check known collections against the default key.
+    Logger.info(LOG_TAG, "New default key is not the same as old default key.");
+    for (Stage stage : Stage.getNamedStages()) {
+      String name = stage.getRepositoryName();
+      if (!newKeys.keyBundleForCollectionIsNotDefault(name)) {
+        // Default key has changed, so this collection has changed.
+        changedKeys.add(name);
+      }
+    }
+
+    return changedKeys;
+  }
+
   @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
     // Take the timestamp from the response since it is later than the timestamp from info/collections.
@@ -99,7 +141,6 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
         Logger.pii(LOG_TAG, "Fetched keys: " + body.toJSONString());
       }
       keys.setKeyPairsFromWBO(CryptoRecord.fromJSONRecord(body), session.config.syncKeyBundle);
-
     } catch (IllegalStateException e) {
       session.abort(e, "Invalid keys WBO.");
       return;
@@ -127,35 +168,15 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
       return;
     }
 
-    // New keys, but we had old keys.  Check for differences, first in default keys.
+    // New keys, but we had old keys.  Check for differences.
     CollectionKeys oldKeys = pck.keys();
-    boolean defaultKeyChanged = false;
-    try {
-      KeyBundle a = oldKeys.defaultKeyBundle();
-      KeyBundle b = keys.defaultKeyBundle();
-      defaultKeyChanged = !a.equals(b);
-    } catch (NoCollectionKeysSetException e) {
-      session.abort(e, "NoCollectionKeysSetException in EnsureCrypto5KeysStage");
-      return;
-    }
-
-    if (defaultKeyChanged) {
-      // New keys with a different default/sync key. Reset all the things!
-      Logger.info(LOG_TAG, "Fetched keys default key is not the same as persisted keys default key; " +
-          "persisting fetched keys and last modified before resetting everything.");
-      setAndPersist(pck, keys, responseTimestamp);
-      session.resetAllStages();
-      session.abort(null, "crypto/keys default key changed on server.");
-      return;
-    }
-
-    Set<String> changedKeys = CollectionKeys.differences(oldKeys, keys);
-    if (!changedKeys.isEmpty()) {
+    Set<String> changedCollections = collectionsToUpdate(oldKeys, keys);
+    if (!changedCollections.isEmpty()) {
       // New keys, different from old keys.
       Logger.info(LOG_TAG, "Fetched keys are not the same as persisted keys; " +
           "setting fetched keys for this session before resetting changed engines.");
       setAndPersist(pck, keys, responseTimestamp);
-      session.resetStagesByName(changedKeys);
+      session.resetStagesByName(changedCollections);
       session.abort(null, "crypto/keys changed on server.");
       return;
     }
