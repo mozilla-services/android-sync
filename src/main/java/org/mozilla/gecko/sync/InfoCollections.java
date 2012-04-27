@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -22,12 +23,26 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   protected String infoURL;
   protected String credentials;
 
-  // Fields.
-  // Rather than storing decimal/double timestamps, as provided by the
-  // server, we convert immediately to milliseconds since epoch.
-  private final HashMap<String, Long> timestamps;
+  /**
+   * Fields fetched from the server, or <code>null</code> if not yet fetched.
+   * <p>
+   * Rather than storing decimal/double timestamps, as provided by the server,
+   * we convert immediately to milliseconds since epoch.
+   */
+  private Map<String, Long> timestamps = null;
 
+  /**
+   * Return the timestamp for the given collection, or null if the timestamps
+   * have not been fetched or the given collection does not have a timestamp.
+   *
+   * @param collection
+   *          The collection to inspect.
+   * @return the timestamp in milliseconds since epoch.
+   */
   public Long getTimestamp(String collection) {
+    if (timestamps == null) {
+      return null;
+    }
     return timestamps.get(collection);
   }
 
@@ -62,18 +77,13 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   private InfoCollectionsDelegate callback;
 
   public InfoCollections(String metaURL, String credentials) {
-    timestamps = new HashMap<String, Long>();
     this.infoURL     = metaURL;
     this.credentials = credentials;
   }
 
   public void fetch(InfoCollectionsDelegate callback) {
-    if (timestamps.isEmpty()) {
-      this.callback = callback;
-      this.doFetch();
-      return;
-    }
-    callback.handleSuccess(this);
+    this.callback = callback;
+    this.doFetch();
   }
 
   private void doFetch() {
@@ -121,8 +131,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
       }
       Log.w(LOG_TAG, "Skipping info/collections entry for " + key);
     }
-    this.timestamps.clear();
-    this.timestamps.putAll(map);
+    this.timestamps = map;
   }
 
   // SyncStorageRequestDelegate methods for fetching.
