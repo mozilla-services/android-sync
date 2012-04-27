@@ -271,6 +271,9 @@ public class SyncAccounts {
   public static void enableAccounts(Account[] accounts, boolean toEnable) {
     String authority = BrowserContract.AUTHORITY;
     for (Account a : accounts) {
+      if (!Constants.ACCOUNTTYPE_SYNC.equals(a.type)) {
+        continue;
+      }
       Logger.debug(LOG_TAG, "Setting authority " + authority + " to " + (toEnable ? "" : "not") + "sync automatically.");
       ContentResolver.setSyncAutomatically(a, authority, toEnable);
       ContentResolver.setIsSyncable(a, authority, toEnable ? 1 : 0);
