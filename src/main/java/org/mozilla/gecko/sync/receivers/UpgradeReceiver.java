@@ -22,7 +22,6 @@ public class UpgradeReceiver extends BroadcastReceiver {
       @Override
       public void run() {
         Account[] accounts = AccountManager.get(context).getAccounts();
-        Logger.debug(LOG_TAG, "num sync accounts: " + accounts.length);
         SyncAccounts.enableSyncAccounts(accounts, true);
       }
     });

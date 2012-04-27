@@ -268,7 +268,7 @@ public class SyncAccounts {
    * @param toEnable
    *        boolean for account activity state
    */
-  public static void enableAccounts(Account[] accounts, boolean toEnable) {
+  public static void enableSyncAccounts(Account[] accounts, boolean toEnable) {
     String authority = BrowserContract.AUTHORITY;
     for (Account a : accounts) {
       if (!Constants.ACCOUNTTYPE_SYNC.equals(a.type)) {
