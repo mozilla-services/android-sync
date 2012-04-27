@@ -82,15 +82,23 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     return null;
   }
 
+  protected void setAndPersist(PersistedCrypto5Keys pck, CollectionKeys keys, long timestamp) {
+    session.config.setCollectionKeys(keys);
+    pck.persistKeys(keys);
+    pck.persistLastModified(timestamp);
+  }
+
   @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
-    CollectionKeys k = new CollectionKeys();
+    // Take the timestamp from the response since it is later than the timestamp from info/collections.
+    long responseTimestamp = response.normalizedWeaveTimestamp();
+    CollectionKeys keys = new CollectionKeys();
     try {
       ExtendedJSONObject body = response.jsonObjectBody();
       if (Logger.LOG_PERSONAL_INFORMATION) {
         Logger.pii(LOG_TAG, "Fetched keys: " + body.toJSONString());
       }
-      k.setKeyPairsFromWBO(CryptoRecord.fromJSONRecord(body), session.config.syncKeyBundle);
+      keys.setKeyPairsFromWBO(CryptoRecord.fromJSONRecord(body), session.config.syncKeyBundle);
 
     } catch (IllegalStateException e) {
       session.abort(e, "Invalid keys WBO.");
@@ -113,22 +121,18 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     PersistedCrypto5Keys pck = session.config.persistedCryptoKeys();
     if (!pck.persistedKeysExist()) {
       // New keys, and no old keys! Persist keys and server timestamp.
-      Logger.info(LOG_TAG, "Setting fetched keys for this session.");
-      session.config.setCollectionKeys(k);
-      Logger.trace(LOG_TAG, "Persisting fetched keys and last modified.");
-      pck.persistKeys(k);
-      // Take the timestamp from the response since it is later than the timestamp from info/collections.
-      pck.persistLastModified(response.normalizedWeaveTimestamp());
+      Logger.info(LOG_TAG, "Setting fetched keys for this session; persisting fetched keys and last modified.");
+      setAndPersist(pck, keys, responseTimestamp);
       session.advance();
       return;
     }
 
-    // New keys, but we had old keys.  Check for differences.
+    // New keys, but we had old keys.  Check for differences, first in default keys.
     CollectionKeys oldKeys = pck.keys();
     boolean defaultKeyChanged = false;
     try {
       KeyBundle a = oldKeys.defaultKeyBundle();
-      KeyBundle b = k.defaultKeyBundle();
+      KeyBundle b = keys.defaultKeyBundle();
       defaultKeyChanged = !a.equals(b);
     } catch (NoCollectionKeysSetException e) {
       session.abort(e, "NoCollectionKeysSetException in EnsureCrypto5KeysStage");
@@ -139,31 +143,25 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
       // New keys with a different default/sync key. Reset all the things!
       Logger.info(LOG_TAG, "Fetched keys default key is not the same as persisted keys default key; " +
           "persisting fetched keys and last modified before resetting everything.");
-      session.config.setCollectionKeys(k);
-      pck.persistKeys(k);
-      pck.persistLastModified(response.normalizedWeaveTimestamp());
+      setAndPersist(pck, keys, responseTimestamp);
       session.resetAllStages();
       session.abort(null, "crypto/keys default key changed on server.");
       return;
     }
 
-    Set<String> changedKeys = CollectionKeys.differences(oldKeys, k);
+    Set<String> changedKeys = CollectionKeys.differences(oldKeys, keys);
     if (!changedKeys.isEmpty()) {
       // New keys, different from old keys.
       Logger.info(LOG_TAG, "Fetched keys are not the same as persisted keys; " +
           "setting fetched keys for this session before resetting changed engines.");
-      session.config.setCollectionKeys(k);
-      Logger.trace(LOG_TAG, "Persisting fetched keys and last modified.");
-      pck.persistKeys(k);
-      // Take the timestamp from the response since it is later than the timestamp from info/collections.
-      pck.persistLastModified(response.normalizedWeaveTimestamp());
+      setAndPersist(pck, keys, responseTimestamp);
       session.resetStagesByName(changedKeys);
       session.abort(null, "crypto/keys changed on server.");
       return;
     }
 
     // New keys don't differ from old keys; persist timestamp and move on.
-    Logger.trace(LOG_TAG, "Fetched keys are the same as persisted keys; persisting last modified.");
+    Logger.trace(LOG_TAG, "Fetched keys are the same as persisted keys; persisting only last modified.");
     session.config.setCollectionKeys(oldKeys);
     pck.persistLastModified(response.normalizedWeaveTimestamp());
     session.advance();
