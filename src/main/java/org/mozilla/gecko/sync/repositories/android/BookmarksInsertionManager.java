@@ -137,7 +137,7 @@ public class BookmarksInsertionManager {
 
     // Parent is known; add as much of the tree as this roots.
     recursivelyEnqueueRecordAndChildren(record);
-    incrementalFlush();
+    flushNonFoldersIfNecessary();
   }
 
   /**
@@ -158,7 +158,7 @@ public class BookmarksInsertionManager {
     // Parent is known; add to insertion queue and maybe write.
     Logger.debug(LOG_TAG, "Non-folder has known parent with guid " + record.parentID + "; adding to insertion queue.");
     nonFoldersToWrite.add(record);
-    incrementalFlush();
+    flushNonFoldersIfNecessary();
   }
 
   /**
@@ -179,18 +179,25 @@ public class BookmarksInsertionManager {
   }
 
   /**
-   * Flush non-folder insertions; empties the insertion queue entirely.
+   * Flush non-folders; empties the insertion queue entirely.
    */
-  protected void incrementalFlush() {
+  protected void flushNonFolders() {
+    inserter.bulkInsertNonFolders(nonFoldersToWrite); // All errors are handled in bulkInsertNonFolders.
+    nonFoldersToWrite.clear();
+  }
+
+  /**
+   * Flush non-folder insertions if there are many of them; empties the
+   * insertion queue entirely.
+   */
+  protected void flushNonFoldersIfNecessary() {
     int num = nonFoldersToWrite.size();
     if (num < flushThreshold) {
       Logger.debug(LOG_TAG, "Incremental flush called with " + num + " < " + flushThreshold + " non-folders; not flushing.");
       return;
     }
-    Logger.debug(LOG_TAG, "Incremental flush called with " + num + " non-folders; flushing in batches of " + flushThreshold);
-
-    inserter.bulkInsertNonFolders(nonFoldersToWrite);
-    nonFoldersToWrite.clear();
+    Logger.debug(LOG_TAG, "Incremental flush called with " + num + " non-folders; flushing.");
+    flushNonFolders();
   }
 
   /**
@@ -204,30 +211,28 @@ public class BookmarksInsertionManager {
     int numNonFolders = 0;
     for (Set<BookmarkRecord> records : recordsWaitingForParent.values()) {
       for (BookmarkRecord record : records) {
-        if (record.isFolder()) {
-          numFolders += 1;
-          if (!inserter.insertFolder(record)) {
-            Logger.warn(LOG_TAG, "Folder with known parent with guid " + record.parentID + " failed to insert!");
-            return;
-          }
-          Logger.debug(LOG_TAG, "Folder with known parent with guid " + record.parentID + " inserted; adding to inserted folders.");
-          insertedFolders.add(record.guid);
+        if (!record.isFolder()) {
+          numNonFolders += 1;
+          nonFoldersToWrite.add(record);
           continue;
         }
 
-        numNonFolders += 1;
-        nonFoldersToWrite.add(record);
+        numFolders += 1;
+        if (!inserter.insertFolder(record)) {
+          Logger.warn(LOG_TAG, "Folder with known parent with guid " + record.parentID + " failed to insert!");
+          continue;
+        }
+
+        Logger.debug(LOG_TAG, "Folder with known parent with guid " + record.parentID + " inserted; adding to inserted folders.");
+        insertedFolders.add(record.guid);
       }
     }
     recordsWaitingForParent.clear();
-    incrementalFlush(); // Write as many non-folder batches as possible, and then whatever is left.
-    if (!nonFoldersToWrite.isEmpty()) {
-      inserter.bulkInsertNonFolders(nonFoldersToWrite);
-      nonFoldersToWrite.clear();
-    }
+    flushNonFolders();
 
-    Logger.debug(LOG_TAG, "finishUp inserted " + numFolders + " folders without known parents " +
-        "and " + numNonFolders + " non-folders without known parents.");
+    Logger.debug(LOG_TAG, "finishUp inserted " +
+        numFolders + " folders without known parents and " +
+        numNonFolders + " non-folders without known parents.");
     if (DEBUG) {
       dumpState();
     }
