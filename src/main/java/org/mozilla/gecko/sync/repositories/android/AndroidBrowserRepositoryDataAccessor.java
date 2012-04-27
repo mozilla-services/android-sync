@@ -201,8 +201,23 @@ public abstract class AndroidBrowserRepositoryDataAccessor {
     ContentValues[] cvs = new ContentValues[size];
     int index = 0;
     for (Record record : records) {
-      cvs[index] = getContentValues(record);
-      index += 1;
+      try {
+        cvs[index] = getContentValues(record);
+        index += 1;
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Got exception in getContentValues for record with guid " + record.guid, e);
+      }
+    }
+
+    if (index != size) {
+      // bulkInsert treats null ContentValues as blank rows, which we don't want
+      // to insert into the database.
+      // We expect exceptions in getContentValues to be exceedingly rare, so we
+      // re-allocate in the (rare) error case and maintain a fast path for the
+      // success case.
+      size = index;
+      ContentValues[] temp = new ContentValues[size];
+      System.arraycopy(cvs, 0, temp, 0, size); // No java.util.Arrays.copyOf in older Android SDKs.
     }
 
     int inserted = context.getContentResolver().bulkInsert(getUri(), cvs);
