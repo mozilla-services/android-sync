@@ -22,6 +22,7 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -53,9 +54,9 @@ import android.net.Uri;
  *
  */
 public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepositorySession {
+  public static final String LOG_TAG = "BrowserRepoSession";
 
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
-  public static final String LOG_TAG = "BrowserRepoSession";
   private HashMap<String, String> recordToGuid;
 
   public AndroidBrowserRepositorySession(Repository repository) {
@@ -146,6 +147,13 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     }
     storeTracker = createStoreTracker();
     deferredDelegate.onBeginSucceeded(this);
+  }
+
+  @Override
+  public void finish(RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
+    dbHelper = null;
+    recordToGuid = null;
+    super.finish(delegate);
   }
 
   protected abstract String buildRecordString(Record record);

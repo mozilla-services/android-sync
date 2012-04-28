@@ -127,13 +127,19 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
 
   @Override
   public void abort() {
-    ((AndroidBrowserHistoryDataAccessor) dbHelper).closeExtender();
+    if (dbHelper != null) {
+      ((AndroidBrowserHistoryDataAccessor) dbHelper).closeExtender();
+      dbHelper = null;
+    }
     super.abort();
   }
 
   @Override
   public void finish(final RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
-    ((AndroidBrowserHistoryDataAccessor) dbHelper).closeExtender();
+    if (dbHelper != null) {
+      ((AndroidBrowserHistoryDataAccessor) dbHelper).closeExtender();
+      dbHelper = null;
+    }
     super.finish(delegate);
   }
 
