@@ -512,7 +512,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     Logger.debug(LOG_TAG, "Ignoring record with guid: " + bmk.guid + " and type: " + bmk.type);
     return true;
   }
-  
+
   @Override
   public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
     // Check for the existence of special folders
@@ -534,7 +534,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       delegate.onBeginFailed(e);
       return;
     }
-    
+
     // To deal with parent mapping of bookmarks we have to do some
     // hairy stuff. Here's the setup for it.
 
