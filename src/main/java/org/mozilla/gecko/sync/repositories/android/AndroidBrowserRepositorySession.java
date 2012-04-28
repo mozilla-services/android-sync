@@ -353,6 +353,8 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     this.fetchSince(0, delegate);
   }
 
+  protected int storeCount = 0;
+
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
     if (delegate == null) {
@@ -362,6 +364,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       Logger.error(LOG_TAG, "Record sent to store was null");
       throw new IllegalArgumentException("Null record passed to AndroidBrowserRepositorySession.store().");
     }
+
+    storeCount += 1;
+    Logger.debug(LOG_TAG, "Storing record with GUID " + record.guid + " (stored " + storeCount + " records this session).");
 
     // Store Runnables *must* complete synchronously. It's OK, they
     // run on a background thread.
@@ -532,6 +537,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
     Uri recordURI = dbHelper.insert(toStore);
+    if (recordURI == null) {
+      throw new NullCursorException(new RuntimeException("Got null URI inserting record with guid " + record.guid));
+    }
     toStore.androidID = ContentUris.parseId(recordURI);
 
     updateBookkeeping(toStore);
