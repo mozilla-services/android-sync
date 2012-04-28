@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.ArrayList;
+
 import org.json.simple.JSONArray;
 import org.mozilla.android.sync.test.helpers.BookmarkHelpers;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
@@ -603,6 +605,35 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     } finally {
       cur.close();
     }
+    dispose(session);
+  }
+
+  /**
+   * Verify that data accessor's bulkInsert actually inserts.
+   * @throws NullCursorException
+   */
+  public void testBulkInsert() throws NullCursorException {
+    RepositorySession session = createAndBeginSession();
+    AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
+
+    // Have to set androidID of parent manually.
+    Cursor cur = db.fetch(new String[] { "mobile" } );
+    assertEquals(1, cur.getCount());
+    cur.moveToFirst();
+    int mobileAndroidID = RepoUtils.getIntFromCursor(cur, BrowserContract.Bookmarks._ID);
+
+    BookmarkRecord bookmark1 = BookmarkHelpers.createBookmarkInMobileFolder1();
+    BookmarkRecord bookmark2 = BookmarkHelpers.createBookmarkInMobileFolder2();
+    bookmark1.androidParentID = mobileAndroidID;
+    bookmark2.androidParentID = mobileAndroidID;
+    ArrayList<Record> recordList = new ArrayList<Record>();
+    recordList.add(bookmark1);
+    recordList.add(bookmark2);
+    db.bulkInsert(recordList);
+
+    String[] guids = new String[] { bookmark1.guid, bookmark2.guid };
+    Record[] expected = new Record[] { bookmark1, bookmark2 };
+    performWait(fetchRunnable(session, guids, expected));
     dispose(session);
   }
 }

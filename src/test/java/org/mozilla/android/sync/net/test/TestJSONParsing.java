@@ -43,6 +43,7 @@ public class TestJSONParsing {
     assertEquals(null, o.getTimestamp("foo"));
   }
 
+  @SuppressWarnings("unused")
   private static void ensureNumberFormatException(ExtendedJSONObject o, String key) {
     try {
       o.getIntegerSafely(key);

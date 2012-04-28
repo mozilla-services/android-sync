@@ -406,10 +406,9 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     records.add(HistoryHelpers.createHistory1());
     records.add(HistoryHelpers.createHistory2());
     records.add(HistoryHelpers.createHistory3());
-    db.bulkInsert(records, true);
-    assertTrue(records.get(0).androidID > 0); // Special sentinel value is negative.
+    db.bulkInsert(records);
 
-    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(records.toArray(new Record[0]))));
+    performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(records.toArray(new Record[records.size()]))));
     session.abort();
   }
 
