@@ -10,6 +10,7 @@ import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFinishDelegate;
 import org.mozilla.android.sync.test.helpers.HistoryHelpers;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -29,6 +30,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 
 public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
 
@@ -311,6 +313,39 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     Record fetched = delegate.records.get(0);
     assertTrue(record0.equalPayloads(fetched));
     closeDataAccessor(dataAccessor);
+  }
+
+  public void testEmptyHistoryItemIsSkipped() throws NullCursorException {
+    final AndroidBrowserHistoryRepositorySession session = (AndroidBrowserHistoryRepositorySession) createAndBeginSession();
+    final AndroidBrowserRepositoryDataAccessor dbHelper = session.getDBHelper();
+
+    final long now = System.currentTimeMillis();
+    final HistoryRecord emptyURL = new HistoryRecord(Utils.generateGuid(), "history", now, false);
+    final HistoryRecord noVisits = new HistoryRecord(Utils.generateGuid(), "history", now, false);
+
+    emptyURL.fennecDateVisited = now;
+    emptyURL.fennecVisitCount  = 1;
+    emptyURL.histURI           = "";
+    emptyURL.title             = "Something";
+
+    noVisits.fennecDateVisited = now;
+    noVisits.fennecVisitCount  = 0;
+    noVisits.histURI           = "http://example.org/novisits";
+    noVisits.title             = "Something Else";
+
+    Uri one = dbHelper.insert(emptyURL);
+    Uri two = dbHelper.insert(noVisits);
+    assertNotNull(one);
+    assertNotNull(two);
+
+    // The records are in the DB.
+    final Cursor all = dbHelper.fetchAll();
+    assertEquals(2, all.getCount());
+    all.close();
+
+    // But aren't returned by fetching.
+    performWait(fetchAllRunnable(session, new Record[] {}));
+    session.abort();
   }
 
   public void testSqlInjectPurgeDelete() {
