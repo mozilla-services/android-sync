@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
@@ -16,6 +17,7 @@ import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -63,9 +65,31 @@ public abstract class ServerSyncStage implements
    * @throws MetaGlobalException
    */
   protected boolean isEnabled() throws MetaGlobalException {
-    // TODO: pass EngineSettings here to check syncID and storage version.
+    EngineSettings engineSettings = null;
+    try {
+       engineSettings = getEngineSettings();
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Unable to get engine settings for " + this + ": fetching config failed.", e);
+      // Fall through; null engineSettings will pass below.
+    }
+
     // Catch the subclasses of MetaGlobalException to trigger various resets and wipes.
-    return session.engineIsEnabled(this.getEngineName(), null);
+    return session.engineIsEnabled(this.getEngineName(), engineSettings);
+  }
+
+  protected EngineSettings getEngineSettings() throws NonObjectJSONException, IOException, ParseException {
+    Integer version = getStorageVersion();
+    if (version == null) {
+      Logger.warn(LOG_TAG, "null storage version for " + this + "; using version 0.");
+      version = new Integer(0);
+    }
+
+    SynchronizerConfiguration config = this.getConfig();
+
+    if (config == null || config.syncID == null) {
+      return new EngineSettings(Utils.generateGuid(), version.intValue());
+    }
+    return new EngineSettings(config.syncID, version.intValue());
   }
 
   protected abstract String getCollection();
@@ -117,8 +141,6 @@ public abstract class ServerSyncStage implements
     SynchronizerConfiguration config = this.getConfig();
     synchronizer.load(config);
 
-    // TODO: should wipe in either direction?
-    // TODO: syncID?!
     return synchronizer;
   }
 
