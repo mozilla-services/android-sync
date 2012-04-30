@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
@@ -16,6 +17,7 @@ import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -59,13 +61,38 @@ public abstract class ServerSyncStage implements
   /**
    * Override these in your subclasses.
    *
-   * @return true if this stage should be executed.
+   * @return <code>true</code> if this stage should be executed.
    * @throws MetaGlobalException
    */
   protected boolean isEnabled() throws MetaGlobalException {
-    // TODO: pass EngineSettings here to check syncID and storage version.
+    SynchronizerConfiguration config;
+    try {
+      config = this.getConfig();
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Unable to enable " + this + ": fetching config failed.", e);
+      return false;
+    }
+    EngineSettings engineSettings = getEngineSettings(config);
+
     // Catch the subclasses of MetaGlobalException to trigger various resets and wipes.
-    return session.engineIsEnabled(this.getEngineName(), null);
+    config.enabled = session.engineIsEnabled(this.getEngineName(), engineSettings);
+
+    // Persist the enabled flag from meta/global so that we can produce an
+    // up-to-date meta/global on demand.
+    this.persistConfig(config);
+
+    return config.enabled;
+  }
+
+  protected EngineSettings getEngineSettings(SynchronizerConfiguration config) {
+    if (config == null) {
+      return null;
+    }
+    if (config.syncID == null) {
+      // syncID not persisted means this is a first sync and we're going to need to write meta/global.
+      return new EngineSettings(Utils.generateGuid(), getEngineVersion());
+    }
+    return new EngineSettings(config.syncID, config.version);
   }
 
   protected abstract String getCollection();
@@ -119,7 +146,6 @@ public abstract class ServerSyncStage implements
     synchronizer.load(config);
 
     // TODO: should wipe in either direction?
-    // TODO: syncID?!
     return synchronizer;
   }
 
