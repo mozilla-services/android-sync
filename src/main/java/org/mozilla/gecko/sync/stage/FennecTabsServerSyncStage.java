@@ -39,6 +39,11 @@ public class FennecTabsServerSyncStage extends ServerSyncStage {
   }
 
   @Override
+  protected int getEngineVersion() {
+    return GlobalSession.TABS_ENGINE_VERSION;
+  }
+
+  @Override
   protected Repository getLocalRepository() {
     return new FennecTabsRepository();
   }

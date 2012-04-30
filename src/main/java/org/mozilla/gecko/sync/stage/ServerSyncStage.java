@@ -70,6 +70,7 @@ public abstract class ServerSyncStage implements
 
   protected abstract String getCollection();
   protected abstract String getEngineName();
+  protected abstract int getEngineVersion();
   protected abstract Repository getLocalRepository();
   protected abstract RecordFactory getRecordFactory();
 

@@ -57,6 +57,11 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     }
 
     @Override
+    protected int getEngineVersion() {
+      return 1;
+    }
+
+    @Override
     protected RecordFactory getRecordFactory() {
       return null;
     }

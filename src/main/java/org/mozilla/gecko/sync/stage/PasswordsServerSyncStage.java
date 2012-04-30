@@ -28,6 +28,11 @@ public class PasswordsServerSyncStage extends ServerSyncStage {
   }
 
   @Override
+  protected int getEngineVersion() {
+    return GlobalSession.PASSWORDS_ENGINE_VERSION;
+  }
+
+  @Override
   protected Repository getLocalRepository() {
     return new PasswordsRepositorySession.PasswordsRepository();
   }

@@ -35,9 +35,15 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
   protected String getCollection() {
     return "forms";
   }
+
   @Override
   protected String getEngineName() {
     return "forms";
+  }
+
+  @Override
+  protected int getEngineVersion() {
+    return GlobalSession.FORMS_ENGINE_VERSION;
   }
 
   @Override
