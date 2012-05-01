@@ -6,20 +6,15 @@ package org.mozilla.gecko.sync.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.CryptoRecord;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
-import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.PersistedMetaGlobal;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 
@@ -50,7 +45,7 @@ public class TestPersistedMetaGlobal {
   }
 
   @Test
-  public void testPersistMetaGlobal() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testPersistMetaGlobal() throws Exception {
     PersistedMetaGlobal persisted = new PersistedMetaGlobal(prefs);
 
     // Test fresh start.
@@ -58,15 +53,17 @@ public class TestPersistedMetaGlobal {
 
     // Test persisting.
     String body = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
-    MetaGlobal mg = new MetaGlobal(null, null);
-    mg.setFromRecord(CryptoRecord.fromJSONRecord(body));
+    MetaGlobal mg = new MetaGlobal(CryptoRecord.fromJSONRecord(body));
     persisted.persistMetaGlobal(mg);
 
     MetaGlobal persistedGlobal = persisted.metaGlobal();
     assertNotNull(persistedGlobal);
-    assertEquals("zPSQTm7WBVWB", persistedGlobal.getSyncID());
-    assertTrue(persistedGlobal.getEngines() instanceof ExtendedJSONObject);
-    assertEquals(new Long(5), persistedGlobal.getStorageVersion());
+    assertEquals("zPSQTm7WBVWB", persistedGlobal.syncID);
+    assertEquals(5, persistedGlobal.storageVersion);
+    EngineSettings engineSettings = mg.getEngineSettings("bookmarks");
+    assertNotNull(engineSettings);
+    assertEquals("NNaQr6_F-9dm", engineSettings.syncID);
+    assertEquals(2, engineSettings.version);
 
     // Test clearing.
     persisted.persistMetaGlobal(null);

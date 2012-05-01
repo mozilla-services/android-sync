@@ -10,6 +10,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.PersistedMetaGlobal;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.gecko.sync.net.MetaGlobalRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
@@ -49,8 +50,13 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
     }
 
     @Override
-    public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
-      session.processMissingMetaGlobal(global);
+    public void handleMalformed(SyncStorageResponse response) {
+      session.processMissingMetaGlobal();
+    }
+
+    @Override
+    public void handleMissing(SyncStorageResponse response) {
+      session.processMissingMetaGlobal();
     }
   }
 
@@ -77,7 +83,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
 
     // We need an update: fetch or upload meta/global as necessary.
     Logger.info(LOG_TAG, "Fetching fresh meta/global for this session.");
-    MetaGlobal global = new MetaGlobal(session.config.metaURL(), session.credentials());
-    global.fetch(new StageMetaGlobalDelegate(session));
+    MetaGlobalRequest request = new MetaGlobalRequest(session.config.metaURL(), session.credentials());
+    request.fetch(new StageMetaGlobalDelegate(session));
   }
 }

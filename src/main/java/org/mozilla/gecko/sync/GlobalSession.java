@@ -29,6 +29,7 @@ import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
+import org.mozilla.gecko.sync.net.MetaGlobalRequest;
 import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
@@ -60,7 +61,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   private static final String LOG_TAG = "GlobalSession";
 
   public static final String API_VERSION   = "1.1";
-  public static final long STORAGE_VERSION = 5;
+  public static final int STORAGE_VERSION = 5;
+  public static final int BOOKMARKS_ENGINE_VERSION = 2;
+  public static final int CLIENTS_ENGINE_VERSION = 1;
+  public static final int FORMS_ENGINE_VERSION = 1;
+  public static final int HISTORY_ENGINE_VERSION = 1;
+  public static final int PASSWORDS_ENGINE_VERSION = 1;
+  public static final int TABS_ENGINE_VERSION = 1;
 
   public SyncConfiguration config = null;
 
@@ -487,7 +494,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   public void processMetaGlobal(MetaGlobal global) {
     config.metaGlobal = global;
 
-    Long storageVersion = global.getStorageVersion();
+    int storageVersion = global.storageVersion;
     if (storageVersion < STORAGE_VERSION) {
       // Outdated server.
       freshStart();
@@ -498,7 +505,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       requiresUpgrade();
       return;
     }
-    String remoteSyncID = global.getSyncID();
+    String remoteSyncID = global.syncID;
     if (remoteSyncID == null) {
       // Corrupt meta/global.
       freshStart();
@@ -515,7 +522,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     advance();
   }
 
-  public void processMissingMetaGlobal(MetaGlobal global) {
+  public void processMissingMetaGlobal() {
     freshStart();
   }
 
@@ -561,15 +568,16 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
         session.config.purgeCryptoKeys();
         session.config.persistToPrefs();
 
-        MetaGlobal mg = new MetaGlobal(metaURL, credentials);
-        mg.setSyncID(newSyncID);
-        mg.setStorageVersion(STORAGE_VERSION);
+        MetaGlobal mg = new MetaGlobal();
+        mg.syncID = newSyncID;
+        mg.storageVersion = STORAGE_VERSION;
+        MetaGlobalRequest request = new MetaGlobalRequest(metaURL, credentials);
 
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
         // for this PUT to ensure at least some level of transactionality.
         // Unfortunately, the servers don't support it after a wipe right now
         // (bug 693893), so we're going to defer this until bug 692700.
-        mg.upload(new MetaGlobalDelegate() {
+        request.upload(mg, new MetaGlobalDelegate() {
 
           @Override
           public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
@@ -598,10 +606,15 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
           }
 
           @Override
-          public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+          public void handleMissing(SyncStorageResponse response) {
             // Shouldn't happen.
             Logger.warn(LOG_TAG, "Got 'missing' response uploading new meta/global.");
             freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing"));
+          }
+
+          @Override
+          public void handleMalformed(SyncStorageResponse response) {
+            handleFailure(response); // XXX for now.
           }
 
           @Override
@@ -767,38 +780,28 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Otherwise, returns true if there is an entry for this engine in the
    * meta/global "engines" object.
    *
-   * @param engineName the name to check (e.g., "bookmarks").
-   * @param engineSettings
-   *        if non-null, verify that the server engine settings are congruent
-   *        with this, throwing the appropriate MetaGlobalException if not.
-   * @return
-   *        true if the engine with the provided name is present in the
-   *        meta/global "engines" object, and verification passed.
+   * @param engineName
+   *          the name to check (e.g., "bookmarks").
+   * @param clientEngineSettings
+   *          if non-null, verify that the server engine settings are congruent
+   *          with these client engine settings, throwing the appropriate
+   *          MetaGlobalException if not.
+   * @return true if the engine with the provided name is present in the
+   *         meta/global "engines" object, and verification passed.
    *
    * @throws MetaGlobalException
    */
-  public boolean engineIsEnabled(String engineName, EngineSettings engineSettings) throws MetaGlobalException {
-    if (this.config.metaGlobal == null) {
+  public boolean engineIsEnabled(String engineName, EngineSettings clientEngineSettings) throws MetaGlobalException {
+    if (config.metaGlobal == null) {
       throw new MetaGlobalNotSetException();
     }
-    if (this.config.metaGlobal.engines == null) {
-      throw new MetaGlobalMissingEnginesException();
-    }
-    ExtendedJSONObject engineEntry;
-    try {
-      engineEntry = this.config.metaGlobal.engines.getObject(engineName);
-    } catch (NonObjectJSONException e) {
-      Logger.error(LOG_TAG, "Engine field for " + engineName + " in meta/global is not an object.");
-      throw new MetaGlobalMissingEnginesException();
-    }
-
-    if (engineEntry == null) {
+    EngineSettings serverEngineSettings = config.metaGlobal.getEngineSettings(engineName);
+    if (serverEngineSettings == null) {
       Logger.debug(LOG_TAG, "Engine " + engineName + " not enabled: no meta/global entry.");
       return false;
     }
-
-    if (engineSettings != null) {
-      MetaGlobal.verifyEngineSettings(engineEntry, engineSettings);
+    if (clientEngineSettings != null) {
+      MetaGlobal.verifyEngineSettings(serverEngineSettings, clientEngineSettings);
     }
     return true;
   }

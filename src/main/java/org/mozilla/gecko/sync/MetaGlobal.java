@@ -4,76 +4,53 @@
 
 package org.mozilla.gecko.sync;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
-import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedSyncIDException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedVersionException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalStaleClientSyncIDException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalStaleClientVersionException;
-import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
-import android.util.Log;
-
-public class MetaGlobal implements SyncStorageRequestDelegate {
+public class MetaGlobal {
+  @SuppressWarnings("unused")
   private static final String LOG_TAG = "MetaGlobal";
-  protected String metaURL;
-  protected String credentials;
 
-  // Fields.
-  protected ExtendedJSONObject  engines;
-  protected Long                storageVersion;
-  protected String              syncID;
+  protected Map<String, EngineSettings> engines = new HashMap<String, EngineSettings>();
+  public String syncID;
+  public int storageVersion;
 
-  // Temporary location to store our callback.
-  private MetaGlobalDelegate callback;
-
-  // A little hack so we can use the same delegate implementation for upload and download.
-  private boolean isUploading;
-
-  public MetaGlobal(String metaURL, String credentials) {
-    this.metaURL     = metaURL;
-    this.credentials = credentials;
+  public MetaGlobal() {
   }
 
-  public void fetch(MetaGlobalDelegate callback) {
-    this.callback = callback;
-    this.doFetch();
-  }
-
-  private void doFetch() {
+  public MetaGlobal(CryptoRecord record) throws MetaGlobalException {
     try {
-      this.isUploading = false;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
-      r.delegate = this;
-      r.deferGet();
-    } catch (URISyntaxException e) {
-      callback.handleError(e);
+      setFromRecord(record);
+    } catch (Exception e) {
+      throw new MetaGlobalException();
     }
   }
 
-  public void upload(MetaGlobalDelegate callback) {
-    try {
-      this.isUploading = true;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+  public Collection<String> getEngineNames() {
+    return new ArrayList<String>(engines.keySet());
+  }
 
-      // TODO: PUT! Body!
-      r.delegate = this;
-      r.deferPut(null);
-    } catch (URISyntaxException e) {
-      callback.handleError(e);
-    }
+  public EngineSettings getEngineSettings(String engineName) {
+    return engines.get(engineName);
   }
 
   protected ExtendedJSONObject asRecordContents() {
     ExtendedJSONObject json = new ExtendedJSONObject();
-    json.put("storageVersion", storageVersion);
-    json.put("engines", engines);
     json.put("syncID", syncID);
+    json.put("storageVersion", storageVersion);
+    ExtendedJSONObject jsonEngines = new ExtendedJSONObject();
+    for (Entry<String, EngineSettings> pair : engines.entrySet()) {
+      jsonEngines.put(pair.getKey(), pair.getValue().toJSONObject());
+    }
+    json.put("engines", jsonEngines);
     return json;
   }
 
@@ -86,137 +63,97 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     return record;
   }
 
-  public void setFromRecord(CryptoRecord record) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
-    Log.i(LOG_TAG, "meta/global is " + record.payload.toJSONString());
-    this.storageVersion = (Long) record.payload.get("storageVersion");
-    this.engines = record.payload.getObject("engines");
-    this.syncID = (String) record.payload.get("syncID");
-  }
+  public void setFromRecord(CryptoRecord record) throws MetaGlobalException {
+    if (record == null || record.payload == null) {
+      throw new IllegalArgumentException("record and record.payload cannot be null.");
+    }
+    // Log.i(LOG_TAG, "meta/global is " + record.payload.toJSONString());
 
-  public Long getStorageVersion() {
-    return this.storageVersion;
-  }
+    try {
+      this.syncID = record.payload.getString("syncID");
+    } catch (Exception e) {
+      throw new MetaGlobalException.MetaGlobalMalformedSyncIDException();
+    }
+    if (this.syncID == null) {
+      throw new MetaGlobalException.MetaGlobalMalformedSyncIDException();
+    }
 
-  public void setStorageVersion(Long version) {
-    this.storageVersion = version;
-  }
+    try {
+      Integer storageVersion = record.payload.getIntegerSafely("storageVersion");
+      if (storageVersion == null) {
+        throw new MetaGlobalException.MetaGlobalMalformedVersionException();
+      }
+      this.storageVersion = storageVersion.intValue();
+      if (this.storageVersion == 0) {
+        throw new MetaGlobalException.MetaGlobalMalformedVersionException();
+      }
+    } catch (NumberFormatException e) {
+      throw new MetaGlobalException.MetaGlobalMalformedVersionException();
+    }
 
-  public ExtendedJSONObject getEngines() {
-    return engines;
-  }
+    ExtendedJSONObject jsonEngines;
+    try {
+      jsonEngines = record.payload.getObject("engines");
+    } catch (NonObjectJSONException e) {
+      throw new MetaGlobalException.MetaGlobalMissingEnginesException();
+    }
+    if (jsonEngines == null) {
+      throw new MetaGlobalException.MetaGlobalMissingEnginesException();
+    }
 
-  public void setEngines(ExtendedJSONObject engines) {
-    this.engines = engines;
+    for (Entry<String, Object> pair : jsonEngines.entryIterable()) {
+      String engineName = pair.getKey();
+      ExtendedJSONObject jsonEngine = null;
+      try {
+        jsonEngine = jsonEngines.getObject(engineName);
+      } catch (NonObjectJSONException e) {
+        throw new MetaGlobalException.MetaGlobalMalformedEnginesException();
+      }
+      if (jsonEngine == null) {
+        continue; // Possibly should throw here.
+      }
+      try {
+        EngineSettings engineSettings = new EngineSettings(jsonEngine);
+        this.engines.put(engineName, engineSettings);
+      } catch (Exception e) {
+        continue; // Possible should throw here.
+      }
+    }
   }
 
   /**
    * Returns if the server settings and local settings match.
    * Throws a specific exception if that's not the case.
    */
-  public static void verifyEngineSettings(ExtendedJSONObject engineEntry,
-                                          EngineSettings engineSettings)
+  public static void verifyEngineSettings(EngineSettings serverSettings,
+                                          EngineSettings clientSettings)
   throws MetaGlobalMalformedVersionException, MetaGlobalMalformedSyncIDException, MetaGlobalStaleClientVersionException, MetaGlobalStaleClientSyncIDException {
 
-    if (engineEntry == null) {
-      throw new IllegalArgumentException("engineEntry cannot be null.");
+    if (serverSettings == null) {
+      throw new IllegalArgumentException("serverSettings cannot be null.");
     }
-    if (engineSettings == null) {
+    if (clientSettings == null) {
       throw new IllegalArgumentException("engineSettings cannot be null.");
     }
-    try {
-      Integer version = engineEntry.getIntegerSafely("version");
-      if (version == null ||
-          version.intValue() == 0) {
-        // Invalid version. Wipe the server.
-        throw new MetaGlobalException.MetaGlobalMalformedVersionException();
-      }
-      if (version > engineSettings.version) {
-        // We're out of date.
-        throw new MetaGlobalException.MetaGlobalStaleClientVersionException(version);
-      }
-      try {
-        String syncID = engineEntry.getString("syncID");
-        if (syncID == null) {
-          // No syncID. This should never happen. Wipe the server.
-          throw new MetaGlobalException.MetaGlobalMalformedSyncIDException();
-        }
-        if (!syncID.equals(engineSettings.syncID)) {
-          // Our syncID is wrong. Reset client and take the server syncID.
-          throw new MetaGlobalException.MetaGlobalStaleClientSyncIDException(syncID);
-        }
-        // Great!
-        return;
 
-      } catch (ClassCastException e) {
-        // Malformed syncID on the server. Wipe the server.
-        throw new MetaGlobalException.MetaGlobalMalformedSyncIDException();
-      }
-    } catch (NumberFormatException e) {
+    if (serverSettings.version < 1) {
       // Invalid version. Wipe the server.
       throw new MetaGlobalException.MetaGlobalMalformedVersionException();
     }
 
-  }
-
-  public String getSyncID() {
-    return syncID;
-  }
-
-  public void setSyncID(String syncID) {
-    this.syncID = syncID;
-  }
-
-  // SyncStorageRequestDelegate methods for fetching.
-  public String credentials() {
-    return this.credentials;
-  }
-
-  public String ifUnmodifiedSince() {
-    return null;
-  }
-
-  public void handleRequestSuccess(SyncStorageResponse response) {
-    if (this.isUploading) {
-      this.handleUploadSuccess(response);
-    } else {
-      this.handleDownloadSuccess(response);
+    if (serverSettings.version > clientSettings.version) {
+      // We're out of date.
+      throw new MetaGlobalException.MetaGlobalStaleClientVersionException(serverSettings.version);
     }
-  }
 
-  private void handleUploadSuccess(SyncStorageResponse response) {
-    this.callback.handleSuccess(this, response);
-    this.callback = null;
-  }
-
-  private void handleDownloadSuccess(SyncStorageResponse response) {
-    if (response.wasSuccessful()) {
-      try {
-        CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
-        this.setFromRecord(record);
-        this.callback.handleSuccess(this, response);
-        this.callback = null;
-      } catch (Exception e) {
-        this.callback.handleError(e);
-        this.callback = null;
-      }
-      return;
+    if (serverSettings.syncID == null) {
+      // No syncID. This should never happen. Wipe the server.
+      throw new MetaGlobalException.MetaGlobalMalformedSyncIDException();
     }
-    this.callback.handleFailure(response);
-    this.callback = null;
-  }
 
-  public void handleRequestFailure(SyncStorageResponse response) {
-    if (response.getStatusCode() == 404) {
-      this.callback.handleMissing(this, response);
-      this.callback = null;
-      return;
+    if (!serverSettings.syncID.equals(clientSettings.syncID)) {
+      // Our syncID is wrong. Reset client and take the server syncID.
+      throw new MetaGlobalException.MetaGlobalStaleClientSyncIDException(serverSettings.syncID);
     }
-    this.callback.handleFailure(response);
-    this.callback = null;
-  }
-
-  public void handleRequestError(Exception e) {
-    this.callback.handleError(e);
-    this.callback = null;
   }
 }

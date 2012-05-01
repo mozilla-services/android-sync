@@ -29,9 +29,7 @@ public class PersistedMetaGlobal {
     MetaGlobal metaGlobal = null;
     try {
       CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(json);
-      MetaGlobal mg = new MetaGlobal(null, null);
-      mg.setFromRecord(cryptoRecord);
-      metaGlobal = mg;
+      metaGlobal = new MetaGlobal(cryptoRecord);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception decrypting persisted meta/global.", e);
     }
