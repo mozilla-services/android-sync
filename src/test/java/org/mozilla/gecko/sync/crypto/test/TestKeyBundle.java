@@ -5,6 +5,8 @@ package org.mozilla.gecko.sync.crypto.test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -54,5 +56,19 @@ public class TestKeyBundle {
 
     boolean equal = Arrays.equals(keys.getEncryptionKey(), keys.getHMACKey());
     assertEquals(false, equal);
+  }
+
+  @Test
+  public void testEquals() throws CryptoException {
+    KeyBundle k = KeyBundle.withRandomKeys();
+    KeyBundle o = KeyBundle.withRandomKeys();
+    assertFalse(k.equals("test"));
+    assertFalse(k.equals(o));
+    assertTrue(k.equals(k));
+    assertTrue(o.equals(o));
+    o.setHMACKey(k.getHMACKey());
+    assertFalse(o.equals(k));
+    o.setEncryptionKey(k.getEncryptionKey());
+    assertTrue(o.equals(k));
   }
 }
