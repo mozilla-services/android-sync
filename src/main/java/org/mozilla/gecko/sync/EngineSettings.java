@@ -12,4 +12,16 @@ public class EngineSettings {
     this.syncID = syncID;
     this.version = version;
   }
+
+  public EngineSettings(ExtendedJSONObject object) throws NumberFormatException {
+    this.syncID = object.getString("syncID");
+    this.version = object.getIntegerSafely("version").intValue();
+  }
+
+  public ExtendedJSONObject toJSONObject() {
+    ExtendedJSONObject json = new ExtendedJSONObject();
+    json.put("syncID", syncID);
+    json.put("version", version);
+    return json;
+  }
 }
