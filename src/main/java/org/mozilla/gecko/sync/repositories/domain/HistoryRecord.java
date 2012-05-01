@@ -1,39 +1,6 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Android Sync Client.
- *
- * The Initial Developer of the Original Code is
- * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.domain;
 
@@ -41,7 +8,6 @@ import java.util.HashMap;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonArrayJSONException;
@@ -58,22 +24,23 @@ public class HistoryRecord extends Record {
   private static final String LOG_TAG = "HistoryRecord";
 
   public static final String COLLECTION_NAME = "history";
+  public static final long HISTORY_TTL = 60 * 24 * 60 * 60; // 60 days in seconds.
 
-  public HistoryRecord(String guid, String collection, long lastModified,
-      boolean deleted) {
+  public HistoryRecord(String guid, String collection, long lastModified, boolean deleted) {
     super(guid, collection, lastModified, deleted);
+    this.ttl = HISTORY_TTL;
   }
   public HistoryRecord(String guid, String collection, long lastModified) {
-    super(guid, collection, lastModified, false);
+    this(guid, collection, lastModified, false);
   }
   public HistoryRecord(String guid, String collection) {
-    super(guid, collection, 0, false);
+    this(guid, collection, 0, false);
   }
   public HistoryRecord(String guid) {
-    super(guid, COLLECTION_NAME, 0, false);
+    this(guid, COLLECTION_NAME, 0, false);
   }
   public HistoryRecord() {
-    super(Utils.generateGuid(), COLLECTION_NAME, 0, false);
+    this(Utils.generateGuid(), COLLECTION_NAME, 0, false);
   }
 
   public String    title;
@@ -97,6 +64,7 @@ public class HistoryRecord extends Record {
     HistoryRecord out = new HistoryRecord(guid, this.collection, this.lastModified, this.deleted);
     out.androidID = androidID;
     out.sortIndex = this.sortIndex;
+    out.ttl       = this.ttl;
 
     // Copy HistoryRecord fields.
     out.title             = this.title;
@@ -109,41 +77,29 @@ public class HistoryRecord extends Record {
   }
 
   @Override
-  public void initFromPayload(CryptoRecord payload) {
-    ExtendedJSONObject p = payload.payload;
+  protected void populatePayload(ExtendedJSONObject payload) {
+    putPayload(payload, "id",      this.guid);
+    putPayload(payload, "title",   this.title);
+    putPayload(payload, "histUri", this.histURI);             // TODO: encoding?
+    payload.put("visits",  this.visits);
+  }
 
-    this.guid = payload.guid;
-    this.checkGUIDs(p);
-
-    this.lastModified  = payload.lastModified;
-    this.deleted       = payload.deleted;
-
-    this.histURI = (String) p.get("histUri");
-    this.title   = (String) p.get("title");
+  @Override
+  protected void initFromPayload(ExtendedJSONObject payload) {
+    this.histURI = (String) payload.get("histUri");
+    this.title   = (String) payload.get("title");
     try {
-      this.visits = p.getArray("visits");
+      this.visits = payload.getArray("visits");
     } catch (NonArrayJSONException e) {
       Logger.error(LOG_TAG, "Got non-array visits in history record " + this.guid, e);
       this.visits = new JSONArray();
     }
   }
 
-  @Override
-  public CryptoRecord getPayload() {
-    CryptoRecord rec = new CryptoRecord(this);
-    rec.payload = new ExtendedJSONObject();
-    Logger.debug(LOG_TAG, "Getting payload for history record " + this.guid + " (" + this.guid.length() + ").");
-    rec.payload.put("id",      this.guid);
-    rec.payload.put("title",   this.title);
-    rec.payload.put("histUri", this.histURI);             // TODO: encoding?
-    rec.payload.put("visits",  this.visits);
-    return rec;
-  }
-
-
   /**
    * We consider two history records to be congruent if they represent the
-   * same history record regardless of visits.
+   * same history record regardless of visits. Titles are allowed to differ,
+   * but the URI must be the same.
    */
   @Override
   public boolean congruentWith(Object o) {
@@ -154,8 +110,7 @@ public class HistoryRecord extends Record {
     if (!super.congruentWith(other)) {
       return false;
     }
-    return RepoUtils.stringsEqual(this.title, other.title) &&
-           RepoUtils.stringsEqual(this.histURI, other.histURI);
+    return RepoUtils.stringsEqual(this.histURI, other.histURI);
   }
 
   @Override

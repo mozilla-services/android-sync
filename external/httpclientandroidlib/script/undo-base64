@@ -1,0 +1,7 @@
+#!/bin/bash
+# Replace Base64 encoding with android.util.Base64 (This way it's only compatible with API 8+)
+find . -name '*.java' -exec sed -i "" "s/android\.util\.Base64/org.mozilla.apache.commons.codec.binary.Base64/g" {} \;
+find . -name "BasicScheme.java" -exec sed -i "" -n '1h;1!H;${;g;s/Base64.encode(/Base64.encodeBase64(/g;p;}' {} \;
+find . -name "NTLMEngineImpl.java" -exec sed -i "" -n '1h;1!H;${;g;s/Base64.encode(resp, Base64.NO_WRAP)/Base64.encodeBase64(resp)/g;p;}' {} \;
+find . -name "*.java" -exec sed -i "" -n '1h;1!H;${;g;s/Base64.decode(\([^;]*, Base64\.NO_WRAP\))/Base64.decodeBase64(\1)/g;p;}' {} \;
+find . -name "*.java" -exec sed -i "" -n '1h;1!H;${;g;s/, Base64\.NO_WRAP//g;p;}' {} \;

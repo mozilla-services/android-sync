@@ -1,40 +1,6 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Android Sync Client.
- *
- * The Initial Developer of the Original Code is
- * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Jason Voll <jvoll@mozilla.com>
- *   Richard Newman <rnewman@mozilla.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.android;
 
@@ -56,10 +22,12 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.StoreTrackingRepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
 
@@ -86,9 +54,9 @@ import android.net.Uri;
  *
  */
 public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepositorySession {
+  public static final String LOG_TAG = "BrowserRepoSession";
 
   protected AndroidBrowserRepositoryDataAccessor dbHelper;
-  public static final String LOG_TAG = "BrowserRepoSession";
   private HashMap<String, String> recordToGuid;
 
   public AndroidBrowserRepositorySession(Repository repository) {
@@ -96,24 +64,55 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   }
 
   /**
-   * Override this.
+   * Retrieve a record from a cursor. Act as if we don't know the final contents of
+   * the record: for example, a folder's child array might change.
+   *
    * Return null if this record should not be processed.
    *
-   * @param cur
-   * @return
    * @throws NoGuidForIdException
    * @throws NullCursorException
    * @throws ParentNotFoundException
    */
-  protected abstract Record recordFromMirrorCursor(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
+  protected abstract Record retrieveDuringStore(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
 
-  // Must be overriden by AndroidBookmarkRepositorySession.
-  protected boolean checkRecordType(Record record) {
-    return true;
+  /**
+   * Retrieve a record from a cursor. Ensure that the contents of the database are
+   * updated to match the record that we're constructing: for example, the children
+   * of a folder might be repositioned as we generate the folder's record.
+   *
+   * @throws NoGuidForIdException
+   * @throws NullCursorException
+   * @throws ParentNotFoundException
+   */
+  protected abstract Record retrieveDuringFetch(Cursor cur) throws NoGuidForIdException, NullCursorException, ParentNotFoundException;
+
+  /**
+   * Override this to allow records to be skipped during insertion.
+   *
+   * For example, a session subclass might skip records of an unsupported type.
+   */
+  protected boolean shouldIgnore(Record record) {
+    return false;
+  }
+
+  /**
+   * Perform any necessary transformation of a record prior to searching by
+   * any field other than GUID.
+   *
+   * Example: translating remote folder names into local names.
+   */
+  protected void fixupRecord(Record record) {
+    return;
   }
 
   /**
    * Override in subclass to implement record extension.
+   *
+   * Populate any fields of the record that are expensive to calculate,
+   * prior to reconciling.
+   *
+   * Example: computing children arrays.
+   *
    * Return null if this record should not be processed.
    *
    * @param record
@@ -126,14 +125,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   }
 
   @Override
-  public void begin(RepositorySessionBeginDelegate delegate) {
+  public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
     RepositorySessionBeginDelegate deferredDelegate = delegate.deferredBeginDelegate(delegateQueue);
-    try {
-      super.sharedBegin();
-    } catch (InvalidSessionTransitionException e) {
-      deferredDelegate.onBeginFailed(e);
-      return;
-    }
+    super.sharedBegin();
 
     try {
       // We do this check here even though it results in one extra call to the DB
@@ -153,6 +147,13 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     }
     storeTracker = createStoreTracker();
     deferredDelegate.onBeginSucceeded(this);
+  }
+
+  @Override
+  public void finish(RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
+    dbHelper = null;
+    recordToGuid = null;
+    super.finish(delegate);
   }
 
   protected abstract String buildRecordString(Record record);
@@ -226,9 +227,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
   @Override
   public void fetch(String[] guids,
-                    RepositorySessionFetchRecordsDelegate delegate) {
+                    RepositorySessionFetchRecordsDelegate delegate) throws InactiveSessionException {
     FetchRunnable command = new FetchRunnable(guids, now(), null, delegate);
-    delegateQueue.execute(command);
+    executeDelegateCommand(command);
   }
 
   abstract class FetchingRunnable implements Runnable {
@@ -247,7 +248,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
             return;
           }
           while (!cursor.isAfterLast()) {
-            Record r = recordFromMirrorCursor(cursor);
+            Record r = retrieveDuringFetch(cursor);
             if (r != null) {
               if (filter == null || !filter.excludeRecord(r)) {
                 Logger.trace(LOG_TAG, "Processing record " + r.guid);
@@ -274,7 +275,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     }
   }
 
-  class FetchRunnable extends FetchingRunnable {
+  public class FetchRunnable extends FetchingRunnable {
     private String[] guids;
     private long     end;
     private RecordFilter filter;
@@ -360,6 +361,8 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     this.fetchSince(0, delegate);
   }
 
+  protected int storeCount = 0;
+
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
     if (delegate == null) {
@@ -370,6 +373,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       throw new IllegalArgumentException("Null record passed to AndroidBrowserRepositorySession.store().");
     }
 
+    storeCount += 1;
+    Logger.debug(LOG_TAG, "Storing record with GUID " + record.guid + " (stored " + storeCount + " records this session).");
+
     // Store Runnables *must* complete synchronously. It's OK, they
     // run on a background thread.
     Runnable command = new Runnable() {
@@ -377,6 +383,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       @Override
       public void run() {
         if (!isActive()) {
+          Logger.warn(LOG_TAG, "AndroidBrowserRepositorySession is inactive. Store failing.");
           delegate.onRecordStoreFailed(new InactiveSessionException(null));
           return;
         }
@@ -386,8 +393,8 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
         // including livemarks and queries, are simply ignored.
         // See Bug 708149. This might be resolved by Fennec changing its database
         // schema, or by Sync storing non-applied records in its own private database.
-        if (!checkRecordType(record)) {
-          Logger.debug(LOG_TAG, "Ignoring record " + record.guid + " due to unknown record type.");
+        if (shouldIgnore(record)) {
+          Logger.debug(LOG_TAG, "Ignoring record " + record.guid);
 
           // Don't throw: we don't want to abort the entire sync when we get a livemark!
           // delegate.onRecordStoreFailed(new InvalidBookmarkTypeException(null));
@@ -408,7 +415,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
         Record existingRecord;
         try {
           // GUID matching only: deleted records don't have a payload with which to search.
-          existingRecord = recordForGUID(record.guid);
+          existingRecord = retrieveByGUIDDuringStore(record.guid);
           if (record.deleted) {
             if (existingRecord == null) {
               // We're done. Don't bother with a callback. That can change later
@@ -431,14 +438,14 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
             boolean locallyModified = existingRecord.lastModified > lastLocalRetrieval;
             if (!locallyModified) {
               trace("Remote modified, local not. Deleting.");
-              storeRecordDeletion(record);
+              storeRecordDeletion(record, existingRecord);
               return;
             }
 
             trace("Both local and remote records have been modified.");
             if (record.lastModified > existingRecord.lastModified) {
               trace("Remote is newer, and deleted. Deleting local.");
-              storeRecordDeletion(record);
+              storeRecordDeletion(record, existingRecord);
               return;
             }
 
@@ -452,6 +459,9 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           // End deletion logic.
 
           // Now we're processing a non-deleted incoming record.
+          // Apply any changes we need in order to correctly find existing records.
+          fixupRecord(record);
+
           if (existingRecord == null) {
             trace("Looking up match for record " + record.guid);
             existingRecord = findExistingRecord(record);
@@ -460,9 +470,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           if (existingRecord == null) {
             // The record is new.
             trace("No match. Inserting.");
-            Record inserted = insert(record);
-            trackRecord(inserted);
-            delegate.onRecordStoreSucceeded(inserted);
+            insert(record);
             return;
           }
 
@@ -479,7 +487,16 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           }
 
           // TODO: pass in timestamps?
-          Logger.debug(LOG_TAG, "Replacing " + existingRecord.guid + " with record " + toStore.guid);
+
+          // This section of code will only run if the incoming record is not
+          // marked as deleted, so we never want to just drop ours from the database:
+          // we need to upload it later.
+          // Allowing deleted items to propagate through `replace` allows normal
+          // logging and side-effects to occur, and is no more expensive than simply
+          // bumping the modified time.
+          Logger.debug(LOG_TAG, "Replacing existing " + existingRecord.guid +
+                       (toStore.deleted ? " with deleted record " : " with record ") +
+                       toStore.guid);
           Record replaced = replace(toStore, existingRecord);
 
           // Note that we don't track records here; deciding that is the job
@@ -511,23 +528,33 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     storeWorkQueue.execute(command);
   }
 
-  protected void storeRecordDeletion(final Record record) {
-    // TODO: we ought to mark the record as deleted rather than deleting it,
+  /**
+   * Process a request for deletion of a record.
+   * Neither argument will ever be null.
+   *
+   * @param record the incoming record. This will be mostly blank, given that it's a deletion.
+   * @param existingRecord the existing record. Use this to decide how to process the deletion.
+   */
+  protected void storeRecordDeletion(final Record record, final Record existingRecord) {
+    // TODO: we ought to mark the record as deleted rather than purging it,
     // in order to support syncing to multiple destinations. Bug 722607.
-    dbHelper.delete(record);      // TODO: mm?
+    dbHelper.purgeGuid(record.guid);
     delegate.onRecordStoreSucceeded(record);
   }
 
-  protected Record insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+  protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Record toStore = prepareRecord(record);
     Uri recordURI = dbHelper.insert(toStore);
-    long id = RepoUtils.getAndroidIdFromUri(recordURI);
-    Logger.debug(LOG_TAG, "Inserted as " + id);
+    if (recordURI == null) {
+      throw new NullCursorException(new RuntimeException("Got null URI inserting record with guid " + record.guid));
+    }
+    toStore.androidID = ContentUris.parseId(recordURI);
 
-    toStore.androidID = id;
     updateBookkeeping(toStore);
-    Logger.debug(LOG_TAG, "insert() returning record " + toStore.guid);
-    return toStore;
+    trackRecord(toStore);
+    delegate.onRecordStoreSucceeded(toStore);
+
+    Logger.debug(LOG_TAG, "Inserted record with guid " + toStore.guid + " as androidID " + toStore.androidID);
   }
 
   protected Record replace(Record newRecord, Record existingRecord) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
@@ -540,7 +567,16 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     return toStore;
   }
 
-  protected Record recordForGUID(String guid) throws
+  /**
+   * Retrieve a record from the store by GUID, without writing unnecessarily to the
+   * database.
+   *
+   * @throws NoGuidForIdException
+   * @throws NullCursorException
+   * @throws ParentNotFoundException
+   * @throws MultipleRecordsForGuidException
+   */
+  protected Record retrieveByGUIDDuringStore(String guid) throws
                                              NoGuidForIdException,
                                              NullCursorException,
                                              ParentNotFoundException,
@@ -551,7 +587,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
         return null;
       }
 
-      Record r = recordFromMirrorCursor(cursor);
+      Record r = retrieveDuringStore(cursor);
 
       cursor.moveToNext();
       if (cursor.isAfterLast()) {
@@ -584,14 +620,20 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
     Logger.debug(LOG_TAG, "Finding existing record for incoming record with GUID " + record.guid);
     String recordString = buildRecordString(record);
+    if (recordString == null) {
+      Logger.debug(LOG_TAG, "No record string for incoming record " + record.guid);
+      return null;
+    }
+
     Logger.debug(LOG_TAG, "Searching with record string " + recordString);
     String guid = getRecordToGuidMap().get(recordString);
-    if (guid != null) {
-      Logger.debug(LOG_TAG, "Found one. Returning computed record.");
-      return recordForGUID(guid);
+    if (guid == null) {
+      Logger.debug(LOG_TAG, "findExistingRecord failed to find one for " + record.guid);
+      return null;
     }
-    Logger.debug(LOG_TAG, "findExistingRecord failed to find one for " + record.guid);
-    return null;
+
+    Logger.debug(LOG_TAG, "Found one. Returning computed record.");
+    return retrieveByGUIDDuringStore(guid);
   }
 
   public HashMap<String, String> getRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
@@ -604,15 +646,22 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   private void createRecordToGuidMap() throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
     Logger.info(LOG_TAG, "BEGIN: creating record -> GUID map.");
     recordToGuid = new HashMap<String, String>();
+
+    // TODO: we should be able to do this entire thing with string concatenations within SQL.
+    // Also consider whether it's better to fetch and process every record in the DB into
+    // memory, or run a query per record to do the same thing.
     Cursor cur = dbHelper.fetchAll();
     try {
       if (!cur.moveToFirst()) {
         return;
       }
       while (!cur.isAfterLast()) {
-        Record record = recordFromMirrorCursor(cur);
+        Record record = retrieveDuringStore(cur);
         if (record != null) {
-          recordToGuid.put(buildRecordString(record), record.guid);
+          final String recordString = buildRecordString(record);
+          if (recordString != null) {
+            recordToGuid.put(recordString, record.guid);
+          }
         }
         cur.moveToNext();
       }
@@ -623,6 +672,10 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   }
 
   public void putRecordToGuidMap(String recordString, String guid) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
+    if (recordString == null) {
+      return;
+    }
+
     if (recordToGuid == null) {
       createRecordToGuidMap();
     }
@@ -630,26 +683,31 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
   }
 
   protected abstract Record prepareRecord(Record record);
+
   protected void updateBookkeeping(Record record) throws NoGuidForIdException,
                                                  NullCursorException,
                                                  ParentNotFoundException {
     putRecordToGuidMap(buildRecordString(record), record.guid);
   }
 
-  // Wipe method and thread.
+  protected WipeRunnable getWipeRunnable(RepositorySessionWipeDelegate delegate) {
+    return new WipeRunnable(delegate);
+  }
+
   @Override
   public void wipe(RepositorySessionWipeDelegate delegate) {
-    Runnable command = new WipeRunnable(delegate);
+    Runnable command = getWipeRunnable(delegate);
     storeWorkQueue.execute(command);
   }
 
   class WipeRunnable implements Runnable {
-    private RepositorySessionWipeDelegate delegate;
+    protected RepositorySessionWipeDelegate delegate;
 
     public WipeRunnable(RepositorySessionWipeDelegate delegate) {
       this.delegate = delegate;
     }
 
+    @Override
     public void run() {
       if (!isActive()) {
         delegate.onWipeFailed(new InactiveSessionException(null));
@@ -658,5 +716,10 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       dbHelper.wipe();
       delegate.onWipeSucceeded();
     }
+  }
+
+  // For testing purposes.
+  public AndroidBrowserRepositoryDataAccessor getDBHelper() {
+    return dbHelper;
   }
 }

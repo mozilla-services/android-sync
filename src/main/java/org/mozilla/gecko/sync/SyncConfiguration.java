@@ -1,39 +1,6 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Android Sync Client.
- *
- * The Initial Developer of the Original Code is
- * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Richard Newman <rnewman@mozilla.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync;
 
@@ -43,10 +10,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.util.Log;
 
 public class SyncConfiguration implements CredentialsSource {
 
@@ -224,12 +191,15 @@ public class SyncConfiguration implements CredentialsSource {
   public String          prefsPath;
   public PrefsSource     prefsSource;
 
+  public static final String CLIENTS_COLLECTION_TIMESTAMP = "serverClientsTimestamp";  // When the collection was touched.
+  public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";  // When our record was touched.
+
+  public static final String PREF_CLUSTER_URL = "clusterURL";
+  public static final String PREF_SYNC_ID = "syncID";
+
   /**
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
    * provide access to preferences.
-   *
-   * @param prefsPath
-   * @param context
    */
   public SyncConfiguration(String prefsPath, PrefsSource prefsSource) {
     this.prefsPath   = prefsPath;
@@ -238,14 +208,15 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   public SharedPreferences getPrefs() {
-    Log.d(LOG_TAG, "Returning prefs for " + prefsPath);
+    Logger.debug(LOG_TAG, "Returning prefs for " + prefsPath);
     return prefsSource.getPrefs(prefsPath, Utils.SHARED_PREFERENCES_MODE);
   }
 
   /**
    * Return a convenient accessor for part of prefs.
-   * @param prefix
    * @return
+   *        A ConfigurationBranch object representing this
+   *        section of the preferences space.
    */
   public ConfigurationBranch getBranch(String prefix) {
     return new ConfigurationBranch(this, prefix);
@@ -253,20 +224,22 @@ public class SyncConfiguration implements CredentialsSource {
 
   public void loadFromPrefs(SharedPreferences prefs) {
 
-    if (prefs.contains("clusterURL")) {
-      String u = prefs.getString("clusterURL", null);
+    if (prefs.contains(PREF_CLUSTER_URL)) {
+      String u = prefs.getString(PREF_CLUSTER_URL, null);
       try {
         clusterURL = new URI(u);
-        Log.i(LOG_TAG, "Set clusterURL from bundle: " + u);
+        Logger.info(LOG_TAG, "Set clusterURL from bundle: " + u);
       } catch (URISyntaxException e) {
-        Log.w(LOG_TAG, "Ignoring bundle clusterURL (" + u + "): invalid URI.", e);
+        Logger.warn(LOG_TAG, "Ignoring bundle clusterURL (" + u + "): invalid URI.", e);
       }
     }
-    if (prefs.contains("syncID")) {
-      syncID = prefs.getString("syncID", null);
-      Log.i(LOG_TAG, "Set syncID from bundle: " + syncID);
+    if (prefs.contains(PREF_SYNC_ID)) {
+      syncID = prefs.getString(PREF_SYNC_ID, null);
+      Logger.info(LOG_TAG, "Set syncID from bundle: " + syncID);
     }
-    // TODO: MetaGlobal, password, infoCollections, collectionKeys.
+    // We don't set crypto/keys here because we need the syncKeyBundle to decrypt the JSON
+    // and we won't have it on construction.
+    // TODO: MetaGlobal, password, infoCollections.
   }
 
   public void persistToPrefs() {
@@ -276,12 +249,12 @@ public class SyncConfiguration implements CredentialsSource {
   public void persistToPrefs(SharedPreferences prefs) {
     Editor edit = prefs.edit();
     if (clusterURL == null) {
-      edit.remove("clusterURL");
+      edit.remove(PREF_CLUSTER_URL);
     } else {
-      edit.putString("clusterURL", clusterURL.toASCIIString());
+      edit.putString(PREF_CLUSTER_URL, clusterURL.toASCIIString());
     }
     if (syncID != null) {
-      edit.putString("syncID", syncID);
+      edit.putString(PREF_SYNC_ID, syncID);
     }
     edit.commit();
     // TODO: keys.
@@ -292,14 +265,8 @@ public class SyncConfiguration implements CredentialsSource {
     return username + ":" + password;
   }
 
-  @Override
   public CollectionKeys getCollectionKeys() {
     return collectionKeys;
-  }
-
-  @Override
-  public KeyBundle keyForCollection(String collection) throws NoCollectionKeysSetException {
-    return getCollectionKeys().keyBundleForCollection(collection);
   }
 
   public void setCollectionKeys(CollectionKeys k) {
@@ -331,6 +298,10 @@ public class SyncConfiguration implements CredentialsSource {
   public String storageURL(boolean trailingSlash) {
     return clusterURL + GlobalSession.API_VERSION + "/" + username +
            (trailingSlash ? "/storage/" : "/storage");
+  }
+
+  public URI collectionURI(String collection) throws URISyntaxException {
+    return new URI(storageURL(true) + collection);
   }
 
   public URI collectionURI(String collection, boolean full) throws URISyntaxException {
@@ -368,26 +339,22 @@ public class SyncConfiguration implements CredentialsSource {
     return clusterURL.toASCIIString();
   }
 
-  public void setAndPersistClusterURL(URI u, SharedPreferences prefs) {
+  protected void setAndPersistClusterURL(URI u, SharedPreferences prefs) {
     boolean shouldPersist = (prefs != null) && (clusterURL == null);
 
-    Log.d(LOG_TAG, "Setting cluster URL to " + u.toASCIIString() +
-                   (shouldPersist ? ". Persisting." : ". Not persisting."));
+    Logger.debug(LOG_TAG, "Setting cluster URL to " + u.toASCIIString() +
+                          (shouldPersist ? ". Persisting." : ". Not persisting."));
     clusterURL = u;
     if (shouldPersist) {
       Editor edit = prefs.edit();
-      edit.putString("clusterURL", clusterURL.toASCIIString());
+      edit.putString(PREF_CLUSTER_URL, clusterURL.toASCIIString());
       edit.commit();
     }
   }
 
-  public void setClusterURL(URI u) {
-    setClusterURL(u, this.getPrefs());
-  }
-
-  public void setClusterURL(URI u, SharedPreferences prefs) {
+  protected void setClusterURL(URI u, SharedPreferences prefs) {
     if (u == null) {
-      Log.w(LOG_TAG, "Refusing to set cluster URL to null.");
+      Logger.warn(LOG_TAG, "Refusing to set cluster URL to null.");
       return;
     }
     URI uri = u.normalize();
@@ -396,18 +363,52 @@ public class SyncConfiguration implements CredentialsSource {
       return;
     }
     setAndPersistClusterURL(uri.resolve("/"), prefs);
-    Log.i(LOG_TAG, "Set cluster URL to " + clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
+    Logger.info(LOG_TAG, "Set cluster URL to " + clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
   }
 
-  public void setClusterURL(String url) throws URISyntaxException {
-    this.setClusterURL(new URI(url));
+  public void setClusterURL(URI u) {
+    setClusterURL(u, this.getPrefs());
   }
 
   /**
    * Used for direct management of related prefs.
-   * @return
    */
   public Editor getEditor() {
     return this.getPrefs().edit();
+  }
+
+  /**
+   * We persist two different clients timestamps: our own record's,
+   * and the timestamp for the collection.
+   */
+  public void persistServerClientRecordTimestamp(long timestamp) {
+    getEditor().putLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, timestamp).commit();
+  }
+
+  public long getPersistedServerClientRecordTimestamp() {
+    return getPrefs().getLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, 0);
+  }
+
+  public void persistServerClientsTimestamp(long timestamp) {
+    getEditor().putLong(SyncConfiguration.CLIENTS_COLLECTION_TIMESTAMP, timestamp).commit();
+  }
+
+  public long getPersistedServerClientsTimestamp() {
+    return getPrefs().getLong(SyncConfiguration.CLIENTS_COLLECTION_TIMESTAMP, 0);
+  }
+
+  public void purgeCryptoKeys() {
+    if (collectionKeys != null) {
+      collectionKeys.clear();
+    }
+    persistedCryptoKeys().purge();
+  }
+
+  public PersistedCrypto5Keys persistedCryptoKeys() {
+    return new PersistedCrypto5Keys(getPrefs(), syncKeyBundle);
+  }
+
+  public PersistedMetaGlobal persistedMetaGlobal() {
+    return new PersistedMetaGlobal(getPrefs());
   }
 }

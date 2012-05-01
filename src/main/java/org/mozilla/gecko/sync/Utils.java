@@ -1,51 +1,24 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Android Sync Client.
- *
- * The Initial Developer of the Original Code is
- * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
+import org.json.simple.JSONArray;
 import org.mozilla.apache.commons.codec.binary.Base32;
 import org.mozilla.apache.commons.codec.binary.Base64;
 
@@ -66,10 +39,11 @@ public class Utils {
     return new String(encodedBytes).replace("+", "-").replace("/", "_");
   }
 
-  /*
+  /**
    * Helper to generate secure random bytes.
    *
-   * @param length Number of bytes to generate.
+   * @param length
+   *        Number of bytes to generate.
    */
   public static byte[] generateRandomBytes(int length) {
     byte[] bytes = new byte[length];
@@ -77,10 +51,11 @@ public class Utils {
     return bytes;
   }
 
-  /*
+  /**
    * Helper to generate a random integer in a specified range.
    *
-   * @param r Generate an integer between 0 and r-1 inclusive.
+   * @param r
+   *        Generate an integer between 0 and r-1 inclusive.
    */
   public static BigInteger generateBigIntegerLessThan(BigInteger r) {
     int maxBytes = (int) Math.ceil(((double) r.bitLength()) / 8);
@@ -88,17 +63,15 @@ public class Utils {
     return randInt.mod(r);
   }
 
-  /*
+  /**
    * Helper to reseed the shared secure random number generator.
    */
   public static void reseedSharedRandom() {
     sharedSecureRandom.setSeed(sharedSecureRandom.generateSeed(8));
   }
 
-  /*
-   * Helper to convert Byte Array to a Hex String
-   * Input: byte[] array
-   * Output: Hex string
+  /**
+   * Helper to convert a byte array to a hex-encoded string
    */
   public static String byte2hex(byte[] b) {
     // StringBuffer should be used instead.
@@ -122,11 +95,6 @@ public class Utils {
     return hs;
   }
 
-  /*
-   * Helper for array concatenation.
-   * Input: At least two byte[]
-   * Output: A concatenated version of them
-   */
   public static byte[] concatAll(byte[] first, byte[]... rest) {
     int totalLength = first.length;
     for (byte[] array : rest) {
@@ -160,20 +128,12 @@ public class Utils {
     return Base64.decodeBase64(base64.getBytes("UTF-8"));
   }
 
-  /*
-   * Decode a friendly base32 string.
-   */
   public static byte[] decodeFriendlyBase32(String base32) {
     Base32 converter = new Base32();
     final String translated = base32.replace('8', 'l').replace('9', 'o');
     return converter.decode(translated.toUpperCase());
   }
 
-  /*
-   * Helper to convert Hex String to Byte Array
-   * Input: Hex string
-   * Output: byte[] version of hex string
-   */
   public static byte[] hex2Byte(String str) {
     if (str.length() % 2 == 1) {
       str = "0" + str;
@@ -187,7 +147,12 @@ public class Utils {
   }
 
   public static String millisecondsToDecimalSecondsString(long ms) {
-    return new BigDecimal(ms).movePointLeft(3).toString();
+    return millisecondsToDecimalSeconds(ms).toString();
+  }
+
+  // For dumping into JSON without quotes.
+  public static BigDecimal millisecondsToDecimalSeconds(long ms) {
+    return new BigDecimal(ms).movePointLeft(3);
   }
 
   // This lives until Bug 708956 lands, and we don't have to do it any more.
@@ -219,7 +184,7 @@ public class Utils {
 
   public static String sha1Base32(String utf8)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    return new Base32().encodeAsString(sha1(utf8)).toLowerCase();
+    return new Base32().encodeAsString(sha1(utf8)).toLowerCase(Locale.US);
   }
 
   public static String getPrefsPath(String username, String serverURL)
@@ -233,37 +198,104 @@ public class Utils {
     return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
   }
 
+  public static void addToIndexBucketMap(TreeMap<Long, ArrayList<String>> map, long index, String value) {
+    ArrayList<String> bucket = map.get(index);
+    if (bucket == null) {
+      bucket = new ArrayList<String>();
+    }
+    bucket.add(value);
+    map.put(index, bucket);
+  }
+
   /**
-   * Populate null slots in the provided array from keys in the provided Map.
-   * Set values in the map to be the new indices.
-   *
-   * @param dest
-   * @param source
-   * @throws Exception
+   * Yes, an equality method that's null-safe.
    */
-  public static void fillArraySpaces(String[] dest, HashMap<String, Long> source) throws Exception {
-    int i = 0;
-    int c = dest.length;
-    int needed = source.size();
-    if (needed == 0) {
-      return;
+  private static boolean same(Object a, Object b) {
+    if (a == b) {
+      return true;
     }
-    if (needed > c) {
-      throw new Exception("Need " + needed + " array spaces, have no more than " + c);
+    if (a == null || b == null) {
+      return false;      // If both null, case above applies.
     }
-    for (String key : source.keySet()) {
-      while (i < c) {
-        if (dest[i] == null) {
-          // Great!
-          dest[i] = key;
-          source.put(key, (long) i);
-          break;
-        }
-        ++i;
+    return a.equals(b);
+  }
+
+  /**
+   * Return true if the two arrays are both null, or are both arrays
+   * containing the same elements in the same order.
+   */
+  public static boolean sameArrays(JSONArray a, JSONArray b) {
+    if (a == b) {
+      return true;
+    }
+    if (a == null || b == null) {
+      return false;
+    }
+    final int size = a.size();
+    if (size != b.size()) {
+      return false;
+    }
+    for (int i = 0; i < size; ++i) {
+      if (!same(a.get(i), b.get(i))) {
+        return false;
       }
     }
-    if (i >= c) {
-      throw new Exception("Could not fill array spaces.");
+    return true;
+  }
+
+  /**
+   * Takes a URI, extracting URI components.
+   * @param scheme the URI scheme on which to match.
+   */
+  public static Map<String, String> extractURIComponents(String scheme, String uri) {
+    if (uri.indexOf(scheme) != 0) {
+      throw new IllegalArgumentException("URI scheme does not match: " + scheme);
     }
+
+    // Do this the hard way to avoid taking a large dependency on
+    // HttpClient or getting all regex-tastic.
+    String components = uri.substring(scheme.length());
+    HashMap<String, String> out = new HashMap<String, String>();
+    String[] parts = components.split("&");
+    for (int i = 0; i < parts.length; ++i) {
+      String part = parts[i];
+      if (part.length() == 0) {
+        continue;
+      }
+      String[] pair = part.split("=", 2);
+      switch (pair.length) {
+      case 0:
+        continue;
+      case 1:
+        out.put(URLDecoder.decode(pair[0]), null);
+        break;
+      case 2:
+        out.put(URLDecoder.decode(pair[0]), URLDecoder.decode(pair[1]));
+        break;
+      }
+    }
+    return out;
+  }
+
+  // Because TextUtils.join is not stubbed.
+  public static String toDelimitedString(String delimiter, Collection<String> items) {
+    if (items == null || items.size() == 0) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder();
+    int i = 0;
+    int c = items.size();
+    for (String string : items) {
+      sb.append(string);
+      if (++i < c) {
+        sb.append(delimiter);
+      }
+    }
+    return sb.toString();
+  }
+
+  public static String toCommaSeparatedString(Collection<String> items) {
+    return toDelimitedString(", ", items);
   }
 }

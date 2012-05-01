@@ -35,7 +35,7 @@ public class TestSyncStorageRequest {
   // Corresponds to rnewman+testandroid@mozilla.com.
   private static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
 
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
@@ -51,6 +51,7 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         e.printStackTrace();
       }
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
@@ -69,6 +70,7 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         fail("Got exception fetching error message.");
       }
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
@@ -114,7 +116,7 @@ public class TestSyncStorageRequest {
     public void handleRequestFailure(SyncStorageResponse res) {
       assertTrue(!res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("Retry-After"));
-      assertEquals(res.retryAfter(), 3001);
+      assertEquals(res.retryAfterInSeconds(), 3001);
       try {
         String responseMessage = res.getErrorMessage();
         String expectedMessage = EXPECTED_RETRY_AFTER_ERROR_MESSAGE;
@@ -122,10 +124,11 @@ public class TestSyncStorageRequest {
       } catch (Exception e) {
         fail("Got exception fetching error message.");
       }
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
-  
+
   public class RetryAfterMockServer extends MockServer {
     @Override
     public void handle(Request request, Response response) {
@@ -154,7 +157,7 @@ public class TestSyncStorageRequest {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.httpResponse().containsHeader("X-Weave-Backoff"));
-      assertEquals(res.weaveBackoff(), 1801);
+      assertEquals(res.weaveBackoffInSeconds(), 1801);
       super.handleRequestSuccess(res);
     }
   }

@@ -1,40 +1,6 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Android Sync Client.
- *
- * The Initial Developer of the Original Code is
- * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- * Jason Voll <jvoll@mozilla.com>
- * Richard Newman <rnewman@mozilla.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.domain;
 
@@ -104,7 +70,22 @@ public abstract class Record {
   public long lastModified;
   public boolean deleted;
   public long androidID;
+  /**
+   * An integer indicating the relative importance of this item in the collection.
+   * <p>
+   * Default is 0.
+   */
   public long sortIndex;
+  /**
+   * The number of seconds to keep this record. After that time this item will
+   * no longer be returned in response to any request, and it may be pruned from
+   * the database.
+   * <p>
+   * Negative values mean never forget this record.
+   * <p>
+   * Default is 1 year.
+   */
+  public long ttl;
 
   public Record(String guid, String collection, long lastModified, boolean deleted) {
     this.guid         = guid;
@@ -112,15 +93,13 @@ public abstract class Record {
     this.lastModified = lastModified;
     this.deleted      = deleted;
     this.sortIndex    = 0;
+    this.ttl          = 365 * 24 * 60 * 60; // Seconds.
     this.androidID    = -1;
   }
 
   /**
    * Return true iff the input is a Record and has the same
    * collection and guid as this object.
-   *
-   * @param o
-   * @return
    */
   public boolean equalIdentifiers(Object o) {
     if (o == null || !(o instanceof Record)) {
@@ -150,11 +129,11 @@ public abstract class Record {
   }
 
   /**
-   * Return true iff the input is a Record which is substantially the
-   * same as this object.
-   *
    * @param o
+   *        The object to which this object should be compared.
    * @return
+   *        true iff the input is a Record which is substantially the
+   *        same as this object.
    */
   public boolean equalPayloads(Object o) {
     if (!this.equalIdentifiers(o)) {
@@ -165,12 +144,14 @@ public abstract class Record {
   }
 
   /**
-   * Return true iff the input is a Record which is substantially the
-   * same as this object, considering the ability and desire two
-   * reconcile the two objects if possible.
+   *
    *
    * @param o
+   *        The object to which this object should be compared.
    * @return
+   *        true iff the input is a Record which is substantially the
+   *        same as this object, considering the ability and desire to
+   *        reconcile the two objects if possible.
    */
   public boolean congruentWith(Object o) {
     if (!this.equalIdentifiers(o)) {
@@ -224,8 +205,39 @@ public abstract class Record {
     return ((Record) o).lastModified == this.lastModified;
   }
 
-  public abstract void initFromPayload(CryptoRecord payload);
-  public abstract CryptoRecord getPayload();
+  protected abstract void populatePayload(ExtendedJSONObject payload);
+  protected abstract void initFromPayload(ExtendedJSONObject payload);
+
+  public void initFromEnvelope(CryptoRecord envelope) {
+    ExtendedJSONObject p = envelope.payload;
+    this.guid = envelope.guid;
+    checkGUIDs(p);
+
+    this.collection    = envelope.collection;
+    this.lastModified  = envelope.lastModified;
+
+    final Object del = p.get("deleted");
+    if (del instanceof Boolean) {
+      this.deleted = (Boolean) del;
+    } else {
+      this.initFromPayload(p);
+    }
+
+  }
+
+  public CryptoRecord getEnvelope() {
+    CryptoRecord rec = new CryptoRecord(this);
+    ExtendedJSONObject payload = new ExtendedJSONObject();
+    payload.put("id", this.guid);
+
+    if (this.deleted) {
+      payload.put("deleted", true);
+    } else {
+      populatePayload(payload);
+    }
+    rec.payload = payload;
+    return rec;
+  }
 
   public String toJSONString() {
     throw new RuntimeException("Cannot JSONify non-CryptoRecord Records.");
@@ -238,6 +250,27 @@ public abstract class Record {
       // Can't happen.
       return null;
     }
+  }
+
+  /**
+   * Utility for safely populating an output CryptoRecord.
+   *
+   * @param rec
+   * @param key
+   * @param value
+   */
+  protected void putPayload(CryptoRecord rec, String key, String value) {
+    if (value == null) {
+      return;
+    }
+    rec.payload.put(key, value);
+  }
+
+  protected void putPayload(ExtendedJSONObject payload, String key, String value) {
+    if (value == null) {
+      return;
+    }
+    payload.put(key, value);
   }
 
   protected void checkGUIDs(ExtendedJSONObject payload) {
@@ -254,13 +287,12 @@ public abstract class Record {
   }
 
   /**
-   * Return an identical copy of this record with the provided two values.
-   *
    * Oh for persistent data structures.
    *
    * @param guid
    * @param androidID
    * @return
+   *        An identical copy of this record with the provided two values.
    */
   public abstract Record copyWithIDs(String guid, long androidID);
 }

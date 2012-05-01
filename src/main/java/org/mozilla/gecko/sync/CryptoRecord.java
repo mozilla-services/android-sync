@@ -1,39 +1,6 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Android Sync Client.
- *
- * The Initial Developer of the Original Code is
- * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *  Richard Newman <rnewman@mozilla.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync;
 
@@ -54,20 +21,20 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 /**
  * A Sync crypto record has:
  *
- * * a collection of fields which are not encrypted (id and collection)
- * * a set of metadata fields (index, modified, ttl)
- * * a payload, which is encrypted and decrypted on request.
+ * <ul>
+ * <li>a collection of fields which are not encrypted (id and collection);</il>
+ * <li>a set of metadata fields (index, modified, ttl);</il>
+ * <li>a payload, which is encrypted and decrypted on request.</il>
+ * </ul>
  *
  * The payload flips between being a blob of JSON with hmac/IV/ciphertext
  * attributes and the cleartext itself.
  *
- * Until there's some benefit to the abstraction, we're simply going to
- * call this CryptoRecord.
+ * Until there's some benefit to the abstraction, we're simply going to call
+ * this <code>CryptoRecord</code>.
  *
- * CryptoRecord uses CryptoInfo to do the actual encryption and decryption.
- *
- * @author rnewman
- *
+ * <code>CryptoRecord</code> uses <code>CryptoInfo</code> to do the actual
+ * encryption and decryption.
  */
 public class CryptoRecord extends Record {
 
@@ -77,6 +44,7 @@ public class CryptoRecord extends Record {
   private static final String KEY_PAYLOAD    = "payload";
   private static final String KEY_MODIFIED   = "modified";
   private static final String KEY_SORTINDEX  = "sortindex";
+  private static final String KEY_TTL        = "ttl";
   private static final String KEY_CIPHERTEXT = "ciphertext";
   private static final String KEY_HMAC       = "hmac";
   private static final String KEY_IV         = "IV";
@@ -130,6 +98,7 @@ public class CryptoRecord extends Record {
    */
   public CryptoRecord(Record source) {
     super(source.guid, source.collection, source.lastModified, source.deleted);
+    this.ttl = source.ttl;
   }
 
   @Override
@@ -138,6 +107,7 @@ public class CryptoRecord extends Record {
     out.guid         = guid;
     out.androidID    = androidID;
     out.sortIndex    = this.sortIndex;
+    out.ttl          = this.ttl;
     out.payload      = (this.payload == null) ? null : new ExtendedJSONObject(this.payload.object);
     out.keyBundle    = this.keyBundle;    // TODO: copy me?
     return out;
@@ -152,6 +122,8 @@ public class CryptoRecord extends Record {
    *
    * @param jsonRecord
    * @return
+   *        A CryptoRecord that encapsulates the provided record.
+   *
    * @throws NonObjectJSONException
    * @throws ParseException
    * @throws IOException
@@ -176,8 +148,13 @@ public class CryptoRecord extends Record {
     if (jsonRecord.containsKey(KEY_MODIFIED)) {
       record.lastModified = jsonRecord.getTimestamp(KEY_MODIFIED);
     }
-    if (jsonRecord.containsKey(KEY_SORTINDEX )) {
+    if (jsonRecord.containsKey(KEY_SORTINDEX)) {
       record.sortIndex = jsonRecord.getLong(KEY_SORTINDEX);
+    }
+    if (jsonRecord.containsKey(KEY_TTL)) {
+      // TTLs are never returned by the sync server, so should never be true if
+      // the record was fetched.
+      record.ttl = jsonRecord.getLong(KEY_TTL);
     }
     // TODO: deleted?
     return record;
@@ -236,12 +213,22 @@ public class CryptoRecord extends Record {
   }
 
   @Override
-  public void initFromPayload(CryptoRecord payload) {
+  public void initFromEnvelope(CryptoRecord payload) {
     throw new IllegalStateException("Can't do this with a CryptoRecord.");
   }
 
   @Override
-  public CryptoRecord getPayload() {
+  public CryptoRecord getEnvelope() {
+    throw new IllegalStateException("Can't do this with a CryptoRecord.");
+  }
+
+  @Override
+  protected void populatePayload(ExtendedJSONObject payload) {
+    throw new IllegalStateException("Can't do this with a CryptoRecord.");
+  }
+
+  @Override
+  protected void initFromPayload(ExtendedJSONObject payload) {
     throw new IllegalStateException("Can't do this with a CryptoRecord.");
   }
 
@@ -250,6 +237,9 @@ public class CryptoRecord extends Record {
     ExtendedJSONObject o = new ExtendedJSONObject();
     o.put(KEY_PAYLOAD, payload.toJSONString());
     o.put(KEY_ID,      this.guid);
+    if (this.ttl > 0) {
+      o.put(KEY_TTL, this.ttl);
+    }
     return o.object;
   }
 

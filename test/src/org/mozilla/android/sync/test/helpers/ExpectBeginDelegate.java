@@ -4,13 +4,22 @@
 package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertNotNull;
+import junit.framework.AssertionFailedError;
 
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 
-public class ExpectBeginDelegate extends DefaultBeginDelegate {
+import android.util.Log;
 
+public class ExpectBeginDelegate extends DefaultBeginDelegate {
   @Override
   public void onBeginSucceeded(RepositorySession session) {
-    assertNotNull(session);
+    Log.d("ExpectBeginDelegate", "onBeginSucceeded.");
+    try {
+      assertNotNull(session);
+    } catch (AssertionFailedError e) {
+      performNotify("Expected non-null session", e);
+      return;
+    }
+    performNotify();
   }
 }

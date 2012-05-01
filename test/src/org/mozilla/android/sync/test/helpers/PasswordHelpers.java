@@ -13,11 +13,13 @@ public class PasswordHelpers {
     rec.formSubmitURL = "http://submit.html";
     rec.hostname = "http://hostname";
     rec.httpRealm = "httpRealm";
-    rec.password ="12345";
+    rec.encryptedPassword ="12345";
     rec.passwordField = "box.pass.field";
+    rec.timeCreated = 111111111L;
     rec.timeLastUsed = 123412352435L;
+    rec.timePasswordChanged = 121111111L;
     rec.timesUsed = 5L;
-    rec.username = "jvoll";
+    rec.encryptedUsername = "jvoll";
     rec.usernameField = "box.user.field";
     return rec;
   }
@@ -28,11 +30,13 @@ public class PasswordHelpers {
     rec.formSubmitURL = "http://submit2.html";
     rec.hostname = "http://hostname2";
     rec.httpRealm = "httpRealm2";
-    rec.password ="54321";
+    rec.encryptedPassword ="54321";
     rec.passwordField = "box.pass.field2";
+    rec.timeCreated = 12111111111L;
     rec.timeLastUsed = 123412352213L;
+    rec.timePasswordChanged = 123111111111L;
     rec.timesUsed = 2L;
-    rec.username = "rnewman";
+    rec.encryptedUsername = "rnewman";
     rec.usernameField = "box.user.field2";
     return rec;
   }
@@ -43,11 +47,13 @@ public class PasswordHelpers {
     rec.formSubmitURL = "http://submit3.html";
     rec.hostname = "http://hostname3";
     rec.httpRealm = "httpRealm3";
-    rec.password ="54321";
+    rec.encryptedPassword ="54321";
     rec.passwordField = "box.pass.field3";
+    rec.timeCreated = 100000000000L;
     rec.timeLastUsed = 123412352213L;
+    rec.timePasswordChanged = 110000000000L;
     rec.timesUsed = 2L;
-    rec.username = "rnewman";
+    rec.encryptedUsername = "rnewman";
     rec.usernameField = "box.user.field3";
     return rec;
   }
@@ -58,11 +64,13 @@ public class PasswordHelpers {
     rec.formSubmitURL = "http://submit4.html";
     rec.hostname = "http://hostname4";
     rec.httpRealm = "httpRealm4";
-    rec.password ="54324";
+    rec.encryptedPassword ="54324";
     rec.passwordField = "box.pass.field4";
+    rec.timeCreated = 101000000000L;
     rec.timeLastUsed = 123412354444L;
+    rec.timePasswordChanged = 110000000000L;
     rec.timesUsed = 4L;
-    rec.username = "rnewman4";
+    rec.encryptedUsername = "rnewman4";
     rec.usernameField = "box.user.field4";
     return rec;
   }
@@ -73,11 +81,13 @@ public class PasswordHelpers {
     rec.formSubmitURL = "http://submit5.html";
     rec.hostname = "http://hostname5";
     rec.httpRealm = "httpRealm5";
-    rec.password ="54325";
+    rec.encryptedPassword ="54325";
     rec.passwordField = "box.pass.field5";
+    rec.timeCreated = 101000000000L;
     rec.timeLastUsed = 123412352555L;
+    rec.timePasswordChanged = 111111111111L;
     rec.timesUsed = 5L;
-    rec.username = "jvoll5";
+    rec.encryptedUsername = "jvoll5";
     rec.usernameField = "box.user.field5";
     return rec;
   }

@@ -8,9 +8,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import java.util.Arrays;
-import java.util.Map;
 
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import junit.framework.AssertionFailedError;
@@ -30,22 +28,23 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   public void onFetchCompleted(final long fetchEnd) {
     Log.i("ExpectFetchSinceDelegate", "onFetchCompleted.");
     AssertionFailedError err = null;
+    Log.i("ExpectFetchSinceDelegate", "recordsSize:" + records.size());
     try {
-
-      Map<String, String> specialGuids = RepoUtils.SPECIAL_GUIDS_MAP;
       int countSpecials = 0;
       for (Record record : records) {
-        if (specialGuids == null || !specialGuids.containsKey(record.guid)) {
+        // Check if record should be ignored.
+        if (!ignore.contains(record.guid)) {
           assertFalse(-1 == Arrays.binarySearch(this.expected, record.guid));
         } else {
           countSpecials++;
         }
+        // Check that record is later than timestamp-earliest.
         assertTrue(record.lastModified >= this.earliest);
       }
       assertEquals(this.expected.length, records.size() - countSpecials);
     } catch (AssertionFailedError e) {
       err = e;
     }
-    testWaiter().performNotify(err);
+    performNotify(err);
   }
 }

@@ -42,14 +42,15 @@
 
         <EditText
           android:id="@+id/pair_row1"
-          style="@style/SyncEditPin" />
+          style="@style/SyncEditPin"
+          android:state_focused="true" />
         <EditText
           android:id="@+id/pair_row2"
           style="@style/SyncEditPin" />
         <EditText
           android:id="@+id/pair_row3"
           style="@style/SyncEditPin"
-          android:imeOptions="actionDone" />
+          android:imeOptions="actionDone|flagNoExtractUi" />
       </LinearLayout>
 
       <LinearLayout

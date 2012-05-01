@@ -1,0 +1,96 @@
+  <string name="sync_app_name">&sync.app.name.label;</string>
+  <string name="sync_title_connect">&sync.title.adddevice.label;</string>
+  <string name="sync_title_pair">&sync.title.pair.label;</string>
+
+  <!-- J-PAKE PIN Screen -->
+  <string name="sync_subtitle_header">&sync.subtitle.header.label;</string>
+  <string name="sync_subtitle_connect">&sync.subtitle.connectlocation.label;</string>
+  <string name="sync_subtitle_pair">&sync.subtitle.pair.label;</string>
+  <string name="sync_pin_default">&sync.pin.oneline.label;</string>
+  <string name="sync_link_show"><u>&sync.link.show.label;</u></string>
+  <string name="sync_link_advancedsetup"><u>&sync.link.advancedsetup.label;</u></string>
+
+  <!-- J-PAKE Waiting Screen -->
+  
+  <string name="sync_jpake_subtitle_waiting">&sync.jpake.subtitle.waiting.label;</string>
+
+  <!-- Account Login Screen -->
+  <string name="sync_subtitle_account">&sync.subtitle.account.label;</string>
+  <string name="sync_input_username">&sync.input.username.label;</string>
+  <string name="sync_input_password">&sync.input.password.label;</string>
+  <string name="sync_input_key">&sync.input.key.label;</string>
+  <string name="sync_checkbox_server">&sync.checkbox.server.label;</string>
+  <string name="sync_input_server">&sync.input.server.label;</string>
+  
+  <!-- Setup Fail -->
+  <string name="sync_title_fail">&sync.title.fail.label;</string>
+  <string name="sync_subtitle_fail">&sync.subtitle.fail.label;</string>
+  <string name="sync_button_tryagain">&sync.button.tryagain.label;</string>
+  <string name="sync_button_manual">&sync.button.manual.label;</string>
+  <string name="sync_subtitle_nointernet">&sync.subtitle.nointernet.label;</string>
+  
+  <!-- Setup Success -->
+  <string name="sync_title_success">&sync.title.success.label;</string>
+  <string name="sync_subtitle_success">&sync.subtitle.success.label;</string>
+  <string name="sync_settings">&sync.settings.label;</string>
+  <string name="sync_subtitle_manage">&sync.subtitle.manage.label;</string>
+  
+  <!-- Pair Device -->
+  <string name="sync_pair_tryagain">&sync.pair.tryagain.label;</string>
+
+  <!-- Firefox SyncAdapter Settings Screen -->
+  <string name="sync_settings_options">&sync.settings.options.label;</string>
+  <string name="sync_settings_summary_pair">&sync.summary.pair.label;</string>
+  <!-- Common text -->
+  <string name="sync_button_cancel">&sync.button.cancel.label;</string>
+  <string name="sync_button_connect">&sync.button.connect.label;</string>
+  <string name="sync_button_ok">&sync.button.ok.label;</string>
+  
+  <!-- Account strings -->
+  <string name="sync_account_label">&sync.account.label.label;</string>
+  
+  <!-- Bookmark folder strings -->
+  <string name="bookmarks_folder_menu">&bookmarks.folder.menu.label;</string>
+  <string name="bookmarks_folder_places">&bookmarks.folder.places.label;</string>
+  <string name="bookmarks_folder_tags">&bookmarks.folder.tags.label;</string>
+  <string name="bookmarks_folder_toolbar">&bookmarks.folder.toolbar.label;</string>
+  <string name="bookmarks_folder_unfiled">&bookmarks.folder.unfiled.label;</string>
+  <string name="bookmarks_folder_desktop">&bookmarks.folder.desktop.label;</string>
+  <string name="bookmarks_folder_mobile">&bookmarks.folder.mobile.label;</string>
+
+  <!-- Notification strings -->
+  <string name="sync_notification_oneaccount">&sync.notification.oneaccount.label;</string>
+
+  <!-- Push tab to device strings -->
+  <string name="sync_new_tab">&new_tab;</string>
+
+  <!-- Incorrect settings and changing credentials. -->
+  <string name="sync.invalidemail.label">&sync.invalidemail.label;</string>
+  <string name="sync.invalidserver.label">&sync.invalidserver.label;</string>
+  <string name="sync.usernamenotavailable.label">&sync.usernamenotavailable.label;</string>
+  <string name="sync.verifying.label">&sync.verifying.label;</string>
+
+  <string name="sync.change.password.title">&sync.change.password.title;</string>
+  <string name="sync.change.password.acceptbutton">&sync.change.password.acceptbutton;</string>
+  <string name="sync.change.password.status.active">&sync.change.password.status.active;</string>
+  <string name="sync.change.password.status.success">&sync.change.password.status.success;</string>
+  <string name="sync.change.password.status.error">&sync.change.password.status.error;</string>
+  <string name="sync.change.password.introText">&sync.change.password.introText;</string>
+  <string name="sync.change.password.warningText">&sync.change.password.warningText;</string>
+
+  <string name="sync.change.recoverykey.title">&sync.change.recoverykey.title;</string>
+  <string name="sync.change.recoverykey.acceptButton">&sync.change.recoverykey.acceptButton;</string>
+  <string name="sync.change.recoverykey.label">&sync.change.recoverykey.label;</string>
+  <string name="sync.change.recoverykey.error">&sync.change.recoverykey.error;</string>
+  <string name="sync.change.recoverykey.success">&sync.change.recoverykey.success;</string>
+
+  <string name="sync.new.password.introtext">&sync.new.password.introtext;</string>
+  <string name="sync.new.password.label">&sync.new.password.label;</string>
+  <string name="sync.new.password.confirm">&sync.new.password.confirm;</string>
+  <string name="sync.new.password.acceptButton">&sync.new.password.acceptButton;</string>
+  <string name="sync.new.password.status.incorrect">&sync.new.password.status.incorrect;</string>
+
+  <string name="sync.new.recoverykey.title">&sync.new.recoverykey.title;</string>
+  <string name="sync.new.recoverykey.introtext">&sync.new.recoverykey.introtext;</string>
+  <string name="sync.new.recoverykey.acceptbutton">&sync.new.recoverykey.acceptbutton;</string>
+  <string name="sync.new.recoverykey.status.incorrect">&sync.new.recoverykey.status.incorrect;</string>

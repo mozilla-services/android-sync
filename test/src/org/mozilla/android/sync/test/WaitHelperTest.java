@@ -6,12 +6,15 @@ package org.mozilla.android.sync.test;
 import junit.framework.AssertionFailedError;
 
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.android.sync.test.helpers.WaitHelper.InnerError;
 import org.mozilla.android.sync.test.helpers.WaitHelper.TimeoutError;
 import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.ThreadPool;
 
 import android.test.ActivityInstrumentationTestCase2;
 
+// Extend ActivityInstrumentationTestCase2 rather than AndroidSyncTestCase
+// since we want a fresh WaitHelper each test.
 public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivity> {
   private static final String ERROR_UNIQUE_IDENTIFIER = "error unique identifier";
 
@@ -68,6 +71,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
     WaitHelper.resetTestWaiter();
     waitHelper = WaitHelper.getTestWaiter();
     resetNotifyCalled();
+  }
+
+  public void tearDown() {
+    assertTrue(waitHelper.isIdle());
   }
 
   public Runnable performNothingRunnable() {
@@ -131,9 +138,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   protected void expectAssertionFailedError(Runnable runnable) {
     try {
       waitHelper.performWait(runnable);
-    } catch (AssertionFailedError e) {
+    } catch (InnerError e) {
+      AssertionFailedError inner = (AssertionFailedError)e.innerError;
       setPerformNotifyErrorCalled();
-      String message = e.getMessage();
+      String message = inner.getMessage();
       assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
                  message.contains(ERROR_UNIQUE_IDENTIFIER));
     }
@@ -142,9 +150,10 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   protected void expectAssertionFailedErrorAfterDelay(int wait, Runnable runnable) {
     try {
       waitHelper.performWait(wait, runnable);
-    } catch (AssertionFailedError e) {
+    } catch (InnerError e) {
+      AssertionFailedError inner = (AssertionFailedError)e.innerError;
       setPerformNotifyErrorCalled();
-      String message = e.getMessage();
+      String message = inner.getMessage();
       assertTrue("Expected '" + message + "' to contain '" + ERROR_UNIQUE_IDENTIFIER + "'",
                  message.contains(ERROR_UNIQUE_IDENTIFIER));
     }
@@ -238,10 +247,29 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
 
   public void testPerformNotifyMultipleTimesFails() {
     try {
-      waitHelper.performWait(NO_WAIT, performNotifyMultipleTimesRunnable());
+      waitHelper.performWait(NO_WAIT, performNotifyMultipleTimesRunnable()); // Not run on thread, so runnable executes before performWait looks for notifications.
     } catch (WaitHelper.MultipleNotificationsError e) {
       setPerformNotifyErrorCalled();
     }
+    assertBothCalled();
+    assertFalse(waitHelper.isIdle()); // First perform notify should be hanging around.
+    waitHelper.performWait(NO_WAIT, performNothingRunnable());
+  }
+
+  public void testNestedWaitsAndNotifies() {
+      waitHelper.performWait(new Runnable() {
+        @Override
+        public void run() {
+          waitHelper.performWait(new Runnable() {
+            public void run() {
+              setPerformNotifyCalled();
+              waitHelper.performNotify();
+            }
+          });
+          setPerformNotifyErrorCalled();
+          waitHelper.performNotify();
+        }
+      });
     assertBothCalled();
   }
 
@@ -261,7 +289,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   }
 
   /**
-   * This will timeout.  The sequence in the helper thread is:
+   * The inner wait will timeout, but the outer wait will succeed.  The sequence in the helper thread is:
    * - A short delay.
    * - performNotify is called.
    *
@@ -270,25 +298,33 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
    *   performNotify quickly enough.
    */
   public void testDelayInThread() throws InterruptedException {
-    try {
-      waitHelper.performWait(NO_WAIT, inThread(performNotifyAfterDelayRunnable(SHORT_WAIT)));
-    } catch (WaitHelper.TimeoutError e) {
-      setPerformNotifyErrorCalled();
-      assertEquals(NO_WAIT, e.waitTimeInMillis);
-    }
-    assertErrorCalled();
+    waitHelper.performWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          waitHelper.performWait(NO_WAIT, inThread(new Runnable() {
+            public void run() {
+              try {
+                Thread.sleep(SHORT_WAIT);
+              } catch (InterruptedException e) {
+                fail("Interrupted.");
+              }
 
-    // The spawned thread should have called performNotify() by now.
-    Thread.sleep(LONG_WAIT);
-    try {
-      waitHelper.performWait(1, this.performNothingRunnable());
-    } catch (AssertionFailedError e) {
-      fail("Should not have thrown!");
-    }
+              setPerformNotifyCalled();
+              waitHelper.performNotify();
+            }
+          }));
+        } catch (WaitHelper.TimeoutError e) {
+          setPerformNotifyErrorCalled();
+          assertEquals(NO_WAIT, e.waitTimeInMillis);
+        }
+      }
+    });
+    assertBothCalled();
   }
 
   /**
-   * This will timeout.  The sequence in the helper thread is:
+   * The inner wait will timeout, but the outer wait will succeed.  The sequence in the helper thread is:
    * - A short delay.
    * - performNotify is called.
    *
@@ -297,20 +333,28 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
    *   performNotify quickly enough.
    */
   public void testDelayInThreadPool() throws InterruptedException {
-    try {
-      waitHelper.performWait(NO_WAIT, inThreadPool(performNotifyAfterDelayRunnable(SHORT_WAIT)));
-    } catch (WaitHelper.TimeoutError e) {
-      setPerformNotifyErrorCalled();
-      assertEquals(NO_WAIT, e.waitTimeInMillis);
-    }
-    assertErrorCalled();
+    waitHelper.performWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          waitHelper.performWait(NO_WAIT, inThreadPool(new Runnable() {
+            public void run() {
+              try {
+                Thread.sleep(SHORT_WAIT);
+              } catch (InterruptedException e) {
+                fail("Interrupted.");
+              }
 
-    // The spawned thread should have called performNotify() by now.
-    Thread.sleep(LONG_WAIT);
-    try {
-      waitHelper.performWait(NO_WAIT, this.performNothingRunnable());
-    } catch (AssertionFailedError e) {
-      fail("Should not have thrown!");
-    }
+              setPerformNotifyCalled();
+              waitHelper.performNotify();
+            }
+          }));
+        } catch (WaitHelper.TimeoutError e) {
+          setPerformNotifyErrorCalled();
+          assertEquals(NO_WAIT, e.waitTimeInMillis);
+        }
+      }
+    });
+    assertBothCalled();
   }
 }

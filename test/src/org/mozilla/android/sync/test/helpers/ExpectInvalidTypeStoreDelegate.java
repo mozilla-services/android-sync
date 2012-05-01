@@ -9,7 +9,7 @@ public class ExpectInvalidTypeStoreDelegate extends DefaultStoreDelegate {
   @Override
   public void onRecordStoreFailed(Exception ex) {
     assertEquals(InvalidBookmarkTypeException.class, ex.getClass());
-    testWaiter().performNotify();
+    performNotify();
   }
   
 }

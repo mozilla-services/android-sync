@@ -7,29 +7,38 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import android.util.Log;
 
 import junit.framework.AssertionFailedError;
 
 public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
   private String[] expected;
+  public Set<String> ignore = new HashSet<String>();
 
   public ExpectGuidsSinceDelegate(String[] guids) {
     expected = guids;
     Arrays.sort(expected);
+    Log.i("ExpectGuidsSinceDelegate", "Expecting " + expected.length);
   }
 
   @Override
   public void onGuidsSinceSucceeded(String[] guids) {
     AssertionFailedError err = null;
     try {
-      assertEquals(guids.length, this.expected.length);
-
-      for (String string : guids) {
-        assertFalse(-1 == Arrays.binarySearch(this.expected, string));
+      int notIgnored = 0;
+      for (String guid : guids) {
+        if (!ignore.contains(guid)) {
+          notIgnored++;
+          assertFalse(-1 == Arrays.binarySearch(this.expected, guid));
+        }
       }
+      assertEquals(this.expected.length, notIgnored);
     } catch (AssertionFailedError e) {
       err = e;
     }
-    testWaiter().performNotify(err);
+    performNotify(err);
   }
 }

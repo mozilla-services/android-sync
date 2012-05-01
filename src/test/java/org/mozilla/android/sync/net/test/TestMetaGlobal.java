@@ -4,34 +4,39 @@
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
+import java.io.IOException;
+
+import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.MetaGlobal;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
-import org.simpleframework.http.Request;
-import org.simpleframework.http.Response;
 
 import android.util.Log;
 
 public class TestMetaGlobal {
   public static Object monitor = new Object();
 
-  private static final int    TEST_PORT   = 15325;
-  private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
+  private static final int    TEST_PORT    = 15325;
+  private static final String TEST_SERVER  = "http://localhost:" + TEST_PORT;
+  private static final String TEST_SYNC_ID = "foobar";
 
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   public static final String META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  private HTTPServerTestHelper data    = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data    = new HTTPServerTestHelper(TEST_PORT);
+
+  public static final String TEST_META_GLOBAL_RESPONSE = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
 
   @Before
   public void setUp() {
@@ -42,124 +47,118 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalModified() {
+  public void testMetaGlobalSyncID() {
     MetaGlobal g = new MetaGlobal(META_URL, USER_PASS);
-    assertFalse(g.isModified);
     g.setSyncID("foobar");
-    assertTrue(g.isModified);
     assertEquals(g.getSyncID(), "foobar");
   }
 
-  public class MissingMetaGlobalFetchDelegate implements MetaGlobalDelegate {
-    MetaGlobal global;
-    public MissingMetaGlobalFetchDelegate(MetaGlobal g) {
-      global = g;
-    }
+  public class MockMetaGlobalFetchDelegate implements MetaGlobalDelegate {
+    boolean             successCalled   = false;
+    MetaGlobal          successGlobal   = null;
+    SyncStorageResponse successResponse = null;
+    boolean             failureCalled   = false;
+    SyncStorageResponse failureResponse = null;
+    boolean             errorCalled     = false;
+    Exception           errorException  = null;
+    boolean             missingCalled   = false;
+    MetaGlobal          missingGlobal   = null;
+    SyncStorageResponse missingResponse = null;
 
     public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
-      fail("Fetch should 404, not succeed.");
+      successCalled = true;
+      successGlobal = global;
+      successResponse = response;
+      WaitHelper.getTestWaiter().performNotify();
     }
 
     public void handleFailure(SyncStorageResponse response) {
-      fail("handleMissing should be invoked.");
+      failureCalled = true;
+      failureResponse = response;
+      WaitHelper.getTestWaiter().performNotify();
     }
 
     public void handleError(Exception e) {
-      e.printStackTrace();
-      fail("Fetch should 404, not error.");
+      errorCalled = true;
+      errorException = e;
+      WaitHelper.getTestWaiter().performNotify(e);
     }
 
     public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
-      assertEquals(response.getStatusCode(), 404);
-      assertTrue(global.isModified);
-      assertEquals(global.getSyncID(), "foobar");
-      data.stopHTTPServer();
-      synchronized (monitor) {
-        monitor.notify();
+      missingCalled = true;
+      missingGlobal = global;
+      missingResponse = response;
+      WaitHelper.getTestWaiter().performNotify();
+    }
+  }
+
+  public MockMetaGlobalFetchDelegate doFetch(final MetaGlobal global) {
+    final MockMetaGlobalFetchDelegate delegate = new MockMetaGlobalFetchDelegate();
+    WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
+      public void run() {
+        global.fetch(delegate);
       }
-    }
+    }));
 
-    @Override
-    public MetaGlobalDelegate deferred() {
-      return this;
-    }
-  }
-
-  public class ExistingMetaGlobalFetchDelegate implements MetaGlobalDelegate {
-    MetaGlobal global;
-    public ExistingMetaGlobalFetchDelegate(MetaGlobal g) {
-      global = g;
-    }
-
-    public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
-      assertEquals(response.getStatusCode(), 200);
-      assertFalse(global.isModified);
-      assertEquals(global.getSyncID(), "zPSQTm7WBVWB");
-      assertTrue(global.getEngines() instanceof ExtendedJSONObject);
-      assertEquals(global.getStorageVersion(), new Long(5));
-      data.stopHTTPServer();
-      synchronized (monitor) {
-        monitor.notify();
-      }
-    }
-
-    public void handleFailure(SyncStorageResponse response) {
-      fail("Fetch should succeed.");
-    }
-
-    public void handleError(Exception e) {
-      e.printStackTrace();
-      fail("Fetch should succeed.");
-    }
-
-    public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
-      fail("Fetch should not result in missing.");
-    }
-
-    @Override
-    public MetaGlobalDelegate deferred() {
-      return this;
-    }
-  }
-
-  public class MissingMetaGlobalServer extends MockServer {
-    public void handle(Request request, Response response) {
-      this.handle(request, response, 404, "{}");
-    }
-  }
-  public class ExistingMetaGlobalServer extends MockServer {
-    public void handle(Request request, Response response) {
-      String body = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
-      this.handle(request, response, 200, body);
-    }
+    return delegate;
   }
 
   @Test
-  public void testMetaGlobalMissingFetch() throws InterruptedException {
-    data.startHTTPServer(new MissingMetaGlobalServer());
-    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
-    assertFalse(global.isModified);
-    global.setSyncID("foobar");
-    assertTrue(global.isModified);
-    assertEquals(global.getSyncID(), "foobar");
-    synchronized (monitor) {
-      global.fetch(new MissingMetaGlobalFetchDelegate(global));
-      monitor.wait();
-    }
+  public void testMetaGlobalMissingFetch() {
+    MockServer missingMetaGlobalServer = new MockServer(404, "{}");
+    final MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
+    global.setSyncID(TEST_SYNC_ID);
+    assertEquals(TEST_SYNC_ID, global.getSyncID());
+
+    data.startHTTPServer(missingMetaGlobalServer);
+    final MockMetaGlobalFetchDelegate delegate = doFetch(global);
+    data.stopHTTPServer();
+
+    assertTrue(delegate.missingCalled);
+    assertEquals(404, delegate.missingResponse.getStatusCode());
+    assertEquals(TEST_SYNC_ID, delegate.missingGlobal.getSyncID());
   }
 
   @Test
-  public void testMetaGlobalExistingFetch() throws InterruptedException {
-    data.startHTTPServer(new ExistingMetaGlobalServer());
+  public void testMetaGlobalExistingFetch() {
+    MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_RESPONSE);
     MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     assertNull(global.getSyncID());
     assertNull(global.getEngines());
     assertNull(global.getStorageVersion());
-    synchronized (monitor) {
-      global.fetch(new ExistingMetaGlobalFetchDelegate(global));
-      monitor.wait();
-    }
+
+    data.startHTTPServer(existingMetaGlobalServer);
+    final MockMetaGlobalFetchDelegate delegate = doFetch(global);
+    data.stopHTTPServer();
+
+    assertTrue(delegate.successCalled);
+    assertEquals(200, delegate.successResponse.getStatusCode());
+    assertEquals("zPSQTm7WBVWB", global.getSyncID());
+    assertTrue(global.getEngines() instanceof ExtendedJSONObject);
+    assertEquals(new Long(5), global.getStorageVersion());
   }
 
+
+  @Test
+  public void testMetaGlobalSetFromRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
+    assertEquals("zPSQTm7WBVWB", mg.getSyncID());
+    assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
+    assertEquals(new Long(5), mg.getStorageVersion());
+  }
+
+  @Test
+  public void testMetaGlobalAsCryptoRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
+    CryptoRecord rec = mg.asCryptoRecord();
+    assertEquals("global", rec.guid);
+    mg.setFromRecord(rec);
+    assertEquals("zPSQTm7WBVWB", mg.getSyncID());
+    assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
+    assertEquals(new Long(5), mg.getStorageVersion());
+  }
   // TODO: upload test.
 }

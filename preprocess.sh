@@ -5,17 +5,22 @@ USERNAME=$(whoami)
 PREPROCESSOR="python tools/Preprocessor.py"
 
 ANDROID_PACKAGE_NAME=$($PREPROCESSOR -Fsubstitution -DUSERNAME=$USERNAME package-name.txt)
+MOZ_APP_DISPLAYNAME="FxSync"
 
 echo "Using ANDROID_PACKAGE_NAME $ANDROID_PACKAGE_NAME."
+echo "Using MOZ_APP_DISPLAYNAME $MOZ_APP_DISPLAYNAME."
 
-AUTHORITIES=src/main/java/org/mozilla/gecko/sync/repositories/android/Authorities.java
+CONSTANTS=src/main/java/org/mozilla/gecko/sync/GlobalConstants.java
+BROWSERCONTRACT=src/main/java/org/mozilla/gecko/db/BrowserContract.java
 MANIFEST=AndroidManifest.xml
 
 DEFINITIONS="-DANDROID_PACKAGE_NAME=$ANDROID_PACKAGE_NAME"
-$PREPROCESSOR $DEFINITIONS $AUTHORITIES.in > $AUTHORITIES
+DISPLAYNAME_DEF="-DMOZ_APP_DISPLAYNAME=$MOZ_APP_DISPLAYNAME"
+$PREPROCESSOR $DEFINITIONS "$DISPLAYNAME_DEF" $CONSTANTS.in > $CONSTANTS
 $PREPROCESSOR $DEFINITIONS $MANIFEST.in > $MANIFEST
+$PREPROCESSOR $DEFINITIONS $BROWSERCONTRACT.in > $BROWSERCONTRACT
 
-$PREPROCESSOR $DEFINITIONS strings.xml.template > res/values/strings.xml
+$PREPROCESSOR $DEFINITIONS strings/strings.xml.template > res/values/strings.xml
 $PREPROCESSOR $DEFINITIONS sync_syncadapter.xml.template > res/xml/sync_syncadapter.xml
 $PREPROCESSOR $DEFINITIONS sync_options.xml.template > res/xml/sync_options.xml
 

@@ -9,9 +9,10 @@ import static junit.framework.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -23,10 +24,11 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
 
   private static final String LOG_TAG = "DefaultFetchDelegate";
   public ArrayList<Record> records = new ArrayList<Record>();
-  
+  public Set<String> ignore = new HashSet<String>();
+
   @Override
   public void onFetchFailed(Exception ex, Record record) {
-    sharedFail("Shouldn't fail");
+    performNotify("Fetch failed.", ex);
   }
 
   @Override
@@ -39,16 +41,17 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   protected void onDone(ArrayList<Record> records, HashMap<String, Record> expected, long end) {
-    Log.i(LOG_TAG, "onDone. Test Waiter is " + testWaiter());
+    Log.i(LOG_TAG, "onDone.");
     Log.i(LOG_TAG, "End timestamp is " + end);
     Log.i(LOG_TAG, "Expected is " + expected);
     Log.i(LOG_TAG, "Records is " + records);
+    Set<String> foundGuids = new HashSet<String>();
     try {
       int expectedCount = 0;
+      int expectedFound = 0;
       Log.d(LOG_TAG, "Counting expected keys.");
       for (String key : expected.keySet()) {
-        if (RepoUtils.SPECIAL_GUIDS_MAP == null ||
-            !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(key)) {
+        if (!ignore.contains(key)) {
           expectedCount++;
         }
       }
@@ -57,33 +60,36 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
         Log.d(LOG_TAG, "Record.");
         Log.d(LOG_TAG, record.guid);
 
-        // Ignore special guids for bookmarks
-        if (RepoUtils.SPECIAL_GUIDS_MAP == null ||
-            !RepoUtils.SPECIAL_GUIDS_MAP.containsKey(record.guid)) {
+        // Ignore special GUIDs (e.g., for bookmarks).
+        if (!ignore.contains(record.guid)) {
+          if (foundGuids.contains(record.guid)) {
+            fail("Found duplicate guid " + record.guid);
+          }
           Record expect = expected.get(record.guid);
           if (expect == null) {
-            Log.d(LOG_TAG, "Failing.");
-            fail("Do not expect to get back a record with guid: " + record.guid);
-            testWaiter().performNotify();
+            fail("Do not expect to get back a record with guid: " + record.guid); // Caught below
           }
           Log.d(LOG_TAG, "Checking equality.");
           try {
-            assertTrue(expect.equalPayloads(record));
+            assertTrue(expect.equalPayloads(record)); // Caught below
           } catch (Exception e) {
             Log.e(LOG_TAG, "ONOZ!", e);
           }
           Log.d(LOG_TAG, "Checked equality.");
+          expectedFound += 1;
+          // Track record once we've found it.
+          foundGuids.add(record.guid);
         }
       }
-      assertEquals(expected.size(), expectedCount);
+      assertEquals(expectedCount, expectedFound); // Caught below
       Log.i(LOG_TAG, "Notifying success.");
-      testWaiter().performNotify();
+      performNotify();
     } catch (AssertionFailedError e) {
       Log.e(LOG_TAG, "Notifying assertion failure.");
-      testWaiter().performNotify(e);
+      performNotify(e);
     } catch (Exception e) {
       Log.e(LOG_TAG, "Fucking no.");
-      testWaiter().performNotify();
+      performNotify();
     }
   }
   

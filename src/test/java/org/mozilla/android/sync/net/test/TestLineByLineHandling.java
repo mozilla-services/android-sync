@@ -30,7 +30,7 @@ public class TestLineByLineHandling {
   private static final String  TEST_SERVER = "http://localhost:" + TEST_PORT;
   private static final String  LOG_TAG     = "TestLineByLineHandling";
   static String                STORAGE_URL = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/lines";
-  private HTTPServerTestHelper data        = new HTTPServerTestHelper();
+  private HTTPServerTestHelper data        = new HTTPServerTestHelper(TEST_PORT);
 
   public ArrayList<String>     lines       = new ArrayList<String>();
 
@@ -86,6 +86,7 @@ public class TestLineByLineHandling {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       Log.i(LOG_TAG, "Got request failure: " + response);
+      BaseResource.consumeEntity(response);
       fail("Should not be called.");
     }
 

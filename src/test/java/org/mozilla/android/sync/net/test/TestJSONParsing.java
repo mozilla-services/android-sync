@@ -42,4 +42,28 @@ public class TestJSONParsing {
     assertEquals(new Long(1233702554000L), o.getTimestamp("modified"));
     assertEquals(null, o.getTimestamp("foo"));
   }
+
+  @SuppressWarnings("unused")
+  private static void ensureNumberFormatException(ExtendedJSONObject o, String key) {
+    try {
+      o.getIntegerSafely(key);
+      fail("Should not succeed.");
+    } catch (Exception e) {
+      assertTrue(e instanceof NumberFormatException);
+    }
+  }
+
+  @Test
+  public void testSafeInteger() {
+    ExtendedJSONObject o = new ExtendedJSONObject();
+    o.put("integer", new Integer(5));
+    o.put("double",  new Double(1.2));
+    o.put("string",  "66");
+    o.put("object",  new ExtendedJSONObject());
+    o.put("null",    null);
+
+    assertEquals(new Integer(5),  o.getIntegerSafely("integer"));
+    assertEquals(new Integer(66), o.getIntegerSafely("string"));
+    assertNull(o.getIntegerSafely(null));
+  }
 }

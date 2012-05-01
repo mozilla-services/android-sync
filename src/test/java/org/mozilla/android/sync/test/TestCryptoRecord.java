@@ -3,8 +3,9 @@
 
 package org.mozilla.android.sync.test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.apache.commons.codec.binary.Base64;
@@ -22,6 +24,9 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
+import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class TestCryptoRecord {
   String base64EncryptionKey = "9K/wLdXdw+nrTtXo4ZpECyHFNr4d7aYHqeg3KW9+m6Q=";
@@ -263,5 +268,37 @@ public class TestCryptoRecord {
 
     assertArrayEquals(Base64.decodeBase64(expectedBase64EncryptionKey.getBytes("UTF-8")), keyBundle.getEncryptionKey());
     assertArrayEquals(Base64.decodeBase64(expectedBase64HmacKey.getBytes("UTF-8")), keyBundle.getHMACKey());
+  }
+
+  @Test
+  public void testTTL() throws UnsupportedEncodingException, CryptoException {
+    Record historyRecord = new HistoryRecord();
+    CryptoRecord cryptoRecord = historyRecord.getEnvelope();
+    assertEquals(historyRecord.ttl, cryptoRecord.ttl);
+
+    // Very important that ttls are set in outbound envelopes.
+    JSONObject o = cryptoRecord.toJSONObject();
+    assertEquals(cryptoRecord.ttl, o.get("ttl"));
+
+    // Most important of all, outbound encrypted record envelopes.
+    KeyBundle keyBundle = KeyBundle.withRandomKeys();
+    cryptoRecord.keyBundle = keyBundle;
+    cryptoRecord.encrypt();
+    assertEquals(historyRecord.ttl, cryptoRecord.ttl); // Should be preserved.
+    o = cryptoRecord.toJSONObject();
+    assertEquals(cryptoRecord.ttl, o.get("ttl"));
+
+    // But we should ignore negative ttls.
+    Record clientRecord = new ClientRecord();
+    clientRecord.ttl = -1; // Don't ttl this record.
+    o = clientRecord.getEnvelope().toJSONObject();
+    assertNull(o.get("ttl"));
+
+    // But we should ignore negative ttls in outbound encrypted record envelopes.
+    cryptoRecord = clientRecord.getEnvelope();
+    cryptoRecord.keyBundle = keyBundle;
+    cryptoRecord.encrypt();
+    o = cryptoRecord.toJSONObject();
+    assertNull(o.get("ttl"));
   }
 }

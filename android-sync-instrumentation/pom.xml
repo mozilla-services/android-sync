@@ -17,6 +17,7 @@
 
   <properties>
     <project.basedir>../test</project.basedir>
+    <failIfNoTests>false</failIfNoTests>
   </properties>
 
   <dependencies>
@@ -40,6 +41,7 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- APK: so our dep gets installed. -->
     <dependency>
       <groupId>org.mozilla.gecko</groupId>
       <artifactId>android-sync-app</artifactId>
@@ -47,6 +49,15 @@
       <type>apk</type>
     </dependency>
 
+    <!-- POM: so we have access to the source. -->
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+    </dependency>
+
+    <!-- JAR: so we have access to dependencies and other sources. -->
     <dependency>
       <groupId>org.mozilla.gecko</groupId>
       <artifactId>android-sync-app</artifactId>
@@ -58,11 +69,34 @@
 
   <build>
     <finalName>${project.artifactId}</finalName>
-
     <sourceDirectory>../test/src</sourceDirectory>
-    <!-- <testSourceDirectory>../test/src/test/java</testSourceDirectory> -->
 
     <plugins>
+      <!--
+        For some reason, when compiling under Jenkins the compiler
+        doesn't see some of the main app's compiled classes.
+        Fix this by adding part of its source tree to the build.
+        -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>../src/main/java/org/mozilla/</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>com.jayway.maven.plugins.android.generation2</groupId>
         <artifactId>android-maven-plugin</artifactId>

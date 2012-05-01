@@ -4,8 +4,11 @@
 package org.mozilla.android.sync.stage.test;
 
 import java.io.IOException;
+import java.net.URI;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.android.sync.test.helpers.RealPrefsMockGlobalSession;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -17,9 +20,8 @@ import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.Context;
-import android.test.AndroidTestCase;
 
-public class TestGlobalSession extends AndroidTestCase {
+public class TestGlobalSession extends AndroidSyncTestCase {
   public void testStageAdvance() {
     assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
     assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
@@ -50,12 +52,32 @@ public class TestGlobalSession extends AndroidTestCase {
     }
 
     @Override
+    public void informNodeAuthenticationFailed(GlobalSession session, URI clusterURL) {
+      fail("Not expecting informNodeAuthenticationFailed.");
+    }
+
+    @Override
+    public void informNodeAssigned(GlobalSession session, URI oldClusterURL, URI newClusterURL) {
+      fail("Not expecting informNodeReassigned.");
+    }
+
+    @Override
+    public void informUnauthorizedResponse(GlobalSession session, URI clusterURL) {
+      fail("Not expecting informUnauthorizedResponse.");
+    }
+
+    @Override
     public void handleAborted(GlobalSession globalSession, String reason) {
       fail("Not expecting abort.");
     }
 
     @Override
     public boolean shouldBackOff() {
+      return false;
+    }
+
+    @Override
+    public boolean wantNodeAssignment() {
       return false;
     }
   }
@@ -68,9 +90,9 @@ public class TestGlobalSession extends AndroidTestCase {
     String syncKey    = "abcdeabcdeabcdeabcdeabcdea";
     KeyBundle syncKeyBundle = new KeyBundle(username, syncKey);
     HappyCallback callback = new HappyCallback();
-    Context context = getContext();
+    Context context = getApplicationContext();
     System.out.println("Using context " + context);
-    GlobalSession session = new MockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
+    GlobalSession session = new RealPrefsMockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
     session.start();
     assertTrue(callback.calledSuccess);
   }

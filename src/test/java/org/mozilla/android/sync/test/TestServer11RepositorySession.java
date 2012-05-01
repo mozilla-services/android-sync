@@ -12,8 +12,8 @@ import java.net.URISyntaxException;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockRecord;
 import org.mozilla.android.sync.test.helpers.MockServer;
-import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
@@ -53,33 +53,7 @@ public class TestServer11RepositorySession {
   static final String USER_PASS         = "n6ec3u5bee3tixzp2asys7bs6fve4jfw:password";
   static final String SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
 
-  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
-
-  public class MockRecord extends Record {
-    public MockRecord(String guid, String collection, long lastModified,
-        boolean deleted) {
-      super(guid, collection, lastModified, deleted);
-    }
-
-    @Override
-    public void initFromPayload(CryptoRecord payload) {
-    }
-
-    @Override
-    public CryptoRecord getPayload() {
-      return null;
-    }
-
-    @Override
-    public String toJSONString() {
-      return "{\"id\":\"" + guid + "\", \"payload\": \"foo\"}";
-    }
-
-    @Override
-    public Record copyWithIDs(String guid, long androidID) {
-      return new MockRecord(guid, this.collection, this.lastModified, this.deleted);
-    }
-  }
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
 
   public class MockServer11RepositorySession extends Server11RepositorySession {
     public MockServer11RepositorySession(Repository repository) {
@@ -106,6 +80,7 @@ public class TestServer11RepositorySession {
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
+      BaseResource.consumeEntity(res);
       data.stopHTTPServer();
     }
   }
