@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.stage;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.json.simple.parser.ParseException;
@@ -94,7 +95,7 @@ public class EnsureCrypto5KeysStage extends AbstractNonRepositorySyncStage
    */
   protected Set<String> collectionsToUpdate(CollectionKeys oldKeys, CollectionKeys newKeys) {
     // These keys have explicitly changed; they definitely need updating.
-    Set<String> changedKeys = CollectionKeys.differences(oldKeys, newKeys);
+    Set<String> changedKeys = new HashSet<String>(CollectionKeys.differences(oldKeys, newKeys));
 
     boolean defaultKeyChanged = true; // Most pessimistic is to assume default key has changed.
     KeyBundle newDefaultKeyBundle = null;
