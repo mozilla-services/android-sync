@@ -5,7 +5,6 @@ package org.mozilla.gecko.sync.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -32,7 +31,6 @@ public class TestInfoCollections {
     ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_JSON);
     infoCollections.setFromRecord(record);
 
-    assertNotNull(infoCollections.getTimestamps());
     assertEquals(Utils.decimalSecondsToMilliseconds(1.3319567131E9), infoCollections.getTimestamp("history").longValue());
     assertEquals(Utils.decimalSecondsToMilliseconds(1.321E9), infoCollections.getTimestamp("meta").longValue());
     assertEquals(Utils.decimalSecondsToMilliseconds(1.35E9), infoCollections.getTimestamp("tabs").longValue());
