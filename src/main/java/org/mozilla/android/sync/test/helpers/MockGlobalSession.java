@@ -27,8 +27,8 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
   }
 
   @Override
-  public boolean engineIsEnabled(String engine, EngineSettings engineSettings) {
-    return false;
+  public EngineSettings engineIsEnabled(String engine, EngineSettings engineSettings) {
+    return null;
   }
 
   @Override

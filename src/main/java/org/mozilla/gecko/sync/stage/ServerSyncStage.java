@@ -72,12 +72,18 @@ public abstract class ServerSyncStage implements
       Logger.warn(LOG_TAG, "Unable to enable " + this + ": fetching config failed.", e);
       return false;
     }
-    EngineSettings engineSettings = getEngineSettings(config);
+    EngineSettings clientEngineSettings = getEngineSettings(config);
 
     // Catch the subclasses of MetaGlobalException to trigger various resets and wipes.
-    config.enabled = session.engineIsEnabled(this.getEngineName(), engineSettings);
+    EngineSettings serverEngineSettings = session.engineIsEnabled(this.getEngineName(), clientEngineSettings);
+    config.enabled = (serverEngineSettings != null);
+    if (serverEngineSettings != null) {
+      // If we didn't throw in engineIsEnabled, then we should take remote syncID and version.
+      config.syncID  = serverEngineSettings.syncID;
+      config.version = serverEngineSettings.version;
+    }
 
-    // Persist the enabled flag from meta/global so that we can produce an
+    // Persist the data from meta/global so that we can produce an
     // up-to-date meta/global on demand.
     this.persistConfig(config);
 

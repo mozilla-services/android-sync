@@ -85,10 +85,9 @@ public class TestResetCommands {
         callback, null, null, null) {
 
       @Override
-      public boolean engineIsEnabled(String engineName,
-                                     EngineSettings engineSettings)
-        throws MetaGlobalException {
-        return true;
+      public EngineSettings engineIsEnabled(String engineName, EngineSettings engineSettings)
+          throws MetaGlobalException {
+        return new EngineSettings("TEST", 1);
       }
 
       @Override

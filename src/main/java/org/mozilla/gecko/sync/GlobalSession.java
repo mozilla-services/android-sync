@@ -777,8 +777,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   /**
    * If meta/global is missing or malformed, throws a MetaGlobalException.
-   * Otherwise, returns true if there is an entry for this engine in the
-   * meta/global "engines" object.
+   * Otherwise, returns the server engine settings if there is an entry for this
+   * engine in the meta/global "engines" object.
    *
    * @param engineName
    *          the name to check (e.g., "bookmarks").
@@ -786,24 +786,25 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    *          if non-null, verify that the server engine settings are congruent
    *          with these client engine settings, throwing the appropriate
    *          MetaGlobalException if not.
-   * @return true if the engine with the provided name is present in the
-   *         meta/global "engines" object, and verification passed.
+   * @return the server engine settings if the engine with the provided name is
+   *         present in the meta/global "engines" object, and verification
+   *         passed; null otherwise.
    *
    * @throws MetaGlobalException
    */
-  public boolean engineIsEnabled(String engineName, EngineSettings clientEngineSettings) throws MetaGlobalException {
+  public EngineSettings engineIsEnabled(String engineName, EngineSettings clientEngineSettings) throws MetaGlobalException {
     if (config.metaGlobal == null) {
       throw new MetaGlobalNotSetException();
     }
     EngineSettings serverEngineSettings = config.metaGlobal.getEngineSettings(engineName);
     if (serverEngineSettings == null) {
       Logger.debug(LOG_TAG, "Engine " + engineName + " not enabled: no meta/global entry.");
-      return false;
+      return null;
     }
     if (clientEngineSettings != null) {
       MetaGlobal.verifyEngineSettings(serverEngineSettings, clientEngineSettings);
     }
-    return true;
+    return serverEngineSettings;
   }
 
   public ClientsDataDelegate getClientsDelegate() {

@@ -169,10 +169,10 @@ public class TestResetting extends AndroidSyncTestCase {
         callback, getApplicationContext(), null, null) {
 
       @Override
-      public boolean engineIsEnabled(String engineName,
+      public EngineSettings engineIsEnabled(String engineName,
                                      EngineSettings engineSettings)
         throws MetaGlobalException {
-        return true;
+        return new EngineSettings("TEST", 1);
       }
 
       @Override
