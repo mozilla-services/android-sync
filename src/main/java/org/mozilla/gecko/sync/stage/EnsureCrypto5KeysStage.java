@@ -25,9 +25,8 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
-public class EnsureCrypto5KeysStage
-extends AbstractNonRepositorySyncStage
-implements SyncStorageRequestDelegate, KeyUploadDelegate {
+public class EnsureCrypto5KeysStage extends AbstractNonRepositorySyncStage
+    implements SyncStorageRequestDelegate, KeyUploadDelegate {
 
   public EnsureCrypto5KeysStage(GlobalSession session) {
     super(session);
@@ -191,10 +190,9 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
   @Override
   public void handleRequestFailure(SyncStorageResponse response) {
     if (retrying) {
-      // Should never happen -- this means we uploaded our crypto/keys
-      // successfully, but somehow didn't have them persisted correctly and
-      // tried to re-download (unsuccessfully).
-      session.handleHTTPError(response, "Failure in refetching uploaded keys.");
+      // Should happen very rarely -- this means we uploaded our crypto/keys
+      // successfully, but failed to re-download.
+      session.handleHTTPError(response, "Failure while re-downloading already uploaded keys.");
       return;
     }
 
@@ -221,13 +219,10 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
   }
 
   @Override
-  public void onKeysUploaded(CollectionKeys keys, long timestamp) {
+  public void onKeysUploaded() {
     Logger.debug(LOG_TAG, "New keys uploaded. Persisting before starting stage again.");
     try {
       retrying = true;
-      PersistedCrypto5Keys pck = session.config.persistedCryptoKeys();
-      pck.persistKeys(keys);
-      pck.persistLastModified(timestamp);
       this.execute();
     } catch (NoSuchStageException e) {
       session.abort(e, "No such stage.");

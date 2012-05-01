@@ -147,6 +147,7 @@ public class TestEnsureCrypto5KeysStage {
     assertNull(session.config.collectionKeys);
 
     final AtomicBoolean keysUploaded = new AtomicBoolean(false);
+    final AtomicBoolean keysDownloaded = new AtomicBoolean(false);
     final CollectionKeys uploadedKeys = new CollectionKeys();
 
     MockServer server = new MockServer() {
@@ -168,6 +169,7 @@ public class TestEnsureCrypto5KeysStage {
           return;
         }
         if (keysUploaded.get()) {
+          keysDownloaded.set(true);
           try {
             CryptoRecord rec = uploadedKeys.asCryptoRecord();
             rec.keyBundle = syncKeyBundle;
@@ -186,6 +188,7 @@ public class TestEnsureCrypto5KeysStage {
 
     assertTrue(callback.calledSuccess);
     assertTrue(keysUploaded.get());
+    assertTrue(keysDownloaded.get());
     assertNotNull(session.config.collectionKeys);
     assertTrue(CollectionKeys.differences(session.config.collectionKeys, uploadedKeys).isEmpty());
   }

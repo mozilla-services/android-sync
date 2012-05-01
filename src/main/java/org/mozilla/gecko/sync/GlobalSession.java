@@ -439,7 +439,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response); // We don't need the response at all.
-        keyUploadDelegate.onKeysUploaded(keys, response.normalizedWeaveTimestamp());
+        keyUploadDelegate.onKeysUploaded();
       }
 
       @Override
@@ -580,7 +580,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
             try {
               session.uploadKeys(CollectionKeys.generateCollectionKeys(), new KeyUploadDelegate() {
                 @Override
-                public void onKeysUploaded(CollectionKeys keys, long timestamp) {
+                public void onKeysUploaded() {
                   // Now we can download them.
                   freshStartDelegate.onFreshStart();
                 }

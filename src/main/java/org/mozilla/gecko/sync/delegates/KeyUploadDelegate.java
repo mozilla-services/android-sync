@@ -4,9 +4,16 @@
 
 package org.mozilla.gecko.sync.delegates;
 
-import org.mozilla.gecko.sync.CollectionKeys;
-
 public interface KeyUploadDelegate {
-  void onKeysUploaded(CollectionKeys keys, long timestamp);
+  /**
+   * Called when keys have been successfully uploaded to the server.
+   * <p>
+   * The uploaded keys are intentionally not exposed. It is possible for two
+   * clients to simultaneously upload keys and for each client to conclude that
+   * her keys are current (since the server returned 200 on upload). To shorten
+   * the window wherein two such clients can race, all clients should upload and
+   * then immediately re-download the fetched keys.
+   */
+  void onKeysUploaded();
   void onKeyUploadFailed(Exception e);
 }
