@@ -87,7 +87,7 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
       @Override
       public void run() {
         try {
-          EnsureClusterURLStage.fetchClusterURL(TEST_NW_URL, delegate, new Account[] { account });
+          EnsureClusterURLStage.fetchClusterURL(TEST_NW_URL, delegate, context);
         } catch (URISyntaxException e) {
           WaitHelper.getTestWaiter().performNotify(e);
         }

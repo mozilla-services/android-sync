@@ -25,6 +25,7 @@ import org.mozilla.gecko.sync.setup.SyncAccounts;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.content.Context;
 import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -76,7 +77,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
    * @throws URISyntaxException
    */
   public static void fetchClusterURL(final String nodeWeaveURL,
-                                     final ClusterURLFetchDelegate delegate, final Account[] accounts) throws URISyntaxException {
+                                     final ClusterURLFetchDelegate delegate, final Context context) throws URISyntaxException {
     Log.d(LOG_TAG, "In fetchClusterURL: node/weave is " + nodeWeaveURL);
 
     BaseResource resource = new BaseResource(nodeWeaveURL);
@@ -156,12 +157,13 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
             } catch (IOException e) {
               delegate.handleError(e);
             }
-            if (RESPONSE_UPGRADE_NEEDED.equals(errorMessage)) {
+            if (RESPONSE_UPGRADE_NEEDED.equals(errorMessage) && context != null) {
               // Sync needs to be upgraded. Don't automatically sync anymore.
               final HttpResponse failedResponse = response;
               ThreadPool.run(new Runnable() {
                 @Override
                 public void run() {
+                  Account[] accounts = AccountManager.get(context).getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
                   SyncAccounts.enableSyncAccounts(accounts, false);
                   Log.i(LOG_TAG, "Got 400 for node/weave cluster URL request (user not found; failing).");
                   delegate.handleFailure(failedResponse);
@@ -278,9 +280,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
       @Override
       public void run() {
         try {
-          Account[] accounts = AccountManager.get(session.getContext()).getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
-          // TODO: make sure context is not null.
-          fetchClusterURL(session.config.nodeWeaveURL(), delegate, accounts);
+          fetchClusterURL(session.config.nodeWeaveURL(), delegate, session.getContext());
         } catch (URISyntaxException e) {
           session.abort(e, "Invalid URL for node/weave.");
         }
