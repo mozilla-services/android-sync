@@ -567,43 +567,74 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
         // Unfortunately, the servers don't support it after a wipe right now
         // (bug 693893), so we're going to defer this until bug 692700.
         mg.upload(new MetaGlobalDelegate() {
-
           @Override
-          public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
-            session.config.metaGlobal = global;
-            Logger.info(LOG_TAG, "New meta/global uploaded with sync ID " + global.syncID);
+          public void handleSuccess(MetaGlobal uploadedGlobal, SyncStorageResponse uploadResponse) {
+            Logger.info(LOG_TAG, "New meta/global uploaded with sync ID " + uploadedGlobal.syncID);
+            // Now we can download the new meta/global. We re-download to
+            // shorten the window in which two clients can race while
+            // uploading meta/global; with luck, both will end up downloading
+            // the same meta/global record.
 
-            // Generate and upload new keys.
-            try {
-              session.uploadKeys(generateNewCryptoKeys(), new KeyUploadDelegate() {
-                @Override
-                public void onKeysUploaded() {
-                  // Now we can download them.
-                  freshStartDelegate.onFreshStart();
-                }
+            mg.fetch(new MetaGlobalDelegate() {
+              @Override
+              public void handleSuccess(MetaGlobal downloadedGlobal, SyncStorageResponse downloadResponse) {
+                session.config.metaGlobal = downloadedGlobal;
 
-                @Override
-                public void onKeyUploadFailed(Exception e) {
-                  Log.e(LOG_TAG, "Got exception uploading new keys.", e);
+                // Generate and upload new keys.
+                try {
+                  session.uploadKeys(generateNewCryptoKeys(), new KeyUploadDelegate() {
+                    @Override
+                    public void onKeysUploaded() {
+                      // Now we can download the new keys. We re-download to
+                      // shorten the window in which two clients can race while
+                      // uploading keys; with luck, both will end up downloading
+                      // the same keys.
+                      freshStartDelegate.onFreshStart();
+                    }
+
+                    @Override
+                    public void onKeyUploadFailed(Exception e) {
+                      Log.e(LOG_TAG, "Got exception uploading new keys.", e);
+                      freshStartDelegate.onFreshStartFailed(e);
+                    }
+                  });
+                } catch (CryptoException e) {
+                  Log.e(LOG_TAG, "Got exception generating new keys.", e);
                   freshStartDelegate.onFreshStartFailed(e);
                 }
-              });
-            } catch (CryptoException e) {
-              Log.e(LOG_TAG, "Got exception generating new keys.", e);
-              freshStartDelegate.onFreshStartFailed(e);
-            }
+              }
+
+              @Override
+              public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+                // Shouldn't happen.
+                Logger.warn(LOG_TAG, "Got 'missing' response downloading new meta/global.");
+                freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing while downloading."));
+              }
+
+              @Override
+              public void handleFailure(SyncStorageResponse response) {
+                Logger.warn(LOG_TAG, "Got failure " + response.getStatusCode() + " downloading new meta/global.");
+                session.interpretHTTPFailure(response.httpResponse());
+                freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));
+              }
+
+              @Override
+              public void handleError(Exception e) {
+                Logger.warn(LOG_TAG, "Got error downloading new meta/global.", e);
+                freshStartDelegate.onFreshStartFailed(e);
+              }
+            });
           }
 
           @Override
           public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
             // Shouldn't happen.
             Logger.warn(LOG_TAG, "Got 'missing' response uploading new meta/global.");
-            freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing"));
+            freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing while uploading."));
           }
 
           @Override
           public void handleFailure(SyncStorageResponse response) {
-            // TODO: respect backoffs etc.
             Logger.warn(LOG_TAG, "Got failure " + response.getStatusCode() + " uploading new meta/global.");
             session.interpretHTTPFailure(response.httpResponse());
             freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));

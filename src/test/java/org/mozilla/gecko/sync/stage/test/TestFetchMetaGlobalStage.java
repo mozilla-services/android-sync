@@ -157,16 +157,6 @@ public class TestFetchMetaGlobalStage {
     data.stopHTTPServer();
   }
 
-  protected void doFreshStart(MockServer server) {
-    data.startHTTPServer(server);
-    WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
-      public void run() {
-        session.freshStart();
-      }
-    }));
-    data.stopHTTPServer();
-  }
-
   @Test
   public void testFetchRequiresUpgrade() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     MetaGlobal mg = new MetaGlobal(null, null);
@@ -207,9 +197,20 @@ public class TestFetchMetaGlobalStage {
     assertTrue(calledProcessMissingMetaGlobal);
   }
 
+  protected void doFreshStart(MockServer server) {
+    data.startHTTPServer(server);
+    WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      public void run() {
+        session.freshStart();
+      }
+    }));
+    data.stopHTTPServer();
+  }
+
   @Test
   public void testFreshStart() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     final AtomicBoolean mgUploaded = new AtomicBoolean(false);
+    final AtomicBoolean mgDownloaded = new AtomicBoolean(false);
     final MetaGlobal uploadedMg = new MetaGlobal(null, null);
 
     MockServer server = new MockServer() {
@@ -230,6 +231,18 @@ public class TestFetchMetaGlobalStage {
           this.handle(request, response, 200, "success");
           return;
         }
+        if (mgUploaded.get()) {
+          mgDownloaded.set(true);
+          try {
+            CryptoRecord rec = uploadedMg.asCryptoRecord();
+            rec.keyBundle = syncKeyBundle;
+            rec.encrypt();
+            this.handle(request, response, 200, rec.toJSONString());
+            return;
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
         this.handle(request, response, 404, "missing");
       }
     };
@@ -239,6 +252,7 @@ public class TestFetchMetaGlobalStage {
     assertTrue(this.calledWipeServer);
     assertTrue(this.calledUploadKeys);
     assertTrue(mgUploaded.get());
+    assertTrue(mgDownloaded.get());
     assertEquals(GlobalSession.STORAGE_VERSION, uploadedMg.getStorageVersion().longValue());
   }
 }
