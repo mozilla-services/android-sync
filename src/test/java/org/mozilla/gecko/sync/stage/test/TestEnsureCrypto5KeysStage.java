@@ -190,7 +190,7 @@ public class TestEnsureCrypto5KeysStage {
     assertTrue(keysUploaded.get());
     assertTrue(keysDownloaded.get());
     assertNotNull(session.config.collectionKeys);
-    assertTrue(CollectionKeys.differences(session.config.collectionKeys, uploadedKeys).isEmpty());
+    assertTrue(session.config.collectionKeys.equals(uploadedKeys));
   }
 
   @Test
@@ -245,8 +245,7 @@ public class TestEnsureCrypto5KeysStage {
 
     assertTrue(callback.calledSuccess);
     assertNotNull(session.config.collectionKeys);
-    assertTrue(session.config.collectionKeys.defaultKeyBundle().equals(keys.defaultKeyBundle()));
-    assertTrue(CollectionKeys.differences(session.config.collectionKeys, keys).isEmpty());
+    assertTrue(session.config.collectionKeys.equals(keys));
   }
 
   /**
