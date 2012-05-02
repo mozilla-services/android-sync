@@ -5,6 +5,7 @@ package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -14,6 +15,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
@@ -28,6 +30,8 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.simpleframework.http.Request;
+import org.simpleframework.http.Response;
 
 import android.util.Log;
 
@@ -179,5 +183,59 @@ public class TestMetaGlobal {
     }
     assertEquals(expected, actual);
   }
-  // TODO: upload test.
+
+  public MockMetaGlobalFetchDelegate doUpload(final MetaGlobal global) {
+    final MockMetaGlobalFetchDelegate delegate = new MockMetaGlobalFetchDelegate();
+    WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
+      public void run() {
+        global.upload(delegate);
+      }
+    }));
+
+    return delegate;
+  }
+
+  @Test
+  public void testMetaGlobalUpload() {
+    long TEST_STORAGE_VERSION = 111;
+    String TEST_SYNC_ID = "testSyncID";
+    MetaGlobal mg = new MetaGlobal(META_URL, USER_PASS);
+    mg.setSyncID(TEST_SYNC_ID);
+    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
+
+    final AtomicBoolean mgUploaded = new AtomicBoolean(false);
+    final MetaGlobal uploadedMg = new MetaGlobal(null, null);
+
+    MockServer server = new MockServer() {
+      public void handle(Request request, Response response) {
+        if (request.getMethod().equals("PUT")) {
+          try {
+            ExtendedJSONObject body = ExtendedJSONObject.parseJSONObject(request.getContent());
+            System.out.println(body.toJSONString());
+            assertTrue(body.containsKey("payload"));
+            assertFalse(body.containsKey("default"));
+
+            CryptoRecord rec = CryptoRecord.fromJSONRecord(body);
+            uploadedMg.setFromRecord(rec);
+            mgUploaded.set(true);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+          this.handle(request, response, 200, "success");
+          return;
+        }
+        this.handle(request, response, 404, "missing");
+      }
+    };
+
+    data.startHTTPServer(server);
+    final MockMetaGlobalFetchDelegate delegate = doUpload(mg);
+    data.stopHTTPServer();
+
+    assertTrue(delegate.successCalled);
+    assertTrue(mgUploaded.get());
+    assertEquals(TEST_SYNC_ID, uploadedMg.getSyncID());
+    assertEquals(TEST_STORAGE_VERSION, uploadedMg.getStorageVersion().longValue());
+  }
 }
