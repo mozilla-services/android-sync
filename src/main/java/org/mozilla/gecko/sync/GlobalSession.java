@@ -511,6 +511,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
     }
+    config.enabledEngineNames = global.getEnabledEngineNames();
     config.persistToPrefs();
     advance();
   }
