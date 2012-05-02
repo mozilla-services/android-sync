@@ -239,6 +239,11 @@ public class ExtendedJSONObject {
     return this.object.entrySet();
   }
 
+  @SuppressWarnings("unchecked")
+  public Iterable<String> keyIterable() {
+    return this.object.keySet();
+  }
+
   public org.json.simple.JSONArray getArray(String key) throws NonArrayJSONException {
     Object o = this.object.get(key);
     if (o == null) {

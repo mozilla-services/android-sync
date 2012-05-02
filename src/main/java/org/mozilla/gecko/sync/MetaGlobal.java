@@ -6,6 +6,8 @@ package org.mozilla.gecko.sync;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedSyncIDException;
@@ -107,6 +109,23 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
   public void setEngines(ExtendedJSONObject engines) {
     this.engines = engines;
+  }
+
+  /**
+   * Get enabled engine names.
+   *
+   * @return a collection of engine names or <code>null</code> if meta/global
+   *         was malformed.
+   */
+  public Set<String> getEnabledEngineNames() {
+    if (engines == null) {
+      return null;
+    }
+    Set<String> engineNames = new HashSet<String>();
+    for (String engineName : engines.keyIterable()) {
+      engineNames.add(engineName);
+    }
+    return engineNames;
   }
 
   /**
