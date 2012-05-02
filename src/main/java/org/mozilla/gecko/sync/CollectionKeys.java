@@ -170,4 +170,14 @@ public class CollectionKeys {
 
     return differences;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof CollectionKeys)) {
+      return false;
+    }
+    CollectionKeys other = (CollectionKeys) o;
+    return defaultKeyBundle.equals(other.defaultKeyBundle) &&
+           CollectionKeys.differences(this, other).isEmpty();
+  }
 }
