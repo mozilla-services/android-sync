@@ -574,7 +574,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
             // Generate and upload new keys.
             try {
-              session.uploadKeys(CollectionKeys.generateCollectionKeys(), new KeyUploadDelegate() {
+              session.uploadKeys(generateNewCryptoKeys(), new KeyUploadDelegate() {
                 @Override
                 public void onKeysUploaded() {
                   // Now we can download them.
@@ -769,6 +769,15 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       engineNames.add(stage.getRepositoryName());
     }
     return engineNames;
+  }
+
+  /**
+   * Generate fresh crypto/keys collection.
+   * @return crypto/keys collection.
+   * @throws CryptoException
+   */
+  public CollectionKeys generateNewCryptoKeys() throws CryptoException {
+    return CollectionKeys.generateCollectionKeys();
   }
 
   /**
