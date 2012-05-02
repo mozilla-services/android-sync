@@ -68,8 +68,9 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
       // TODO: PUT! Body!
       r.delegate = this;
-      r.deferPut(null);
-    } catch (URISyntaxException e) {
+      this.callback = callback;
+      r.put(this.asCryptoRecord());
+    } catch (Exception e) {
       callback.handleError(e);
     }
   }
@@ -251,7 +252,6 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
   private void handleUploadSuccess(SyncStorageResponse response) {
     this.callback.handleSuccess(this, response);
-    this.callback = null;
   }
 
   private void handleDownloadSuccess(SyncStorageResponse response) {
@@ -260,29 +260,23 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
         CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
         this.setFromRecord(record);
         this.callback.handleSuccess(this, response);
-        this.callback = null;
       } catch (Exception e) {
         this.callback.handleError(e);
-        this.callback = null;
       }
       return;
     }
     this.callback.handleFailure(response);
-    this.callback = null;
   }
 
   public void handleRequestFailure(SyncStorageResponse response) {
     if (response.getStatusCode() == 404) {
       this.callback.handleMissing(this, response);
-      this.callback = null;
       return;
     }
     this.callback.handleFailure(response);
-    this.callback = null;
   }
 
   public void handleRequestError(Exception e) {
     this.callback.handleError(e);
-    this.callback = null;
   }
 }

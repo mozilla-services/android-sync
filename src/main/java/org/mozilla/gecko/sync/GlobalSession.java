@@ -524,7 +524,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   /**
    * Do a fresh start then quietly finish the sync, starting another.
    */
-  protected void freshStart() {
+  public void freshStart() {
     final GlobalSession globalSession = this;
     freshStart(this, new FreshStartDelegate() {
 
@@ -641,7 +641,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   // reset client to prompt reupload.
   // If sync ID mismatch: take that syncID and reset client.
 
-  private void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
+  protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
     SyncStorageRequest request;
     final GlobalSession self = this;
 
@@ -821,6 +821,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   public void requiresUpgrade() {
     Logger.info(LOG_TAG, "Client outdated storage version; requires update.");
     // TODO: notify UI.
+    this.abort(null, "Requires upgrade");
   }
 
   /**
