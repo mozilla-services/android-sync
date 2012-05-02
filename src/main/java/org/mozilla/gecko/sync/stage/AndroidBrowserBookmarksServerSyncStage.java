@@ -32,9 +32,15 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   protected String getCollection() {
     return "bookmarks";
   }
+
   @Override
   protected String getEngineName() {
     return "bookmarks";
+  }
+
+  @Override
+  public Integer getStorageVersion() {
+    return GlobalSession.BOOKMARKS_ENGINE_VERSION;
   }
 
   @Override

@@ -24,6 +24,7 @@ public abstract class BaseMockServerSyncStage extends ServerSyncStage {
   public Repository remote;
   public String name;
   public String collection;
+  public int version = 1;
 
   public BaseMockServerSyncStage(GlobalSession session) {
     super(session);
@@ -52,6 +53,11 @@ public abstract class BaseMockServerSyncStage extends ServerSyncStage {
   @Override
   protected String getEngineName() {
     return name;
+  }
+
+  @Override
+  public Integer getStorageVersion() {
+    return version;
   }
 
   @Override
