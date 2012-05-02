@@ -57,6 +57,11 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     }
 
     @Override
+    public Integer getStorageVersion() {
+      return 1;
+    }
+
+    @Override
     protected RecordFactory getRecordFactory() {
       return null;
     }
@@ -77,6 +82,10 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     @Override
     public void wipeLocal() {
       this.resetLocal();
+    }
+
+    public Integer getStorageVersion() {
+      return null;
     }
 
     @Override

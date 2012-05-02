@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
@@ -61,6 +62,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   public static final String API_VERSION   = "1.1";
   public static final long STORAGE_VERSION = 5;
+  public static final int  BOOKMARKS_ENGINE_VERSION = 2;
+  public static final int  CLIENTS_ENGINE_VERSION = 1;
+  public static final int  FORMS_ENGINE_VERSION = 1;
+  public static final int  HISTORY_ENGINE_VERSION = 1;
+  public static final int  PASSWORDS_ENGINE_VERSION = 1;
+  public static final int  TABS_ENGINE_VERSION = 1;
 
   public SyncConfiguration config = null;
 
@@ -306,11 +313,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   private String getSyncID() {
-    return config.syncID;
-  }
-
-  private String generateSyncID() {
-    config.syncID = Utils.generateGuid();
     return config.syncID;
   }
 
@@ -574,10 +576,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Clean the server, aborting the current sync.
    */
   protected void freshStart(final GlobalSession session, final FreshStartDelegate freshStartDelegate) {
-
-    final String newSyncID   = session.generateSyncID();
-    final String metaURL     = session.config.metaURL();
-    final String credentials = session.credentials();
+    final MetaGlobal mg = generateNewMetaGlobal();
 
     wipeServer(session, new WipeServerDelegate() {
 
@@ -586,10 +585,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
         session.resetAllStages();
         session.config.purgeCryptoKeys();
         session.config.persistToPrefs();
-
-        MetaGlobal mg = new MetaGlobal(metaURL, credentials);
-        mg.setSyncID(newSyncID);
-        mg.setStorageVersion(STORAGE_VERSION);
 
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
         // for this PUT to ensure at least some level of transactionality.
@@ -600,11 +595,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
           @Override
           public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
             session.config.metaGlobal = global;
-            Logger.info(LOG_TAG, "New meta/global uploaded with sync ID " + newSyncID);
+            Logger.info(LOG_TAG, "New meta/global uploaded with sync ID " + global.syncID);
 
             // Generate and upload new keys.
             try {
-              session.uploadKeys(CollectionKeys.generateCollectionKeys(), new KeyUploadDelegate() {
+              session.uploadKeys(generateNewCryptoKeys(), new KeyUploadDelegate() {
                 @Override
                 public void onKeysUploaded() {
                   // Now we can download them.
@@ -777,6 +772,72 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     }
     GlobalSession.resetStages(stages);
+  }
+
+  /**
+   * Engines to include in a fresh meta/global record.
+   * <p>
+   * Returns either the persisted engine names (perhaps we have been node
+   * re-assigned and are initializing a clean server: we want to upload the
+   * persisted engine names so that we don't accidentally disable engines that
+   * Android Sync doesn't recognize), or the set of engines names that Android
+   * Sync implements.
+   *
+   * @return set of engine names.
+   */
+  protected Set<String> enabledEngineNames() {
+    if (config.enabledEngineNames != null) {
+      return config.enabledEngineNames;
+    }
+    Set<String> engineNames = new HashSet<String>();
+    for (Stage stage : Stage.getNamedStages()) {
+      engineNames.add(stage.getRepositoryName());
+    }
+    return engineNames;
+  }
+
+  /**
+   * Generate fresh crypto/keys collection.
+   * @return crypto/keys collection.
+   * @throws CryptoException
+   */
+  public CollectionKeys generateNewCryptoKeys() throws CryptoException {
+    return CollectionKeys.generateCollectionKeys();
+  }
+
+  /**
+   * Generate a fresh meta/global record.
+   * @return meta/global record.
+   */
+  public MetaGlobal generateNewMetaGlobal() {
+    final String newSyncID   = Utils.generateGuid();
+    final String metaURL     = this.config.metaURL();
+    final String credentials = this.credentials();
+
+    ExtendedJSONObject engines = new ExtendedJSONObject();
+    for (String engineName : enabledEngineNames()) {
+      EngineSettings engineSettings = null;
+      try {
+        GlobalSyncStage globalStage = this.getSyncStageByName(engineName);
+        Integer version = globalStage.getStorageVersion();
+        if (version == null) {
+          continue; // Don't want this stage to be included in meta/global.
+        }
+        engineSettings = new EngineSettings(Utils.generateGuid(), version.intValue());
+      } catch (NoSuchStageException e) {
+        // No trouble; Android Sync might not recognize this engine yet.
+        // By default, version 0.  Other clients will see the 0 version and reset/wipe accordingly.
+        engineSettings = new EngineSettings(Utils.generateGuid(), 0);
+      }
+      engines.put(engineName, engineSettings.toJSONObject());
+    }
+
+    MetaGlobal metaGlobal = new MetaGlobal(metaURL, credentials);
+    metaGlobal.setSyncID(newSyncID);
+    metaGlobal.setStorageVersion(STORAGE_VERSION);
+    metaGlobal.setEngines(engines);
+
+    return metaGlobal;
   }
 
   /**

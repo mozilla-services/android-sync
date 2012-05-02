@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.net.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -12,9 +13,11 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import junit.framework.AssertionFailedError;
@@ -31,6 +34,7 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -359,5 +363,49 @@ public class TestGlobalSession {
 
     assertTrue(callback.calledError); // TODO: this should be calledAborted.
     assertFalse(callback.calledRequestBackoff);
+  }
+
+  @Test
+  public void testGenerateNewMetaGlobalNonePersisted() throws Exception {
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
+
+    // Verify we fill in all of our known engines when none are persisted.
+    session.config.enabledEngineNames = null;
+    MetaGlobal mg = session.generateNewMetaGlobal();
+    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    List<String> namesList = new ArrayList<String>(mg.getEnabledEngineNames());
+    Collections.sort(namesList);
+    String[] names = namesList.toArray(new String[namesList.size()]);
+    String[] expected = new String[] { "bookmarks", "clients", "forms", "history", "passwords", "tabs" };
+    assertArrayEquals(expected, names);
+    assertEquals(GlobalSession.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
+    assertEquals(GlobalSession.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
+  }
+
+  @Test
+  public void testGenerateNewMetaGlobalSomePersisted() throws Exception {
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
+
+    // Verify we preserve engines with version 0 if some are persisted.
+    session.config.enabledEngineNames = new HashSet<String>();
+    session.config.enabledEngineNames.add("bookmarks");
+    session.config.enabledEngineNames.add("clients");
+    session.config.enabledEngineNames.add("addons");
+    session.config.enabledEngineNames.add("prefs");
+    MetaGlobal mg = session.generateNewMetaGlobal();
+    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    List<String> namesList = new ArrayList<String>(mg.getEnabledEngineNames());
+    Collections.sort(namesList);
+    String[] names = namesList.toArray(new String[namesList.size()]);
+    String[] expected = new String[] { "addons", "bookmarks", "clients", "prefs" };
+    assertArrayEquals(expected, names);
+    assertEquals(GlobalSession.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
+    assertEquals(GlobalSession.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
+    assertEquals(0, mg.getEngines().getObject("addons").getIntegerSafely("version").intValue());
+    assertEquals(0, mg.getEngines().getObject("prefs").getIntegerSafely("version").intValue());
   }
 }
