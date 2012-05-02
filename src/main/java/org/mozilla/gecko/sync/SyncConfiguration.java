@@ -438,6 +438,11 @@ public class SyncConfiguration implements CredentialsSource {
     persistedCryptoKeys().purge();
   }
 
+  public void purgeMetaGlobal() {
+    metaGlobal = null;
+    persistedMetaGlobal().purge();
+  }
+
   public PersistedCrypto5Keys persistedCryptoKeys() {
     return new PersistedCrypto5Keys(getPrefs(), syncKeyBundle);
   }

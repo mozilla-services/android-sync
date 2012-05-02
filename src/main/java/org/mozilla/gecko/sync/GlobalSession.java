@@ -312,10 +312,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
-  private String getSyncID() {
-    return config.syncID;
-  }
-
   /*
    * PrefsSource methods.
    */
@@ -491,24 +487,28 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
     Long storageVersion = global.getStorageVersion();
     if (storageVersion < STORAGE_VERSION) {
-      // Outdated server.
+      Logger.warn(LOG_TAG, "Outdated server: reported " +
+          "remote storage version " + storageVersion + " < " +
+          "local storage version " + STORAGE_VERSION);
       freshStart();
       return;
     }
     if (storageVersion > STORAGE_VERSION) {
-      // Outdated client!
+      Logger.warn(LOG_TAG, "Outdated client: reported " +
+          "remote storage version " + storageVersion + " > " +
+          "local storage version " + STORAGE_VERSION);
       requiresUpgrade();
       return;
     }
     String remoteSyncID = global.getSyncID();
     if (remoteSyncID == null) {
-      // Corrupt meta/global.
+      Logger.warn(LOG_TAG, "Malformed remote meta/global: could not retrieve remote syncID.");
       freshStart();
       return;
     }
-    String localSyncID = this.getSyncID();
+    String localSyncID = config.syncID;
     if (!remoteSyncID.equals(localSyncID)) {
-      // Sync ID has changed. Reset timestamps and fetch new keys.
+      Logger.warn(LOG_TAG, "Remote syncID different from local syncID: resetting client and assuming remote syncID.");
       resetAllStages();
       config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
@@ -559,6 +559,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       public void onWiped(long timestamp) {
         session.resetAllStages();
         session.config.purgeCryptoKeys();
+        session.config.purgeMetaGlobal();
         session.config.persistToPrefs();
 
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
