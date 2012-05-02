@@ -204,7 +204,7 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
       // No keys. Generate and upload, then refetch.
       CollectionKeys keys;
       try {
-        keys = CollectionKeys.generateCollectionKeys();
+        keys = session.generateNewCryptoKeys();
       } catch (CryptoException e) {
         session.abort(e, "Couldn't generate new key bundle.");
         return;
