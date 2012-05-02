@@ -4,13 +4,13 @@
 package org.mozilla.android.sync.test.integration;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -26,70 +26,84 @@ public class TestBasicFetch {
 
   // Corresponds to rnewman+testandroid@mozilla.com.
   static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
-  static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
+  static final String PASSWORD     = "password";
   static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
 
-  public class LiveDelegate extends BaseTestStorageRequestDelegate {
+  public static class LiveDelegate extends BaseTestStorageRequestDelegate {
     public boolean shouldDecrypt = false;
+    public String jsonBody = null;
+
+    final String username;
+    final String syncKey;
+
+    public LiveDelegate(String username, String syncKey) {
+      this.username = username;
+      this.syncKey = syncKey;
+    }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
-      assertTrue(res.wasSuccessful());
-      assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
+      try {
+        assertTrue(res.wasSuccessful());
+        assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
+      } catch (Exception e) {
+        WaitHelper.getTestWaiter().performNotify(e);
+        return;
+      }
 
       ExtendedJSONObject body = null;
       try {
         body = res.jsonObjectBody();
-        System.out.println(body.toJSONString());
+        jsonBody = body.toJSONString();
       } catch (Exception e) {
-        e.printStackTrace();
+        WaitHelper.getTestWaiter().performNotify(e);
         return;
       }
 
       if (shouldDecrypt) {
         try {
-          System.out.println("Attempting to decrypt.");
           CryptoRecord rec;
           rec = CryptoRecord.fromJSONRecord(body);
-          rec.keyBundle = new KeyBundle(USERNAME, SYNC_KEY);
+          rec.keyBundle = new KeyBundle(username, syncKey);
           rec.decrypt();
-          System.out.println(rec.payload.toJSONString());
+          jsonBody = rec.payload.toJSONString();
         } catch (Exception e) {
-          e.printStackTrace();
-          fail("Should receive no exception when decrypting.");
+          WaitHelper.getTestWaiter().performNotify(e);
+          return;
         }
       }
+
+      WaitHelper.getTestWaiter().performNotify();
     }
+  }
+
+  public static String realLiveFetch(String username, String password, String syncKey, String url, boolean shouldDecrypt) throws URISyntaxException {
+    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url));
+    LiveDelegate delegate = new LiveDelegate(username, syncKey);
+    delegate.shouldDecrypt = shouldDecrypt;
+    delegate._credentials = username + ":" + password;
+    r.delegate = delegate;
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        r.get();
+      }
+    });
+    return delegate.jsonBody;
   }
 
   @Test
   public void testRealLiveMetaGlobal() throws URISyntaxException {
-    URI u = new URI(REMOTE_META_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
-    LiveDelegate delegate = new LiveDelegate();
-    delegate._credentials = USER_PASS;
-    r.delegate = delegate;
-    r.get();
+    System.out.println(realLiveFetch(USERNAME, PASSWORD, SYNC_KEY, REMOTE_META_URL, false));
   }
 
   @Test
   public void testRealLiveCryptoKeys() throws URISyntaxException {
-    URI u = new URI(REMOTE_KEYS_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
-    LiveDelegate delegate = new LiveDelegate();
-    delegate.shouldDecrypt = true;
-    delegate._credentials = USER_PASS;
-    r.delegate = delegate;
-    r.get();
+    System.out.println(realLiveFetch(USERNAME, PASSWORD, SYNC_KEY, REMOTE_KEYS_URL, true));
   }
 
   @Test
   public void testRealLiveInfoCollections() throws URISyntaxException {
-    URI u = new URI(REMOTE_INFO_COLLECTIONS_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(u);
-    LiveDelegate delegate = new LiveDelegate();
-    delegate._credentials = USER_PASS;
-    r.delegate = delegate;
-    r.get();
+    System.out.println(realLiveFetch(USERNAME, PASSWORD, SYNC_KEY, REMOTE_INFO_COLLECTIONS_URL, false));
   }
 }
