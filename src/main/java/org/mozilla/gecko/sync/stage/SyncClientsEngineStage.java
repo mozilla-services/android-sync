@@ -309,6 +309,10 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     this.resetLocal();
   }
 
+  public Integer getStorageVersion() {
+    return GlobalSession.CLIENTS_ENGINE_VERSION;
+  }
+
   protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
     final String ourGUID = delegate.getAccountGUID();
     final String ourName = delegate.getClientName();
