@@ -315,13 +315,14 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     closeDataAccessor(dataAccessor);
   }
 
-  public void testEmptyHistoryItemIsSkipped() throws NullCursorException {
+  public void testInvalidHistoryItemIsSkipped() throws NullCursorException {
     final AndroidBrowserHistoryRepositorySession session = (AndroidBrowserHistoryRepositorySession) createAndBeginSession();
     final AndroidBrowserRepositoryDataAccessor dbHelper = session.getDBHelper();
 
     final long now = System.currentTimeMillis();
     final HistoryRecord emptyURL = new HistoryRecord(Utils.generateGuid(), "history", now, false);
     final HistoryRecord noVisits = new HistoryRecord(Utils.generateGuid(), "history", now, false);
+    final HistoryRecord aboutURL = new HistoryRecord(Utils.generateGuid(), "history", now, false);
 
     emptyURL.fennecDateVisited = now;
     emptyURL.fennecVisitCount  = 1;
@@ -333,18 +334,29 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     noVisits.histURI           = "http://example.org/novisits";
     noVisits.title             = "Something Else";
 
+    aboutURL.fennecDateVisited = now;
+    aboutURL.fennecVisitCount  = 1;
+    aboutURL.histURI           = "about:home";
+    aboutURL.title             = "Fennec Home";
+
     Uri one = dbHelper.insert(emptyURL);
     Uri two = dbHelper.insert(noVisits);
+    Uri tre = dbHelper.insert(aboutURL);
     assertNotNull(one);
     assertNotNull(two);
+    assertNotNull(tre);
 
     // The records are in the DB.
     final Cursor all = dbHelper.fetchAll();
-    assertEquals(2, all.getCount());
+    assertEquals(3, all.getCount());
     all.close();
 
     // But aren't returned by fetching.
     performWait(fetchAllRunnable(session, new Record[] {}));
+
+    // And we'd ignore about:home if we downloaded it.
+    assertTrue(session.shouldIgnore(aboutURL));
+
     session.abort();
   }
 
