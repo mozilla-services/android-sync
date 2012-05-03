@@ -513,7 +513,14 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
     }
+    // Persist enabled engine names.
     config.enabledEngineNames = global.getEnabledEngineNames();
+    if (config.enabledEngineNames == null) {
+      Logger.warn(LOG_TAG, "meta/global reported no enabled engine names!");
+    } else {
+      Logger.debug(LOG_TAG, "Persisting enabled engine names '" +
+          Utils.toCommaSeparatedString(config.enabledEngineNames) + "' from meta/global.");
+    }
     config.persistToPrefs();
     advance();
   }
@@ -537,6 +544,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void onFreshStart() {
         try {
+          Logger.warn(LOG_TAG, "Fresh start succeeded; restarting global session.");
           globalSession.config.persistToPrefs();
           globalSession.restart();
         } catch (Exception e) {
@@ -562,6 +570,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
         session.config.purgeMetaGlobal();
         session.config.persistToPrefs();
 
+        Logger.info(LOG_TAG, "Uploading new meta/global with sync ID " + mg.syncID);
+
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
         // for this PUT to ensure at least some level of transactionality.
         // Unfortunately, the servers don't support it after a wipe right now
@@ -578,6 +588,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
             mg.fetch(new MetaGlobalDelegate() {
               @Override
               public void handleSuccess(MetaGlobal downloadedGlobal, SyncStorageResponse downloadResponse) {
+                Logger.info(LOG_TAG, "New meta/global downloaded with sync ID " + downloadedGlobal.syncID);
                 session.config.metaGlobal = downloadedGlobal;
 
                 // Generate and upload new keys.
