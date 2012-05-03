@@ -4,6 +4,7 @@
 package org.mozilla.android.sync.test;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.mozilla.gecko.sync.PrefsSource;
 import org.mozilla.gecko.sync.SyncConfiguration;
@@ -32,15 +33,28 @@ public class TestSyncConfiguration extends AndroidSyncTestCase implements PrefsS
     config.persistToPrefs();
     assertTrue(prefs.contains(SyncConfiguration.PREF_ENABLED_ENGINE_NAMES));
     config = new SyncConfiguration(TEST_PREFS_NAME, this);
-    config.loadFromPrefs(prefs);
-    assertEquals(2, config.enabledEngineNames.size());
-    assertTrue(config.enabledEngineNames.contains("test1"));
-    assertTrue(config.enabledEngineNames.contains("test2"));
+    Set<String> expected = new HashSet<String>();
+    for (String name : new String[] { "test1", "test2" }) {
+      expected.add(name);
+    }
+    assertEquals(expected, config.enabledEngineNames);
 
     config.enabledEngineNames = null;
     config.persistToPrefs();
     assertFalse(prefs.contains(SyncConfiguration.PREF_ENABLED_ENGINE_NAMES));
-    config.loadFromPrefs(prefs);
+    config = new SyncConfiguration(TEST_PREFS_NAME, this);
     assertNull(config.enabledEngineNames);
+  }
+
+  public void testSyncID() {
+    SyncConfiguration config = null;
+    SharedPreferences prefs = getPrefs(TEST_PREFS_NAME, 0);
+
+    config = new SyncConfiguration(TEST_PREFS_NAME, this);
+    config.syncID = "test1";
+    config.persistToPrefs();
+    assertTrue(prefs.contains(SyncConfiguration.PREF_SYNC_ID));
+    config = new SyncConfiguration(TEST_PREFS_NAME, this);
+    assertEquals("test1", config.syncID);
   }
 }
