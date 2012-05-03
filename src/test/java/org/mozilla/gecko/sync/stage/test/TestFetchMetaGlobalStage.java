@@ -70,6 +70,7 @@ public class TestFetchMetaGlobalStage {
   private boolean calledFreshStart = false;
   private boolean calledWipeServer = false;
   private boolean calledUploadKeys = false;
+  private boolean calledResetAllStages = false;
 
   @Before
   public void setUp()
@@ -80,6 +81,7 @@ public class TestFetchMetaGlobalStage {
     calledFreshStart = false;
     calledWipeServer = false;
     calledUploadKeys = false;
+    calledResetAllStages = false;
 
     // Set info collections to not have crypto.
     infoCollections = new InfoCollections(null, null);
@@ -139,6 +141,12 @@ public class TestFetchMetaGlobalStage {
         calledWipeServer = true;
         wipeDelegate.onWiped(System.currentTimeMillis());
       }
+
+      // Don't really resetAllStages.
+      @Override
+      public void resetAllStages() {
+        calledResetAllStages = true;
+      }
     };
     session.config.setClusterURL(new URI(TEST_CLUSTER_URL));
     session.config.infoCollections = infoCollections;
@@ -171,8 +179,41 @@ public class TestFetchMetaGlobalStage {
     assertTrue(calledRequiresUpgrade);
   }
 
+  /**
+   * Verify that a fetched meta/global with remote syncID == local syncID does
+   * not reset.
+   *
+   * @throws Exception
+   */
   @Test
-  public void testFetchSuccess() throws Exception {
+  public void testFetchSuccessWithSameSyncID() throws Exception {
+    session.config.syncID = TEST_SYNC_ID;
+
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setSyncID(TEST_SYNC_ID);
+    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
+
+    MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
+    doSession(server);
+
+    assertTrue(callback.calledSuccess);
+    assertFalse(calledProcessMissingMetaGlobal);
+    assertFalse(calledResetAllStages);
+    assertEquals(TEST_SYNC_ID, session.config.metaGlobal.getSyncID());
+    assertEquals(TEST_STORAGE_VERSION, session.config.metaGlobal.getStorageVersion().longValue());
+    assertEquals(TEST_SYNC_ID, session.config.syncID);
+  }
+
+  /**
+   * Verify that a fetched meta/global with remote syncID != local syncID resets
+   * local and retains remote syncID.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testFetchSuccessWithDifferentSyncID() throws Exception {
+    session.config.syncID = "NOT TEST SYNC ID";
+
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setSyncID(TEST_SYNC_ID);
     mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
@@ -181,8 +222,11 @@ public class TestFetchMetaGlobalStage {
     doSession(server);
 
     assertEquals(true, callback.calledSuccess);
+    assertFalse(calledProcessMissingMetaGlobal);
+    assertTrue(calledResetAllStages);
     assertEquals(TEST_SYNC_ID, session.config.metaGlobal.getSyncID());
     assertEquals(TEST_STORAGE_VERSION, session.config.metaGlobal.getStorageVersion().longValue());
+    assertEquals(TEST_SYNC_ID, session.config.syncID);
   }
 
   @Test
