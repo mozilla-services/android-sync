@@ -69,6 +69,8 @@ public class HTTPFailureException extends SyncException {
       // Node reassignment 401s get handled internally.
       syncResult.stats.numAuthExceptions++;
       return;
+    case 400:
+      syncResult.stats.numConflictDetectedExceptions++;
     case 500:
     case 501:
     case 503:
