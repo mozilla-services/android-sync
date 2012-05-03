@@ -21,6 +21,7 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class MetaGlobal implements SyncStorageRequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";
+
   protected String metaURL;
   protected String credentials;
 
@@ -93,7 +94,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   }
 
   public void setFromRecord(CryptoRecord record) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
-    Logger.info(LOG_TAG, "meta/global is " + record.payload.toJSONString());
+    Logger.debug(LOG_TAG, "Setting meta/global record from record payload " + record.payload.toJSONString());
     this.storageVersion = (Long) record.payload.get("storageVersion");
     this.engines = record.payload.getObject("engines");
     this.syncID = (String) record.payload.get("syncID");

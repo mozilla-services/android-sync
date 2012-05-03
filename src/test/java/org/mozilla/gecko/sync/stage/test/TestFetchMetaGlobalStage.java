@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.android.sync.net.test.TestMetaGlobal;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
@@ -158,7 +159,7 @@ public class TestFetchMetaGlobalStage {
   }
 
   @Test
-  public void testFetchRequiresUpgrade() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
+  public void testFetchRequiresUpgrade() throws Exception {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setSyncID(TEST_SYNC_ID);
     mg.setStorageVersion(new Long(TEST_STORAGE_VERSION + 1));
@@ -171,7 +172,7 @@ public class TestFetchMetaGlobalStage {
   }
 
   @Test
-  public void testFetchSuccess() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
+  public void testFetchSuccess() throws Exception {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setSyncID(TEST_SYNC_ID);
     mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
@@ -185,16 +186,50 @@ public class TestFetchMetaGlobalStage {
   }
 
   @Test
-  public void testFetchMissing() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
-    MetaGlobal mg = new MetaGlobal(null, null);
-    mg.setSyncID(TEST_SYNC_ID);
-    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
-
+  public void testFetchMissing() throws Exception {
     MockServer server = new MockServer(404, "missing");
     doSession(server);
 
     assertEquals(true, callback.calledError);
     assertTrue(calledProcessMissingMetaGlobal);
+  }
+
+  /**
+   * Empty payload object has no syncID or storageVersion and should call freshStart.
+   * @throws Exception
+   */
+  @Test
+  public void testFetchEmptyPayload() throws Exception {
+    MockServer server = new MockServer(200, TestMetaGlobal.TEST_META_GLOBAL_EMPTY_PAYLOAD_RESPONSE);
+    doSession(server);
+
+    assertTrue(calledFreshStart);
+  }
+
+  /**
+   * No payload means no syncID or storageVersion and therefore we should call freshStart.
+   * @throws Exception
+   */
+  @Test
+  public void testFetchNoPayload() throws Exception {
+    MockServer server = new MockServer(200, TestMetaGlobal.TEST_META_GLOBAL_NO_PAYLOAD_RESPONSE);
+    doSession(server);
+
+    assertTrue(calledFreshStart);
+  }
+
+  /**
+   * Malformed payload is a server response issue, not a meta/global record
+   * issue. This should error out of the sync.
+   * @throws Exception
+   */
+  @Test
+  public void testFetchMalformedPayload() throws Exception {
+    MockServer server = new MockServer(200, TestMetaGlobal.TEST_META_GLOBAL_MALFORMED_PAYLOAD_RESPONSE);
+    doSession(server);
+
+    assertEquals(true, callback.calledError);
+    assertEquals(ParseException.class, callback.calledErrorException.getClass());
   }
 
   protected void doFreshStart(MockServer server) {
