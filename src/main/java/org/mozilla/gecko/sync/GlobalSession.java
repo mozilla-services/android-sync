@@ -486,6 +486,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     config.metaGlobal = global;
 
     Long storageVersion = global.getStorageVersion();
+    if (storageVersion == null) {
+      Logger.warn(LOG_TAG, "Malformed remote meta/global: could not retrieve remote storage version.");
+      freshStart();
+      return;
+    }
     if (storageVersion < STORAGE_VERSION) {
       Logger.warn(LOG_TAG, "Outdated server: reported " +
           "remote storage version " + storageVersion + " < " +
