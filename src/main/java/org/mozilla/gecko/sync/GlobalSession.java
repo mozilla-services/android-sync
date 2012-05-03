@@ -312,10 +312,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
-  private String getSyncID() {
-    return config.syncID;
-  }
-
   /*
    * PrefsSource methods.
    */
@@ -515,30 +511,46 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     config.metaGlobal = global;
 
     Long storageVersion = global.getStorageVersion();
+    if (storageVersion == null) {
+      Logger.warn(LOG_TAG, "Malformed remote meta/global: could not retrieve remote storage version.");
+      freshStart();
+      return;
+    }
     if (storageVersion < STORAGE_VERSION) {
-      // Outdated server.
+      Logger.warn(LOG_TAG, "Outdated server: reported " +
+          "remote storage version " + storageVersion + " < " +
+          "local storage version " + STORAGE_VERSION);
       freshStart();
       return;
     }
     if (storageVersion > STORAGE_VERSION) {
-      // Outdated client!
+      Logger.warn(LOG_TAG, "Outdated client: reported " +
+          "remote storage version " + storageVersion + " > " +
+          "local storage version " + STORAGE_VERSION);
       requiresUpgrade();
       return;
     }
     String remoteSyncID = global.getSyncID();
     if (remoteSyncID == null) {
-      // Corrupt meta/global.
+      Logger.warn(LOG_TAG, "Malformed remote meta/global: could not retrieve remote syncID.");
       freshStart();
       return;
     }
-    String localSyncID = this.getSyncID();
+    String localSyncID = config.syncID;
     if (!remoteSyncID.equals(localSyncID)) {
-      // Sync ID has changed. Reset timestamps and fetch new keys.
+      Logger.warn(LOG_TAG, "Remote syncID different from local syncID: resetting client and assuming remote syncID.");
       resetAllStages();
       config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
     }
+    // Persist enabled engine names.
     config.enabledEngineNames = global.getEnabledEngineNames();
+    if (config.enabledEngineNames == null) {
+      Logger.warn(LOG_TAG, "meta/global reported no enabled engine names!");
+    } else {
+      Logger.debug(LOG_TAG, "Persisting enabled engine names '" +
+          Utils.toCommaSeparatedString(config.enabledEngineNames) + "' from meta/global.");
+    }
     config.persistToPrefs();
     advance();
   }
@@ -562,6 +574,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void onFreshStart() {
         try {
+          Logger.warn(LOG_TAG, "Fresh start succeeded; restarting global session.");
           globalSession.config.persistToPrefs();
           globalSession.restart();
         } catch (Exception e) {
@@ -584,50 +597,85 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       public void onWiped(long timestamp) {
         session.resetAllStages();
         session.config.purgeCryptoKeys();
+        session.config.purgeMetaGlobal();
         session.config.persistToPrefs();
+
+        Logger.info(LOG_TAG, "Uploading new meta/global with sync ID " + mg.syncID);
 
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
         // for this PUT to ensure at least some level of transactionality.
         // Unfortunately, the servers don't support it after a wipe right now
         // (bug 693893), so we're going to defer this until bug 692700.
         mg.upload(new MetaGlobalDelegate() {
-
           @Override
-          public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
-            session.config.metaGlobal = global;
-            Logger.info(LOG_TAG, "New meta/global uploaded with sync ID " + global.syncID);
+          public void handleSuccess(MetaGlobal uploadedGlobal, SyncStorageResponse uploadResponse) {
+            Logger.info(LOG_TAG, "New meta/global uploaded with sync ID " + uploadedGlobal.syncID);
+            // Now we can download the new meta/global. We re-download to
+            // shorten the window in which two clients can race while
+            // uploading meta/global; with luck, both will end up downloading
+            // the same meta/global record.
 
-            // Generate and upload new keys.
-            try {
-              session.uploadKeys(generateNewCryptoKeys(), new KeyUploadDelegate() {
-                @Override
-                public void onKeysUploaded() {
-                  // Now we can download them.
-                  freshStartDelegate.onFreshStart();
-                }
+            mg.fetch(new MetaGlobalDelegate() {
+              @Override
+              public void handleSuccess(MetaGlobal downloadedGlobal, SyncStorageResponse downloadResponse) {
+                Logger.info(LOG_TAG, "New meta/global downloaded with sync ID " + downloadedGlobal.syncID);
+                session.config.metaGlobal = downloadedGlobal;
 
-                @Override
-                public void onKeyUploadFailed(Exception e) {
-                  Log.e(LOG_TAG, "Got exception uploading new keys.", e);
+                // Generate and upload new keys.
+                try {
+                  session.uploadKeys(generateNewCryptoKeys(), new KeyUploadDelegate() {
+                    @Override
+                    public void onKeysUploaded() {
+                      // Now we can download the new keys. We re-download to
+                      // shorten the window in which two clients can race while
+                      // uploading keys; with luck, both will end up downloading
+                      // the same keys.
+                      freshStartDelegate.onFreshStart();
+                    }
+
+                    @Override
+                    public void onKeyUploadFailed(Exception e) {
+                      Log.e(LOG_TAG, "Got exception uploading new keys.", e);
+                      freshStartDelegate.onFreshStartFailed(e);
+                    }
+                  });
+                } catch (CryptoException e) {
+                  Log.e(LOG_TAG, "Got exception generating new keys.", e);
                   freshStartDelegate.onFreshStartFailed(e);
                 }
-              });
-            } catch (CryptoException e) {
-              Log.e(LOG_TAG, "Got exception generating new keys.", e);
-              freshStartDelegate.onFreshStartFailed(e);
-            }
+              }
+
+              @Override
+              public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+                // Shouldn't happen.
+                Logger.warn(LOG_TAG, "Got 'missing' response downloading new meta/global.");
+                freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing while downloading."));
+              }
+
+              @Override
+              public void handleFailure(SyncStorageResponse response) {
+                Logger.warn(LOG_TAG, "Got failure " + response.getStatusCode() + " downloading new meta/global.");
+                session.interpretHTTPFailure(response.httpResponse());
+                freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));
+              }
+
+              @Override
+              public void handleError(Exception e) {
+                Logger.warn(LOG_TAG, "Got error downloading new meta/global.", e);
+                freshStartDelegate.onFreshStartFailed(e);
+              }
+            });
           }
 
           @Override
           public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
             // Shouldn't happen.
             Logger.warn(LOG_TAG, "Got 'missing' response uploading new meta/global.");
-            freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing"));
+            freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing while uploading."));
           }
 
           @Override
           public void handleFailure(SyncStorageResponse response) {
-            // TODO: respect backoffs etc.
             Logger.warn(LOG_TAG, "Got failure " + response.getStatusCode() + " uploading new meta/global.");
             session.interpretHTTPFailure(response.httpResponse());
             freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));
