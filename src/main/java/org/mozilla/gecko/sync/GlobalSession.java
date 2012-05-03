@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
@@ -34,6 +35,8 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.setup.Constants;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
@@ -50,6 +53,9 @@ import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.mozilla.gecko.sync.stage.PasswordsServerSyncStage;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -393,13 +399,43 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       callback.requestBackoff(responseBackoff);
     }
 
-    if (response.getStatusLine() != null && response.getStatusLine().getStatusCode() == 401) {
-      /*
-       * Alert our callback we have a 401 on a cluster URL. This GlobalSession
-       * will fail, but the next one will fetch a new cluster URL and will
-       * distinguish between "node reassignment" and "user password changed".
-       */
-      callback.informUnauthorizedResponse(this, config.getClusterURL());
+    if (response.getStatusLine() != null) {
+      int statusCode = response.getStatusLine().getStatusCode();
+      switch(statusCode) {
+      case 400:
+        SyncStorageResponse storageResponse = new SyncStorageResponse(response);
+        // Server response "16" indicates upgrade needed.
+        try {
+          if ("16".equals(storageResponse.body())) {
+            // Sync needs to be upgraded. Don't automatically sync anymore.
+            ThreadPool.run(new Runnable() {
+              @Override
+              public void run() {
+                AccountManager accountManager = AccountManager.get(context);
+                Account[] accounts = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+                for (Account a : accounts) {
+                  // Only mark account to be re-enabled on upgrade if it is currently enabled.
+                  if (ContentResolver.getSyncAutomatically(a, BrowserContract.AUTHORITY)) {
+                    accountManager.setUserData(a, Constants.DATA_ENABLE_ON_UPGRADE, "1");
+                    SyncAccounts.setSyncAutomatically(a, false);
+                  }
+                }
+              }
+            });
+          }
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Encountered error in disabling sync accounts when upgrade is required.");
+        }
+        break;
+      case 401:
+        /*
+         * Alert our callback we have a 401 on a cluster URL. This GlobalSession
+         * will fail, but the next one will fetch a new cluster URL and will
+         * distinguish between "node reassignment" and "user password changed".
+         */
+        callback.informUnauthorizedResponse(this, config.getClusterURL());
+        break;
+      }
     }
   }
 
