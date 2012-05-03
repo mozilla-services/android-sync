@@ -67,6 +67,11 @@ public class TestGlobalSession extends AndroidSyncTestCase {
     }
 
     @Override
+    public void informUpgradeRequiredResponse(GlobalSession session) {
+      fail("Not expecting informUnauthorizedResponse.");
+    }
+
+    @Override
     public void handleAborted(GlobalSession globalSession, String reason) {
       fail("Not expecting abort.");
     }

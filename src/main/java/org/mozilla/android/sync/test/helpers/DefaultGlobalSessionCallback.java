@@ -37,6 +37,10 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
+  public void informUpgradeRequiredResponse(GlobalSession session) {
+  }
+
+  @Override
   public void handleAborted(GlobalSession globalSession, String reason) {
   }
 
