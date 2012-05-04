@@ -309,6 +309,11 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     }
 
     @Override
+    public void informUpgradeRequiredResponse(GlobalSession session) {
+      // Do nothing.
+    }
+
+    @Override
     public boolean shouldBackOff() {
       return false;
     }
