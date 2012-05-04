@@ -8,14 +8,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.android.sync.test.helpers.BaseResourceDelegate;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
-import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
-import org.mozilla.android.sync.test.helpers.MockResourceDelegate;
 import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
@@ -28,6 +29,7 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -42,12 +44,12 @@ import org.simpleframework.http.core.Container;
 import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
 
-import ch.boye.httpclientandroidlib.HttpResponse;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 /**
  * When syncing and a server responds with a 400 "Upgrade Required," Sync
@@ -243,6 +245,118 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     } catch (IOException ex) {
       Logger.error(LOG_TAG, "Error stopping HTTP server on port " + TEST_PORT + "... DONE", ex);
       fail("Failed while stopping server: " + ex.toString());
+    }
+  }
+
+  /**
+   * A callback for use with a GlobalSession that records what happens for later
+   * inspection.
+   *
+   * This callback is expected to be used from within the friendly confines of a
+   * WaitHelper performWait.
+   */
+  private class MockGlobalSessionCallback implements GlobalSessionCallback {
+    protected WaitHelper testWaiter() {
+      return WaitHelper.getTestWaiter();
+    }
+    public boolean   calledError          = false;
+    public Exception calledErrorException = null;
+    public boolean   calledAborted        = false;
+
+    @Override
+    public void handleSuccess(GlobalSession globalSession) {
+      this.testWaiter().performNotify();
+    }
+
+    @Override
+    public void handleAborted(GlobalSession globalSession, String reason) {
+      this.calledAborted = true;
+      this.testWaiter().performNotify();
+    }
+
+    @Override
+    public void handleError(GlobalSession globalSession, Exception ex) {
+      this.calledError = true;
+      this.calledErrorException = ex;
+      this.testWaiter().performNotify();
+    }
+
+    @Override
+    public void handleStageCompleted(Stage currentState,
+        GlobalSession globalSession) {
+    }
+
+    @Override
+    public void requestBackoff(long backoff) {
+      // Do nothing.
+    }
+
+    @Override
+    public void informNodeAuthenticationFailed(GlobalSession session,
+        URI clusterURL) {
+      // Do nothing.
+    }
+
+    @Override
+    public void informNodeAssigned(GlobalSession session, URI oldClusterURL,
+        URI newClusterURL) {
+      // Do nothing.
+    }
+
+    @Override
+    public void informUnauthorizedResponse(GlobalSession session, URI clusterURL) {
+      // Do nothing.
+    }
+
+    @Override
+    public boolean shouldBackOff() {
+      return false;
+    }
+
+    @Override
+    public boolean wantNodeAssignment() {
+      return false;
+    }
+  }
+
+  private class MockResourceDelegate extends BaseResourceDelegate {
+    public WaitHelper          waitHelper          = null;
+
+    public boolean             handledHttpResponse = false;
+    public HttpResponse        httpResponse        = null;
+
+    public MockResourceDelegate(WaitHelper waitHelper) {
+      this.waitHelper = waitHelper;
+    }
+
+    @Override
+    public String getCredentials() {
+      return TEST_PASSWORD;
+    }
+
+    @Override
+    public void handleHttpProtocolException(ClientProtocolException e) {
+      waitHelper.performNotify(e);
+    }
+
+    @Override
+    public void handleHttpIOException(IOException e) {
+      waitHelper.performNotify(e);
+    }
+
+    @Override
+    public void handleTransportException(GeneralSecurityException e) {
+      waitHelper.performNotify(e);
+    }
+
+    @Override
+    public void handleHttpResponse(HttpResponse response) {
+      handledHttpResponse = true;
+      httpResponse = response;
+
+      assertEquals(response.getStatusLine().getStatusCode(), 200);
+      BaseResource.consumeEntity(response);
+      waitHelper.performNotify();
     }
   }
 }
