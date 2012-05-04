@@ -480,7 +480,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     request.put(keysRecord);
   }
 
-
   /*
    * meta/global callbacks.
    */
@@ -782,25 +781,25 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     if (this.config.metaGlobal == null) {
       throw new MetaGlobalNotSetException();
     }
-    if (this.config.metaGlobal.engines == null) {
-      throw new MetaGlobalMissingEnginesException();
-    }
-    ExtendedJSONObject engineEntry;
-    try {
-      engineEntry = this.config.metaGlobal.engines.getObject(engineName);
-    } catch (NonObjectJSONException e) {
-      Logger.error(LOG_TAG, "Engine field for " + engineName + " in meta/global is not an object.");
+
+    // This should not occur.
+    if (this.config.enabledEngineNames == null) {
+      Logger.error(LOG_TAG, "No enabled engines in config. Giving up.");
       throw new MetaGlobalMissingEnginesException();
     }
 
-    if (engineEntry == null) {
+    if (!(this.config.enabledEngineNames.contains(engineName))) {
       Logger.debug(LOG_TAG, "Engine " + engineName + " not enabled: no meta/global entry.");
       return false;
     }
 
+    // If we have a meta/global, check that it's safe for us to sync.
+    // (If we don't, we'll create one later, which is why we return `true` above.)
     if (engineSettings != null) {
-      MetaGlobal.verifyEngineSettings(engineEntry, engineSettings);
+      // Throws if there's a problem.
+      this.config.metaGlobal.verifyEngineSettings(engineName, engineSettings);
     }
+
     return true;
   }
 
