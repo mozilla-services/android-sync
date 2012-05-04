@@ -6,7 +6,9 @@ package org.mozilla.gecko.sync;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.json.simple.parser.ParseException;
@@ -30,6 +32,11 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   protected ExtendedJSONObject  engines;
   protected Long                storageVersion;
   protected String              syncID;
+
+  // Lookup tables.
+  protected Map<String, String> syncIDs;
+  protected Map<String, Integer> versions;
+  protected Map<String, MetaGlobalException> exceptions;
 
   // Temporary location to store our callback.
   private MetaGlobalDelegate callback;
@@ -109,6 +116,64 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
   public void setEngines(ExtendedJSONObject engines) {
     this.engines = engines;
+    final int count = engines.size();
+    versions   = new HashMap<String, Integer>(count);
+    syncIDs    = new HashMap<String, String>(count);
+    exceptions = new HashMap<String, MetaGlobalException>(count);
+    for (String engineName : engines.keySet()) {
+      try {
+        ExtendedJSONObject engineEntry = engines.getObject(engineName);
+        recordEngineState(engineName, engineEntry);
+      } catch (NonObjectJSONException e) {
+        Logger.error(LOG_TAG, "Engine field for " + engineName + " in meta/global is not an object.");
+      }
+    }
+  }
+
+  /**
+   * Take a JSON object corresponding to the 'engines' field for the provided engine name,
+   * updating {@link #syncIDs} and {@link #versions} accordingly.
+   *
+   * If the record is malformed, an entry is added to {@link #exceptions}, to be rethrown
+   * during validation.
+   */
+  protected void recordEngineState(String engineName, ExtendedJSONObject engineEntry) {
+    if (engineEntry == null) {
+      throw new IllegalArgumentException("engineEntry cannot be null.");
+    }
+    try {
+      Integer version = engineEntry.getIntegerSafely("version");
+      Logger.trace(LOG_TAG, "Engine " + engineName + " has server version " + version);
+      if (version == null ||
+          version.intValue() == 0) {
+        // Invalid version. Wipe the server.
+        Logger.warn(LOG_TAG, "Malformed version " + version +
+                             " for " + engineName + ". Recording exception.");
+        exceptions.put(engineName, new MetaGlobalMalformedVersionException());
+        return;
+      }
+      versions.put(engineName, version);
+    } catch (NumberFormatException e) {
+      // Invalid version. Wipe the server.
+      Logger.warn(LOG_TAG, "Malformed version " + engineEntry.get("version") +
+                           " for " + engineName + ". Recording exception.");
+      exceptions.put(engineName, new MetaGlobalMalformedVersionException());
+      return;
+    }
+
+    try {
+      String syncID = engineEntry.getString("syncID");
+      if (syncID == null) {
+        Logger.warn(LOG_TAG, "No syncID for " + engineName + ". Recording exception.");
+        exceptions.put(engineName, new MetaGlobalMalformedSyncIDException());
+      }
+      syncIDs.put(engineName, syncID);
+    } catch (ClassCastException e) {
+      // Malformed syncID on the server. Wipe the server.
+      Logger.warn(LOG_TAG, "Malformed syncID " + engineEntry.get("syncID") +
+                           " for " + engineName + ". Recording exception.");
+      exceptions.put(engineName, new MetaGlobalException.MetaGlobalMalformedSyncIDException());
+    }
   }
 
   /**
