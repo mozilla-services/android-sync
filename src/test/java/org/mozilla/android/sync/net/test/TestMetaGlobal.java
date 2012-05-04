@@ -3,11 +3,17 @@
 
 package org.mozilla.android.sync.net.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
@@ -159,6 +165,19 @@ public class TestMetaGlobal {
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
     assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
     assertEquals(new Long(5), mg.getStorageVersion());
+  }
+
+  @Test
+  public void testMetaGlobalGetEnabledEngineNames() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
+    assertEquals("zPSQTm7WBVWB", mg.getSyncID());
+    final Set<String> actual = mg.getEnabledEngineNames();
+    final Set<String> expected = new HashSet<String>();
+    for (String name : new String[] { "bookmarks", "clients", "forms", "history", "passwords", "prefs", "tabs" }) {
+      expected.add(name);
+    }
+    assertEquals(expected, actual);
   }
   // TODO: upload test.
 }
