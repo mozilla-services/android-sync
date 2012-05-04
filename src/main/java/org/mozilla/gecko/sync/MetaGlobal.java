@@ -6,6 +6,8 @@ package org.mozilla.gecko.sync;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedSyncIDException;
@@ -17,10 +19,9 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
-import android.util.Log;
-
 public class MetaGlobal implements SyncStorageRequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";
+
   protected String metaURL;
   protected String credentials;
 
@@ -63,8 +64,9 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
       // TODO: PUT! Body!
       r.delegate = this;
-      r.deferPut(null);
-    } catch (URISyntaxException e) {
+      this.callback = callback;
+      r.put(this.asCryptoRecord());
+    } catch (Exception e) {
       callback.handleError(e);
     }
   }
@@ -87,7 +89,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   }
 
   public void setFromRecord(CryptoRecord record) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
-    Log.i(LOG_TAG, "meta/global is " + record.payload.toJSONString());
+    Logger.debug(LOG_TAG, "Setting meta/global record from record payload " + record.payload.toJSONString());
     this.storageVersion = (Long) record.payload.get("storageVersion");
     this.engines = record.payload.getObject("engines");
     this.syncID = (String) record.payload.get("syncID");
@@ -107,6 +109,23 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
   public void setEngines(ExtendedJSONObject engines) {
     this.engines = engines;
+  }
+
+  /**
+   * Get enabled engine names.
+   *
+   * @return a collection of engine names or <code>null</code> if meta/global
+   *         was malformed.
+   */
+  public Set<String> getEnabledEngineNames() {
+    if (engines == null) {
+      return null;
+    }
+    Set<String> engineNames = new HashSet<String>();
+    for (String engineName : engines.keyIterable()) {
+      engineNames.add(engineName);
+    }
+    return engineNames;
   }
 
   /**
@@ -185,7 +204,6 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
   private void handleUploadSuccess(SyncStorageResponse response) {
     this.callback.handleSuccess(this, response);
-    this.callback = null;
   }
 
   private void handleDownloadSuccess(SyncStorageResponse response) {
@@ -194,29 +212,23 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
         CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
         this.setFromRecord(record);
         this.callback.handleSuccess(this, response);
-        this.callback = null;
       } catch (Exception e) {
         this.callback.handleError(e);
-        this.callback = null;
       }
       return;
     }
     this.callback.handleFailure(response);
-    this.callback = null;
   }
 
   public void handleRequestFailure(SyncStorageResponse response) {
     if (response.getStatusCode() == 404) {
       this.callback.handleMissing(this, response);
-      this.callback = null;
       return;
     }
     this.callback.handleFailure(response);
-    this.callback = null;
   }
 
   public void handleRequestError(Exception e) {
     this.callback.handleError(e);
-    this.callback = null;
   }
 }

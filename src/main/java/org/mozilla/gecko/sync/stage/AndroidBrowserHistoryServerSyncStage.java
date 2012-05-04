@@ -65,9 +65,15 @@ public class AndroidBrowserHistoryServerSyncStage extends ServerSyncStage {
   protected String getCollection() {
     return "history";
   }
+
   @Override
   protected String getEngineName() {
     return "history";
+  }
+
+  @Override
+  public Integer getStorageVersion() {
+    return GlobalSession.HISTORY_ENGINE_VERSION;
   }
 
   @Override
