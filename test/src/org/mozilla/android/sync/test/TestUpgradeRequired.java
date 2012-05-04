@@ -5,51 +5,36 @@
 package org.mozilla.android.sync.test;
 
 import java.io.IOException;
-import java.io.PrintStream;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.test.helpers.BaseResourceDelegate;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
-import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.HTTPFailureException;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
-import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
-import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
-import org.simpleframework.http.Request;
-import org.simpleframework.http.Response;
-import org.simpleframework.http.core.Container;
-import org.simpleframework.transport.connect.Connection;
-import org.simpleframework.transport.connect.SocketConnection;
+import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.util.Log;
+import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.ProtocolVersion;
+import ch.boye.httpclientandroidlib.entity.StringEntity;
+import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 
 /**
  * When syncing and a server responds with a 400 "Upgrade Required," Sync
@@ -66,302 +51,211 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
   private final int     TEST_PORT        = 15325;
   private final String  TEST_SERVER      = "http://localhost:" + TEST_PORT + "/";
 
-  private final String TEST_USERNAME     = "user1";
-  private final String TEST_PASSWORD     = "pass1";
-  private final String TEST_SYNC_KEY     = "abcdeabcdeabcdeabcdeabcdea";
+  private static final String TEST_USERNAME     = "user1";
+  private static final String TEST_PASSWORD     = "pass1";
+  private static final String TEST_SYNC_KEY     = "abcdeabcdeabcdeabcdeabcdea";
 
   private Context context;
-  private AccountManager accountManager;
-  private Account account;
 
-  // Mock server
-  private Container upgradeServer;
-  private Connection connection;
+  public static boolean syncsAutomatically(Account a) {
+    return ContentResolver.getSyncAutomatically(a, BrowserContract.AUTHORITY);
+  }
+
+  public static boolean isSyncable(Account a) {
+    return 1 == ContentResolver.getIsSyncable(a, BrowserContract.AUTHORITY);
+  }
+
+  public static boolean willEnableOnUpgrade(Account a, AccountManager accountManager) {
+    return "1".equals(accountManager.getUserData(a, Constants.DATA_ENABLE_ON_UPGRADE));
+  }
+
+  private static void deleteAccount(final Account account, final AccountManager accountManager) {
+    final Object monitor = new Object();
+    if (account != null) {
+      Thread me = new Thread() {
+        @Override
+        public void run() {
+          // Ensure our test account is gone.
+          accountManager.removeAccount(account, new AccountManagerCallback<Boolean>() {
+            @Override
+            public void run(AccountManagerFuture<Boolean> success) {
+              Log.i(LOG_TAG, "Removed account: " + success);
+              synchronized (monitor) {
+                monitor.notify();
+              }
+            }
+          }, null);
+        }
+      };
+      synchronized (monitor) {
+        me.start();
+        try {
+          monitor.wait();
+        } catch (InterruptedException e) {
+          fail("Should not occur.");
+        }
+      }
+    }
+  }
+
+  private static Account getTestAccount(AccountManager accountManager) {
+    final String type = Constants.ACCOUNTTYPE_SYNC;
+    Account[] existing = accountManager.getAccountsByType(type);
+    for (Account account : existing) {
+      if (account.name.equals(TEST_USERNAME)) {
+        return account;
+      }
+    }
+    return null;
+  }
+
+  private void deleteTestAccount() {
+    final AccountManager accountManager = AccountManager.get(context);
+    final Account found = getTestAccount(accountManager);
+    if (found == null) {
+      return;
+    }
+    deleteAccount(found, accountManager);
+  }
 
   @Override
   public void setUp() {
     context = getApplicationContext();
+    final AccountManager accountManager = AccountManager.get(context);
+
+    deleteTestAccount();
 
     // Set up and enable Sync accounts.
-    accountManager = AccountManager.get(context);
     SyncAccountParameters syncAccountParams = new SyncAccountParameters(context, accountManager, TEST_USERNAME, TEST_PASSWORD, TEST_SYNC_KEY, TEST_SERVER, null, null, null);
-    account = SyncAccounts.createSyncAccount(syncAccountParams);
+    final Account account = SyncAccounts.createSyncAccount(syncAccountParams);
+    assertNotNull(account);
     SyncAccounts.setSyncAutomatically(account);
-
-    // Create mock server.
-    upgradeServer = new Container() {
-
-      @Override
-      public void handle(Request request, Response response) {
-        Logger.debug(LOG_TAG, "Handling request...");
-        try {
-          // Default response fields.
-          long time = System.currentTimeMillis();
-          response.set("Content-Type", "text/plain");
-          response.set("Server", "HelloWorld/1.0 (Simple 4.0)");
-          response.setDate("Date", time);
-          response.setDate("Last-Modified", time);
-
-          final String timestampHeader = Utils.millisecondsToDecimalSecondsString(time);
-          response.set("X-Weave-Timestamp", timestampHeader);
-          System.out.println("> X-Weave-Timestamp header: " + timestampHeader);
-
-          // HTTP response and response code in body for requiring upgrade.
-          response.setCode(400);
-          PrintStream bodyStream = response.getPrintStream();
-          bodyStream.println("16");
-          bodyStream.close();
-        } catch (IOException e) {
-          fail("Failed on IO error.");
-        }
-      }
-    };
   }
 
   /**
-   * Sync accounts should be disabled when the server responds with a 400
-   * response and the "Upgrade Required" response code.
-   * @throws CryptoException
-   * @throws ParseException
-   * @throws IOException
-   * @throws NonObjectJSONException
-   * @throws IllegalArgumentException
-   * @throws SyncConfigurationException
+   * Verify that when SyncAdapter is informed of an Upgrade Required
+   * response, that it disables the account it's syncing.
    */
-  public void testUpgradeResponse() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
-    final Map<Stage, GlobalSyncStage> stagesToRun = new HashMap<Stage, GlobalSyncStage>();
+  public void testInformUpgradeRequired() {
+    final AccountManager accountManager = AccountManager.get(context);
+    final Account account = getTestAccount(accountManager);
 
-    // Mock GlobalSession.
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      protected void prepareStages() {
-        super.prepareStages();
-        stagesToRun.putAll(this.stages);
-        this.stages = stagesToRun;
-      }
-    };
+    assertNotNull(account);
+    assertTrue(syncsAutomatically(account));
+    assertTrue(isSyncable(account));
+    assertFalse(willEnableOnUpgrade(account, accountManager));
 
-    // Stage that makes a get() to upgradeServer.
-    MockServerSyncStage stage = new MockServerSyncStage(session) {
-      @Override
-      public void execute() {
-        Logger.warn(LOG_TAG, "execute()");
-        final WaitHelper innerWaitHelper = new WaitHelper();
-        innerWaitHelper.performWait(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              Logger.debug(LOG_TAG, "run()");
-              final BaseResource r = new BaseResource(TEST_SERVER);
-              r.delegate = new MockResourceDelegate(innerWaitHelper) {
-                @Override
-                public void handleHttpResponse(HttpResponse response) {
-                  Logger.warn(LOG_TAG, "handleHttpResponse()");
-                  if (response.getStatusLine().getStatusCode() != 200) {
-                    session.interpretHTTPFailure(response);
-                  }
-                  BaseResource.consumeEntity(response);
-                  waitHelper.performNotify();
-                }
-              };
-              Logger.debug(LOG_TAG, "get()");
-              r.get();
-            } catch (URISyntaxException e) {
-              innerWaitHelper.performNotify(e);
-            }
-          }
-        });
-      }
-    };
-    stagesToRun.put(Stage.ensureClusterURL, stage);
+    SyncAdapter adapter = new SyncAdapter(context, true);
+    adapter.localAccount = account;
+    adapter.informUpgradeRequiredResponse(null);
 
-    startServer(upgradeServer);
-    // Run session.
-    WaitHelper.getTestWaiter().performWait(new Runnable() {
+    // Oh god.
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    // We have disabled the account, but it's still syncable.
+    assertFalse(syncsAutomatically(account));
+    assertTrue(isSyncable(account));
+    assertTrue(willEnableOnUpgrade(account, accountManager));
+  }
+
+  private class Result {
+    public boolean called = false;
+  }
+
+  public static HttpResponse simulate400() {
+    HttpResponse response = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 400, "Bad Request") {
       @Override
-      public void run() {
+      public HttpEntity getEntity() {
         try {
-          session.start();
-        } catch (AlreadySyncingException e) {
-          WaitHelper.getTestWaiter().performNotify(e);
-          fail(e.toString());
+          return new StringEntity("16");
+        } catch (UnsupportedEncodingException e) {
+          // Never happens.
+          return null;
         }
       }
-    });
-    stopServer();
+    };
+    return response;
+  }
 
-    assertTrue(callback.calledAborted);
-    assertTrue(callback.calledError);
-    assertTrue(callback.calledErrorException instanceof HTTPFailureException);
+  /**
+   * Verify that when a 400 response is received with an
+   * "Upgrade Required" response code body, we call
+   * informUpgradeRequiredResponse on the delegate.
+   */
+  public void testUpgradeResponse() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
+    final Result calledUpgradeRequired = new Result();
+    final GlobalSessionCallback callback = new BlankGlobalSessionCallback() {
+      @Override
+      public void informUpgradeRequiredResponse(final GlobalSession session) {
+        calledUpgradeRequired.called = true;
+      }
+    };
 
-    // 400 error should have occurred.
-    SyncStorageResponse httpResponse = ((HTTPFailureException) callback.calledErrorException).response;
-    assertEquals(400, httpResponse.getStatusCode());
-    try {
-      assertEquals("16", httpResponse.body());
-    } catch (Exception e) {
-      fail("Exception in checking HTTP response body: " + e.toString());
-    }
+    final GlobalSession session = new MockGlobalSession(
+        TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
-    // Sync accounts should be disabled and have flags.
-    Account[] accounts = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
-    for (Account a : accounts) {
-      assertFalse(ContentResolver.getSyncAutomatically(a, BrowserContract.AUTHORITY));
-      assertEquals(0, ContentResolver.getIsSyncable(a, BrowserContract.AUTHORITY));
-      assertEquals("1", accountManager.getUserData(a, Constants.DATA_ENABLE_ON_UPGRADE));
-    }
+    session.interpretHTTPFailure(simulate400());
+    assertTrue(calledUpgradeRequired.called);
   }
 
   @Override
   public void tearDown() {
-    // Delete account.
-    accountManager.removeAccount(account, null, null);
-  }
-  private void startServer(Container server) {
-    SyncResourceDelegate.connectionTimeoutInMillis = 1000;
-    try {
-      Logger.info(LOG_TAG, "Starting HTTP server on port " + TEST_PORT + "...");
-      connection = new SocketConnection(server);
-      SocketAddress address = new InetSocketAddress(TEST_PORT);
-      connection.connect(address);
-      Logger.info(LOG_TAG, "Starting HTTP server on port " + TEST_PORT + "... DONE");
-    } catch (IOException e) {
-      fail("Failed while starting mock server: " + e.toString());
-    }
+    deleteTestAccount();
   }
 
-  private void stopServer() {
-    Logger.info(LOG_TAG, "Stopping HTTP server on port " + TEST_PORT + "...");
-    try {
-      if (connection != null) {
-        connection.close();
-      }
-      connection = null;
-      Logger.info(LOG_TAG, "Closing connection pool...");
-      BaseResource.shutdownConnectionManager();
-      Logger.info(LOG_TAG, "Stopping HTTP server on port " + TEST_PORT + "... DONE");
-    } catch (IOException ex) {
-      Logger.error(LOG_TAG, "Error stopping HTTP server on port " + TEST_PORT + "... DONE", ex);
-      fail("Failed while stopping server: " + ex.toString());
-    }
-  }
-
-  /**
-   * A callback for use with a GlobalSession that records what happens for later
-   * inspection.
-   *
-   * This callback is expected to be used from within the friendly confines of a
-   * WaitHelper performWait.
-   */
-  private class MockGlobalSessionCallback implements GlobalSessionCallback {
-    protected WaitHelper testWaiter() {
-      return WaitHelper.getTestWaiter();
-    }
-    public boolean   calledError          = false;
-    public Exception calledErrorException = null;
-    public boolean   calledAborted        = false;
-
-    @Override
-    public void handleSuccess(GlobalSession globalSession) {
-      this.testWaiter().performNotify();
-    }
-
-    @Override
-    public void handleAborted(GlobalSession globalSession, String reason) {
-      this.calledAborted = true;
-      this.testWaiter().performNotify();
-    }
-
-    @Override
-    public void handleError(GlobalSession globalSession, Exception ex) {
-      this.calledError = true;
-      this.calledErrorException = ex;
-      this.testWaiter().performNotify();
-    }
-
-    @Override
-    public void handleStageCompleted(Stage currentState,
-        GlobalSession globalSession) {
+  public abstract class BlankGlobalSessionCallback implements GlobalSessionCallback {
+    public BlankGlobalSessionCallback() {
     }
 
     @Override
     public void requestBackoff(long backoff) {
-      // Do nothing.
-    }
-
-    @Override
-    public void informNodeAuthenticationFailed(GlobalSession session,
-        URI clusterURL) {
-      // Do nothing.
-    }
-
-    @Override
-    public void informNodeAssigned(GlobalSession session, URI oldClusterURL,
-        URI newClusterURL) {
-      // Do nothing.
-    }
-
-    @Override
-    public void informUnauthorizedResponse(GlobalSession session, URI clusterURL) {
-      // Do nothing.
-    }
-
-    @Override
-    public void informUpgradeRequiredResponse(GlobalSession session) {
-      // Do nothing.
-    }
-
-    @Override
-    public boolean shouldBackOff() {
-      return false;
     }
 
     @Override
     public boolean wantNodeAssignment() {
       return false;
     }
-  }
 
-  private class MockResourceDelegate extends BaseResourceDelegate {
-    public WaitHelper          waitHelper          = null;
-
-    public boolean             handledHttpResponse = false;
-    public HttpResponse        httpResponse        = null;
-
-    public MockResourceDelegate(WaitHelper waitHelper) {
-      this.waitHelper = waitHelper;
+    @Override
+    public void informUnauthorizedResponse(GlobalSession globalSession,
+                                           URI oldClusterURL) {
     }
 
     @Override
-    public String getCredentials() {
-      return TEST_PASSWORD;
+    public void informNodeAssigned(GlobalSession globalSession,
+                                   URI oldClusterURL, URI newClusterURL) {
     }
 
     @Override
-    public void handleHttpProtocolException(ClientProtocolException e) {
-      waitHelper.performNotify(e);
+    public void informNodeAuthenticationFailed(GlobalSession globalSession,
+                                               URI failedClusterURL) {
     }
 
     @Override
-    public void handleHttpIOException(IOException e) {
-      waitHelper.performNotify(e);
+    public void handleAborted(GlobalSession globalSession, String reason) {
     }
 
     @Override
-    public void handleTransportException(GeneralSecurityException e) {
-      waitHelper.performNotify(e);
+    public void handleError(GlobalSession globalSession, Exception ex) {
     }
 
     @Override
-    public void handleHttpResponse(HttpResponse response) {
-      handledHttpResponse = true;
-      httpResponse = response;
+    public void handleSuccess(GlobalSession globalSession) {
+    }
 
-      assertEquals(response.getStatusLine().getStatusCode(), 200);
-      BaseResource.consumeEntity(response);
-      waitHelper.performNotify();
+    @Override
+    public void handleStageCompleted(Stage currentState,
+                                     GlobalSession globalSession) {
+    }
+
+    @Override
+    public boolean shouldBackOff() {
+      return false;
     }
   }
 }
