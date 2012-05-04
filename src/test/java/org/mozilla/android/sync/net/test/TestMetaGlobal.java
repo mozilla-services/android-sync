@@ -6,6 +6,7 @@ package org.mozilla.android.sync.net.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -47,17 +48,25 @@ public class TestMetaGlobal {
   private HTTPServerTestHelper data    = new HTTPServerTestHelper(TEST_PORT);
 
   public static final String TEST_META_GLOBAL_RESPONSE = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
+  public static final String TEST_META_GLOBAL_NO_PAYLOAD_RESPONSE = "{\"id\":\"global\"," +
+      "\"username\":\"5817483\",\"modified\":1.32046073744E9}";
+  public static final String TEST_META_GLOBAL_MALFORMED_PAYLOAD_RESPONSE = "{\"id\":\"global\"," +
+      "\"payload\":\"{!!!}\"," +
+      "\"username\":\"5817483\",\"modified\":1.32046073744E9}";
+  public static final String TEST_META_GLOBAL_EMPTY_PAYLOAD_RESPONSE = "{\"id\":\"global\"," +
+      "\"payload\":\"{}\"," +
+      "\"username\":\"5817483\",\"modified\":1.32046073744E9}";
 
   @Before
   public void setUp() {
-    Log.i("TestMetaGlobal", "Faking SSL context.");
+    Log.i("test", "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
     Log.i("TestResource", "Disabling URI rewriting.");
     BaseResource.rewriteLocalhost = false;
   }
 
   @Test
-  public void testMetaGlobalSyncID() {
+  public void testSyncID() {
     MetaGlobal g = new MetaGlobal(META_URL, USER_PASS);
     g.setSyncID("foobar");
     assertEquals(g.getSyncID(), "foobar");
@@ -91,7 +100,7 @@ public class TestMetaGlobal {
     public void handleError(Exception e) {
       errorCalled = true;
       errorException = e;
-      WaitHelper.getTestWaiter().performNotify(e);
+      WaitHelper.getTestWaiter().performNotify();
     }
 
     public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
@@ -115,7 +124,7 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalMissingFetch() {
+  public void testFetchMissing() {
     MockServer missingMetaGlobalServer = new MockServer(404, "{}");
     final MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     global.setSyncID(TEST_SYNC_ID);
@@ -131,7 +140,7 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalExistingFetch() {
+  public void testFetchExisting() {
     MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_RESPONSE);
     MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     assertNull(global.getSyncID());
@@ -149,9 +158,53 @@ public class TestMetaGlobal {
     assertEquals(new Long(5), global.getStorageVersion());
   }
 
+  /**
+   * A record that is valid JSON but invalid as a meta/global record will be
+   * downloaded successfully, but will fail later.
+   */
+  @Test
+  public void testFetchNoPayload() {
+    MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_NO_PAYLOAD_RESPONSE);
+    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
+
+    data.startHTTPServer(existingMetaGlobalServer);
+    final MockMetaGlobalFetchDelegate delegate = doFetch(global);
+    data.stopHTTPServer();
+
+    assertTrue(delegate.successCalled);
+  }
 
   @Test
-  public void testMetaGlobalSetFromRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testFetchEmptyPayload() {
+    MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_EMPTY_PAYLOAD_RESPONSE);
+    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
+
+    data.startHTTPServer(existingMetaGlobalServer);
+    final MockMetaGlobalFetchDelegate delegate = doFetch(global);
+    data.stopHTTPServer();
+
+    assertTrue(delegate.successCalled);
+  }
+
+  /**
+   * A record that is invalid JSON will fail to download at all.
+   */
+  @Test
+  public void testFetchMalformedPayload() {
+    MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_MALFORMED_PAYLOAD_RESPONSE);
+    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
+
+    data.startHTTPServer(existingMetaGlobalServer);
+    final MockMetaGlobalFetchDelegate delegate = doFetch(global);
+    data.stopHTTPServer();
+
+    assertTrue(delegate.errorCalled);
+    assertNotNull(delegate.errorException);
+    assertEquals(ParseException.class, delegate.errorException.getClass());
+  }
+
+  @Test
+  public void testSetFromRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
@@ -160,7 +213,7 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalAsCryptoRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testAsCryptoRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     CryptoRecord rec = mg.asCryptoRecord();
@@ -172,7 +225,7 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalGetEnabledEngineNames() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testGetEnabledEngineNames() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
@@ -197,7 +250,7 @@ public class TestMetaGlobal {
   }
 
   @Test
-  public void testMetaGlobalUpload() {
+  public void testUpload() {
     long TEST_STORAGE_VERSION = 111;
     String TEST_SYNC_ID = "testSyncID";
     MetaGlobal mg = new MetaGlobal(META_URL, USER_PASS);
