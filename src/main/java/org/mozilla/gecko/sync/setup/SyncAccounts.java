@@ -259,4 +259,24 @@ public class SyncAccounts {
     }
     Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
   }
+
+  /**
+   * Enable or disable all Sync accounts.
+   *
+   * @param context
+   *        Context containing accounts
+   * @param toEnable
+   *        boolean for account activity state
+   */
+  public static void enableSyncAccounts(Account[] accounts, boolean toEnable) {
+    String authority = BrowserContract.AUTHORITY;
+    for (Account a : accounts) {
+      if (!Constants.ACCOUNTTYPE_SYNC.equals(a.type)) {
+        continue;
+      }
+      Logger.debug(LOG_TAG, "Setting authority " + authority + " to " + (toEnable ? "" : "not") + "sync automatically.");
+      ContentResolver.setSyncAutomatically(a, authority, toEnable);
+      ContentResolver.setIsSyncable(a, authority, toEnable ? 1 : 0);
+    }
+  }
 }

@@ -99,7 +99,7 @@ public class TestEnsureClusterURLStage {
       @Override
       public void run() {
         try {
-          EnsureClusterURLStage.fetchClusterURL(TEST_NW_URL, delegate);
+          EnsureClusterURLStage.fetchClusterURL(TEST_NW_URL, delegate, null);
         } catch (URISyntaxException e) {
           WaitHelper.getTestWaiter().performNotify(e);
         }

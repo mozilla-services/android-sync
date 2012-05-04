@@ -34,6 +34,7 @@ public class SyncStorageResponse extends SyncResponse {
     errors.put("13", "Invalid collection");
     errors.put("14", "User over quota");
     errors.put("15", "The email does not match the username");
+    errors.put("16", "Client upgrade required");
     errors.put("255", "An unexpected server error occurred: pool is empty.");
 
     // Infrastructure-generated errors.

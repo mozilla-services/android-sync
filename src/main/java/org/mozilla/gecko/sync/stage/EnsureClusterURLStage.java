@@ -13,18 +13,27 @@ import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NodeAuthenticationException;
 import org.mozilla.gecko.sync.NullClusterURLException;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.setup.Constants;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.content.Context;
 import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
+  private final static String RESPONSE_UPGRADE_NEEDED = SyncStorageResponse.SERVER_ERROR_MESSAGES.get("16");
+
   public EnsureClusterURLStage(GlobalSession session) {
     super(session);
   }
@@ -68,7 +77,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
    * @throws URISyntaxException
    */
   public static void fetchClusterURL(final String nodeWeaveURL,
-                                     final ClusterURLFetchDelegate delegate) throws URISyntaxException {
+                                     final ClusterURLFetchDelegate delegate, final Context context) throws URISyntaxException {
     Log.d(LOG_TAG, "In fetchClusterURL: node/weave is " + nodeWeaveURL);
 
     BaseResource resource = new BaseResource(nodeWeaveURL);
@@ -138,6 +147,31 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
             }
             break;
           case 400:
+            Logger.debug(LOG_TAG, "Checking response code for 400.");
+            SyncStorageResponse storageResponse = new SyncStorageResponse(response);
+            String errorMessage = null;
+            try {
+              errorMessage = storageResponse.getErrorMessage();
+            } catch (IllegalStateException e) {
+              delegate.handleError(e);
+            } catch (IOException e) {
+              delegate.handleError(e);
+            }
+            if (RESPONSE_UPGRADE_NEEDED.equals(errorMessage) && context != null) {
+              // Sync needs to be upgraded. Don't automatically sync anymore.
+              final HttpResponse failedResponse = response;
+              ThreadPool.run(new Runnable() {
+                @Override
+                public void run() {
+                  Account[] accounts = AccountManager.get(context).getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+                  SyncAccounts.enableSyncAccounts(accounts, false);
+                  Log.i(LOG_TAG, "Got 400 for node/weave cluster URL request (user not found; failing).");
+                  delegate.handleFailure(failedResponse);
+                }
+              });
+              break;
+            }
+            // Fall through for failure handling.
           case 404:
             Log.i(LOG_TAG, "Got " + status + " for node/weave cluster URL request (user not found; failing).");
             delegate.handleFailure(response);
@@ -246,7 +280,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
       @Override
       public void run() {
         try {
-          fetchClusterURL(session.config.nodeWeaveURL(), delegate);
+          fetchClusterURL(session.config.nodeWeaveURL(), delegate, session.getContext());
         } catch (URISyntaxException e) {
           session.abort(e, "Invalid URL for node/weave.");
         }
