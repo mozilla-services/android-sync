@@ -5,6 +5,7 @@ package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -119,7 +120,7 @@ public class TestCollectionKeys {
   }
 
   @Test
-  public void testDifferences() throws CryptoException {
+  public void testDifferences() throws Exception {
     KeyBundle kb1 = KeyBundle.withRandomKeys();
     KeyBundle kb2 = KeyBundle.withRandomKeys();
     KeyBundle kb3 = KeyBundle.withRandomKeys();
@@ -145,5 +146,50 @@ public class TestCollectionKeys {
     b.setKeyBundleForCollection("1", KeyBundle.withRandomKeys());
     diffs = CollectionKeys.differences(a, b);
     assertEquals(3, diffs.size());
+
+    // This tests that explicitly setting a default key works.
+    a = CollectionKeys.generateCollectionKeys();
+    b = CollectionKeys.generateCollectionKeys();
+    b.setDefaultKeyBundle(a.defaultKeyBundle());
+    a.setKeyBundleForCollection("a", a.defaultKeyBundle());
+    b.setKeyBundleForCollection("b", b.defaultKeyBundle());
+    assertTrue(CollectionKeys.differences(a, b).isEmpty());
+    assertTrue(CollectionKeys.differences(b, a).isEmpty());
+  }
+
+  @Test
+  public void testEquals() throws Exception {
+    KeyBundle kb1 = KeyBundle.withRandomKeys();
+    KeyBundle kb2 = KeyBundle.withRandomKeys();
+    CollectionKeys a = CollectionKeys.generateCollectionKeys();
+    CollectionKeys b = CollectionKeys.generateCollectionKeys();
+
+    // Random keys are different.
+    assertFalse(a.equals(b));
+    assertFalse(b.equals(a));
+
+    // keys with unset default key bundles are different.
+    b.setDefaultKeyBundle(null);
+    assertFalse(a.equals(b));
+
+    // keys with equal default key bundles and no other collections are the same.
+    b.setDefaultKeyBundle(a.defaultKeyBundle());
+    assertTrue(a.equals(b));
+
+    // keys with equal defaults and equal collections are the same.
+    a.setKeyBundleForCollection("1", kb1);
+    b.setKeyBundleForCollection("1", kb1);
+    assertTrue(a.equals(b));
+
+    // keys with equal defaults but some collection missing are different.
+    a.setKeyBundleForCollection("2", kb2);
+    assertFalse(a.equals(b));
+    assertFalse(b.equals(a));
+
+    // keys with equal defaults and some collection set to the default are the same.
+    a.setKeyBundleForCollection("2", a.defaultKeyBundle());
+    b.setKeyBundleForCollection("3", b.defaultKeyBundle());
+    assertTrue(a.equals(b));
+    assertTrue(b.equals(a));
   }
 }

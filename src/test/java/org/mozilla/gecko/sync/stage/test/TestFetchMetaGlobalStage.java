@@ -270,16 +270,8 @@ public class TestFetchMetaGlobalStage {
           return;
         }
         if (mgUploaded.get()) {
+          // We shouldn't be trying to download anything after uploading meta/global.
           mgDownloaded.set(true);
-          try {
-            CryptoRecord rec = uploadedMg.asCryptoRecord();
-            rec.keyBundle = syncKeyBundle;
-            rec.encrypt();
-            this.handle(request, response, 200, rec.toJSONString());
-            return;
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
         }
         this.handle(request, response, 404, "missing");
       }
@@ -290,7 +282,7 @@ public class TestFetchMetaGlobalStage {
     assertTrue(this.calledWipeServer);
     assertTrue(this.calledUploadKeys);
     assertTrue(mgUploaded.get());
-    assertTrue(mgDownloaded.get());
+    assertFalse(mgDownloaded.get());
     assertEquals(GlobalSession.STORAGE_VERSION, uploadedMg.getStorageVersion().longValue());
   }
 }

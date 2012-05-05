@@ -15,6 +15,7 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.gecko.sync.repositories.android.FennecControlHelper;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecordFactory;
+import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
 public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   protected static final String LOG_TAG = "BookmarksStage";
@@ -40,7 +41,7 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
 
   @Override
   public Integer getStorageVersion() {
-    return GlobalSession.BOOKMARKS_ENGINE_VERSION;
+    return VersionConstants.BOOKMARKS_ENGINE_VERSION;
   }
 
   @Override

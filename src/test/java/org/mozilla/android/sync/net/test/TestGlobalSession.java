@@ -43,6 +43,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
@@ -375,13 +376,14 @@ public class TestGlobalSession {
     session.config.enabledEngineNames = null;
     MetaGlobal mg = session.generateNewMetaGlobal();
     assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
+
     List<String> namesList = new ArrayList<String>(mg.getEnabledEngineNames());
     Collections.sort(namesList);
     String[] names = namesList.toArray(new String[namesList.size()]);
     String[] expected = new String[] { "bookmarks", "clients", "forms", "history", "passwords", "tabs" };
     assertArrayEquals(expected, names);
-    assertEquals(GlobalSession.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
-    assertEquals(GlobalSession.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
   }
 
   @Test
@@ -396,16 +398,18 @@ public class TestGlobalSession {
     session.config.enabledEngineNames.add("clients");
     session.config.enabledEngineNames.add("addons");
     session.config.enabledEngineNames.add("prefs");
+
     MetaGlobal mg = session.generateNewMetaGlobal();
     assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
+    assertEquals(0, mg.getEngines().getObject("addons").getIntegerSafely("version").intValue());
+    assertEquals(0, mg.getEngines().getObject("prefs").getIntegerSafely("version").intValue());
+
     List<String> namesList = new ArrayList<String>(mg.getEnabledEngineNames());
     Collections.sort(namesList);
     String[] names = namesList.toArray(new String[namesList.size()]);
     String[] expected = new String[] { "addons", "bookmarks", "clients", "prefs" };
     assertArrayEquals(expected, names);
-    assertEquals(GlobalSession.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
-    assertEquals(GlobalSession.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
-    assertEquals(0, mg.getEngines().getObject("addons").getIntegerSafely("version").intValue());
-    assertEquals(0, mg.getEngines().getObject("prefs").getIntegerSafely("version").intValue());
   }
 }

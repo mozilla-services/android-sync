@@ -45,19 +45,15 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.credentials = credentials;
   }
 
-  public void fetch(MetaGlobalDelegate callback) {
-    this.callback = callback;
-    this.doFetch();
-  }
-
-  private void doFetch() {
+  public void fetch(MetaGlobalDelegate delegate) {
+    this.callback = delegate;
     try {
       this.isUploading = false;
       SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
       r.delegate = this;
       r.deferGet();
     } catch (URISyntaxException e) {
-      callback.handleError(e);
+      this.callback.handleError(e);
     }
   }
 
@@ -66,7 +62,6 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
       this.isUploading = true;
       SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
 
-      // TODO: PUT! Body!
       r.delegate = this;
       this.callback = callback;
       r.put(this.asCryptoRecord());
@@ -83,6 +78,10 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     return json;
   }
 
+  /**
+   * Return a copy ready for upload.
+   * @return an unencrypted <code>CryptoRecord</code>.
+   */
   public CryptoRecord asCryptoRecord() {
     ExtendedJSONObject payload = this.asRecordContents();
     CryptoRecord record = new CryptoRecord(payload);

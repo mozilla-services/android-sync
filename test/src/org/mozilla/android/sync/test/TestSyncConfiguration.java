@@ -1,9 +1,7 @@
-/* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
-
 package org.mozilla.android.sync.test;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.mozilla.gecko.sync.PrefsSource;
 import org.mozilla.gecko.sync.SyncConfiguration;
@@ -33,9 +31,11 @@ public class TestSyncConfiguration extends AndroidSyncTestCase implements PrefsS
     assertTrue(prefs.contains(SyncConfiguration.PREF_ENABLED_ENGINE_NAMES));
     config = new SyncConfiguration(TEST_PREFS_NAME, this);
     config.loadFromPrefs(prefs);
-    assertEquals(2, config.enabledEngineNames.size());
-    assertTrue(config.enabledEngineNames.contains("test1"));
-    assertTrue(config.enabledEngineNames.contains("test2"));
+    Set<String> expected = new HashSet<String>();
+    for (String name : new String[] { "test1", "test2" }) {
+      expected.add(name);
+    }
+    assertEquals(expected, config.enabledEngineNames);
 
     config.enabledEngineNames = null;
     config.persistToPrefs();

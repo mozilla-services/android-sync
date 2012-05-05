@@ -5,7 +5,6 @@
 package org.mozilla.gecko.sync;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -54,7 +53,6 @@ import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class GlobalSession implements CredentialsSource, PrefsSource, HttpResponseObserver {
@@ -62,12 +60,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   public static final String API_VERSION   = "1.1";
   public static final long STORAGE_VERSION = 5;
-  public static final int  BOOKMARKS_ENGINE_VERSION = 2;
-  public static final int  CLIENTS_ENGINE_VERSION = 1;
-  public static final int  FORMS_ENGINE_VERSION = 1;
-  public static final int  HISTORY_ENGINE_VERSION = 1;
-  public static final int  PASSWORDS_ENGINE_VERSION = 1;
-  public static final int  TABS_ENGINE_VERSION = 1;
 
   public SyncConfiguration config = null;
 
@@ -462,12 +454,14 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
+        Logger.debug(LOG_TAG, "Keys uploaded.");
         BaseResource.consumeEntity(response); // We don't need the response at all.
         keyUploadDelegate.onKeysUploaded();
       }
 
       @Override
       public void handleRequestFailure(SyncStorageResponse response) {
+        Logger.debug(LOG_TAG, "Failed to upload keys.");
         self.interpretHTTPFailure(response.httpResponse());
         BaseResource.consumeEntity(response); // The exception thrown should not need the body of the response.
         keyUploadDelegate.onKeyUploadFailed(new HTTPFailureException(response));
@@ -475,6 +469,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
       @Override
       public void handleRequestError(Exception ex) {
+        Logger.warn(LOG_TAG, "Got exception trying to upload keys", ex);
         keyUploadDelegate.onKeyUploadFailed(ex);
       }
 
@@ -484,19 +479,14 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     };
 
+    // Convert keys to an encrypted crypto record.
     CryptoRecord keysRecord;
     try {
       keysRecord = keys.asCryptoRecord();
       keysRecord.setKeyBundle(config.syncKeyBundle);
       keysRecord.encrypt();
-    } catch (UnsupportedEncodingException e) {
-      keyUploadDelegate.onKeyUploadFailed(e);
-      return;
-    } catch (CryptoException e) {
-      keyUploadDelegate.onKeyUploadFailed(e);
-      return;
-    } catch (NoCollectionKeysSetException e) {
-      // Should not occur.
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception trying creating crypto record from keys", e);
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
     }
@@ -548,8 +538,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     if (config.enabledEngineNames == null) {
       Logger.warn(LOG_TAG, "meta/global reported no enabled engine names!");
     } else {
-      Logger.debug(LOG_TAG, "Persisting enabled engine names '" +
-          Utils.toCommaSeparatedString(config.enabledEngineNames) + "' from meta/global.");
+      if (Logger.logVerbose(LOG_TAG)) {
+        Logger.trace(LOG_TAG, "Persisting enabled engine names '" +
+            Utils.toCommaSeparatedString(config.enabledEngineNames) + "' from meta/global.");
+      }
     }
     config.persistToPrefs();
     advance();
@@ -587,20 +579,34 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   /**
    * Clean the server, aborting the current sync.
+   * <p>
+   * <ol>
+   * <li>Wipe the server storage.</li>
+   * <li>Reset all stages and purge cached state: (meta/global and crypto/keys records).</li>
+   * <li>Upload fresh meta/global record.</li>
+   * <li>Upload fresh crypto/keys record.</li>
+   * <li>Restart the sync entirely in order to re-download meta/global and crypto/keys record.</li>
+   * </ol>
+   * @param session the current session.
+   * @param freshStartDelegate delegate to notify on fresh start or failure.
    */
-  protected void freshStart(final GlobalSession session, final FreshStartDelegate freshStartDelegate) {
-    final MetaGlobal mg = generateNewMetaGlobal();
+  protected static void freshStart(final GlobalSession session, final FreshStartDelegate freshStartDelegate) {
+    Logger.debug(LOG_TAG, "Fresh starting.");
 
-    wipeServer(session, new WipeServerDelegate() {
+    final MetaGlobal mg = session.generateNewMetaGlobal();
+
+    session.wipeServer(session, new WipeServerDelegate() {
 
       @Override
       public void onWiped(long timestamp) {
+        Logger.debug(LOG_TAG, "Successfully wiped server.  Resetting all stages and purging cached meta/global and crypto/keys records.");
+
         session.resetAllStages();
-        session.config.purgeCryptoKeys();
         session.config.purgeMetaGlobal();
+        session.config.purgeCryptoKeys();
         session.config.persistToPrefs();
 
-        Logger.info(LOG_TAG, "Uploading new meta/global with sync ID " + mg.syncID);
+        Logger.info(LOG_TAG, "Uploading new meta/global with sync ID " + mg.syncID + ".");
 
         // It would be good to set the X-If-Unmodified-Since header to `timestamp`
         // for this PUT to ensure at least some level of transactionality.
@@ -609,59 +615,33 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
         mg.upload(new MetaGlobalDelegate() {
           @Override
           public void handleSuccess(MetaGlobal uploadedGlobal, SyncStorageResponse uploadResponse) {
-            Logger.info(LOG_TAG, "New meta/global uploaded with sync ID " + uploadedGlobal.syncID);
-            // Now we can download the new meta/global. We re-download to
-            // shorten the window in which two clients can race while
-            // uploading meta/global; with luck, both will end up downloading
-            // the same meta/global record.
+            Logger.info(LOG_TAG, "Uploaded new meta/global with sync ID " + uploadedGlobal.syncID + ".");
 
-            mg.fetch(new MetaGlobalDelegate() {
+            // Generate new keys.
+            CollectionKeys keys = null;
+            try {
+              keys = session.generateNewCryptoKeys();
+            } catch (CryptoException e) {
+              Logger.warn(LOG_TAG, "Got exception generating new keys; failing fresh start.", e);
+              freshStartDelegate.onFreshStartFailed(e);
+            }
+            if (keys == null) {
+              Logger.warn(LOG_TAG, "Got null keys from generateNewKeys; failing fresh start.");
+              freshStartDelegate.onFreshStartFailed(null);
+            }
+
+            // Upload new keys.
+            Logger.info(LOG_TAG, "Uploading new crypto/keys.");
+            session.uploadKeys(keys, new KeyUploadDelegate() {
               @Override
-              public void handleSuccess(MetaGlobal downloadedGlobal, SyncStorageResponse downloadResponse) {
-                Logger.info(LOG_TAG, "New meta/global downloaded with sync ID " + downloadedGlobal.syncID);
-                session.config.metaGlobal = downloadedGlobal;
-
-                // Generate and upload new keys.
-                try {
-                  session.uploadKeys(generateNewCryptoKeys(), new KeyUploadDelegate() {
-                    @Override
-                    public void onKeysUploaded() {
-                      // Now we can download the new keys. We re-download to
-                      // shorten the window in which two clients can race while
-                      // uploading keys; with luck, both will end up downloading
-                      // the same keys.
-                      freshStartDelegate.onFreshStart();
-                    }
-
-                    @Override
-                    public void onKeyUploadFailed(Exception e) {
-                      Log.e(LOG_TAG, "Got exception uploading new keys.", e);
-                      freshStartDelegate.onFreshStartFailed(e);
-                    }
-                  });
-                } catch (CryptoException e) {
-                  Log.e(LOG_TAG, "Got exception generating new keys.", e);
-                  freshStartDelegate.onFreshStartFailed(e);
-                }
+              public void onKeysUploaded() {
+                Logger.info(LOG_TAG, "Uploaded new crypto/keys.");
+                freshStartDelegate.onFreshStart();
               }
 
               @Override
-              public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
-                // Shouldn't happen.
-                Logger.warn(LOG_TAG, "Got 'missing' response downloading new meta/global.");
-                freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing while downloading."));
-              }
-
-              @Override
-              public void handleFailure(SyncStorageResponse response) {
-                Logger.warn(LOG_TAG, "Got failure " + response.getStatusCode() + " downloading new meta/global.");
-                session.interpretHTTPFailure(response.httpResponse());
-                freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));
-              }
-
-              @Override
-              public void handleError(Exception e) {
-                Logger.warn(LOG_TAG, "Got error downloading new meta/global.", e);
+              public void onKeyUploadFailed(Exception e) {
+                Logger.warn(LOG_TAG, "Got exception uploading new keys.", e);
                 freshStartDelegate.onFreshStartFailed(e);
               }
             });
@@ -669,7 +649,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
           @Override
           public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
-            // Shouldn't happen.
+            // Shouldn't happen on upload.
             Logger.warn(LOG_TAG, "Got 'missing' response uploading new meta/global.");
             freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing while uploading."));
           }
@@ -914,23 +894,19 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * @throws MetaGlobalException
    */
   public boolean engineIsEnabled(String engineName, EngineSettings engineSettings) throws MetaGlobalException {
+    if (this.config.metaGlobal == null) {
+      throw new MetaGlobalNotSetException();
+    }
+
     // This should not occur.
     if (this.config.enabledEngineNames == null) {
       Logger.error(LOG_TAG, "No enabled engines in config. Giving up.");
-      if (this.config.metaGlobal == null) {
-        throw new MetaGlobalNotSetException();
-      }
       throw new MetaGlobalMissingEnginesException();
     }
 
     if (!(this.config.enabledEngineNames.contains(engineName))) {
       Logger.debug(LOG_TAG, "Engine " + engineName + " not enabled: no meta/global entry.");
       return false;
-    }
-
-    if (this.config.metaGlobal == null) {
-      Logger.warn(LOG_TAG, "No meta/global; using historical enabled engine names.");
-      return true;
     }
 
     // If we have a meta/global, check that it's safe for us to sync.

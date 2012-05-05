@@ -36,6 +36,7 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
+import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
 public class TestFreshStart {
   // TODO: switch this to use a local server, with appropriate setup.
@@ -130,8 +131,8 @@ public class TestFreshStart {
     String[] names = namesList.toArray(new String[namesList.size()]);
     String[] expected = new String[] { "addons", "bookmarks", "clients", "prefs" };
     assertArrayEquals(expected, names);
-    assertEquals(GlobalSession.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
-    assertEquals(GlobalSession.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
     assertEquals(0, mg.getEngines().getObject("addons").getIntegerSafely("version").intValue());
     assertEquals(0, mg.getEngines().getObject("prefs").getIntegerSafely("version").intValue());
 

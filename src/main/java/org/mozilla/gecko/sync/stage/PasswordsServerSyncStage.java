@@ -11,6 +11,7 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.PasswordsRepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
 public class PasswordsServerSyncStage extends ServerSyncStage {
   public PasswordsServerSyncStage(GlobalSession session) {
@@ -29,7 +30,7 @@ public class PasswordsServerSyncStage extends ServerSyncStage {
 
   @Override
   public Integer getStorageVersion() {
-    return GlobalSession.PASSWORDS_ENGINE_VERSION;
+    return VersionConstants.PASSWORDS_ENGINE_VERSION;
   }
 
   @Override

@@ -4,7 +4,6 @@
 package org.mozilla.gecko.sync.stage.test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
@@ -31,7 +29,6 @@ import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -123,74 +120,6 @@ public class TestEnsureCrypto5KeysStage {
       }
     });
     data.stopHTTPServer();
-  }
-
-  @Test
-  public void testUploadKeysFails() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
-    MockServer server = new MockServer() {
-      public void handle(Request request, Response response) {
-        if (request.getMethod().equals("PUT")) {
-          this.handle(request, response, 400, "denied");
-          return;
-        }
-        this.handle(request, response, 404, "not found");
-      }
-    };
-    doSession(server);
-
-    assertTrue(callback.calledError);
-    assertTrue(callback.calledErrorException instanceof HTTPFailureException);
-  }
-
-  @Test
-  public void testUploadKeysSucceeds() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
-    assertNull(session.config.collectionKeys);
-
-    final AtomicBoolean keysUploaded = new AtomicBoolean(false);
-    final AtomicBoolean keysDownloaded = new AtomicBoolean(false);
-    final CollectionKeys uploadedKeys = new CollectionKeys();
-
-    MockServer server = new MockServer() {
-      public void handle(Request request, Response response) {
-        if (request.getMethod().equals("PUT")) {
-          try {
-            ExtendedJSONObject body = ExtendedJSONObject.parseJSONObject(request.getContent());
-            System.out.println(body.toJSONString());
-            assertTrue(body.containsKey("payload"));
-            assertFalse(body.containsKey("default"));
-
-            CryptoRecord rec = CryptoRecord.fromJSONRecord(body);
-            uploadedKeys.setKeyPairsFromWBO(rec, syncKeyBundle); // Decrypt.
-            keysUploaded.set(true);
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-          this.handle(request, response, 200, "success");
-          return;
-        }
-        if (keysUploaded.get()) {
-          keysDownloaded.set(true);
-          try {
-            CryptoRecord rec = uploadedKeys.asCryptoRecord();
-            rec.keyBundle = syncKeyBundle;
-            rec.encrypt();
-            this.handle(request, response, 200, rec.toJSONString());
-            return;
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-        this.handle(request, response, 404, "not found");
-      }
-    };
-
-    doSession(server);
-
-    assertTrue(callback.calledSuccess);
-    assertTrue(keysUploaded.get());
-    assertTrue(keysDownloaded.get());
-    assertNotNull(session.config.collectionKeys);
-    assertTrue(session.config.collectionKeys.equals(uploadedKeys));
   }
 
   @Test
@@ -308,18 +237,10 @@ public class TestEnsureCrypto5KeysStage {
     session.config.persistedCryptoKeys().persistKeys(keys);
     keys.setKeyBundleForCollection(TEST_COLLECTION, syncKeyBundle); // Change one key bundle.
 
-    MockServer server = new MockServer() {
-      public void handle(Request request, Response response) {
-        try {
-          CryptoRecord rec = keys.asCryptoRecord();
-          rec.keyBundle = syncKeyBundle;
-          rec.encrypt();
-          this.handle(request, response, 200, rec.toJSONString());
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    };
+    CryptoRecord rec = keys.asCryptoRecord();
+    rec.keyBundle = syncKeyBundle;
+    rec.encrypt();
+    MockServer server = new MockServer(200, rec.toJSONString());
 
     doSession(server);
 

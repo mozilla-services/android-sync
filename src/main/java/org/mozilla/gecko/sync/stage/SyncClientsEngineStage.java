@@ -32,6 +32,7 @@ import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
+import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
 import ch.boye.httpclientandroidlib.HttpStatus;
 
@@ -310,7 +311,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   public Integer getStorageVersion() {
-    return GlobalSession.CLIENTS_ENGINE_VERSION;
+    return VersionConstants.CLIENTS_ENGINE_VERSION;
   }
 
   protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
@@ -319,7 +320,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     ClientRecord r = new ClientRecord(ourGUID);
     r.name = ourName;
-    return r;    
+    return r;
   }
 
   // TODO: Bug 726055 - More considered handling of when to sync.
