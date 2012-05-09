@@ -57,8 +57,9 @@ echo "SYNC_RES_LAYOUT := $(find res/layout         -name '*.xml' | xargs)"  >> $
 echo "SYNC_RES_VALUES := res/values/sync_styles.xml" >> $MKFILE
 # Finished creating makefile for Mozilla
 
+true > $SYNC/preprocess-sources.mn
 for f in $PREPROCESS_FILES ; do
-    echo $f > $SYNC/preprocess-sources.mn
+    echo $f >> $SYNC/preprocess-sources.mn
 done
 
 echo "Writing README."
