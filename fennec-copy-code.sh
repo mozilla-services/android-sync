@@ -48,8 +48,9 @@ done
 echo "Writing README."
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $WARNING > $ANDROID/base/httpclientandroidlib/README.txt
+true > $SYNC/java-sources.mn
 for f in $SOURCEFILES ; do
-    echo $f > $SYNC/java-sources.mn
+    echo $f >> $SYNC/java-sources.mn
 done
 true > $SYNC/java-third-party-sources.mn
 for f in $HTTPLIBFILES $JSONLIBFILES $APACHEFILES ; do
