@@ -42,9 +42,25 @@ mkdir -p $ANDROID/base/json-simple/
 rsync -C -a $HTTPLIB $ANDROID/base/
 rsync -C -a $JSONLIB/ $ANDROID/base/json-simple/
 
+# Creating makefile for Mozilla
+MKFILE=$ANDROID/base/android-sync-files.mk
+echo "Creating makefile for including in the Mozilla build system at $MKFILE"
+echo "# $WARNING" > $MKFILE
+echo "SYNC_JAVA_FILES := $(echo $SOURCEFILES | xargs)" >> $MKFILE
+echo "SYNC_PP_JAVA_FILES := $(echo $PREPROCESS_FILES | xargs)" >> $MKFILE
+echo "SYNC_THIRDPARTY_JAVA_FILES := $(echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE := $(find res/drawable       -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_LDPI := $(find res/drawable-ldpi  -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_HDPI := $(find find res/drawable-hdpi  -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_LAYOUT := $(find res/layout         -name '*.xml' | xargs)"  >> $MKFILE
+echo "SYNC_RES_VALUES := res/values/sync_styles.xml" >> $MKFILE
+# Finished creating makefile for Mozilla
+
 for f in $PREPROCESS_FILES ; do
     echo $f > $SYNC/preprocess-sources.mn
 done
+
 echo "Writing README."
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $WARNING > $ANDROID/base/httpclientandroidlib/README.txt
