@@ -42,12 +42,19 @@ mkdir -p $ANDROID/base/json-simple/
 rsync -C -a $HTTPLIB $ANDROID/base/
 rsync -C -a $JSONLIB/ $ANDROID/base/json-simple/
 
-echo $PREPROCESS_FILES > $SYNC/preprocess-sources.mn
+for f in $PREPROCESS_FILES ; do
+    echo $f > $SYNC/preprocess-sources.mn
+done
 echo "Writing README."
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $WARNING > $ANDROID/base/httpclientandroidlib/README.txt
-echo $SOURCEFILES > $SYNC/java-sources.mn
-echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES > $SYNC/java-third-party-sources.mn
+for f in $SOURCEFILES ; do
+    echo $f > $SYNC/java-sources.mn
+done
+true > $SYNC/java-third-party-sources.mn
+for f in $HTTPLIBFILES $JSONLIBFILES $APACHEFILES ; do
+    echo $f >> $SYNC/java-third-party-sources.mn
+done
 
 echo "Copying resources..."
 # I'm guessing these go here.
