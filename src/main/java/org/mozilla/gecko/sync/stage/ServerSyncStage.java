@@ -18,6 +18,7 @@ import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
@@ -442,6 +443,8 @@ public abstract class ServerSyncStage implements
     } catch (MetaGlobalException.MetaGlobalMalformedSyncIDException e) {
       // Bad engine syncID. This should never happen. Wipe the server.
       try {
+        session.updateMetaGlobalWith(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
+        Logger.info(LOG_TAG, "Wiping server because malformed engine sync ID was found in meta/global.");
         wipeServer();
         Logger.info(LOG_TAG, "Wiped server after malformed engine sync ID found in meta/global.");
       } catch (Exception ex) {
@@ -450,6 +453,8 @@ public abstract class ServerSyncStage implements
     } catch (MetaGlobalException.MetaGlobalMalformedVersionException e) {
       // Bad engine version. This should never happen. Wipe the server.
       try {
+        session.updateMetaGlobalWith(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
+        Logger.info(LOG_TAG, "Wiping server because malformed engine version was found in meta/global.");
         wipeServer();
         Logger.info(LOG_TAG, "Wiped server after malformed engine version found in meta/global.");
       } catch (Exception ex) {
