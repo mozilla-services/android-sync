@@ -450,7 +450,7 @@ public class FormHistoryRepositorySession extends
         try {
           flushInsertQueue();
         } catch (Exception e) {
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         }
       }
@@ -491,7 +491,8 @@ public class FormHistoryRepositorySession extends
           }
           storeDone(now());
         } catch (Exception e) {
-          delegate.onRecordStoreFailed(e);
+          // XXX TODO
+          delegate.onRecordStoreFailed(e, null);
         }
       }
     };
@@ -562,7 +563,7 @@ public class FormHistoryRepositorySession extends
       public void run() {
         if (!isActive()) {
           Logger.warn(LOG_TAG, "FormHistoryRepositorySession is inactive. Store failing.");
-          delegate.onRecordStoreFailed(new InactiveSessionException(null));
+          delegate.onRecordStoreFailed(new InactiveSessionException(null), record.guid);
           return;
         }
 
@@ -680,7 +681,7 @@ public class FormHistoryRepositorySession extends
           return;
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         }
       }

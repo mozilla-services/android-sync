@@ -384,7 +384,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
       public void run() {
         if (!isActive()) {
           Logger.warn(LOG_TAG, "AndroidBrowserRepositorySession is inactive. Store failing.");
-          delegate.onRecordStoreFailed(new InactiveSessionException(null));
+          delegate.onRecordStoreFailed(new InactiveSessionException(null), record.guid);
           return;
         }
 
@@ -508,19 +508,19 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
         } catch (MultipleRecordsForGuidException e) {
           Logger.error(LOG_TAG, "Multiple records returned for given guid: " + record.guid);
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         } catch (NoGuidForIdException e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         } catch (NullCursorException e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         }
       }

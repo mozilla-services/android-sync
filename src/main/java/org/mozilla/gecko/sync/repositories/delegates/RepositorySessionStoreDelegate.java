@@ -49,7 +49,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
  *
  */
 public interface RepositorySessionStoreDelegate {
-  public void onRecordStoreFailed(Exception ex);
+  public void onRecordStoreFailed(Exception ex, String guid);
 
   // Optionally called with an equivalent (but not necessarily identical) record
   // when a store has succeeded.

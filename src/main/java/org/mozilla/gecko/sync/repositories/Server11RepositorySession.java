@@ -457,7 +457,8 @@ public class Server11RepositorySession extends RepositorySession {
     @Override
     public void handleRequestError(final Exception ex) {
       Logger.warn(LOG_TAG, "Got request error: " + ex, ex);
-      delegate.onRecordStoreFailed(ex);
+      // XXX TODO
+      delegate.onRecordStoreFailed(ex, null);
     }
 
     public class ByteArraysContentProducer implements ContentProducer {
