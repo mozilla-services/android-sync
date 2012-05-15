@@ -367,12 +367,6 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
             Log.d(getName(), "Failed.");
             performNotify(new AssertionFailedError("Should not fail."));
           }
-
-          @Override
-          public void onSynchronizeAborted(Synchronizer synchronize) {
-            Log.d(getName(), "Aborted.");
-            performNotify(new AssertionFailedError("Should not abort."));
-          }
         });
       }
     };

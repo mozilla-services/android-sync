@@ -77,7 +77,7 @@ public class TestSynchronizer {
       }
 
       @Override
-      public void onSynchronized(SynchronizerSession session) {
+      public void onSynchronizedSession(SynchronizerSession session) {
         System.out.println("onSynchronized. Success!");
         synchronized (monitor) {
           monitor.notify();
@@ -85,7 +85,7 @@ public class TestSynchronizer {
       }
       
       @Override
-      public void onSynchronizeFailed(SynchronizerSession session,
+      public void onSynchronizeSessionFailed(SynchronizerSession session,
                                       Exception lastException, String reason) {
         fail("Synchronization should not fail.");
       }
@@ -106,12 +106,7 @@ public class TestSynchronizer {
       }
 
       @Override
-      public void onSynchronizeAborted(SynchronizerSession synchronizerSession) {
-        fail("Sync should not be aborted.");
-      }
-
-      @Override
-      public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
+      public void onSynchronizeSessionSkipped(SynchronizerSession synchronizerSession) {
         fail("Sync should not be skipped.");
       }
     });
@@ -150,11 +145,6 @@ public class TestSynchronizer {
     public void onSynchronizeFailed(Synchronizer synchronizer,
                                     Exception lastException, String reason) {
       fail("Should not fail.");
-    }
-
-    @Override
-    public void onSynchronizeAborted(Synchronizer synchronize) {
-      fail("Should not abort.");
     }
   }
 
@@ -286,11 +276,6 @@ public class TestSynchronizer {
                                         Exception lastException, String reason) {
           fail("Sync should not fail.");
         }
-
-        @Override
-        public void onSynchronizeAborted(Synchronizer synchronize) {
-          fail("Sync should not be aborted.");
-        }
       });
       try {
         monitor.wait();
@@ -354,11 +339,6 @@ public class TestSynchronizer {
         public void onSynchronizeFailed(Synchronizer synchronizer,
                                         Exception lastException, String reason) {
           fail("Sync should not fail.");
-        }
-
-        @Override
-        public void onSynchronizeAborted(Synchronizer synchronize) {
-          fail("Sync should not be aborted.");
         }
       });
       try {

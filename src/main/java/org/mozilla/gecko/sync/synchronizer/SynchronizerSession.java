@@ -114,7 +114,7 @@ implements RecordsChannelDelegate,
     if (channelBToA != null) {
       channelBToA.abort();
     }
-    this.delegate.onSynchronizeAborted(this);
+    // this.delegate.onSynchronizeSessionAborted(this);
   }
 
   /**
@@ -127,7 +127,7 @@ implements RecordsChannelDelegate,
       Logger.info(LOG_TAG, "Neither session reports data available. Short-circuiting sync.");
       sessionA.abort();
       sessionB.abort();
-      this.delegate.onSynchronizeSkipped(this);
+      this.delegate.onSynchronizeSessionSkipped(this);
       return;
     }
 
@@ -229,6 +229,7 @@ implements RecordsChannelDelegate,
   public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO: clean up, tear down, abort.
     Logger.warn(LOG_TAG, "Second RecordsChannel onFlowStoreFailed. Ignoring store error.", ex);
+    this.delegate.onStoreError(ex);
   }
 
   @Override
@@ -331,7 +332,7 @@ implements RecordsChannelDelegate,
       return;
     }
     String session = (this.sessionA == null) ? "B" : "A";
-    this.delegate.onSynchronizeFailed(this, ex, "Finish of session " + session + " failed.");
+    this.delegate.onSynchronizeSessionFailed(this, ex, "Finish of session " + session + " failed.");
   }
 
   /**
@@ -371,7 +372,7 @@ implements RecordsChannelDelegate,
         bundle.bumpTimestamp(Math.max(pendingBTimestamp, storeEndBTimestamp));
         this.synchronizer.bundleB = bundle;
         Logger.info(LOG_TAG, "Notifying delegate.onSynchronized.");
-        this.delegate.onSynchronized(this);
+        this.delegate.onSynchronizedSession(this);
       } else {
         // Should not happen!
         this.delegate.onSessionError(new UnexpectedSessionException(sessionB));
