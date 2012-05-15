@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutorService;
 import junit.framework.AssertionFailedError;
 
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
-import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class ExpectSuccessRepositorySessionStoreDelegate extends
     ExpectSuccessDelegate implements RepositorySessionStoreDelegate {
@@ -24,7 +23,7 @@ public class ExpectSuccessRepositorySessionStoreDelegate extends
   }
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(String guid) {
     log("Record store succeeded.");
   }
 

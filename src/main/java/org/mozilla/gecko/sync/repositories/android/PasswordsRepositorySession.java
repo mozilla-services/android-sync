@@ -354,7 +354,7 @@ public class PasswordsRepositorySession extends
             return;
           }
           trackRecord(inserted);
-          delegate.onRecordStoreSucceeded(inserted);
+          delegate.onRecordStoreSucceeded(inserted.guid);
           return;
         }
 
@@ -385,7 +385,7 @@ public class PasswordsRepositorySession extends
         // of reconcileRecords.
         Logger.debug(LOG_TAG, "Calling delegate callback with guid " + replaced.guid +
                               "(" + replaced.androidID + ")");
-        delegate.onRecordStoreSucceeded(replaced);
+        delegate.onRecordStoreSucceeded(record.guid);
         return;
       }
     };
@@ -635,7 +635,7 @@ public class PasswordsRepositorySession extends
       delegate.onRecordStoreFailed(e, record.guid);
       return;
     }
-    delegate.onRecordStoreSucceeded(record);
+    delegate.onRecordStoreSucceeded(record.guid);
   }
 
   /**

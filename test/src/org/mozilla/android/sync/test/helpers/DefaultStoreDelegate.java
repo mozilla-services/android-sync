@@ -16,7 +16,7 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(String guid) {
     performNotify("DefaultStoreDelegate used", null);
   }
 
@@ -31,11 +31,11 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
     return new RepositorySessionStoreDelegate() {
 
       @Override
-      public void onRecordStoreSucceeded(final Record record) {
+      public void onRecordStoreSucceeded(final String guid) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onRecordStoreSucceeded(record);
+            self.onRecordStoreSucceeded(guid);
           }
         });
       }

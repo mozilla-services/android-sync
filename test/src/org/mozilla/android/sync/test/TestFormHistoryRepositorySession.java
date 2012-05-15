@@ -398,8 +398,8 @@ public class TestFormHistoryRepositorySession extends AndroidSyncTestCase {
 
   public static class ExpectNoStoreDelegate extends ExpectStoreCompletedDelegate {
     @Override
-    public void onRecordStoreSucceeded(Record record) {
-      performNotify("Should not have stored record " + record.guid, null);
+    public void onRecordStoreSucceeded(String guid) {
+      performNotify("Should not have stored record " + guid, null);
     }
   }
 

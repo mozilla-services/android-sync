@@ -11,7 +11,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class ExpectStoredDelegate extends DefaultStoreDelegate {
   String expectedGUID;
-  Record storedRecord;
+  String storedGuid;
 
   public ExpectStoredDelegate(String guid) {
     this.expectedGUID = guid;
@@ -21,7 +21,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   public synchronized void onStoreCompleted(long storeEnd) {
     System.out.println("Notifying in onStoreCompleted.");
     try {
-      assertNotNull(storedRecord);
+      assertNotNull(storedGuid);
       performNotify();
     } catch (AssertionFailedError e) {
       performNotify("GUID " + this.expectedGUID + " was not stored", e);
@@ -29,11 +29,11 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   }
 
   @Override
-  public synchronized void onRecordStoreSucceeded(Record record) {
-    this.storedRecord = record;
+  public synchronized void onRecordStoreSucceeded(String guid) {
+    this.storedGuid = guid;
     try {
       if (this.expectedGUID != null) {
-        assertEquals(this.expectedGUID, record.guid);
+        assertEquals(this.expectedGUID, guid);
       }
     } catch (AssertionFailedError e) {
       performNotify(e);

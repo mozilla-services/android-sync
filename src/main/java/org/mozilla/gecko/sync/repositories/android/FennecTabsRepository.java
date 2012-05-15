@@ -157,7 +157,7 @@ public class FennecTabsRepository extends Repository {
                 clientsProvider.delete(BrowserContract.Clients.CONTENT_URI,
                                        CLIENT_GUID_IS,
                                        selectionArgs);
-                delegate.onRecordStoreSucceeded(record);
+                delegate.onRecordStoreSucceeded(record.guid);
               } catch (Exception e) {
                 delegate.onRecordStoreFailed(e, record.guid);
               }
@@ -184,7 +184,7 @@ public class FennecTabsRepository extends Repository {
             final int inserted = tabsProvider.bulkInsert(BrowserContract.Tabs.CONTENT_URI, tabsArray);
             Logger.trace(LOG_TAG, "Inserted: " + inserted);
 
-            delegate.onRecordStoreSucceeded(tabsRecord);
+            delegate.onRecordStoreSucceeded(record.guid);
           } catch (Exception e) {
             Logger.warn(LOG_TAG, "Error storing tabs.", e);
             delegate.onRecordStoreFailed(e, record.guid);
