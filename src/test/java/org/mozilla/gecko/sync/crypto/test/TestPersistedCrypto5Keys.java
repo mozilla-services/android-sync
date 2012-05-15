@@ -23,7 +23,6 @@ public class TestPersistedCrypto5Keys {
 
   @Before
   public void setUp() {
-    Logger.LOG_TO_STDOUT = true;
     prefs = new MockSharedPreferences();
   }
 

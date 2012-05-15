@@ -71,7 +71,6 @@ public class TestCrypto5MiddlewareRepositorySession {
 
   @Before
   public void setUp() throws CryptoException {
-    Logger.LOG_TO_STDOUT = true;
     wboRepo = new WBORepository();
     keyBundle = KeyBundle.withRandomKeys();
     cmwRepo = new Crypto5MiddlewareRepository(wboRepo, keyBundle);
