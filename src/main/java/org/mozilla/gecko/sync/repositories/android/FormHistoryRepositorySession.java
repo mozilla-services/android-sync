@@ -441,41 +441,58 @@ public class FormHistoryRepositorySession extends
   }
 
   protected Object recordsBufferMonitor = new Object();
-  protected ArrayList<ContentValues> recordsBuffer = new ArrayList<ContentValues>();
+  protected ArrayList<FormHistoryRecord> recordsBuffer = new ArrayList<FormHistoryRecord>();
 
   protected void enqueueRegularRecord(Record record) {
     synchronized (recordsBufferMonitor) {
       if (recordsBuffer.size() >= INSERT_ITEM_THRESHOLD) {
         // Insert the existing contents, then enqueue.
-        try {
-          flushInsertQueue();
-        } catch (Exception e) {
-          delegate.onRecordStoreFailed(e, record.guid);
-          return;
-        }
+        flushInsertQueue();
       }
-      // Store the ContentValues, rather than the record.
-      recordsBuffer.add(contentValuesForRegularRecord(record));
+      recordsBuffer.add((FormHistoryRecord) record);
     }
   }
 
   // Should always be called from storeWorkQueue.
-  protected void flushInsertQueue() throws RemoteException {
+  protected void flushInsertQueue() {
+    ContentValues[] outgoing;
     synchronized (recordsBufferMonitor) {
-      if (recordsBuffer.size() > 0) {
-        final ContentValues[] outgoing = recordsBuffer.toArray(new ContentValues[0]);
-        recordsBuffer = new ArrayList<ContentValues>();
+      if (recordsBuffer == null || recordsBuffer.size() == 0) {
+        Logger.debug(LOG_TAG, "No form history items to insert; returning immediately.");
+        return;
+      }
 
-        if (outgoing == null || outgoing.length == 0) {
-          Logger.debug(LOG_TAG, "No form history items to insert; returning immediately.");
-          return;
-        }
+      outgoing = new ContentValues[recordsBuffer.size()];
+      int index = 0;
+      for (FormHistoryRecord record : recordsBuffer) {
+        outgoing[index] = contentValuesForRegularRecord(record);
+        index += 1;
+      }
 
-        long before = System.currentTimeMillis();
-        formsProvider.bulkInsert(FORM_HISTORY_CONTENT_URI, outgoing);
+      long before = System.currentTimeMillis();
+      int inserted = -1;
+      try {
+        inserted = formsProvider.bulkInsert(FORM_HISTORY_CONTENT_URI, outgoing);
         long after = System.currentTimeMillis();
         Logger.debug(LOG_TAG, "Inserted " + outgoing.length + " form history items in (" + (after - before) + " milliseconds).");
+      } catch (RemoteException e) {
+        // Ignore actual exception.
       }
+
+      if (inserted == outgoing.length) {
+        // Everything is inserted.
+        for (FormHistoryRecord record : recordsBuffer) {
+          delegate.onRecordStoreSucceeded(record);
+        }
+      } else {
+        // Something failed; most pessimistic action is to declare that all insertions failed.
+        for (FormHistoryRecord failed : recordsBuffer) {
+          delegate.onRecordStoreFailed(new RuntimeException("Failed to insert form history item with guid " + failed.guid + "."), failed.guid);
+        }
+      }
+
+      // Finally, start with a fresh recordsBuffer
+      recordsBuffer = new ArrayList<FormHistoryRecord>();
     }
   }
 
@@ -485,15 +502,10 @@ public class FormHistoryRepositorySession extends
       @Override
       public void run() {
         Logger.debug(LOG_TAG, "Checking for residual form history items to insert.");
-        try {
-          synchronized (recordsBufferMonitor) {
-            flushInsertQueue();
-          }
-          storeDone(now());
-        } catch (Exception e) {
-          // XXX TODO
-          delegate.onRecordStoreFailed(e, null);
+        synchronized (recordsBufferMonitor) {
+          flushInsertQueue();
         }
+        storeDone(now());
       }
     };
     storeWorkQueue.execute(command);

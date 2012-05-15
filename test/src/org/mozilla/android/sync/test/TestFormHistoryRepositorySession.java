@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectFetchSinceDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectGuidsSinceDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectManyStoredDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoreCompletedDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
@@ -444,5 +445,43 @@ public class TestFormHistoryRepositorySession extends AndroidSyncTestCase {
     performWait(fetchAllRunnable(session, new Record[] { rec, deleted1 }));
 
     session.abort();
+  }
+
+  public static Runnable storeManyRunnable(final RepositorySession session, final Record[] records, final RepositorySessionStoreDelegate delegate) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        session.setStoreDelegate(delegate);
+        try {
+          for (Record record : records) {
+            session.store(record);
+          }
+          session.storeDone();
+        } catch (NoStoreDelegateException e) {
+          fail("NoStoreDelegateException should not occur.");
+        }
+      }
+    };
+  }
+
+  public void testDelegateCallbacksAreInvoked() throws Exception {
+    regular1 = new FormHistoryRecord("guid1", "forms", System.currentTimeMillis(), false);
+    regular1.fieldName = "fieldName1";
+    regular1.fieldValue = "value1";
+
+    regular2 = new FormHistoryRecord("guid2", "forms", System.currentTimeMillis(), false);
+    regular2.fieldName = "fieldName2";
+    regular2.fieldValue = "value2";
+
+    deleted1 = new FormHistoryRecord("guid3", "forms", -1, true);
+    deleted2 = new FormHistoryRecord("guid4", "forms", -1, true);
+
+    // All 4 should be recorded as stored.
+    final FormHistoryRepositorySession session = createAndBeginSession();
+    Record[] recs = new Record[] { regular1, deleted1, regular2, deleted2 };
+    performWait(storeManyRunnable(session, recs, new ExpectManyStoredDelegate(recs)));
+
+    // But only 2 actually hit the db (deleted are processed immediately).
+    performWait(fetchAllRunnable(session, new Record[] { regular1, regular2 }));
   }
 }
