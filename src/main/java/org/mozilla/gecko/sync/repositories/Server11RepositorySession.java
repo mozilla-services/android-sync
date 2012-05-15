@@ -133,7 +133,7 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public String credentials() {
-      return serverRepository.credentialsSource.credentials();
+      return getCredentials();
     }
 
     @Override
@@ -312,6 +312,7 @@ public class Server11RepositorySession extends RepositorySession {
 
   protected Object recordsBufferMonitor = new Object();
   protected ArrayList<byte[]> recordsBuffer = new ArrayList<byte[]>();
+  protected ArrayList<String> recordGuidsBuffer = new ArrayList<String>();
   protected int byteCount = PER_BATCH_OVERHEAD;
 
   @Override
@@ -340,6 +341,7 @@ public class Server11RepositorySession extends RepositorySession {
         flush();
       }
       recordsBuffer.add(json);
+      recordGuidsBuffer.add(record.guid);
       byteCount += PER_RECORD_OVERHEAD + delta;
     }
   }
@@ -349,10 +351,12 @@ public class Server11RepositorySession extends RepositorySession {
   protected void flush() {
     if (recordsBuffer.size() > 0) {
       final ArrayList<byte[]> outgoing = recordsBuffer;
+      final ArrayList<String> outgoingGuids = recordGuidsBuffer;
       RepositorySessionStoreDelegate uploadDelegate = this.delegate;
-      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, byteCount));
+      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, outgoingGuids, byteCount));
 
       recordsBuffer = new ArrayList<byte[]>();
+      recordGuidsBuffer = new ArrayList<String>();
       byteCount = PER_BATCH_OVERHEAD;
     }
   }
@@ -363,6 +367,14 @@ public class Server11RepositorySession extends RepositorySession {
       flush();
       storeDone(uploadTimestamp.get());
     }
+  }
+
+  protected String getCredentials() {
+    return serverRepository.credentialsSource.credentials();
+  }
+
+  protected URI getCollectionURI() {
+    return serverRepository.collectionURI();
   }
 
   /**
@@ -376,21 +388,24 @@ public class Server11RepositorySession extends RepositorySession {
 
     public final String LOG_TAG = "RecordUploadRunnable";
     private ArrayList<byte[]> outgoing;
+    private ArrayList<String> outgoingGuids;
     private long byteCount;
 
     public RecordUploadRunnable(RepositorySessionStoreDelegate storeDelegate,
                                 ArrayList<byte[]> outgoing,
+                                ArrayList<String> outgoingGuids,
                                 long byteCount) {
       Logger.debug(LOG_TAG, "Preparing RecordUploadRunnable for " +
                      outgoing.size() + " records (" +
                      byteCount + " bytes).");
       this.outgoing  = outgoing;
+      this.outgoingGuids = outgoingGuids;
       this.byteCount = byteCount;
     }
 
     @Override
     public String credentials() {
-      return serverRepository.credentialsSource.credentials();
+      return getCredentials();
     }
 
     @Override
@@ -438,7 +453,9 @@ public class Server11RepositorySession extends RepositorySession {
         if ((failed != null) &&
             (failed.object.size() > 0)) {
           Logger.debug(LOG_TAG, "Failed records: " + failed.object.toString());
-          // TODO: notify.
+          for (String guid : failed.keySet()) {
+            delegate.onRecordStoreFailed(new RuntimeException("Server failed to POST record with guid " + guid), guid);
+          }
         }
       } catch (UnexpectedJSONException e) {
         Logger.error(LOG_TAG, "Got exception processing success/failed in POST success body.", e);
@@ -457,8 +474,9 @@ public class Server11RepositorySession extends RepositorySession {
     @Override
     public void handleRequestError(final Exception ex) {
       Logger.warn(LOG_TAG, "Got request error: " + ex, ex);
-      // XXX TODO
-      delegate.onRecordStoreFailed(ex, null);
+      for (String guid : outgoingGuids) {
+        delegate.onRecordStoreFailed(new RuntimeException("Got request error trying to POST record with guid " + guid), guid);
+      }
     }
 
     public class ByteArraysContentProducer implements ContentProducer {
@@ -514,9 +532,7 @@ public class Server11RepositorySession extends RepositorySession {
         return;
       }
 
-      URI u = serverRepository.collectionURI();
-      SyncStorageRequest request = new SyncStorageRequest(u);
-
+      SyncStorageRequest request = new SyncStorageRequest(getCollectionURI());
       request.delegate = this;
 
       // We don't want the task queue to proceed until this request completes.

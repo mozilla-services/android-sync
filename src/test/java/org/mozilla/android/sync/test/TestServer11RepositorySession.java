@@ -62,7 +62,7 @@ public class TestServer11RepositorySession {
 
     public RecordUploadRunnable getRecordUploadRunnable() {
       // TODO: implement upload delegate in the class, too!
-      return new RecordUploadRunnable(null, recordsBuffer, byteCount);
+      return new RecordUploadRunnable(null, recordsBuffer, recordGuidsBuffer, byteCount);
     }
 
     public void enqueueRecord(Record r) {
