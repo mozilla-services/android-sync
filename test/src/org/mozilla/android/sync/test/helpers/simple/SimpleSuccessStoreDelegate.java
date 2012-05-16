@@ -9,7 +9,7 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDeleg
 
 public abstract class SimpleSuccessStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   @Override
-  public void onRecordStoreFailed(Exception ex, String guid) {
+  public void notifyRecordStoreFailed(Exception ex, String guid) {
     performNotify("Store failed", ex);
   }
 

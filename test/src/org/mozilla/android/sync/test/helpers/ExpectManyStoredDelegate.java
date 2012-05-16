@@ -38,7 +38,7 @@ public class ExpectManyStoredDelegate extends DefaultStoreDelegate {
   }
 
   @Override
-  public void onRecordStoreSucceeded(String guid) {
+  public void notifyRecordStoreSucceeded(String guid) {
     try {
       assertTrue(expectedGUIDs.contains(guid));
     } catch (AssertionFailedError e) {

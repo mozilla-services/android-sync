@@ -14,10 +14,22 @@ import java.util.concurrent.ExecutorService;
  *
  */
 public interface RepositorySessionStoreDelegate {
-  public void onRecordStoreFailed(Exception ex, String guid);
+  /**
+   * Called once for each record that fails to store.
+   *
+   * @param ex error that occurred while storing record.
+   * @param guid the GUID of the failing record.
+   */
+  public void notifyRecordStoreFailed(Exception ex, String guid);
 
-  // Called with a GUID when store has succeeded.
-  public void onRecordStoreSucceeded(String guid);
+  /**
+   * Called once for each record that successfully stores.
+   *
+   * @param guid the GUID of the stored record.
+   */
+  public void notifyRecordStoreSucceeded(String guid);
+
   public void onStoreCompleted(long storeEnd);
+
   public RepositorySessionStoreDelegate deferredStoreDelegate(ExecutorService executor);
 }

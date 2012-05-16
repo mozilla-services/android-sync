@@ -11,12 +11,12 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 public class DefaultStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   
   @Override
-  public void onRecordStoreFailed(Exception ex, String guid) {
+  public void notifyRecordStoreFailed(Exception ex, String guid) {
     performNotify("Store failed", ex);
   }
 
   @Override
-  public void onRecordStoreSucceeded(String guid) {
+  public void notifyRecordStoreSucceeded(String guid) {
     performNotify("DefaultStoreDelegate used", null);
   }
 
@@ -31,21 +31,21 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
     return new RepositorySessionStoreDelegate() {
 
       @Override
-      public void onRecordStoreSucceeded(final String guid) {
+      public void notifyRecordStoreSucceeded(final String guid) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onRecordStoreSucceeded(guid);
+            self.notifyRecordStoreSucceeded(guid);
           }
         });
       }
 
       @Override
-      public void onRecordStoreFailed(final Exception ex, final String guid) {
+      public void notifyRecordStoreFailed(final Exception ex, final String guid) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onRecordStoreFailed(ex, guid);
+            self.notifyRecordStoreFailed(ex, guid);
           }
         });
       }

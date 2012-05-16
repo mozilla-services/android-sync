@@ -29,7 +29,7 @@ public class ExpectStoredDelegate extends DefaultStoreDelegate {
   }
 
   @Override
-  public synchronized void onRecordStoreSucceeded(String guid) {
+  public synchronized void notifyRecordStoreSucceeded(String guid) {
     this.storedGuid = guid;
     try {
       if (this.expectedGUID != null) {

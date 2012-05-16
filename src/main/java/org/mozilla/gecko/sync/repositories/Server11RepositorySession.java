@@ -454,7 +454,7 @@ public class Server11RepositorySession extends RepositorySession {
             (failed.object.size() > 0)) {
           Logger.debug(LOG_TAG, "Failed records: " + failed.object.toString());
           for (String guid : failed.keySet()) {
-            delegate.onRecordStoreFailed(new RuntimeException("Server failed to POST record with guid " + guid), guid);
+            delegate.notifyRecordStoreFailed(new RuntimeException("Server failed to POST record with guid " + guid), guid);
           }
         }
       } catch (UnexpectedJSONException e) {
@@ -475,7 +475,7 @@ public class Server11RepositorySession extends RepositorySession {
     public void handleRequestError(final Exception ex) {
       Logger.warn(LOG_TAG, "Got request error: " + ex, ex);
       for (String guid : outgoingGuids) {
-        delegate.onRecordStoreFailed(new RuntimeException("Got request error trying to POST record with guid " + guid), guid);
+        delegate.notifyRecordStoreFailed(new RuntimeException("Got request error trying to POST record with guid " + guid), guid);
       }
     }
 

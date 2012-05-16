@@ -6,7 +6,7 @@ package org.mozilla.android.sync.test.helpers;
 public class ExpectStoreCompletedDelegate extends DefaultStoreDelegate {
 
   @Override
-  public void onRecordStoreSucceeded(String guid) {
+  public void notifyRecordStoreSucceeded(String guid) {
     // That's fine.
   }
 

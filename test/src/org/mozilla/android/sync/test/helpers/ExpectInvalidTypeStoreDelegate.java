@@ -7,7 +7,7 @@ import org.mozilla.gecko.sync.repositories.InvalidBookmarkTypeException;
 public class ExpectInvalidTypeStoreDelegate extends DefaultStoreDelegate {
   
   @Override
-  public void onRecordStoreFailed(Exception ex, String guid) {
+  public void notifyRecordStoreFailed(Exception ex, String guid) {
     assertEquals(InvalidBookmarkTypeException.class, ex.getClass());
     performNotify();
   }

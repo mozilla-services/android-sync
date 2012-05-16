@@ -17,13 +17,13 @@ public class ExpectSuccessRepositorySessionStoreDelegate extends
   }
 
   @Override
-  public void onRecordStoreFailed(Exception ex, String guid) {
+  public void notifyRecordStoreFailed(Exception ex, String guid) {
     log("Record store failed.", ex);
     performNotify(new AssertionFailedError("onRecordStoreFailed: record store should not have failed."));
   }
 
   @Override
-  public void onRecordStoreSucceeded(String guid) {
+  public void notifyRecordStoreSucceeded(String guid) {
     log("Record store succeeded.");
   }
 

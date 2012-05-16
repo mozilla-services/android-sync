@@ -135,7 +135,7 @@ public class WBORepository extends Repository {
       if (existing != null &&
           existing.lastModified > record.lastModified) {
         Logger.debug(LOG_TAG, "Local record is newer. Not storing.");
-        delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record.guid);
+        delegate.deferredStoreDelegate(delegateExecutor).notifyRecordStoreSucceeded(record.guid);
         return;
       }
       if (existing != null) {
@@ -150,7 +150,7 @@ public class WBORepository extends Repository {
       wbos.put(record.guid, toStore);
 
       trackRecord(toStore);
-      delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record.guid);
+      delegate.deferredStoreDelegate(delegateExecutor).notifyRecordStoreSucceeded(record.guid);
     }
 
     @Override

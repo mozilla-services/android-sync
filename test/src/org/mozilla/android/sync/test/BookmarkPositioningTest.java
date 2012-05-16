@@ -650,7 +650,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
           }
 
           @Override
-          public void onRecordStoreSucceeded(String guid) {
+          public void notifyRecordStoreSucceeded(String guid) {
           }
         };
         session.setStoreDelegate(storeDelegate);

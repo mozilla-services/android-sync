@@ -181,14 +181,14 @@ class RecordsChannel implements
   }
 
   @Override
-  public void onRecordStoreFailed(Exception ex, String guid) {
+  public void notifyRecordStoreFailed(Exception ex, String guid) {
     this.consumer.stored();
     delegate.onFlowStoreFailed(this, ex);
     // TODO: abort?
   }
 
   @Override
-  public void onRecordStoreSucceeded(String guid) {
+  public void notifyRecordStoreSucceeded(String guid) {
     this.consumer.stored();
   }
 

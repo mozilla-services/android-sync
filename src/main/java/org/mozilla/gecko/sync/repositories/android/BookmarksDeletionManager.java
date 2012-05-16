@@ -223,7 +223,7 @@ public class BookmarksDeletionManager {
     }
     Logger.trace(LOG_TAG, "Invoking store callback for " + nonFolderGUIDs.length + " GUIDs.");
     for (String guid : nonFolderGUIDs) {
-      delegate.onRecordStoreSucceeded(guid);
+      delegate.notifyRecordStoreSucceeded(guid);
     }
   }
 
