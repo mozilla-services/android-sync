@@ -344,6 +344,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         if (atPos > 1 || pos != i) {
           changed = true;
         }
+
+        ++i;
+
         for (String guid : entry.getValue()) {
           if (!forbiddenGUID(guid)) {
             childArray.add(guid);
