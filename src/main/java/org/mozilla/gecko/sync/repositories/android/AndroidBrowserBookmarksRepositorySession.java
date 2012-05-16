@@ -902,9 +902,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
             dataAccessor.bumpModified(folderID, now());
             untrackGUID(guid);
           }
-          // Until getChildrenArray can tell us if it needed to make
-          // any changes at all, always update positions.
-          dataAccessor.updatePositions(new ArrayList<String>(onServer));
+
+          // If the arrays are different, or they're the same but not flushed to disk,
+          // write them out now.
+          if (!sameArrays || !clean) {
+            dataAccessor.updatePositions(new ArrayList<String>(onServer));
+          }
         } catch (Exception e) {
           Logger.warn(LOG_TAG, "Error repositioning children for " + guid, e);
         }
