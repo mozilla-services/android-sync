@@ -362,7 +362,18 @@ public class Server11RepositorySession extends RepositorySession {
     Logger.debug(LOG_TAG, "storeDone().");
     synchronized (recordsBufferMonitor) {
       flush();
-      storeDone(uploadTimestamp.get());
+      // Do this in a Runnable so that the timestamp is grabbed after any upload.
+      final Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          synchronized (recordsBufferMonitor) {
+            final long end = uploadTimestamp.get();
+            Logger.debug(LOG_TAG, "Calling storeDone with " + end);
+            storeDone(end);
+          }
+        }
+      };
+      storeWorkQueue.execute(r);
     }
   }
 
