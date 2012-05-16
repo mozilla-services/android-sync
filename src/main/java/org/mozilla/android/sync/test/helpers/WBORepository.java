@@ -85,7 +85,7 @@ public class WBORepository extends Repository {
             Logger.debug(LOG_TAG, "Excluding record " + record.guid);
             continue;
           }
-          delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(record);
+          delegate.deferredFetchDelegate(delegateExecutor).notifyFetchedRecord(record);
         }
       }
       long fetchCompleted  = now();
@@ -100,7 +100,7 @@ public class WBORepository extends Repository {
       stats.fetchBegan = fetchBegan;
       for (String guid : guids) {
         if (wbos.containsKey(guid)) {
-          delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(wbos.get(guid));
+          delegate.deferredFetchDelegate(delegateExecutor).notifyFetchedRecord(wbos.get(guid));
         }
       }
       long fetchCompleted  = now();
@@ -114,7 +114,7 @@ public class WBORepository extends Repository {
       stats.fetchBegan = fetchBegan;
       for (Entry<String, Record> entry : wbos.entrySet()) {
         Record record = entry.getValue();
-        delegate.deferredFetchDelegate(delegateExecutor).onFetchedRecord(record);
+        delegate.deferredFetchDelegate(delegateExecutor).notifyFetchedRecord(record);
       }
       long fetchCompleted  = now();
       stats.fetchCompleted = fetchCompleted;

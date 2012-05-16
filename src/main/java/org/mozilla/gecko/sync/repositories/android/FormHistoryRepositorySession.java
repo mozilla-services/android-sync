@@ -230,7 +230,7 @@ public class FormHistoryRepositorySession extends
         if (r != null) {
           if (filter == null || !filter.excludeRecord(r)) {
             Logger.trace(LOG_TAG, "Processing record " + r.guid);
-            delegate.onFetchedRecord(r);
+            delegate.notifyFetchedRecord(r);
           } else {
             Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
           }
@@ -254,7 +254,7 @@ public class FormHistoryRepositorySession extends
       @Override
       public void run() {
         if (!isActive()) {
-          delegate.onFetchFailed(new InactiveSessionException(null), null);
+          delegate.onFetchFailed(new InactiveSessionException(null));
           return;
         }
 
@@ -265,7 +265,7 @@ public class FormHistoryRepositorySession extends
             fetchFromCursor(cursor, filter, delegate); // Closes cursor.
           } catch (Exception e) {
             Logger.warn(LOG_TAG, "Exception during fetchHelper", e);
-            delegate.onFetchFailed(e, null);
+            delegate.onFetchFailed(e);
             return;
           }
         }

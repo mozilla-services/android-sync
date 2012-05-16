@@ -131,7 +131,7 @@ public class PasswordsRepositorySession extends
       @Override
       public void run() {
         if (!isActive()) {
-          delegate.onFetchFailed(new InactiveSessionException(null), null);
+          delegate.onFetchFailed(new InactiveSessionException(null));
           return;
         }
 
@@ -165,7 +165,7 @@ public class PasswordsRepositorySession extends
           }
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Exception in fetch.");
-          delegate.onFetchFailed(e, null);
+          delegate.onFetchFailed(e);
         }
       }
     };
@@ -193,7 +193,7 @@ public class PasswordsRepositorySession extends
       @Override
       public void run() {
         if (!isActive()) {
-          delegate.onFetchFailed(new InactiveSessionException(null), null);
+          delegate.onFetchFailed(new InactiveSessionException(null));
           return;
         }
 
@@ -222,7 +222,7 @@ public class PasswordsRepositorySession extends
 
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Exception in fetch.");
-          delegate.onFetchFailed(e, null);
+          delegate.onFetchFailed(e);
         }
       }
     };
@@ -539,7 +539,7 @@ public class PasswordsRepositorySession extends
         if (r != null) {
           if (filter == null || !filter.excludeRecord(r)) {
             Logger.debug(LOG_TAG, "Fetched record " + r);
-            delegate.onFetchedRecord(r);
+            delegate.notifyFetchedRecord(r);
           } else {
             Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
           }
@@ -547,7 +547,7 @@ public class PasswordsRepositorySession extends
       }
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Exception in fetch.");
-      delegate.onFetchFailed(e, null);
+      delegate.onFetchFailed(e);
       return false;
     } finally {
       cursor.close();

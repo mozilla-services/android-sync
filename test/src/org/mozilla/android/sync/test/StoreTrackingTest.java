@@ -65,7 +65,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
         try {
           session.fetch(new String[] { expectedGUID }, new SimpleSuccessFetchDelegate() {
             @Override
-            public void onFetchedRecord(Record record) {
+            public void notifyFetchedRecord(Record record) {
               Log.d(getName(), "Hurrah! Fetched record " + record.guid);
               assertEq(expectedGUID, record.guid);
             }
@@ -79,7 +79,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
                 private AtomicBoolean fetched = new AtomicBoolean(false);
 
                 @Override
-                public void onFetchedRecord(Record record) {
+                public void notifyFetchedRecord(Record record) {
                   Log.d(getName(), "Fetched record " + record.guid);
                   fetched.set(true);
                   performNotify(new AssertionFailedError("Should have fetched no record!"));
@@ -136,7 +136,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
               session.fetchSince(0, new SimpleSuccessFetchDelegate() {
 
                 @Override
-                public void onFetchedRecord(Record record) {
+                public void notifyFetchedRecord(Record record) {
                   assertEq(expectedGUID, record.guid);
                 }
 

@@ -18,23 +18,23 @@ public class DeferredRepositorySessionFetchRecordsDelegate implements Repository
   }
 
   @Override
-  public void onFetchedRecord(final Record record) {
+  public void notifyFetchedRecord(final Record record) {
     executor.execute(new Runnable() {
       @Override
       public void run() {
-         inner.onFetchedRecord(record);
+         inner.notifyFetchedRecord(record);
       }
     });
   }
 
   @Override
-  public void onFetchFailed(final Exception ex, final Record record) {
+  public void onFetchFailed(final Exception ex) {
     executor.execute(new Runnable() {
       @Override
       public void run() {
-        inner.onFetchFailed(ex, record);
+        inner.onFetchFailed(ex);
       }
-    });       
+    });
   }
 
   @Override
@@ -44,7 +44,7 @@ public class DeferredRepositorySessionFetchRecordsDelegate implements Repository
       public void run() {
         inner.onFetchCompleted(fetchEnd);
       }
-    });        
+    });
   }
 
   @Override

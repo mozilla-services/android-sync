@@ -27,7 +27,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   public Set<String> ignore = new HashSet<String>();
 
   @Override
-  public void onFetchFailed(Exception ex, Record record) {
+  public void onFetchFailed(Exception ex) {
     performNotify("Fetch failed.", ex);
   }
 
@@ -89,7 +89,7 @@ public class DefaultFetchDelegate extends DefaultDelegate implements RepositoryS
   }
 
   @Override
-  public void onFetchedRecord(Record record) {
+  public void notifyFetchedRecord(Record record) {
     Log.d(LOG_TAG, "onFetchedRecord(" + record.guid + ")");
     records.add(record);
   }

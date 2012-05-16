@@ -21,7 +21,7 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
   }
 
   @Override
-  public void onFetchedRecord(Record record) {
+  public void notifyFetchedRecord(Record record) {
     Log.i(LOG_TAG, "onFetchedRecord: " + record.guid);
     this.records.add(record);
   }

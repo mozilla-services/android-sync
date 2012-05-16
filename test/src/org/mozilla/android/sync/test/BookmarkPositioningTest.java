@@ -603,7 +603,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
       RepositorySessionFetchRecordsDelegate fetchDelegate = new SimpleSuccessFetchDelegate() {
 
         @Override
-        public void onFetchedRecord(Record record) {
+        public void notifyFetchedRecord(Record record) {
           fetchedRecord = record;
         }
 

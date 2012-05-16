@@ -175,7 +175,7 @@ public class Server11RepositorySession extends RepositorySession {
         @Override
         public void run() {
           Logger.debug(LOG_TAG, "Running onFetchFailed.");
-          delegate.onFetchFailed(ex, null);
+          delegate.onFetchFailed(ex);
         }
       });
     }
@@ -184,7 +184,7 @@ public class Server11RepositorySession extends RepositorySession {
     public void handleWBO(CryptoRecord record) {
       workTracker.incrementOutstanding();
       try {
-        delegate.onFetchedRecord(record);
+        delegate.notifyFetchedRecord(record);
       } catch (Exception ex) {
         Logger.warn(LOG_TAG, "Got exception calling onFetchedRecord with WBO.", ex);
         // TODO: handle this better.
@@ -268,7 +268,7 @@ public class Server11RepositorySession extends RepositorySession {
     try {
       this.fetchWithParameters(timestamp, limit, true, sort, null, new RequestFetchDelegateAdapter(delegate));
     } catch (URISyntaxException e) {
-      delegate.onFetchFailed(e, null);
+      delegate.onFetchFailed(e);
     }
   }
 
@@ -280,7 +280,7 @@ public class Server11RepositorySession extends RepositorySession {
       String sort = serverRepository.getDefaultSort();
       this.fetchWithParameters(timestamp, limit, true, sort, null, new RequestFetchDelegateAdapter(delegate));
     } catch (URISyntaxException e) {
-      delegate.onFetchFailed(e, null);
+      delegate.onFetchFailed(e);
     }
   }
 
@@ -297,7 +297,7 @@ public class Server11RepositorySession extends RepositorySession {
       String ids = flattenIDs(guids);
       this.fetchWithParameters(-1, -1, true, "index", ids, new RequestFetchDelegateAdapter(delegate));
     } catch (URISyntaxException e) {
-      delegate.onFetchFailed(e, null);
+      delegate.onFetchFailed(e);
     }
   }
 
