@@ -898,14 +898,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
               }
             }
             Logger.debug(LOG_TAG, "Added " + added + " items locally.");
+            Logger.debug(LOG_TAG, "Untracking and bumping " + guid + "(" + folderID + ")");
             dataAccessor.bumpModified(folderID, now());
-            // Wow, this is spectacularly wasteful.
-            Logger.debug(LOG_TAG, "Untracking " + guid);
-            final Record record = retrieveByGUIDDuringStore(guid);
-            if (record == null) {
-              return;
-            }
-            untrackRecord(record);
+            untrackGUID(guid);
           }
           // Until getChildrenArray can tell us if it needed to make
           // any changes at all, always update positions.
