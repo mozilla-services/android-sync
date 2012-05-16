@@ -106,6 +106,7 @@ class RecordsChannel implements
    * halt the consumer if it exists.
    */
   public void abort() {
+    waitingForQueueDone = false;
     if (source.isActive()) {
       source.abort();
     }

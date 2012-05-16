@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -450,25 +449,47 @@ public class TestSynchronizer {
             }
 
             if (batch.size() >= batchSize) {
-              final ArrayList<Record> thisBatch = new ArrayList<Record>(batch);
-              final boolean thisBatchShouldFail = batchShouldFail;
-              batchShouldFail = false;
-              batch.clear();
-
-              ThreadPool.run(new Runnable() {
-                @Override
-                public void run() {
-                  Logger.trace("XXX", "Notifying about batch.  Failure? " + thisBatchShouldFail);
-                  for (Record batchRecord : thisBatch) {
-                    if (thisBatchShouldFail) {
-                      delegate.notifyRecordStoreFailed(new RuntimeException(), batchRecord.guid);
-                    } else {
-                      delegate.notifyRecordStoreSucceeded(batchRecord.guid);
-                    }
-                  }
-                }
-              });
+              flush();
             }
+          }
+        }
+
+        public void flush() {
+          final ArrayList<Record> thisBatch = new ArrayList<Record>(batch);
+          final boolean thisBatchShouldFail = batchShouldFail;
+          batchShouldFail = false;
+          batch.clear();
+
+          storeWorkQueue.execute(new Runnable() {
+            @Override
+            public void run() {
+              Logger.trace("XXX", "Notifying about batch.  Failure? " + thisBatchShouldFail);
+              for (Record batchRecord : thisBatch) {
+                if (thisBatchShouldFail) {
+                  delegate.notifyRecordStoreFailed(new RuntimeException(), batchRecord.guid);
+                } else {
+                  delegate.notifyRecordStoreSucceeded(batchRecord.guid);
+                }
+              }
+            }
+          });
+        }
+
+        @Override
+        public void storeDone() {
+          synchronized (batch) {
+            flush();
+            // Do this in a Runnable so that the timestamp is grabbed after any upload.
+            final Runnable r = new Runnable() {
+              @Override
+              public void run() {
+                synchronized (batch) {
+                  Logger.trace("XXX", "Calling storeDone.");
+                  storeDone(now());
+                }
+              }
+            };
+            storeWorkQueue.execute(r);
           }
         }
       });
@@ -514,7 +535,7 @@ public class TestSynchronizer {
     return synchronizer;
   }
 
-  protected Exception doSynchronize(final Synchronizer synchronizer) {
+  protected static Exception doSynchronize(final Synchronizer synchronizer) {
     final ArrayList<Exception> a = new ArrayList<Exception>();
 
     WaitHelper.getTestWaiter().performWait(new Runnable() {
@@ -586,9 +607,27 @@ public class TestSynchronizer {
   }
 
   @Test
-  public void testRemoteBatchStoreErrorsAreNotIgnored() throws Exception {
+  public void testRemoteBatchStoreErrorsAreNotIgnoredManyBatches() throws Exception {
     Logger.LOG_TO_STDOUT = true;
     final int BATCH_SIZE = 3;
+
+    Synchronizer synchronizer = getSynchronizer(new BatchFailStoreWBORepository(BATCH_SIZE), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
+
+    // Should get a FlowAbortedException out of this.
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertTrue(e instanceof FlowAbortedException);
+
+    assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
+    // Should get groups of 3 failures, but can't say exactly how many record batches are processed.
+    assertFalse(synchronizer.remoteStoreFailedGuids.isEmpty());
+    assertEquals(0, synchronizer.remoteStoreFailedGuids.size() % BATCH_SIZE);
+  }
+
+  @Test
+  public void testRemoteBatchStoreErrorsAreNotIgnoredOneBigBatch() throws Exception {
+    Logger.LOG_TO_STDOUT = true;
+    final int BATCH_SIZE = 20;
 
     Synchronizer synchronizer = getSynchronizer(new BatchFailStoreWBORepository(BATCH_SIZE), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
 

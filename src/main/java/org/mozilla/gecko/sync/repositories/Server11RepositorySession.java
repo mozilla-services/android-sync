@@ -365,7 +365,18 @@ public class Server11RepositorySession extends RepositorySession {
   public void storeDone() {
     synchronized (recordsBufferMonitor) {
       flush();
-      storeDone(uploadTimestamp.get());
+      // Do this in a Runnable so that the timestamp is grabbed after any upload.
+      final Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          synchronized (recordsBufferMonitor) {
+            final long end = uploadTimestamp.get();
+            Logger.debug(LOG_TAG, "Calling storeDone with " + end);
+            storeDone(end);
+          }
+        }
+      };
+      storeWorkQueue.execute(r);
     }
   }
 
@@ -422,7 +433,7 @@ public class Server11RepositorySession extends RepositorySession {
         body = response.jsonObjectBody(); // jsonObjectBody() throws or returns non-null.
       } catch (Exception e) {
         Logger.error(LOG_TAG, "Got exception parsing POST success body.", e);
-        // TODO
+        this.handleRequestError(e);
         return;
       }
 
@@ -466,7 +477,7 @@ public class Server11RepositorySession extends RepositorySession {
         }
       } catch (UnexpectedJSONException e) {
         Logger.error(LOG_TAG, "Got exception processing success/failed in POST success body.", e);
-        // TODO
+        this.handleRequestError(e);
         return;
       }
     }

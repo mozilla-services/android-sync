@@ -148,6 +148,7 @@ implements RecordsChannelDelegate,
         pendingATimestamp = fetchEnd;
         storeEndBTimestamp = storeEnd;
         flowAToBCompleted = true;
+        channelAToB = null;
         channelBToA.flow();
       }
 
