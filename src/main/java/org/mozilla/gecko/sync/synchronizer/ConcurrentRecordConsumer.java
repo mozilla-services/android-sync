@@ -112,35 +112,35 @@ class ConcurrentRecordConsumer extends RecordConsumer {
 
   private void consumerIsDone() {
     info("Consumer is done. Processed " + counter + ((counter == 1) ? " record." : " records."));
-    delegate.consumerIsDone(!allRecordsQueued);
+    delegate.consumerIsDone(stopImmediately || !allRecordsQueued);
   }
 
   @Override
   public void run() {
     while (true) {
-      synchronized (monitor) {
-        trace("run() took monitor.");
-        if (stopImmediately) {
-          debug("Stopping immediately. Clearing queue.");
-          delegate.getQueue().clear();
-          debug("Notifying consumer.");
-          consumerIsDone();
-          return;
-        }
-        debug("run() dropped monitor.");
-      }
       // The queue is concurrent-safe.
       while (!delegate.getQueue().isEmpty()) {
-        trace("Grabbing record...");
+        synchronized (monitor) {
+          trace("run() took monitor to check stopImmediately.");
+          if (stopImmediately) {
+            debug("Stopping immediately. Clearing queue.");
+            delegate.getQueue().clear();
+            debug("Notifying consumer.");
+            consumerIsDone();
+            return;
+          }
+          debug("run() dropped monitor after checking stopImmediately.");
+        }
+
         Record record = delegate.getQueue().remove();
-        trace("Storing record... " + delegate);
+        trace("Record with guid " + record.guid + ": storing to delegate " + delegate);
         try {
           delegate.store(record);
         } catch (Exception e) {
           // TODO: Bug 709371: track records that failed to apply.
-          Log.e(LOG_TAG, "Caught error in store.", e);
+          Log.e(LOG_TAG, "Caught error storing record with guid " + record.guid + ".", e);
         }
-        trace("Done with record.");
+        trace("Record with guid " + record.guid + ": done.");
       }
       synchronized (monitor) {
         trace("run() took monitor.");

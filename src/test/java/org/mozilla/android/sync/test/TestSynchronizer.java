@@ -6,13 +6,16 @@ package org.mozilla.android.sync.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
@@ -22,6 +25,7 @@ import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.synchronizer.FlowAbortedException;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerSession;
@@ -50,6 +54,18 @@ public class TestSynchronizer {
     assertEquals(a.collection,   b.collection);
   }
 
+  @Before
+  public void setUp() {
+    Logger.LOG_TO_STDOUT = false;
+    WaitHelper.resetTestWaiter();
+  }
+
+  @After
+  public void tearDown() {
+    Logger.LOG_TO_STDOUT = false;
+    WaitHelper.resetTestWaiter();
+  }
+
   @Test
   public void testSynchronizerSession() {
     final Object monitor = new Object();
@@ -73,7 +89,7 @@ public class TestSynchronizer {
     synchronizer.repositoryA = repoA;
     synchronizer.repositoryB = repoB;
     SynchronizerSession syncSession = new SynchronizerSession(synchronizer, new SynchronizerSessionDelegate() {
-      
+
       @Override
       public void onInitialized(SynchronizerSession session) {
         assertFalse(repoA.wbos.containsKey(guidB));
@@ -409,23 +425,36 @@ public class TestSynchronizer {
   }
 
   protected Synchronizer getSynchronizer(WBORepository remote, WBORepository local) {
-    BookmarkRecord inbound1 =  new BookmarkRecord("inboundFail",  "bookmarks", 1, false);
-    BookmarkRecord inbound2 =  new BookmarkRecord("inboundSucc",  "bookmarks", 1, false);
-    BookmarkRecord outbound1 = new BookmarkRecord("outboundFail", "bookmarks", 1, false);
-    BookmarkRecord outbound2 = new BookmarkRecord("outboundSucc", "bookmarks", 1, false);
-
-    remote.wbos.put(inbound1.guid, inbound1);
-    remote.wbos.put(inbound2.guid, inbound2);
-    local.wbos.put(outbound1.guid, outbound1);
-    local.wbos.put(outbound2.guid, outbound2);
+    BookmarkRecord[] inbounds = new BookmarkRecord[] {
+        new BookmarkRecord("inboundSucc1", "bookmarks", 1, false),
+        new BookmarkRecord("inboundSucc2", "bookmarks", 1, false),
+        new BookmarkRecord("inboundFail1", "bookmarks", 1, false),
+        new BookmarkRecord("inboundSucc3", "bookmarks", 1, false),
+        new BookmarkRecord("inboundSucc4", "bookmarks", 1, false),
+        new BookmarkRecord("inboundFail2", "bookmarks", 1, false),
+    };
+    BookmarkRecord[] outbounds = new BookmarkRecord[] {
+        new BookmarkRecord("outboundFail1", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail2", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail3", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail4", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail5", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail6", "bookmarks", 1, false),
+    };
+    for (BookmarkRecord inbound : inbounds) {
+      remote.wbos.put(inbound.guid, inbound);
+    }
+    for (BookmarkRecord outbound : outbounds) {
+      local.wbos.put(outbound.guid, outbound);
+    }
     final Synchronizer synchronizer = new Synchronizer();
     synchronizer.repositoryA = remote;
     synchronizer.repositoryB = local;
     return synchronizer;
   }
 
-  protected boolean doSynchronize(final Synchronizer synchronizer) {
-    final AtomicBoolean success = new AtomicBoolean(false);
+  protected Exception doSynchronize(final Synchronizer synchronizer) {
+    final ArrayList<Exception> a = new ArrayList<Exception>();
 
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
@@ -433,41 +462,49 @@ public class TestSynchronizer {
         synchronizer.synchronize(null, new SynchronizerDelegate() {
           @Override
           public void onSynchronized(Synchronizer synchronizer) {
-            success.set(true);
+            a.add(null);
             WaitHelper.getTestWaiter().performNotify();
           }
 
           @Override
           public void onSynchronizeFailed(Synchronizer synchronizer, Exception lastException, String reason) {
-            success.set(false);
+            a.add(lastException);
             WaitHelper.getTestWaiter().performNotify();
           }
         });
       }
     });
-    return success.get();
+
+    return a.get(0);
   }
 
   @Test
-  public void testErrors() {
-    Logger.LOG_TO_STDOUT = true;
-
-    Synchronizer synchronizer;
-    synchronizer = getSynchronizer(new WBORepository(), new WBORepository());
-    assertTrue(doSynchronize(synchronizer));
+  public void testNoErrors() {
+    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new TrackingWBORepository());
+    assertNull(doSynchronize(synchronizer));
     assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
     assertArrayEquals(new String[] { }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
+  }
 
-    // Local store failures should be ignored.
-    synchronizer = getSynchronizer(new WBORepository(), new FailStoreWBORepository());
-    assertTrue(doSynchronize(synchronizer));
-    assertArrayEquals(new String[] { "inboundFail" }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
+  @Test
+  public void testLocalStoreErrorsAreIgnored() {
+    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new FailStoreWBORepository());
+    assertNull(doSynchronize(synchronizer));
+    assertArrayEquals(new String[] { "inboundFail1", "inboundFail2" }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
     assertArrayEquals(new String[] { }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
+  }
 
-    // Remote store failures should be ignored.
-    synchronizer = getSynchronizer(new FailStoreWBORepository(), new TrackingWBORepository());
-    assertTrue(doSynchronize(synchronizer));
+  @Test
+  public void testRemoteStoreErrorsAreNotIgnored() throws Exception {
+    Synchronizer synchronizer = getSynchronizer(new FailStoreWBORepository(), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
+
+    // Should get a FlowAbortedException out of this.
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertTrue(e instanceof FlowAbortedException);
+
     assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
-    assertArrayEquals(new String[] { "outboundFail" }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
+    assertEquals(1, synchronizer.remoteStoreFailedGuids.size()); // Only one record should fail before we abort, but we can't say which.
+    assertTrue(synchronizer.remoteStoreFailedGuids.get(0).contains("Fail"));
   }
 }

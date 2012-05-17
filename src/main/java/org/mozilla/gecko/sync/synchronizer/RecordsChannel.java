@@ -167,6 +167,7 @@ class RecordsChannel implements
 
   @Override
   public void notifyFetchedRecord(Record record) {
+    Logger.trace(LOG_TAG, "Record with guid " + record.guid + ": fetched.");
     this.toProcess.add(record);
     this.consumer.doNotify();
   }
@@ -190,14 +191,21 @@ class RecordsChannel implements
     this.consumer.stored();
   }
 
-
   @Override
-  public void consumerIsDone(boolean allRecordsQueued) {
-    Logger.trace(LOG_TAG, "Consumer is done. Are we waiting for it? " + waitingForQueueDone);
-    if (waitingForQueueDone) {
-      waitingForQueueDone = false;
-      this.sink.storeDone();                 // Now we'll be waiting for onStoreCompleted.
+  public void consumerIsDone(boolean forced) {
+    Logger.trace(LOG_TAG, "Consumer is done. Is it forced? " + forced +
+        ". Are we waiting for it? " + waitingForQueueDone + ".");
+
+    if (forced || !waitingForQueueDone) {
+      if (!waitingForQueueDone) {
+        Logger.error(LOG_TAG, "Consumer is done but we weren't waiting for it!");
+      }
+      delegate.onFlowFinishFailed(this, new FlowAbortedException());
+      return;
     }
+
+    waitingForQueueDone = false;
+    this.sink.storeDone();                 // Now we'll be waiting for onStoreCompleted.
   }
 
   @Override

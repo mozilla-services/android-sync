@@ -107,14 +107,15 @@ implements RecordsChannelDelegate,
     // Guaranteed to have been begun by the time we get to run.
     if (channelAToB != null) {
       channelAToB.abort();
+      channelAToB = null; // Don't call abort multiple times.
     }
 
     // Not guaranteed. It's possible for the second flow to begin after we've aborted.
     // TODO: stop this from happening!
     if (channelBToA != null) {
       channelBToA.abort();
+      channelBToA = null; // Don't call abort() multiple times.
     }
-    // this.delegate.onSynchronizeSessionAborted(this);
   }
 
   /**
@@ -165,7 +166,7 @@ implements RecordsChannelDelegate,
 
       @Override
       public void notifyFlowRecordStoreFailed(RecordsChannel recordsChannel, Exception ex, String guid) {
-        Logger.warn(LOG_TAG, "First RecordsChannel onFlowStoreFailed. Reporting store error.", ex);
+        Logger.warn(LOG_TAG, "First RecordsChannel onFlowStoreFailed. Reporting local store error.", ex);
         session.delegate.notifyLocalRecordStoreFailed(ex, guid);
       }
 
@@ -217,16 +218,11 @@ implements RecordsChannelDelegate,
     this.delegate.onFetchError(ex);
   }
 
-  /**
-   * We ignore possible store errors, since failure to store a record is not
-   * necessarily a cause to abort. It might mean that the record should be
-   * tracked for re-downloading, or skipped, or we might abort.
-   *
-   * TODO: Bug 709371.
-   */
   @Override
   public void notifyFlowRecordStoreFailed(RecordsChannel recordsChannel, Exception ex, String recordGuid) {
-     this.delegate.notifyRemoteRecordStoreFailed(ex, recordGuid);
+    Logger.warn(LOG_TAG, "Second RecordsChannel onFlowStoreFailed. Reporting remote store error.", ex);
+    this.delegate.notifyRemoteRecordStoreFailed(ex, recordGuid);
+    this.abort();
   }
 
   @Override
