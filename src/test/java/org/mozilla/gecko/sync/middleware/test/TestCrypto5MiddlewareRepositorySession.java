@@ -23,10 +23,9 @@ import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionFinis
 import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositoryWipeDelegate;
 import org.mozilla.android.sync.test.helpers.MockRecord;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.android.sync.test.helpers.WBORepository;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
