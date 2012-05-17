@@ -35,9 +35,10 @@
   
   <!-- Setup Success -->
   <string name="sync_title_success">&sync.title.success.label;</string>
-  <string name="sync_subtitle_success">&sync.subtitle.success.label;</string>
+  <string name="sync_subtitle_success">&sync.subtitle.success.label1;</string>
   <string name="sync_settings">&sync.settings.label;</string>
-  <string name="sync_subtitle_manage">&sync.subtitle.manage.label;</string>
+  <string name="brand_shortName">&brandShortName;</string>
+  <string name="sync_subtitle_manage">&sync.subtitle.manage.label1;</string>
   
   <!-- Pair Device -->
   <string name="sync_pair_tryagain">&sync.pair.tryagain.label;</string>
