@@ -142,11 +142,6 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
   }
 
   @Override
-  public void abort(RepositorySessionFinishDelegate delegate) {
-    inner.abort(new MiddlewareRepositorySessionFinishDelegate(this, delegate));
-  }
-
-  @Override
   public void guidsSince(long timestamp, RepositorySessionGuidsSinceDelegate delegate) {
     // TODO: need to do anything here?
     inner.guidsSince(timestamp, delegate);

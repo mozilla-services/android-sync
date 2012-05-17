@@ -200,15 +200,6 @@ public abstract class RepositorySession {
   }
 
   /**
-   * Just like finish(), but doesn't do any work that should only be performed
-   * at the end of a successful sync, and can be called any time.
-   */
-  public void abort(RepositorySessionFinishDelegate delegate) {
-    this.abort();
-    delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
-  }
-
-  /**
    * Abnormally terminate the repository session, freeing or closing
    * any resources that were opened during the lifetime of the session.
    */
