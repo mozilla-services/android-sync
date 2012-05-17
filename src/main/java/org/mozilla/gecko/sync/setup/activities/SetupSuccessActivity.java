@@ -5,11 +5,11 @@
 package org.mozilla.gecko.sync.setup.activities;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -19,13 +19,11 @@ import android.widget.TextView;
 public class SetupSuccessActivity extends Activity {
   private final static String LOG_TAG = "SetupSuccessActivity";
   private TextView setupSubtitle;
-  private Context mContext;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     setTheme(R.style.SyncTheme);
     super.onCreate(savedInstanceState);
-    mContext = getApplicationContext();
     Bundle extras = this.getIntent().getExtras();
     setContentView(R.layout.sync_setup_success);
     setupSubtitle = ((TextView) findViewById(R.id.setup_success_subtitle));
@@ -50,10 +48,10 @@ public class SetupSuccessActivity extends Activity {
     startActivity(intent);
   }
 
-  public void pairClickHandler(View target) {
-    Intent intent = new Intent(mContext, SetupSyncActivity.class);
-    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
-    intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, false);
+  public void launchBrowser(View target) {
+    Intent intent = new Intent(Intent.ACTION_MAIN);
+    intent.setClassName(GlobalConstants.PRODUCT_PACKAGE, GlobalConstants.PRODUCT_PACKAGE + ".App");
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
     startActivity(intent);
   }
 }
