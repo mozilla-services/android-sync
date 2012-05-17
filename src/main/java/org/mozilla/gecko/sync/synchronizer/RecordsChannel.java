@@ -154,7 +154,6 @@ class RecordsChannel implements
       sink.store(record);
     } catch (NoStoreDelegateException e) {
       Logger.error(LOG_TAG, "Got NoStoreDelegateException in RecordsChannel.store(). This should not occur. Aborting.", e);
-      delegate.onFlowStoreFailed(this, e);
       this.abort();
     }
   }
@@ -183,8 +182,7 @@ class RecordsChannel implements
   @Override
   public void notifyRecordStoreFailed(Exception ex, String guid) {
     this.consumer.stored();
-    delegate.onFlowStoreFailed(this, ex);
-    // TODO: abort?
+    delegate.notifyFlowRecordStoreFailed(this, ex, guid);
   }
 
   @Override

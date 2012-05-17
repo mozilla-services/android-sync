@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -10,11 +11,17 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WBORepository;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
+import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerSession;
@@ -83,23 +90,28 @@ public class TestSynchronizer {
           monitor.notify();
         }
       }
-      
+
       @Override
       public void onSynchronizeSessionFailed(SynchronizerSession session,
                                       Exception lastException, String reason) {
         fail("Synchronization should not fail.");
       }
-      
+
       @Override
-      public void onStoreError(Exception e) {
+      public void notifyLocalRecordStoreFailed(Exception e, String recordGuid) {
         fail("Should be no store error.");
       }
-      
+
+      @Override
+      public void notifyRemoteRecordStoreFailed(Exception e, String recordGuid) {
+        fail("Should be no store error.");
+      }
+
       @Override
       public void onSessionError(Exception e) {
         fail("Should be no session error.");
       }
-      
+
       @Override
       public void onFetchError(Exception e) {
         fail("Should be no fetch error.");
@@ -364,5 +376,98 @@ public class TestSynchronizer {
     recordEquals(aa, ba);
     recordEquals(ab, bb);
     System.out.println("Reached end of test.");
+  }
+
+  public static class FailStoreWBORepository extends WBORepository {
+    @Override
+    public void createSession(RepositorySessionCreationDelegate delegate,
+                              Context context) {
+      delegate.deferredCreationDelegate().onSessionCreated(new WBORepositorySession(this) {
+        @Override
+        public void store(final Record record) throws NoStoreDelegateException {
+          if (delegate == null) {
+            throw new NoStoreDelegateException();
+          }
+          if (record.guid.contains("Fail")) {
+            delegate.notifyRecordStoreFailed(new RuntimeException(), record.guid);
+          } else {
+            delegate.notifyRecordStoreSucceeded(record.guid);
+          }
+        }
+      });
+    }
+  }
+
+  public static class TrackingWBORepository extends WBORepository {
+    @Override
+    public synchronized boolean shouldTrack() {
+      return true;
+    }
+
+    public void store(final Record record) throws NoStoreDelegateException {
+    }
+  }
+
+  protected Synchronizer getSynchronizer(WBORepository remote, WBORepository local) {
+    BookmarkRecord inbound1 =  new BookmarkRecord("inboundFail",  "bookmarks", 1, false);
+    BookmarkRecord inbound2 =  new BookmarkRecord("inboundSucc",  "bookmarks", 1, false);
+    BookmarkRecord outbound1 = new BookmarkRecord("outboundFail", "bookmarks", 1, false);
+    BookmarkRecord outbound2 = new BookmarkRecord("outboundSucc", "bookmarks", 1, false);
+
+    remote.wbos.put(inbound1.guid, inbound1);
+    remote.wbos.put(inbound2.guid, inbound2);
+    local.wbos.put(outbound1.guid, outbound1);
+    local.wbos.put(outbound2.guid, outbound2);
+    final Synchronizer synchronizer = new Synchronizer();
+    synchronizer.repositoryA = remote;
+    synchronizer.repositoryB = local;
+    return synchronizer;
+  }
+
+  protected boolean doSynchronize(final Synchronizer synchronizer) {
+    final AtomicBoolean success = new AtomicBoolean(false);
+
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        synchronizer.synchronize(null, new SynchronizerDelegate() {
+          @Override
+          public void onSynchronized(Synchronizer synchronizer) {
+            success.set(true);
+            WaitHelper.getTestWaiter().performNotify();
+          }
+
+          @Override
+          public void onSynchronizeFailed(Synchronizer synchronizer, Exception lastException, String reason) {
+            success.set(false);
+            WaitHelper.getTestWaiter().performNotify();
+          }
+        });
+      }
+    });
+    return success.get();
+  }
+
+  @Test
+  public void testErrors() {
+    Logger.LOG_TO_STDOUT = true;
+
+    Synchronizer synchronizer;
+    synchronizer = getSynchronizer(new WBORepository(), new WBORepository());
+    assertTrue(doSynchronize(synchronizer));
+    assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
+    assertArrayEquals(new String[] { }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
+
+    // Local store failures should be ignored.
+    synchronizer = getSynchronizer(new WBORepository(), new FailStoreWBORepository());
+    assertTrue(doSynchronize(synchronizer));
+    assertArrayEquals(new String[] { "inboundFail" }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
+    assertArrayEquals(new String[] { }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
+
+    // Remote store failures should be ignored.
+    synchronizer = getSynchronizer(new FailStoreWBORepository(), new TrackingWBORepository());
+    assertTrue(doSynchronize(synchronizer));
+    assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
+    assertArrayEquals(new String[] { "outboundFail" }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
   }
 }

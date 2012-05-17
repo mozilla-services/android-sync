@@ -9,11 +9,11 @@ public interface SynchronizerSessionDelegate {
 
   public void onSynchronizedSession(SynchronizerSession session);
   public void onSynchronizeSessionFailed(SynchronizerSession session, Exception lastException, String reason);
-  public void onSynchronizeSessionSkipped(SynchronizerSession synchronizerSession);
+  public void onSynchronizeSessionSkipped(SynchronizerSession session);
 
-  // TODO: return value?
   public void onFetchError(Exception e);
-  public void onStoreError(Exception e);
   public void onSessionError(Exception e);
 
+  public void notifyLocalRecordStoreFailed(Exception e, String recordGuid);
+  public void notifyRemoteRecordStoreFailed(Exception e, String recordGuid);
 }

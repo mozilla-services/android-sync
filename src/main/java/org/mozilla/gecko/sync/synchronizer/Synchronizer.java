@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.synchronizer;
 
+import java.util.ArrayList;
+
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
@@ -78,9 +80,13 @@ public class Synchronizer {
     }
 
     @Override
-    public void onStoreError(Exception e) {
-      session.abort();
-      synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), e, "Got store error.");
+    public void notifyLocalRecordStoreFailed(Exception e, String recordGuid) {
+      localStoreFailedGuids.add(recordGuid);
+    }
+
+    @Override
+    public void notifyRemoteRecordStoreFailed(Exception e, String recordGuid) {
+      remoteStoreFailedGuids.add(recordGuid);
     }
 
     @Override
@@ -95,10 +101,15 @@ public class Synchronizer {
   public RepositorySessionBundle bundleA;
   public RepositorySessionBundle bundleB;
 
+  public final ArrayList<String> localStoreFailedGuids = new ArrayList<String>();
+  public final ArrayList<String> remoteStoreFailedGuids = new ArrayList<String>();
+
   /**
    * Start synchronizing, calling delegate's callback methods.
    */
   public void synchronize(Context context, SynchronizerDelegate delegate) {
+    localStoreFailedGuids.clear();
+    remoteStoreFailedGuids.clear();
     SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);
     SynchronizerSession session = new SynchronizerSession(this, sessionDelegate);
     session.init(context, bundleA, bundleB);

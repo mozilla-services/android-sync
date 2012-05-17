@@ -164,10 +164,9 @@ implements RecordsChannelDelegate,
       }
 
       @Override
-      public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
-        // TODO: clean up, tear down, abort.
+      public void notifyFlowRecordStoreFailed(RecordsChannel recordsChannel, Exception ex, String guid) {
         Logger.warn(LOG_TAG, "First RecordsChannel onFlowStoreFailed. Reporting store error.", ex);
-        session.delegate.onStoreError(ex);
+        session.delegate.notifyLocalRecordStoreFailed(ex, guid);
       }
 
       @Override
@@ -226,10 +225,8 @@ implements RecordsChannelDelegate,
    * TODO: Bug 709371.
    */
   @Override
-  public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex) {
-    // TODO: clean up, tear down, abort.
-    Logger.warn(LOG_TAG, "Second RecordsChannel onFlowStoreFailed. Ignoring store error.", ex);
-    this.delegate.onStoreError(ex);
+  public void notifyFlowRecordStoreFailed(RecordsChannel recordsChannel, Exception ex, String recordGuid) {
+     this.delegate.notifyRemoteRecordStoreFailed(ex, recordGuid);
   }
 
   @Override
