@@ -444,7 +444,14 @@ public class Server11RepositorySession extends RepositorySession {
         if ((success != null) &&
             (success.size() > 0)) {
           Logger.debug(LOG_TAG, "Successful records: " + success.toString());
-          // TODO: how do we notify without the whole record?
+          for (Object o : success) {
+            try {
+              delegate.notifyRecordStoreSucceeded((String) o);
+            } catch (ClassCastException e) {
+              Logger.error(LOG_TAG, "Got exception parsing POST success guid.", e);
+              // Not much to be done: don't want to abort on success.
+            }
+          }
 
           long normalizedTimestamp = getNormalizedTimestamp(response);
           Logger.debug(LOG_TAG, "Passing back upload X-Weave-Timestamp: " + normalizedTimestamp);
