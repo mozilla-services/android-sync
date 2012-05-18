@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -34,6 +35,7 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerSessionDelegate;
 import android.content.Context;
 
 public class TestSynchronizer {
+  public static final String LOG_TAG = "TestSynchronizer";
 
   public static void assertInRangeInclusive(long earliest, long value, long latest) {
     assertTrue(earliest <= value);
@@ -101,7 +103,7 @@ public class TestSynchronizer {
 
       @Override
       public void onSynchronizedSession(SynchronizerSession session) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         synchronized (monitor) {
           monitor.notify();
         }
@@ -162,7 +164,7 @@ public class TestSynchronizer {
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
     recordEquals(aa, ba);
     recordEquals(ab, bb);
-    System.out.println("Got to end of test.");
+    Logger.trace(LOG_TAG, "Got to end of test.");
   }
 
   public abstract class SuccessfulSynchronizerDelegate implements SynchronizerDelegate {
@@ -193,7 +195,7 @@ public class TestSynchronizer {
     final SuccessfulSynchronizerDelegate delegateOne = new SuccessfulSynchronizerDelegate() {
       @Override
       public void onSynchronized(Synchronizer synchronizer) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
         synchronized (monitor) {
@@ -204,7 +206,7 @@ public class TestSynchronizer {
     final SuccessfulSynchronizerDelegate delegateTwo = new SuccessfulSynchronizerDelegate() {
       @Override
       public void onSynchronized(Synchronizer synchronizer) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
         synchronized (monitor) {
@@ -221,10 +223,10 @@ public class TestSynchronizer {
       }
     }
     long now = new Date().getTime();
-    System.out.println("Earliest is " + earliest);
-    System.out.println("syncAOne is " + delegateOne.syncAOne);
-    System.out.println("syncBOne is " + delegateOne.syncBOne);
-    System.out.println("Now: " + now);
+    Logger.trace(LOG_TAG, "Earliest is " + earliest);
+    Logger.trace(LOG_TAG, "syncAOne is " + delegateOne.syncAOne);
+    Logger.trace(LOG_TAG, "syncBOne is " + delegateOne.syncBOne);
+    Logger.trace(LOG_TAG, "Now: " + now);
     assertInRangeInclusive(earliest, delegateOne.syncAOne, now);
     assertInRangeInclusive(earliest, delegateOne.syncBOne, now);
     try {
@@ -241,15 +243,15 @@ public class TestSynchronizer {
       }
     }
     now = new Date().getTime();
-    System.out.println("Earliest is " + earliest);
-    System.out.println("syncAOne is " + delegateTwo.syncAOne);
-    System.out.println("syncBOne is " + delegateTwo.syncBOne);
-    System.out.println("Now: " + now);
+    Logger.trace(LOG_TAG, "Earliest is " + earliest);
+    Logger.trace(LOG_TAG, "syncAOne is " + delegateTwo.syncAOne);
+    Logger.trace(LOG_TAG, "syncBOne is " + delegateTwo.syncBOne);
+    Logger.trace(LOG_TAG, "Now: " + now);
     assertInRangeInclusive(earliest, delegateTwo.syncAOne, now);
     assertInRangeInclusive(earliest, delegateTwo.syncBOne, now);
     assertTrue(delegateTwo.syncAOne > delegateOne.syncAOne);
     assertTrue(delegateTwo.syncBOne > delegateOne.syncBOne);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 
   private Synchronizer getTestSynchronizer(long tsA, long tsB) {
@@ -293,7 +295,7 @@ public class TestSynchronizer {
 
         @Override
         public void onSynchronized(Synchronizer synchronizer) {
-          System.out.println("onSynchronized. Success!");
+          Logger.trace(LOG_TAG, "onSynchronized. Success!");
           synchronized (monitor) {
             monitor.notify();
           }
@@ -325,7 +327,7 @@ public class TestSynchronizer {
     assertNull(ba);
     recordEquals(aa, guidA, lastModifiedA, deleted, collection);
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 
 
@@ -357,7 +359,7 @@ public class TestSynchronizer {
 
         @Override
         public void onSynchronized(Synchronizer synchronizer) {
-          System.out.println("onSynchronized. Success!");
+          Logger.trace(LOG_TAG, "onSynchronized. Success!");
           synchronized (monitor) {
             monitor.notify();
           }
@@ -391,10 +393,13 @@ public class TestSynchronizer {
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
     recordEquals(aa, ba);
     recordEquals(ab, bb);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 
-  public static class FailStoreWBORepository extends WBORepository {
+  /**
+   * Store one at a time, failing if the guid contains "Fail".
+   */
+  public static class SerialFailStoreWBORepository extends WBORepository {
     @Override
     public void createSession(RepositorySessionCreationDelegate delegate,
                               Context context) {
@@ -408,6 +413,62 @@ public class TestSynchronizer {
             delegate.notifyRecordStoreFailed(new RuntimeException(), record.guid);
           } else {
             delegate.notifyRecordStoreSucceeded(record.guid);
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Store in batches, failing if any of the batch guids contains "Fail".
+   * <p>
+   * This will drop the final batch.
+   */
+  public static class BatchFailStoreWBORepository extends WBORepository {
+    public final int batchSize;
+    public ArrayList<Record> batch = new ArrayList<Record>();
+    public boolean batchShouldFail = false;
+
+    public BatchFailStoreWBORepository(int batchSize) {
+      super();
+      this.batchSize = batchSize;
+    }
+
+    @Override
+    public void createSession(RepositorySessionCreationDelegate delegate,
+                              Context context) {
+      delegate.deferredCreationDelegate().onSessionCreated(new WBORepositorySession(this) {
+        @Override
+        public void store(final Record record) throws NoStoreDelegateException {
+          if (delegate == null) {
+            throw new NoStoreDelegateException();
+          }
+          synchronized (batch) {
+            batch.add(record);
+            if (record.guid.contains("Fail")) {
+              batchShouldFail = true;
+            }
+
+            if (batch.size() >= batchSize) {
+              final ArrayList<Record> thisBatch = new ArrayList<Record>(batch);
+              final boolean thisBatchShouldFail = batchShouldFail;
+              batchShouldFail = false;
+              batch.clear();
+
+              ThreadPool.run(new Runnable() {
+                @Override
+                public void run() {
+                  Logger.trace("XXX", "Notifying about batch.  Failure? " + thisBatchShouldFail);
+                  for (Record batchRecord : thisBatch) {
+                    if (thisBatchShouldFail) {
+                      delegate.notifyRecordStoreFailed(new RuntimeException(), batchRecord.guid);
+                    } else {
+                      delegate.notifyRecordStoreSucceeded(batchRecord.guid);
+                    }
+                  }
+                }
+              });
+            }
           }
         }
       });
@@ -475,6 +536,7 @@ public class TestSynchronizer {
       }
     });
 
+    assertEquals(1, a.size()); // Should not be called multiple times!
     return a.get(0);
   }
 
@@ -482,21 +544,36 @@ public class TestSynchronizer {
   public void testNoErrors() {
     Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new TrackingWBORepository());
     assertNull(doSynchronize(synchronizer));
+
     assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
     assertArrayEquals(new String[] { }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
   }
 
   @Test
-  public void testLocalStoreErrorsAreIgnored() {
-    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new FailStoreWBORepository());
+  public void testLocalSerialStoreErrorsAreIgnored() {
+    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new SerialFailStoreWBORepository());
     assertNull(doSynchronize(synchronizer));
+
     assertArrayEquals(new String[] { "inboundFail1", "inboundFail2" }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
     assertArrayEquals(new String[] { }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
   }
 
   @Test
-  public void testRemoteStoreErrorsAreNotIgnored() throws Exception {
-    Synchronizer synchronizer = getSynchronizer(new FailStoreWBORepository(), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
+  public void testLocalBatchStoreErrorsAreIgnored() {
+    final int BATCH_SIZE = 3;
+
+    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new BatchFailStoreWBORepository(BATCH_SIZE));
+    assertNull(doSynchronize(synchronizer));
+
+    // Should get groups of 3 failures, but can't say exactly how records are batched.
+    assertFalse(synchronizer.localStoreFailedGuids.isEmpty());
+    assertEquals(0, synchronizer.localStoreFailedGuids.size() % BATCH_SIZE);
+    assertArrayEquals(new String[] { }, synchronizer.remoteStoreFailedGuids.toArray(new String[0]));
+  }
+
+  @Test
+  public void testRemoteSerialStoreErrorsAreNotIgnored() throws Exception {
+    Synchronizer synchronizer = getSynchronizer(new SerialFailStoreWBORepository(), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
 
     // Should get a FlowAbortedException out of this.
     Exception e = doSynchronize(synchronizer);
@@ -506,5 +583,23 @@ public class TestSynchronizer {
     assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
     assertEquals(1, synchronizer.remoteStoreFailedGuids.size()); // Only one record should fail before we abort, but we can't say which.
     assertTrue(synchronizer.remoteStoreFailedGuids.get(0).contains("Fail"));
+  }
+
+  @Test
+  public void testRemoteBatchStoreErrorsAreNotIgnored() throws Exception {
+    Logger.LOG_TO_STDOUT = true;
+    final int BATCH_SIZE = 3;
+
+    Synchronizer synchronizer = getSynchronizer(new BatchFailStoreWBORepository(BATCH_SIZE), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
+
+    // Should get a FlowAbortedException out of this.
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertTrue(e instanceof FlowAbortedException);
+
+    assertArrayEquals(new String[] { }, synchronizer.localStoreFailedGuids.toArray(new String[0]));
+    // Should get groups of 3 failures, but can't say exactly how many record batches are processed.
+    assertFalse(synchronizer.remoteStoreFailedGuids.isEmpty());
+    assertEquals(0, synchronizer.remoteStoreFailedGuids.size() % BATCH_SIZE);
   }
 }
