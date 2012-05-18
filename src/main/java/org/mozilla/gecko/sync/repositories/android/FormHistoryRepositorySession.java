@@ -606,7 +606,7 @@ public class FormHistoryRepositorySession extends
               Logger.trace(LOG_TAG, "Remote modified, local not. Deleting.");
               deleteExistingRecord(existingRecord);
               trackRecord(record);
-              delegate.onRecordStoreSucceeded(record);
+              delegate.onRecordStoreSucceeded(record.guid);
               return;
             }
 
@@ -615,7 +615,7 @@ public class FormHistoryRepositorySession extends
               Logger.trace(LOG_TAG, "Remote is newer, and deleted. Purging local.");
               deleteExistingRecord(existingRecord);
               trackRecord(record);
-              delegate.onRecordStoreSucceeded(record);
+              delegate.onRecordStoreSucceeded(record.guid);
               return;
             }
 
@@ -639,7 +639,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "No match. Inserting.");
             insertNewRegularRecord(record);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 
@@ -651,7 +651,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "Remote guid different from local guid. Storing to keep remote guid.");
             replaceExistingRecordWithRegularRecord(record, existingRecord);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 
@@ -661,7 +661,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "Remote modified, local not. Storing.");
             replaceExistingRecordWithRegularRecord(record, existingRecord);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 
@@ -670,7 +670,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "Remote is newer, and not deleted. Storing.");
             replaceExistingRecordWithRegularRecord(record, existingRecord);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 

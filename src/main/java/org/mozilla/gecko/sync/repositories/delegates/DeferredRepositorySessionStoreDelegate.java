@@ -6,8 +6,6 @@ package org.mozilla.gecko.sync.repositories.delegates;
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.gecko.sync.repositories.domain.Record;
-
 public class DeferredRepositorySessionStoreDelegate implements
     RepositorySessionStoreDelegate {
   protected final RepositorySessionStoreDelegate inner;
@@ -20,11 +18,11 @@ public class DeferredRepositorySessionStoreDelegate implements
   }
 
   @Override
-  public void onRecordStoreSucceeded(final Record record) {
+  public void onRecordStoreSucceeded(final String guid) {
     executor.execute(new Runnable() {
       @Override
       public void run() {
-        inner.onRecordStoreSucceeded(record);
+        inner.onRecordStoreSucceeded(guid);
       }
     });
   }

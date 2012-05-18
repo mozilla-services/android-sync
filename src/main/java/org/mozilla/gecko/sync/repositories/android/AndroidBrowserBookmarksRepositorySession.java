@@ -600,7 +600,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       return false;
     }
     trackRecord(toStore);
-    delegate.onRecordStoreSucceeded(toStore);
+    delegate.onRecordStoreSucceeded(record.guid);
     return true;
   }
 
@@ -642,7 +642,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Logger.warn(LOG_TAG, "Got exception updating bookkeeping of non-folder with guid " + succeeded.guid + ".", e);
       }
       trackRecord(succeeded);
-      delegate.onRecordStoreSucceeded(succeeded);
+      delegate.onRecordStoreSucceeded(succeeded.guid);
     }
   }
 
