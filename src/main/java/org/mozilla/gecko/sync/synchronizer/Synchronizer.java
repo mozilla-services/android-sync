@@ -27,23 +27,16 @@ import android.util.Log;
  * After synchronizing, call `save` to get back a SynchronizerConfiguration with
  * updated bundle information.
  */
-public class Synchronizer {
+public class Synchronizer implements SynchronizerSessionDelegate {
   protected String configSyncID; // Used to pass syncID from load() back into save().
 
   /**
    * I translate the fine-grained feedback of a SynchronizerSessionDelegate into
    * the coarse-grained feedback of a SynchronizerDelegate.
    */
-  public class SynchronizerDelegateSessionDelegate implements
-      SynchronizerSessionDelegate {
-
     private static final String LOG_TAG = "SyncDelSDelegate";
     private SynchronizerDelegate synchronizerDelegate;
     private SynchronizerSession  session;
-
-    public SynchronizerDelegateSessionDelegate(SynchronizerDelegate delegate) {
-      this.synchronizerDelegate = delegate;
-    }
 
     @Override
     public void onInitialized(SynchronizerSession session) {
@@ -93,7 +86,6 @@ public class Synchronizer {
       session.abort();
       synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), e, "Got session error.");
     }
-  }
 
   public Repository repositoryA;
   public Repository repositoryB;
@@ -104,8 +96,9 @@ public class Synchronizer {
    * Start synchronizing, calling delegate's callback methods.
    */
   public void synchronize(Context context, SynchronizerDelegate delegate) {
-    SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);
-    SynchronizerSession session = new SynchronizerSession(this, sessionDelegate);
+    // SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);
+    this.synchronizerDelegate = delegate;
+    SynchronizerSession session = new SynchronizerSession(this, this);
     session.init(context, bundleA, bundleB);
   }
 
