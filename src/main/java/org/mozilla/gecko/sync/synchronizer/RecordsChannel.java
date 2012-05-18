@@ -197,7 +197,7 @@ class RecordsChannel implements
   }
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(String guid) {
     this.consumer.stored();
   }
 

@@ -3,12 +3,10 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.gecko.sync.repositories.domain.Record;
-
 public class ExpectStoreCompletedDelegate extends DefaultStoreDelegate {
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(String guid) {
     // That's fine.
   }
 

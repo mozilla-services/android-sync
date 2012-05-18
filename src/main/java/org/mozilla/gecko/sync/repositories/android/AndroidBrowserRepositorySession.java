@@ -503,7 +503,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
           // of reconcileRecords.
           Logger.debug(LOG_TAG, "Calling delegate callback with guid " + replaced.guid +
                                 "(" + replaced.androidID + ")");
-          delegate.onRecordStoreSucceeded(replaced);
+          delegate.onRecordStoreSucceeded(replaced.guid);
           return;
 
         } catch (MultipleRecordsForGuidException e) {
@@ -539,7 +539,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
     // TODO: we ought to mark the record as deleted rather than purging it,
     // in order to support syncing to multiple destinations. Bug 722607.
     dbHelper.purgeGuid(record.guid);
-    delegate.onRecordStoreSucceeded(record);
+    delegate.onRecordStoreSucceeded(record.guid);
   }
 
   protected void insert(Record record) throws NoGuidForIdException, NullCursorException, ParentNotFoundException {
@@ -552,7 +552,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
     updateBookkeeping(toStore);
     trackRecord(toStore);
-    delegate.onRecordStoreSucceeded(toStore);
+    delegate.onRecordStoreSucceeded(toStore.guid);
 
     Logger.debug(LOG_TAG, "Inserted record with guid " + toStore.guid + " as androidID " + toStore.androidID);
   }

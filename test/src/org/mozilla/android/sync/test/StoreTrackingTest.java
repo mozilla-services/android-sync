@@ -54,9 +54,9 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
     final SimpleSuccessStoreDelegate storeDelegate = new SimpleSuccessStoreDelegate() {
 
       @Override
-      public void onRecordStoreSucceeded(Record record) {
-        Log.d(getName(), "Stored " + record.guid);
-        assertEq(expectedGUID, record.guid);
+      public void onRecordStoreSucceeded(String guid) {
+        Log.d(getName(), "Stored " + guid);
+        assertEq(expectedGUID, guid);
       }
 
       @Override

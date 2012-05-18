@@ -234,7 +234,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
         throw e;
       }
       trackRecord(succeeded);
-      delegate.onRecordStoreSucceeded(succeeded); // At this point, we are really inserted.
+      delegate.onRecordStoreSucceeded(succeeded.guid); // At this point, we are really inserted.
     }
   }
 
