@@ -77,8 +77,8 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
     };
 
     // Calculate BasicAuth hash of username/password.
-    String authHeader = makeAuthHeader(aa.usernameHash, aa.password);
-    String authRequestUrl = makeAuthRequestUrl(aa.authServer, aa.usernameHash);
+    String authHeader = makeAuthHeader(aa.username, aa.password);
+    String authRequestUrl = makeAuthRequestUrl(aa.authServer, aa.username);
     Logger.trace(LOG_TAG, "Making auth request to: " + authRequestUrl);
     authenticateAccount(callbackDelegate, authRequestUrl, authHeader);
 

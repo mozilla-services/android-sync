@@ -9,7 +9,7 @@ import java.util.Queue;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.ThreadPool;
-import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.setup.activities.AccountActivity;
 
 import android.util.Log;
@@ -22,7 +22,7 @@ public class AccountAuthenticator {
 
   // Values for authentication.
   public String password;
-  public String usernameHash;
+  public String username;
 
   public String authServer;
   public String nodeServer;
@@ -42,7 +42,7 @@ public class AccountAuthenticator {
     stages.add(new AuthenticateAccountStage());
   }
 
-  public void authenticate(String server, String username, String password) {
+  public void authenticate(String server, String account, String password) {
     // Set authentication values.
     if (!server.endsWith("/")) {
       server += "/";
@@ -52,11 +52,11 @@ public class AccountAuthenticator {
 
     // Calculate and save username hash.
     try {
-      usernameHash = Utils.sha1Base32(username.toLowerCase()).toLowerCase();
+      username = KeyBundle.usernameFromAccount(account);
     } catch (Exception e) {
       abort(AuthenticationResult.FAILURE_OTHER, e);
     }
-    Logger.debug(LOG_TAG, "usernameHash:" + usernameHash);
+    Logger.debug(LOG_TAG, "username:" + username);
 
     Log.d(LOG_TAG, "running first stage.");
     // Start first stage of authentication.
