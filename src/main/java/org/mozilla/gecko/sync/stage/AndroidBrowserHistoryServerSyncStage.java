@@ -27,6 +27,12 @@ public class AndroidBrowserHistoryServerSyncStage extends ServerSyncStage {
 
   public AndroidBrowserHistoryServerSyncStage(GlobalSession session) {
     super(session);
+
+    // Hack: because we're going to sync regardless of whether migration
+    // is done, we ask Fennec to migrate when we're instantiated rather
+    // than waiting for isEnabled(). That should give us enough time
+    // for a small profile to migrate, because the history stage runs last.
+    FennecControlHelper.isHistoryMigrated(session.getContext());
   }
 
   @Override
@@ -71,8 +77,8 @@ public class AndroidBrowserHistoryServerSyncStage extends ServerSyncStage {
     }
     boolean migrated = FennecControlHelper.isHistoryMigrated(session.getContext());
     if (!migrated) {
-      Logger.warn(LOG_TAG, "Not enabling history engine since Fennec history is not migrated.");
+      Logger.warn(LOG_TAG, "Fennec history not migrated. Syncing anyway.");
     }
-    return super.isEnabled() && migrated;
+    return super.isEnabled();
   }
 }
