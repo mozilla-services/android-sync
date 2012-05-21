@@ -54,7 +54,7 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
 
     };
 
-    String userRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash;
+    String userRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.username;
     final BaseResource httpResource = new BaseResource(userRequestUrl);
     httpResource.delegate = new SyncResourceDelegate(httpResource) {
 

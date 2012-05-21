@@ -61,7 +61,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
         aa.abort(AuthenticationResult.FAILURE_OTHER, e);
       }
     };
-    String nodeRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.usernameHash + "/" + Constants.AUTH_NODE_SUFFIX;
+    String nodeRequestUrl = aa.nodeServer + Constants.AUTH_NODE_PATHNAME + Constants.AUTH_NODE_VERSION + aa.username + "/" + Constants.AUTH_NODE_SUFFIX;
     Logger.debug(LOG_TAG, "nodeUrl: " + nodeRequestUrl);
     final BaseResource httpResource = makeFetchNodeRequest(callbackDelegate, nodeRequestUrl);
     // Make request on separate thread.
