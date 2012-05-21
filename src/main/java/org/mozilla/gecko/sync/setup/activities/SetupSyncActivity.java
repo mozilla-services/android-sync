@@ -598,7 +598,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    switch(resultCode) {
+    switch (resultCode) {
     case Activity.RESULT_OK:
       // Setup completed in manual setup.
       finish();
