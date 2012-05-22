@@ -9,7 +9,6 @@ public interface SynchronizerSessionDelegate {
 
   public void onSynchronized(SynchronizerSession session);
   public void onSynchronizeFailed(SynchronizerSession session, Exception lastException, String reason);
-  public void onSynchronizeAborted(SynchronizerSession synchronizerSession);
   public void onSynchronizeSkipped(SynchronizerSession synchronizerSession);
 
   // TODO: return value?

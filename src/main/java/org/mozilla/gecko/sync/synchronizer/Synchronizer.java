@@ -65,11 +65,6 @@ public class Synchronizer implements SynchronizerSessionDelegate {
     }
 
     @Override
-    public void onSynchronizeAborted(SynchronizerSession synchronizerSession) {
-      this.synchronizerDelegate.onSynchronizeAborted(session.getSynchronizer());
-    }
-
-    @Override
     public void onFetchError(Exception e) {
       session.abort();
       synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), e, "Got fetch error.");
