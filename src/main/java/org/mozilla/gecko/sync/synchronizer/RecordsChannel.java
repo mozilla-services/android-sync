@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.synchronizer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -59,7 +60,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
  * @author rnewman
  *
  */
-class RecordsChannel implements
+public class RecordsChannel implements
   RepositorySessionFetchRecordsDelegate,
   RepositorySessionStoreDelegate,
   RecordsConsumerDelegate,
@@ -71,6 +72,9 @@ class RecordsChannel implements
   private RecordsChannelDelegate delegate;
   private long timestamp;
   private long fetchEnd = -1;
+
+  public final AtomicInteger numFetchFailed = new AtomicInteger();
+  public final AtomicInteger numStoreFailed = new AtomicInteger();
 
   public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate) {
     this.source    = source;
@@ -132,6 +136,8 @@ class RecordsChannel implements
       this.delegate.onFlowBeginFailed(this, new SessionNotBegunException(failed));
     }
     sink.setStoreDelegate(this);
+    numFetchFailed.set(0);
+    numStoreFailed.set(0);
     // Start a consumer thread.
     this.consumer = new ConcurrentRecordConsumer(this);
     ThreadPool.run(this.consumer);
@@ -162,6 +168,7 @@ class RecordsChannel implements
   @Override
   public void onFetchFailed(Exception ex, Record record) {
     Logger.warn(LOG_TAG, "onFetchFailed. Calling for immediate stop.", ex);
+    numFetchFailed.incrementAndGet();
     this.consumer.halt();
     delegate.onFlowFetchFailed(this, ex);
   }
@@ -191,6 +198,8 @@ class RecordsChannel implements
 
   @Override
   public void onRecordStoreFailed(Exception ex, String recordGuid) {
+    Logger.trace(LOG_TAG, "Failed to store record with guid " + recordGuid);
+    numStoreFailed.incrementAndGet();
     this.consumer.stored();
     delegate.onFlowStoreFailed(this, ex, recordGuid);
     // TODO: abort?
@@ -198,6 +207,7 @@ class RecordsChannel implements
 
   @Override
   public void onRecordStoreSucceeded(String guid) {
+    Logger.trace(LOG_TAG, "Stored record with guid " + guid);
     this.consumer.stored();
   }
 
