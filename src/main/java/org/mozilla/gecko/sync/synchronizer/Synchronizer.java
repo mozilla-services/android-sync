@@ -36,11 +36,9 @@ public class Synchronizer implements SynchronizerSessionDelegate {
    */
     private static final String LOG_TAG = "SyncDelSDelegate";
     private SynchronizerDelegate synchronizerDelegate;
-    private SynchronizerSession  session;
 
     @Override
     public void onInitialized(SynchronizerSession session) {
-      this.session = session;
       session.synchronize();
     }
 
@@ -66,20 +64,14 @@ public class Synchronizer implements SynchronizerSessionDelegate {
 
     @Override
     public void onFetchError(Exception e) {
-      session.abort();
-      synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), e, "Got fetch error.");
     }
 
     @Override
     public void onStoreError(Exception e) {
-      session.abort();
-      synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), e, "Got store error.");
     }
 
     @Override
     public void onSessionError(Exception e) {
-      session.abort();
-      synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), e, "Got session error.");
     }
 
   public Repository repositoryA;

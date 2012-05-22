@@ -5,7 +5,9 @@ import java.util.concurrent.ExecutorService;
 
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
+import org.mozilla.gecko.sync.repositories.StoreFailedException;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -13,14 +15,6 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.content.Context;
 
 public class SynchronizerHelpers {
-  public static class FetchFailedException extends Exception {
-    private static final long serialVersionUID = 4182380403973190005L;
-  }
-
-  public static class StoreFailedException extends Exception {
-    private static final long serialVersionUID = 4182380403973190005L;
-  }
-
   public static final String FAIL_SENTINEL = "Fail";
 
   /**

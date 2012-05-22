@@ -8,10 +8,12 @@ package org.mozilla.gecko.sync.synchronizer;
 import java.util.concurrent.ExecutorService;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
+import org.mozilla.gecko.sync.repositories.StoreFailedException;
 import org.mozilla.gecko.sync.repositories.delegates.DeferrableRepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.DeferredRepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
@@ -103,20 +105,6 @@ implements RecordsChannelDelegate,
   protected RecordsChannel channelAToB;
   protected RecordsChannel channelBToA;
 
-  public synchronized void abort() {
-    // Guaranteed to have been begun by the time we get to run.
-    if (channelAToB != null) {
-      channelAToB.abort();
-    }
-
-    // Not guaranteed. It's possible for the second flow to begin after we've aborted.
-    // TODO: stop this from happening!
-    if (channelBToA != null) {
-      channelBToA.abort();
-    }
-    this.delegate.onSynchronizeAborted(this);
-  }
-
   /**
    * Please don't call this until you've been notified with onInitialized.
    */
@@ -142,8 +130,28 @@ implements RecordsChannelDelegate,
     // This is the delegate for the *first* flow.
     RecordsChannelDelegate channelAToBDelegate = new RecordsChannelDelegate() {
       public void onFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
-        Logger.info(LOG_TAG, "First RecordsChannel onFlowCompleted. Fetch end is " + fetchEnd +
-             ". Store end is " + storeEnd + ". Starting next.");
+        Logger.info(LOG_TAG, "First RecordsChannel onFlowCompleted.");
+
+        // Fetch failures always abort.
+        int numRemoteFetchFailed = recordsChannel.numFetchFailed.get();
+        if (numRemoteFetchFailed > 0) {
+          final String message = "Got " + numRemoteFetchFailed + " failures fetching remote records!";
+          Logger.warn(LOG_TAG, message + " Aborting session.");
+          session.delegate.onSynchronizeFailed(session, new FetchFailedException(), message);
+          return;
+        }
+        Logger.trace(LOG_TAG, "No failures fetching remote records.");
+
+        // Local store failures are ignored.
+        int numLocalStoreFailed = recordsChannel.numStoreFailed.get();
+        if (numLocalStoreFailed > 0) {
+          final String message = "Got " + numLocalStoreFailed + " failures storing local records!";
+          Logger.warn(LOG_TAG, message + " Ignoring local store failures and continuing synchronizer session.");
+        } else {
+          Logger.trace(LOG_TAG, "No failures storing local records.");
+        }
+
+        Logger.info(LOG_TAG, "Fetch end is " + fetchEnd + ". Store end is " + storeEnd + ". Starting next.");
         pendingATimestamp = fetchEnd;
         storeEndBTimestamp = storeEnd;
         flowAToBCompleted = true;
@@ -158,15 +166,13 @@ implements RecordsChannelDelegate,
 
       @Override
       public void onFlowFetchFailed(RecordsChannel recordsChannel, Exception ex) {
-        // TODO: clean up, tear down, abort.
-        Logger.warn(LOG_TAG, "First RecordsChannel onFlowFetchFailed. Reporting fetch error.", ex);
+        Logger.warn(LOG_TAG, "First RecordsChannel onFlowFetchFailed. Reporting remote fetch error.", ex);
         session.delegate.onFetchError(ex);
       }
 
       @Override
       public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex, String recordGuid) {
-        // TODO: clean up, tear down, abort.
-        Logger.warn(LOG_TAG, "First RecordsChannel onFlowStoreFailed. Reporting store error.", ex);
+        Logger.warn(LOG_TAG, "First RecordsChannel onFlowStoreFailed. Reporting local store error.", ex);
         session.delegate.onStoreError(ex);
       }
 
@@ -189,9 +195,30 @@ implements RecordsChannelDelegate,
   }
 
   @Override
-  public void onFlowCompleted(RecordsChannel channel, long fetchEnd, long storeEnd) {
-    Logger.info(LOG_TAG, "Second RecordsChannel onFlowCompleted. Fetch end is " + fetchEnd +
-         ". Store end is " + storeEnd + ". Finishing.");
+  public void onFlowCompleted(RecordsChannel recordsChannel, long fetchEnd, long storeEnd) {
+    Logger.info(LOG_TAG, "Second RecordsChannel onFlowCompleted.");
+
+    // Fetch failures always abort.
+    int numLocalFetchFailed = recordsChannel.numFetchFailed.get();
+    if (numLocalFetchFailed > 0) {
+      final String message = "Got " + numLocalFetchFailed + " failures fetching local records!";
+      Logger.warn(LOG_TAG, message + " Aborting session.");
+      this.delegate.onSynchronizeFailed(this, new FetchFailedException(), message);
+      return;
+    }
+    Logger.trace(LOG_TAG, "No failures fetching local records.");
+
+    // Remote store failures abort!
+    int numRemoteStoreFailed = recordsChannel.numStoreFailed.get();
+    if (numRemoteStoreFailed > 0) {
+      final String message = "Got " + numRemoteStoreFailed + " failures storing remote records!";
+      Logger.warn(LOG_TAG, message + " Aborting session.");
+      this.delegate.onSynchronizeFailed(this, new StoreFailedException(), message);
+      return;
+    }
+    Logger.trace(LOG_TAG, "No failures storing remote records.");
+
+    Logger.info(LOG_TAG, "Fetch end is " + fetchEnd + ". Store end is " + storeEnd + ". Finishing.");
 
     pendingBTimestamp = fetchEnd;
     storeEndATimestamp = storeEnd;
@@ -214,7 +241,7 @@ implements RecordsChannelDelegate,
   @Override
   public void onFlowFetchFailed(RecordsChannel recordsChannel, Exception ex) {
     // TODO: clean up, tear down, abort.
-    Logger.warn(LOG_TAG, "Second RecordsChannel onFlowFetchFailed. Reporting fetch error.", ex);
+    Logger.warn(LOG_TAG, "Second RecordsChannel onFlowFetchFailed. Reporting local fetch error.", ex);
     this.delegate.onFetchError(ex);
   }
 
@@ -228,7 +255,8 @@ implements RecordsChannelDelegate,
   @Override
   public void onFlowStoreFailed(RecordsChannel recordsChannel, Exception ex, String recordGuid) {
     // TODO: clean up, tear down, abort.
-    Logger.warn(LOG_TAG, "Second RecordsChannel onFlowStoreFailed. Ignoring store error.", ex);
+    Logger.warn(LOG_TAG, "Second RecordsChannel onFlowStoreFailed. Reporting remote store error.", ex);
+    this.delegate.onStoreError(ex);
   }
 
   @Override
