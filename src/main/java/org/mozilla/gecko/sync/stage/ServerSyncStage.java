@@ -522,11 +522,4 @@ public abstract class ServerSyncStage implements
       session.abort(lastException, reason);
     }
   }
-
-  @Override
-  public void onSynchronizeAborted(Synchronizer synchronize) {
-    Logger.info(LOG_TAG, "onSynchronizeAborted.");
-
-    session.abort(null, "Synchronization was aborted.");
-  }
 }
