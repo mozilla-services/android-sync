@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import junit.framework.AssertionFailedError;
-
 import org.mozilla.gecko.sync.Logger;
 
 public class ExpectSuccessDelegate {
@@ -18,7 +16,7 @@ public class ExpectSuccessDelegate {
     this.waitHelper.performNotify();
   }
 
-  public void performNotify(AssertionFailedError e) {
+  public void performNotify(Throwable e) {
     this.waitHelper.performNotify(e);
   }
 

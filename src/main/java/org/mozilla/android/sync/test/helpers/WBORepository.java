@@ -44,8 +44,8 @@ public class WBORepository extends Repository {
 
   public class WBORepositorySession extends StoreTrackingRepositorySession {
 
-    private WBORepository wboRepository;
-    private ExecutorService delegateExecutor = Executors.newSingleThreadExecutor();
+    protected WBORepository wboRepository;
+    protected ExecutorService delegateExecutor = Executors.newSingleThreadExecutor();
     public ConcurrentHashMap<String, Record> wbos;
 
     public WBORepositorySession(WBORepository repository) {
