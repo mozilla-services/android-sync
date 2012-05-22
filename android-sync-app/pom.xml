@@ -119,7 +119,7 @@
         <artifactId>android-maven-plugin</artifactId>
         <configuration>
           <sdk>
-            <platform>10</platform>
+            <platform>14</platform>
           </sdk>
           <emulator>
             <!-- the name of the avd device to use for starting the emulator -->
