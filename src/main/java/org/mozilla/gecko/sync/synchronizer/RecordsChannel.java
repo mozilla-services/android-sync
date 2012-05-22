@@ -106,25 +106,6 @@ public class RecordsChannel implements
   }
 
   /**
-   * Attempt to abort an outstanding fetch. Finish both sessions, and
-   * halt the consumer if it exists.
-   */
-  public void abort() {
-    if (source.isActive()) {
-      source.abort();
-    }
-    if (sink.isActive()) {
-      sink.abort();
-    }
-
-    toProcess.clear();
-    if (consumer == null) {
-      return;
-    }
-    consumer.halt();
-  }
-
-  /**
    * Start records flowing through the channel.
    */
   public void flow() {
@@ -161,7 +142,6 @@ public class RecordsChannel implements
     } catch (NoStoreDelegateException e) {
       Logger.error(LOG_TAG, "Got NoStoreDelegateException in RecordsChannel.store(). This should not occur. Aborting.", e);
       delegate.onFlowStoreFailed(this, e, record.guid);
-      this.abort();
     }
   }
 

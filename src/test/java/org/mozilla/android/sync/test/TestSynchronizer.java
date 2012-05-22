@@ -5,15 +5,27 @@ package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Date;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.mozilla.android.sync.test.SynchronizerHelpers.BatchFailStoreWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.FailFetchWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.SerialFailStoreWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
 import org.mozilla.android.sync.test.helpers.WBORepository;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
+import org.mozilla.gecko.sync.repositories.StoreFailedException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
@@ -23,6 +35,7 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerSessionDelegate;
 import android.content.Context;
 
 public class TestSynchronizer {
+  public static final String LOG_TAG = "TestSynchronizer";
 
   public static void assertInRangeInclusive(long earliest, long value, long latest) {
     assertTrue(earliest <= value);
@@ -41,6 +54,18 @@ public class TestSynchronizer {
     assertEquals(a.lastModified, b.lastModified);
     assertEquals(a.deleted,      b.deleted);
     assertEquals(a.collection,   b.collection);
+  }
+
+  @Before
+  public void setUp() {
+    Logger.LOG_TO_STDOUT = true;
+    WaitHelper.resetTestWaiter();
+  }
+
+  @After
+  public void tearDown() {
+    Logger.LOG_TO_STDOUT = false;
+    WaitHelper.resetTestWaiter();
   }
 
   @Test
@@ -66,7 +91,7 @@ public class TestSynchronizer {
     synchronizer.repositoryA = repoA;
     synchronizer.repositoryB = repoB;
     SynchronizerSession syncSession = new SynchronizerSession(synchronizer, new SynchronizerSessionDelegate() {
-      
+
       @Override
       public void onInitialized(SynchronizerSession session) {
         assertFalse(repoA.wbos.containsKey(guidB));
@@ -78,36 +103,31 @@ public class TestSynchronizer {
 
       @Override
       public void onSynchronized(SynchronizerSession session) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         synchronized (monitor) {
           monitor.notify();
         }
       }
-      
+
       @Override
       public void onSynchronizeFailed(SynchronizerSession session,
                                       Exception lastException, String reason) {
         fail("Synchronization should not fail.");
       }
-      
+
       @Override
       public void onStoreError(Exception e) {
         fail("Should be no store error.");
       }
-      
+
       @Override
       public void onSessionError(Exception e) {
         fail("Should be no session error.");
       }
-      
-      @Override
-      public void onFetchError(Exception e) {
-        fail("Should be no fetch error.");
-      }
 
       @Override
-      public void onSynchronizeAborted(SynchronizerSession synchronizerSession) {
-        fail("Sync should not be aborted.");
+      public void onFetchError(Exception e) {
+        fail("Should be no local fetch error.");
       }
 
       @Override
@@ -139,7 +159,7 @@ public class TestSynchronizer {
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
     recordEquals(aa, ba);
     recordEquals(ab, bb);
-    System.out.println("Got to end of test.");
+    Logger.trace(LOG_TAG, "Got to end of test.");
   }
 
   public abstract class SuccessfulSynchronizerDelegate implements SynchronizerDelegate {
@@ -150,11 +170,6 @@ public class TestSynchronizer {
     public void onSynchronizeFailed(Synchronizer synchronizer,
                                     Exception lastException, String reason) {
       fail("Should not fail.");
-    }
-
-    @Override
-    public void onSynchronizeAborted(Synchronizer synchronize) {
-      fail("Should not abort.");
     }
   }
 
@@ -175,7 +190,7 @@ public class TestSynchronizer {
     final SuccessfulSynchronizerDelegate delegateOne = new SuccessfulSynchronizerDelegate() {
       @Override
       public void onSynchronized(Synchronizer synchronizer) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
         synchronized (monitor) {
@@ -186,7 +201,7 @@ public class TestSynchronizer {
     final SuccessfulSynchronizerDelegate delegateTwo = new SuccessfulSynchronizerDelegate() {
       @Override
       public void onSynchronized(Synchronizer synchronizer) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
         synchronized (monitor) {
@@ -203,10 +218,10 @@ public class TestSynchronizer {
       }
     }
     long now = new Date().getTime();
-    System.out.println("Earliest is " + earliest);
-    System.out.println("syncAOne is " + delegateOne.syncAOne);
-    System.out.println("syncBOne is " + delegateOne.syncBOne);
-    System.out.println("Now: " + now);
+    Logger.trace(LOG_TAG, "Earliest is " + earliest);
+    Logger.trace(LOG_TAG, "syncAOne is " + delegateOne.syncAOne);
+    Logger.trace(LOG_TAG, "syncBOne is " + delegateOne.syncBOne);
+    Logger.trace(LOG_TAG, "Now: " + now);
     assertInRangeInclusive(earliest, delegateOne.syncAOne, now);
     assertInRangeInclusive(earliest, delegateOne.syncBOne, now);
     try {
@@ -223,15 +238,15 @@ public class TestSynchronizer {
       }
     }
     now = new Date().getTime();
-    System.out.println("Earliest is " + earliest);
-    System.out.println("syncAOne is " + delegateTwo.syncAOne);
-    System.out.println("syncBOne is " + delegateTwo.syncBOne);
-    System.out.println("Now: " + now);
+    Logger.trace(LOG_TAG, "Earliest is " + earliest);
+    Logger.trace(LOG_TAG, "syncAOne is " + delegateTwo.syncAOne);
+    Logger.trace(LOG_TAG, "syncBOne is " + delegateTwo.syncBOne);
+    Logger.trace(LOG_TAG, "Now: " + now);
     assertInRangeInclusive(earliest, delegateTwo.syncAOne, now);
     assertInRangeInclusive(earliest, delegateTwo.syncBOne, now);
     assertTrue(delegateTwo.syncAOne > delegateOne.syncAOne);
     assertTrue(delegateTwo.syncBOne > delegateOne.syncBOne);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 
   private Synchronizer getTestSynchronizer(long tsA, long tsB) {
@@ -275,7 +290,7 @@ public class TestSynchronizer {
 
         @Override
         public void onSynchronized(Synchronizer synchronizer) {
-          System.out.println("onSynchronized. Success!");
+          Logger.trace(LOG_TAG, "onSynchronized. Success!");
           synchronized (monitor) {
             monitor.notify();
           }
@@ -285,11 +300,6 @@ public class TestSynchronizer {
         public void onSynchronizeFailed(Synchronizer synchronizer,
                                         Exception lastException, String reason) {
           fail("Sync should not fail.");
-        }
-
-        @Override
-        public void onSynchronizeAborted(Synchronizer synchronize) {
-          fail("Sync should not be aborted.");
         }
       });
       try {
@@ -312,7 +322,7 @@ public class TestSynchronizer {
     assertNull(ba);
     recordEquals(aa, guidA, lastModifiedA, deleted, collection);
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 
 
@@ -344,7 +354,7 @@ public class TestSynchronizer {
 
         @Override
         public void onSynchronized(Synchronizer synchronizer) {
-          System.out.println("onSynchronized. Success!");
+          Logger.trace(LOG_TAG, "onSynchronized. Success!");
           synchronized (monitor) {
             monitor.notify();
           }
@@ -354,11 +364,6 @@ public class TestSynchronizer {
         public void onSynchronizeFailed(Synchronizer synchronizer,
                                         Exception lastException, String reason) {
           fail("Sync should not fail.");
-        }
-
-        @Override
-        public void onSynchronizeAborted(Synchronizer synchronize) {
-          fail("Sync should not be aborted.");
         }
       });
       try {
@@ -383,6 +388,162 @@ public class TestSynchronizer {
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
     recordEquals(aa, ba);
     recordEquals(ab, bb);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
+  }
+
+  protected Synchronizer getSynchronizer(WBORepository remote, WBORepository local) {
+    BookmarkRecord[] inbounds = new BookmarkRecord[] {
+        new BookmarkRecord("inboundSucc1", "bookmarks", 1, false),
+        new BookmarkRecord("inboundSucc2", "bookmarks", 1, false),
+        new BookmarkRecord("inboundFail1", "bookmarks", 1, false),
+        new BookmarkRecord("inboundSucc3", "bookmarks", 1, false),
+        new BookmarkRecord("inboundFail2", "bookmarks", 1, false),
+        new BookmarkRecord("inboundFail3", "bookmarks", 1, false),
+    };
+    BookmarkRecord[] outbounds = new BookmarkRecord[] {
+        new BookmarkRecord("outboundFail1", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail2", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail3", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail4", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail5", "bookmarks", 1, false),
+        new BookmarkRecord("outboundFail6", "bookmarks", 1, false),
+    };
+    for (BookmarkRecord inbound : inbounds) {
+      remote.wbos.put(inbound.guid, inbound);
+    }
+    for (BookmarkRecord outbound : outbounds) {
+      local.wbos.put(outbound.guid, outbound);
+    }
+    final Synchronizer synchronizer = new Synchronizer();
+    synchronizer.repositoryA = remote;
+    synchronizer.repositoryB = local;
+    return synchronizer;
+  }
+
+  protected static Exception doSynchronize(final Synchronizer synchronizer) {
+    final ArrayList<Exception> a = new ArrayList<Exception>();
+
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        synchronizer.synchronize(null, new SynchronizerDelegate() {
+          @Override
+          public void onSynchronized(Synchronizer synchronizer) {
+            Logger.trace(LOG_TAG, "Got onSynchronized.");
+            a.add(null);
+            WaitHelper.getTestWaiter().performNotify();
+          }
+
+          @Override
+          public void onSynchronizeFailed(Synchronizer synchronizer, Exception lastException, String reason) {
+            Logger.trace(LOG_TAG, "Got onSynchronizedFailed.");
+            a.add(lastException);
+            WaitHelper.getTestWaiter().performNotify();
+          }
+        });
+      }
+    });
+
+    assertEquals(1, a.size()); // Should not be called multiple times!
+    return a.get(0);
+  }
+
+  @Test
+  public void testNoErrors() {
+    WBORepository remote = new TrackingWBORepository();
+    WBORepository local  = new TrackingWBORepository();
+
+    Synchronizer synchronizer = getSynchronizer(remote, local);
+    assertNull(doSynchronize(synchronizer));
+
+    assertEquals(12, local.wbos.size());
+    assertEquals(12, remote.wbos.size());
+  }
+
+  @Test
+  public void testLocalFetchErrors() {
+    WBORepository remote = new TrackingWBORepository();
+    WBORepository local  = new FailFetchWBORepository();
+
+    Synchronizer synchronizer = getSynchronizer(remote, local);
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(FetchFailedException.class, e.getClass());
+
+    // Neither session gets finished successfully, so all records are dropped.
+    assertEquals(6, local.wbos.size());
+    assertEquals(6, remote.wbos.size());
+  }
+
+  @Test
+  public void testRemoteFetchErrors() {
+    WBORepository remote = new FailFetchWBORepository();
+    WBORepository local  = new TrackingWBORepository();
+
+    Synchronizer synchronizer = getSynchronizer(remote, local);
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(FetchFailedException.class, e.getClass());
+
+    // Neither session gets finished successfully, so all records are dropped.
+    assertEquals(6, local.wbos.size());
+    assertEquals(6, remote.wbos.size());
+  }
+
+  @Test
+  public void testLocalSerialStoreErrorsAreIgnored() {
+    Logger.LOG_TO_STDOUT = true;
+
+    WBORepository remote = new TrackingWBORepository();
+    WBORepository local  = new SerialFailStoreWBORepository();
+
+    Synchronizer synchronizer = getSynchronizer(remote, local);
+    assertNull(doSynchronize(synchronizer));
+
+    assertEquals(9,  local.wbos.size());
+    assertEquals(12, remote.wbos.size());
+  }
+
+  @Test
+  public void testLocalBatchStoreErrorsAreIgnored() {
+    final int BATCH_SIZE = 3;
+
+    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new BatchFailStoreWBORepository(BATCH_SIZE));
+
+    Exception e = doSynchronize(synchronizer);
+    assertNull(e);
+  }
+
+  @Test
+  public void testRemoteSerialStoreErrorsAreNotIgnored() throws Exception {
+    Synchronizer synchronizer = getSynchronizer(new SerialFailStoreWBORepository(), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
+
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(StoreFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testRemoteBatchStoreErrorsAreNotIgnoredManyBatches() throws Exception {
+    Logger.LOG_TO_STDOUT = true;
+    final int BATCH_SIZE = 3;
+
+    Synchronizer synchronizer = getSynchronizer(new BatchFailStoreWBORepository(BATCH_SIZE), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
+
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(StoreFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testRemoteBatchStoreErrorsAreNotIgnoredOneBigBatch() throws Exception {
+    Logger.LOG_TO_STDOUT = true;
+    final int BATCH_SIZE = 20;
+
+    Synchronizer synchronizer = getSynchronizer(new BatchFailStoreWBORepository(BATCH_SIZE), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
+
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(StoreFailedException.class, e.getClass());
   }
 }
