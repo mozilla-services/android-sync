@@ -11,7 +11,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 public class DefaultStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   
   @Override
-  public void onRecordStoreFailed(Exception ex) {
+  public void onRecordStoreFailed(Exception ex, String guid) {
     performNotify("Store failed", ex);
   }
 
@@ -41,11 +41,11 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
       }
 
       @Override
-      public void onRecordStoreFailed(final Exception ex) {
+      public void onRecordStoreFailed(final Exception ex, final String guid) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onRecordStoreFailed(ex);
+            self.onRecordStoreFailed(ex, guid);
           }
         });
       }
