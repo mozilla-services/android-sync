@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.JSONArray;
@@ -28,6 +29,7 @@ import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
@@ -311,7 +313,23 @@ public class Server11RepositorySession extends RepositorySession {
   }
 
   protected Object recordsBufferMonitor = new Object();
+  /**
+   * Data of outbound records.
+   * <p>
+   * We buffer the data (rather than the <code>Record</code>) so that we can
+   * flush the buffer based on outgoing transmission size.
+   * <p>
+   * Access should be synchronized on <code>recordsBufferMonitor</code>.
+   */
   protected ArrayList<byte[]> recordsBuffer = new ArrayList<byte[]>();
+  /**
+   * Guids of outbound records.
+   * <p>
+   * Used to fail entire outgoing uploads.
+   * <p>
+   * Access should be synchronized on <code>recordsBufferMonitor</code>.
+   */
+  protected ArrayList<String> recordGuidsBuffer = new ArrayList<String>();
   protected int byteCount = PER_BATCH_OVERHEAD;
 
   @Override
@@ -340,6 +358,7 @@ public class Server11RepositorySession extends RepositorySession {
         flush();
       }
       recordsBuffer.add(json);
+      recordGuidsBuffer.add(record.guid);
       byteCount += PER_RECORD_OVERHEAD + delta;
     }
   }
@@ -349,10 +368,12 @@ public class Server11RepositorySession extends RepositorySession {
   protected void flush() {
     if (recordsBuffer.size() > 0) {
       final ArrayList<byte[]> outgoing = recordsBuffer;
+      final ArrayList<String> outgoingGuids = recordGuidsBuffer;
       RepositorySessionStoreDelegate uploadDelegate = this.delegate;
-      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, byteCount));
+      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, outgoingGuids, byteCount));
 
       recordsBuffer = new ArrayList<byte[]>();
+      recordGuidsBuffer = new ArrayList<String>();
       byteCount = PER_BATCH_OVERHEAD;
     }
   }
@@ -378,6 +399,16 @@ public class Server11RepositorySession extends RepositorySession {
   }
 
   /**
+   * <code>true</code> if a record upload has failed this session.
+   */
+  protected final AtomicBoolean recordUploadFailed = new AtomicBoolean(false);
+
+  public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
+    recordUploadFailed.set(false);
+    super.begin(delegate);
+  }
+
+  /**
    * Make an HTTP request, and convert HTTP request delegate callbacks into
    * store callbacks within the context of this RepositorySession.
    *
@@ -388,15 +419,18 @@ public class Server11RepositorySession extends RepositorySession {
 
     public final String LOG_TAG = "RecordUploadRunnable";
     private ArrayList<byte[]> outgoing;
+    private ArrayList<String> outgoingGuids;
     private long byteCount;
 
     public RecordUploadRunnable(RepositorySessionStoreDelegate storeDelegate,
                                 ArrayList<byte[]> outgoing,
+                                ArrayList<String> outgoingGuids,
                                 long byteCount) {
       Logger.info(LOG_TAG, "Preparing record upload for " +
                   outgoing.size() + " records (" +
                   byteCount + " bytes).");
-      this.outgoing  = outgoing;
+      this.outgoing = outgoing;
+      this.outgoingGuids = outgoingGuids;
       this.byteCount = byteCount;
     }
 
@@ -419,7 +453,7 @@ public class Server11RepositorySession extends RepositorySession {
         body = response.jsonObjectBody(); // jsonObjectBody() throws or returns non-null.
       } catch (Exception e) {
         Logger.error(LOG_TAG, "Got exception parsing POST success body.", e);
-        // TODO
+        this.handleRequestError(e);
         return;
       }
 
@@ -441,7 +475,14 @@ public class Server11RepositorySession extends RepositorySession {
         if ((success != null) &&
             (success.size() > 0)) {
           Logger.debug(LOG_TAG, "Successful records: " + success.toString());
-          // TODO: how do we notify without the whole record?
+          for (Object o : success) {
+            try {
+              delegate.onRecordStoreSucceeded((String) o);
+            } catch (ClassCastException e) {
+              Logger.error(LOG_TAG, "Got exception parsing POST success guid.", e);
+              // Not much to be done.
+            }
+          }
 
           long normalizedTimestamp = getNormalizedTimestamp(response);
           Logger.debug(LOG_TAG, "Passing back upload X-Weave-Timestamp: " + normalizedTimestamp);
@@ -450,7 +491,9 @@ public class Server11RepositorySession extends RepositorySession {
         if ((failed != null) &&
             (failed.object.size() > 0)) {
           Logger.debug(LOG_TAG, "Failed records: " + failed.object.toString());
-          // TODO: notify.
+          for (String guid : failed.keySet()) {
+            delegate.onRecordStoreFailed(new RuntimeException("Server failed to POST record with guid " + guid), guid);
+          }
         }
       } catch (UnexpectedJSONException e) {
         Logger.error(LOG_TAG, "Got exception processing success/failed in POST success body.", e);
@@ -462,7 +505,6 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      // TODO: ensure that delegate methods don't get called more than once.
       // TODO: call session.interpretHTTPFailure.
       this.handleRequestError(new HTTPFailureException(response));
     }
@@ -470,8 +512,12 @@ public class Server11RepositorySession extends RepositorySession {
     @Override
     public void handleRequestError(final Exception ex) {
       Logger.warn(LOG_TAG, "Got request error: " + ex, ex);
-      // XXX TODO
-      delegate.onRecordStoreFailed(ex, null);
+
+      recordUploadFailed.set(true);
+      for (String guid : outgoingGuids) {
+        delegate.onRecordStoreFailed(ex, guid);
+      }
+      return;
     }
 
     public class ByteArraysContentProducer implements ContentProducer {
@@ -521,6 +567,15 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void run() {
+      if (recordUploadFailed.get()) {
+        final String message = "Previous record upload failed.  Failing all records and not retrying.";
+        Logger.info(LOG_TAG, message);
+        for (String guid : outgoingGuids) {
+          delegate.onRecordStoreFailed(new RuntimeException(message), guid);
+        }
+        return;
+      }
+
       if (outgoing == null ||
           outgoing.size() == 0) {
         Logger.debug(LOG_TAG, "No items: RecordUploadRunnable returning immediately.");
