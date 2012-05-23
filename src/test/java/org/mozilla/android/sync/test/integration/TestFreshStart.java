@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.android.sync.test.integration.TestBasicFetch.LiveDelegate;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -103,6 +104,12 @@ public class TestFreshStart {
 
   @Test
   public void testLiveFreshStart() throws Exception {
+    // Dummy fetch to abort if internet connection is down.
+    LiveDelegate ld = TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, session.config.infoURL());
+    if (ld.testFailureIgnored) {
+      return;
+    }
+
     assertEquals(TEST_USERNAME, KeyBundle.usernameFromAccount(TEST_ACCOUNT));
     session.config.enabledEngineNames = new HashSet<String>();
     session.config.enabledEngineNames.add("bookmarks");
