@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
+import org.mozilla.android.sync.test.integration.TestBasicFetch.LiveDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -70,7 +71,11 @@ public class TestWipeServer {
     CryptoRecord rec = record.getEnvelope();
     rec.setKeyBundle(syncKeyBundle);
     rec.encrypt();
-    assertNotNull(TestBasicFetch.realLivePut(TEST_USERNAME, TEST_PASSWORD, RECORD_URL, rec).body());
+    LiveDelegate ld = TestBasicFetch.realLivePut(TEST_USERNAME, TEST_PASSWORD, RECORD_URL, rec);
+    if (ld.testFailureIgnored) {
+      return;
+    }
+    assertNotNull(ld.body());
 
     // Make sure record appears in collection guids.
     JSONArray a = (JSONArray) ExtendedJSONObject.parse(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
