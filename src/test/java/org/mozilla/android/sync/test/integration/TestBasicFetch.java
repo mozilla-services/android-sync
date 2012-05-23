@@ -15,9 +15,11 @@ import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
@@ -39,6 +41,8 @@ public class TestBasicFetch {
     protected final String username;
     protected final String password;
 
+    public boolean testFailureIgnored = false;
+
     public LiveDelegate(String username, String password) {
       this.username = username;
       this.password = password;
@@ -56,6 +60,24 @@ public class TestBasicFetch {
         return;
       }
       WaitHelper.getTestWaiter().performNotify();
+    }
+
+    @Override
+    public void handleRequestFailure(SyncStorageResponse response) {
+      BaseResource.consumeEntity(response);
+      WaitHelper.getTestWaiter().performNotify(new RuntimeException());
+    }
+
+    @Override
+    public void handleRequestError(Exception e) {
+      if (e instanceof IOException) {
+        System.out.println("WARNING: TEST FAILURE IGNORED!");
+        testFailureIgnored = true;
+        // Assume that this is because Jenkins doesn't have network access.
+        WaitHelper.getTestWaiter().performNotify();
+        return;
+      }
+      WaitHelper.getTestWaiter().performNotify(e);
     }
 
     public String body() {
@@ -103,16 +125,29 @@ public class TestBasicFetch {
 
   @Test
   public void testRealLiveMetaGlobal() throws Exception {
-    System.out.println(realLiveFetch(USERNAME, PASSWORD, REMOTE_META_URL).body());
+    Logger.LOG_TO_STDOUT = true;
+    LiveDelegate ld = realLiveFetch(USERNAME, PASSWORD, REMOTE_META_URL);
+    if (ld.testFailureIgnored) {
+      return;
+    }
+    System.out.println(ld.body());
   }
 
   @Test
   public void testRealLiveCryptoKeys() throws Exception {
-    System.out.println(realLiveFetch(USERNAME, PASSWORD, REMOTE_KEYS_URL).decrypt(SYNC_KEY));
+    LiveDelegate ld = realLiveFetch(USERNAME, PASSWORD, REMOTE_KEYS_URL);
+    if (ld.testFailureIgnored) {
+      return;
+    }
+    System.out.println(ld.decrypt(SYNC_KEY));
   }
 
   @Test
   public void testRealLiveInfoCollections() throws Exception {
-    System.out.println(realLiveFetch(USERNAME, PASSWORD, REMOTE_INFO_COLLECTIONS_URL).body());
+    LiveDelegate ld = realLiveFetch(USERNAME, PASSWORD, REMOTE_INFO_COLLECTIONS_URL);
+    if (ld.testFailureIgnored) {
+      return;
+    }
+    System.out.println(ld.body());
   }
 }
