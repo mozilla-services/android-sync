@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.gecko.sync.repositories.domain;
+package org.mozilla.gecko.sync.repositories.domain.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -10,6 +10,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
+import org.mozilla.gecko.sync.repositories.domain.ClientRecordFactory;
 
 public class TestClientRecord {
 
