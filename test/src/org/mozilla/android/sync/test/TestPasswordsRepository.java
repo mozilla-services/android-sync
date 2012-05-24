@@ -21,6 +21,7 @@ import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
+import org.mozilla.gecko.sync.repositories.android.PasswordProviderException;
 import org.mozilla.gecko.sync.repositories.android.PasswordsRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -335,13 +336,17 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
       public void createSession(RepositorySessionCreationDelegate delegate,
           Context context) {
         PasswordsRepositorySession session;
-        session = new PasswordsRepositorySession(this, context) {
-          @Override
-          protected synchronized void trackGUID(String guid) {
-            System.out.println("Ignoring trackGUID call: this is a test!");
-          }
-        };
-        delegate.onSessionCreated(session);
+        try {
+          session = new PasswordsRepositorySession(this, context) {
+            @Override
+            protected synchronized void trackGUID(String guid) {
+              System.out.println("Ignoring trackGUID call: this is a test!");
+            }
+          };
+          delegate.onSessionCreated(session);
+        } catch (PasswordProviderException ex) {
+          delegate.onSessionCreateFailed(ex);
+        }
       }
     };
   }

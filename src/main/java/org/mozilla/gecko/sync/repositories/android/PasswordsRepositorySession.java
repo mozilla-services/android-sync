@@ -42,9 +42,14 @@ public class PasswordsRepositorySession extends
     @Override
     public void createSession(RepositorySessionCreationDelegate delegate,
         Context context) {
-      PasswordsRepositorySession session = new PasswordsRepositorySession(PasswordsRepository.this, context);
+      PasswordsRepositorySession session;
       final RepositorySessionCreationDelegate deferredCreationDelegate = delegate.deferredCreationDelegate();
-      deferredCreationDelegate.onSessionCreated(session);
+      try {
+        session = new PasswordsRepositorySession(PasswordsRepository.this, context);
+        deferredCreationDelegate.onSessionCreated(session);
+      } catch (PasswordProviderException e) {
+        deferredCreationDelegate.onSessionCreateFailed(e);
+      }
     }
   }
 
@@ -57,12 +62,18 @@ public class PasswordsRepositorySession extends
 
   private final Context context;
 
-  public PasswordsRepositorySession(Repository repository, Context context) {
+  public PasswordsRepositorySession(Repository repository, Context context) throws PasswordProviderException {
     super(repository);
     this.context = context;
     this.passwordsHelper        = new QueryHelper(context, BrowserContractHelpers.PASSWORDS_CONTENT_URI, LOG_TAG);
     this.deletedPasswordsHelper = new QueryHelper(context, BrowserContractHelpers.DELETED_PASSWORDS_CONTENT_URI, LOG_TAG);
     this.passwordsProvider      = context.getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
+
+    // Android can't throw exceptions across process boundaries, so we'll get null instead.
+    if (this.passwordsProvider == null) {
+      Logger.warn(LOG_TAG, "Null content provider client for passwords layer. MP enabled?");
+      throw new PasswordProviderException();
+    }
   }
 
   private static final String[] GUID_COLS = new String[] { Passwords.GUID };
@@ -683,7 +694,7 @@ public class PasswordsRepositorySession extends
     return rec;
   }
 
-  private static ContentValues getContentValues(Record record) {
+  protected static ContentValues getContentValues(Record record) {
     PasswordRecord rec = (PasswordRecord) record;
 
     ContentValues cv = new ContentValues();
