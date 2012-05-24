@@ -45,7 +45,8 @@ rsync -C -a $JSONLIB/ $ANDROID/base/json-simple/
 # Creating Makefile for Mozilla.
 MKFILE=$ANDROID/base/android-sync-files.mk
 echo "Creating makefile for including in the Mozilla build system at $MKFILE"
-echo "# $WARNING" > $MKFILE
+cat tools/makefile_mpl.txt > $MKFILE
+echo "# $WARNING" >> $MKFILE
 echo "SYNC_JAVA_FILES := $(echo $SOURCEFILES | xargs)" >> $MKFILE
 echo "SYNC_PP_JAVA_FILES := $(echo $PREPROCESS_FILES | xargs)" >> $MKFILE
 echo "SYNC_THIRDPARTY_JAVA_FILES := $(echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES | xargs)" >> $MKFILE
