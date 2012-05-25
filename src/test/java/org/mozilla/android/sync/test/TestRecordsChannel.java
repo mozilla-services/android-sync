@@ -10,14 +10,12 @@ import static org.junit.Assert.assertTrue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.SynchronizerHelpers.FailFetchWBORepository;
 import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionCreationDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionFinishDelegate;
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -41,11 +39,6 @@ public class TestRecordsChannel {
   protected AtomicInteger numFlowCompleted;
   protected AtomicBoolean flowBeginFailed;
   protected AtomicBoolean flowFinishFailed;
-
-  @Before
-  public void setUp() {
-    Logger.LOG_TO_STDOUT = true;
-  }
 
   public void doFlow(final Repository remote, final Repository local) throws Exception {
     WaitHelper.getTestWaiter().performWait(new Runnable() {

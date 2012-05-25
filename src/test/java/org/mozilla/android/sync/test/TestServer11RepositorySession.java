@@ -18,7 +18,6 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockRecord;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.CredentialsSource;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
@@ -156,8 +155,6 @@ public class TestServer11RepositorySession implements CredentialsSource {
 
   @Test
   public void testFetchFailure() throws Exception {
-    Logger.LOG_TO_STDOUT = true;
-
     MockServer server = new MockServer(404, "error");
     Exception e = doSynchronize(server);
     assertNotNull(e);
@@ -166,8 +163,6 @@ public class TestServer11RepositorySession implements CredentialsSource {
 
   @Test
   public void testStorePostSuccessWithFailingRecords() throws Exception {
-    Logger.LOG_TO_STDOUT = true;
-
     MockServer server = new MockServer(200, "{ modified: \" + " + Utils.millisecondsToDecimalSeconds(System.currentTimeMillis()) + ", " +
         "success: []," +
         "failed: { outboundFail2: [] } }");
@@ -178,8 +173,6 @@ public class TestServer11RepositorySession implements CredentialsSource {
 
   @Test
   public void testStorePostFailure() throws Exception {
-    Logger.LOG_TO_STDOUT = true;
-
     MockServer server = new MockServer() {
       public void handle(Request request, Response response) {
         if (request.getMethod().equals("POST")) {

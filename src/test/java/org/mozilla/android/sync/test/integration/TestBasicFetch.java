@@ -15,7 +15,6 @@ import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -125,7 +124,6 @@ public class TestBasicFetch {
 
   @Test
   public void testRealLiveMetaGlobal() throws Exception {
-    Logger.LOG_TO_STDOUT = true;
     LiveDelegate ld = realLiveFetch(USERNAME, PASSWORD, REMOTE_META_URL);
     if (ld.testFailureIgnored) {
       return;
