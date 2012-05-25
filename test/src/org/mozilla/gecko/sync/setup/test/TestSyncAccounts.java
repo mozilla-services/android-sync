@@ -23,6 +23,14 @@ import android.accounts.AccountManagerFuture;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+/**
+ * We can use <code>performWait</code> and <code>performNotify</code> here if we
+ * are careful about threading issues with <code>AsyncTask</code>. We need to
+ * take some care to both create and run certain tasks on the main thread --
+ * moving the object allocation out of the UI thread causes failures!
+ * <p>
+ * @see <a href="http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework">http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework</a>.
+ */
 public class TestSyncAccounts extends AndroidSyncTestCase {
   private static final String TEST_USERNAME  = "testAccount@mozilla.com";
   private static final String TEST_SYNCKEY   = "testSyncKey";
@@ -43,22 +51,30 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   }
 
   public void deleteAccount(final Account account) {
-    final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
-      @Override
-      public void run(AccountManagerFuture<Boolean> future) {
-        try {
-          future.getResult(5L, TimeUnit.SECONDS);
-          performNotify();
-        } catch (Exception e) {
-          performNotify(e);
-        }
-      }
-    };
-
     performWait(new Runnable() {
       @Override
       public void run() {
-        accountManager.removeAccount(account, callback, null);
+        try {
+          runTestOnUiThread(new Runnable() {
+            final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
+              @Override
+              public void run(AccountManagerFuture<Boolean> future) {
+                try {
+                  future.getResult(5L, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                }
+                performNotify();
+              }
+            };
+
+            @Override
+            public void run() {
+              accountManager.removeAccount(account, callback, null);
+            }
+          });
+        } catch (Throwable e) {
+          performNotify(e);
+        }
       }
     });
   }
@@ -68,6 +84,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
       return;
     }
     deleteAccount(account);
+    account = null;
   }
 
   public void testSyncAccountParameters() {
@@ -138,17 +155,27 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     assertTrue(afterCreate > before);
 
     final TestSyncAccounts self = this;
-    final SyncAccounts.AccountsExistTask task = new SyncAccounts.AccountsExistTask() {
-      @Override
-      public void onPostExecute(Boolean result) {
-        self.result = result;
-        performNotify();
-      }
-    };
     performWait(new Runnable() {
       @Override
       public void run() {
-        task.execute(context);
+        try {
+          runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              final SyncAccounts.AccountsExistTask task = new SyncAccounts.AccountsExistTask() {
+                @Override
+                public void onPostExecute(Boolean result) {
+                  self.result = result;
+                  performNotify();
+                }
+              };
+
+              task.execute(context);
+            }
+          });
+        } catch (Throwable e) {
+          performNotify(e);
+        }
       }
     });
 
@@ -165,17 +192,27 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
 
     final TestSyncAccounts self = this;
-    final SyncAccounts.CreateSyncAccountTask task = new SyncAccounts.CreateSyncAccountTask() {
-      @Override
-      public void onPostExecute(Account account) {
-        self.account = account;
-        performNotify();
-      }
-    };
     performWait(new Runnable() {
       @Override
       public void run() {
-        task.execute(syncAccount);
+        try {
+          runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              final SyncAccounts.CreateSyncAccountTask task = new SyncAccounts.CreateSyncAccountTask() {
+                @Override
+                public void onPostExecute(Account account) {
+                  self.account = account;
+                  performNotify();
+                }
+              };
+
+              task.execute(syncAccount);
+            }
+          });
+        } catch (Throwable e) {
+          performNotify(e);
+        }
       }
     });
 
