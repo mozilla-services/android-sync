@@ -12,7 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.CollectionKeys;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -23,7 +22,6 @@ public class TestPersistedCrypto5Keys {
 
   @Before
   public void setUp() {
-    Logger.LOG_TO_STDOUT = true;
     prefs = new MockSharedPreferences();
   }
 

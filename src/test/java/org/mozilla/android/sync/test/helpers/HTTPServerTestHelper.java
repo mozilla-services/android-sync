@@ -27,7 +27,6 @@ public class HTTPServerTestHelper {
   public MockServer server;
 
   public MockServer startHTTPServer(MockServer server) {
-    Logger.LOG_TO_STDOUT = true; // No sense hiding information when we know we're testing.
     BaseResource.rewriteLocalhost = false; // No sense rewriting when we're running the unit tests.
     SyncResourceDelegate.connectionTimeoutInMillis = 1000; // No sense waiting a long time for a local connection.
 

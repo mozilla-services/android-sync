@@ -133,8 +133,6 @@ public class TestServerLocalSynchronizer {
 
   @Test
   public void testLocalSerialStoreErrorsAreIgnored() {
-    Logger.LOG_TO_STDOUT = true;
-
     WBORepository remote = new TrackingWBORepository();
     WBORepository local  = new SerialFailStoreWBORepository();
 
@@ -166,7 +164,6 @@ public class TestServerLocalSynchronizer {
 
   @Test
   public void testRemoteBatchStoreErrorsAreNotIgnoredManyBatches() throws Exception {
-    Logger.LOG_TO_STDOUT = true;
     final int BATCH_SIZE = 3;
 
     Synchronizer synchronizer = getSynchronizer(new BatchFailStoreWBORepository(BATCH_SIZE), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
@@ -178,7 +175,6 @@ public class TestServerLocalSynchronizer {
 
   @Test
   public void testRemoteBatchStoreErrorsAreNotIgnoredOneBigBatch() throws Exception {
-    Logger.LOG_TO_STDOUT = true;
     final int BATCH_SIZE = 20;
 
     Synchronizer synchronizer = getSynchronizer(new BatchFailStoreWBORepository(BATCH_SIZE), new TrackingWBORepository()); // Tracking so we don't send incoming records back.
@@ -190,7 +186,6 @@ public class TestServerLocalSynchronizer {
 
   @Test
   public void testSessionRemoteBeginError() {
-    Logger.LOG_TO_STDOUT = true;
     Synchronizer synchronizer = getSynchronizer(new BeginErrorWBORepository(), new TrackingWBORepository());
     Exception e = doSynchronize(synchronizer);
     assertNotNull(e);

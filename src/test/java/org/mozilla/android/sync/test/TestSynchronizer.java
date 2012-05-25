@@ -50,13 +50,11 @@ public class TestSynchronizer {
 
   @Before
   public void setUp() {
-    Logger.LOG_TO_STDOUT = true;
     WaitHelper.resetTestWaiter();
   }
 
   @After
   public void tearDown() {
-    Logger.LOG_TO_STDOUT = false;
     WaitHelper.resetTestWaiter();
   }
 

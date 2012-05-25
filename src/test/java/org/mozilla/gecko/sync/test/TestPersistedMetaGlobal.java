@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -28,7 +27,6 @@ public class TestPersistedMetaGlobal {
 
   @Before
   public void setUp() {
-    Logger.LOG_TO_STDOUT = true;
     prefs = new MockSharedPreferences();
   }
 
