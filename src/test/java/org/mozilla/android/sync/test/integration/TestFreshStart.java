@@ -29,7 +29,6 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
@@ -57,7 +56,6 @@ public class TestFreshStart {
   public void setUp()
       throws IllegalStateException, NonObjectJSONException, IOException,
       ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException, URISyntaxException {
-    Logger.LOG_TO_STDOUT = true;
 
     keysToUpload = CollectionKeys.generateCollectionKeys();
     keysToUpload.setKeyBundleForCollection("addons", KeyBundle.withRandomKeys());
