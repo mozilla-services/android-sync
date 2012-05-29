@@ -41,6 +41,7 @@ HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,httpclientandro
 mkdir -p $ANDROID/base/json-simple/
 rsync -C -a $HTTPLIB $ANDROID/base/
 rsync -C -a $JSONLIB/ $ANDROID/base/json-simple/
+cp external/json-simple-1.1/LICENSE.txt $ANDROID/base/json-simple/
 
 # Creating Makefile for Mozilla.
 MKFILE=$ANDROID/base/android-sync-files.mk
