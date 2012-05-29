@@ -77,14 +77,15 @@ public class SetupSuccessActivity extends Activity {
   /* Click Handlers */
   public void settingsClickHandler(View target) {
     Intent intent = new Intent(Settings.ACTION_SYNC_SETTINGS);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     startActivity(intent);
   }
 
   public void launchBrowser(View target) {
     Intent intent = new Intent(Intent.ACTION_MAIN);
-    intent.setClassName(GlobalConstants.PRODUCT_PACKAGE, GlobalConstants.PRODUCT_PACKAGE + ".App");
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+    intent.setClassName(GlobalConstants.BROWSER_INTENT_PACKAGE, GlobalConstants.BROWSER_INTENT_CLASS);
+    // Start Fennec as a new task. If Fennec is already running, bring it to the front.
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     startActivity(intent);
   }
 }
