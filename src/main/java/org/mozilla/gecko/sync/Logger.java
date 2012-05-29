@@ -8,7 +8,10 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.mozilla.gecko.sync.log.writers.AndroidLevelCachingLogWriter;
+import org.mozilla.gecko.sync.log.writers.AndroidLogWriter;
 import org.mozilla.gecko.sync.log.writers.LogWriter;
+import org.mozilla.gecko.sync.log.writers.SingleTagLogWriter;
 
 import android.util.Log;
 
@@ -24,6 +27,8 @@ import android.util.Log;
 public class Logger {
   public static final String LOG_TAG = "Logger";
 
+  public static final String GLOBAL_LOG_TAG = "FxSync";
+
   // For extra debugging.
   public static boolean LOG_PERSONAL_INFORMATION = false;
 
@@ -34,6 +39,8 @@ public class Logger {
 
   protected static Set<LogWriter> defaultLogWriters() {
     Set<LogWriter> defaultLogWriters = new LinkedHashSet<LogWriter>();
+    defaultLogWriters.add(new SingleTagLogWriter(GLOBAL_LOG_TAG,
+        new AndroidLevelCachingLogWriter(new AndroidLogWriter())));
     return defaultLogWriters;
   }
 
