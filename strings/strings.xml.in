@@ -70,32 +70,7 @@
   <string name="sync_new_tab">&new_tab;</string>
 
   <!-- Incorrect settings and changing credentials. -->
-  <string name="sync.invalidemail.label">&sync.invalidemail.label;</string>
-  <string name="sync.invalidserver.label">&sync.invalidserver.label;</string>
-  <string name="sync.usernamenotavailable.label">&sync.usernamenotavailable.label;</string>
-  <string name="sync.verifying.label">&sync.verifying.label;</string>
-
-  <string name="sync.change.password.title">&sync.change.password.title;</string>
-  <string name="sync.change.password.acceptbutton">&sync.change.password.acceptbutton;</string>
-  <string name="sync.change.password.status.active">&sync.change.password.status.active;</string>
-  <string name="sync.change.password.status.success">&sync.change.password.status.success;</string>
-  <string name="sync.change.password.status.error">&sync.change.password.status.error;</string>
-  <string name="sync.change.password.introText">&sync.change.password.introText;</string>
-  <string name="sync.change.password.warningText">&sync.change.password.warningText;</string>
-
-  <string name="sync.change.recoverykey.title">&sync.change.recoverykey.title;</string>
-  <string name="sync.change.recoverykey.acceptButton">&sync.change.recoverykey.acceptButton;</string>
-  <string name="sync.change.recoverykey.label">&sync.change.recoverykey.label;</string>
-  <string name="sync.change.recoverykey.error">&sync.change.recoverykey.error;</string>
-  <string name="sync.change.recoverykey.success">&sync.change.recoverykey.success;</string>
-
-  <string name="sync.new.password.introtext">&sync.new.password.introtext;</string>
-  <string name="sync.new.password.label">&sync.new.password.label;</string>
-  <string name="sync.new.password.confirm">&sync.new.password.confirm;</string>
-  <string name="sync.new.password.acceptButton">&sync.new.password.acceptButton;</string>
-  <string name="sync.new.password.status.incorrect">&sync.new.password.status.incorrect;</string>
-
-  <string name="sync.new.recoverykey.title">&sync.new.recoverykey.title;</string>
-  <string name="sync.new.recoverykey.introtext">&sync.new.recoverykey.introtext;</string>
-  <string name="sync.new.recoverykey.acceptbutton">&sync.new.recoverykey.acceptbutton;</string>
-  <string name="sync.new.recoverykey.status.incorrect">&sync.new.recoverykey.status.incorrect;</string>
+  <string name="sync_invalidcreds_label">&sync.invalidcreds.label;</string>
+  <string name="sync_invalidserver_label">&sync.invalidserver.label;</string>
+  <string name="sync_verifying_label">&sync.verifying.label;</string>
+  <string name="sync_new_recoverykey_status_incorrect">&sync.new.recoverykey.status.incorrect;</string>
