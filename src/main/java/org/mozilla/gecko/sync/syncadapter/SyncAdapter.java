@@ -23,6 +23,8 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.log.FileLogManager;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.ConnectionMonitorThread;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
@@ -316,6 +318,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           // Support multiple accounts by mapping each server/account pair to a branch of the
           // shared preferences space.
           String prefsPath = Utils.getPrefsPath(username, serverURL);
+          FileLogManager.startFileLogging(mContext, prefsPath);
+
           self.performSync(username, password, prefsPath, serverURL, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
@@ -324,6 +328,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       }
     };
 
+        // And logging.
+        FileLogManager.cleanFileLogs(mContext);
+        Logger.stopLoggingToAll();
     final Handler handler = null;
     final Runnable fetchAuthToken = new Runnable() {
       @Override
