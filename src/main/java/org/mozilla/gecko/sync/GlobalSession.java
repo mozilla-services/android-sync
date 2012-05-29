@@ -54,7 +54,6 @@ import org.mozilla.gecko.sync.stage.UploadMetaGlobalStage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class GlobalSession implements CredentialsSource, PrefsSource, HttpResponseObserver {
@@ -124,7 +123,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
                        KeyBundle syncKeyBundle,
                        GlobalSessionCallback callback,
                        Context context,
-                       Bundle extras,
                        ClientsDataDelegate clientsDelegate)
                            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
     if (callback == null) {
@@ -135,7 +133,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       throw new SyncConfigurationException();
     }
 
-    Logger.info(LOG_TAG, "GlobalSession initialized with bundle " + extras);
     URI serverURI;
     try {
       serverURI = (serverURL == null) ? null : new URI(serverURL);

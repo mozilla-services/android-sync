@@ -28,7 +28,7 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
   public RealPrefsMockGlobalSession(String clusterURL, String username, String password,
       KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context)
       throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
-    super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, null, syncKeyBundle, callback, context, null, null);
+    super(SyncConfiguration.DEFAULT_USER_API, clusterURL, username, password, null, syncKeyBundle, callback, context, null);
   }
 
   public class MockServerSyncStage extends ServerSyncStage {

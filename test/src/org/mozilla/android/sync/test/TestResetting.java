@@ -166,7 +166,7 @@ public class TestResetting extends AndroidSyncTestCase {
         TEST_CLUSTER_URL,
         TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
-        callback, getApplicationContext(), null, null) {
+        callback, getApplicationContext(), null) {
 
       @Override
       public boolean engineIsEnabled(String engineName,

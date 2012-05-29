@@ -47,7 +47,7 @@ public class TestClientsStage extends AndroidSyncTestCase {
         TEST_CLUSTER_URL,
         TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
-        callback, context, null, delegate);
+        callback, context, delegate);
 
     SyncClientsEngineStage stage = new SyncClientsEngineStage(session) {
 

@@ -31,7 +31,7 @@ public class MockPrefsGlobalSession extends GlobalSession {
       throws SyncConfigurationException, IllegalArgumentException, IOException,
       ParseException, NonObjectJSONException {
     super(userAPI, serverURL, username, password, prefsPath, syncKeyBundle,
-        callback, context, extras, clientsDelegate);
+        callback, context, clientsDelegate);
   }
 
   @Override

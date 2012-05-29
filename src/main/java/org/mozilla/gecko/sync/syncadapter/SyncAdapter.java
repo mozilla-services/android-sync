@@ -316,8 +316,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           // Support multiple accounts by mapping each server/account pair to a branch of the
           // shared preferences space.
           String prefsPath = Utils.getPrefsPath(username, serverURL);
-          self.performSync(account, extras, authority, provider, syncResult,
-              username, password, prefsPath, serverURL, keyBundle);
+          self.performSync(username, password, prefsPath, serverURL, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
           return;
@@ -383,12 +382,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
    * @throws ParseException
    * @throws IOException
    */
-  protected void performSync(Account account, Bundle extras, String authority,
-                             ContentProviderClient provider,
-                             SyncResult syncResult,
-                             String username, String password,
+  protected void performSync(String username,
+                             String password,
                              String prefsPath,
-                             String serverURL, KeyBundle keyBundle)
+                             String serverURL,
+                             KeyBundle keyBundle)
                                  throws NoSuchAlgorithmException,
                                         SyncConfigurationException,
                                         IllegalArgumentException,
@@ -400,8 +398,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
                                                     serverURL, username, password, prefsPath,
-                                                    keyBundle, this, this.mContext, extras, this);
-
+                                                    keyBundle, this, this.mContext, this);
     globalSession.start();
   }
 
