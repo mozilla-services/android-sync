@@ -46,6 +46,23 @@
   <!-- Firefox SyncAdapter Settings Screen -->
   <string name="sync_settings_options">&sync.settings.options.label;</string>
   <string name="sync_settings_summary_pair">&sync.summary.pair.label;</string>
+
+  <!-- Configure Logging -->
+  <string name="sync_configure_logging_title">&sync.configure.logging.title.label;</string>
+  <string name="sync_configure_logging_summary">&sync.configure.logging.summary.label;</string>
+  <string name="sync_configure_logging_level0_title">&sync.configure.logging.level0.title.label;</string>
+  <string name="sync_configure_logging_level1_title">&sync.configure.logging.level1.title.label;</string>
+  <string name="sync_configure_logging_level2_title">&sync.configure.logging.level2.title.label;</string>
+  <string name="sync_configure_logging_level3_title">&sync.configure.logging.level3.title.label;</string>
+  <string name="sync_configure_logging_share_logs_title">&sync.configure.logging.share.logs.title.label;</string>
+  <string name="sync_configure_logging_share_all_logs_title">&sync.configure.logging.share.all.logs.title.label;</string>
+  <string name="sync_configure_logging_delete_logs_title">&sync.configure.logging.delete.logs.title.label;</string>
+  <string name="sync_configure_logging_delete_all_logs_title">&sync.configure.logging.delete.all.logs.title.label;</string>
+  <string name="sync_configure_logging_share_logs_toast">&sync.configure.logging.share.logs.toast.label;</string>
+  <string name="sync_configure_logging_delete_logs_toast">&sync.configure.logging.delete.logs.toast.label;</string>
+  <string name="sync_configure_logging_delete_all_logs_toast">&sync.configure.logging.delete.all.logs.toast.label;</string>
+  <string name="sync_configure_logging_delete_all_logs_confirm">&sync.configure.logging.delete.all.logs.confirm.label;</string>
+
   <!-- Common text -->
   <string name="sync_button_cancel">&sync.button.cancel.label;</string>
   <string name="sync_button_connect">&sync.button.connect.label;</string>
