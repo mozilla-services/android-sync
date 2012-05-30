@@ -108,11 +108,6 @@ public class TestSynchronizer {
       }
 
       @Override
-      public void onSessionError(Exception e) {
-        fail("Should be no session error.");
-      }
-
-      @Override
       public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
         fail("Sync should not be skipped.");
       }

@@ -131,6 +131,7 @@ public class RecordsChannel implements
         failed = sink;
       }
       this.delegate.onFlowBeginFailed(this, new SessionNotBegunException(failed));
+      return;
     }
     sink.setStoreDelegate(this);
     numFetchFailed.set(0);
@@ -238,6 +239,7 @@ public class RecordsChannel implements
         sink.begin(this);
       } catch (InvalidSessionTransitionException e) {
         onBeginFailed(e);
+        return;
       }
     }
     if (session == sink) {
