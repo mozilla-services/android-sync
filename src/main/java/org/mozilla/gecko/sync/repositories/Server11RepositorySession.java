@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.JSONArray;
@@ -22,6 +21,8 @@ import org.mozilla.gecko.sync.DelayedWorkTracker;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Server11PreviousPostFailedException;
+import org.mozilla.gecko.sync.Server11RecordPostFailedException;
 import org.mozilla.gecko.sync.UnexpectedJSONException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
@@ -313,6 +314,7 @@ public class Server11RepositorySession extends RepositorySession {
   }
 
   protected Object recordsBufferMonitor = new Object();
+
   /**
    * Data of outbound records.
    * <p>
@@ -322,8 +324,9 @@ public class Server11RepositorySession extends RepositorySession {
    * Access should be synchronized on <code>recordsBufferMonitor</code>.
    */
   protected ArrayList<byte[]> recordsBuffer = new ArrayList<byte[]>();
+
   /**
-   * Guids of outbound records.
+   * GUIDs of outbound records.
    * <p>
    * Used to fail entire outgoing uploads.
    * <p>
@@ -400,11 +403,15 @@ public class Server11RepositorySession extends RepositorySession {
 
   /**
    * <code>true</code> if a record upload has failed this session.
+   * <p>
+   * This is only set in begin and possibly by <code>RecordUploadRunnable</code>.
+   * Since those are executed serially, we can use an unsynchronized
+   * volatile boolean here.
    */
-  protected final AtomicBoolean recordUploadFailed = new AtomicBoolean(false);
+  protected volatile boolean recordUploadFailed;
 
   public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
-    recordUploadFailed.set(false);
+    recordUploadFailed = false;
     super.begin(delegate);
   }
 
@@ -471,7 +478,6 @@ public class Server11RepositorySession extends RepositorySession {
 
       try {
         JSONArray          success = body.getArray("success");
-        ExtendedJSONObject failed  = body.getObject("failed");
         if ((success != null) &&
             (success.size() > 0)) {
           Logger.debug(LOG_TAG, "Successful records: " + success.toString());
@@ -488,13 +494,18 @@ public class Server11RepositorySession extends RepositorySession {
           Logger.debug(LOG_TAG, "Passing back upload X-Weave-Timestamp: " + normalizedTimestamp);
           bumpUploadTimestamp(normalizedTimestamp);
         }
+        success = null; // Want to GC this ASAP.
+
+        ExtendedJSONObject failed  = body.getObject("failed");
         if ((failed != null) &&
             (failed.object.size() > 0)) {
           Logger.debug(LOG_TAG, "Failed records: " + failed.object.toString());
+          Exception ex = new Server11RecordPostFailedException();
           for (String guid : failed.keySet()) {
-            delegate.onRecordStoreFailed(new RuntimeException("Server failed to POST record with guid " + guid), guid);
+            delegate.onRecordStoreFailed(ex, guid);
           }
         }
+        failed = null; // Want to GC this ASAP.
       } catch (UnexpectedJSONException e) {
         Logger.error(LOG_TAG, "Got exception processing success/failed in POST success body.", e);
         // TODO
@@ -513,8 +524,10 @@ public class Server11RepositorySession extends RepositorySession {
     public void handleRequestError(final Exception ex) {
       Logger.warn(LOG_TAG, "Got request error: " + ex, ex);
 
-      recordUploadFailed.set(true);
-      for (String guid : outgoingGuids) {
+      recordUploadFailed = true;
+      ArrayList<String> failedOutgoingGuids = outgoingGuids;
+      outgoingGuids = null; // Want to GC this ASAP.
+      for (String guid : failedOutgoingGuids) {
         delegate.onRecordStoreFailed(ex, guid);
       }
       return;
@@ -567,11 +580,11 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void run() {
-      if (recordUploadFailed.get()) {
-        final String message = "Previous record upload failed.  Failing all records and not retrying.";
-        Logger.info(LOG_TAG, message);
+      if (recordUploadFailed) {
+        Logger.info(LOG_TAG, "Previous record upload failed.  Failing all records and not retrying.");
+        Exception ex = new Server11PreviousPostFailedException();
         for (String guid : outgoingGuids) {
-          delegate.onRecordStoreFailed(new RuntimeException(message), guid);
+          delegate.onRecordStoreFailed(ex, guid);
         }
         return;
       }
