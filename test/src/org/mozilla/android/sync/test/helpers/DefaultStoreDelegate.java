@@ -6,7 +6,6 @@ package org.mozilla.android.sync.test.helpers;
 import java.util.concurrent.ExecutorService;
 
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
-import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class DefaultStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   
