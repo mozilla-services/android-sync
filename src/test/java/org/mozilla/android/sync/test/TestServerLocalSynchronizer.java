@@ -8,7 +8,11 @@ import java.util.ArrayList;
 
 import org.junit.Test;
 import org.mozilla.android.sync.test.SynchronizerHelpers.BatchFailStoreWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.BeginErrorWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.BeginFailedException;
 import org.mozilla.android.sync.test.SynchronizerHelpers.FailFetchWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.FinishErrorWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.FinishFailedException;
 import org.mozilla.android.sync.test.SynchronizerHelpers.SerialFailStoreWBORepository;
 import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
 import org.mozilla.android.sync.test.helpers.WBORepository;
@@ -181,4 +185,52 @@ public class TestServerLocalSynchronizer {
     assertEquals(StoreFailedException.class, e.getClass());
   }
 
+  @Test
+  public void testSessionRemoteBeginError() {
+    Logger.LOG_TO_STDOUT = true;
+    Synchronizer synchronizer = getSynchronizer(new BeginErrorWBORepository(), new TrackingWBORepository());
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(BeginFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testSessionLocalBeginError() {
+    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new BeginErrorWBORepository());
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(BeginFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testSessionRemoteFinishError() {
+    Synchronizer synchronizer = getSynchronizer(new FinishErrorWBORepository(), new TrackingWBORepository());
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(FinishFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testSessionLocalFinishError() {
+    Synchronizer synchronizer = getSynchronizer(new TrackingWBORepository(), new FinishErrorWBORepository());
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(FinishFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testSessionBothBeginError() {
+    Synchronizer synchronizer = getSynchronizer(new BeginErrorWBORepository(), new BeginErrorWBORepository());
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(BeginFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testSessionBothFinishError() {
+    Synchronizer synchronizer = getSynchronizer(new FinishErrorWBORepository(), new FinishErrorWBORepository());
+    Exception e = doSynchronize(synchronizer);
+    assertNotNull(e);
+    assertEquals(FinishFailedException.class, e.getClass());
+  }
 }

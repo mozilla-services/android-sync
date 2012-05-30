@@ -59,10 +59,6 @@ public class Synchronizer implements SynchronizerSessionDelegate {
     this.synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), lastException, reason);
   }
 
-  @Override
-  public void onSessionError(Exception e) {
-  }
-
   public Repository repositoryA;
   public Repository repositoryB;
   public RepositorySessionBundle bundleA;

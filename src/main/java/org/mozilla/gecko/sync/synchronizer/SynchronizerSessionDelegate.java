@@ -10,6 +10,4 @@ public interface SynchronizerSessionDelegate {
   public void onSynchronized(SynchronizerSession session);
   public void onSynchronizeFailed(SynchronizerSession session, Exception lastException, String reason);
   public void onSynchronizeSkipped(SynchronizerSession synchronizerSession);
-
-  public void onSessionError(Exception e);
 }

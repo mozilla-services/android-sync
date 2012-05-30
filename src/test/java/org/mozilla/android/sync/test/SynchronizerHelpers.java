@@ -6,10 +6,14 @@ import java.util.concurrent.ExecutorService;
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
+import org.mozilla.gecko.sync.repositories.InactiveSessionException;
+import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
 import org.mozilla.gecko.sync.repositories.StoreFailedException;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
@@ -181,8 +185,51 @@ public class SynchronizerHelpers {
     public synchronized boolean shouldTrack() {
       return true;
     }
+  }
 
-    public void store(final Record record) throws NoStoreDelegateException {
+  public static class BeginFailedException extends Exception {
+    private static final long serialVersionUID = -2349459755976915096L;
+  }
+
+  public static class FinishFailedException extends Exception {
+    private static final long serialVersionUID = -4644528423867070934L;
+  }
+
+  public static class BeginErrorWBORepository extends TrackingWBORepository {
+    @Override
+    public void createSession(RepositorySessionCreationDelegate delegate,
+                              Context context) {
+      delegate.deferredCreationDelegate().onSessionCreated(new BeginErrorWBORepositorySession(this));
+    }
+
+    public class BeginErrorWBORepositorySession extends WBORepositorySession {
+      public BeginErrorWBORepositorySession(WBORepository repository) {
+        super(repository);
+      }
+
+      @Override
+      public void begin(RepositorySessionBeginDelegate delegate) throws InvalidSessionTransitionException {
+        delegate.onBeginFailed(new BeginFailedException());
+      }
+    }
+  }
+
+  public static class FinishErrorWBORepository extends TrackingWBORepository {
+    @Override
+    public void createSession(RepositorySessionCreationDelegate delegate,
+                              Context context) {
+      delegate.deferredCreationDelegate().onSessionCreated(new FinishErrorWBORepositorySession(this));
+    }
+
+    public class FinishErrorWBORepositorySession extends WBORepositorySession {
+      public FinishErrorWBORepositorySession(WBORepository repository) {
+        super(repository);
+      }
+
+      @Override
+      public void finish(final RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
+        delegate.onFinishFailed(new FinishFailedException());
+      }
     }
   }
 }
