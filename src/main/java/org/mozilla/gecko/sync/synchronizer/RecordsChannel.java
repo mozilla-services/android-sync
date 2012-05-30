@@ -73,8 +73,8 @@ public class RecordsChannel implements
   private long timestamp;
   private long fetchEnd = -1;
 
-  public final AtomicInteger numFetchFailed = new AtomicInteger();
-  public final AtomicInteger numStoreFailed = new AtomicInteger();
+  private final AtomicInteger numFetchFailed = new AtomicInteger();
+  private final AtomicInteger numStoreFailed = new AtomicInteger();
 
   public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate) {
     this.source    = source;
@@ -103,6 +103,22 @@ public class RecordsChannel implements
 
   protected boolean isReady() {
     return source.isActive() && sink.isActive();
+  }
+
+  /**
+   * Get the number of fetch failures recorded so far.
+   * @return number of fetch failures.
+   */
+  public int getFetchFailureCount() {
+    return numFetchFailed.get();
+  }
+
+  /**
+   * Get the number of store failures recorded so far.
+   * @return number of store failures.
+   */
+  public int getStoreFailureCount() {
+    return numStoreFailed.get();
   }
 
   /**

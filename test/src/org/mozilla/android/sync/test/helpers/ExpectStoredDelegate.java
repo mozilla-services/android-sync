@@ -7,8 +7,6 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import junit.framework.AssertionFailedError;
 
-import org.mozilla.gecko.sync.repositories.domain.Record;
-
 public class ExpectStoredDelegate extends DefaultStoreDelegate {
   String expectedGUID;
   String storedGuid;

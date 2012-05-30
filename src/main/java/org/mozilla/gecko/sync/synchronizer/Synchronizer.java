@@ -28,51 +28,40 @@ import android.util.Log;
  * updated bundle information.
  */
 public class Synchronizer implements SynchronizerSessionDelegate {
+  public static final String LOG_TAG = "SyncDelSDelegate";
+
   protected String configSyncID; // Used to pass syncID from load() back into save().
 
-  /**
-   * I translate the fine-grained feedback of a SynchronizerSessionDelegate into
-   * the coarse-grained feedback of a SynchronizerDelegate.
-   */
-    private static final String LOG_TAG = "SyncDelSDelegate";
-    private SynchronizerDelegate synchronizerDelegate;
+  protected SynchronizerDelegate synchronizerDelegate;
 
-    @Override
-    public void onInitialized(SynchronizerSession session) {
-      session.synchronize();
-    }
+  @Override
+  public void onInitialized(SynchronizerSession session) {
+    session.synchronize();
+  }
 
-    @Override
-    public void onSynchronized(SynchronizerSession synchronizerSession) {
-      Log.d(LOG_TAG, "Got onSynchronized.");
-      Log.d(LOG_TAG, "Notifying SynchronizerDelegate.");
-      this.synchronizerDelegate.onSynchronized(synchronizerSession.getSynchronizer());
-    }
+  @Override
+  public void onSynchronized(SynchronizerSession synchronizerSession) {
+    Log.d(LOG_TAG, "Got onSynchronized.");
+    Log.d(LOG_TAG, "Notifying SynchronizerDelegate.");
+    this.synchronizerDelegate.onSynchronized(synchronizerSession.getSynchronizer());
+  }
 
-    @Override
-    public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
-      Log.d(LOG_TAG, "Got onSynchronizeSkipped.");
-      Log.d(LOG_TAG, "Notifying SynchronizerDelegate as if on success.");
-      this.synchronizerDelegate.onSynchronized(synchronizerSession.getSynchronizer());
-    }
+  @Override
+  public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
+    Log.d(LOG_TAG, "Got onSynchronizeSkipped.");
+    Log.d(LOG_TAG, "Notifying SynchronizerDelegate as if on success.");
+    this.synchronizerDelegate.onSynchronized(synchronizerSession.getSynchronizer());
+  }
 
-    @Override
-    public void onSynchronizeFailed(SynchronizerSession session,
-                                    Exception lastException, String reason) {
-      this.synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), lastException, reason);
-    }
+  @Override
+  public void onSynchronizeFailed(SynchronizerSession session,
+      Exception lastException, String reason) {
+    this.synchronizerDelegate.onSynchronizeFailed(session.getSynchronizer(), lastException, reason);
+  }
 
-    @Override
-    public void onFetchError(Exception e) {
-    }
-
-    @Override
-    public void onStoreError(Exception e) {
-    }
-
-    @Override
-    public void onSessionError(Exception e) {
-    }
+  @Override
+  public void onSessionError(Exception e) {
+  }
 
   public Repository repositoryA;
   public Repository repositoryB;
@@ -80,12 +69,18 @@ public class Synchronizer implements SynchronizerSessionDelegate {
   public RepositorySessionBundle bundleB;
 
   /**
+   * Fetch a synchronizer session appropriate for this <code>Synchronizer</code>
+   */
+  public SynchronizerSession getSynchronizerSession() {
+    return new SynchronizerSession(this, this);
+  }
+
+  /**
    * Start synchronizing, calling delegate's callback methods.
    */
   public void synchronize(Context context, SynchronizerDelegate delegate) {
-    // SynchronizerDelegateSessionDelegate sessionDelegate = new SynchronizerDelegateSessionDelegate(delegate);
     this.synchronizerDelegate = delegate;
-    SynchronizerSession session = new SynchronizerSession(this, this);
+    SynchronizerSession session = getSynchronizerSession();
     session.init(context, bundleA, bundleB);
   }
 
