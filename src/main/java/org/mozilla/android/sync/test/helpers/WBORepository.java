@@ -44,8 +44,8 @@ public class WBORepository extends Repository {
 
   public class WBORepositorySession extends StoreTrackingRepositorySession {
 
-    private WBORepository wboRepository;
-    private ExecutorService delegateExecutor = Executors.newSingleThreadExecutor();
+    protected WBORepository wboRepository;
+    protected ExecutorService delegateExecutor = Executors.newSingleThreadExecutor();
     public ConcurrentHashMap<String, Record> wbos;
 
     public WBORepositorySession(WBORepository repository) {
@@ -135,7 +135,7 @@ public class WBORepository extends Repository {
       if (existing != null &&
           existing.lastModified > record.lastModified) {
         Logger.debug(LOG_TAG, "Local record is newer. Not storing.");
-        delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
+        delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record.guid);
         return;
       }
       if (existing != null) {
@@ -150,7 +150,7 @@ public class WBORepository extends Repository {
       wbos.put(record.guid, toStore);
 
       trackRecord(toStore);
-      delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record);
+      delegate.deferredStoreDelegate(delegateExecutor).onRecordStoreSucceeded(record.guid);
     }
 
     @Override

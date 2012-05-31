@@ -1,6 +1,7 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */package org.mozilla.android.sync.test.helpers.simple;
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
+package org.mozilla.android.sync.test.helpers.simple;
 
 import java.util.concurrent.ExecutorService;
 
@@ -9,7 +10,7 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDeleg
 
 public abstract class SimpleSuccessStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   @Override
-  public void onRecordStoreFailed(Exception ex) {
+  public void onRecordStoreFailed(Exception ex, String guid) {
     performNotify("Store failed", ex);
   }
 

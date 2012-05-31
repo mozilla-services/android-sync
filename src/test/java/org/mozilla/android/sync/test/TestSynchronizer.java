@@ -11,8 +11,12 @@ import static org.junit.Assert.fail;
 
 import java.util.Date;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WBORepository;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
@@ -23,6 +27,7 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerSessionDelegate;
 import android.content.Context;
 
 public class TestSynchronizer {
+  public static final String LOG_TAG = "TestSynchronizer";
 
   public static void assertInRangeInclusive(long earliest, long value, long latest) {
     assertTrue(earliest <= value);
@@ -41,6 +46,18 @@ public class TestSynchronizer {
     assertEquals(a.lastModified, b.lastModified);
     assertEquals(a.deleted,      b.deleted);
     assertEquals(a.collection,   b.collection);
+  }
+
+  @Before
+  public void setUp() {
+    Logger.LOG_TO_STDOUT = true;
+    WaitHelper.resetTestWaiter();
+  }
+
+  @After
+  public void tearDown() {
+    Logger.LOG_TO_STDOUT = false;
+    WaitHelper.resetTestWaiter();
   }
 
   @Test
@@ -66,7 +83,7 @@ public class TestSynchronizer {
     synchronizer.repositoryA = repoA;
     synchronizer.repositoryB = repoB;
     SynchronizerSession syncSession = new SynchronizerSession(synchronizer, new SynchronizerSessionDelegate() {
-      
+
       @Override
       public void onInitialized(SynchronizerSession session) {
         assertFalse(repoA.wbos.containsKey(guidB));
@@ -78,36 +95,16 @@ public class TestSynchronizer {
 
       @Override
       public void onSynchronized(SynchronizerSession session) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         synchronized (monitor) {
           monitor.notify();
         }
       }
-      
+
       @Override
       public void onSynchronizeFailed(SynchronizerSession session,
                                       Exception lastException, String reason) {
         fail("Synchronization should not fail.");
-      }
-      
-      @Override
-      public void onStoreError(Exception e) {
-        fail("Should be no store error.");
-      }
-      
-      @Override
-      public void onSessionError(Exception e) {
-        fail("Should be no session error.");
-      }
-      
-      @Override
-      public void onFetchError(Exception e) {
-        fail("Should be no fetch error.");
-      }
-
-      @Override
-      public void onSynchronizeAborted(SynchronizerSession synchronizerSession) {
-        fail("Sync should not be aborted.");
       }
 
       @Override
@@ -139,7 +136,7 @@ public class TestSynchronizer {
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
     recordEquals(aa, ba);
     recordEquals(ab, bb);
-    System.out.println("Got to end of test.");
+    Logger.trace(LOG_TAG, "Got to end of test.");
   }
 
   public abstract class SuccessfulSynchronizerDelegate implements SynchronizerDelegate {
@@ -150,11 +147,6 @@ public class TestSynchronizer {
     public void onSynchronizeFailed(Synchronizer synchronizer,
                                     Exception lastException, String reason) {
       fail("Should not fail.");
-    }
-
-    @Override
-    public void onSynchronizeAborted(Synchronizer synchronize) {
-      fail("Should not abort.");
     }
   }
 
@@ -175,7 +167,7 @@ public class TestSynchronizer {
     final SuccessfulSynchronizerDelegate delegateOne = new SuccessfulSynchronizerDelegate() {
       @Override
       public void onSynchronized(Synchronizer synchronizer) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
         synchronized (monitor) {
@@ -186,7 +178,7 @@ public class TestSynchronizer {
     final SuccessfulSynchronizerDelegate delegateTwo = new SuccessfulSynchronizerDelegate() {
       @Override
       public void onSynchronized(Synchronizer synchronizer) {
-        System.out.println("onSynchronized. Success!");
+        Logger.trace(LOG_TAG, "onSynchronized. Success!");
         syncAOne = synchronizer.bundleA.getTimestamp();
         syncBOne = synchronizer.bundleB.getTimestamp();
         synchronized (monitor) {
@@ -203,10 +195,10 @@ public class TestSynchronizer {
       }
     }
     long now = new Date().getTime();
-    System.out.println("Earliest is " + earliest);
-    System.out.println("syncAOne is " + delegateOne.syncAOne);
-    System.out.println("syncBOne is " + delegateOne.syncBOne);
-    System.out.println("Now: " + now);
+    Logger.trace(LOG_TAG, "Earliest is " + earliest);
+    Logger.trace(LOG_TAG, "syncAOne is " + delegateOne.syncAOne);
+    Logger.trace(LOG_TAG, "syncBOne is " + delegateOne.syncBOne);
+    Logger.trace(LOG_TAG, "Now: " + now);
     assertInRangeInclusive(earliest, delegateOne.syncAOne, now);
     assertInRangeInclusive(earliest, delegateOne.syncBOne, now);
     try {
@@ -223,15 +215,15 @@ public class TestSynchronizer {
       }
     }
     now = new Date().getTime();
-    System.out.println("Earliest is " + earliest);
-    System.out.println("syncAOne is " + delegateTwo.syncAOne);
-    System.out.println("syncBOne is " + delegateTwo.syncBOne);
-    System.out.println("Now: " + now);
+    Logger.trace(LOG_TAG, "Earliest is " + earliest);
+    Logger.trace(LOG_TAG, "syncAOne is " + delegateTwo.syncAOne);
+    Logger.trace(LOG_TAG, "syncBOne is " + delegateTwo.syncBOne);
+    Logger.trace(LOG_TAG, "Now: " + now);
     assertInRangeInclusive(earliest, delegateTwo.syncAOne, now);
     assertInRangeInclusive(earliest, delegateTwo.syncBOne, now);
     assertTrue(delegateTwo.syncAOne > delegateOne.syncAOne);
     assertTrue(delegateTwo.syncBOne > delegateOne.syncBOne);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 
   private Synchronizer getTestSynchronizer(long tsA, long tsB) {
@@ -275,7 +267,7 @@ public class TestSynchronizer {
 
         @Override
         public void onSynchronized(Synchronizer synchronizer) {
-          System.out.println("onSynchronized. Success!");
+          Logger.trace(LOG_TAG, "onSynchronized. Success!");
           synchronized (monitor) {
             monitor.notify();
           }
@@ -285,11 +277,6 @@ public class TestSynchronizer {
         public void onSynchronizeFailed(Synchronizer synchronizer,
                                         Exception lastException, String reason) {
           fail("Sync should not fail.");
-        }
-
-        @Override
-        public void onSynchronizeAborted(Synchronizer synchronize) {
-          fail("Sync should not be aborted.");
         }
       });
       try {
@@ -312,7 +299,7 @@ public class TestSynchronizer {
     assertNull(ba);
     recordEquals(aa, guidA, lastModifiedA, deleted, collection);
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 
 
@@ -344,7 +331,7 @@ public class TestSynchronizer {
 
         @Override
         public void onSynchronized(Synchronizer synchronizer) {
-          System.out.println("onSynchronized. Success!");
+          Logger.trace(LOG_TAG, "onSynchronized. Success!");
           synchronized (monitor) {
             monitor.notify();
           }
@@ -354,11 +341,6 @@ public class TestSynchronizer {
         public void onSynchronizeFailed(Synchronizer synchronizer,
                                         Exception lastException, String reason) {
           fail("Sync should not fail.");
-        }
-
-        @Override
-        public void onSynchronizeAborted(Synchronizer synchronize) {
-          fail("Sync should not be aborted.");
         }
       });
       try {
@@ -383,6 +365,6 @@ public class TestSynchronizer {
     recordEquals(bb, guidB, lastModifiedB, deleted, collection);
     recordEquals(aa, ba);
     recordEquals(ab, bb);
-    System.out.println("Reached end of test.");
+    Logger.trace(LOG_TAG, "Reached end of test.");
   }
 }

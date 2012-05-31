@@ -6,7 +6,6 @@ package org.mozilla.android.sync.test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
@@ -232,7 +231,8 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     });
 
     // Furthermore, the children of that folder should be correct in the DB.
-    final long folderId = storedIDs.get(folderGUID).longValue();
+    ContentResolver cr = getApplicationContext().getContentResolver();
+    final long folderId = fennecGetFolderId(cr, folderGUID);
     Log.d(getName(), "Folder " + folderGUID + " => " + folderId);
 
     assertChildrenAreDirect(folderId, new String[] {
@@ -293,7 +293,8 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     Log.d(getName(), "Storing A, B, folder...");
     storeRecordsInSession(repo, abf, null);
 
-    long folderID = storedIDs.get(folderGUID);
+    ContentResolver cr = getApplicationContext().getContentResolver();
+    final long folderID = fennecGetFolderId(cr, folderGUID);
     assertChildrenAreOrdered(repo, folderGUID, abRecords);
     assertChildrenAreDirect(folderID, abGUIDs);
 
@@ -389,7 +390,8 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     storeRecordsInSession(repo, abfcd, null);
 
     // Verify that it worked.
-    long folderID = storedIDs.get(folderGUID);
+    ContentResolver cr = getApplicationContext().getContentResolver();
+    final long folderID = fennecGetFolderId(cr, folderGUID);
     assertChildrenAreOrdered(repo, folderGUID, abcdRecords);
     assertChildrenAreDirect(folderID, abcdGUIDs);
 
@@ -427,7 +429,6 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     // Verify that the unsorted bookmarks folder contains its child and the
     // first and fourth children of the now-deleted folder.
     // Also verify that the folder is gone.
-    ContentResolver cr = getApplicationContext().getContentResolver();
     long unsortedID = fennecGetFolderId(cr, "unfiled");
     long toolbarID  = fennecGetFolderId(cr, "toolbar");
     String[] expected = new String[] { unsortedA.guid, bookmarkA.guid, bookmarkD.guid };
@@ -619,8 +620,6 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     }
   }
 
-  final HashMap<String, Long> storedIDs = new HashMap<String, Long>();
-
   /**
    * Create a new session for the given repository, storing each record
    * from the provided array. Notifies on failure or success.
@@ -651,9 +650,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
           }
 
           @Override
-          public void onRecordStoreSucceeded(Record record) {
-            // Great.
-            storedIDs.put(record.guid, record.androidID);
+          public void onRecordStoreSucceeded(String guid) {
           }
         };
         session.setStoreDelegate(storeDelegate);

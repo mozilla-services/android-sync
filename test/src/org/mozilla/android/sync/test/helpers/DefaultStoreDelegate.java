@@ -6,17 +6,16 @@ package org.mozilla.android.sync.test.helpers;
 import java.util.concurrent.ExecutorService;
 
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDelegate;
-import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class DefaultStoreDelegate extends DefaultDelegate implements RepositorySessionStoreDelegate {
   
   @Override
-  public void onRecordStoreFailed(Exception ex) {
+  public void onRecordStoreFailed(Exception ex, String guid) {
     performNotify("Store failed", ex);
   }
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(String guid) {
     performNotify("DefaultStoreDelegate used", null);
   }
 
@@ -31,21 +30,21 @@ public class DefaultStoreDelegate extends DefaultDelegate implements RepositoryS
     return new RepositorySessionStoreDelegate() {
 
       @Override
-      public void onRecordStoreSucceeded(final Record record) {
+      public void onRecordStoreSucceeded(final String guid) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onRecordStoreSucceeded(record);
+            self.onRecordStoreSucceeded(guid);
           }
         });
       }
 
       @Override
-      public void onRecordStoreFailed(final Exception ex) {
+      public void onRecordStoreFailed(final Exception ex, final String guid) {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            self.onRecordStoreFailed(ex);
+            self.onRecordStoreFailed(ex, guid);
           }
         });
       }
