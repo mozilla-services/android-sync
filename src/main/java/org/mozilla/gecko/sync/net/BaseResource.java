@@ -61,6 +61,8 @@ public class BaseResource implements Resource {
   private static final int MAX_TOTAL_CONNECTIONS     = 20;
   private static final int MAX_CONNECTIONS_PER_ROUTE = 10;
 
+  private boolean retry = true;
+
   public static boolean rewriteLocalhost = true;
 
   private static final String LOG_TAG = "BaseResource";
@@ -71,6 +73,7 @@ public class BaseResource implements Resource {
   public    ResourceDelegate delegate;
   protected HttpRequestBase request;
   public String charset = "utf-8";
+
 
   protected static WeakReference<HttpResponseObserver> httpResponseObserver = null;
 
@@ -249,11 +252,24 @@ public class BaseResource implements Resource {
     } catch (ClientProtocolException e) {
       delegate.handleHttpProtocolException(e);
     } catch (IOException e) {
-      delegate.handleHttpIOException(e);
+      Logger.debug(LOG_TAG, "I/O exception returned from execute.");
+      if (!retry) {
+        delegate.handleHttpIOException(e);
+      } else {
+        retry = false;
+        Logger.debug(LOG_TAG, "Retrying request...");
+        this.execute();
+      }
     } catch (Exception e) {
       // Bug 740731: Don't let an exception fall through. Wrapping isn't
       // optimal, but often the exception is treated as an Exception anyway.
-      delegate.handleHttpIOException(new IOException(e));
+      if (!retry) {
+        delegate.handleHttpIOException(new IOException(e));
+      } else {
+        retry = false;
+        Logger.debug(LOG_TAG, "Retrying request...");
+        this.execute();
+      }
     }
   }
 
