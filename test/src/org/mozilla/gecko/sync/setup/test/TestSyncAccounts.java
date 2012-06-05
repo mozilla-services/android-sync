@@ -32,10 +32,11 @@ import android.content.SharedPreferences;
  * @see <a href="http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework">http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework</a>.
  */
 public class TestSyncAccounts extends AndroidSyncTestCase {
-  private static final String TEST_USERNAME  = "testAccount@mozilla.com";
-  private static final String TEST_SYNCKEY   = "testSyncKey";
-  private static final String TEST_PASSWORD  = "testPassword";
-  private static final String TEST_SERVERURL = "testServerURL";
+  private static final String TEST_USERNAME   = "testAccount@mozilla.com";
+  private static final String TEST_SYNCKEY    = "testSyncKey";
+  private static final String TEST_PASSWORD   = "testPassword";
+  private static final String TEST_SERVERURL  = "test.server.url/";
+  private static final String TEST_CLUSTERURL = "test.cluster.url/";
 
   private Account account;
   private Context context;
@@ -248,17 +249,15 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   }
 
   public void testClusterURL() throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    final String TEST_SERVER_URL = "test.server.url/";
-    final String TEST_CLUSTER_URL = "test.cluster.url/";
     syncAccount = new SyncAccountParameters(context, null,
-        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVER_URL, TEST_CLUSTER_URL, null, null);
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
     account = SyncAccounts.createSyncAccount(syncAccount);
     assertNotNull(account);
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVER_URL);
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVERURL);
     String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
     assertNotNull(clusterURL);
-    assertEquals(TEST_CLUSTER_URL, clusterURL);
+    assertEquals(TEST_CLUSTERURL, clusterURL);
 
     SyncAdapter syncAdapter = new SyncAdapter(context, false);
     syncAdapter.localAccount = account;
@@ -269,5 +268,25 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     String name = syncAdapter.getClientName();
     assertNotNull(name);
     assertTrue(name.startsWith(GlobalConstants.PRODUCT_NAME));
+  }
+
+  /**
+   * Verify that creating an account wipes stale settings in Shared Preferences.
+   */
+  public void testCreatingWipesSharedPrefs() throws Exception {
+    final String TEST_PREFERENCE = "testPreference";
+    final String TEST_SYNC_ID = "testSyncID";
+
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVERURL);
+    prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
+    prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
+
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
+    account = SyncAccounts.createSyncAccount(syncAccount);
+
+    // All values deleted (known and unknown).
+    assertNull(prefs.getString(TEST_PREFERENCE, null));
+    assertNull(prefs.getString(TEST_SYNC_ID, null));
   }
 }

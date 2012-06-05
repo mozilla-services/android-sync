@@ -215,8 +215,8 @@ public class SyncAccounts {
     Logger.debug(LOG_TAG, "Finished setting syncables.");
 
     // TODO: correctly implement Sync Options.
-    Logger.info(LOG_TAG, "Clearing preferences for this account.");
     try {
+      Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(username, serverURL) + " for this account.");
       SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit().clear();
       if (syncAccount.clusterURL != null) {
         editor.putString(SyncConfiguration.PREF_CLUSTER_URL, syncAccount.clusterURL);
