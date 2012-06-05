@@ -75,7 +75,6 @@ public class TestFormHistoryRepositorySession extends AndroidSyncTestCase {
           final FormHistoryRepositorySession session = new FormHistoryRepositorySession(this, context) {
             @Override
             protected synchronized void trackGUID(String guid) {
-              System.out.println("Ignoring trackGUID call: this is a test!");
             }
           };
           delegate.onSessionCreated(session);

@@ -57,17 +57,16 @@ public class TestAccountAuthenticatorStage {
             code = 401;
           }
 
-          System.out.println("Handling request...");
+          Logger.debug(LOG_TAG, "Handling request...");
           PrintStream bodyStream = this.handleBasicHeaders(request, response, code, "application/json");
           bodyStream.println(body);
           bodyStream.close();
         } catch (IOException e) {
-          System.err.println("Oops.");
+          Logger.error(LOG_TAG, "Oops.", e);
         }
       }
     };
     authServer.expectedBasicAuthHeader = authStage.makeAuthHeader(USERNAME, PASSWORD);
-    System.out.println("expected: {" + authServer.expectedBasicAuthHeader + "}");
 
     // Authentication delegate to handle HTTP responses.
     testCallback = new AuthenticateAccountStageDelegate() {
@@ -102,7 +101,6 @@ public class TestAccountAuthenticatorStage {
 
       @Override
       public void handleError(Exception e) {
-        System.out.println("handleError()");
         fail("Unexpected error during authentication.");
       }
     };

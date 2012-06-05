@@ -300,7 +300,6 @@ public class TestFetchMetaGlobalStage {
         if (request.getMethod().equals("PUT")) {
           try {
             ExtendedJSONObject body = ExtendedJSONObject.parseJSONObject(request.getContent());
-            System.out.println(body.toJSONString());
             assertTrue(body.containsKey("payload"));
             assertFalse(body.containsKey("default"));
 
