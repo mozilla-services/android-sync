@@ -271,7 +271,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   }
 
   /**
-   * Verify that creating an account wipes stale settings in Shared Preferences.
+   * Verify that creating an account wipes stale settings in Shared Preferences,
+   * and wipes global prefs.
    */
   public void testCreatingWipesSharedPrefs() throws Exception {
     final String TEST_PREFERENCE = "testPreference";
@@ -281,6 +282,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
+    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID);
+
     syncAccount = new SyncAccountParameters(context, null,
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
     account = SyncAccounts.createSyncAccount(syncAccount);
@@ -288,5 +291,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     // All values deleted (known and unknown).
     assertNull(prefs.getString(TEST_PREFERENCE, null));
     assertNull(prefs.getString(TEST_SYNC_ID, null));
+    // And global value gone too.
+    assertNull(SyncAdapter.getGlobalPrefs(context).getString(TEST_PREFERENCE, null));
   }
 }
