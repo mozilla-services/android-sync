@@ -23,9 +23,12 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.log.FileLogManager;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.ConnectionMonitorThread;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
+import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.accounts.Account;
@@ -43,7 +46,6 @@ import android.content.SyncResult;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback, ClientsDataDelegate {
@@ -147,18 +149,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     }
   }
 
-  private AccountManagerFuture<Bundle> getAuthToken(final Account account,
-                            AccountManagerCallback<Bundle> callback,
-                            Handler handler) {
-    return mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, handler);
-  }
-
-  private void invalidateAuthToken(Account account) {
-    AccountManagerFuture<Bundle> future = getAuthToken(account, null, null);
+  private static void invalidateAuthToken(final AccountManager accountManager, final Account account) {
+    AccountManagerFuture<Bundle> future = accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null);
     String token;
     try {
       token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
-      mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
+      accountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
     } catch (Exception e) {
       Log.e(LOG_TAG, "Couldn't invalidate auth token: " + e);
     }
@@ -245,41 +241,21 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
     // Pick up log level changes. Do this here so that we don't do extra work
     // if we're not going to be syncing.
-    Logger.refreshLogLevels();
+    Logger.resetLogging();
 
     // TODO: don't clear the auth token unless we have a sync error.
     Log.i(LOG_TAG, "Got onPerformSync. Extras bundle is " + extras);
     Log.i(LOG_TAG, "Account name: " + account.name);
 
-    // TODO: don't always invalidate; use getShouldInvalidateAuthToken.
-    // However, this fixes Bug 716815, so it'll do for now.
-    Log.d(LOG_TAG, "Invalidating auth token.");
-    invalidateAuthToken(account);
-
     final SyncAdapter self = this;
-    final AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+    WithSyncAccountParameters callback = new WithSyncAccountParameters() {
       @Override
-      public void run(AccountManagerFuture<Bundle> future) {
-        Log.i(LOG_TAG, "AccountManagerCallback invoked.");
-        // TODO: N.B.: Future must not be used on the main thread.
+      public void run(SyncAccountParameters syncAccountParameters) {
         try {
-          Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
-          if (bundle.containsKey("KEY_INTENT")) {
-            Log.w(LOG_TAG, "KEY_INTENT included in AccountManagerFuture bundle. Problem?");
-          }
-          String username  = bundle.getString(Constants.OPTION_USERNAME);
-          String syncKey   = bundle.getString(Constants.OPTION_SYNCKEY);
-          String serverURL = bundle.getString(Constants.OPTION_SERVER);
-          String password  = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-          Log.d(LOG_TAG, "Username: " + username);
-          Log.d(LOG_TAG, "Server:   " + serverURL);
-          Log.d(LOG_TAG, "Password? " + (password != null));
-          Log.d(LOG_TAG, "Key?      " + (syncKey != null));
-
-          if (password  == null &&
-              username  == null &&
-              syncKey   == null &&
-              serverURL == null) {
+          if (syncAccountParameters.password  == null &&
+              syncAccountParameters.username  == null &&
+              syncAccountParameters.syncKey   == null &&
+              syncAccountParameters.serverURL == null) {
 
             // Totally blank. Most likely the user has two copies of Firefox
             // installed, and something is misbehaving.
@@ -297,27 +273,28 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           }
 
           // Now catch the individual cases.
-          if (password == null) {
+          if (syncAccountParameters.password == null) {
             Log.e(LOG_TAG, "No password: aborting sync.");
             syncResult.stats.numAuthExceptions++;
             notifyMonitor();
             return;
           }
 
-          if (syncKey == null) {
+          if (syncAccountParameters.syncKey == null) {
             Log.e(LOG_TAG, "No Sync Key: aborting sync.");
             syncResult.stats.numAuthExceptions++;
             notifyMonitor();
             return;
           }
 
-          KeyBundle keyBundle = new KeyBundle(username, syncKey);
+          KeyBundle keyBundle = new KeyBundle(syncAccountParameters.username, syncAccountParameters.syncKey);
 
           // Support multiple accounts by mapping each server/account pair to a branch of the
           // shared preferences space.
-          String prefsPath = Utils.getPrefsPath(username, serverURL);
-          self.performSync(account, extras, authority, provider, syncResult,
-              username, password, prefsPath, serverURL, keyBundle);
+          String prefsPath = Utils.getPrefsPath(syncAccountParameters.username, syncAccountParameters.serverURL);
+          FileLogManager.startFileLogging(mContext, prefsPath);
+
+          self.performSync(syncAccountParameters.username, syncAccountParameters.password, prefsPath, syncAccountParameters.serverURL, keyBundle);
         } catch (Exception e) {
           self.handleException(e, syncResult);
           return;
@@ -325,18 +302,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       }
     };
 
-    final Handler handler = null;
-    final Runnable fetchAuthToken = new Runnable() {
-      @Override
-      public void run() {
-        getAuthToken(account, callback, handler);
-      }
-    };
     synchronized (syncMonitor) {
       // Perform the work in a new thread from within this synchronized block,
       // which allows us to be waiting on the monitor before the callback can
       // notify us in a failure case. Oh, concurrent programming.
-      new Thread(fetchAuthToken).start();
+      withSyncAccountParameters(mContext, mAccountManager, account, callback);
 
       // Start our stale connection monitor thread.
       ConnectionMonitorThread stale = new ConnectionMonitorThread();
@@ -353,9 +323,81 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       } finally {
         // And we're done with HTTP stuff.
         stale.shutdown();
+        // And logging.
+        FileLogManager.cleanFileLogs(mContext);
+        Logger.stopLoggingToAll();
       }
     }
- }
+  }
+
+  /**
+   * A callback to be run with account parameters.
+   */
+  public interface WithSyncAccountParameters {
+    public void run(SyncAccountParameters syncAccountParameters);
+  }
+
+  /**
+   * Fetch an auth token and account parameters for the given account and run
+   * the given callback with the fetched parameters.
+   * @param context <code>Context</code>.
+   * @param accountManager <code>AccountManager</code>.
+   * @param account <code>Account</code>.
+   * @param withSyncAccountParameters the callback to run.
+   */
+  public static void withSyncAccountParameters(final Context context,
+      final AccountManager accountManager,
+      final Account account,
+      final WithSyncAccountParameters withSyncAccountParameters) {
+
+    final AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+      @Override
+      public void run(AccountManagerFuture<Bundle> future) {
+        Log.i(LOG_TAG, "AccountManagerCallback invoked.");
+        // TODO: N.B.: Future must not be used on the main thread.
+
+        Bundle bundle = null;
+        try {
+          bundle = future.getResult(60L, TimeUnit.SECONDS);
+        } catch (Exception e) {
+          Log.e(LOG_TAG, "Could not get AccountManagerFuture bundle!", e);
+          return;
+        }
+        if (bundle == null) {
+          Log.e(LOG_TAG, "Got null AccountManagerFuture bundle!");
+          return;
+        }
+        if (bundle.containsKey("KEY_INTENT")) {
+          Log.w(LOG_TAG, "KEY_INTENT included in AccountManagerFuture bundle. Problem?");
+          return;
+        }
+        String username  = bundle.getString(Constants.OPTION_USERNAME);
+        String syncKey   = bundle.getString(Constants.OPTION_SYNCKEY);
+        String serverURL = bundle.getString(Constants.OPTION_SERVER);
+        String password  = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+        Log.d(LOG_TAG, "Username: " + username);
+        Log.d(LOG_TAG, "Server:   " + serverURL);
+        Log.d(LOG_TAG, "Password? " + (password != null));
+        Log.d(LOG_TAG, "Key?      " + (syncKey != null));
+
+        withSyncAccountParameters.run(new SyncAccountParameters(context, accountManager, username, syncKey, password, serverURL));
+      }
+    };
+
+   final Runnable fetchAuthToken = new Runnable() {
+      @Override
+      public void run() {
+        // TODO: don't always invalidate; use getShouldInvalidateAuthToken.
+        // However, this fixes Bug 716815, so it'll do for now.
+        Log.d(LOG_TAG, "Invalidating auth token.");
+        invalidateAuthToken(accountManager, account);
+
+        accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, null);
+      }
+    };
+
+    new Thread(fetchAuthToken).start();
+  }
 
   public int getSyncInterval() {
     // Must have been a problem that means we can't access the Account.
@@ -383,12 +425,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
    * @throws ParseException
    * @throws IOException
    */
-  protected void performSync(Account account, Bundle extras, String authority,
-                             ContentProviderClient provider,
-                             SyncResult syncResult,
-                             String username, String password,
+  protected void performSync(String username,
+                             String password,
                              String prefsPath,
-                             String serverURL, KeyBundle keyBundle)
+                             String serverURL,
+                             KeyBundle keyBundle)
                                  throws NoSuchAlgorithmException,
                                         SyncConfigurationException,
                                         IllegalArgumentException,
@@ -400,8 +441,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     // TODO: default serverURL.
     GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
                                                     serverURL, username, password, prefsPath,
-                                                    keyBundle, this, this.mContext, extras, this);
-
+                                                    keyBundle, this, this.mContext, this);
     globalSession.start();
   }
 

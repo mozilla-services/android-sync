@@ -56,6 +56,22 @@
 <!ENTITY sync.settings.options.label 'Options'>
 <!ENTITY sync.summary.pair.label 'Link another device to your &syncBrand.shortName.label; account'>
 
+<!-- Configure Logging -->
+<!ENTITY sync.configure.logging.title.label 'Configure Logging'>
+<!ENTITY sync.configure.logging.summary.label 'Turn logging on and off. Share and delete logs'>
+<!ENTITY sync.configure.logging.level0.title.label 'Never keep &syncBrand.shortName.label; logs (default)'>
+<!ENTITY sync.configure.logging.level1.title.label 'Only keep logs when &syncBrand.shortName.label; has problems'>
+<!ENTITY sync.configure.logging.level2.title.label 'Always keep &syncBrand.shortName.label; logs'>
+<!ENTITY sync.configure.logging.level3.title.label 'Keep detailed &syncBrand.shortName.label; logs (for developers)'>
+<!ENTITY sync.configure.logging.share.logs.title.label 'Share Logs'>
+<!ENTITY sync.configure.logging.share.all.logs.title.label 'Share All Logs'>
+<!ENTITY sync.configure.logging.delete.logs.title.label 'Delete Logs'>
+<!ENTITY sync.configure.logging.delete.all.logs.title.label 'Delete All Logs'>
+<!ENTITY sync.configure.logging.share.logs.toast.label 'Sharing &#37;d logs'>
+<!ENTITY sync.configure.logging.delete.logs.toast.label 'Deleted &#37;d logs'>
+<!ENTITY sync.configure.logging.delete.all.logs.toast.label 'Deleted all &#37;d logs'>
+<!ENTITY sync.configure.logging.delete.all.logs.confirm.label 'Really delete all logs?'>
+
 <!-- Common text -->
 <!ENTITY sync.button.cancel.label 'Cancel'>
 <!ENTITY sync.button.connect.label 'Connect'>

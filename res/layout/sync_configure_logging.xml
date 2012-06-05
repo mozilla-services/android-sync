@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  style="@style/SyncLayout" >
+  <LinearLayout
+    android:id="@+id/sync_configure_logging_top"
+    style="@style/SyncTop" >
+  <ImageView
+    style="@style/SyncTopIcon" />
+  <TextView
+    style="@style/SyncTextTitle"
+    android:text="@string/sync_configure_logging_title" />
+  </LinearLayout>
+
+  <ScrollView
+    android:id="@+id/sync_configure_logging_content"
+    style="@style/SyncLayout"
+    android:fillViewport="true"
+    android:layout_below="@+id/sync_configure_logging_top"
+    android:layout_above="@+id/sync_configure_logging_bottom">
+    <LinearLayout
+      style="@style/SyncLayout.Vertical"
+      android:padding="20dp" >
+        <RadioGroup
+            android:id="@+id/sync_configure_logging_level_radioGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/sync_configure_logging_level0_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="35dp"
+                android:checked="true"
+                android:text="@string/sync_configure_logging_level0_title" />
+
+            <RadioButton
+                android:id="@+id/sync_configure_logging_level1_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="35dp"
+                android:text="@string/sync_configure_logging_level1_title" />
+
+            <RadioButton
+                android:id="@+id/sync_configure_logging_level2_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="35dp"
+                android:text="@string/sync_configure_logging_level2_title" />
+
+            <RadioButton
+                android:id="@+id/sync_configure_logging_level3_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="35dp"
+                android:text="@string/sync_configure_logging_level3_title" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:layout_height="fill_parent"
+            android:layout_width="fill_parent"
+            android:layout_weight="1">
+            <!-- this expands to fill the empty space if needed -->
+        </LinearLayout>
+
+    <LinearLayout
+      style="@style/SyncLayout.Vertical"
+      android:layout_height="wrap_content"
+      android:padding="20dp" >
+        <Button
+            android:id="@+id/sync_configure_logging_share_logs_button"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:onClick="shareLogsClickHandler"
+            android:text="@string/sync_configure_logging_share_logs_title" />
+        <Button
+            android:id="@+id/sync_configure_logging_delete_logs_button"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:onClick="deleteLogsClickHandler"
+            android:text="@string/sync_configure_logging_delete_logs_title" />
+    </LinearLayout>
+    </LinearLayout>
+  </ScrollView>
+
+  <LinearLayout
+    android:id="@id/sync_configure_logging_bottom"
+    style="@style/SyncBottom"
+    android:orientation="horizontal" >
+
+    <Button
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:onClick="okClickHandler"
+      android:text="@string/sync_button_ok" />
+    <Button
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:onClick="cancelClickHandler"
+      android:text="@string/sync_button_cancel" />
+  </LinearLayout>
+</RelativeLayout>

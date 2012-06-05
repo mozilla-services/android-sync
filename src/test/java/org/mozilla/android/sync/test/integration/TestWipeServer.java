@@ -21,7 +21,6 @@ import org.mozilla.android.sync.test.integration.TestBasicFetch.LiveDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -48,7 +47,6 @@ public class TestWipeServer {
   public void setUp()
       throws IllegalStateException, NonObjectJSONException, IOException,
       ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException, URISyntaxException {
-    Logger.LOG_TO_STDOUT = true;
 
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
 

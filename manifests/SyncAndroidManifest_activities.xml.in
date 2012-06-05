@@ -16,10 +16,16 @@
             android:windowSoftInputMode="adjustPan|stateHidden"/>
         <activity
             android:noHistory="true"
+            android:excludeFromRecents="true"
             android:name="org.mozilla.gecko.sync.setup.activities.SetupFailureActivity" />
         <activity
             android:noHistory="true"
+            android:excludeFromRecents="true"
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />
+        <activity
+            android:noHistory="false"
+            android:excludeFromRecents="true"
+            android:name="org.mozilla.gecko.sync.config.activities.ConfigureLoggingActivity" />
         <receiver
             android:name="org.mozilla.gecko.sync.receivers.UpgradeReceiver">
             <intent-filter>

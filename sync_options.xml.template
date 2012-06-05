@@ -20,4 +20,14 @@
         android:value="false" />
     </intent>
   </PreferenceScreen>
+  <PreferenceScreen
+    android:key="sync_configure_logging"
+    android:title="@string/sync_configure_logging_title"
+    android:summary="@string/sync_configure_logging_summary">
+    <intent
+      android:action="android.intent.action.MAIN"
+      android:targetPackage="@ANDROID_PACKAGE_NAME@"
+      android:targetClass="org.mozilla.gecko.sync.config.activities.ConfigureLoggingActivity">
+    </intent>
+  </PreferenceScreen>
 </PreferenceScreen>
