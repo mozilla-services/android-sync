@@ -68,9 +68,9 @@ public class PrintLogWriter extends LogWriter {
     if (closed) {
       return;
     }
-    closed = true;
     if (pw != null) {
       pw.close();
     }
+    closed = true;
   }
 }

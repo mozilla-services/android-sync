@@ -16,13 +16,7 @@ import org.mozilla.gecko.sync.log.writers.SingleTagLogWriter;
 import android.util.Log;
 
 /**
- * Logging helper class. Serializes all log operations (by synchronizing),
- * and caches log level settings.
- *
- * Ultimately this will also be a hook point for our own logging system.
- *
- * @author rnewman
- *
+ * Logging helper class. Serializes all log operations (by synchronizing).
  */
 public class Logger {
   public static final String LOG_TAG = "Logger";
@@ -32,15 +26,26 @@ public class Logger {
   // For extra debugging.
   public static boolean LOG_PERSONAL_INFORMATION = false;
 
+  /**
+   * Current set of writers logged to.
+   * <p>
+   * We want logging to be available while running tests, so we set initialize
+   * this set statically.
+   */
   protected final static Set<LogWriter> logWriters = new LinkedHashSet<LogWriter>();
   static {
     logWriters.addAll(Logger.defaultLogWriters());
   }
 
-  protected static Set<LogWriter> defaultLogWriters() {
-    Set<LogWriter> defaultLogWriters = new LinkedHashSet<LogWriter>();
-    defaultLogWriters.add(new SingleTagLogWriter(GLOBAL_LOG_TAG,
-        new AndroidLevelCachingLogWriter(new AndroidLogWriter())));
+  /**
+   * Default set of log writers to log to.
+   */
+  protected final static Set<LogWriter> defaultLogWriters() {
+    final Set<LogWriter> defaultLogWriters = new LinkedHashSet<LogWriter>();
+    LogWriter log = new AndroidLogWriter();
+    LogWriter cache = new AndroidLevelCachingLogWriter(log);
+    LogWriter single = new SingleTagLogWriter(GLOBAL_LOG_TAG, cache);
+    defaultLogWriters.add(single);
     return defaultLogWriters;
   }
 
@@ -68,6 +73,9 @@ public class Logger {
     logWriters.clear();
   }
 
+  /**
+   * Write to only the default log writers.
+   */
   public static synchronized void resetLogging() {
     stopLoggingToAll();
     logWriters.addAll(Logger.defaultLogWriters());
