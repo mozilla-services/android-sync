@@ -12,9 +12,9 @@ import org.mozilla.gecko.sync.log.writers.LogWriter;
 public class TestAndroidLogWriters extends AndroidSyncTestCase {
   public static final String TEST_LOG_TAG = "TestAndroidLogWriters";
 
-  public static final String TEST_MESSAGE_1  = "LOG TEST MESSAGE one";
-  public static final String TEST_MESSAGE_2  = "LOG TEST MESSAGE two";
-  public static final String TEST_MESSAGE_3  = "LOG TEST MESSAGE three";
+  public static final String TEST_MESSAGE_1 = "LOG TEST MESSAGE one";
+  public static final String TEST_MESSAGE_2 = "LOG TEST MESSAGE two";
+  public static final String TEST_MESSAGE_3 = "LOG TEST MESSAGE three";
 
   public void setUp() {
     Logger.stopLoggingToAll();
