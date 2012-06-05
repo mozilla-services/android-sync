@@ -338,7 +338,6 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
         session = new PasswordsRepositorySession(this, context) {
           @Override
           protected synchronized void trackGUID(String guid) {
-            System.out.println("Ignoring trackGUID call: this is a test!");
           }
         };
         delegate.onSessionCreated(session);

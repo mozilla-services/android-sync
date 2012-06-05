@@ -30,7 +30,6 @@ public class ExpectManyStoredDelegate extends DefaultStoreDelegate {
   public void onStoreCompleted(long storeEnd) {
     try {
       assertEquals(expectedGUIDs.size(), stored.get());
-      System.out.println("Notifying in onStoreCompleted.");
       performNotify();
     } catch (AssertionFailedError e) {
       performNotify(e);
