@@ -20,6 +20,10 @@ public class TestAndroidLogWriters extends AndroidSyncTestCase {
     Logger.stopLoggingToAll();
   }
 
+  public void tearDown() {
+    Logger.resetLogging();
+  }
+
   /**
    * Verify these *all* appear in the Android log by using
    * <code>adb logcat | grep TestAndroidLogWriters</code> after executing

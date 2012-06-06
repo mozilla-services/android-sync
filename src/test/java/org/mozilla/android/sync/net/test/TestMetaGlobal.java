@@ -30,8 +30,6 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
-import android.util.Log;
-
 public class TestMetaGlobal {
   public static Object monitor = new Object();
 
@@ -55,9 +53,7 @@ public class TestMetaGlobal {
 
   @Before
   public void setUp() {
-    Log.i("test", "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
-    Log.i("TestResource", "Disabling URI rewriting.");
     BaseResource.rewriteLocalhost = false;
   }
 
