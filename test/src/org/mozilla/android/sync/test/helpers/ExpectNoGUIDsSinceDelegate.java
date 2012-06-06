@@ -8,8 +8,6 @@ import static junit.framework.Assert.assertEquals;
 import java.util.HashSet;
 import java.util.Set;
 
-import android.util.Log;
-
 import junit.framework.AssertionFailedError;
 
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
@@ -22,7 +20,6 @@ public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
     try {
       int nonIgnored = 0;
       for (int i = 0; i < guids.length; i++) {
-        Log.i("BOOM", "Got " + guids[i]);
         if (!ignore.contains(guids[i])) {
           nonIgnored++;
         }

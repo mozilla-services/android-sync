@@ -14,7 +14,6 @@ import org.mozilla.android.sync.test.helpers.PasswordHelpers;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
@@ -31,7 +30,6 @@ import android.content.ContentProviderClient;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.RemoteException;
-import android.util.Log;
 
 public class TestPasswordsRepository extends AndroidSyncTestCase {
   private final String NEW_PASSWORD1 = "password";
@@ -66,11 +64,9 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
 
     String[] expected = new String[] { record1.guid, record2.guid };
 
-    Logger.info("guidsSinceMultiple", "Storing two records...");
     performWait(storeRunnable(session, record1));
     performWait(storeRunnable(session, record2));
 
-    Logger.info("guidsSinceMultiple", "Getting guids since " + timestamp + "; expecting " + expected.length);
     performWait(guidsSinceRunnable(session, timestamp, expected));
     dispose(session);
   }
@@ -92,23 +88,18 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     // Passwords fetchSince checks timePasswordChanged, not insertion time.
     PasswordRecord record1 = PasswordHelpers.createPassword1();
     long timeModified1 = updatePassword(NEW_PASSWORD1, record1);
-    Log.i("fetchSinceOneRecord", "Storing record1.");
     performWait(storeRunnable(session, record1));
 
     PasswordRecord record2 = PasswordHelpers.createPassword2();
     long timeModified2 = updatePassword(NEW_PASSWORD2, record2);
-    Log.i("fetchSinceOneRecord", "Storing record2.");
     performWait(storeRunnable(session, record2));
 
-    Log.i("fetchSinceOneRecord", "Fetching record 1.");
     String[] expectedOne = new String[] { record2.guid };
     performWait(fetchSinceRunnable(session, timeModified2 - 10, expectedOne));
 
-    Log.i("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
     String[] expectedBoth = new String[] { record1.guid, record2.guid };
     performWait(fetchSinceRunnable(session, timeModified1 - 10, expectedBoth));
 
-    Log.i("fetchSinceOneRecord", "Done.");
     dispose(session);
   }
 
@@ -174,16 +165,12 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     // Store updated local record.
     PasswordRecord local = PasswordHelpers.createPassword1();
     updatePassword(NEW_PASSWORD1, local, System.currentTimeMillis() - 1000);
-    Log.d(LOG_TAG, "local.guid: " + local.guid);
-    Log.d(LOG_TAG, "local: " + local);
     performWait(storeRunnable(session, local));
 
     // Sync a remote record version that is newer.
     PasswordRecord remote = PasswordHelpers.createPassword2();
     remote.guid = local.guid;
     updatePassword(NEW_PASSWORD2, remote);
-    Log.d(LOG_TAG, "remote.guid: " + remote.guid);
-    Log.d(LOG_TAG, "remote: " + remote);
     performWait(storeRunnable(session, remote));
 
     // Make a fetch, expecting only the newer (remote) record.
@@ -219,15 +206,11 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     RepositorySession session = createAndBeginSession();
     PasswordRecord record = PasswordHelpers.createPassword1();
     record.guid = "before1";
-    Log.d(LOG_TAG, "record1.guid: " + record.guid);
-    Log.d(LOG_TAG, "record1: " + record);
     // Store record.
     performWait(storeRunnable(session, record));
 
     // Store same record, but with different guid.
     record.guid = Utils.generateGuid();
-    Log.d(LOG_TAG, "record2.guid: " + record.guid);
-    Log.d(LOG_TAG, "record2: " + record);
     performWait(storeRunnable(session, record));
 
     performWait(fetchAllRunnable(session, new Record[] { record }));
@@ -237,15 +220,11 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
 
     PasswordRecord record2 = PasswordHelpers.createPassword2();
     record2.guid = "before2";
-    Log.d(LOG_TAG, "record1.guid: " + record2.guid);
-    Log.d(LOG_TAG, "record1: " + record2);
     // Store record.
     performWait(storeRunnable(session, record2));
 
     // Store same record, but with different guid.
     record2.guid = Utils.generateGuid();
-    Log.d(LOG_TAG, "record2.guid: " + record2.guid);
-    Log.d(LOG_TAG, "record2: " + record2);
     performWait(storeRunnable(session, record2));
 
     performWait(fetchAllRunnable(session, new Record[] { record, record2 }));
@@ -262,13 +241,9 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
     PasswordRecord record1 = PasswordHelpers.createPassword1();
     record1.encryptedUsername = "original";
     record1.guid = "before1";
-    Log.d(LOG_TAG, "record1.guid: " + record1.guid);
-    Log.d(LOG_TAG, "record1: " + record1);
     PasswordRecord record2 = PasswordHelpers.createPassword1();
     record2.encryptedUsername = "different";
     record1.guid = "before2";
-    Log.d(LOG_TAG, "record2.guid: " + record2.guid);
-    Log.d(LOG_TAG, "record2: " + record2);
     // Store records.
     performWait(storeRunnable(session, record1));
     performWait(storeRunnable(session, record2));
@@ -279,14 +254,10 @@ public class TestPasswordsRepository extends AndroidSyncTestCase {
 
     // Store same records, but with different guids.
     record1.guid = Utils.generateGuid();
-    Log.d(LOG_TAG, "new record1.guid: " + record1.guid);
-    Log.d(LOG_TAG, "new record1: " + record1);
     performWait(storeRunnable(session, record1));
     performWait(fetchAllRunnable(session, new Record[] { record1, record2 }));
 
     record2.guid = Utils.generateGuid();
-    Log.d(LOG_TAG, "new record2.guid: " + record2.guid);
-    Log.d(LOG_TAG, "new record2: " + record2);
     performWait(storeRunnable(session, record2));
     performWait(fetchAllRunnable(session, new Record[] { record1, record2 }));
 

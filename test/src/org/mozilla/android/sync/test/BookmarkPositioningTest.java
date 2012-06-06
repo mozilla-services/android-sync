@@ -18,6 +18,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -40,7 +41,6 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 public class BookmarkPositioningTest extends AndroidSyncTestCase {
 
@@ -89,14 +89,14 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     children[2] = bookmarkC;
 
     wipe();
-    Log.d(getName(), "Storing just folder...");
+    Logger.debug(getName(), "Storing just folder...");
     storeRecordsInSession(repo, folderOnly, null);
 
     // We don't have any children, despite our insistence upon storing.
     assertChildrenAreOrdered(repo, folderGUID, new Record[] {});
 
     // Now store the children.
-    Log.d(getName(), "Storing children...");
+    Logger.debug(getName(), "Storing children...");
     storeRecordsInSession(repo, children, null);
 
     // Now we have children, but their order is not determined, because
@@ -106,9 +106,9 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     // Now if we store the folder record again, they'll be put in the
     // right place.
     folder.lastModified++;
-    Log.d(getName(), "Storing just folder again...");
+    Logger.debug(getName(), "Storing just folder again...");
     storeRecordsInSession(repo, folderOnly, null);
-    Log.d(getName(), "Fetching children yet again...");
+    Logger.debug(getName(), "Fetching children yet again...");
     assertChildrenAreOrdered(repo, folderGUID, children);
 
     // Now let's see what happens when we see records in the same session.
@@ -172,11 +172,11 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     fennecAddBookmark("Bookmark One", "http://example.com/fennec/One");
     fennecAddBookmark("Bookmark Two", "http://example.com/fennec/Two");
 
-    Log.d(getName(), "Fetching children...");
+    Logger.debug(getName(), "Fetching children...");
     JSONArray folderChildren = fetchChildrenForGUID(repo, folderGUID);
 
     assertTrue(folderChildren != null);
-    Log.d(getName(), "Children are " + folderChildren.toJSONString());
+    Logger.debug(getName(), "Children are " + folderChildren.toJSONString());
     assertEquals(2, folderChildren.size());
     String guidOne = (String) folderChildren.get(0);
     String guidTwo = (String) folderChildren.get(1);
@@ -233,7 +233,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     // Furthermore, the children of that folder should be correct in the DB.
     ContentResolver cr = getApplicationContext().getContentResolver();
     final long folderId = fennecGetFolderId(cr, folderGUID);
-    Log.d(getName(), "Folder " + folderGUID + " => " + folderId);
+    Logger.debug(getName(), "Folder " + folderGUID + " => " + folderId);
 
     assertChildrenAreDirect(folderId, new String[] {
         bookmarkA.guid,
@@ -290,7 +290,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     final Record[] baRecords = new Record[] { bookmarkB, bookmarkA };
 
     wipe();
-    Log.d(getName(), "Storing A, B, folder...");
+    Logger.debug(getName(), "Storing A, B, folder...");
     storeRecordsInSession(repo, abf, null);
 
     ContentResolver cr = getApplicationContext().getContentResolver();
@@ -386,7 +386,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     final Record[] abcdRecords = new Record[] { bookmarkA, bookmarkB, bookmarkC, bookmarkD };
 
     wipe();
-    Log.d(getName(), "Storing A, B, folder, C, D...");
+    Logger.debug(getName(), "Storing A, B, folder, C, D...");
     storeRecordsInSession(repo, abfcd, null);
 
     // Verify that it worked.
@@ -779,7 +779,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     // Restore deleted record if possible
     values.put(BrowserContract.Bookmarks.IS_DELETED, 0);
 
-    Log.i(getName(), "Adding bookmark " + title + ", " + uri + " in " + folderId);
+    Logger.debug(getName(), "Adding bookmark " + title + ", " + uri + " in " + folderId);
     int updated = cr.update(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI),
         values,
         BrowserContract.Bookmarks.URL + " = ?",
@@ -788,8 +788,8 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     if (updated == 0) {
       Uri insert = cr.insert(appendProfile(BrowserContractHelpers.BOOKMARKS_CONTENT_URI), values);
       long idFromUri = ContentUris.parseId(insert);
-      Log.i(getName(), "Inserted " + uri + " as " + idFromUri);
-      Log.i(getName(), "Position is " + getPosition(idFromUri));
+      Logger.debug(getName(), "Inserted " + uri + " as " + idFromUri);
+      Logger.debug(getName(), "Position is " + getPosition(idFromUri));
     }
   }
 
@@ -815,16 +815,16 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   }
 
   protected void wipe() {
-    Log.d(getName(), "Wiping.");
+    Logger.debug(getName(), "Wiping.");
     getDataAccessor().wipe();
   }
 
   protected void assertChildrenAreOrdered(AndroidBrowserBookmarksRepository repo, String guid, Record[] expected) {
-    Log.d(getName(), "Fetching children...");
+    Logger.debug(getName(), "Fetching children...");
     JSONArray folderChildren = fetchChildrenForGUID(repo, guid);
 
     assertTrue(folderChildren != null);
-    Log.d(getName(), "Children are " + folderChildren.toJSONString());
+    Logger.debug(getName(), "Children are " + folderChildren.toJSONString());
     assertEquals(expected.length, folderChildren.size());
     for (int i = 0; i < expected.length; ++i) {
       assertEquals(expected[i].guid, ((String) folderChildren.get(i)));
@@ -832,11 +832,11 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   }
 
   protected void assertChildrenAreUnordered(AndroidBrowserBookmarksRepository repo, String guid, Record[] expected) {
-    Log.d(getName(), "Fetching children...");
+    Logger.debug(getName(), "Fetching children...");
     JSONArray folderChildren = fetchChildrenForGUID(repo, guid);
 
     assertTrue(folderChildren != null);
-    Log.d(getName(), "Children are " + folderChildren.toJSONString());
+    Logger.debug(getName(), "Children are " + folderChildren.toJSONString());
     assertEquals(expected.length, folderChildren.size());
     for (Record record : expected) {
       folderChildren.contains(record.guid);
@@ -849,7 +849,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
    * @param guids
    */
   protected void assertChildrenAreDirect(long id, String[] guids) {
-    Log.d(getName(), "Fetching children directly from DB...");
+    Logger.debug(getName(), "Fetching children directly from DB...");
     AndroidBrowserBookmarksDataAccessor accessor = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
     Cursor cur = null;
     try {
@@ -871,7 +871,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
         assertTrue(i < guids.length);
         final String guid = cur.getString(guidCol);
         final int pos = cur.getInt(posCol);
-        Log.d(getName(), "Fetched child: " + guid + " has position " + pos);
+        Logger.debug(getName(), "Fetched child: " + guid + " has position " + pos);
         assertEquals(guids[i], guid);
         assertEquals(i,        pos);
 

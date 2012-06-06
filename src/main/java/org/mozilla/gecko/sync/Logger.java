@@ -32,10 +32,7 @@ public class Logger {
    * We want logging to be available while running tests, so we set initialize
    * this set statically.
    */
-  protected final static Set<LogWriter> logWriters = new LinkedHashSet<LogWriter>();
-  static {
-    logWriters.addAll(Logger.defaultLogWriters());
-  }
+  protected final static Set<LogWriter> logWriters = new LinkedHashSet<LogWriter>(Logger.defaultLogWriters());
 
   /**
    * Default set of log writers to log to.

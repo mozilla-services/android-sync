@@ -21,7 +21,6 @@ import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 
 import android.database.Cursor;
-import android.util.Log;
 
 public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
 
@@ -29,7 +28,6 @@ public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
   protected static final String LOG_TAG = "SyncHistoryVisitsTest";
 
   public void setUp() {
-    Log.i(LOG_TAG, "Wiping.");
     extender = new AndroidBrowserHistoryDataExtender(getApplicationContext());
     extender.wipe();
   }
