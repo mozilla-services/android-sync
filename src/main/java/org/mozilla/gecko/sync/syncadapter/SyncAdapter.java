@@ -74,8 +74,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
   public static void purgeGlobalPrefs(Context context) {
     getGlobalPrefs(context).edit().clear().commit();
-    final SharedPreferences prefs = context.getSharedPreferences("sync.prefs", SHARED_PREFERENCES_MODE);
-    prefs.edit().remove("global").commit();
   }
 
   /**

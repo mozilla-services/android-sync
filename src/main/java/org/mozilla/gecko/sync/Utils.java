@@ -176,13 +176,13 @@ public class Utils {
     return (long)(decimal * 1000);
   }
 
-  protected static byte[] sha1(String utf8)
+  protected static byte[] sha1(final String utf8)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
     MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
     return sha1.digest(utf8.getBytes("UTF-8"));
   }
 
-  protected static String sha1Base32(String utf8)
+  protected static String sha1Base32(final String utf8)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
     return new Base32().encodeAsString(sha1(utf8)).toLowerCase(Locale.US);
   }
@@ -197,7 +197,7 @@ public class Utils {
    * @throws UnsupportedEncodingException
    * @throws NoSuchAlgorithmException
    */
-  public static String usernameFromAccount(String account) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+  public static String usernameFromAccount(final String account) throws NoSuchAlgorithmException, UnsupportedEncodingException {
     if (account == null || account.equals("")) {
       throw new IllegalArgumentException("No account name provided.");
     }
@@ -227,7 +227,7 @@ public class Utils {
    * @param context Android <code>Context</code>.
    * @param username the Sync account name, optionally encoded with <code>Utils.usernameFromAccount</code>.
    * @param serverURL the Sync account server URL.
-   * @return a <code>SharedPreferences</code>.
+   * @return a <code>SharedPreferences</code> instance.
    * @throws NoSuchAlgorithmException
    * @throws UnsupportedEncodingException
    */
