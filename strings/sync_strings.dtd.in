@@ -58,6 +58,11 @@
 <!ENTITY sync.settings.options.label 'Options'>
 <!ENTITY sync.summary.pair.label 'Link another device to your &syncBrand.shortName.label; account'>
 
+<!-- Configure Engines -->
+<!ENTITY sync.configure.engines.title.label 'Configure Engines'>
+<!ENTITY sync.configure.engines.summary.label 'Configure what to sync: Bookmarks, Passwords, History, Tabs, …'>
+<!ENTITY sync.configure.engines.sync.my.title.label 'Sync my …'>
+
 <!-- Common text -->
 <!ENTITY sync.button.cancel.label 'Cancel'>
 <!ENTITY sync.button.connect.label 'Connect'>

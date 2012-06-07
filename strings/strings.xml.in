@@ -50,6 +50,12 @@
   <!-- Firefox SyncAdapter Settings Screen -->
   <string name="sync_settings_options">&sync.settings.options.label;</string>
   <string name="sync_settings_summary_pair">&sync.summary.pair.label;</string>
+
+  <!-- Configure Engines -->
+  <string name="sync_configure_engines_title">&sync.configure.engines.title.label;</string>
+  <string name="sync_configure_engines_summary">&sync.configure.engines.summary.label;</string>
+  <string name="sync_configure_engines_sync_my_title">&sync.configure.engines.sync.my.title.label;</string>
+
   <!-- Common text -->
   <string name="sync_button_cancel">&sync.button.cancel.label;</string>
   <string name="sync_button_connect">&sync.button.connect.label;</string>
