@@ -235,6 +235,20 @@ public class SyncConfiguration implements CredentialsSource {
     return new ConfigurationBranch(this, prefix);
   }
 
+  public static Set<String> getEnabledEngineNames(SharedPreferences prefs) {
+    String json = prefs.getString(PREF_ENABLED_ENGINE_NAMES, null);
+    if (json == null) {
+      return null;
+    }
+    try {
+      ExtendedJSONObject o = ExtendedJSONObject.parseJSONObject(json);
+      return new HashSet<String>(o.keySet());
+    } catch (Exception e) {
+      // enabledEngineNames can be null.
+      return null;
+    }
+  }
+
   public void loadFromPrefs(SharedPreferences prefs) {
 
     if (prefs.contains(PREF_CLUSTER_URL)) {
@@ -250,15 +264,7 @@ public class SyncConfiguration implements CredentialsSource {
       syncID = prefs.getString(PREF_SYNC_ID, null);
       Logger.info(LOG_TAG, "Set syncID from bundle: " + syncID);
     }
-    if (prefs.contains(PREF_ENABLED_ENGINE_NAMES)) {
-      String json = prefs.getString(PREF_ENABLED_ENGINE_NAMES, null);
-      try {
-        ExtendedJSONObject o = ExtendedJSONObject.parseJSONObject(json);
-        enabledEngineNames = new HashSet<String>(o.keySet());
-      } catch (Exception e) {
-        // enabledEngineNames can be null.
-      }
-    }
+    enabledEngineNames = getEnabledEngineNames(prefs);
     // We don't set crypto/keys here because we need the syncKeyBundle to decrypt the JSON
     // and we won't have it on construction.
     // TODO: MetaGlobal, password, infoCollections.
