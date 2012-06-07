@@ -357,8 +357,16 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.start();
   }
 
-  public void completeSync() {
+  /**
+   * We're finished (aborted or succeeded): release resources.
+   */
+  protected void cleanUp() {
     uninstallAsHttpResponseObserver();
+    this.stages = null;
+  }
+
+  public void completeSync() {
+    cleanUp();
     this.currentState = GlobalSyncStage.Stage.idle;
     this.callback.handleSuccess(this);
   }
@@ -461,7 +469,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   public void abort(Exception e, String reason) {
     Logger.warn(LOG_TAG, "Aborting sync: " + reason, e);
-    uninstallAsHttpResponseObserver();
+    cleanUp();
     long existingBackoff = largestBackoffObserved.get();
     if (existingBackoff > 0) {
       callback.requestBackoff(existingBackoff);
