@@ -152,7 +152,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // If we upload remote records, checkAndUpload() will be called upon
       // upload success in the delegate. Otherwise call checkAndUpload() now.
       if (toUpload.size() > 0) {
-        uploadRemoteRecords(response.normalizedWeaveTimestamp());
+        uploadRemoteRecords();
         return;
       }
       checkAndUpload();
@@ -239,7 +239,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       Long timestampInMilliseconds = currentlyUploadingRecordTimestamp;
 
       // It's the first upload so we don't care about X-If-Unmodified-Since.
-      if (timestampInMilliseconds == 0) {
+      if (timestampInMilliseconds <= 0) {
         return null;
       }
 
@@ -425,8 +425,12 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   @SuppressWarnings("unchecked")
-  protected void uploadRemoteRecords(long timestamp) {
+  protected void uploadRemoteRecords() {
     Logger.trace(LOG_TAG, "In uploadRemoteRecords. Uploading " + toUpload.size() + " records" );
+
+    for (ClientRecord r : toUpload) {
+      Logger.trace(LOG_TAG, ">> Uploading record " + r.guid + ": " + r.name);
+    }
 
     if (toUpload.size() == 1) {
       ClientRecord record = toUpload.get(0);
