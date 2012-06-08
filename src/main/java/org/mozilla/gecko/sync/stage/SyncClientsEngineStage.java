@@ -212,7 +212,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       try {
         return session.keyBundleForCollection(COLLECTION_NAME);
       } catch (NoCollectionKeysSetException e) {
-        session.abort(e, "No collection keys set.");
         return null;
       }
     }
@@ -478,6 +477,10 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     try {
       CryptoRecord cryptoRecord = recordToUpload.getEnvelope();
       cryptoRecord.keyBundle = clientUploadDelegate.keyBundle();
+      if (cryptoRecord.keyBundle == null) {
+        session.abort(new NoCollectionKeysSetException(), "No collection keys set.");
+        return null;
+      }
       return cryptoRecord.encrypt();
     } catch (UnsupportedEncodingException e) {
       session.abort(e, encryptionFailure + " Unsupported encoding.");
