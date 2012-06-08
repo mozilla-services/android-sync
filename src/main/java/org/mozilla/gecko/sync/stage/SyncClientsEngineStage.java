@@ -251,26 +251,33 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       Logger.debug(LOG_TAG, "Upload succeeded.");
       uploadAttemptsCount.set(0);
 
-      // This is the case when we are NOT currently uploading our local record.
+      // X-Weave-Timestamp is the modified time of uploaded records.
+      // Always persist this.
+      final long responseTimestamp = response.normalizedWeaveTimestamp();
+      Logger.trace(LOG_TAG, "Timestamp from header is: " + responseTimestamp);
+
+      if (responseTimestamp == -1) {
+        final String message = "Response did not contain a valid timestamp.";
+        session.abort(new RuntimeException(message), message);
+        return;
+      }
+
+      BaseResource.consumeEntity(response);
+      session.config.persistServerClientsTimestamp(responseTimestamp);
+
+      // If we're not uploading our record, we're done here; just
+      // clean up and finish.
       if (!currentlyUploadingLocalRecord) {
+        // TODO: check failed uploads in body.
         clearRecordsToUpload();
         checkAndUpload();
         return;
       }
 
-      try {
-        commandsProcessedShouldUpload = false;
-        long timestamp = Utils.decimalSecondsToMilliseconds(response.body());
-        session.config.persistServerClientRecordTimestamp(timestamp);
-        session.config.persistServerClientsTimestamp(timestamp);
-        BaseResource.consumeEntity(response);
-
-        Logger.trace(LOG_TAG, "Timestamp from body is: " + timestamp);
-        Logger.trace(LOG_TAG, "Timestamp from header is: " + response.normalizedWeaveTimestamp());
-      } catch (Exception e) {
-        session.abort(e, "Unable to fetch timestamp.");
-        return;
-      }
+      // If we're processing our record, we have a little more cleanup
+      // to do.
+      commandsProcessedShouldUpload = false;
+      session.config.persistServerClientRecordTimestamp(responseTimestamp);
       session.advance();
     }
 
@@ -334,7 +341,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     session.getClientsDelegate().setClientsCount(0);
     try {
-      getClientsDatabaseAccessor().wipe();
+      getClientsDatabaseAccessor().wipeDB();
     } finally {
       closeDataAccessor();
     }
@@ -422,9 +429,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.trace(LOG_TAG, "In uploadRemoteRecords. Uploading " + toUpload.size() + " records" );
 
     if (toUpload.size() == 1) {
-      Logger.debug(LOG_TAG, "Only 1 remote record to upload.");
-      Logger.debug(LOG_TAG, "Record last mod: " + record.lastModified);
       ClientRecord record = toUpload.get(0);
+      Logger.debug(LOG_TAG, "Only 1 remote record to upload.");
+      Logger.debug(LOG_TAG, "Record last modified: " + record.lastModified);
       CryptoRecord cryptoRecord = encryptClientRecord(record);
       if (cryptoRecord != null) {
         clientUploadDelegate.setUploadDetails(false);
@@ -440,8 +447,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       CryptoRecord cryptoRecord = encryptClientRecord(record);
       cryptoRecords.add(cryptoRecord.toJSONObject());
     }
+    Logger.debug(LOG_TAG, "Uploading records: " + cryptoRecords.size());
     clientUploadDelegate.setUploadDetails(false);
-    Logger.info(LOG_TAG, "cryptoRecords size: " + cryptoRecords.size());
     this.uploadClientRecords(cryptoRecords);
   }
 
@@ -490,9 +497,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     clientDownloadDelegate = makeClientDownloadDelegate();
 
     try {
-      URI getURI = session.config.collectionURI(COLLECTION_NAME, true);
-
-      SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI);
+      final URI getURI = session.config.collectionURI(COLLECTION_NAME, true);
+      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI);
       request.delegate = clientDownloadDelegate;
 
       Logger.trace(LOG_TAG, "Downloading client records.");
@@ -505,9 +511,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected void uploadClientRecords(JSONArray records) {
     Logger.trace(LOG_TAG, "Uploading client records " + records.toJSONString());
     try {
-      URI putURI = session.config.collectionURI(COLLECTION_NAME, false);
-
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(putURI);
+      final URI postURI = session.config.collectionURI(COLLECTION_NAME, false);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
       request.delegate = clientUploadDelegate;
       request.post(records);
     } catch (URISyntaxException e) {
@@ -523,8 +528,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected void uploadClientRecord(CryptoRecord record) {
     Logger.debug(LOG_TAG, "Uploading client record " + record.guid);
     try {
-      URI postURI = session.config.collectionURI(COLLECTION_NAME);
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final URI postURI = session.config.collectionURI(COLLECTION_NAME);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
       request.delegate = clientUploadDelegate;
       request.post(record);
     } catch (URISyntaxException e) {

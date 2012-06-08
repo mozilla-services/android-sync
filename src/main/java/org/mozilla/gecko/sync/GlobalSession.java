@@ -186,7 +186,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     });
 
-    processor.registerCommand("wipeEngine", new CommandRunner() {
+    processor.registerCommand("wipeEngine", new CommandRunner(1) {
       @Override
       public void executeCommand(List<String> args) {
         HashSet<String> names = new HashSet<String>();
@@ -195,7 +195,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
     });
 
-    processor.registerCommand("wipeAll", new CommandRunner() {
+    processor.registerCommand("wipeAll", new CommandRunner(0) {
       @Override
       public void executeCommand(List<String> args) {
         wipeAllStages();
