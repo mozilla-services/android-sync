@@ -240,14 +240,10 @@ public class BaseResource implements Resource {
   }
 
   private void execute() {
+    HttpResponse response = null;
     try {
-      HttpResponse response = client.execute(request, context);
+      response = client.execute(request, context);
       Logger.debug(LOG_TAG, "Response: " + response.getStatusLine().toString());
-      HttpResponseObserver observer = getHttpResponseObserver();
-      if (observer != null) {
-        observer.observeHttpResponse(response);
-      }
-      delegate.handleHttpResponse(response);
     } catch (ClientProtocolException e) {
       delegate.handleHttpProtocolException(e);
     } catch (IOException e) {
@@ -266,6 +262,15 @@ public class BaseResource implements Resource {
         retryRequest();
       }
     }
+    // Request did not succeed.
+    if (response == null) {
+      return;
+    }
+    HttpResponseObserver observer = getHttpResponseObserver();
+    if (observer != null) {
+      observer.observeHttpResponse(response);
+    }
+    delegate.handleHttpResponse(response);
   }
 
   private void retryRequest() {
