@@ -489,10 +489,10 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
   public void clearRecordsToUpload() {
     try {
-      db.wipeCommandsTable();
+      getClientsDatabaseAccessor().wipeCommandsTable();
       toUpload.clear();
     } finally {
-      db.close();
+      closeDataAccessor();
     }
   }
 
@@ -546,7 +546,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected void wipeAndStore(ClientRecord record) {
-    ClientsDatabaseAccessor db = getClientsDatabaseAccessor();
+    final ClientsDatabaseAccessor db = getClientsDatabaseAccessor();
     if (shouldWipe) {
       db.wipeClientsTable();
       shouldWipe = false;
