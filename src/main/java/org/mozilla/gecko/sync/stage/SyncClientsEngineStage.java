@@ -317,7 +317,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       try {
         return session.keyBundleForCollection(COLLECTION_NAME);
       } catch (NoCollectionKeysSetException e) {
-        session.abort(e, "No collection keys set.");
         return null;
       }
     }
