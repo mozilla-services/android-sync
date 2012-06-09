@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -21,6 +22,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Test;
+import org.mozilla.android.sync.test.helpers.CommandHelpers;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockClientsDataDelegate;
 import org.mozilla.android.sync.test.helpers.MockClientsDatabaseAccessor;
@@ -30,6 +32,7 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.MockSyncClientsEngineStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
+import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -147,6 +150,16 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
     data.startHTTPServer(currentUploadMockServer);
     super.uploadClientRecord(record);
+  }
+
+  @Override
+  protected void uploadClientRecords(JSONArray records) {
+    BaseResource.rewriteLocalhost = false;
+    if (stubUpload) {
+      return;
+    }
+    data.startHTTPServer(currentUploadMockServer);
+    super.uploadClientRecords(records);
   }
 
   public static class MockClientsGlobalSession extends MockGlobalSession {
@@ -475,7 +488,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertFalse(shouldWipe);
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertFalse(getMockDataAccessor().wiped);
+    assertFalse(getMockDataAccessor().clientsTableWiped);
     assertTrue(getMockDataAccessor().storedRecord);
   }
 
@@ -485,7 +498,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     shouldWipe = true;
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertTrue(getMockDataAccessor().wiped);
+    assertTrue(getMockDataAccessor().clientsTableWiped);
     assertTrue(getMockDataAccessor().storedRecord);
   }
 
@@ -676,5 +689,25 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     performFailingUpload();
     assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
+  }
+
+  class TestAddCommandsMockClientsDatabaseAccessor extends MockClientsDatabaseAccessor {
+    @Override
+    public List<Command> fetchCommandsForClient(String accountGUID) throws NullCursorException {
+      List<Command> commands = new ArrayList<Command>();
+      commands.add(CommandHelpers.getCommand1());
+      commands.add(CommandHelpers.getCommand2());
+      commands.add(CommandHelpers.getCommand3());
+      commands.add(CommandHelpers.getCommand4());
+      return commands;
+    }
+  }
+
+  @Test
+  public void testAddCommands() throws NullCursorException {
+    db = new TestAddCommandsMockClientsDatabaseAccessor();
+    this.addCommands(new ClientRecord());
+    assertEquals(1, toUpload.size());
+    assertEquals(4, toUpload.get(0).commands.size());
   }
 }

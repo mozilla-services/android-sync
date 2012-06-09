@@ -31,7 +31,7 @@ public class TestCachedSQLiteOpenHelper extends AndroidTestCase {
 
   public void testUnclosedDatabasesDontInteract() throws NullCursorException {
     // clientsDB gracefully does its thing and closes.
-    clientsDB.wipe();
+    clientsDB.wipeClientsTable();
     ClientRecord record = new ClientRecord();
     String profileConst = ClientsDatabaseAccessor.PROFILE_ID;
     clientsDB.store(profileConst, record);
@@ -44,7 +44,7 @@ public class TestCachedSQLiteOpenHelper extends AndroidTestCase {
     // Ensure items in the clientsDB are still accessible nonetheless.
     Cursor cur = null;
     try {
-      cur = clientsDB.fetchAll();
+      cur = clientsDB.fetchAllClients();
       assertTrue(cur.moveToFirst());
       assertEquals(1, cur.getCount());
     } finally {
