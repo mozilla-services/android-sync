@@ -27,7 +27,7 @@ public class TestClientsStage extends AndroidSyncTestCase {
 
   public void setUp() {
     ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(getApplicationContext());
-    db.wipe();
+    db.wipeDB();
     db.close();
   }
 
