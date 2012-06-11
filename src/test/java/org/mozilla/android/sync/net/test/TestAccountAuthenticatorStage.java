@@ -18,7 +18,6 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.android.sync.test.helpers.WaitHelper.InnerError;
 import org.mozilla.gecko.sync.setup.auth.AuthenticateAccountStage;
 import org.mozilla.gecko.sync.setup.auth.AuthenticateAccountStage.AuthenticateAccountStageDelegate;
 import org.simpleframework.http.Request;
@@ -32,8 +31,6 @@ import ch.boye.httpclientandroidlib.HttpResponse;
  *
  */
 public class TestAccountAuthenticatorStage {
-  private final String LOG_TAG = "TestAcctAuthStage";
-
   private static final int TEST_PORT      = 15325;
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 

@@ -34,6 +34,7 @@ import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
@@ -110,7 +111,7 @@ public class TestFreshStart {
       return;
     }
 
-    assertEquals(TEST_USERNAME, KeyBundle.usernameFromAccount(TEST_ACCOUNT));
+    assertEquals(TEST_USERNAME, Utils.usernameFromAccount(TEST_ACCOUNT));
     session.config.enabledEngineNames = new HashSet<String>();
     session.config.enabledEngineNames.add("bookmarks");
     session.config.enabledEngineNames.add("clients");
