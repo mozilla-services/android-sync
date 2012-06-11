@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.repositories.android;
 
+import java.util.ArrayList;
+
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -92,7 +94,7 @@ public class FennecTabsRepository extends Repository {
     public void guidsSince(long timestamp,
                            RepositorySessionGuidsSinceDelegate delegate) {
       // Empty until Bug 730039 lands.
-      delegate.onGuidsSinceSucceeded(new String[] {});
+      delegate.onGuidsSinceSucceeded(new ArrayList<String>());
     }
 
     @Override

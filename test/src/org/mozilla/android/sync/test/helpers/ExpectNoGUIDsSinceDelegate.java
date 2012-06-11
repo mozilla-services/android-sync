@@ -5,22 +5,23 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertEquals;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.AssertionFailedError;
+import android.util.Log;
 
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
-  
   public Set<String> ignore = new HashSet<String>();
 
   @Override
-  public void onGuidsSinceSucceeded(String[] guids) {
+  public void onGuidsSinceSucceeded(Collection<String> guids) {
     AssertionFailedError err = null;
     try {
       int nonIgnored = 0;
-      for (int i = 0; i < guids.length; i++) {
-        if (!ignore.contains(guids[i])) {
+      for (String guid : guids) {
+        if (!ignore.contains(guid)) {
           nonIgnored++;
         }
       }

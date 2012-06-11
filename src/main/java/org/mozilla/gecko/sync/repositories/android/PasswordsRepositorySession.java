@@ -116,8 +116,7 @@ public class PasswordsRepositorySession extends
           delegate.onGuidsSinceFailed(e);
           return;
         }
-        String[] guidStrings = new String[guids.size()];
-        delegate.onGuidsSinceSucceeded(guids.toArray(guidStrings));
+        delegate.onGuidsSinceSucceeded(guids);
       }
     };
 

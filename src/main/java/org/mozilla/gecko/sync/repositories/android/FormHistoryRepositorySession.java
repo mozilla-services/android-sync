@@ -170,8 +170,7 @@ public class FormHistoryRepositorySession extends
           }
         }
 
-        String guidsArray[] = guids.toArray(new String[0]);
-        delegate.onGuidsSinceSucceeded(guidsArray);
+        delegate.onGuidsSinceSucceeded(guids);
       }
     };
     delegateQueue.execute(command);

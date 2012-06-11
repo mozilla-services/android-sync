@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test;
 
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 
 import org.mozilla.android.sync.test.helpers.DefaultBeginDelegate;
@@ -790,7 +791,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       public void run() {
         session.guidsSince(System.currentTimeMillis(),
             new RepositorySessionGuidsSinceDelegate() {
-              public void onGuidsSinceSucceeded(String[] guids) {
+              public void onGuidsSinceSucceeded(Collection<String> guids) {
                 fail("Session inactive, should fail");
                 performNotify();
               }
