@@ -70,7 +70,7 @@ public class RecordsChannel implements
   public RepositorySession source;
   public RepositorySession sink;
   private RecordsChannelDelegate delegate;
-  private long timestamp;
+  protected long timestamp;
   private long fetchEnd = -1;
 
   private final AtomicInteger numFetchFailed = new AtomicInteger();
@@ -140,6 +140,10 @@ public class RecordsChannel implements
     this.consumer = new ConcurrentRecordConsumer(this);
     ThreadPool.run(this.consumer);
     waitingForQueueDone = true;
+    fetch();
+  }
+
+  protected void fetch() {
     source.fetchSince(timestamp, this);
   }
 
