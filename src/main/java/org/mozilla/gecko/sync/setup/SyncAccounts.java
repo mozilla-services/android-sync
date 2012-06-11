@@ -214,6 +214,8 @@ public class SyncAccounts {
     // TODO: for each, also add to res/xml to make visible in account settings
     Logger.debug(LOG_TAG, "Finished setting syncables.");
 
+    // Purging global prefs assumes we have only a single Sync account at one time.
+    // TODO: Bug 761682: don't do anything with global prefs here.
     Logger.info(LOG_TAG, "Clearing global prefs.");
     SyncAdapter.purgeGlobalPrefs(context);
 
