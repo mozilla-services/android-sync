@@ -10,8 +10,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import android.util.Log;
-
 import junit.framework.AssertionFailedError;
 
 public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
@@ -21,7 +19,6 @@ public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
   public ExpectGuidsSinceDelegate(String[] guids) {
     expected = guids;
     Arrays.sort(expected);
-    Log.i("ExpectGuidsSinceDelegate", "Expecting " + expected.length);
   }
 
   @Override

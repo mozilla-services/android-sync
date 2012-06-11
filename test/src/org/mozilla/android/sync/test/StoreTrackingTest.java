@@ -16,6 +16,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
@@ -28,7 +29,6 @@ import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
-import android.util.Log;
 
 public class StoreTrackingTest extends AndroidSyncTestCase {
   public void assertEq(Object expected, Object actual) {
@@ -55,24 +55,24 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
 
       @Override
       public void onRecordStoreSucceeded(String guid) {
-        Log.d(getName(), "Stored " + guid);
+        Logger.debug(getName(), "Stored " + guid);
         assertEq(expectedGUID, guid);
       }
 
       @Override
       public void onStoreCompleted(long storeEnd) {
-        Log.d(getName(), "Store completed at " + storeEnd + ".");
+        Logger.debug(getName(), "Store completed at " + storeEnd + ".");
         try {
           session.fetch(new String[] { expectedGUID }, new SimpleSuccessFetchDelegate() {
             @Override
             public void onFetchedRecord(Record record) {
-              Log.d(getName(), "Hurrah! Fetched record " + record.guid);
+              Logger.debug(getName(), "Hurrah! Fetched record " + record.guid);
               assertEq(expectedGUID, record.guid);
             }
 
             @Override
             public void onFetchCompleted(final long fetchEnd) {
-              Log.d(getName(), "Fetch completed at " + fetchEnd + ".");
+              Logger.debug(getName(), "Fetch completed at " + fetchEnd + ".");
 
               // But fetching by time returns nothing.
               session.fetchSince(0, new SimpleSuccessFetchDelegate() {
@@ -80,7 +80,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
 
                 @Override
                 public void onFetchedRecord(Record record) {
-                  Log.d(getName(), "Fetched record " + record.guid);
+                  Logger.debug(getName(), "Fetched record " + record.guid);
                   fetched.set(true);
                   performNotify(new AssertionFailedError("Should have fetched no record!"));
                 }
@@ -88,7 +88,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
                 @Override
                 public void onFetchCompleted(final long fetchEnd) {
                   if (fetched.get()) {
-                    Log.d(getName(), "Not finishing session: record retrieved.");
+                    Logger.debug(getName(), "Not finishing session: record retrieved.");
                     return;
                   }
                   try {
@@ -114,7 +114,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
 
     session.setStoreDelegate(storeDelegate);
     try {
-      Log.d(getName(), "Storing...");
+      Logger.debug(getName(), "Storing...");
       session.store(record);
       session.storeDone();
     } catch (NoStoreDelegateException e) {
@@ -127,7 +127,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
     final SimpleSuccessCreationDelegate createDelegate = new SimpleSuccessCreationDelegate() {
       @Override
       public void onSessionCreated(final RepositorySession session) {
-        Log.i(getName(), "Session created.");
+        Logger.debug(getName(), "Session created.");
         try {
           session.begin(new SimpleSuccessBeginDelegate() {
             @Override
@@ -182,7 +182,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
    * Invokes doTestStoreRetrieveByGUID, doTestNewSessionRetrieveByTime.
    */
   public void testStoreRetrieveByGUID() {
-    Log.i(getName(), "Started.");
+    Logger.debug(getName(), "Started.");
     final WBORepository r = new TrackingWBORepository();
     final long now = System.currentTimeMillis();
     final String expectedGUID = "abcdefghijkl";
@@ -191,7 +191,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
     final RepositorySessionCreationDelegate createDelegate = new SimpleSuccessCreationDelegate() {
       @Override
       public void onSessionCreated(RepositorySession session) {
-        Log.d(getName(), "Session created: " + session);
+        Logger.debug(getName(), "Session created: " + session);
         try {
           session.begin(new SimpleSuccessBeginDelegate() {
             @Override
@@ -249,7 +249,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
 
       @Override
       public void store(final Record record) throws NoStoreDelegateException {
-        Log.d(LOG_TAG, "Counter now " + counter.incrementAndGet());
+        Logger.debug(LOG_TAG, "Counter now " + counter.incrementAndGet());
         super.store(record);
       }
     }
@@ -336,7 +336,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
           public void onSynchronized(Synchronizer synchronizer) {
             long countA = repoA.counter.get();
             long countB = repoB.counter.get();
-            Log.d(getName(), "Counts: " + countA + ", " + countB);
+            Logger.debug(getName(), "Counts: " + countA + ", " + countB);
             assertEq(2L, countA);
             assertEq(3L, countB);
 
@@ -346,12 +346,12 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
             // the last fetched time.
             final long timestampA = synchronizer.bundleA.getTimestamp();
             final long timestampB = synchronizer.bundleB.getTimestamp();
-            Log.d(getName(), "Repo A timestamp: " + timestampA);
-            Log.d(getName(), "Repo B timestamp: " + timestampB);
-            Log.d(getName(), "Repo A fetch done: " + repoA.stats.fetchCompleted);
-            Log.d(getName(), "Repo A store done: " + repoA.stats.storeCompleted);
-            Log.d(getName(), "Repo B fetch done: " + repoB.stats.fetchCompleted);
-            Log.d(getName(), "Repo B store done: " + repoB.stats.storeCompleted);
+            Logger.debug(getName(), "Repo A timestamp: " + timestampA);
+            Logger.debug(getName(), "Repo B timestamp: " + timestampB);
+            Logger.debug(getName(), "Repo A fetch done: " + repoA.stats.fetchCompleted);
+            Logger.debug(getName(), "Repo A store done: " + repoA.stats.storeCompleted);
+            Logger.debug(getName(), "Repo B fetch done: " + repoB.stats.fetchCompleted);
+            Logger.debug(getName(), "Repo B store done: " + repoB.stats.storeCompleted);
 
             assertTrue(timestampB <= timestampA);
             assertTrue(repoA.stats.fetchCompleted <= timestampA);
@@ -364,7 +364,7 @@ public class StoreTrackingTest extends AndroidSyncTestCase {
           @Override
           public void onSynchronizeFailed(Synchronizer synchronizer,
                                           Exception lastException, String reason) {
-            Log.d(getName(), "Failed.");
+            Logger.debug(getName(), "Failed.");
             performNotify(new AssertionFailedError("Should not fail."));
           }
         });

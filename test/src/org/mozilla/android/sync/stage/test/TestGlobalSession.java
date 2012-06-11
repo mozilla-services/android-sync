@@ -96,7 +96,6 @@ public class TestGlobalSession extends AndroidSyncTestCase {
     KeyBundle syncKeyBundle = new KeyBundle(username, syncKey);
     HappyCallback callback = new HappyCallback();
     Context context = getApplicationContext();
-    System.out.println("Using context " + context);
     GlobalSession session = new RealPrefsMockGlobalSession(clusterURL, username, password, syncKeyBundle, callback, context);
     session.start();
     assertTrue(callback.calledSuccess);

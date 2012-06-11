@@ -1,6 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.android.sync.test;
 
@@ -29,7 +28,6 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
@@ -79,7 +77,6 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
           accountManager.removeAccount(account, new AccountManagerCallback<Boolean>() {
             @Override
             public void run(AccountManagerFuture<Boolean> success) {
-              Log.i(LOG_TAG, "Removed account: " + success);
               synchronized (monitor) {
                 monitor.notify();
               }

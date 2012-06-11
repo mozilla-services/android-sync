@@ -1,6 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.android.sync.net.test;
 
@@ -18,6 +17,7 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.setup.auth.AuthenticateAccountStage;
 import org.mozilla.gecko.sync.setup.auth.AuthenticateAccountStage.AuthenticateAccountStageDelegate;
 import org.simpleframework.http.Request;
@@ -57,17 +57,16 @@ public class TestAccountAuthenticatorStage {
             code = 401;
           }
 
-          System.out.println("Handling request...");
+          Logger.debug(LOG_TAG, "Handling request...");
           PrintStream bodyStream = this.handleBasicHeaders(request, response, code, "application/json");
           bodyStream.println(body);
           bodyStream.close();
         } catch (IOException e) {
-          System.err.println("Oops.");
+          Logger.error(LOG_TAG, "Oops.", e);
         }
       }
     };
     authServer.expectedBasicAuthHeader = authStage.makeAuthHeader(USERNAME, PASSWORD);
-    System.out.println("expected: {" + authServer.expectedBasicAuthHeader + "}");
 
     // Authentication delegate to handle HTTP responses.
     testCallback = new AuthenticateAccountStageDelegate() {
@@ -102,7 +101,6 @@ public class TestAccountAuthenticatorStage {
 
       @Override
       public void handleError(Exception e) {
-        System.out.println("handleError()");
         fail("Unexpected error during authentication.");
       }
     };

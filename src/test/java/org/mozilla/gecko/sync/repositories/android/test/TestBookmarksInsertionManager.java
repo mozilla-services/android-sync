@@ -25,7 +25,6 @@ public class TestBookmarksInsertionManager {
 
   @Before
   public void setUp() {
-    Logger.LOG_TO_STDOUT = true;
     insertions = new ArrayList<String[]>();
     Set<String> writtenFolders = new HashSet<String>();
     writtenFolders.add("mobile");

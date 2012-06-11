@@ -25,8 +25,6 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 
-import android.util.Log;
-
 /**
  * Test the on-device side effects of reset operations on a stage.
  *
@@ -106,7 +104,6 @@ public class TestResetting extends AndroidSyncTestCase {
     Record remoteRecord = remote.wbos.get(recordGUID);
     assertNotNull(remoteRecord);
     assertNotNull(local.wbos.get(recordGUID));
-    Log.i("Foo", "Remote record: " + remoteRecord.guid + ", " + remoteRecord.lastModified + " (" + afterReset + ")");
     assertEquals(recordGUID, remoteRecord.guid);
     assertTrue(afterReset <= remoteRecord.lastModified);
 

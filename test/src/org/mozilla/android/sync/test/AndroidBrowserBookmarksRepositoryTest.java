@@ -31,7 +31,6 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 
 public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
 
@@ -298,9 +297,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
    */
   @Override
   public void testStoreIdenticalExceptGuid() {
-    Log.i("testStoreIdenticalExceptGuid", "Started.");
     storeIdenticalExceptGuid(BookmarkHelpers.createBookmarkInMobileFolder1());
-    Log.i("testStoreIdenticalExceptGuid", "Done.");
   }
   
   /*

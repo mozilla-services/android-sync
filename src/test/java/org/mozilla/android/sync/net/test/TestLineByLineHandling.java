@@ -16,14 +16,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
-
-import android.util.Log;
 
 public class TestLineByLineHandling {
   private static final int     TEST_PORT   = 15325;
@@ -71,7 +70,7 @@ public class TestLineByLineHandling {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
-      Log.i(LOG_TAG, "Request success.");
+      Logger.info(LOG_TAG, "Request success.");
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
@@ -85,21 +84,21 @@ public class TestLineByLineHandling {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      Log.i(LOG_TAG, "Got request failure: " + response);
+      Logger.info(LOG_TAG, "Got request failure: " + response);
       BaseResource.consumeEntity(response);
       fail("Should not be called.");
     }
 
     @Override
     public void handleRequestError(Exception ex) {
-      Log.e(LOG_TAG, "Got request error: ", ex);
+      Logger.error(LOG_TAG, "Got request error: ", ex);
       fail("Should not be called.");
     }
   }
 
   @Before
   public void setUp() {
-    Log.i(LOG_TAG, "Faking SSL context.");
+    Logger.info(LOG_TAG, "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
   }
 
@@ -108,7 +107,7 @@ public class TestLineByLineHandling {
     BaseResource.rewriteLocalhost = false;
 
     data.startHTTPServer(new LineByLineMockServer());
-    Log.i(LOG_TAG, "Server started.");
+    Logger.info(LOG_TAG, "Server started.");
     SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
     SyncStorageCollectionRequestDelegate delegate = new BaseLineByLineDelegate();
     r.delegate = delegate;
