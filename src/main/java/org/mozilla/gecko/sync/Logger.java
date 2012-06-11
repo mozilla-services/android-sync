@@ -79,7 +79,7 @@ public class Logger {
   }
 
   // Synchronized version for other classes to use.
-  public static synchronized boolean logVerbose(String logTag) {
+  public static synchronized boolean shouldLogVerbose(String logTag) {
     for (LogWriter logWriter : logWriters) {
       if (logWriter.shouldLogVerbose(logTag)) {
         return true;
