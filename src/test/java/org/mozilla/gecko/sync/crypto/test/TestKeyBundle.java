@@ -9,26 +9,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import org.junit.Test;
 import org.mozilla.apache.commons.codec.binary.Base64;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 public class TestKeyBundle {
-  @Test
-  public void testUsernameFromAccount() throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", Utils.sha1Base32("foobar@baz.com"));
-    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", KeyBundle.usernameFromAccount("foobar@baz.com"));
-    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", KeyBundle.usernameFromAccount("FooBar@Baz.com"));
-    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", KeyBundle.usernameFromAccount("xee7ffonluzpdp66l6xgpyh2v2w6ojkc"));
-    assertEquals("foobar",                           KeyBundle.usernameFromAccount("foobar"));
-    assertEquals("foobar",                           KeyBundle.usernameFromAccount("FOOBAr"));
-  }
-
   @Test
   public void testCreateKeyBundle() throws UnsupportedEncodingException, CryptoException {
     String username              = "smqvooxj664hmrkrv6bw4r4vkegjhkns";
