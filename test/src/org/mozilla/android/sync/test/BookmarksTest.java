@@ -49,13 +49,13 @@ public class BookmarksTest extends AndroidSyncTestCase {
   public void testRetrieveFolderHasAccurateChildren() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
 
     final String folderGUID = "eaaaaaaaafff";
-    BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now -5, false);
-    BookmarkRecord bookmarkA = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now -1, false);
-    BookmarkRecord bookmarkB = new BookmarkRecord("baaaaaaaabbb", "bookmarks", now -3, false);
-    BookmarkRecord bookmarkC = new BookmarkRecord("aaaaaaaaaccc", "bookmarks", now -2, false);
+    BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now - 5, false);
+    BookmarkRecord bookmarkA = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now - 1, false);
+    BookmarkRecord bookmarkB = new BookmarkRecord("baaaaaaaabbb", "bookmarks", now - 3, false);
+    BookmarkRecord bookmarkC = new BookmarkRecord("aaaaaaaaaccc", "bookmarks", now - 2, false);
 
     folder.children   = childrenFromRecords(bookmarkA, bookmarkB, bookmarkC);
     folder.sortIndex  = 150;
@@ -159,11 +159,11 @@ public class BookmarksTest extends AndroidSyncTestCase {
   public void testMergeFoldersPreservesSaneOrder() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     final String folderGUID = "mobile";
 
     wipe();
-    long mobile = setUpFennecMobileRecord();
+    final long mobile = setUpFennecMobileRecord();
 
     // No children.
     assertChildrenAreUnordered(repo, folderGUID, new Record[] {});
@@ -251,7 +251,7 @@ public class BookmarksTest extends AndroidSyncTestCase {
   public void testNoReorderingMeansNoReupload() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
 
     final String folderGUID = "eaaaaaaaafff";
     BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now -5, false);
@@ -467,7 +467,7 @@ public class BookmarksTest extends AndroidSyncTestCase {
     assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
 
     // Replace folder3 with a record with a new GUID, and add bmk4 as folder3's child.
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     folder3.guid = Utils.generateGuid();
     folder3.lastModified = now;
     bmk4.title = bmk4.title + "/NEW";
@@ -517,7 +517,7 @@ public class BookmarksTest extends AndroidSyncTestCase {
     assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
 
     // Rename folder1, and add bmk2 as folder1's child.
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     folder1.title = folder1.title + "/NEW";
     folder1.lastModified = now;
     bmk2.title = bmk2.title + "/NEW";
@@ -681,7 +681,7 @@ public class BookmarksTest extends AndroidSyncTestCase {
   }
 
   @SuppressWarnings("unchecked")
-  protected JSONArray childrenFromRecords(BookmarkRecord... records) {
+  protected static JSONArray childrenFromRecords(BookmarkRecord... records) {
     JSONArray children = new JSONArray();
     for (BookmarkRecord record : records) {
       children.add(record.guid);
@@ -702,11 +702,11 @@ public class BookmarksTest extends AndroidSyncTestCase {
     return getApplicationContext().getContentResolver().insert(uri, values);
   }
 
-  protected ContentValues fennecMobileRecordWithoutTitle() {
+  protected static ContentValues fennecMobileRecordWithoutTitle() {
     ContentValues values = new ContentValues();
     values.put(BrowserContract.SyncColumns.GUID, "mobile");
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     values.put(BrowserContract.Bookmarks.DATE_CREATED, now);
     values.put(BrowserContract.Bookmarks.DATE_MODIFIED, now);
     values.putNull(BrowserContract.Bookmarks.TITLE);
