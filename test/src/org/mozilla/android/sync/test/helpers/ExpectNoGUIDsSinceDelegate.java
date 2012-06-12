@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.AssertionFailedError;
-import android.util.Log;
 
 public class ExpectNoGUIDsSinceDelegate extends DefaultGuidsSinceDelegate {
   public Set<String> ignore = new HashSet<String>();

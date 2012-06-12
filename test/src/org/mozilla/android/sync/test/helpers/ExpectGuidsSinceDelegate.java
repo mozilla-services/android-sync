@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.AssertionFailedError;
-import android.util.Log;
 
 public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
   private String[] expected;
