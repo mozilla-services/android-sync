@@ -6,8 +6,6 @@ package org.mozilla.android.sync.test.helpers;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 
-import junit.framework.AssertionFailedError;
-
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
@@ -22,7 +20,7 @@ public class ExpectSuccessRepositorySessionFetchRecordsDelegate extends
   @Override
   public void onFetchFailed(Exception ex, Record record) {
     log("Fetch failed.", ex);
-    performNotify(new AssertionFailedError("onFetchFailed: fetch should not have failed."));
+    performNotify(ex);
   }
 
   @Override
