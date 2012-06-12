@@ -42,9 +42,9 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 
-public class BookmarkPositioningTest extends AndroidSyncTestCase {
+public class BookmarksTest extends AndroidSyncTestCase {
 
-  protected static final String LOG_TAG = "BookmarkPositioningTest";
+  protected static final String LOG_TAG = "BookmarksTest";
 
   public void testRetrieveFolderHasAccurateChildren() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
