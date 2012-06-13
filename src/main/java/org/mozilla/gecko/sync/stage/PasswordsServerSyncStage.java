@@ -52,4 +52,13 @@ public class PasswordsServerSyncStage extends ServerSyncStage {
       return r;
     }
   }
+
+  /**
+   * Password insertion is usually very slow, so we aggressively limit the
+   * number of records fetched per batch.
+   */
+  @Override
+  protected int getBatchSize() {
+    return 50;
+  }
 }

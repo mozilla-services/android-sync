@@ -21,7 +21,7 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
   // Eventually this kind of sync stage will be data-driven,
   // and all this hard-coding can go away.
   private static final String FORM_HISTORY_SORT          = "index";
-  private static final long   FORM_HISTORY_REQUEST_LIMIT = 5000;         // Sanity limit.
+  private static final long   FORM_HISTORY_REQUEST_LIMIT = 200;         // Sanity limit.
 
   public FormHistoryServerSyncStage(GlobalSession session) {
     super(session);
@@ -75,5 +75,10 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
   @Override
   protected RecordFactory getRecordFactory() {
     return new FormHistoryRecordFactory();
+  }
+
+  @Override
+  protected int getBatchSize() {
+    return (int) FORM_HISTORY_REQUEST_LIMIT;
   }
 }

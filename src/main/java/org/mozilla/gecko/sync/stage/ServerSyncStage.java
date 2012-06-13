@@ -37,9 +37,10 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
-import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
+import org.mozilla.gecko.sync.synchronizer.FillingServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
+import org.mozilla.gecko.sync.synchronizer.managers.SQLiteGuidsManager;
 
 import android.content.Context;
 
@@ -57,6 +58,8 @@ public abstract class ServerSyncStage implements
   protected static final String LOG_TAG = "ServerSyncStage";
 
   protected final GlobalSession session;
+
+  protected SQLiteGuidsManager manager = null;
 
   public ServerSyncStage(GlobalSession session) {
     if (session == null) {
@@ -103,6 +106,26 @@ public abstract class ServerSyncStage implements
   protected abstract Repository getLocalRepository();
   protected abstract RecordFactory getRecordFactory();
 
+  /**
+   * Number of records to download per fetch.
+   * <p>
+   * Override this in subclasses.
+   *
+   * @return number of records.
+   */
+  protected abstract int getBatchSize();
+
+  /**
+   * Number of times to re-download records that fail to store.
+   * <p>
+   * Override this in subclasses.
+   *
+   * @return number of retry attempts.
+   */
+  protected int getNumRetries() {
+    return 5;
+  }
+
   // Override this in subclasses.
   protected Repository getRemoteRepository() throws URISyntaxException {
     return new Server11Repository(session.config.getClusterURLString(),
@@ -140,7 +163,8 @@ public abstract class ServerSyncStage implements
   public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException, URISyntaxException, NonObjectJSONException, IOException, ParseException {
     Repository remote = wrappedServerRepo();
 
-    Synchronizer synchronizer = new ServerLocalSynchronizer();
+    manager = new SQLiteGuidsManager(session.getContext(), this.getCollection(), this.getBatchSize(), this.getNumRetries());
+    Synchronizer synchronizer = new FillingServerLocalSynchronizer(manager);
     synchronizer.repositoryA = remote;
     synchronizer.repositoryB = this.getLocalRepository();
     synchronizer.load(getConfig());
@@ -512,6 +536,10 @@ public abstract class ServerSyncStage implements
       Logger.warn(LOG_TAG, "Didn't get configuration from synchronizer after success.");
     }
 
+    if (manager != null) {
+      manager.close();
+    }
+
     Logger.info(LOG_TAG, "Advancing session.");
     session.advance();
   }
@@ -538,6 +566,10 @@ public abstract class ServerSyncStage implements
       } else {
         session.interpretHTTPFailure(response.httpResponse()); // Does not call session.abort().
       }
+    }
+
+    if (manager != null) {
+      manager.close();
     }
 
     Logger.info(LOG_TAG, "Advancing session even though stage failed. Timestamps not persisted.");

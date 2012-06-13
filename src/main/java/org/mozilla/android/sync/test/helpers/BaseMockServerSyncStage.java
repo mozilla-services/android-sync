@@ -66,6 +66,11 @@ public abstract class BaseMockServerSyncStage extends ServerSyncStage {
   }
 
   @Override
+  protected int getBatchSize() {
+    return 5000;
+  }
+
+  @Override
   protected Repository wrappedServerRepo()
   throws NoCollectionKeysSetException, URISyntaxException {
     return getRemoteRepository();

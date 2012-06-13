@@ -64,6 +64,16 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
     return new BookmarkRecordFactory();
   }
 
+  /**
+   * We assume that we get the entire bookmark folder tree in a single session
+   * so that we can re-parent correctly. Therefore, we really can't get records
+   * in small batches.
+   */
+  @Override
+  protected int getBatchSize() {
+    return (int) BOOKMARKS_REQUEST_LIMIT;
+  }
+
   @Override
   protected boolean isEnabled() throws MetaGlobalException {
     if (session.getContext() == null) {
