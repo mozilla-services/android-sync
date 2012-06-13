@@ -28,6 +28,7 @@ import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksDataAccessor;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
+import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepositorySession;
 import org.mozilla.gecko.sync.repositories.android.BrowserContractHelpers;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -42,20 +43,66 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 
-public class BookmarkPositioningTest extends AndroidSyncTestCase {
+public class BookmarksTest extends AndroidSyncTestCase {
 
-  protected static final String LOG_TAG = "BookmarkPositioningTest";
+  protected static final String LOG_TAG = "BookmarksTest";
+
+  /**
+   * Trivial test that reading list records will be ignored if processed.
+   */
+  public void testReadingListIsIgnored() {
+    final AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+    final long now = System.currentTimeMillis();
+    final BookmarkRecord yes = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now - 1, false);
+    final BookmarkRecord no  = new BookmarkRecord("baaaaaaaaaaa", "bookmarks", now - 2, false);
+    final BookmarkRecord rl  = new BookmarkRecord("readinglist",  "bookmarks", now - 3, false);
+
+    yes.type = no.type = "bookmark";
+    rl.type = "folder";
+
+    yes.parentID = "readinglist";
+    no.parentID  = "toolbar";
+    rl.parentID  = "places";
+
+    inBegunSession(repo, new SimpleSuccessBeginDelegate() {
+      @Override
+      public void onBeginSucceeded(RepositorySession session) {
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(yes));
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(rl));
+        assertFalse(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(no));
+        finishAndNotify(session);
+      }
+    });
+  }
+
+  /**
+   * Trivial test that reading list records will be skipped if present in the DB.
+   */
+  public void testReadingListIsNotRetrieved() {
+    final AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+
+    // Ensure that it exists.
+    setUpFennecReadingListRecord();
+
+    // It's there in the DB…
+    final ArrayList<String> roots = fetchChildrenDirect(BrowserContract.Bookmarks.FIXED_ROOT_ID);
+    Logger.info(LOG_TAG, "Roots: " + roots);
+    assertTrue(roots.contains("readinglist"));
+
+    // … but not when we fetch.
+    assertFalse(fetchGUIDs(repo).contains("readinglist"));
+  }
 
   public void testRetrieveFolderHasAccurateChildren() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
 
     final String folderGUID = "eaaaaaaaafff";
-    BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now -5, false);
-    BookmarkRecord bookmarkA = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now -1, false);
-    BookmarkRecord bookmarkB = new BookmarkRecord("baaaaaaaabbb", "bookmarks", now -3, false);
-    BookmarkRecord bookmarkC = new BookmarkRecord("aaaaaaaaaccc", "bookmarks", now -2, false);
+    BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now - 5, false);
+    BookmarkRecord bookmarkA = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now - 1, false);
+    BookmarkRecord bookmarkB = new BookmarkRecord("baaaaaaaabbb", "bookmarks", now - 3, false);
+    BookmarkRecord bookmarkC = new BookmarkRecord("aaaaaaaaaccc", "bookmarks", now - 2, false);
 
     folder.children   = childrenFromRecords(bookmarkA, bookmarkB, bookmarkC);
     folder.sortIndex  = 150;
@@ -159,11 +206,11 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   public void testMergeFoldersPreservesSaneOrder() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     final String folderGUID = "mobile";
 
     wipe();
-    long mobile = setUpFennecMobileRecord();
+    final long mobile = setUpFennecMobileRecord();
 
     // No children.
     assertChildrenAreUnordered(repo, folderGUID, new Record[] {});
@@ -251,7 +298,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   public void testNoReorderingMeansNoReupload() {
     AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
 
     final String folderGUID = "eaaaaaaaafff";
     BookmarkRecord folder    = new BookmarkRecord(folderGUID,     "bookmarks", now -5, false);
@@ -467,7 +514,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
 
     // Replace folder3 with a record with a new GUID, and add bmk4 as folder3's child.
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     folder3.guid = Utils.generateGuid();
     folder3.lastModified = now;
     bmk4.title = bmk4.title + "/NEW";
@@ -517,7 +564,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     assertChildrenAreUnordered(repo, folder3.guid, new Record[] { bmk4 });
 
     // Rename folder1, and add bmk2 as folder1's child.
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     folder1.title = folder1.title + "/NEW";
     folder1.lastModified = now;
     bmk2.title = bmk2.title + "/NEW";
@@ -586,9 +633,33 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   }
 
   /**
+   * Simple helper class for fetching all records.
+   * The fetched records' GUIDs are stored in `fetchedGUIDs`.
+   */
+  public class SimpleFetchAllBeginDelegate extends SimpleSuccessBeginDelegate {
+    public final ArrayList<String> fetchedGUIDs = new ArrayList<String>();
+
+    @Override
+    public void onBeginSucceeded(final RepositorySession session) {
+      RepositorySessionFetchRecordsDelegate fetchDelegate = new SimpleSuccessFetchDelegate() {
+
+        @Override
+        public void onFetchedRecord(Record record) {
+          fetchedGUIDs.add(record.guid);
+        }
+
+        @Override
+        public void onFetchCompleted(long end) {
+          finishAndNotify(session);
+        }
+      };
+      session.fetchSince(0, fetchDelegate);
+    }
+  }
+
+  /**
    * Simple helper class for fetching a single record by GUID.
    * The fetched record is stored in `fetchedRecord`.
-   *
    */
   public class SimpleFetchOneBeginDelegate extends SimpleSuccessBeginDelegate {
     public final String guid;
@@ -667,10 +738,18 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     inBegunSession(repo, beginDelegate);
   }
 
+  public ArrayList<String> fetchGUIDs(AndroidBrowserBookmarksRepository repo) {
+    SimpleFetchAllBeginDelegate beginDelegate = new SimpleFetchAllBeginDelegate();
+    inBegunSession(repo, beginDelegate);
+    return beginDelegate.fetchedGUIDs;
+  }
+
   public BookmarkRecord fetchGUID(AndroidBrowserBookmarksRepository repo,
-      final String guid) {
+                                  final String guid) {
+    Logger.info(LOG_TAG, "Fetching for " + guid);
     SimpleFetchOneBeginDelegate beginDelegate = new SimpleFetchOneBeginDelegate(guid);
     inBegunSession(repo, beginDelegate);
+    Logger.info(LOG_TAG, "Fetched " + beginDelegate.fetchedRecord);
     assertTrue(beginDelegate.fetchedRecord != null);
     return (BookmarkRecord) beginDelegate.fetchedRecord;
   }
@@ -681,7 +760,7 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   }
 
   @SuppressWarnings("unchecked")
-  protected JSONArray childrenFromRecords(BookmarkRecord... records) {
+  protected static JSONArray childrenFromRecords(BookmarkRecord... records) {
     JSONArray children = new JSONArray();
     for (BookmarkRecord record : records) {
       children.add(record.guid);
@@ -702,15 +781,31 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     return getApplicationContext().getContentResolver().insert(uri, values);
   }
 
-  protected ContentValues fennecMobileRecordWithoutTitle() {
+  protected static ContentValues specialFolder() {
     ContentValues values = new ContentValues();
-    values.put(BrowserContract.SyncColumns.GUID, "mobile");
 
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
     values.put(BrowserContract.Bookmarks.DATE_CREATED, now);
     values.put(BrowserContract.Bookmarks.DATE_MODIFIED, now);
+    values.put(BrowserContract.Bookmarks.TYPE, BrowserContract.Bookmarks.TYPE_FOLDER);
+
+    return values;
+  }
+
+  protected static ContentValues fennecMobileRecordWithoutTitle() {
+    ContentValues values = specialFolder();
+    values.put(BrowserContract.SyncColumns.GUID, "mobile");
     values.putNull(BrowserContract.Bookmarks.TITLE);
 
+    return values;
+  }
+
+  protected ContentValues fennecReadingListRecord() {
+    ContentValues values = specialFolder();
+    values.put(BrowserContract.SyncColumns.GUID, "readinglist");
+    String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_reading_list);
+    values.put(BrowserContract.Bookmarks.TITLE, title);
+    values.put(BrowserContract.Bookmarks.PARENT, BrowserContract.Bookmarks.FIXED_ROOT_ID);
     return values;
   }
 
@@ -724,11 +819,15 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
   protected long setUpFennecMobileRecord() {
     ContentResolver cr = getApplicationContext().getContentResolver();
     ContentValues values = fennecMobileRecordWithoutTitle();
-    values.put(BrowserContract.Bookmarks.PARENT, 0);
+    values.put(BrowserContract.Bookmarks.PARENT, BrowserContract.Bookmarks.FIXED_ROOT_ID);
     String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_mobile);
     values.put(BrowserContract.Bookmarks.TITLE, title);
     updateRow(values);
     return fennecGetMobileBookmarksFolderId(cr);
+  }
+
+  protected void setUpFennecReadingListRecord() {
+    insertRow(fennecReadingListRecord());
   }
 
   //
@@ -841,6 +940,34 @@ public class BookmarkPositioningTest extends AndroidSyncTestCase {
     for (Record record : expected) {
       folderChildren.contains(record.guid);
     }
+  }
+
+  /**
+   * Return a sequence of children GUIDs for the provided folder ID.
+   */
+  protected ArrayList<String> fetchChildrenDirect(long id) {
+    Logger.debug(getName(), "Fetching children directly from DB...");
+    final ArrayList<String> out = new ArrayList<String>();
+    final AndroidBrowserBookmarksDataAccessor accessor = new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
+    Cursor cur = null;
+    try {
+      cur = accessor.getChildren(id);
+    } catch (NullCursorException e) {
+      fail("Got null cursor.");
+    }
+    try {
+      if (!cur.moveToFirst()) {
+        return out;
+      }
+      final int guidCol = cur.getColumnIndex(BrowserContract.SyncColumns.GUID);
+      while (!cur.isAfterLast()) {
+        out.add(cur.getString(guidCol));
+        cur.moveToNext();
+      }
+    } finally {
+      cur.close();
+    }
+    return out;
   }
 
   /**
