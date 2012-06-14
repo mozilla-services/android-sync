@@ -21,6 +21,7 @@ $PREPROCESSOR $DEFINITIONS $MANIFEST.in > $MANIFEST
 $PREPROCESSOR $DEFINITIONS $BROWSERCONTRACT.in > $BROWSERCONTRACT
 
 $PREPROCESSOR $DEFINITIONS strings/strings.xml.template > res/values/strings.xml
+$PREPROCESSOR $DEFINITIONS sync_authenticator.xml.template > res/xml/sync_authenticator.xml
 $PREPROCESSOR $DEFINITIONS sync_syncadapter.xml.template > res/xml/sync_syncadapter.xml
 $PREPROCESSOR $DEFINITIONS sync_options.xml.template > res/xml/sync_options.xml
 

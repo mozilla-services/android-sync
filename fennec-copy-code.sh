@@ -22,6 +22,9 @@ echo "Copying preprocessed GlobalConstants file."
 PREPROCESS_FILES="sync/GlobalConstants.java"
 cp $SOURCEDIR/GlobalConstants.java.in $ANDROID/base/sync/
 
+echo "Copying preprocessed sync_authenticator.xml."
+cp sync_authenticator.xml.template $ANDROID/base/resources/xml/sync_authenticator.xml.in
+
 echo "Copying preprocessed sync_syncadapter.xml."
 cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
 
@@ -99,6 +102,7 @@ find res/drawable-hdpi  -name '*.xml' -or -name '*.png' | sed "s,res/,mobile/and
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.
+rm $ANDROID/base/resources/xml/sync_authenticator.xml
 rm $ANDROID/base/resources/xml/sync_syncadapter.xml
 rm $ANDROID/base/resources/xml/sync_options.xml
 
