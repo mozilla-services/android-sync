@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
@@ -96,7 +97,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
-        Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+        Account[] accts = mAccountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
         finishResume(accts);
       }
     });
@@ -339,7 +340,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    */
   public void onPaired() {
     // Extract Sync account data.
-    Account[] accts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    Account[] accts = mAccountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
     if (accts.length == 0) {
       // Error, no account present.
       Logger.error(LOG_TAG, "No accounts present.");
@@ -401,8 +402,8 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
       final Intent intent = new Intent(); // The intent to return.
       intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, syncAccount.username);
-      intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
-      intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+      intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, GlobalConstants.ACCOUNTTYPE_SYNC);
+      intent.putExtra(AccountManager.KEY_AUTHTOKEN, GlobalConstants.ACCOUNTTYPE_SYNC);
       setAccountAuthenticatorResult(intent.getExtras());
 
       if (result) {

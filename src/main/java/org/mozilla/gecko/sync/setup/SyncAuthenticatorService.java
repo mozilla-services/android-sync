@@ -7,6 +7,8 @@ package org.mozilla.gecko.sync.setup;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
+import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
@@ -62,7 +64,7 @@ public class SyncAuthenticatorService extends Service {
       final Intent intent = new Intent(mContext, SetupSyncActivity.class);
       intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE,
                       response);
-      intent.putExtra("accountType", Constants.ACCOUNTTYPE_SYNC);
+      intent.putExtra("accountType", GlobalConstants.ACCOUNTTYPE_SYNC);
       intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, true);
 
       final Bundle result = new Bundle();

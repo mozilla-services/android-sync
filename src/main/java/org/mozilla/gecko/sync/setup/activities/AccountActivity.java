@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync.setup.activities;
 import java.util.Locale;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.InvalidSyncKeyException;
@@ -25,9 +26,9 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -243,8 +244,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
 
     final Intent intent = new Intent(); // The intent to return.
     intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, syncAccount.username);
-    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
-    intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+    intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, GlobalConstants.ACCOUNTTYPE_SYNC);
+    intent.putExtra(AccountManager.KEY_AUTHTOKEN, GlobalConstants.ACCOUNTTYPE_SYNC);
     setAccountAuthenticatorResult(intent.getExtras());
 
     if (!accountResult) {

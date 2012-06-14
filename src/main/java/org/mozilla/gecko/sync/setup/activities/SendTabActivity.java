@@ -5,11 +5,13 @@ import java.util.List;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandRunner;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.setup.Constants;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
@@ -66,7 +68,7 @@ public class SendTabActivity extends Activity {
 
   private void redirectIfNoSyncAccount() {
     accountManager = AccountManager.get(getApplicationContext());
-    Account[] accts = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    Account[] accts = accountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
 
     // A Sync account exists.
     if (accts.length > 0) {
