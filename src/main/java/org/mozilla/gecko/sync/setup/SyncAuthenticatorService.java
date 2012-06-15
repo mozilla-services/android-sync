@@ -106,24 +106,19 @@ public class SyncAuthenticatorService extends Service {
       final AccountManager am = AccountManager.get(mContext);
       final String password = am.getPassword(account);
       if (password != null) {
-        final Bundle result = new Bundle();
-
-        // This is a Sync account.
-        result.putString(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+        // authToken is JSON (username, syncKey, serverURL, password).
+        ExtendedJSONObject authToken = new ExtendedJSONObject();
 
         // Server.
         String serverURL = am.getUserData(account, Constants.OPTION_SERVER);
-        result.putString(Constants.OPTION_SERVER, serverURL);
-
-        // Full username, before hashing.
-        result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
+        authToken.put(Constants.OPTION_SERVER, serverURL);
 
         // Username after hashing.
         try {
           String username = Utils.usernameFromAccount(account.name);
           Logger.pii(LOG_TAG, "Account " + account.name + " hashes to " + username);
           Logger.info(LOG_TAG, "Setting username. Null? " + (username == null));
-          result.putString(Constants.OPTION_USERNAME, username);
+          authToken.put(Constants.OPTION_USERNAME, username);
         } catch (NoSuchAlgorithmException e) {
           // Do nothing. Calling code must check for missing value.
         } catch (UnsupportedEncodingException e) {
@@ -133,10 +128,16 @@ public class SyncAuthenticatorService extends Service {
         // Sync key.
         final String syncKey = am.getUserData(account, Constants.OPTION_SYNCKEY);
         Logger.info(LOG_TAG, "Setting Sync Key. Null? " + (syncKey == null));
-        result.putString(Constants.OPTION_SYNCKEY, syncKey);
+        authToken.put(Constants.OPTION_SYNCKEY, syncKey);
 
         // Password.
-        result.putString(AccountManager.KEY_AUTHTOKEN, password);
+        authToken.put(Constants.OPTION_PASSWORD, password);
+
+        final Bundle result = new Bundle();
+        result.putString(AccountManager.KEY_ACCOUNT_TYPE, GlobalConstants.ACCOUNTTYPE_SYNC); // This is a Sync account.
+        result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name); // Full username, before hashing.
+        result.putString(AccountManager.KEY_AUTHTOKEN, authToken.toJSONString()); // authToken as JSON.
+
         return result;
       }
       Logger.warn(LOG_TAG, "Returning null bundle for getAuthToken.");

@@ -7,10 +7,10 @@ package org.mozilla.gecko.sync.syncadapter;
 import java.io.IOException;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.TimeUnit;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.AlreadySyncingException;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
@@ -30,8 +30,6 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.content.AbstractThreadedSyncAdapter;
@@ -43,7 +41,6 @@ import android.content.SyncResult;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
-import android.os.Handler;
 
 public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback, ClientsDataDelegate {
   private static final String  LOG_TAG = "SyncAdapter";
@@ -150,6 +147,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     }
   }
 
+  /*
   private AccountManagerFuture<Bundle> getAuthToken(final Account account,
                             AccountManagerCallback<Bundle> callback,
                             Handler handler) {
@@ -161,12 +159,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     String token;
     try {
       token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
-      mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
+      mAccountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, token);
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Couldn't invalidate auth token: " + e);
     }
   }
-
+*/
   @Override
   public void onSyncCanceled() {
     super.onSyncCanceled();
@@ -256,24 +254,36 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
     // TODO: don't always invalidate; use getShouldInvalidateAuthToken.
     // However, this fixes Bug 716815, so it'll do for now.
-    Logger.debug(LOG_TAG, "Invalidating auth token.");
-    invalidateAuthToken(account);
+    // Logger.debug(LOG_TAG, "Invalidating auth token.");
+    // invalidateAuthToken(account);
 
     final SyncAdapter self = this;
-    final AccountManagerCallback<Bundle> callback = new AccountManagerCallback<Bundle>() {
+
+    // final Handler handler = null;
+    final Runnable fetchAuthToken = new Runnable() {
       @Override
-      public void run(AccountManagerFuture<Bundle> future) {
+      public void run() {
         Logger.info(LOG_TAG, "AccountManagerCallback invoked.");
         // TODO: N.B.: Future must not be used on the main thread.
         try {
-          Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
-          if (bundle.containsKey("KEY_INTENT")) {
-            Logger.warn(LOG_TAG, "KEY_INTENT included in AccountManagerFuture bundle. Problem?");
-          }
+          // authToken is JSON.
+          String authToken = mAccountManager.blockingGetAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true);
+          Logger.info(LOG_TAG, "Auth token is '" + authToken + "'.");
+
+        ExtendedJSONObject bundle;
+        try {
+          bundle = ExtendedJSONObject.parseJSONObject(authToken);
+        } catch (Exception e) {
+          Logger.error(LOG_TAG, "Got exception parsing JSON auth token. " +
+              "Invalidating auth token and aborting sync.", e);
+          mAccountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, null);
+          return;
+        }
+
           String username  = bundle.getString(Constants.OPTION_USERNAME);
           String syncKey   = bundle.getString(Constants.OPTION_SYNCKEY);
           String serverURL = bundle.getString(Constants.OPTION_SERVER);
-          String password  = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+          String password  = bundle.getString(Constants.OPTION_PASSWORD);
           Logger.debug(LOG_TAG, "Username: " + username);
           Logger.debug(LOG_TAG, "Server:   " + serverURL);
           Logger.debug(LOG_TAG, "Password? " + (password != null));
@@ -328,13 +338,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       }
     };
 
-    final Handler handler = null;
-    final Runnable fetchAuthToken = new Runnable() {
-      @Override
-      public void run() {
-        getAuthToken(account, callback, handler);
-      }
-    };
     synchronized (syncMonitor) {
       // Perform the work in a new thread from within this synchronized block,
       // which allows us to be waiting on the monitor before the callback can
