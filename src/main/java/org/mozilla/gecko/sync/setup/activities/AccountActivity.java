@@ -242,6 +242,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     createAccountThread(syncAccount);
   }
 
+  // createAccountOnThread?
   private void createAccountThread(final SyncAccountParameters syncAccount) {
     ThreadPool.run(new Runnable() {
       @Override
@@ -255,6 +256,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
             public void run() {
               // Use default error.
               // TODO: Display more accurate error (Account failed to be created).
+              // Do we have a ticket for this?  I'd like to see a bug number in code, even if it's a meta bug.
               Logger.debug(LOG_TAG, "displayFailure()");
               displayFailure(AuthenticationResult.FAILURE_OTHER);
             }

@@ -398,15 +398,18 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       createAccountAndCleanUp(syncAccount);
     } else {
       // No need to create an account; just clean up.
+      // This no longer calls setResult.
       onCompleteCleanup(true);
     }
   }
 
+  // This doesn't really feel like "clean up" to me -- perhaps "finish" or "displayResultAndFinish"?
   private void onCompleteCleanup(final boolean isSuccess) {
     jClient = null;
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
+        // I suggest calling setResult here.
         displayResult(isSuccess);
       }
     });
@@ -424,7 +427,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
           resultBundle.putString(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
           resultBundle.putString(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
           setAccountAuthenticatorResult(resultBundle);
-
+          // Rather than having the setResult here.
           setResult(RESULT_OK);
         } else {
           setResult(RESULT_CANCELED);
