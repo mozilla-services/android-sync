@@ -386,42 +386,53 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * @param jCreds
    */
   public void onComplete(JSONObject jCreds) {
-    boolean result = true;
-
     if (!pairWithPin) {
+      // Create account from received credentials.
       String accountName  = (String) jCreds.get(Constants.JSON_KEY_ACCOUNT);
       String password     = (String) jCreds.get(Constants.JSON_KEY_PASSWORD);
       String syncKey      = (String) jCreds.get(Constants.JSON_KEY_SYNCKEY);
       String serverURL    = (String) jCreds.get(Constants.JSON_KEY_SERVER);
 
-      final SyncAccountParameters syncAccount = new SyncAccountParameters(mContext, mAccountManager,
-          accountName, syncKey, password, serverURL);
-      final Account account = SyncAccounts.createSyncAccount(syncAccount);
-      result = (account != null);
-
-      final Intent intent = new Intent(); // The intent to return.
-      intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, syncAccount.username);
-      intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
-      intent.putExtra(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
-      setAccountAuthenticatorResult(intent.getExtras());
-
-      if (result) {
-        setResult(RESULT_OK, intent);
-      } else {
-        setResult(RESULT_CANCELED, intent);
-      }
+      final SyncAccountParameters syncAccount = new SyncAccountParameters(mContext, mAccountManager, accountName,
+                                                                          syncKey, password, serverURL);
+      createAccountAndCleanUp(syncAccount);
+    } else {
+      // No need to create an account; just clean up.
+      onCompleteCleanup(true);
     }
+  }
 
-    jClient = null; // Sync should be set up. Kill reference to JPakeClient object.
-    final boolean res = result;
+  private void onCompleteCleanup(final boolean isSuccess) {
+    jClient = null;
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
-        displayResult(res);
+        displayResult(isSuccess);
       }
     });
   }
 
+  private void createAccountAndCleanUp(final SyncAccountParameters syncAccount) {
+    ThreadPool.run(new Runnable() {
+      @Override
+      public void run() {
+        Account account = SyncAccounts.createSyncAccount(syncAccount);
+        boolean isSuccess = (account != null);
+        if (isSuccess) {
+          Bundle resultBundle = new Bundle();
+          resultBundle.putString(AccountManager.KEY_ACCOUNT_NAME, syncAccount.username);
+          resultBundle.putString(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
+          resultBundle.putString(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
+          setAccountAuthenticatorResult(resultBundle);
+
+          setResult(RESULT_OK);
+        } else {
+          setResult(RESULT_CANCELED);
+        }
+        onCompleteCleanup(isSuccess);
+      }
+    });
+  }
   /*
    * Helper functions
    */
