@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandRunner;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 
 public class TestCommandProcessor extends CommandProcessor {
@@ -28,13 +29,16 @@ public class TestCommandProcessor extends CommandProcessor {
 
   private boolean commandExecuted;
 
+  // Session is not used in these tests.
+  protected final GlobalSession session = null;
+
   public class MockCommandRunner extends CommandRunner {
     public MockCommandRunner(int argCount) {
       super(argCount);
     }
 
     @Override
-    public void executeCommand(List<String> args) {
+    public void executeCommand(final GlobalSession session, List<String> args) {
       commandExecuted = true;
     }
   }
@@ -51,7 +55,7 @@ public class TestCommandProcessor extends CommandProcessor {
     commandExecuted = false;
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(wellFormedCommand);
     this.registerCommand(commandType, new MockCommandRunner(1));
-    this.processCommand(unparsedCommand);
+    this.processCommand(session, unparsedCommand);
     assertTrue(commandExecuted);
   }
 
@@ -59,7 +63,7 @@ public class TestCommandProcessor extends CommandProcessor {
   public void testProcessUnregisteredCommand() throws NonObjectJSONException, IOException, ParseException {
     commandExecuted = false;
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(wellFormedCommand);
-    this.processCommand(unparsedCommand);
+    this.processCommand(session, unparsedCommand);
     assertFalse(commandExecuted);
   }
 
@@ -67,7 +71,7 @@ public class TestCommandProcessor extends CommandProcessor {
   public void testProcessInvalidCommand() throws NonObjectJSONException, IOException, ParseException {
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(commandWithNoType);
     this.registerCommand(commandType, new MockCommandRunner(1));
-    this.processCommand(unparsedCommand);
+    this.processCommand(session, unparsedCommand);
     assertFalse(commandExecuted);
   }
 
