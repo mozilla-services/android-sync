@@ -50,12 +50,23 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   private static final String  LOG_TAG = "SyncAdapter";
 
   private static final String  PREFS_EARLIEST_NEXT_SYNC = "earliestnextsync";
+  private static final String  PREFS_LAST_SYNC_FINISH_TIME = "lastsyncfinishtime";
   private static final String  PREFS_INVALIDATE_AUTH_TOKEN = "invalidateauthtoken";
   private static final String  PREFS_CLUSTER_URL_IS_STALE = "clusterurlisstale";
 
   private static final int     SHARED_PREFERENCES_MODE = 0;
   private static final int     BACKOFF_PAD_SECONDS = 5;
+
+  /**
+   * Time to wait between full syncs if this Sync account has multiple devices
+   * attached to it.
+   */
   public  static final int     MULTI_DEVICE_INTERVAL_MILLISECONDS = 5 * 60 * 1000;         // 5 minutes.
+
+  /**
+   * Time to wait between full syncs if this Sync account has only one device
+   * attached to it.
+   */
   public  static final int     SINGLE_DEVICE_INTERVAL_MILLISECONDS = 24 * 60 * 60 * 1000;  // 24 hours.
 
   private final AccountManager mAccountManager;
@@ -77,26 +88,53 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   /**
-   * Backoff.
+   * Time before which we will not start an unforced sync.
+   *
+   * @return timestamp in milliseconds since the epoch.
    */
-  public synchronized long getEarliestNextSync() {
+  protected synchronized long getEarliestNextSync() {
     SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
     return sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0);
   }
-  public synchronized void setEarliestNextSync(long next) {
+
+  /**
+   * Set time before which we will not start an unforced sync, if time is after
+   * the persisted time; otherwise, ignore.
+   *
+   * @param notBefore
+   *          timestamp in milliseconds since the epoch.
+   */
+  protected synchronized void extendEarliestNextSync(final long notBefore) {
     SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
-    Editor edit = sharedPreferences.edit();
-    edit.putLong(PREFS_EARLIEST_NEXT_SYNC, next);
-    edit.commit();
-  }
-  public synchronized void extendEarliestNextSync(long next) {
-    SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
-    if (sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0) >= next) {
+    if (sharedPreferences.getLong(PREFS_EARLIEST_NEXT_SYNC, 0) >= notBefore) {
       return;
     }
-    Editor edit = sharedPreferences.edit();
-    edit.putLong(PREFS_EARLIEST_NEXT_SYNC, next);
-    edit.commit();
+    sharedPreferences.edit().putLong(PREFS_EARLIEST_NEXT_SYNC, notBefore).commit();
+  }
+
+  /**
+   * Time we last <it>finished</it> a sync.
+   * <p>
+   * We maintain the time the last sync finished (rather than started, or a
+   * timestamp from retrieved data) so that we can throttle resource usage even
+   * when individual syncs are long running.
+   *
+   * @return timestamp in milliseconds since the epoch.
+   */
+  protected synchronized long getLastSyncFinishTime() {
+    SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
+    return sharedPreferences.getLong(PREFS_LAST_SYNC_FINISH_TIME, 0);
+  }
+
+  /**
+   * Set time we last finished a sync.
+   *
+   * @param finishTime
+   *          timestamp in milliseconds since the epoch.
+   */
+  protected synchronized void setLastSyncFinishTime(final long finishTime) {
+    SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
+    sharedPreferences.edit().putLong(PREFS_LAST_SYNC_FINISH_TIME, finishTime).commit();
   }
 
   public synchronized boolean getShouldInvalidateAuthToken() {
@@ -184,16 +222,40 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   protected boolean thisSyncIsForced = false;
 
   /**
-   * Return the number of milliseconds until we're allowed to sync again,
-   * or 0 if now is fine.
+   * Return the number of milliseconds until we're allowed to sync again, or 0
+   * if now is fine.
+   * <p>
+   * Checks if we have an absolute time to wait until (set by a server backoff)
+   * or if we should wait for a specified interval.
    */
   public long delayMilliseconds() {
-    long earliestNextSync = getEarliestNextSync();
-    if (earliestNextSync <= 0) {
-      return 0;
-    }
     long now = System.currentTimeMillis();
-    return Math.max(0, earliestNextSync - now);
+    long earliestNextSync = getEarliestNextSync();
+    long lastSyncTime = getLastSyncFinishTime();
+    long interval = getSyncInterval();
+    Logger.trace(LOG_TAG, "timestamp now:          " + now);
+    Logger.trace(LOG_TAG, "earliest next sync:     " + earliestNextSync);
+    Logger.trace(LOG_TAG, "last sync finished:     " + lastSyncTime);
+    Logger.trace(LOG_TAG, "interval between syncs: " + interval);
+
+    if (earliestNextSync > now) {
+      // We need to wait for a backoff period to expire.
+      long delay = earliestNextSync - now;
+      Logger.trace(LOG_TAG, "delaying:               " + interval);
+      return delay;
+    }
+
+    if (lastSyncTime + interval > now) {
+      // We need to wait a little longer; we're trying to sync too frequently.
+      long delay = (lastSyncTime + interval) - now;
+      Logger.trace(LOG_TAG, "delaying:               " + interval);
+      return delay;
+    }
+
+    // We can sync now.
+    long delay = 0;
+    Logger.trace(LOG_TAG, "delaying:               " + delay);
+    return delay;
   }
 
   @Override
@@ -353,9 +415,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       Log.i(LOG_TAG, "Waiting on sync monitor.");
       try {
         syncMonitor.wait();
-        long next = System.currentTimeMillis() + getSyncInterval();
-        Log.i(LOG_TAG, "Setting minimum next sync time to " + next);
-        extendEarliestNextSync(next);
+        long now = System.currentTimeMillis();
+        Log.i(LOG_TAG, "Setting last sync finished time to " + now + ".");
+        setLastSyncFinishTime(now);
       } catch (InterruptedException e) {
         Log.i(LOG_TAG, "Waiting on sync monitor interrupted.", e);
       } finally {
@@ -363,7 +425,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         stale.shutdown();
       }
     }
- }
+  }
 
   public int getSyncInterval() {
     // Must have been a problem that means we can't access the Account.
