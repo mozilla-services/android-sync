@@ -79,6 +79,11 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     mContext = getApplicationContext();
     Logger.debug(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(mContext);
+
+    // Set "screen on" flag.
+    Window w = getWindow();
+    w.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    Logger.debug(LOG_TAG, "Successfully set screen-on flag.");
   }
 
   @Override
@@ -104,11 +109,6 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
   public void finishResume(Account[] accts) {
     Logger.debug(LOG_TAG, "Finishing Resume after fetching accounts.");
-
-    // Set "screen on" flag.
-    Logger.debug(LOG_TAG, "Setting screen-on flag.");
-    Window w = getWindow();
-    w.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     if (accts.length == 0) { // Start J-PAKE for pairing if no accounts present.
       Logger.debug(LOG_TAG, "No accounts; starting J-PAKE receiver.");
@@ -456,13 +456,17 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     Intent intent = null;
     if (isSuccess) {
       intent = new Intent(mContext, SetupSuccessActivity.class);
-    }  else {
+      intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
+      intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, !pairWithPin);
+      startActivity(intent);
+      finish();
+    } else {
       intent = new Intent(mContext, SetupFailureActivity.class);
+      intent.putExtra(Constants.INTENT_EXTRA_IS_ACCOUNTERROR, true);
+      intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
+      intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, !pairWithPin);
+      startActivity(intent);
     }
-    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
-    intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, !pairWithPin);
-    startActivity(intent);
-    finish();
   }
 
   /**
