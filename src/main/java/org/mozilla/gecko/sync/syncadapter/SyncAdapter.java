@@ -241,8 +241,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         Log.i(LOG_TAG, "Forced sync: overruling remaining backoff of " + delay + "ms.");
       } else {
         Log.i(LOG_TAG, "Not syncing: must wait another " + delay + "ms.");
+        // We never want to ask Android to wait all that long, though.
         long remainingSeconds = delay / 1000;
-        syncResult.delayUntil = remainingSeconds + BACKOFF_PAD_SECONDS;
+        syncResult.delayUntil = Math.min(remainingSeconds,
+                                         MULTI_DEVICE_INTERVAL_MILLISECONDS / 1000);
+        // Padding ensures we don't "just miss" and wait two cycles.
+        syncResult.delayUntil += BACKOFF_PAD_SECONDS;
         return;
       }
     }
