@@ -11,6 +11,8 @@ import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.setup.Constants;
+import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
+import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -105,6 +107,9 @@ public class SendTabActivity extends Activity {
         for (int i = 0; i < guids.length; i++) {
           processor.sendURIToClientForDisplay(uri, guids[i], title, getAccountGUID(), getApplicationContext());
         }
+
+        Logger.info(LOG_TAG, "Requesting immediate clients stage sync.");
+        SyncAdapter.requestImmediateSync(localAccount, new String[] { SyncClientsEngineStage.COLLECTION_NAME });
       }
     }.start();
 
