@@ -239,10 +239,10 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     // Successful authentication. Create and add account to AccountManager.
     SyncAccountParameters syncAccount = new SyncAccountParameters(
         mContext, mAccountManager, username, key, password, server);
-    createAccountThread(syncAccount);
+    createAccountOnThread(syncAccount);
   }
 
-  private void createAccountThread(final SyncAccountParameters syncAccount) {
+  private void createAccountOnThread(final SyncAccountParameters syncAccount) {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
@@ -254,7 +254,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
             @Override
             public void run() {
               // Use default error.
-              // TODO: Display more accurate error (Account failed to be created).
+              // TODO: Bug 766499: Show specific error message when Android fails on Account creation.
               Logger.debug(LOG_TAG, "displayFailure()");
               displayFailure(AuthenticationResult.FAILURE_OTHER);
             }

@@ -395,24 +395,26 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
       final SyncAccountParameters syncAccount = new SyncAccountParameters(mContext, mAccountManager, accountName,
                                                                           syncKey, password, serverURL);
-      createAccountAndCleanUp(syncAccount);
+      createAccountOnThread(syncAccount);
     } else {
       // No need to create an account; just clean up.
-      onCompleteCleanup(true);
+      displayResultAndFinish(true);
     }
   }
 
-  private void onCompleteCleanup(final boolean isSuccess) {
+  private void displayResultAndFinish(final boolean isSuccess) {
     jClient = null;
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
+        int result = isSuccess ? RESULT_OK : RESULT_CANCELED;
+        setResult(result);
         displayResult(isSuccess);
       }
     });
   }
 
-  private void createAccountAndCleanUp(final SyncAccountParameters syncAccount) {
+  private void createAccountOnThread(final SyncAccountParameters syncAccount) {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
@@ -424,12 +426,8 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
           resultBundle.putString(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNTTYPE_SYNC);
           resultBundle.putString(AccountManager.KEY_AUTHTOKEN, Constants.ACCOUNTTYPE_SYNC);
           setAccountAuthenticatorResult(resultBundle);
-
-          setResult(RESULT_OK);
-        } else {
-          setResult(RESULT_CANCELED);
         }
-        onCompleteCleanup(isSuccess);
+        displayResultAndFinish(isSuccess);
       }
     });
   }
