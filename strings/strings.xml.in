@@ -80,7 +80,6 @@
   <string name="sync_title_send_tab">&sync.title.send.tab.label;</string>
   <string name="sync_button_send">&sync.button.send.label;</string>
   <string name="sync_button_setup">&sync.button.setup.label;</string>
-  <string name="sync_button_continue_browsing">&sync.button.continue.browsing.label;</string>
   <string name="sync_title_redirect_to_setup">&sync.title.redirect.to.setup.label;</string>
   <string name="sync_text_redirect_to_setup">&sync.text.redirect.to.setup.label;</string>
   <string name="sync_text_tab_sent">&sync.text.tab.sent.label;</string>
