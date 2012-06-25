@@ -25,7 +25,7 @@ public class Constants {
    * which are the stage names to sync. For example:
    * <code>"{ \"stageToSync\": 0 }"</code>.
    */
-  public static final String EXTRAS_KEY_STAGES_TO_SYNC = "stagesToSync";
+  public static final String EXTRAS_KEY_STAGES_TO_SYNC = "sync";
 
   /**
    * Key in sync extras bundle specifying stages to skip this sync session.
@@ -34,7 +34,7 @@ public class Constants {
    * which are the stage names to skip. For example:
    * <code>"{ \"stageToSkip\": 0 }"</code>.
    */
-  public static final String EXTRAS_KEY_STAGES_TO_SKIP = "stagesToSkip";
+  public static final String EXTRAS_KEY_STAGES_TO_SKIP = "skip";
 
   // Constants for Activities.
   public static final String INTENT_EXTRA_IS_SETUP = "isSetup";

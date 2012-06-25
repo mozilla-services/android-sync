@@ -204,6 +204,9 @@ public class SyncConfiguration implements CredentialsSource {
    * <p>
    * Generated <it>each sync</it> from extras bundle passed to
    * <code>SyncAdapter.onPerformSync</code> and not persisted.
+   * <p>
+   * Not synchronized! Set this exactly once per global session and don't modify
+   * it -- especially not from multiple threads.
    */
   public Collection<String> stagesToSync;
 

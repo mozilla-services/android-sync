@@ -263,7 +263,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                    " with client guid " + getAccountGUID() +
                    " (sync account has " + getClientsCount() + " clients).");
 
-    thisSyncIsForced = (extras != null) && (extras.getBoolean("force", false));
+    thisSyncIsForced = (extras != null) && (extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false));
     long delay = delayMilliseconds();
     if (delay > 0) {
       if (thisSyncIsForced) {

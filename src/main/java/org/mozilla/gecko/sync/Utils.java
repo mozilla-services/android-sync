@@ -380,26 +380,26 @@ public class Utils {
     if (extras == null) {
       return knownStageNames;
     }
-    String s1 = extras.getString(Constants.EXTRAS_KEY_STAGES_TO_SYNC);
-    String s2 = extras.getString(Constants.EXTRAS_KEY_STAGES_TO_SKIP);
-    if (s1 == null && s2 == null) {
+    String toSyncString = extras.getString(Constants.EXTRAS_KEY_STAGES_TO_SYNC);
+    String toSkipString = extras.getString(Constants.EXTRAS_KEY_STAGES_TO_SKIP);
+    if (toSyncString == null && toSkipString == null) {
       return knownStageNames;
     }
 
     ArrayList<String> toSync = null;
     ArrayList<String> toSkip = null;
-    if (s1 != null) {
+    if (toSyncString != null) {
       try {
-        toSync = new ArrayList<String>(ExtendedJSONObject.parseJSONObject(s1).keySet());
+        toSync = new ArrayList<String>(ExtendedJSONObject.parseJSONObject(toSyncString).keySet());
       } catch (Exception e) {
-        Logger.warn(LOG_TAG, "Got exception parsing stages to sync: '" + s1 + "'.", e);
+        Logger.warn(LOG_TAG, "Got exception parsing stages to sync: '" + toSyncString + "'.", e);
       }
     }
-    if (s2 != null) {
+    if (toSkipString != null) {
       try {
-        toSkip = new ArrayList<String>(ExtendedJSONObject.parseJSONObject(s2).keySet());
+        toSkip = new ArrayList<String>(ExtendedJSONObject.parseJSONObject(toSkipString).keySet());
       } catch (Exception e) {
-        Logger.warn(LOG_TAG, "Got exception parsing stages to skip: '" + s2 + "'.", e);
+        Logger.warn(LOG_TAG, "Got exception parsing stages to skip: '" + toSkipString + "'.", e);
       }
     }
 
