@@ -51,9 +51,8 @@ import android.util.Log;
 public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback, ClientsDataDelegate {
   private static final String  LOG_TAG = "SyncAdapter";
 
-  private static final String  PREFS_EARLIEST_NEXT_SYNC = "earliestnextsync";
-  private static final String  PREFS_INVALIDATE_AUTH_TOKEN = "invalidateauthtoken";
-  private static final String  PREFS_CLUSTER_URL_IS_STALE = "clusterurlisstale";
+  public static final String  PREFS_EARLIEST_NEXT_SYNC = "earliestnextsync";
+  public static final String  PREFS_CLUSTER_URL_IS_STALE = "clusterurlisstale";
 
   private static final int     SHARED_PREFERENCES_MODE = 0;
   private static final int     BACKOFF_PAD_SECONDS = 5;
@@ -100,25 +99,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     edit.commit();
   }
 
-  public synchronized boolean getShouldInvalidateAuthToken() {
-    SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
-    return sharedPreferences.getBoolean(PREFS_INVALIDATE_AUTH_TOKEN, false);
-  }
-  public synchronized void clearShouldInvalidateAuthToken() {
-    SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
-    Editor edit = sharedPreferences.edit();
-    edit.remove(PREFS_INVALIDATE_AUTH_TOKEN);
-    edit.commit();
-  }
-  public synchronized void setShouldInvalidateAuthToken() {
-    SharedPreferences sharedPreferences = getGlobalPrefs(mContext);
-    Editor edit = sharedPreferences.edit();
-    edit.putBoolean(PREFS_INVALIDATE_AUTH_TOKEN, true);
-    edit.commit();
-  }
-
   private void handleException(Exception e, SyncResult syncResult) {
-    setShouldInvalidateAuthToken();
+    invalidateAuthToken(localAccount);
     try {
       if (e instanceof SQLiteConstraintException) {
         Log.e(LOG_TAG, "Constraint exception. Aborting sync.", e);
@@ -159,6 +141,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   private void invalidateAuthToken(Account account) {
+    if (account == null) {
+      Log.w(LOG_TAG, "Can't invalidate auth token for null account.");
+      return;
+    }
+
     AccountManagerFuture<Bundle> future = getAuthToken(account, null, null);
     String token;
     try {
@@ -447,7 +434,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   @Override
   public void handleError(GlobalSession globalSession, Exception ex) {
     Log.i(LOG_TAG, "GlobalSession indicated error. Flagging auth token as invalid, just in case.");
-    setShouldInvalidateAuthToken();
+    invalidateAuthToken(localAccount);
     this.updateStats(globalSession, ex);
     notifyMonitor();
   }
