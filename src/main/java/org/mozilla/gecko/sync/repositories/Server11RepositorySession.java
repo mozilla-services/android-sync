@@ -522,7 +522,7 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestError(final Exception ex) {
-      Logger.warn(LOG_TAG, "Got request error: " + ex, ex);
+      Logger.warn(LOG_TAG, "Got request error.", ex);
 
       recordUploadFailed = true;
       ArrayList<String> failedOutgoingGuids = outgoingGuids;

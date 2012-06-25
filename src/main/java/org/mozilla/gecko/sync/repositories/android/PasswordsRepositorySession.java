@@ -370,8 +370,6 @@ public class PasswordsRepositorySession extends
 
         // TODO: pass in timestamps?
         Logger.debug(LOG_TAG, "Replacing " + existingRecord.guid + " with record " + toStore.guid);
-        Logger.debug(LOG_TAG, "existing: " + existingRecord);
-        Logger.debug(LOG_TAG, "toStore: " + toStore);
         Record replaced = null;
         try {
           replaced = replace(existingRecord, toStore);
@@ -612,7 +610,7 @@ public class PasswordsRepositorySession extends
         // We don't have the keys for encrypting our query,
         // so we run a more general query and then filter
         // the returned records for a matching username.
-        Logger.trace(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
+        Logger.pii(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
         if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
           Logger.trace(LOG_TAG, "Found matching record: " + foundRecord);
           return foundRecord;
