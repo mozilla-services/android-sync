@@ -5,6 +5,8 @@
 package org.mozilla.gecko.sync.setup;
 
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -18,6 +20,8 @@ import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -442,5 +446,88 @@ public class SyncAccounts {
       return;
     }
     Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
+  }
+
+  protected static class SyncAccountVersion0Callback implements AccountManagerCallback<Bundle> {
+    protected final Context context;
+    protected final CountDownLatch latch;
+
+    public SyncAccountParameters syncAccountParameters = null;
+
+    public SyncAccountVersion0Callback(final Context context, final CountDownLatch latch) {
+      this.context = context;
+      this.latch = latch;
+    }
+
+    @Override
+    public void run(AccountManagerFuture<Bundle> future) {
+      try {
+        Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
+        if (bundle.containsKey("KEY_INTENT")) {
+          throw new IllegalStateException("KEY_INTENT included in AccountManagerFuture bundle.");
+        }
+        final String username  = bundle.getString(Constants.OPTION_USERNAME); // Encoded by Utils.usernameFromAccount.
+        final String syncKey   = bundle.getString(Constants.OPTION_SYNCKEY);
+        final String serverURL = bundle.getString(Constants.OPTION_SERVER);
+        final String password  = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+
+        syncAccountParameters = new SyncAccountParameters(this.context, null, username, syncKey, password, serverURL);
+      } catch (Exception e) {
+        // Do nothing -- caller will find null syncAccountParameters.
+        Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters.", e);
+      } finally {
+        latch.countDown();
+      }
+    }
+  }
+
+  /**
+   * Synchronously extract Sync account parameters from Android account version
+   * 0, using plain auth token type.
+   * <p>
+   * Safe to call from main thread.
+   * <p>
+   * Invalidates existing auth token first, which is necessary because Android
+   * caches only the auth token string, not the complete bundle. By invalidating
+   * the existing token, we generate a new (complete) bundle every invocation.
+   *
+   * @param context
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account.
+   * @return Sync account parameters.
+   */
+  public static SyncAccountParameters blockingFromAndroidAccountV0(final Context context, final AccountManager accountManager, final Account account) {
+    final CountDownLatch latch = new CountDownLatch(1);
+    final SyncAccountVersion0Callback callback = new SyncAccountVersion0Callback(context, latch);
+
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          // Get old auth token, with incomplete bundle.
+          String oldToken = accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null).getResult().getString(AccountManager.KEY_AUTHTOKEN);
+          // Invalidate it.
+          accountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, oldToken); // Not the token type, the account type!
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Got exception invalidating old token.", e);
+          latch.notify();
+        } finally {
+        }
+
+        // Get the new auth token, with complete bundle.
+        accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, null);
+      }
+    }).start();
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters.", e);
+      return null;
+    }
+
+    return callback.syncAccountParameters;
   }
 }

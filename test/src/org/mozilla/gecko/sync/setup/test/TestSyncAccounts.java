@@ -356,4 +356,47 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     // And global value remain too.
     assertNotNull(SyncAdapter.getGlobalPrefs(context).getString(TEST_PREFERENCE, null));
   }
+
+  protected void assertParams(final SyncAccountParameters params) throws Exception {
+    assertNotNull(params);
+    assertEquals(context, params.context);
+    assertEquals(Utils.usernameFromAccount(TEST_USERNAME), params.username);
+    assertEquals(TEST_PASSWORD, params.password);
+    assertEquals(TEST_SERVERURL, params.serverURL);
+    assertEquals(TEST_SYNCKEY, params.syncKey);
+  }
+
+  public void testBlockingFromAndroidAccountV0() throws Throwable {
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
+    try {
+      account = SyncAccounts.createSyncAccount(syncAccount);
+      assertNotNull(account);
+
+      // Test fetching parameters multiple times, since we need to invalidate this token type every fetch.
+      SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+      assertParams(params);
+
+      params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+      assertParams(params);
+
+      // Would like to test this on the main thread, too, but there seems to be
+      // a problem: SyncAuthenticatorService ANR's, possibly because we block
+      // the main thread?
+      /*
+      this.runTestOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+          assertParams(params);
+        }
+      });
+      */
+    } finally {
+      if (account != null) {
+        deleteAccount(this, accountManager, account);
+        account = null;
+      }
+    }
+  }
 }
