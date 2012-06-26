@@ -116,7 +116,7 @@ public class HistoryRecord extends Record {
   @Override
   public boolean equalPayloads(Object o) {
     if (o == null || !(o instanceof HistoryRecord)) {
-      Logger.debug(LOG_TAG, "Not a HistoryRecord: " + o);
+      Logger.debug(LOG_TAG, "Not a HistoryRecord: " + o.getClass());
       return false;
     }
     HistoryRecord other = (HistoryRecord) o;

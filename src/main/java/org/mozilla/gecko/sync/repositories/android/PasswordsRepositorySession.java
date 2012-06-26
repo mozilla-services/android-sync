@@ -360,7 +360,7 @@ public class PasswordsRepositorySession extends
 
         // We found a local dupe.
         trace("Incoming record " + remoteRecord.guid + " dupes to local record " + existingRecord.guid);
-        Logger.debug(LOG_TAG, "remote " + remoteRecord + " dupes to " + existingRecord);
+        Logger.debug(LOG_TAG, "remote " + remoteRecord.guid + " dupes to " + existingRecord.guid);
         Record toStore = reconcileRecords(remoteRecord, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);
 
         if (toStore == null) {
@@ -612,7 +612,7 @@ public class PasswordsRepositorySession extends
         // the returned records for a matching username.
         Logger.pii(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
         if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
-          Logger.trace(LOG_TAG, "Found matching record: " + foundRecord);
+          Logger.trace(LOG_TAG, "Found matching record: " + foundRecord.guid);
           return foundRecord;
         }
       }
