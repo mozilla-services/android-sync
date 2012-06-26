@@ -42,6 +42,7 @@ public class SetupFailureActivity extends Activity {
 
   public void manualClickHandler(View target) {
     Intent intent = new Intent(mContext, AccountActivity.class);
+    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
     overridePendingTransition(0, 0);
     finish();

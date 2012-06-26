@@ -253,10 +253,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
           runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              // Use default error.
-              // TODO: Bug 766499: Show specific error message when Android fails on Account creation.
-              Logger.debug(LOG_TAG, "displayFailure()");
-              displayFailure(AuthenticationResult.FAILURE_OTHER);
+              displayFailure(AuthenticationResult.FAILURE_ACCOUNT);
             }
           });
           return;

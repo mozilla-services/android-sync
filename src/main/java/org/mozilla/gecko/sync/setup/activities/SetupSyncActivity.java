@@ -80,7 +80,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     Logger.debug(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(mContext);
 
-    // Set "screen on" flag.
+    // Set "screen on" flag for this activity. Screen will not automatically dim as long as this
+    // activity is at the top of the stack.
+    // Attempting to set this flag more than once causes hanging, so we set it here, not in onResume().
     Window w = getWindow();
     w.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     Logger.debug(LOG_TAG, "Successfully set screen-on flag.");
@@ -431,10 +433,10 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       }
     });
   }
+
   /*
    * Helper functions
    */
-
   private void activateButton(Button button, boolean toActivate) {
     button.setEnabled(toActivate);
     button.setClickable(toActivate);
@@ -450,7 +452,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * Displays Sync account setup result to user.
    *
    * @param isSetup
-   *          true is account was set up successfully, false otherwise.
+   *          true if account was set up successfully, false otherwise.
    */
   private void displayResult(boolean isSuccess) {
     Intent intent = null;
@@ -466,6 +468,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
       intent.putExtra(Constants.INTENT_EXTRA_IS_SETUP, !pairWithPin);
       startActivity(intent);
+      // Do not finish, so user can retry setup by hitting "back."
     }
   }
 
