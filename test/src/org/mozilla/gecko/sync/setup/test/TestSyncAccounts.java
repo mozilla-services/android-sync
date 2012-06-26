@@ -22,6 +22,7 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.test.InstrumentationTestCase;
 
 /**
  * We can use <code>performWait</code> and <code>performNotify</code> here if we
@@ -51,12 +52,12 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, null);
   }
 
-  public void deleteAccount(final Account account) {
+  public static void deleteAccount(final InstrumentationTestCase test, final AccountManager accountManager, final Account account) {
     performWait(new Runnable() {
       @Override
       public void run() {
         try {
-          runTestOnUiThread(new Runnable() {
+          test.runTestOnUiThread(new Runnable() {
             final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
               @Override
               public void run(AccountManagerFuture<Boolean> future) {
@@ -84,7 +85,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     if (account == null) {
       return;
     }
-    deleteAccount(account);
+    deleteAccount(this, accountManager, account);
     account = null;
   }
 
@@ -109,7 +110,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     account = SyncAccounts.createSyncAccount(syncAccount);
     int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterCreate > before);
-    deleteAccount(account);
+    deleteAccount(this, accountManager, account);
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
@@ -129,8 +130,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     int afterSecond = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterSecond > afterFirst);
 
-    deleteAccount(second);
-    deleteAccount(account);
+    deleteAccount(this, accountManager, second);
+    deleteAccount(this, accountManager, account);
     account = null;
 
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
@@ -183,7 +184,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     assertNotNull(result);
     assertTrue(result.booleanValue());
 
-    deleteAccount(account);
+    deleteAccount(this, accountManager, account);
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
@@ -222,7 +223,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterCreate > before);
 
-    deleteAccount(account);
+    deleteAccount(this, accountManager, account);
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
