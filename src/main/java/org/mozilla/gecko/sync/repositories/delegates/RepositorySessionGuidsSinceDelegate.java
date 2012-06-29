@@ -4,7 +4,9 @@
 
 package org.mozilla.gecko.sync.repositories.delegates;
 
+import java.util.Collection;
+
 public interface RepositorySessionGuidsSinceDelegate {
   public void onGuidsSinceFailed(Exception ex);
-  public void onGuidsSinceSucceeded(String[] guids);
+  public void onGuidsSinceSucceeded(Collection<String> guids);
 }

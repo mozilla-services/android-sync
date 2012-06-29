@@ -7,6 +7,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,7 +23,7 @@ public class ExpectGuidsSinceDelegate extends DefaultGuidsSinceDelegate {
   }
 
   @Override
-  public void onGuidsSinceSucceeded(String[] guids) {
+  public void onGuidsSinceSucceeded(Collection<String> guids) {
     AssertionFailedError err = null;
     try {
       int notIgnored = 0;

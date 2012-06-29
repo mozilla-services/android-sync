@@ -226,11 +226,11 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
 
       ArrayList<String> guids;
       try {
+        guids = new ArrayList<String>();
         if (!cur.moveToFirst()) {
-          delegate.onGuidsSinceSucceeded(new String[] {});
+          delegate.onGuidsSinceSucceeded(guids);
           return;
         }
-        guids = new ArrayList<String>();
         while (!cur.isAfterLast()) {
           guids.add(RepoUtils.getStringFromCursor(cur, "guid"));
           cur.moveToNext();
@@ -239,10 +239,7 @@ public abstract class AndroidBrowserRepositorySession extends StoreTrackingRepos
         Logger.debug(LOG_TAG, "Closing cursor after guidsSince.");
         cur.close();
       }
-
-      String guidsArray[] = new String[guids.size()];
-      guids.toArray(guidsArray);
-      delegate.onGuidsSinceSucceeded(guidsArray);
+      delegate.onGuidsSinceSucceeded(guids);
     }
   }
 

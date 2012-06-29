@@ -65,6 +65,11 @@ public class AndroidBrowserHistoryServerSyncStage extends ServerSyncStage {
   }
 
   @Override
+  protected int getBatchSize() {
+    return (int) HISTORY_REQUEST_LIMIT;
+  }
+
+  @Override
   protected boolean isEnabled() throws MetaGlobalException {
     if (session == null || session.getContext() == null) {
       return false;

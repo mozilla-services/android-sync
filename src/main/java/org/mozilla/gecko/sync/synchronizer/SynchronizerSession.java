@@ -104,6 +104,20 @@ implements RecordsChannelDelegate,
   protected RecordsChannel channelBToA;
 
   /**
+   * Create a new first RecordsChannel (for incoming records).
+   */
+  protected RecordsChannel newFirstRecordsChannel(final RepositorySession source, final RepositorySession sink, final RecordsChannelDelegate delegate) {
+    return new RecordsChannel(source, sink, delegate);
+  }
+
+  /**
+   * Create a new second RecordsChannel (for outgoing records).
+   */
+  protected RecordsChannel newSecondRecordsChannel(final RepositorySession source, final RepositorySession sink, final RecordsChannelDelegate delegate) {
+    return new RecordsChannel(source, sink, delegate);
+  }
+
+  /**
    * Please don't call this until you've been notified with onInitialized.
    */
   public synchronized void synchronize() {
@@ -123,7 +137,7 @@ implements RecordsChannelDelegate,
 
     // This is the *second* record channel to flow.
     // I, SynchronizerSession, am the delegate for the *second* flow.
-    channelBToA = new RecordsChannel(this.sessionB, this.sessionA, this);
+    channelBToA = newSecondRecordsChannel(this.sessionB, this.sessionA, this);
 
     // This is the delegate for the *first* flow.
     RecordsChannelDelegate channelAToBDelegate = new RecordsChannelDelegate() {
@@ -155,7 +169,7 @@ implements RecordsChannelDelegate,
     };
 
     // This is the *first* channel to flow.
-    channelAToB = new RecordsChannel(this.sessionA, this.sessionB, channelAToBDelegate);
+    channelAToB = newFirstRecordsChannel(this.sessionA, this.sessionB, channelAToBDelegate);
 
     Logger.trace(LOG_TAG, "Starting A to B flow. Channel is " + channelAToB);
     try {

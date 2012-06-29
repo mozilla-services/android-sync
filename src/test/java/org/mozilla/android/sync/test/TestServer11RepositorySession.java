@@ -14,9 +14,11 @@ import java.net.URISyntaxException;
 import org.junit.Test;
 import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
+import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionFetchRecordsDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockRecord;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -61,10 +63,11 @@ public class TestServer11RepositorySession implements CredentialsSource {
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT + "/";
   static final String LOCAL_REQUEST_URL   = TEST_SERVER + "1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
 
-  // Corresponds to rnewman+atest1@mozilla.com, local.
-  static final String USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
-  static final String USER_PASS         = "n6ec3u5bee3tixzp2asys7bs6fve4jfw:password";
-  static final String SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
+  // Corresponds to rnewman+testandroid@mozilla.com.
+  static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
+  static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
+  static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
+  static final String SERVER            = "https://phx-sync545.services.mozilla.com/";
 
   @Override
   public String credentials() {
@@ -186,5 +189,64 @@ public class TestServer11RepositorySession implements CredentialsSource {
     Exception e = doSynchronize(server);
     assertNotNull(e);
     assertEquals(StoreFailedException.class, e.getClass());
+  }
+
+  static final String[] allGuids = new String[] { "-GyXy03fp-4v", "1aTHvaXHHL3G", "4dCw2glCks63", "5pXg_AFgJiHg", "7Z4hmG0sOfRJ",
+      "F8k5LkBdsOpo", "IyljKi3S5Bex", "NCpebnnmXPnd", "S2hTTT44b4s0", "ZvGaP34tC7__", "bHbZ2hGtWnBS", "dPoL8cyz3eMb",
+      "h9TGqrWHCzPz", "xUF33zO2I9dh", "tOTBcI6VMLhu", "yBnY_HTWljuw", "40ZTvarETes8", "57jxTjj9tbzm", "6vlTzrFd7qdU",
+      "F-wlmYVvR2yE", "H4AEJI_TbCoQ", "Sdfo9oRt4oOg", "eaaaaaaaafff", "efEIU0Tuezrs", "haUy25aHxnoP", "o96Nx8RyKHrk",
+      "PGl_gLHzNgMz", "aaaaaaaaaccc", "baaaaaaaabbb", "daaaaaaaaaaa", "menu", "mobile", "n3nueM3q7B5u", "tnqjdIidwSUe",
+      "toolbar", "unfiled", "zh8ypRiGz_sE" };
+
+  static final long TIMESTAMP = 1337881474220L - 1000L;
+  static final String[] afterGuids = new String[] { "PGl_gLHzNgMz", "aaaaaaaaaccc", "baaaaaaaabbb", "daaaaaaaaaaa",
+    "menu", "mobile", "n3nueM3q7B5u", "tnqjdIidwSUe", "toolbar", "unfiled", "zh8ypRiGz_sE" };
+
+  @Test
+  public void testGuidsSince() throws Exception {
+    final Server11Repository repo = new Server11Repository(SERVER, USERNAME, "bookmarks", this);
+
+    final Server11RepositorySession repoSession = new Server11RepositorySession(repo);
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        repoSession.guidsSince(0, new TestWBORepository.ExpectGuidsSince(allGuids));
+      }
+    });
+
+    final Server11RepositorySession repoSession2 = new Server11RepositorySession(repo);
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        repoSession2.guidsSince(TIMESTAMP, new TestWBORepository.ExpectGuidsSince(afterGuids));
+      }
+    });
+  }
+
+  @Test
+  public void testFetch() throws Exception {
+    final Server11Repository repo = new Server11Repository(SERVER, USERNAME, "bookmarks", this);
+    final Server11RepositorySession repoSession = new Server11RepositorySession(repo);
+
+    final ExpectSuccessRepositorySessionFetchRecordsDelegate delegate = new ExpectSuccessRepositorySessionFetchRecordsDelegate(WaitHelper.getTestWaiter());
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        repoSession.fetch(allGuids, delegate);
+      }
+    });
+    assertEquals(37, delegate.fetchedRecords.size());
+
+    delegate.fetchedRecords.clear();
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        repoSession.fetch(afterGuids, delegate);
+      }
+    });
+    assertEquals(11, delegate.fetchedRecords.size());
+    for (Record record : delegate.fetchedRecords) {
+      assertTrue(record.lastModified >= TIMESTAMP);
+    }
   }
 }

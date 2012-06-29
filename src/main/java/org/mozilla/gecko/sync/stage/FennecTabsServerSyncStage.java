@@ -53,4 +53,9 @@ public class FennecTabsServerSyncStage extends ServerSyncStage {
   protected RecordFactory getRecordFactory() {
     return new FennecTabsRecordFactory();
   }
+
+  @Override
+  protected int getBatchSize() {
+    return 50;
+  }
 }

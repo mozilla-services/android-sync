@@ -1,6 +1,8 @@
 package org.mozilla.android.sync.test.helpers;
 
 import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,15 +66,42 @@ public class WBORepository extends Repository {
       }
     }
 
+    /**
+     * Return GUIDs modified on or after timestamp, with oldest returned first.
+     */
     @Override
     public void guidsSince(long timestamp,
-                           RepositorySessionGuidsSinceDelegate delegate) {
-      throw new RuntimeException("guidsSince not implemented.");
+                           final RepositorySessionGuidsSinceDelegate delegate) {
+      if (!isActive()) {
+        delegate.onGuidsSinceFailed(new InactiveSessionException(null));
+        return;
+      }
+
+      stats.fetchBegan = now();
+      final SortedMap<Long, String> guids = new TreeMap<Long, String>();
+      for (Entry<String, Record> entry : wbos.entrySet()) {
+        Record record = entry.getValue();
+        if (record.lastModified >= timestamp) {
+          guids.put(new Long(record.lastModified), record.guid);
+        }
+      }
+      stats.fetchCompleted = now();
+      delegateExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+          delegate.onGuidsSinceSucceeded(guids.values());
+        }
+      });
     }
 
     @Override
     public void fetchSince(long timestamp,
                            RepositorySessionFetchRecordsDelegate delegate) {
+      if (!isActive()) {
+        delegate.onFetchFailed(new InactiveSessionException(null), null);
+        return;
+      }
+
       long fetchBegan  = now();
       stats.fetchBegan = fetchBegan;
       RecordFilter filter = storeTracker.getFilter();
@@ -96,6 +125,11 @@ public class WBORepository extends Repository {
     @Override
     public void fetch(final String[] guids,
                       final RepositorySessionFetchRecordsDelegate delegate) {
+      if (!isActive()) {
+        delegate.onFetchFailed(new InactiveSessionException(null), null);
+        return;
+      }
+
       long fetchBegan  = now();
       stats.fetchBegan = fetchBegan;
       for (String guid : guids) {
@@ -110,6 +144,11 @@ public class WBORepository extends Repository {
 
     @Override
     public void fetchAll(final RepositorySessionFetchRecordsDelegate delegate) {
+      if (!isActive()) {
+        delegate.onFetchFailed(new InactiveSessionException(null), null);
+        return;
+      }
+
       long fetchBegan  = now();
       stats.fetchBegan = fetchBegan;
       for (Entry<String, Record> entry : wbos.entrySet()) {

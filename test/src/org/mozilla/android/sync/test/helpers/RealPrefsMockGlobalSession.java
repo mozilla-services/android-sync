@@ -65,6 +65,11 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     protected RecordFactory getRecordFactory() {
       return null;
     }
+
+    @Override
+    protected int getBatchSize() {
+      return 5000;
+    }
   }
 
   public class MockStage implements GlobalSyncStage {

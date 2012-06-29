@@ -3,6 +3,8 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import java.util.Collection;
+
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 
 public class DefaultGuidsSinceDelegate extends DefaultDelegate implements RepositorySessionGuidsSinceDelegate {
@@ -13,7 +15,7 @@ public class DefaultGuidsSinceDelegate extends DefaultDelegate implements Reposi
   }
 
   @Override
-  public void onGuidsSinceSucceeded(String[] guids) {
+  public void onGuidsSinceSucceeded(Collection<String> guids) {
     performNotify("default guids since delegate called", null);
   }
 }
