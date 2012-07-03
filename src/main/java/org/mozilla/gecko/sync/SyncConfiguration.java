@@ -216,6 +216,9 @@ public class SyncConfiguration implements CredentialsSource {
   public String          prefsPath;
   public PrefsSource     prefsSource;
 
+  public static final String PREF_VERSION = "version";
+  public static final long CURRENT_VERSION = 1;
+
   public static final String CLIENTS_COLLECTION_TIMESTAMP = "serverClientsTimestamp";  // When the collection was touched.
   public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";  // When our record was touched.
 

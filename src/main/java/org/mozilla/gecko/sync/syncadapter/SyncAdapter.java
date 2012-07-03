@@ -21,6 +21,7 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncException;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.config.ConfigurationMigrator;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -208,7 +209,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     this.syncResult   = syncResult;
     this.localAccount = account;
 
-    final SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(mContext, AccountManager.get(mContext), this.localAccount);
+    final AccountManager accountManager = AccountManager.get(mContext);
+    final SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(mContext, accountManager, this.localAccount);
 
     final AtomicBoolean setNextSync = new AtomicBoolean(true);
     final SyncAdapter self = this;
@@ -267,6 +269,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
             notifyMonitor();
             return;
           }
+
+          final String profile = "default";
+          ConfigurationMigrator.ensurePrefsAreVersion(SyncConfiguration.CURRENT_VERSION, mContext, accountManager, localAccount,
+              GlobalConstants.PRODUCT_NAME, username, serverURL, profile);
 
           // Support multiple accounts by mapping each server/account pair to a branch of the
           // shared preferences space.
