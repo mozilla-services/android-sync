@@ -4,6 +4,7 @@
 package org.mozilla.gecko.sync.setup.test;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
@@ -49,7 +50,7 @@ public class TestSyncAuthenticatorService extends AndroidSyncTestCase {
     final Bundle bundle = SyncAuthenticatorService.getPlainAuthToken(context, account);
 
     assertEquals(TEST_USERNAME, bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
-    assertEquals(Constants.ACCOUNTTYPE_SYNC, bundle.getString(AccountManager.KEY_ACCOUNT_TYPE));
+    assertEquals(GlobalConstants.ACCOUNTTYPE_SYNC, bundle.getString(AccountManager.KEY_ACCOUNT_TYPE));
     assertEquals(Utils.usernameFromAccount(TEST_USERNAME), bundle.getString(Constants.OPTION_USERNAME));
     assertEquals(TEST_PASSWORD, bundle.getString(AccountManager.KEY_AUTHTOKEN));
     assertEquals(TEST_SYNCKEY, bundle.getString(Constants.OPTION_SYNCKEY));

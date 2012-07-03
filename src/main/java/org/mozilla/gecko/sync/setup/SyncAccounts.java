@@ -16,7 +16,6 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
-import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -325,28 +324,30 @@ public class SyncAccounts {
     setIsSyncable(account, syncAutomatically);
     Logger.debug(LOG_TAG, "Set account to sync automatically? " + syncAutomatically + ".");
 
-    setClientRecord(context, accountManager, account, syncAccount.clientName, syncAccount.clientGuid);
-
-    // TODO: add other ContentProviders as needed (e.g. passwords)
-    // TODO: for each, also add to res/xml to make visible in account settings
-    Logger.debug(LOG_TAG, "Finished setting syncables.");
-
-    // Purging global prefs assumes we have only a single Sync account at one time.
-    // TODO: Bug 761682: don't do anything with global prefs here.
-    if (clearPreferences) {
-      Logger.info(LOG_TAG, "Clearing global prefs.");
-      SyncAdapter.purgeGlobalPrefs(context);
-    }
-
     try {
-      SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit();
+      final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+      final String profile = Constants.DEFAULT_PROFILE;
+      final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+
+      final SharedPreferences.Editor editor = Utils.getSharedPreferences(context, product, username, serverURL, profile, version).edit();
       if (clearPreferences) {
-        Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(username, serverURL) + " for this account.");
+        final String prefsPath = Utils.getPrefsPath(product, username, serverURL, profile, version);
+        Logger.info(LOG_TAG, "Clearing preferences path " + prefsPath + " for this account.");
         editor.clear();
       }
+
       if (syncAccount.clusterURL != null) {
         editor.putString(SyncConfiguration.PREF_CLUSTER_URL, syncAccount.clusterURL);
       }
+
+      if (syncAccount.clientName != null && syncAccount.clientGuid != null) {
+        Logger.debug(LOG_TAG, "Setting client name to " + syncAccount.clientName + " and client GUID to " + syncAccount.clientGuid + ".");
+        editor.putString(SyncConfiguration.PREF_CLIENT_NAME, syncAccount.clientName);
+        editor.putString(SyncConfiguration.PREF_ACCOUNT_GUID, syncAccount.clientGuid);
+      } else {
+        Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
+      }
+
       editor.commit();
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Could not clear prefs path!", e);
@@ -437,17 +438,6 @@ public class SyncAccounts {
     return intent;
   }
 
-  protected static void setClientRecord(Context context, AccountManager accountManager, Account account,
-      String clientName, String clientGuid) {
-    if (clientName != null && clientGuid != null) {
-      Logger.debug(LOG_TAG, "Setting client name to " + clientName + " and client GUID to " + clientGuid + ".");
-      SyncAdapter.setAccountGUID(accountManager, account, clientGuid);
-      SyncAdapter.setClientName(accountManager, account, clientName);
-      return;
-    }
-    Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
-  }
-
   protected static class SyncAccountVersion0Callback implements AccountManagerCallback<Bundle> {
     protected final Context context;
     protected final CountDownLatch latch;
@@ -509,7 +499,7 @@ public class SyncAccounts {
           // Get old auth token, with incomplete bundle.
           String oldToken = accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null).getResult().getString(AccountManager.KEY_AUTHTOKEN);
           // Invalidate it.
-          accountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, oldToken); // Not the token type, the account type!
+          accountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, oldToken); // Not the token type, the account type!
         } catch (Exception e) {
           Logger.warn(LOG_TAG, "Got exception invalidating old token.", e);
           latch.notify();
