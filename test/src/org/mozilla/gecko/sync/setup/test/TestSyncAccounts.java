@@ -8,13 +8,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
-import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
-import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -237,14 +235,13 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     account = SyncAccounts.createSyncAccount(syncAccount);
     assertNotNull(account);
 
-    SyncAdapter syncAdapter = new SyncAdapter(context, false);
-    syncAdapter.localAccount = account;
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, SyncAccounts.DEFAULT_SERVER);
 
-    assertEquals(TEST_GUID, syncAdapter.getAccountGUID());
-    assertEquals(TEST_NAME, syncAdapter.getClientName());
+    // Verify that client record is set.
+    assertEquals(TEST_GUID, prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null));
+    assertEquals(TEST_NAME, prefs.getString(SyncConfiguration.PREF_CLIENT_NAME, null));
 
     // Let's verify that clusterURL is correctly not set.
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, SyncAccounts.DEFAULT_SERVER);
     String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
     assertNull(clusterURL);
   }
@@ -260,20 +257,13 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     assertNotNull(clusterURL);
     assertEquals(TEST_CLUSTERURL, clusterURL);
 
-    SyncAdapter syncAdapter = new SyncAdapter(context, false);
-    syncAdapter.localAccount = account;
-
-    // Let's verify that client name and GUID are not set (and the default is returned).
-    String guid = syncAdapter.getAccountGUID();
-    assertNotNull(guid);
-    String name = syncAdapter.getClientName();
-    assertNotNull(name);
-    assertTrue(name.startsWith(GlobalConstants.PRODUCT_NAME));
+    // Let's verify that client name and GUID are not set.
+    assertNull(prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null));
+    assertNull(prefs.getString(SyncConfiguration.PREF_CLIENT_NAME, null));
   }
 
   /**
-   * Verify that creating an account wipes stale settings in Shared Preferences,
-   * and wipes global prefs.
+   * Verify that creating an account wipes stale settings in Shared Preferences.
    */
   public void testCreatingWipesSharedPrefs() throws Exception {
     final String TEST_PREFERENCE = "testPreference";
@@ -283,8 +273,6 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
-    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID);
-
     syncAccount = new SyncAccountParameters(context, null,
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
     account = SyncAccounts.createSyncAccount(syncAccount);
@@ -292,8 +280,6 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     // All values deleted (known and unknown).
     assertNull(prefs.getString(TEST_PREFERENCE, null));
     assertNull(prefs.getString(TEST_SYNC_ID, null));
-    // And global value gone too.
-    assertNull(SyncAdapter.getGlobalPrefs(context).getString(TEST_PREFERENCE, null));
   }
 
   protected void assertParams(final SyncAccountParameters params) throws Exception {

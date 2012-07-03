@@ -14,9 +14,6 @@ public class Constants {
   public static final String AUTHTOKEN_TYPE_PLAIN = "auth.plain";
   public static final String AUTHTOKEN_TYPE_JSON_PREFIX = "auth.JSON.version.";
   public static final String OPTION_SERVER        = "option.serverUrl";
-  public static final String ACCOUNT_GUID         = "account.guid";
-  public static final String CLIENT_NAME          = "account.clientName";
-  public static final String NUM_CLIENTS          = "account.numClients";
   public static final String DATA_ENABLE_ON_UPGRADE = "data.enableOnUpgrade";
 
   /**
