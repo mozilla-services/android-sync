@@ -13,8 +13,6 @@ import java.util.Set;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
-import org.mozilla.gecko.sync.setup.Constants;
-import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -225,12 +223,12 @@ public class SyncConfiguration implements CredentialsSource {
   public static final String PREF_SYNC_ID = "syncID";
   public static final String PREF_ENABLED_ENGINE_NAMES = "enabledEngineNames";
 
-  public static final String PREF_EARLIEST_NEXT_SYNC = SyncAdapter.PREFS_EARLIEST_NEXT_SYNC;
-  public static final String PREF_CLUSTER_URL_IS_STALE = SyncAdapter.PREFS_CLUSTER_URL_IS_STALE;
+  public static final String PREF_EARLIEST_NEXT_SYNC = "earliestnextsync";
+  public static final String PREF_CLUSTER_URL_IS_STALE = "clusterurlisstale";
 
-  public static final String PREF_ACCOUNT_GUID = Constants.ACCOUNT_GUID;
-  public static final String PREF_CLIENT_NAME = Constants.CLIENT_NAME;
-  public static final String PREF_NUM_CLIENTS = Constants.NUM_CLIENTS;
+  public static final String PREF_ACCOUNT_GUID = "account.guid";
+  public static final String PREF_CLIENT_NAME = "account.clientName";
+  public static final String PREF_NUM_CLIENTS = "account.numClients";
 
   /**
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to

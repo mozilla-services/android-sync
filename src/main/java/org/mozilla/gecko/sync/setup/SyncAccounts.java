@@ -12,7 +12,6 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
-import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -245,23 +244,22 @@ public class SyncAccounts {
     setIsSyncable(account, syncAutomatically);
     Logger.debug(LOG_TAG, "Set account to sync automatically? " + syncAutomatically + ".");
 
-    setClientRecord(context, accountManager, account, syncAccount.clientName, syncAccount.clientGuid);
-
-    // TODO: add other ContentProviders as needed (e.g. passwords)
-    // TODO: for each, also add to res/xml to make visible in account settings
-    Logger.debug(LOG_TAG, "Finished setting syncables.");
-
-    // Purging global prefs assumes we have only a single Sync account at one time.
-    // TODO: Bug 761682: don't do anything with global prefs here.
-    Logger.info(LOG_TAG, "Clearing global prefs.");
-    SyncAdapter.purgeGlobalPrefs(context);
-
     try {
       Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(username, serverURL) + " for this account.");
       SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit().clear();
+
       if (syncAccount.clusterURL != null) {
         editor.putString(SyncConfiguration.PREF_CLUSTER_URL, syncAccount.clusterURL);
       }
+
+      if (syncAccount.clientName != null && syncAccount.clientGuid != null) {
+        Logger.debug(LOG_TAG, "Setting client name to " + syncAccount.clientName + " and client GUID to " + syncAccount.clientGuid + ".");
+        editor.putString(SyncConfiguration.PREF_CLIENT_NAME, syncAccount.clientName);
+        editor.putString(SyncConfiguration.PREF_ACCOUNT_GUID, syncAccount.clientGuid);
+      } else {
+        Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
+      }
+
       editor.commit();
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Could not clear prefs path!", e);
@@ -283,17 +281,6 @@ public class SyncAccounts {
     Logger.debug(LOG_TAG, "Setting authority " + authority + " to " +
                           (syncAutomatically ? "" : "not ") + "sync automatically.");
     ContentResolver.setSyncAutomatically(account, authority, syncAutomatically);
-  }
-
-  protected static void setClientRecord(Context context, AccountManager accountManager, Account account,
-      String clientName, String clientGuid) {
-    if (clientName != null && clientGuid != null) {
-      Logger.debug(LOG_TAG, "Setting client name to " + clientName + " and client GUID to " + clientGuid + ".");
-      SyncAdapter.setAccountGUID(accountManager, account, clientGuid);
-      SyncAdapter.setClientName(accountManager, account, clientName);
-      return;
-    }
-    Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
   }
 
   protected static class SyncAccountVersion0Callback implements AccountManagerCallback<Bundle> {
