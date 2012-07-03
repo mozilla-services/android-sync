@@ -14,6 +14,7 @@ import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -25,6 +26,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 
 public class TestAccountPickler extends AndroidSyncTestCase {
   public static final String TEST_FILENAME = "test.json";
@@ -38,8 +40,13 @@ public class TestAccountPickler extends AndroidSyncTestCase {
   public static final String TEST_SYNCKEY    = "testSyncKey";
   public static final String TEST_PASSWORD   = "testPassword";
   public static final String TEST_SERVER_URL = "test.server.url/";
+  public static final String TEST_CLUSTER_URL  = "test.cluster.url/";
   public static final String TEST_CLIENT_NAME = "testClientName";
   public static final String TEST_CLIENT_GUID = "testClientGuid";
+
+  public static final String TEST_PRODUCT = GlobalConstants.BROWSER_INTENT_PACKAGE;
+  public static final String TEST_PROFILE = "default";
+  public static final long TEST_VERSION = SyncConfiguration.CURRENT_PREFS_VERSION;
 
   protected SyncAccountParameters params;
   protected Context context;
@@ -50,8 +57,8 @@ public class TestAccountPickler extends AndroidSyncTestCase {
     context = getApplicationContext();
     accountManager = AccountManager.get(context);
     params = new SyncAccountParameters(context, accountManager,
-        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVER_URL, null, TEST_CLIENT_NAME, TEST_CLIENT_GUID);
-
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVER_URL,
+        TEST_CLUSTER_URL, TEST_CLIENT_NAME, TEST_CLIENT_GUID);
     numAccounts = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
   }
 
@@ -108,7 +115,7 @@ public class TestAccountPickler extends AndroidSyncTestCase {
     assertEquals(TEST_PASSWORD,  o.getString(Constants.JSON_KEY_PASSWORD));
     assertEquals(TEST_SERVER_URL, o.getString(Constants.JSON_KEY_SERVER));
     assertEquals(TEST_SYNCKEY,   o.getString(Constants.JSON_KEY_SYNCKEY));
-    assertNull(o.getString(Constants.JSON_KEY_CLUSTER));
+    assertEquals(TEST_CLUSTER_URL, o.getString(Constants.JSON_KEY_CLUSTER));
     assertEquals(TEST_CLIENT_NAME, o.getString(Constants.JSON_KEY_CLIENT_NAME));
     assertEquals(TEST_CLIENT_GUID, o.getString(Constants.JSON_KEY_CLIENT_GUID));
     assertEquals(new Boolean(true), o.get(Constants.JSON_KEY_SYNC_AUTOMATICALLY));
@@ -152,12 +159,18 @@ public class TestAccountPickler extends AndroidSyncTestCase {
       final String password = accountManager.getPassword(account);
       final String serverURL  = accountManager.getUserData(account, Constants.OPTION_SERVER);
       final String syncKey    = accountManager.getUserData(account, Constants.OPTION_SYNCKEY);
-      final String clientName = accountManager.getUserData(account, Constants.CLIENT_NAME);
-      final String clientGuid = accountManager.getUserData(account, Constants.ACCOUNT_GUID);
 
       assertEquals(TEST_PASSWORD, password);
       assertEquals(TEST_SERVER_URL, serverURL);
       assertEquals(TEST_SYNCKEY, syncKey);
+
+      // Verify shared prefs parameters are in place.
+      final SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME, TEST_SERVER_URL, TEST_PROFILE, TEST_VERSION);
+      final String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
+      final String clientName = prefs.getString(SyncConfiguration.PREF_CLIENT_NAME, null);
+      final String clientGuid = prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null);
+
+      assertEquals(TEST_CLUSTER_URL, clusterURL);
       assertEquals(TEST_CLIENT_NAME, clientName);
       assertEquals(TEST_CLIENT_GUID, clientGuid);
     } finally {
