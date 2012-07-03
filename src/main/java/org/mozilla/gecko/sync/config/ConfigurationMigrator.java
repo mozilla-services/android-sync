@@ -68,7 +68,7 @@ public class ConfigurationMigrator {
         // Do nothing -- perhaps SharedPreferences accepts types we don't know about.
       }
 
-      Logger.debug(LOG_TAG, "Migrated '" + fromKey + "' to '" + toKey + "'.");
+      Logger.trace(LOG_TAG, "Migrated '" + fromKey + "' to '" + toKey + "'.");
       count += 1;
     }
 

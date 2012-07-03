@@ -22,6 +22,7 @@ import org.mozilla.gecko.sync.SyncException;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.ConfigurationMigrator;
+import org.mozilla.gecko.sync.config.ConfigurationPickler;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -299,6 +300,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
             }
           }
 
+          // Bug 769745: at this point, we're going to sync. Write out account
+          // data in case this is our first ever sync.
+          ConfigurationPickler.pickle(mContext, self.accountSharedPreferences, Constants.JSON_PICKLE_FILENAME);
+
           final KeyBundle keyBundle = new KeyBundle(username, syncKey);
           final String prefsPath = Utils.getPrefsPath(username, serverURL);
           self.performSync(account, extras, authority, provider, syncResult,
@@ -328,6 +333,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           long next = System.currentTimeMillis() + interval;
           Log.i(LOG_TAG, "Setting minimum next sync time to " + next + " (" + interval + "ms from now).");
           extendEarliestNextSync(next);
+
+          // Bug 769745: write out updated account data.
+          ConfigurationPickler.pickle(mContext, accountSharedPreferences, Constants.JSON_PICKLE_FILENAME);
         }
       } catch (InterruptedException e) {
         Log.w(LOG_TAG, "Waiting on sync monitor interrupted.", e);

@@ -17,6 +17,11 @@ public class Constants {
   public static final String DATA_ENABLE_ON_UPGRADE = "data.enableOnUpgrade";
 
   /**
+   * Name of file to pickle current account preferences to each sync.
+   */
+  public static final String JSON_PICKLE_FILENAME = "sync.account.json";
+
+  /**
    * Key in sync extras bundle specifying stages to sync this sync session.
    * <p>
    * Corresponding value should be a String JSON-encoding an object, the keys of
