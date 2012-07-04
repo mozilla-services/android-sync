@@ -76,6 +76,7 @@ public class Constants {
   public static final String JSON_KEY_PASSWORD   = "password";
   public static final String JSON_KEY_SYNCKEY    = "synckey";
   public static final String JSON_KEY_SERVER     = "serverURL";
+  public static final String JSON_KEY_TIMESTAMP  = "timestamp";
 
   public static final String CRYPTO_KEY_GR1 = "gr1";
   public static final String CRYPTO_KEY_GR2 = "gr2";

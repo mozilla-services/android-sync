@@ -4,14 +4,21 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.setup.Constants;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
+import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
 
+import android.accounts.Account;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.os.AsyncTask;
 
 /**
  * Android deletes Account objects when the Authenticator that owns the Account
@@ -26,8 +33,104 @@ import android.content.SharedPreferences.Editor;
 public class ConfigurationPickler {
   public static final String LOG_TAG = "ConfigurationPickler";
 
+  public static class JSONPrefs implements SharedPreferences {
+    protected final ExtendedJSONObject json;
+
+    public JSONPrefs(final ExtendedJSONObject json) {
+      this.json = json;
+    }
+
+    public ExtendedJSONObject getJSONObject() {
+      return json;
+    }
+
+    @Override
+    public boolean contains(String key) {
+      return json.containsKey(key);
+    }
+
+    @Override
+    public Editor edit() {
+      return new JSONEditor(json);
+    }
+
+    @Override
+    public Map<String, ?> getAll() {
+      final Map<String, Object> map = new HashMap<String, Object>();
+      for (Entry<String, Object> pair : json.entryIterable()) {
+        map.put(pair.getKey(), pair.getValue());
+      }
+      return map;
+    }
+
+    @Override
+    public boolean getBoolean(String key, boolean defValue) {
+      Boolean value = (Boolean) json.get(key);
+      if (value != null) {
+        return value.booleanValue();
+      }
+      return defValue;
+    }
+
+    @Override
+    public float getFloat(String key, float defValue) {
+      Float value = (Float) json.get(key);
+      if (value != null) {
+        return value.floatValue();
+      }
+      return defValue;
+    }
+
+    @Override
+    public int getInt(String key, int defValue) {
+      Long value = json.getLong(key);
+      if (value != null) {
+        return value.intValue();
+      }
+      return defValue;
+    }
+
+    @Override
+    public long getLong(String key, long defValue) {
+      Long value = json.getLong(key);
+      if (value != null) {
+        return value.longValue();
+      }
+      return defValue;
+    }
+
+    @Override
+    public String getString(String key, String defValue) {
+      String value = json.getString(key);
+      if (value != null) {
+        return value;
+      }
+      return defValue;
+    }
+
+    // Not marking as Override, because Android <= 10 doesn't have
+    // getStringSet. Neither can we implement it.
+    public Set<String> getStringSet(String key, Set<String> defValue) {
+      throw new RuntimeException("getStringSet not available.");
+    }
+
+    @Override
+    public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+      // Ignore.
+    }
+
+    @Override
+    public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+      // Ignore.
+    }
+  }
+
   public static class JSONEditor implements Editor {
-    protected ExtendedJSONObject json = new ExtendedJSONObject();
+    protected final ExtendedJSONObject json;
+
+    public JSONEditor(final ExtendedJSONObject json) {
+      this.json = json;
+    }
 
     public ExtendedJSONObject getJSONObject() {
       return json;
@@ -45,7 +148,7 @@ public class ConfigurationPickler {
 
     @Override
     public Editor clear() {
-      json = new ExtendedJSONObject();
+      json.object.clear();
       return this;
     }
 
@@ -102,7 +205,7 @@ public class ConfigurationPickler {
     for (String pref : prefs.getAll().keySet()) {
       map.put(pref, pref);
     }
-    final JSONEditor jsonEditor = new JSONEditor();
+    final JSONEditor jsonEditor = new JSONEditor(new ExtendedJSONObject());
     ConfigurationMigrator.copyPreferences(prefs, map, jsonEditor);
 
     return jsonEditor.getJSONObject();
@@ -123,10 +226,20 @@ public class ConfigurationPickler {
    * Persist preferences to disk as a JSON object.
    *
    * @param context Android context.
-   * @param prefs <code>SharedPreferences</code> instance to persist.
+   * @param prefs <code>SharedPreferences</code> instance to persist.  Should include keys:
+   * <ul>
+   * <li><code>Constants.JSON_KEY_ACCOUNT</code>: the Sync account's hashed
+   * username;</li>
+   *
+   * <li><code>Constants.JSON_KEY_PASSWORD</code>: the Sync account's password;</li>
+   *
+   * <li><code>Constants.JSON_KEY_SERVER</code>: the Sync account's server;</li>
+   *
+   * <li><code>Constants.JSON_KEY_SYNCKEY</code>: the Sync account's sync key.</li>
+   * </ul>
    * @param filename name of file to persist to; must not contain path separators.
    */
-  public static void pickle(final Context context, final SharedPreferences prefs, final String filename) {
+  protected static void pickle(final Context context, final SharedPreferences prefs, final String filename) {
     final ExtendedJSONObject o = asJSON(prefs);
     try {
       final FileOutputStream fos = context.openFileOutput(filename, Context.MODE_PRIVATE);
@@ -138,5 +251,127 @@ public class ConfigurationPickler {
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Caught exception persisting preferences to " + filename + "; ignoring.", e);
     }
+  }
+
+  /**
+   * Persist Sync account, current timestamp, and preferences to disk as a JSON object.
+   *
+   * @param context Android context.
+   * @param prefs <code>SharedPreferences</code> instance to persist.
+   * @param filename name of file to persist to; must not contain path separators.
+   * @param username the Sync account's un-encoded username, like "test@mozilla.com".
+   * @param password the Sync account's password.
+   * @param serverURL the Sync account's server.
+   * @param syncKey the Sync account's sync key.
+   */
+  public static void pickle(final Context context, final SharedPreferences prefs, final String filename,
+      final String username,
+      final String password,
+      final String serverURL,
+      final String syncKey) {
+    prefs.edit()
+      .putString(Constants.JSON_KEY_ACCOUNT,  username)
+      .putString(Constants.JSON_KEY_PASSWORD, password)
+      .putString(Constants.JSON_KEY_SERVER,   serverURL)
+      .putString(Constants.JSON_KEY_SYNCKEY,  syncKey)
+      .putLong(Constants.JSON_KEY_TIMESTAMP, System.currentTimeMillis())
+      .commit();
+    pickle(context, prefs, filename);
+  }
+
+  public static class UnpickleParameters {
+    public final Context context;
+    public final String filename;
+
+    /**
+     * @param context Android context.
+     * @param filename name of file to unpickle; must not contain path separators.
+     */
+    public UnpickleParameters(final Context context, final String filename) {
+      this.context = context;
+      this.filename = filename;
+    }
+  }
+
+  /**
+   * This class provides background-thread abstracted access to un-pickling a
+   * pickled Firefox Sync account.
+   * <p>
+   * If an Android Firefox Sync account already exists, returns null immediately.
+   * <p>
+   * Subclass this task and override `onPostExecute` to act on the result. The
+   * <code>Result</code> (of type <code>Account</code>) is null if an error
+   * occurred and the account could not be added.
+   *
+   */
+  public static class UnpickleSyncAccountTask extends AsyncTask<UnpickleParameters, Void, Account> {
+    @Override
+    protected Account doInBackground(UnpickleParameters... params) {
+      final Context context = params[0].context;
+      final String filename = params[0].filename;
+
+      if (SyncAccounts.syncAccountsExist(context)) {
+        Logger.info(LOG_TAG, "A Firefox Sync Android account already exists; not unpickling.");
+        return null;
+      }
+
+      return unpickle(context, filename);
+    }
+  }
+
+  public static Account unpickle(final Context context, final String filename) {
+    final String jsonString = Utils.readFile(context, filename);
+    if (jsonString == null) {
+      Logger.info(LOG_TAG, "Pickle file '" + filename + "' not found; aborting.");
+      return null;
+    }
+
+    ExtendedJSONObject json = null;
+    try {
+      json = ExtendedJSONObject.parseJSONObject(jsonString);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception reading pickle file '" + filename + "'; aborting.", e);
+      return null;
+    }
+
+    final String username  = json.getString(Constants.JSON_KEY_ACCOUNT); // Un-encoded, like "test@mozilla.com".
+    final String password  = json.getString(Constants.JSON_KEY_PASSWORD);
+    final String serverURL = json.getString(Constants.JSON_KEY_SERVER);
+    final String syncKey   = json.getString(Constants.JSON_KEY_SYNCKEY);
+
+    SyncAccountParameters params = null;
+    try {
+      // Null checking of inputs is done in constructor.
+      params = new SyncAccountParameters(context, null, username, syncKey, password, serverURL);
+    } catch (IllegalArgumentException e) {
+      Logger.warn(LOG_TAG, "Un-pickled data included null username, password, or serverURL; aborting.", e);
+      return null;
+    }
+
+    final Account account = SyncAccounts.createSyncAccount(params);
+    if (account == null) {
+      Logger.warn(LOG_TAG, "Failed to add Android Account; aborting.");
+      return null;
+    }
+
+    SharedPreferences prefs = null;
+    try {
+      prefs = Utils.getSharedPreferences(context, username, serverURL);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception getting shared preferences; ignoring.", e);
+      return account;
+    }
+    final Editor editor = prefs.edit();
+
+    Map<String, String> map = new HashMap<String, String>();
+    for (String pref : json.keySet()) {
+      map.put(pref, pref);
+    }
+    int count = ConfigurationMigrator.copyPreferences(new JSONPrefs(json), map, editor);
+    editor.commit();
+
+    Logger.info(LOG_TAG, "Un-pickled Android account named " + username + " and restored " + count + " preferences.");
+
+    return account;
   }
 }
