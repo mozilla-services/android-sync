@@ -4,6 +4,10 @@
 
 package org.mozilla.gecko.sync;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -210,34 +214,41 @@ public class Utils {
     return sha1Base32(account.toLowerCase(Locale.US));
   }
 
+  public static String getPrefsPath(String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    return getPrefsPath(null, username, serverURL, null, 0);
+  }
+
+  public static SharedPreferences getSharedPreferences(Context context, String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    return getSharedPreferences(context, null, username, serverURL, null, 0);
+  }
+
+  public static SharedPreferences getSharedPreferences(final Context context, final String product, final String username, final String serverURL, final String profile, final long version)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    String prefsPath = getPrefsPath(product, username, serverURL, profile, version);
+    return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
+  }
+
   /**
    * Get shared preferences path for a Sync account.
    *
+   * @param product the Firefox Sync product package name (like "org.mozilla.firefox").
    * @param username the Sync account name, optionally encoded with <code>Utils.usernameFromAccount</code>.
    * @param serverURL the Sync account server URL.
+   * @param profile the Firefox profile name.
+   * @param version the version of preferences to reference.
    * @return the path.
    * @throws NoSuchAlgorithmException
    * @throws UnsupportedEncodingException
    */
-  public static String getPrefsPath(String username, String serverURL)
-    throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    return "sync.prefs." + sha1Base32(serverURL + ":" + usernameFromAccount(username));
-  }
+  public static String getPrefsPath(final String product, final String username, final String serverURL, final String profile, final long version)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    final String encodedAccount = sha1Base32(serverURL + ":" + usernameFromAccount(username));
 
-  /**
-   * Get shared preferences for a Sync account.
-   *
-   * @param context Android <code>Context</code>.
-   * @param username the Sync account name, optionally encoded with <code>Utils.usernameFromAccount</code>.
-   * @param serverURL the Sync account server URL.
-   * @return a <code>SharedPreferences</code> instance.
-   * @throws NoSuchAlgorithmException
-   * @throws UnsupportedEncodingException
-   */
-  public static SharedPreferences getSharedPreferences(Context context, String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    String prefsPath = getPrefsPath(username, serverURL);
-    Logger.debug(LOG_TAG, "Shared preferences: " + prefsPath);
-    return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
+    if (version <= 0) {
+      return "sync.prefs." + encodedAccount;
+    } else {
+      return "sync.prefs." + product.replace('.', '!').replace(' ', '!') + "." + encodedAccount + "." + profile + "." + version;
+    }
   }
 
   public static void addToIndexBucketMap(TreeMap<Long, ArrayList<String>> map, long index, String value) {
@@ -439,6 +450,48 @@ public class Utils {
         o.put(stageName, 0);
       }
       bundle.putString(Constants.EXTRAS_KEY_STAGES_TO_SKIP, o.toJSONString());
+    }
+  }
+
+  /**
+   * Read contents of file as a string.
+   *
+   * @param context Android context.
+   * @param filename name of file to read.
+   * @return <code>String</code> instance.
+   */
+  public static String readFile(final Context context, final String filename) {
+    FileInputStream fis = null;
+    InputStreamReader isr = null;
+    BufferedReader br = null;
+
+    try {
+      fis = context.openFileInput(filename);
+      isr = new InputStreamReader(fis);
+      br = new BufferedReader(isr);
+      StringBuilder sb = new StringBuilder();
+      String line;
+      while ((line = br.readLine()) != null) {
+        sb.append(line);
+      }
+      return sb.toString();
+    } catch (Exception e) {
+      return null;
+    } finally {
+      if (isr != null) {
+        try {
+          isr.close();
+        } catch (IOException e) {
+          // Ignore.
+        }
+      }
+      if (fis != null) {
+        try {
+          fis.close();
+        } catch (IOException e) {
+          // Ignore.
+        }
+      }
     }
   }
 }

@@ -216,12 +216,22 @@ public class SyncConfiguration implements CredentialsSource {
   public String          prefsPath;
   public PrefsSource     prefsSource;
 
+  public static final String PREF_VERSION = "version";
+  public static final long CURRENT_VERSION = 1;
+
   public static final String CLIENTS_COLLECTION_TIMESTAMP = "serverClientsTimestamp";  // When the collection was touched.
   public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";  // When our record was touched.
 
   public static final String PREF_CLUSTER_URL = "clusterURL";
   public static final String PREF_SYNC_ID = "syncID";
   public static final String PREF_ENABLED_ENGINE_NAMES = "enabledEngineNames";
+
+  public static final String PREF_EARLIEST_NEXT_SYNC = "earliestnextsync";
+  public static final String PREF_CLUSTER_URL_IS_STALE = "clusterurlisstale";
+
+  public static final String PREF_ACCOUNT_GUID = "account.guid";
+  public static final String PREF_CLIENT_NAME = "account.clientName";
+  public static final String PREF_NUM_CLIENTS = "account.numClients";
 
   /**
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
@@ -234,7 +244,7 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   public SharedPreferences getPrefs() {
-    Logger.debug(LOG_TAG, "Returning prefs for " + prefsPath);
+    Logger.trace(LOG_TAG, "Returning prefs for " + prefsPath);
     return prefsSource.getPrefs(prefsPath, Utils.SHARED_PREFERENCES_MODE);
   }
 
@@ -254,14 +264,14 @@ public class SyncConfiguration implements CredentialsSource {
       String u = prefs.getString(PREF_CLUSTER_URL, null);
       try {
         clusterURL = new URI(u);
-        Logger.debug(LOG_TAG, "Set clusterURL from bundle: " + u);
+        Logger.trace(LOG_TAG, "Set clusterURL from bundle: " + u);
       } catch (URISyntaxException e) {
         Logger.warn(LOG_TAG, "Ignoring bundle clusterURL (" + u + "): invalid URI.", e);
       }
     }
     if (prefs.contains(PREF_SYNC_ID)) {
       syncID = prefs.getString(PREF_SYNC_ID, null);
-      Logger.debug(LOG_TAG, "Set syncID from bundle: " + syncID);
+      Logger.trace(LOG_TAG, "Set syncID from bundle: " + syncID);
     }
     if (prefs.contains(PREF_ENABLED_ENGINE_NAMES)) {
       String json = prefs.getString(PREF_ENABLED_ENGINE_NAMES, null);
@@ -386,7 +396,7 @@ public class SyncConfiguration implements CredentialsSource {
   protected void setAndPersistClusterURL(URI u, SharedPreferences prefs) {
     boolean shouldPersist = (prefs != null) && (clusterURL == null);
 
-    Logger.debug(LOG_TAG, "Setting cluster URL to " + u.toASCIIString() +
+    Logger.trace(LOG_TAG, "Setting cluster URL to " + u.toASCIIString() +
                           (shouldPersist ? ". Persisting." : ". Not persisting."));
     clusterURL = u;
     if (shouldPersist) {
@@ -407,7 +417,7 @@ public class SyncConfiguration implements CredentialsSource {
       return;
     }
     setAndPersistClusterURL(uri.resolve("/"), prefs);
-    Logger.debug(LOG_TAG, "Set cluster URL to " + clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
+    Logger.trace(LOG_TAG, "Set cluster URL to " + clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
   }
 
   public void setClusterURL(URI u) {

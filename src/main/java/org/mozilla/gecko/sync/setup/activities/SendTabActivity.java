@@ -11,10 +11,15 @@ import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandRunner;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.config.ConfigurationPickler;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.setup.Constants;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
+import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
@@ -22,6 +27,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
@@ -79,6 +85,11 @@ public class SendTabActivity extends Activity {
       return;
     }
 
+    localAccount = ConfigurationPickler.unpickle(this, Constants.JSON_PICKLE_FILENAME);
+    if (localAccount != null) {
+      return;
+    }
+
     Intent intent = new Intent(this, RedirectToSetupActivity.class);
     intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
     startActivity(intent);
@@ -89,10 +100,24 @@ public class SendTabActivity extends Activity {
    * @return Return null if there is no account set up. Return the account GUID otherwise.
    */
   private String getAccountGUID() {
-    if (accountManager == null || localAccount == null) {
+    if (localAccount == null) {
+      Logger.warn(LOG_TAG, "Null local account; aborting.");
       return null;
     }
-    return accountManager.getUserData(localAccount, Constants.ACCOUNT_GUID);
+
+    SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccount(getApplicationContext(), accountManager, localAccount, 1);
+    if (params == null) {
+      Logger.warn(LOG_TAG, "Could not get sync account parameters; aborting.");
+      return null;
+    }
+
+    SharedPreferences prefs;
+    try {
+      prefs = Utils.getSharedPreferences(getApplicationContext(), params.username, params.serverURL);
+      return prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   public void sendClickHandler(View view) {
@@ -108,8 +133,14 @@ public class SendTabActivity extends Activity {
     new Thread() {
       @Override
       public void run() {
+        final String accountGUID = getAccountGUID();
+        Logger.debug(LOG_TAG, "Retrieved account GUID '" + accountGUID + "'.");
+        if (accountGUID == null) {
+          return;
+        }
+
         for (int i = 0; i < guids.length; i++) {
-          processor.sendURIToClientForDisplay(uri, guids[i], title, getAccountGUID(), getApplicationContext());
+          processor.sendURIToClientForDisplay(uri, guids[i], title, accountGUID, getApplicationContext());
         }
 
         Logger.info(LOG_TAG, "Requesting immediate clients stage sync.");

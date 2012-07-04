@@ -12,11 +12,14 @@ public class Constants {
   public static final String OPTION_SYNCKEY       = "option.synckey";
   public static final String OPTION_USERNAME      = "option.username";
   public static final String AUTHTOKEN_TYPE_PLAIN = "auth.plain";
+  public static final String AUTHTOKEN_TYPE_JSON_PREFIX = "auth.JSON.version.";
   public static final String OPTION_SERVER        = "option.serverUrl";
-  public static final String ACCOUNT_GUID         = "account.guid";
-  public static final String CLIENT_NAME          = "account.clientName";
-  public static final String NUM_CLIENTS          = "account.numClients";
   public static final String DATA_ENABLE_ON_UPGRADE = "data.enableOnUpgrade";
+
+  /**
+   * Name of file to pickle current account preferences to each sync.
+   */
+  public static final String JSON_PICKLE_FILENAME = "sync.account.json";
 
   /**
    * Key in sync extras bundle specifying stages to sync this sync session.
@@ -73,6 +76,7 @@ public class Constants {
   public static final String JSON_KEY_PASSWORD   = "password";
   public static final String JSON_KEY_SYNCKEY    = "synckey";
   public static final String JSON_KEY_SERVER     = "serverURL";
+  public static final String JSON_KEY_TIMESTAMP  = "timestamp";
 
   public static final String CRYPTO_KEY_GR1 = "gr1";
   public static final String CRYPTO_KEY_GR2 = "gr2";

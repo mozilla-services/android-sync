@@ -4,15 +4,20 @@
 
 package org.mozilla.gecko.sync.setup;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
-import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -207,23 +212,27 @@ public class SyncAccounts {
     Logger.debug(LOG_TAG, "Account " + account + " added successfully.");
 
     setSyncAutomatically(account);
-    setClientRecord(context, accountManager, account, syncAccount.clientName, syncAccount.clientGuid);
 
     // TODO: add other ContentProviders as needed (e.g. passwords)
     // TODO: for each, also add to res/xml to make visible in account settings
     Logger.debug(LOG_TAG, "Finished setting syncables.");
 
-    // Purging global prefs assumes we have only a single Sync account at one time.
-    // TODO: Bug 761682: don't do anything with global prefs here.
-    Logger.info(LOG_TAG, "Clearing global prefs.");
-    SyncAdapter.purgeGlobalPrefs(context);
-
     try {
       Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(username, serverURL) + " for this account.");
       SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit().clear();
+
       if (syncAccount.clusterURL != null) {
         editor.putString(SyncConfiguration.PREF_CLUSTER_URL, syncAccount.clusterURL);
       }
+
+      if (syncAccount.clientName != null && syncAccount.clientGuid != null) {
+        Logger.debug(LOG_TAG, "Setting client name to " + syncAccount.clientName + " and client GUID to " + syncAccount.clientGuid + ".");
+        editor.putString(SyncConfiguration.PREF_CLIENT_NAME, syncAccount.clientName);
+        editor.putString(SyncConfiguration.PREF_ACCOUNT_GUID, syncAccount.clientGuid);
+      } else {
+        Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
+      }
+
       editor.commit();
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Could not clear prefs path!", e);
@@ -252,14 +261,163 @@ public class SyncAccounts {
     setIsSyncable(account, true);
   }
 
-  protected static void setClientRecord(Context context, AccountManager accountManager, Account account,
-      String clientName, String clientGuid) {
-    if (clientName != null && clientGuid != null) {
-      Logger.debug(LOG_TAG, "Setting client name to " + clientName + " and client GUID to " + clientGuid + ".");
-      SyncAdapter.setAccountGUID(accountManager, account, clientGuid);
-      SyncAdapter.setClientName(accountManager, account, clientName);
-      return;
+  protected static class SyncAccountVersion0Callback implements AccountManagerCallback<Bundle> {
+    protected final Context context;
+    protected final CountDownLatch latch;
+
+    public SyncAccountParameters syncAccountParameters = null;
+
+    public SyncAccountVersion0Callback(final Context context, final CountDownLatch latch) {
+      this.context = context;
+      this.latch = latch;
     }
-    Logger.debug(LOG_TAG, "Client name and guid not both non-null, so not setting client data.");
+
+    @Override
+    public void run(AccountManagerFuture<Bundle> future) {
+      try {
+        Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
+        if (bundle.containsKey("KEY_INTENT")) {
+          throw new IllegalStateException("KEY_INTENT included in AccountManagerFuture bundle.");
+        }
+        final String username  = bundle.getString(Constants.OPTION_USERNAME); // Encoded by Utils.usernameFromAccount.
+        final String syncKey   = bundle.getString(Constants.OPTION_SYNCKEY);
+        final String serverURL = bundle.getString(Constants.OPTION_SERVER);
+        final String password  = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+
+        syncAccountParameters = new SyncAccountParameters(this.context, null, username, syncKey, password, serverURL);
+      } catch (Exception e) {
+        // Do nothing -- caller will find null syncAccountParameters.
+        Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters.", e);
+      } finally {
+        latch.countDown();
+      }
+    }
+  }
+
+  /**
+   * Synchronously extract Sync account parameters from Android account version
+   * 0, using plain auth token type.
+   * <p>
+   * Safe to call from main thread.
+   * <p>
+   * Invalidates existing auth token first, which is necessary because Android
+   * caches only the auth token string, not the complete bundle. By invalidating
+   * the existing token, we generate a new (complete) bundle every invocation.
+   *
+   * @param context
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account.
+   * @return Sync account parameters.
+   */
+  public static SyncAccountParameters blockingFromAndroidAccountV0(final Context context, final AccountManager accountManager, final Account account) {
+    final CountDownLatch latch = new CountDownLatch(1);
+    final SyncAccountVersion0Callback callback = new SyncAccountVersion0Callback(context, latch);
+
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          // Get old auth token, with incomplete bundle.
+          String oldToken = accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null).getResult().getString(AccountManager.KEY_AUTHTOKEN);
+          // Invalidate it.
+          accountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, oldToken); // Not the token type, the account type!
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Got exception invalidating old token.", e);
+          latch.notify();
+        } finally {
+        }
+
+        // Get the new auth token, with complete bundle.
+        accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, null);
+      }
+    }).start();
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters.", e);
+      return null;
+    }
+
+    return callback.syncAccountParameters;
+  }
+
+  protected static class SyncAccountJSONRunnable implements Runnable {
+    protected final Context context;
+    protected final AccountManager accountManager;
+    protected final Account account;
+    protected final CountDownLatch latch;
+    protected final int version;
+
+    public SyncAccountParameters syncAccountParameters = null;
+
+    public SyncAccountJSONRunnable(final Context context, final AccountManager accountManager, final Account account, final CountDownLatch latch, final int version) {
+      this.context = context;
+      this.accountManager = accountManager;
+      this.account = account;
+      this.latch = latch;
+      this.version = version;
+    }
+
+    @Override
+    public void run() {
+      try {
+        // Can try to fetch a specified version, but only accepts version 1 in return (see check below).
+        final String token = accountManager.blockingGetAuthToken(account, Constants.AUTHTOKEN_TYPE_JSON_PREFIX + this.version, true);
+        if (token == null) {
+          throw new IllegalStateException("Could not fetch JSON auth token; old version installed?");
+        }
+
+        ExtendedJSONObject o = ExtendedJSONObject.parseJSONObject(token);
+        int version = o.getIntegerSafely(Constants.JSON_KEY_VERSION);
+        if (version != 1) {
+          throw new IllegalStateException("Got auth token JSON version = " + this.version + " != 1.");
+        }
+
+        final String username  = o.getString(Constants.JSON_KEY_ACCOUNT); // Encoded by Utils.usernameFromAccount.
+        final String syncKey   = o.getString(Constants.JSON_KEY_SYNCKEY);
+        final String serverURL = o.getString(Constants.JSON_KEY_SERVER);
+        final String password  = o.getString(Constants.JSON_KEY_PASSWORD);
+
+        this.syncAccountParameters = new SyncAccountParameters(context, null, username, syncKey, password, serverURL);
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Got exception getting auth token.", e);
+      } finally {
+        latch.countDown();
+      }
+    }
+  }
+
+  /**
+   * Synchronously extract Sync account parameters from Android account version
+   * >= 1, using JSON auth token type.
+   * <p>
+   * Safe to call from main thread.
+   *
+   * @param context
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account.
+   * @param version
+   *          JSON version to request.
+   * @return Sync account parameters.
+   */
+  public static SyncAccountParameters blockingFromAndroidAccount(final Context context, final AccountManager accountManager, final Account account, final int version) {
+    final CountDownLatch latch = new CountDownLatch(1);
+    final SyncAccountJSONRunnable runnable = new SyncAccountJSONRunnable(context, accountManager, account, latch, version);
+
+    new Thread(runnable).start();
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters.", e);
+      return null;
+    }
+
+    return runnable.syncAccountParameters;
   }
 }
