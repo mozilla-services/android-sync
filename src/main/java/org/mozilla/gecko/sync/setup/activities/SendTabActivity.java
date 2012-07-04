@@ -13,6 +13,7 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.config.ConfigurationPickler;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
@@ -81,6 +82,11 @@ public class SendTabActivity extends Activity {
     // A Sync account exists.
     if (accts.length > 0) {
       localAccount = accts[0];
+      return;
+    }
+
+    localAccount = ConfigurationPickler.unpickle(this, Constants.JSON_PICKLE_FILENAME);
+    if (localAccount != null) {
       return;
     }
 
