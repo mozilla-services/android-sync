@@ -221,6 +221,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         Logger.trace(LOG_TAG, "AccountManagerCallback invoked.");
         // TODO: N.B.: Future must not be used on the main thread.
         try {
+          if (params == null) {
+            Log.e(LOG_TAG, "No account parameters: aborting sync.");
+            syncResult.stats.numAuthExceptions++;
+            notifyMonitor();
+            return;
+          }
+
           String username  = params.username; // Encoded with Utils.usernameFromAccount.
           String password  = params.password;
           String serverURL = params.serverURL;
@@ -302,7 +309,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
           // Bug 769745: at this point, we're going to sync. Write out account
           // data in case this is our first ever sync.
-          ConfigurationPickler.pickle(mContext, self.accountSharedPreferences, Constants.JSON_PICKLE_FILENAME);
+          ConfigurationPickler.pickle(mContext, self.accountSharedPreferences, Constants.JSON_PICKLE_FILENAME,
+              account.name, password, serverURL, syncKey); // username is encoded by Utils.usernameFromAccount.
 
           final KeyBundle keyBundle = new KeyBundle(username, syncKey);
           final String prefsPath = Utils.getPrefsPath(username, serverURL);
@@ -335,7 +343,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           extendEarliestNextSync(next);
 
           // Bug 769745: write out updated account data.
-          ConfigurationPickler.pickle(mContext, accountSharedPreferences, Constants.JSON_PICKLE_FILENAME);
+          if (params != null) {
+            ConfigurationPickler.pickle(mContext, accountSharedPreferences, Constants.JSON_PICKLE_FILENAME,
+                account.name, params.password, params.serverURL, params.syncKey); // params.username is encoded by Utils.usernameFromAccount.
+          }
         }
       } catch (InterruptedException e) {
         Log.w(LOG_TAG, "Waiting on sync monitor interrupted.", e);
