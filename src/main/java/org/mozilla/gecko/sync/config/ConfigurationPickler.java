@@ -109,6 +109,17 @@ public class ConfigurationPickler {
   }
 
   /**
+   * Remove preferences persisted to disk, if there are any.
+   *
+   * @param context Android context.
+   * @param filename name of persisted pickle file; must not contain path separators.
+   * @return <code>true</code> if given pickle existed and was successfully deleted.
+   */
+  public static boolean deletePickle(final Context context, final String filename) {
+    return context.deleteFile(filename);
+  }
+
+  /**
    * Persist preferences to disk as a JSON object.
    *
    * @param context Android context.
