@@ -210,14 +210,6 @@ public class Utils {
     return sha1Base32(account.toLowerCase(Locale.US));
   }
 
-  public static String getPrefsPath(String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    return getPrefsPath(null, username, serverURL, null, 0);
-  }
-
-  public static SharedPreferences getSharedPreferences(Context context, String username, String serverURL) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    return getSharedPreferences(context, null, username, serverURL, null, 0);
-  }
-
   public static SharedPreferences getSharedPreferences(final Context context, final String product, final String username, final String serverURL, final String profile, final long version)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
     String prefsPath = getPrefsPath(product, username, serverURL, profile, version);

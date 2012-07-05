@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -36,6 +37,9 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   private static final String TEST_PASSWORD   = "testPassword";
   private static final String TEST_SERVERURL  = "test.server.url/";
   private static final String TEST_CLUSTERURL = "test.cluster.url/";
+  private static final String TEST_PRODUCT    = GlobalConstants.BROWSER_INTENT_PACKAGE;
+  private static final String TEST_PROFILE    = Constants.DEFAULT_PROFILE;
+  private static final long   TEST_VERSION    = SyncConfiguration.CURRENT_PREFS_VERSION;
 
   private Account account;
   private Context context;
@@ -235,7 +239,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     account = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNotNull(account);
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, SyncAccounts.DEFAULT_SERVER);
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
+        SyncAccounts.DEFAULT_SERVER, TEST_PROFILE, TEST_VERSION);
 
     // Verify that client record is set.
     assertEquals(TEST_GUID, prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null));
@@ -252,7 +257,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     account = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNotNull(account);
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVERURL);
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
+        TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
     String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
     assertNotNull(clusterURL);
     assertEquals(TEST_CLUSTERURL, clusterURL);
@@ -269,7 +275,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     final String TEST_PREFERENCE = "testPreference";
     final String TEST_SYNC_ID = "testSyncID";
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVERURL);
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
+        TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
     prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 

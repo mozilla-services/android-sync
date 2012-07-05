@@ -15,6 +15,8 @@ public class Constants {
   public static final String OPTION_SERVER        = "option.serverUrl";
   public static final String DATA_ENABLE_ON_UPGRADE = "data.enableOnUpgrade";
 
+  public static final String DEFAULT_PROFILE = "default";
+
   /**
    * Key in sync extras bundle specifying stages to sync this sync session.
    * <p>

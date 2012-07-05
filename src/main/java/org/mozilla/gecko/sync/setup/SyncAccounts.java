@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
@@ -245,8 +246,11 @@ public class SyncAccounts {
     Logger.debug(LOG_TAG, "Set account to sync automatically? " + syncAutomatically + ".");
 
     try {
-      Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(username, serverURL) + " for this account.");
-      SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit().clear();
+      final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+      final String profile = Constants.DEFAULT_PROFILE;
+      final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+      Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(product, username, serverURL, profile, version) + " for this account.");
+      SharedPreferences.Editor editor = Utils.getSharedPreferences(context, product, username, serverURL, profile, version).edit().clear();
 
       if (syncAccount.clusterURL != null) {
         editor.putString(SyncConfiguration.PREF_CLUSTER_URL, syncAccount.clusterURL);

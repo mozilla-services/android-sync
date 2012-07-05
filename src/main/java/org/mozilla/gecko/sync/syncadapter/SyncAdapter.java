@@ -277,7 +277,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
           // Support multiple accounts by mapping each server/account pair to a branch of the
           // shared preferences space.
-          self.accountSharedPreferences = Utils.getSharedPreferences(mContext, params.username, params.serverURL);
+          final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+          final String profile = Constants.DEFAULT_PROFILE;
+          final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+          self.accountSharedPreferences = Utils.getSharedPreferences(mContext, product, username, serverURL, profile, version);
 
           Log.i(LOG_TAG,
               "Syncing account named " + account.name +
@@ -301,7 +304,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           }
 
           final KeyBundle keyBundle = new KeyBundle(username, syncKey);
-          final String prefsPath = Utils.getPrefsPath(username, serverURL);
+          final String prefsPath = Utils.getPrefsPath(product, username, serverURL, profile, version);
           self.performSync(account, extras, authority, provider, syncResult,
               username, password, prefsPath, serverURL, keyBundle);
         } catch (Exception e) {
