@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
@@ -322,5 +323,60 @@ public class ConfigurationMigrator {
     downgradeGlobals1to0(oldPrefs, globalPrefs);
     downgradeAndroidAccount1to0(oldPrefs, accountManager, account);
     downgradeShared1to0(oldPrefs, accountPrefs);
+  }
+
+  /**
+   * Migrate, if necessary, existing prefs to a certain version.
+   * <p>
+   * Stores current prefs version in Android shared prefs with root
+   * "sync.prefs.version", which corresponds to the file
+   * "sync.prefs.version.xml".
+   *
+   * @param desiredVersion
+   *          version to finish it.
+   * @param context
+   * @param accountManager
+   * @param account
+   * @param product
+   * @param username
+   * @param serverURL
+   * @param profile
+   * @throws Exception
+   */
+  public static void ensurePrefsAreVersion(final long desiredVersion,
+      final Context context, final AccountManager accountManager, final Account account,
+      final String product, final String username, final String serverURL, final String profile) throws Exception {
+    if (desiredVersion < 0 || desiredVersion > SyncConfiguration.CURRENT_PREFS_VERSION) {
+      throw new IllegalArgumentException("Cannot migrate to unknown version " + desiredVersion + ".");
+    }
+
+    SharedPreferences versionPrefs = context.getSharedPreferences("sync.prefs.version", Utils.SHARED_PREFERENCES_MODE);
+
+    // We default to 0 since clients getting this code for the first time will
+    // not have "sync.prefs.version.xml" *at all*, and upgrading when all old
+    // data is missing is expected to be safe.
+    long currentVersion = versionPrefs.getLong(SyncConfiguration.PREF_PREFS_VERSION, 0);
+    if (currentVersion == desiredVersion) {
+      Logger.info(LOG_TAG, "Current version (" + currentVersion + ") is desired version; no need to migrate.");
+      return;
+    }
+
+    if (currentVersion < 0 || currentVersion > SyncConfiguration.CURRENT_PREFS_VERSION) {
+      throw new IllegalStateException("Cannot migrate from unknown version " + currentVersion + ".");
+    }
+
+    // Now we're down to either version 0 or version 1.
+    if (currentVersion == 0 && desiredVersion == 1) {
+      Logger.info(LOG_TAG, "Upgrading from version 0 to version 1.");
+      upgrade0to1(context, accountManager, account, product, username, serverURL, profile);
+    } else if (currentVersion == 1 && desiredVersion == 0) {
+      Logger.info(LOG_TAG, "Upgrading from version 0 to version 1.");
+      upgrade0to1(context, accountManager, account, product, username, serverURL, profile);
+    } else {
+      Logger.warn(LOG_TAG, "Don't know how to migrate from version " + currentVersion + " to " + desiredVersion + ".");
+    }
+
+    Logger.info(LOG_TAG, "Migrated from version " + currentVersion + " to version " + desiredVersion + ".");
+    versionPrefs.edit().putLong(SyncConfiguration.PREF_PREFS_VERSION, desiredVersion).commit();
   }
 }
