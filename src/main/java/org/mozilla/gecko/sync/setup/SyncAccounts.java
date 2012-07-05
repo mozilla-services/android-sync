@@ -139,11 +139,21 @@ public class SyncAccounts {
    * occurred and the account could not be added.
    */
   public static class CreateSyncAccountTask extends AsyncTask<SyncAccountParameters, Void, Account> {
+    protected final boolean syncAutomatically;
+
+    public CreateSyncAccountTask() {
+      this.syncAutomatically = true;
+    }
+
+    public CreateSyncAccountTask(final boolean syncAutomically) {
+      this.syncAutomatically = syncAutomically;
+    }
+
     @Override
     protected Account doInBackground(SyncAccountParameters... params) {
       SyncAccountParameters syncAccount = params[0];
       try {
-        return createSyncAccount(syncAccount);
+        return createSyncAccount(syncAccount, syncAutomatically);
       } catch (Exception e) {
         Log.e(Logger.GLOBAL_LOG_TAG, "Unable to create account.", e);
         return null;
@@ -152,16 +162,36 @@ public class SyncAccounts {
   }
 
   /**
-   * Create a sync account.
+   * Create a sync account and set it to sync automatically.
    * <p>
    * Do not call this method from the main thread.
    *
    * @param syncAccount
-   *        The parameters of the account to be created.
-   * @return The created <code>Account</code>, or null if an error occurred and
-   *         the account could not be added.
+   *          parameters of the account to be created.
+   * @return created <code>Account</code>, or null if an error occurred and the
+   *         account could not be added.
    */
   public static Account createSyncAccount(SyncAccountParameters syncAccount) {
+    return createSyncAccount(syncAccount, true);
+  }
+
+  /**
+   * Create a sync account.
+   * <p>
+   * Do not call this method from the main thread.
+   * <p>
+   * Intended for testing; use
+   * <code>createSyncAccount(SyncAccountParameters)</code> instead.
+   *
+   * @param syncAccount
+   *          parameters of the account to be created.
+   * @param syncAutomatically
+   *          whether to start syncing this Account automatically (
+   *          <code>false</code> for test accounts).
+   * @return created Android <code>Account</code>, or null if an error occurred
+   *         and the account could not be added.
+   */
+  public static Account createSyncAccount(SyncAccountParameters syncAccount, boolean syncAutomatically) {
     final Context context = syncAccount.context;
     final AccountManager accountManager = (syncAccount.accountManager == null) ?
           AccountManager.get(syncAccount.context) : syncAccount.accountManager;
@@ -206,7 +236,10 @@ public class SyncAccounts {
     }
     Logger.debug(LOG_TAG, "Account " + account + " added successfully.");
 
-    setSyncAutomatically(account);
+    setSyncAutomatically(account, syncAutomatically);
+    setIsSyncable(account, syncAutomatically);
+    Logger.debug(LOG_TAG, "Set account to sync automatically? " + syncAutomatically + ".");
+
     setClientRecord(context, accountManager, account, syncAccount.clientName, syncAccount.clientGuid);
 
     // TODO: add other ContentProviders as needed (e.g. passwords)
@@ -245,11 +278,6 @@ public class SyncAccounts {
     Logger.debug(LOG_TAG, "Setting authority " + authority + " to " +
                           (syncAutomatically ? "" : "not ") + "sync automatically.");
     ContentResolver.setSyncAutomatically(account, authority, syncAutomatically);
-  }
-
-  public static void setSyncAutomatically(Account account) {
-    setSyncAutomatically(account, true);
-    setIsSyncable(account, true);
   }
 
   protected static void setClientRecord(Context context, AccountManager accountManager, Account account,
