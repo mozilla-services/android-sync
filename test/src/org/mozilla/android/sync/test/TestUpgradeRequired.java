@@ -19,13 +19,12 @@ import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
+import org.mozilla.gecko.sync.setup.test.TestSyncAccounts;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
 import android.content.ContentResolver;
 import android.content.Context;
 import ch.boye.httpclientandroidlib.HttpEntity;
@@ -67,34 +66,6 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     return "1".equals(accountManager.getUserData(a, Constants.DATA_ENABLE_ON_UPGRADE));
   }
 
-  private static void deleteAccount(final Account account, final AccountManager accountManager) {
-    final Object monitor = new Object();
-    if (account != null) {
-      Thread me = new Thread() {
-        @Override
-        public void run() {
-          // Ensure our test account is gone.
-          accountManager.removeAccount(account, new AccountManagerCallback<Boolean>() {
-            @Override
-            public void run(AccountManagerFuture<Boolean> success) {
-              synchronized (monitor) {
-                monitor.notify();
-              }
-            }
-          }, null);
-        }
-      };
-      synchronized (monitor) {
-        me.start();
-        try {
-          monitor.wait();
-        } catch (InterruptedException e) {
-          fail("Should not occur.");
-        }
-      }
-    }
-  }
-
   private static Account getTestAccount(AccountManager accountManager) {
     final String type = Constants.ACCOUNTTYPE_SYNC;
     Account[] existing = accountManager.getAccountsByType(type);
@@ -112,7 +83,7 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     if (found == null) {
       return;
     }
-    deleteAccount(found, accountManager);
+    TestSyncAccounts.deleteAccount(this, accountManager, found);
   }
 
   @Override
@@ -124,9 +95,10 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
 
     // Set up and enable Sync accounts.
     SyncAccountParameters syncAccountParams = new SyncAccountParameters(context, accountManager, TEST_USERNAME, TEST_PASSWORD, TEST_SYNC_KEY, TEST_SERVER, null, null, null);
-    final Account account = SyncAccounts.createSyncAccount(syncAccountParams);
+    final Account account = SyncAccounts.createSyncAccount(syncAccountParams, true);
     assertNotNull(account);
-    SyncAccounts.setSyncAutomatically(account);
+    assertTrue(syncsAutomatically(account));
+    assertTrue(isSyncable(account));
   }
 
   /**
