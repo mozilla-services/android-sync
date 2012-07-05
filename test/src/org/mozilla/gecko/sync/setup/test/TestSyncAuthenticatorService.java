@@ -4,6 +4,7 @@
 package org.mozilla.gecko.sync.setup.test;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
@@ -54,5 +55,23 @@ public class TestSyncAuthenticatorService extends AndroidSyncTestCase {
     assertEquals(TEST_PASSWORD, bundle.getString(AccountManager.KEY_AUTHTOKEN));
     assertEquals(TEST_SYNCKEY, bundle.getString(Constants.OPTION_SYNCKEY));
     assertEquals(TEST_SERVERURL, bundle.getString(Constants.OPTION_SERVER));
+  }
+
+  public void testGetJSONV1AuthToken() throws Exception {
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
+    assertNotNull(account);
+
+    final Bundle bundle = SyncAuthenticatorService.getJSONV1AuthToken(context, account);
+
+    assertEquals(TEST_USERNAME, bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
+    assertEquals(Constants.ACCOUNTTYPE_SYNC, bundle.getString(AccountManager.KEY_ACCOUNT_TYPE));
+
+    ExtendedJSONObject o = ExtendedJSONObject.parseJSONObject(bundle.getString(AccountManager.KEY_AUTHTOKEN));
+    assertEquals(1, SyncAuthenticatorService.JSON_VERSION);
+    assertEquals(new Long(1), o.getLong(Constants.JSON_KEY_VERSION));
+    assertEquals(Utils.usernameFromAccount(TEST_USERNAME), o.getString(Constants.JSON_KEY_ACCOUNT));
+    assertEquals(TEST_PASSWORD, o.getString(Constants.JSON_KEY_PASSWORD));
+    assertEquals(TEST_SYNCKEY, o.getString(Constants.JSON_KEY_SYNCKEY));
+    assertEquals(TEST_SERVERURL, o.getString(Constants.JSON_KEY_SERVER));
   }
 }

@@ -12,6 +12,7 @@ public class Constants {
   public static final String OPTION_SYNCKEY       = "option.synckey";
   public static final String OPTION_USERNAME      = "option.username";
   public static final String AUTHTOKEN_TYPE_PLAIN = "auth.plain";
+  public static final String AUTHTOKEN_TYPE_JSON_PREFIX = "auth.JSON.version.";
   public static final String OPTION_SERVER        = "option.serverUrl";
   public static final String DATA_ENABLE_ON_UPGRADE = "data.enableOnUpgrade";
 
