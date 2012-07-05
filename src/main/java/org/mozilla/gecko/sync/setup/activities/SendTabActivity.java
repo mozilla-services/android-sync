@@ -124,7 +124,10 @@ public class SendTabActivity extends Activity {
 
     SharedPreferences prefs;
     try {
-      prefs = Utils.getSharedPreferences(getApplicationContext(), params.username, params.serverURL);
+      final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+      final String profile = Constants.DEFAULT_PROFILE;
+      final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+      prefs = Utils.getSharedPreferences(getApplicationContext(), product, params.username, params.serverURL, profile, version);
       return prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null);
     } catch (Exception e) {
       return null;

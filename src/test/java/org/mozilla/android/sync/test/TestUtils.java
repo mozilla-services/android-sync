@@ -47,9 +47,6 @@ public class TestUtils extends Utils {
   @Test
   public void testGetPrefsPath() throws NoSuchAlgorithmException, UnsupportedEncodingException {
     assertEquals("ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.sha1Base32("test.url.com:xee7ffonluzpdp66l6xgpyh2v2w6ojkc"));
-    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("foobar@baz.com", "test.url.com"));
-    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("FooBar@Baz.com", "test.url.com"));
-    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", "test.url.com"));
 
     assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("product", "foobar@baz.com", "test.url.com", "default", 0));
     assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("org.mozilla.firefox_beta", "FooBar@Baz.com", "test.url.com", "default", 0));
