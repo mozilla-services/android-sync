@@ -302,7 +302,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     syncAccount = new SyncAccountParameters(context, null,
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
     try {
-      account = SyncAccounts.createSyncAccount(syncAccount);
+      account = SyncAccounts.createSyncAccount(syncAccount, false);
       assertNotNull(account);
 
       // Test fetching parameters multiple times, since we need to invalidate this token type every fetch.
@@ -324,6 +324,57 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
         }
       });
       */
+    } finally {
+      if (account != null) {
+        deleteAccount(this, accountManager, account);
+        account = null;
+      }
+    }
+  }
+
+  public void testBlockingFromAndroidAccountV1() throws Throwable {
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
+    try {
+      account = SyncAccounts.createSyncAccount(syncAccount, false);
+      assertNotNull(account);
+
+      SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccount(context, accountManager, account, 1);
+      assertParams(params);
+
+      params = SyncAccounts.blockingFromAndroidAccount(context, accountManager, account, 1);
+      assertParams(params);
+
+      // And maybe on the main thread, too.
+      this.runTestOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccount(context, accountManager, account, 1);
+          try {
+            assertParams(params);
+          } catch (Exception e) {
+            fail("Caught exception: " + e);
+          }
+        }
+      });
+    } finally {
+      if (account != null) {
+        deleteAccount(this, accountManager, account);
+        account = null;
+      }
+    }
+  }
+
+  public void testBlockingFromAndroidAccountV2() throws Throwable {
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
+    try {
+      account = SyncAccounts.createSyncAccount(syncAccount, false);
+      assertNotNull(account);
+
+      // Should work, even though internally it will return V1 JSON.
+      SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccount(context, accountManager, account, 2);
+      assertParams(params);
     } finally {
       if (account != null) {
         deleteAccount(this, accountManager, account);

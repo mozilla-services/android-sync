@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
@@ -368,5 +369,82 @@ public class SyncAccounts {
     }
 
     return callback.syncAccountParameters;
+  }
+
+  protected static class SyncAccountJSONRunnable implements Runnable {
+    protected final Context context;
+    protected final AccountManager accountManager;
+    protected final Account account;
+    protected final CountDownLatch latch;
+    protected final int version;
+
+    public SyncAccountParameters syncAccountParameters = null;
+
+    public SyncAccountJSONRunnable(final Context context, final AccountManager accountManager, final Account account, final CountDownLatch latch, final int version) {
+      this.context = context;
+      this.accountManager = accountManager;
+      this.account = account;
+      this.latch = latch;
+      this.version = version;
+    }
+
+    @Override
+    public void run() {
+      try {
+        // Can try to fetch a specified version, but only accepts version 1 in return (see check below).
+        final String token = accountManager.blockingGetAuthToken(account, Constants.AUTHTOKEN_TYPE_JSON_PREFIX + this.version, true);
+        if (token == null) {
+          throw new IllegalStateException("Could not fetch JSON auth token; old version installed?");
+        }
+
+        ExtendedJSONObject o = ExtendedJSONObject.parseJSONObject(token);
+        int version = o.getIntegerSafely(Constants.JSON_KEY_VERSION);
+        if (version != 1) {
+          throw new IllegalStateException("Got auth token JSON version = " + this.version + " != 1.");
+        }
+
+        final String username  = o.getString(Constants.JSON_KEY_ACCOUNT); // Encoded by Utils.usernameFromAccount.
+        final String syncKey   = o.getString(Constants.JSON_KEY_SYNCKEY);
+        final String serverURL = o.getString(Constants.JSON_KEY_SERVER);
+        final String password  = o.getString(Constants.JSON_KEY_PASSWORD);
+
+        this.syncAccountParameters = new SyncAccountParameters(context, null, username, syncKey, password, serverURL);
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Got exception getting auth token.", e);
+      } finally {
+        latch.countDown();
+      }
+    }
+  }
+
+  /**
+   * Synchronously extract Sync account parameters from Android account version
+   * >= 1, using JSON auth token type.
+   * <p>
+   * Safe to call from main thread.
+   *
+   * @param context
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account.
+   * @param version
+   *          JSON version to request.
+   * @return Sync account parameters.
+   */
+  public static SyncAccountParameters blockingFromAndroidAccount(final Context context, final AccountManager accountManager, final Account account, final int version) {
+    final CountDownLatch latch = new CountDownLatch(1);
+    final SyncAccountJSONRunnable runnable = new SyncAccountJSONRunnable(context, accountManager, account, latch, version);
+
+    new Thread(runnable).start();
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters.", e);
+      return null;
+    }
+
+    return runnable.syncAccountParameters;
   }
 }
