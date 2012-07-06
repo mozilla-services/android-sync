@@ -11,6 +11,7 @@ import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
@@ -150,12 +151,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
   public Boolean result;
 
-  public void testAccountsExistTask() {
-    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    account = SyncAccounts.createSyncAccount(syncAccount, false);
-    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    assertTrue(afterCreate > before);
-
+  protected boolean doAccountsExistTask() {
     final TestSyncAccounts self = this;
     performWait(new Runnable() {
       @Override
@@ -182,12 +178,44 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     });
 
     assertNotNull(result);
-    assertTrue(result.booleanValue());
+    return result.booleanValue();
+  }
+
+  public void testAccountsExistTask() {
+    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
+    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    assertTrue(afterCreate > before);
+
+    assertTrue(doAccountsExistTask());
 
     deleteAccount(this, accountManager, account);
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
+  }
+
+  public void testAccountsExistTaskAndPickling() {
+    // Make sure there's nothing to un-pickle.
+    context.deleteFile(Constants.ACCOUNT_PICKLE_FILENAME);
+
+    assertFalse(doAccountsExistTask());
+
+    // Write pickle file, and ensure it gets un-pickled.
+    final SyncAccountParameters params = new SyncAccountParameters(getApplicationContext(), null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, null, "testClientName", "testClientGuid");
+
+    try {
+      AccountPickler.pickle(context, Constants.ACCOUNT_PICKLE_FILENAME, params, false);
+      assertTrue(doAccountsExistTask());
+    } finally {
+      // Clean up!
+      for (Account account : accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC)) {
+        if (TEST_USERNAME.equals(account.name)) {
+          TestSyncAccounts.deleteAccount(this, accountManager, account);
+        }
+      }
+    }
   }
 
   public void testCreateAccountTask() {

@@ -4,10 +4,14 @@
 
 package org.mozilla.gecko.sync.setup;
 
+import java.io.File;
+
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
@@ -38,12 +42,28 @@ public class SyncAccounts {
   public final static String DEFAULT_SERVER = "https://auth.services.mozilla.com/";
 
   /**
-   * Returns true if a Sync account is set up.
+   * Returns true if a Sync account is set up, or we have a pickled Sync account
+   * on disk that should be un-pickled (Bug 769745). If we have a pickled Sync
+   * account, try to un-pickle it and create the corresponding Sync account.
    * <p>
    * Do not call this method from the main thread.
    */
   public static boolean syncAccountsExist(Context c) {
-    return AccountManager.get(c).getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length > 0;
+    final boolean accountsExist = AccountManager.get(c).getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length > 0;
+    if (accountsExist) {
+      return true;
+    }
+
+    final File file = c.getFileStreamPath(Constants.ACCOUNT_PICKLE_FILENAME);
+    if (!file.exists()) {
+      return false;
+    }
+
+    // There is a small race window here: if the user creates a new Sync account
+    // between our checks, this could erroneously report that no Sync accounts
+    // exist.
+    final Account account = AccountPickler.unpickle(c, Constants.ACCOUNT_PICKLE_FILENAME);
+    return (account != null);
   }
 
   /**
@@ -133,6 +153,29 @@ public class SyncAccounts {
     public SyncAccountParameters(Context context, AccountManager accountManager,
         String username, String syncKey, String password, String serverURL) {
       this(context, accountManager, username, syncKey, password, serverURL, null, null, null);
+    }
+
+    public SyncAccountParameters(final Context context, final AccountManager accountManager, final ExtendedJSONObject o) {
+      this(context, accountManager,
+          o.getString(Constants.JSON_KEY_ACCOUNT),
+          o.getString(Constants.JSON_KEY_SYNCKEY),
+          o.getString(Constants.JSON_KEY_PASSWORD),
+          o.getString(Constants.JSON_KEY_SERVER),
+          o.getString(Constants.JSON_KEY_CLUSTER),
+          o.getString(Constants.JSON_KEY_CLIENT_NAME),
+          o.getString(Constants.JSON_KEY_CLIENT_GUID));
+    }
+
+    public ExtendedJSONObject asJSON() {
+      final ExtendedJSONObject o = new ExtendedJSONObject();
+      o.put(Constants.JSON_KEY_ACCOUNT, username);
+      o.put(Constants.JSON_KEY_PASSWORD, password);
+      o.put(Constants.JSON_KEY_SERVER, serverURL);
+      o.put(Constants.JSON_KEY_SYNCKEY, syncKey);
+      o.put(Constants.JSON_KEY_CLUSTER, clusterURL);
+      o.put(Constants.JSON_KEY_CLIENT_NAME, clientName);
+      o.put(Constants.JSON_KEY_CLIENT_GUID, clientGuid);
+      return o;
     }
   }
 
