@@ -834,7 +834,7 @@ public class BookmarksTest extends AndroidSyncTestCase {
   // Fennec fake layer.
   //
   private Uri appendProfile(Uri uri) {
-    String defaultProfile = BrowserContract.DEFAULT_PROFILE;
+    final String defaultProfile = "default";     // Fennec constant removed in Bug 715307.
     return uri.buildUpon().appendQueryParameter(BrowserContract.PARAM_PROFILE, defaultProfile).build();
   }
 
