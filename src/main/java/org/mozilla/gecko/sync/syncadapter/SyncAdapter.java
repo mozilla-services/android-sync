@@ -21,6 +21,7 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncException;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -302,6 +303,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
               return;
             }
           }
+
+          // Bug 769745: at this point, we're going to sync. Pickle account data
+          // so that we can un-pickle if need be.
+          AccountPickler.pickle(mContext, Constants.JSON_PICKLE_FILENAME,
+              account.name, password, serverURL, syncKey); // username is encoded by Utils.usernameFromAccount.
 
           final KeyBundle keyBundle = new KeyBundle(username, syncKey);
           final String prefsPath = Utils.getPrefsPath(product, username, serverURL, profile, version);

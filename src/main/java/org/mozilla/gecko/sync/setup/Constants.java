@@ -18,6 +18,11 @@ public class Constants {
   public static final String DEFAULT_PROFILE = "default";
 
   /**
+   * Name of file to pickle current account preferences to each sync.
+   */
+  public static final String JSON_PICKLE_FILENAME = "sync.account.json";
+
+  /**
    * Key in sync extras bundle specifying stages to sync this sync session.
    * <p>
    * Corresponding value should be a String JSON-encoding an object, the keys of
@@ -72,6 +77,7 @@ public class Constants {
   public static final String JSON_KEY_PASSWORD   = "password";
   public static final String JSON_KEY_SYNCKEY    = "synckey";
   public static final String JSON_KEY_SERVER     = "serverURL";
+  public static final String JSON_KEY_TIMESTAMP  = "timestamp";
 
   public static final String CRYPTO_KEY_GR1 = "gr1";
   public static final String CRYPTO_KEY_GR2 = "gr2";
