@@ -311,7 +311,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
-    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID);
+    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
     syncAccount = new SyncAccountParameters(context, null,
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
@@ -319,8 +319,33 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
     // All values deleted (known and unknown).
     assertNull(prefs.getString(TEST_PREFERENCE, null));
-    assertNull(prefs.getString(TEST_SYNC_ID, null));
+    assertNull(prefs.getString(SyncConfiguration.PREF_SYNC_ID, null));
     // And global value gone too.
     assertNull(SyncAdapter.getGlobalPrefs(context).getString(TEST_PREFERENCE, null));
+  }
+
+  /**
+   * Verify that creating an account preserves settings in Shared Preferences,
+   * and global prefs, when asked.
+   */
+  public void testCreateSyncAccountWithExistingPreferences() throws Exception {
+    final String TEST_PREFERENCE = "testPreference";
+    final String TEST_SYNC_ID = "testSyncID";
+
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVERURL);
+    prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
+    prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
+
+    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
+
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
+    account = SyncAccounts.createSyncAccountPreservingExistingPreferences(syncAccount, false);
+
+    // All values remain (known and unknown).
+    assertNotNull(prefs.getString(TEST_PREFERENCE, null));
+    assertNotNull(prefs.getString(SyncConfiguration.PREF_SYNC_ID, null));
+    // And global value remain too.
+    assertNotNull(SyncAdapter.getGlobalPrefs(context).getString(TEST_PREFERENCE, null));
   }
 }

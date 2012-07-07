@@ -211,7 +211,8 @@ public class SyncAccounts {
   }
 
   /**
-   * Create a sync account and set it to sync automatically.
+   * Create a sync account, clearing any existing preferences, and set it to
+   * sync automatically.
    * <p>
    * Do not call this method from the main thread.
    *
@@ -221,7 +222,33 @@ public class SyncAccounts {
    *         account could not be added.
    */
   public static Account createSyncAccount(SyncAccountParameters syncAccount) {
-    return createSyncAccount(syncAccount, true);
+    return createSyncAccount(syncAccount, true, true);
+  }
+
+  /**
+   * Create a sync account, clearing any existing preferences.
+   * <p>
+   * Do not call this method from the main thread.
+   * <p>
+   * Intended for testing; use
+   * <code>createSyncAccount(SyncAccountParameters)</code> instead.
+   *
+   * @param syncAccount
+   *          parameters of the account to be created.
+   * @param syncAutomatically
+   *          whether to start syncing this Account automatically (
+   *          <code>false</code> for test accounts).
+   * @return created Android <code>Account</code>, or null if an error occurred
+   *         and the account could not be added.
+   */
+  public static Account createSyncAccount(SyncAccountParameters syncAccount,
+      boolean syncAutomatically) {
+    return createSyncAccount(syncAccount, syncAutomatically, true);
+  }
+
+  public static Account createSyncAccountPreservingExistingPreferences(SyncAccountParameters syncAccount,
+      boolean syncAutomatically) {
+    return createSyncAccount(syncAccount, syncAutomatically, false);
   }
 
   /**
@@ -237,10 +264,13 @@ public class SyncAccounts {
    * @param syncAutomatically
    *          whether to start syncing this Account automatically (
    *          <code>false</code> for test accounts).
+   * @param clearPreferences
+   *          <code>true</code> to clear existing preferences before creating.
    * @return created Android <code>Account</code>, or null if an error occurred
    *         and the account could not be added.
    */
-  public static Account createSyncAccount(SyncAccountParameters syncAccount, boolean syncAutomatically) {
+  protected static Account createSyncAccount(SyncAccountParameters syncAccount,
+      boolean syncAutomatically, boolean clearPreferences) {
     final Context context = syncAccount.context;
     final AccountManager accountManager = (syncAccount.accountManager == null) ?
           AccountManager.get(syncAccount.context) : syncAccount.accountManager;
@@ -297,12 +327,17 @@ public class SyncAccounts {
 
     // Purging global prefs assumes we have only a single Sync account at one time.
     // TODO: Bug 761682: don't do anything with global prefs here.
-    Logger.info(LOG_TAG, "Clearing global prefs.");
-    SyncAdapter.purgeGlobalPrefs(context);
+    if (clearPreferences) {
+      Logger.info(LOG_TAG, "Clearing global prefs.");
+      SyncAdapter.purgeGlobalPrefs(context);
+    }
 
     try {
-      Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(username, serverURL) + " for this account.");
-      SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit().clear();
+      SharedPreferences.Editor editor = Utils.getSharedPreferences(context, username, serverURL).edit();
+      if (clearPreferences) {
+        Logger.info(LOG_TAG, "Clearing preferences path " + Utils.getPrefsPath(username, serverURL) + " for this account.");
+        editor.clear();
+      }
       if (syncAccount.clusterURL != null) {
         editor.putString(SyncConfiguration.PREF_CLUSTER_URL, syncAccount.clusterURL);
       }

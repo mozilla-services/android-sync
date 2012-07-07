@@ -138,7 +138,7 @@ public class AccountPickler {
       }
     }
 
-    final Account account = SyncAccounts.createSyncAccount(params, syncAutomatically);
+    final Account account = SyncAccounts.createSyncAccountPreservingExistingPreferences(params, syncAutomatically);
     if (account == null) {
       Logger.warn(LOG_TAG, "Failed to add Android Account; aborting.");
       return null;
