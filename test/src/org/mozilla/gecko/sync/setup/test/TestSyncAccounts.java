@@ -11,6 +11,7 @@ import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
@@ -22,6 +23,7 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.test.InstrumentationTestCase;
 
 /**
  * We can use <code>performWait</code> and <code>performNotify</code> here if we
@@ -51,12 +53,12 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, null);
   }
 
-  public void deleteAccount(final Account account) {
+  public static void deleteAccount(final InstrumentationTestCase test, final AccountManager accountManager, final Account account) {
     performWait(new Runnable() {
       @Override
       public void run() {
         try {
-          runTestOnUiThread(new Runnable() {
+          test.runTestOnUiThread(new Runnable() {
             final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
               @Override
               public void run(AccountManagerFuture<Boolean> future) {
@@ -84,7 +86,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     if (account == null) {
       return;
     }
-    deleteAccount(account);
+    deleteAccount(this, accountManager, account);
     account = null;
   }
 
@@ -106,10 +108,10 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
   public void testCreateAccount() {
     int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    account = SyncAccounts.createSyncAccount(syncAccount);
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
     int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterCreate > before);
-    deleteAccount(account);
+    deleteAccount(this, accountManager, account);
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
@@ -117,20 +119,20 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
   public void testCreateSecondAccount() {
     int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    account = SyncAccounts.createSyncAccount(syncAccount);
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
     int afterFirst = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterFirst > before);
 
     SyncAccountParameters secondSyncAccount = new SyncAccountParameters(context, null,
         "second@username.com", TEST_SYNCKEY, TEST_PASSWORD, null);
 
-    Account second = SyncAccounts.createSyncAccount(secondSyncAccount);
+    Account second = SyncAccounts.createSyncAccount(secondSyncAccount, false);
     assertNotNull(second);
     int afterSecond = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterSecond > afterFirst);
 
-    deleteAccount(second);
-    deleteAccount(account);
+    deleteAccount(this, accountManager, second);
+    deleteAccount(this, accountManager, account);
     account = null;
 
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
@@ -139,22 +141,17 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
   public void testCreateDuplicateAccount() {
     int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    account = SyncAccounts.createSyncAccount(syncAccount);
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
     int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterCreate > before);
 
-    Account dupe = SyncAccounts.createSyncAccount(syncAccount);
+    Account dupe = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNull(dupe);
   }
 
   public Boolean result;
 
-  public void testAccountsExistTask() {
-    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    account = SyncAccounts.createSyncAccount(syncAccount);
-    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    assertTrue(afterCreate > before);
-
+  protected boolean doAccountsExistTask() {
     final TestSyncAccounts self = this;
     performWait(new Runnable() {
       @Override
@@ -181,12 +178,44 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     });
 
     assertNotNull(result);
-    assertTrue(result.booleanValue());
+    return result.booleanValue();
+  }
 
-    deleteAccount(account);
+  public void testAccountsExistTask() {
+    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
+    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    assertTrue(afterCreate > before);
+
+    assertTrue(doAccountsExistTask());
+
+    deleteAccount(this, accountManager, account);
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
+  }
+
+  public void testAccountsExistTaskAndPickling() {
+    // Make sure there's nothing to un-pickle.
+    context.deleteFile(Constants.ACCOUNT_PICKLE_FILENAME);
+
+    assertFalse(doAccountsExistTask());
+
+    // Write pickle file, and ensure it gets un-pickled.
+    final SyncAccountParameters params = new SyncAccountParameters(getApplicationContext(), null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, null, "testClientName", "testClientGuid");
+
+    try {
+      AccountPickler.pickle(context, Constants.ACCOUNT_PICKLE_FILENAME, params, false);
+      assertTrue(doAccountsExistTask());
+    } finally {
+      // Clean up!
+      for (Account account : accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC)) {
+        if (TEST_USERNAME.equals(account.name)) {
+          TestSyncAccounts.deleteAccount(this, accountManager, account);
+        }
+      }
+    }
   }
 
   public void testCreateAccountTask() {
@@ -200,7 +229,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
           runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-              final SyncAccounts.CreateSyncAccountTask task = new SyncAccounts.CreateSyncAccountTask() {
+              final SyncAccounts.CreateSyncAccountTask task = new SyncAccounts.CreateSyncAccountTask(false) {
                 @Override
                 public void onPostExecute(Account account) {
                   self.account = account;
@@ -222,7 +251,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertTrue(afterCreate > before);
 
-    deleteAccount(account);
+    deleteAccount(this, accountManager, account);
     account = null;
     int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
     assertEquals(before, afterDelete);
@@ -233,7 +262,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     final String TEST_GUID = "testGuid";
     syncAccount = new SyncAccountParameters(context, null,
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, null, null, TEST_NAME, TEST_GUID);
-    account = SyncAccounts.createSyncAccount(syncAccount);
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNotNull(account);
 
     SyncAdapter syncAdapter = new SyncAdapter(context, false);
@@ -251,7 +280,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   public void testClusterURL() throws NoSuchAlgorithmException, UnsupportedEncodingException {
     syncAccount = new SyncAccountParameters(context, null,
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
-    account = SyncAccounts.createSyncAccount(syncAccount);
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNotNull(account);
 
     SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVERURL);
@@ -282,16 +311,41 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
-    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID);
+    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
     syncAccount = new SyncAccountParameters(context, null,
         TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
-    account = SyncAccounts.createSyncAccount(syncAccount);
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
 
     // All values deleted (known and unknown).
     assertNull(prefs.getString(TEST_PREFERENCE, null));
-    assertNull(prefs.getString(TEST_SYNC_ID, null));
+    assertNull(prefs.getString(SyncConfiguration.PREF_SYNC_ID, null));
     // And global value gone too.
     assertNull(SyncAdapter.getGlobalPrefs(context).getString(TEST_PREFERENCE, null));
+  }
+
+  /**
+   * Verify that creating an account preserves settings in Shared Preferences,
+   * and global prefs, when asked.
+   */
+  public void testCreateSyncAccountWithExistingPreferences() throws Exception {
+    final String TEST_PREFERENCE = "testPreference";
+    final String TEST_SYNC_ID = "testSyncID";
+
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_USERNAME, TEST_SERVERURL);
+    prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
+    prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
+
+    SyncAdapter.getGlobalPrefs(context).edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
+
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
+    account = SyncAccounts.createSyncAccountPreservingExistingPreferences(syncAccount, false);
+
+    // All values remain (known and unknown).
+    assertNotNull(prefs.getString(TEST_PREFERENCE, null));
+    assertNotNull(prefs.getString(SyncConfiguration.PREF_SYNC_ID, null));
+    // And global value remain too.
+    assertNotNull(SyncAdapter.getGlobalPrefs(context).getString(TEST_PREFERENCE, null));
   }
 }
