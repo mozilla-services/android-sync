@@ -46,11 +46,6 @@ public class SynchronizerHelpers {
             }
 
             @Override
-            public void onFetchSucceeded(Record[] records, long fetchEnd) {
-              delegate.onFetchSucceeded(records, fetchEnd);
-            }
-
-            @Override
             public void onFetchFailed(Exception ex, Record record) {
               delegate.onFetchFailed(ex, record);
             }
