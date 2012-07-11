@@ -59,6 +59,9 @@ public abstract class ServerSyncStage implements
 
   protected final GlobalSession session;
 
+  protected long stageStartTimestamp = -1;
+  protected long stageCompleteTimestamp = -1;
+
   public ServerSyncStage(GlobalSession session) {
     if (session == null) {
       throw new IllegalArgumentException("session must not be null.");
@@ -451,6 +454,8 @@ public abstract class ServerSyncStage implements
     final String name = getEngineName();
     Logger.debug(LOG_TAG, "Starting execute for " + name);
 
+    stageStartTimestamp = System.currentTimeMillis();
+
     try {
       if (!this.isEnabled()) {
         Logger.info(LOG_TAG, "Skipping stage " + name + ".");
@@ -513,12 +518,22 @@ public abstract class ServerSyncStage implements
   }
 
   /**
+   * Express the duration taken by this stage as a String, like "0.56 seconds".
+   *
+   * @return formatted string.
+   */
+  protected String getStageDurationString() {
+    return Utils.formatDuration(stageStartTimestamp, stageCompleteTimestamp);
+  }
+
+  /**
    * We synced this engine!  Persist timestamps and advance the session.
    *
    * @param synchronizer the <code>Synchronizer</code> that succeeded.
    */
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
+    stageCompleteTimestamp = System.currentTimeMillis();
     Logger.debug(LOG_TAG, "onSynchronized.");
 
     SynchronizerConfiguration newConfig = synchronizer.save();
@@ -531,8 +546,8 @@ public abstract class ServerSyncStage implements
     final SynchronizerSession synchronizerSession = synchronizer.getSynchronizerSession();
     int inboundCount = synchronizerSession.getInboundCount();
     int outboundCount = synchronizerSession.getOutboundCount();
-    Logger.info(LOG_TAG, "Received " + inboundCount + " and sent " + outboundCount + " records.");
-
+    Logger.info(LOG_TAG, "Received " + inboundCount + " and sent " + outboundCount +
+        " records in " + getStageDurationString() + ".");
     Logger.info(LOG_TAG, "Advancing session.");
     session.advance();
   }
@@ -547,6 +562,7 @@ public abstract class ServerSyncStage implements
   @Override
   public void onSynchronizeFailed(Synchronizer synchronizer,
                                   Exception lastException, String reason) {
+    stageCompleteTimestamp = System.currentTimeMillis();
     Logger.warn(LOG_TAG, "Synchronize failed: " + reason, lastException);
 
     // This failure could be due to a 503 or a 401 and it could have headers.
@@ -561,7 +577,8 @@ public abstract class ServerSyncStage implements
       }
     }
 
-    Logger.info(LOG_TAG, "Advancing session even though stage failed. Timestamps not persisted.");
+    Logger.info(LOG_TAG, "Advancing session even though stage failed (took " + getStageDurationString() +
+        "). Timestamps not persisted.");
     session.advance();
   }
 }
