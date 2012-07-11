@@ -102,14 +102,23 @@ public class SendTabActivity extends Activity {
     final String title = extras.getString(Intent.EXTRA_SUBJECT);
     final CommandProcessor processor = CommandProcessor.getProcessor();
 
-    final String[] guids = arrayAdapter.getCheckedGUIDs();
+    final String clientGUID = getAccountGUID();
+    final List<String> guids = arrayAdapter.getCheckedGUIDs();
+
+    if (clientGUID == null || guids == null) {
+      // Should never happen.
+      Logger.warn(LOG_TAG, "clientGUID? " + (clientGUID == null) + " or guids? " + (guids == null) +
+          " was null; aborting without sending tab.");
+      finish();
+      return;
+    }
 
     // Perform tab sending on another thread.
     new Thread() {
       @Override
       public void run() {
-        for (int i = 0; i < guids.length; i++) {
-          processor.sendURIToClientForDisplay(uri, guids[i], title, getAccountGUID(), getApplicationContext());
+        for (String guid : guids) {
+          processor.sendURIToClientForDisplay(uri, guid, title, clientGUID, getApplicationContext());
         }
 
         Logger.info(LOG_TAG, "Requesting immediate clients stage sync.");

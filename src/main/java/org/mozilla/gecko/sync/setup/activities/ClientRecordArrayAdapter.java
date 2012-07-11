@@ -76,14 +76,14 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<Object> {
     return row;
   }
 
-  public String[] getCheckedGUIDs() {
-    List<String> guids = new ArrayList<String>();
+  public List<String> getCheckedGUIDs() {
+    final List<String> guids = new ArrayList<String>();
     for (int i = 0; i < checkedItems.length; i++) {
       if (checkedItems[i]) {
         guids.add(clientRecordList[i].guid);
       }
     }
-    return (String[]) guids.toArray();
+    return guids;
   }
 
   public int getNumCheckedGUIDs() {
