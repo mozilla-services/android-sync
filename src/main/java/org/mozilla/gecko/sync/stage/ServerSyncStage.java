@@ -40,6 +40,7 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelega
 import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
+import org.mozilla.gecko.sync.synchronizer.SynchronizerSession;
 
 import android.content.Context;
 
@@ -526,6 +527,11 @@ public abstract class ServerSyncStage implements
     } else {
       Logger.warn(LOG_TAG, "Didn't get configuration from synchronizer after success.");
     }
+
+    final SynchronizerSession synchronizerSession = synchronizer.getSynchronizerSession();
+    int inboundCount = synchronizerSession.getInboundCount();
+    int outboundCount = synchronizerSession.getOutboundCount();
+    Logger.info(LOG_TAG, "Received " + inboundCount + " and sent " + outboundCount + " records.");
 
     Logger.info(LOG_TAG, "Advancing session.");
     session.advance();
