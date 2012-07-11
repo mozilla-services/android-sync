@@ -3,7 +3,6 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.mozilla.gecko.sync.repositories.domain.Record;
@@ -15,12 +14,6 @@ public class ExpectFetchDelegate extends DefaultFetchDelegate {
     for(int i = 0; i < records.length; i++) {
       expect.put(records[i].guid, records[i]);
     }
-  }
-
-  @Override
-  public void onFetchSucceeded(Record[] records, final long fetchEnd) {
-    this.records.addAll(Arrays.asList(records));
-    this.onFetchCompleted(fetchEnd);
   }
 
   @Override
