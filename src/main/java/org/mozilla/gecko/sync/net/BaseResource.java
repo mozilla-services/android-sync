@@ -153,7 +153,7 @@ public class BaseResource implements Resource {
    * @throws NoSuchAlgorithmException
    * @throws KeyManagementException
    */
-  private void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
+  protected void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
     context = new BasicHttpContext();
 
     // We could reuse these client instances, except that we mess around
