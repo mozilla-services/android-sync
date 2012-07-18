@@ -1,7 +1,6 @@
 package org.mozilla.persona.test;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -41,13 +40,13 @@ public class TodoServer {
 
   public TodoServer(final String serverURL) {
     this.serverURL = serverURL;
-    URI uri;
-    try {
-      uri = new URI(serverURL);
-    } catch (URISyntaxException e) {
-      throw new IllegalArgumentException("serverURL could not be parsed");
-    }
-    host = uri.getHost();
+    final String[] pieces = this.serverURL.split("://"); // This must be in URI, but I can't find it.
+    this.host = pieces[pieces.length-1];
+  }
+
+  public TodoServer(final String serverURL, final String host) {
+    this.serverURL = serverURL;
+    this.host = host;
   }
 
   protected static StringEntity stringEntity(final String s) throws UnsupportedEncodingException {
