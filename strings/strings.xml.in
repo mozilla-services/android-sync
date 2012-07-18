@@ -76,6 +76,7 @@
 
   <!-- Notification strings -->
   <string name="sync_notification_oneaccount">&sync.notification.oneaccount.label;</string>
+  <string name="sync_notification_savedprefs">&sync.notification.configure.saved;</string>
 
   <!-- Incorrect settings and changing credentials. -->
   <string name="sync_invalidcreds_label">&sync.invalidcreds.label;</string>

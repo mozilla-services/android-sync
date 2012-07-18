@@ -20,6 +20,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ListView;
+import android.widget.Toast;
 
 /**
  * Configure which engines to Sync.
@@ -94,6 +95,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     if (which == DialogInterface.BUTTON_POSITIVE) {
       requestSync();
       setResult(RESULT_OK);
+      Toast.makeText(this, R.string.sync_notification_savedprefs, Toast.LENGTH_SHORT);
       finish();
     }
     if (which == DialogInterface.BUTTON_NEGATIVE) {
