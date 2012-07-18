@@ -45,8 +45,8 @@
             android:excludeFromRecents="true"
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />
         <activity
-            android:noHistory="false"
             android:excludeFromRecents="true"
+            android:taskAffinity="org.mozilla.gecko.sync.setup"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:name="org.mozilla.gecko.sync.config.activities.ConfigureEnginesActivity" />
         <receiver

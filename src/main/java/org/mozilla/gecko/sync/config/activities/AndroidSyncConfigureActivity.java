@@ -1,11 +1,20 @@
 package org.mozilla.gecko.sync.config.activities;
 
+
+import java.util.concurrent.TimeUnit;
+
+import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.ThreadPool;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 /**
@@ -18,11 +27,27 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
   protected AccountManager mAccountManager;
   protected Context mContext;
 
+  protected interface PrefsConsumer {
+    public void run(SharedPreferences prefs);
+  }
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     mContext = getApplicationContext();
     mAccountManager = AccountManager.get(mContext);
+  }
+
+  // hacky, because auth token storage is broken.
+  private void invalidateAuthToken(Account account) {
+    AccountManagerFuture<Bundle> future = mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null);
+    String token;
+    try {
+      token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
+      mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Couldn't invalidate auth token: " + e);
+    }
   }
 
   protected Account getAccount() {
@@ -34,36 +59,47 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
       return accounts[0];
     }
   }
-//  public interface WithAccountAndPreferences {
-//    public void run(SyncAccountParameters params, SharedPreferences prefs);
-//  }
-//
-//  protected void withAccountAndPreferences(final WithAccountAndPreferences withAccountAndPreferences) {
-//    final Context context = this;
-//    Account account = (Account) this.getIntent().getExtras().get("account");
-//    if (account == null) {
-//      Logger.error(LOG_TAG, "Failed to get account!");
-//      return;
-//    }
-//
-//    SyncAdapter.withSyncAccountParameters(this, AccountManager.get(this), account{
-//      @Override
-//      public void run(SyncAccountParameters syncAccountParameters) {
-//        String prefsPath = null;
-//        try {
-//          prefsPath = Utils.getPrefsPath(syncAccountParameters.username, syncAccountParameters.serverURL);
-//        } catch (Exception e) {
-//          Logger.error(LOG_TAG, "Caught exception getting preferences path.", e);
-//          return;
-//        }
-//        if (prefsPath == null) {
-//          Logger.error(LOG_TAG, "Got null preferences path.");
-//          return;
-//        }
-//
-//        SharedPreferences prefs = context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
-//        withAccountAndPreferences.run(syncAccountParameters, prefs);
-//      }
-//    });
-//  }
+
+  public void fetchPrefsAndConsume(final PrefsConsumer accountConsumer) {
+    final Account account = getAccount();
+    if (account == null) {
+      Logger.error(LOG_TAG, "Failed to get account!");
+      finish();
+      return;
+    }
+
+    // Get authToken and pass to AccountConsumer.
+    ThreadPool.run(new Runnable() {
+
+      @Override
+      public void run() {
+        // Hack to fix broken Account creation.
+        invalidateAuthToken(account);
+        mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, new AccountManagerCallback<Bundle>() {
+
+          @Override
+          public void run(AccountManagerFuture<Bundle> future) {
+            Logger.trace(LOG_TAG, "AccountManagerCallback invoked.");
+            // TODO: N.B.: Future must not be used on the main thread.
+            try {
+              Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
+              // Ignoring KEY_INTENT check.
+              String username = bundle.getString(Constants.OPTION_USERNAME);
+              String serverURL = bundle.getString(Constants.OPTION_SERVER);
+              Logger.debug(LOG_TAG, "username null? " + (null == username) + ", serverURL null? " + (null == serverURL));
+              // Get SharedPreferences and display configuration editor.
+              String prefsPath;
+              prefsPath = Utils.getPrefsPath(username, serverURL);
+              SharedPreferences prefs = mContext.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
+              accountConsumer.run(prefs);
+            } catch (Exception e) {
+              Logger.error(LOG_TAG, "Failed to get sync information or shared preferences.", e);
+              finish();
+              return;
+            }
+          }
+        }, null);
+      }
+    });
+  }
 }
