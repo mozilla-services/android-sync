@@ -7,6 +7,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.math.BigInteger;
+
 import org.json.simple.JSONArray;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
@@ -14,21 +16,16 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 
 /**
- * Test 123done.org todo list app.
- * <p>
- * To generate new assertion, valid for 2 days:
- * <p>
- * <code>
- * ./gen_mockmyid.js -u test@mockmyid.com -a "http://123done.org"
- * </code>
- * <p>
- * Then copy value in <code>assertion.txt</code> to string assertion.
+ * Test 123done.org todo list API.
  */
 public class TodoServerTest {
-  public static final String SERVER_URL = "http://123done.org"; // Remember to update assertion if you change servers.
-  // public static final String HOST = "http://localhost:8080"; // Remember to update assertion if you change servers.
-  public static final String EMAIL = "test@mockmyid.com";
-  public static final String ASSERTION = "eyJhbGciOiJSUzI1NiJ9.eyJwdWJsaWMta2V5Ijp7ImFsZ29yaXRobSI6IlJTIiwibiI6IjE5Mjg3MjQ4ODgyNTY5NzUwMTUyNjQ3MTEzMDY1MDg2ODA0OTg5MTQxMTk5NDMzMzUzMjM2NDEwNzAyNjEwMzE0MzY5MDAxNjE1MDgxMjA4ODA3NTQ1NjU0MDA0MDgwNzUwMTcyNTgwNTU0MzE0NTI5NjcxNTc0MTQzNjIwMjE1NjQ1NTY5ODQ4MjgxMjMyNDAyMTI2NzYwOTU1Mzg4MDMzNDIyNzY3NDg1NjA5MTQwNTA5NDk5MTIyNDg4MjkzMjA4MDI5MzA5Mjg4NTMzMDM1NzczNTExNjkyNjk5MTM5NDAyMzIyNjY1MDA5MTY0MjIxNDE0MDA2MzEwNDA5MTgyMjkxNjcwNjIzMjgxNTE4NDY2ODUxOTY3MzE0NzI0NDEzODE4OTQwNjY1Mzk5NzM1ODQ0MDk1NDQ0OTY1MTY3MjExODQyNjM2OTQyNjc3NzUxMDY2MTE4MjUwNjgyNzg4Nzg5MTI2MjU3NzE4NzYzMDYxMjQ5NTc2MDQwMjg4NzgxNjczODY4NjI4MjUxNzY1MzY1OTE2MjI3MTAxMDc3OTUyMzc5MTk0NDQ1OTk4MDc3MTcwNzQ2MTE4NjE4ODQ4MTIxMzcyMzMxNjE2Nzk0NzQxNjE0ODM3NDk4NjI4NzMwNzg2MzQ5OTc1NjA2MjAwNjA3Nzc3NTI3Njc5MzIxODcyMTc5MTMyNDUwMjk0NjUyNjU3NzU5MTA2MTkyODcyMDUwMjYwNjY5NTkzMjA1NTk4MDAzMjc2NTcwOTIyMzI3OTE4Njg1NzAyNTA4MTU2NzU3MTc4NDA4NDM4NzczMDQ3NzkwODExIiwiZSI6IjY1NTM3In0sInByaW5jaXBhbCI6eyJlbWFpbCI6InRlc3RAbW9ja215aWQuY29tIn0sImV4cCI6MTM0MjY0MjEzNjU0MiwiaXNzIjoibW9ja215aWQuY29tIn0.MUBbYK2JT9RAfaahFVXXeIWdfBlIC4zGxzE5E6ydIviUrHZta47UaOxI3g24Ohw-ofwAGN-4U49L4E0LvZ39XkvnVxDU0Ne7naY5aHtt5BJWRll_mrb4UFFOhTl6_qDbVc3saOEseO7o8eYa7fsm7MX-uhZhkXSKNNYNta52W0Zsbzd84I7Jweh9aDHOk3af3AHB06Ogt1l9-BxszqT3Sb5HyIdetDaKY6QHDKHr_Zn5Ea30ijH_qh0MvcIgOtaELcCO0TmSZ_ClCVDLfBLZLRqOnpTu9tOa57xa0dEQ5TudpUSRVvxH1Q2T1Op3q1aAwv8nK39sCdXb4vWCu1HCJw~eyJhbGciOiJSUzI1NiJ9.eyJpYXQiOjEzNDI0NjkzMzY1NDgsImV4cCI6MTM0MjY0MjEzNjU0OCwiaXNzIjoiMTI3LjAuMC4xIiwiYXVkIjoiaHR0cDovLzEyM2RvbmUub3JnIn0.jp2ZUAzA6hkN61D1Pm2Q0hfyNy2Uqvl3WXjupRi3I-CIDxYkoTqxFW1vVfpDW_74YZkzMzBOzEUTZj_E9CMic9UeX-15wIpbkhIMCXziiyEIDTYwuT7NcRcqBVCw940pLxOyYl0hfpo1HqEJWctV0RfUNFLlOTizKm1PFG2vg6WKqe1ZB6V9oW3WIBWZF16Fq38dHElFaGRwV15q6-rSJT1exfDo_mrYxQYJFGUE527WDbIuOAcTNgUwdi1hQkg-10t_scPpctabXfV5KccqZtUWDYDkAAOms7jAWCWXPVFbG_Llm7mkHhK8x5SQcPVlQOcWGUmWgJ5w9I2ZmwYFag";
+  public static final String HOST = "123done.org";
+  // public static final String HOST = "localhost:8080";
+  public static final String SERVER_URL = "http://" + HOST;
+  public static final String USERNAME = "testx";
+  public static final String EMAIL = USERNAME + "@mockmyid.com";
+
+  protected String assertion;
 
   @SuppressWarnings("unchecked")
   protected JSONArray newTestTodoList(final int numTodos) {
@@ -44,12 +41,58 @@ public class TodoServerTest {
     return todos;
   }
 
+  /**
+   * Sign a public key asserting ownership of username@mockmyid.com with mockmyid.com's private key.
+   *
+   * @param publicKeyToSign public key to sign.
+   * @param username sign username@mockmyid.com
+   * @return Java Web Signature.
+   * @throws Exception
+   */
+  protected String createMockMyIdCertificate(final ExtendedJSONObject publicKeyToSign, final String username) throws Exception {
+    final ExtendedJSONObject mockMyIdSecretKey = new ExtendedJSONObject();
+    mockMyIdSecretKey.put("n", new BigInteger("15498874758090276039465094105837231567265546373975960480941122651107772824121527483107402353899846252489837024870191707394743196399582959425513904762996756672089693541009892030848825079649783086005554442490232900875792851786203948088457942416978976455297428077460890650409549242124655536986141363719589882160081480785048965686285142002320767066674879737238012064156675899512503143225481933864507793118457805792064445502834162315532113963746801770187685650408560424682654937744713813773896962263709692724630650952159596951348264005004375017610441835956073275708740239518011400991972811669493356682993446554779893834303").toString(10));
+    mockMyIdSecretKey.put("d", new BigInteger("6539906961872354450087244036236367269804254381890095841127085551577495913426869112377010004955160417265879626558436936025363204803913318582680951558904318308893730033158178650549970379367915856087364428530828396795995781364659413467784853435450762392157026962694408807947047846891301466649598749901605789115278274397848888140105306063608217776127549926721544215720872305194645129403056801987422794114703255989202755511523434098625000826968430077091984351410839837395828971692109391386427709263149504336916566097901771762648090880994773325283207496645630792248007805177873532441314470502254528486411726581424522838833").toString(10));
+
+    final long issuedAt = System.currentTimeMillis();
+    final long expiresAt = issuedAt + 60 * 60 * 1000;
+    return RSAJWCrypto.certificate(publicKeyToSign, username + "@mockmyid.com", "mockmyid.com", issuedAt, expiresAt, mockMyIdSecretKey);
+  }
+
+  /**
+   * Generate a BrowserID assertion.
+   *
+   * @return assertion.
+   * @throws Exception
+   */
+  protected String getAssertion() throws Exception {
+    if (assertion != null) {
+      return assertion;
+    }
+
+    final ExtendedJSONObject pair = RSAJWCrypto.generateKeypair(2048);
+    final ExtendedJSONObject publicKeyToSign = pair.getObject("publicKey");
+    final ExtendedJSONObject privateKeyToSignWith = pair.getObject("privateKey");
+
+    String certificate;
+    try {
+      certificate = createMockMyIdCertificate(publicKeyToSign, USERNAME);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+
+    final String issuer = "127.0.0.1";
+    final String audience = SERVER_URL;
+    assertion = RSAJWCrypto.assertion(privateKeyToSignWith, certificate, issuer, audience);
+    return assertion;
+  }
+
   @Test
   public void testLoginLogout() throws Exception {
     final TodoServer todoServer = new TodoServer(SERVER_URL);
 
     assertNull(todoServer.getUserLoggedIn());
-    todoServer.login(ASSERTION);
+    todoServer.login(getAssertion());
     assertNotNull(todoServer.getUserLoggedIn());
 
     todoServer.logout();
@@ -61,7 +104,7 @@ public class TodoServerTest {
     final TodoServer todoServer = new TodoServer(SERVER_URL);
 
     assertNull(todoServer.getUserLoggedIn());
-    todoServer.login(ASSERTION);
+    todoServer.login(getAssertion());
     assertNotNull(todoServer.getUserLoggedIn());
 
     final String cookie = todoServer.getSessionCookie();
@@ -71,7 +114,7 @@ public class TodoServerTest {
     assertNull(todoServer.getUserLoggedIn());
 
     assertNull(todoServer.getUserLoggedIn());
-    todoServer.login(ASSERTION);
+    todoServer.login(getAssertion());
     assertNotNull(todoServer.getUserLoggedIn());
 
     final String cookie2 = todoServer.getSessionCookie();
@@ -93,7 +136,7 @@ public class TodoServerTest {
   public void testGetSave() throws Exception {
     final TodoServer todoServer = new TodoServer(SERVER_URL);
 
-    todoServer.login(ASSERTION);
+    todoServer.login(getAssertion());
     assertNotNull(todoServer.getUserLoggedIn());
 
     final int NUM = 3;
@@ -124,7 +167,7 @@ public class TodoServerTest {
   public void testAfterLogout() throws Exception {
     final TodoServer todoServer = new TodoServer(SERVER_URL);
 
-    todoServer.login(ASSERTION);
+    todoServer.login(getAssertion());
     assertNotNull(todoServer.getUserLoggedIn());
     todoServer.logout();
     assertNull(todoServer.getUserLoggedIn());
