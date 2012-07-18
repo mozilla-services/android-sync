@@ -162,7 +162,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    *
    * @param session
    * @param record
-   * @return
+   * @return Runnable.
    */
   public static Runnable quietStoreRunnable(final RepositorySession session, final Record record) {
     return storeRunnable(session, record, new ExpectStoreCompletedDelegate());

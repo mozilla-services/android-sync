@@ -31,7 +31,8 @@ import android.test.InstrumentationTestCase;
  * take some care to both create and run certain tasks on the main thread --
  * moving the object allocation out of the UI thread causes failures!
  * <p>
- * @see <a href="http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework">http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework</a>.
+ * @see "<a href='http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework'>
+ * http://stackoverflow.com/questions/2321829/android-asynctask-testing-problem-with-android-test-framework</a>."
  */
 public class TestSyncAccounts extends AndroidSyncTestCase {
   private static final String TEST_USERNAME   = "testAccount@mozilla.com";

@@ -589,8 +589,6 @@ public class BookmarksTest extends AndroidSyncTestCase {
   /**
    * Create and begin a new session, handing control to the delegate when started.
    * Returns when the delegate has notified.
-   *
-   * @param delegate
    */
   public void inBegunSession(final AndroidBrowserBookmarksRepository repo,
                              final RepositorySessionBeginDelegate beginDelegate) {
