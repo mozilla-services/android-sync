@@ -224,7 +224,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     } else {
       uri = Uri.parse(Constants.LINK_FIND_ADD_DEVICE);
     }
-    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+    intent.setClassName(GlobalConstants.BROWSER_INTENT_PACKAGE, GlobalConstants.BROWSER_INTENT_CLASS);
+    startActivity(intent);
   }
 
   /* Controller methods */
