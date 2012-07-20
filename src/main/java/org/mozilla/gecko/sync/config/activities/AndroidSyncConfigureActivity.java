@@ -3,7 +3,9 @@ package org.mozilla.gecko.sync.config.activities;
 
 import java.util.concurrent.TimeUnit;
 
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -38,20 +40,19 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
     mAccountManager = AccountManager.get(mContext);
   }
 
-  // hacky, because auth token storage is broken.
   private void invalidateAuthToken(Account account) {
     AccountManagerFuture<Bundle> future = mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null);
     String token;
     try {
       token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
-      mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
+      mAccountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, token);
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Couldn't invalidate auth token: " + e);
     }
   }
 
   protected Account getAccount() {
-    Account[] accounts = mAccountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC);
+    Account[] accounts = mAccountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
     if (accounts.length == 0) {
       return null;
     } else {
@@ -88,8 +89,8 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
               String serverURL = bundle.getString(Constants.OPTION_SERVER);
               Logger.debug(LOG_TAG, "username null? " + (null == username) + ", serverURL null? " + (null == serverURL));
               // Get SharedPreferences and display configuration editor.
-              String prefsPath;
-              prefsPath = Utils.getPrefsPath(username, serverURL);
+              // Prefs path args are taken directly from constants right now, because prefs are automatically migrated.
+              String prefsPath = Utils.getPrefsPath(GlobalConstants.BROWSER_INTENT_PACKAGE, username, serverURL, Constants.DEFAULT_PROFILE, SyncConfiguration.CURRENT_PREFS_VERSION);
               SharedPreferences prefs = mContext.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
               accountConsumer.run(prefs);
             } catch (Exception e) {
