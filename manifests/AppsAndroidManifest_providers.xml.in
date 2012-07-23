@@ -1,0 +1,7 @@
+        <permission android:name="org.mozilla.apps.permissions.APPS_PROVIDER"
+                    android:protectionLevel="signature"/>
+
+        <provider android:name="org.mozilla.apps.AppsContentProvider"
+                  android:label="Apps"
+                  android:authorities="org.mozilla.apps.AppsContentProvider"
+                  android:permission="org.mozilla.apps.permissions.APPS_PROVIDER" />

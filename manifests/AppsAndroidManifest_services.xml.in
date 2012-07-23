@@ -1,0 +1,11 @@
+        <service
+            android:exported="false"
+            android:name="org.mozilla.apps.AppsService" >
+            <intent-filter >
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/apps_syncadapter" />
+        </service>
