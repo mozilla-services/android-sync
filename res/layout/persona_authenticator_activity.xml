@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  >
+  <LinearLayout
+        android:id="@+id/persona_authenticator_activity_top"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        >
+        <ImageView
+    android:src="@drawable/persona_logo_wordmark"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical"
+            android:contentDescription="Mozilla Persona logo and wordmark" />
+    </LinearLayout>
+
+   <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/persona_authenticator_activity_top"
+         >
+
+    <TextView
+        android:layout_marginTop="6dip"
+        android:layout_marginBottom="6dip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign In"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:layout_marginTop="6dip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Email Address"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <EditText
+        android:id="@+id/email"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textEmailAddress" >
+
+        <requestFocus />
+    </EditText>
+
+   </LinearLayout>
+
+   <RelativeLayout
+        android:baselineAligned="true"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:padding="6dip"
+        >
+             <Button
+                android:id="@+id/next_button"
+                android:onClick="handleNext"
+                android:layout_alignParentRight="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:background="#4EB5E5"
+                android:drawableRight="@drawable/persona_button_arrow"
+                android:paddingLeft="12dip"
+                android:text="Next"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+     </RelativeLayout>
+</RelativeLayout>

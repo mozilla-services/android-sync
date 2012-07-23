@@ -12,6 +12,7 @@
               android:targetSdkVersion="14" />
 
 #include manifests/SyncAndroidManifest_permissions.xml.in
+#include manifests/PersonaAndroidManifest_permissions.xml.in
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
@@ -22,7 +23,9 @@
                  android:label="@string/sync_app_name">
 
 #include manifests/SyncAndroidManifest_activities.xml.in
+#include manifests/PersonaAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
+#include manifests/PersonaAndroidManifest_services.xml.in
 
     </application>
 

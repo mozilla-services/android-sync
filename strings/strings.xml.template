@@ -8,9 +8,13 @@
 <!-- Sync strings. -->
 #include sync_strings.dtd.in
 
+<!-- Persona strings. -->
+#include persona_strings.dtd.in
+
 <!-- Fennec strings. -->
 #include android_strings.dtd
 ]>
 <resources>
 #include strings.xml.in
+#include persona_strings.xml.in
 </resources>
