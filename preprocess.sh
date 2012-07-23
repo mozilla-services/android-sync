@@ -26,6 +26,7 @@ $PREPROCESSOR $DEFINITIONS $BROWSERCONTRACT.in > $BROWSERCONTRACT
 
 $PREPROCESSOR $DEFINITIONS strings/strings.xml.template > res/values/strings.xml
 $PREPROCESSOR $DEFINITIONS sync_syncadapter.xml.template > res/xml/sync_syncadapter.xml
+$PREPROCESSOR $DEFINITIONS apps_syncadapter.xml.template > res/xml/apps_syncadapter.xml
 $PREPROCESSOR $DEFINITIONS sync_options.xml.template > res/xml/sync_options.xml
 
 # Now do the test project.
