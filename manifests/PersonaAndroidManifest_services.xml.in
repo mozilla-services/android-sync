@@ -1,0 +1,11 @@
+        <service
+            android:exported="true"
+            android:name="org.mozilla.persona.PersonaAuthenticatorService" >
+            <intent-filter >
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/persona_authenticator" />
+        </service>

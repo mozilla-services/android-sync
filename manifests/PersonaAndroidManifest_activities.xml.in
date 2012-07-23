@@ -1,0 +1,5 @@
+        <activity
+            android:clearTaskOnLaunch="true"
+            android:name="org.mozilla.persona.PersonaAuthenticatorActivity"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:windowSoftInputMode="adjustResize"/>
