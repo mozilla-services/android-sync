@@ -1,4 +1,4 @@
-package org.mozilla.persona.test;
+package org.mozilla.persona.crypto;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;

@@ -1,4 +1,4 @@
-package org.mozilla.persona.test;
+package org.mozilla.todo;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;

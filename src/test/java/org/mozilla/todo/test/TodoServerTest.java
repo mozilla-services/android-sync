@@ -1,4 +1,4 @@
-package org.mozilla.persona.test;
+package org.mozilla.todo.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -14,6 +14,8 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.persona.crypto.RSAJWCrypto;
+import org.mozilla.todo.TodoServer;
 
 /**
  * Test 123done.org todo list API.
