@@ -51,10 +51,10 @@ echo "# $WARNING" >> $MKFILE
 echo "SYNC_JAVA_FILES := $(echo $SOURCEFILES | xargs)" >> $MKFILE
 echo "SYNC_PP_JAVA_FILES := $(echo $PREPROCESS_FILES | xargs)" >> $MKFILE
 echo "SYNC_THIRDPARTY_JAVA_FILES := $(echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE := $(find res/drawable       -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_LDPI := $(find res/drawable-ldpi  -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -name '*.xml' -or -name '*.png' | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE := $(find res/drawable       -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_LDPI := $(find res/drawable-ldpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
 echo "SYNC_RES_LAYOUT := $(find res/layout -name '*.xml' | xargs)"  >> $MKFILE
 echo "SYNC_RES_VALUES := res/values/sync_styles.xml" >> $MKFILE
 # Finished creating Makefile for Mozilla.
@@ -79,10 +79,10 @@ done
 
 echo "Copying resources..."
 # I'm guessing these go here.
-rsync -a res/drawable $ANDROID/base/resources/
-rsync -a res/drawable-hdpi $ANDROID/base/resources/
-rsync -a res/drawable-mdpi $ANDROID/base/resources/
-rsync -a res/drawable-ldpi $ANDROID/base/resources/
+rsync -a --exclude "icon.png" res/drawable $ANDROID/base/resources/
+rsync -a --exclude "icon.png" res/drawable-hdpi $ANDROID/base/resources/
+rsync -a --exclude "icon.png" res/drawable-mdpi $ANDROID/base/resources/
+rsync -a --exclude "icon.png" res/drawable-ldpi $ANDROID/base/resources/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/values/sync_styles.xml $ANDROID/base/resources/values/
@@ -92,10 +92,10 @@ rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dt
 
 echo "res/values/sync_styles.xml " > $SYNC/android-values-resources.mn
 find res/layout         -name '*.xml' > $SYNC/android-layout-resources.mn
-find res/drawable       -name '*.xml' -or -name '*.png' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-resources.mn
-find res/drawable-ldpi  -name '*.xml' -or -name '*.png' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-ldpi-resources.mn
-find res/drawable-mdpi  -name '*.xml' -or -name '*.png' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-mdpi-resources.mn
-find res/drawable-hdpi  -name '*.xml' -or -name '*.png' | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-hdpi-resources.mn
+find res/drawable       -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-resources.mn
+find res/drawable-ldpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-ldpi-resources.mn
+find res/drawable-mdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-mdpi-resources.mn
+find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-hdpi-resources.mn
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.

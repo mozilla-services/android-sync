@@ -21,6 +21,7 @@
     <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"/>
 
     <application android:debuggable="true"
+                 android:icon="@drawable/icon"
                  android:label="@string/sync_app_name">
 
 #include manifests/SyncAndroidManifest_activities.xml.in
