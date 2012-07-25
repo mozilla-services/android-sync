@@ -41,6 +41,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   private static final String TEST_SERVERURL  = "test.server.url/";
   private static final String TEST_CLUSTERURL = "test.cluster.url/";
 
+  public static final String TEST_ACCOUNTTYPE = GlobalConstants.ACCOUNTTYPE_SYNC;
+
   private Account account;
   private Context context;
   private AccountManager accountManager;
@@ -108,20 +110,20 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   }
 
   public void testCreateAccount() {
-    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int before = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     account = SyncAccounts.createSyncAccount(syncAccount, false);
-    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterCreate = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertTrue(afterCreate > before);
     deleteAccount(this, accountManager, account);
     account = null;
-    int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterDelete = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertEquals(before, afterDelete);
   }
 
   public void testCreateSecondAccount() {
-    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int before = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     account = SyncAccounts.createSyncAccount(syncAccount, false);
-    int afterFirst = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterFirst = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertTrue(afterFirst > before);
 
     SyncAccountParameters secondSyncAccount = new SyncAccountParameters(context, null,
@@ -129,21 +131,21 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
     Account second = SyncAccounts.createSyncAccount(secondSyncAccount, false);
     assertNotNull(second);
-    int afterSecond = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterSecond = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertTrue(afterSecond > afterFirst);
 
     deleteAccount(this, accountManager, second);
     deleteAccount(this, accountManager, account);
     account = null;
 
-    int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterDelete = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertEquals(before, afterDelete);
   }
 
   public void testCreateDuplicateAccount() {
-    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int before = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     account = SyncAccounts.createSyncAccount(syncAccount, false);
-    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterCreate = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertTrue(afterCreate > before);
 
     Account dupe = SyncAccounts.createSyncAccount(syncAccount, false);
@@ -183,16 +185,16 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   }
 
   public void testAccountsExistTask() {
-    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int before = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     account = SyncAccounts.createSyncAccount(syncAccount, false);
-    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterCreate = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertTrue(afterCreate > before);
 
     assertTrue(doAccountsExistTask());
 
     deleteAccount(this, accountManager, account);
     account = null;
-    int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterDelete = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertEquals(before, afterDelete);
   }
 
@@ -216,7 +218,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
       assertTrue(doAccountsExistTask());
     } finally {
       // Clean up!
-      for (Account account : accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC)) {
+      for (Account account : accountManager.getAccountsByType(TEST_ACCOUNTTYPE)) {
         if (TEST_USERNAME.equals(account.name)) {
           TestSyncAccounts.deleteAccount(this, accountManager, account);
         }
@@ -225,7 +227,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   }
 
   public void testCreateAccountTask() {
-    int before = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int before = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
 
     final TestSyncAccounts self = this;
     performWait(new Runnable() {
@@ -254,12 +256,12 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
     assertNotNull(account);
 
-    int afterCreate = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterCreate = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertTrue(afterCreate > before);
 
     deleteAccount(this, accountManager, account);
     account = null;
-    int afterDelete = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int afterDelete = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertEquals(before, afterDelete);
   }
 

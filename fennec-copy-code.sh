@@ -22,6 +22,9 @@ echo "Copying preprocessed GlobalConstants file."
 PREPROCESS_FILES="sync/GlobalConstants.java"
 cp $SOURCEDIR/GlobalConstants.java.in $ANDROID/base/sync/
 
+echo "Copying preprocessed sync_authenticator.xml."
+cp sync_authenticator.xml.template $ANDROID/base/resources/xml/sync_authenticator.xml.in
+
 echo "Copying preprocessed sync_syncadapter.xml."
 cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
 
@@ -57,6 +60,11 @@ echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -not -name 'icon.png' 
 echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
 echo "SYNC_RES_LAYOUT := $(find res/layout -name '*.xml' | xargs)"  >> $MKFILE
 echo "SYNC_RES_VALUES := res/values/sync_styles.xml" >> $MKFILE
+# XML resources that do not need to be preprocessed.
+echo "SYNC_RES_XML :=" >> $MKFILE
+# XML resources that need to be preprocessed.
+echo "SYNC_PP_RES_XML := res/xml/sync_syncadapter.xml res/xml/sync_options.xml res/xml/sync_authenticator.xml" >> $MKFILE
+
 # Finished creating Makefile for Mozilla.
 
 true > $SYNC/preprocess-sources.mn
@@ -99,6 +107,7 @@ find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png'
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.
+rm $ANDROID/base/resources/xml/sync_authenticator.xml
 rm $ANDROID/base/resources/xml/sync_syncadapter.xml
 rm $ANDROID/base/resources/xml/sync_options.xml
 
