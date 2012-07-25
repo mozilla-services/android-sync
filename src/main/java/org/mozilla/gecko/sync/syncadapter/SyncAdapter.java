@@ -167,7 +167,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     String token;
     try {
       token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
-      mAccountManager.invalidateAuthToken(Constants.ACCOUNTTYPE_SYNC, token);
+      mAccountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, token);
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Couldn't invalidate auth token: " + e);
     }

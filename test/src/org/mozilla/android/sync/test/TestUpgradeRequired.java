@@ -10,6 +10,7 @@ import java.net.URI;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -67,7 +68,7 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
   }
 
   private static Account getTestAccount(AccountManager accountManager) {
-    final String type = Constants.ACCOUNTTYPE_SYNC;
+    final String type = GlobalConstants.ACCOUNTTYPE_SYNC;
     Account[] existing = accountManager.getAccountsByType(type);
     for (Account account : existing) {
       if (account.name.equals(TEST_USERNAME)) {

@@ -5,8 +5,8 @@ package org.mozilla.android.sync.test;
 
 import java.util.concurrent.TimeUnit;
 
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
-import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
@@ -17,6 +17,8 @@ import android.content.Context;
 import android.os.Bundle;
 
 public class TestClientsDataDelegate extends AndroidSyncTestCase {
+  public static final String TEST_ACCOUNTTYPE = GlobalConstants.ACCOUNTTYPE_SYNC;
+
   private Context context;
   private ClientsDataDelegate clientsDelegate;
   private AccountManager accountManager;
@@ -31,8 +33,8 @@ public class TestClientsDataDelegate extends AndroidSyncTestCase {
 
     // If Android accounts get added while a test runs, this could race, but
     // that's unlikely -- and this is test code.
-    numAccountsBefore = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
-    account = new Account("testAccount@mozilla.com", Constants.ACCOUNTTYPE_SYNC);
+    numAccountsBefore = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
+    account = new Account("testAccount@mozilla.com", TEST_ACCOUNTTYPE);
     ((SyncAdapter)clientsDelegate).localAccount = account;
     assertTrue(accountManager.addAccountExplicitly(account, "", userbundle));
   }
@@ -44,7 +46,7 @@ public class TestClientsDataDelegate extends AndroidSyncTestCase {
       deleteAccount(account);
       account = null;
     }
-    int numAccountsAfter = accountManager.getAccountsByType(Constants.ACCOUNTTYPE_SYNC).length;
+    int numAccountsAfter = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
     assertEquals(numAccountsBefore, numAccountsAfter);
   }
 
