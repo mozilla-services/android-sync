@@ -1,5 +1,4 @@
         <service
-            android:exported="true"
             android:name="org.mozilla.persona.PersonaAuthenticatorService" >
             <intent-filter >
                 <action android:name="android.accounts.AccountAuthenticator" />

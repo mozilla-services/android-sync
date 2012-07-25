@@ -112,7 +112,7 @@ public class TodoServer {
   protected ExtendedJSONObject blockingPost(final String uri, final String body) throws URISyntaxException {
     final Wrapper<String> wrapper = new Wrapper<String>();
 
-    final BaseResource r = new BaseResource(serverURL + uri, false) {
+    final BaseResource r = new BaseResource(serverURL + uri, true) {
       @Override
       protected void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
         super.prepareClient();
@@ -143,7 +143,7 @@ public class TodoServer {
   protected String blockingGet(final String uri) throws URISyntaxException {
     final Wrapper<String> wrapper = new Wrapper<String>();
 
-    final BaseResource r = new BaseResource(serverURL + uri, false) {
+    final BaseResource r = new BaseResource(serverURL + uri, true) {
       @Override
       protected void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
         super.prepareClient();

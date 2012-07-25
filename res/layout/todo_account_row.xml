@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/LinearLayout1"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content" >
 
 	<ImageView
-		android:id="@+id/avatar"
+		android:id="@+id/account_avatar"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:padding="2dip"
@@ -13,11 +12,12 @@
 		android:src="@drawable/persona_logo" />
 
 	<TextView
+		style="?android:attr/spinnerItemStyle"
 		android:id="@+id/account_name"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_gravity="center_vertical"
-		android:text="Medium Text"
-		android:textAppearance="?android:attr/textAppearanceMedium" />
-
+		android:singleLine="true" />
+<!-- 		android:textAppearance="?android:attr/textAppearanceMedium" />
+ -->
 </LinearLayout>

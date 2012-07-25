@@ -1,3 +1,6 @@
+    <permission android:name="org.mozilla.apps.permissions.APPS_PROVIDER"
+                android:protectionLevel="signature"/>
+
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />

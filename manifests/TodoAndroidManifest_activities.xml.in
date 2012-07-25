@@ -1,3 +1,19 @@
         <activity
             android:name="org.mozilla.todo.activities.TodoActivity"
-            />
+            android:label="123done"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:windowSoftInputMode="adjustResize" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.mozilla.todo.activities.SpinnerActivity"
+            android:label="123done"
+            android:windowSoftInputMode="adjustResize" >
+            <!-- <intent-filter> -->
+            <!--     <action android:name="android.intent.action.MAIN" /> -->
+            <!--     <category android:name="android.intent.category.LAUNCHER" /> -->
+            <!-- </intent-filter> -->
+        </activity>

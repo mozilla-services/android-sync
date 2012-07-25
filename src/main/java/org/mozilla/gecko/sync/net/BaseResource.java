@@ -89,6 +89,7 @@ public class BaseResource implements Resource {
   }
 
   public BaseResource(URI uri, boolean rewrite) {
+    Logger.info(LOG_TAG, "rewrite is " + rewrite + ", uri is " + uri + " and host is " + uri.getHost() + ".");
     if (rewrite && uri.getHost().equals("localhost")) {
       // Rewrite localhost URIs to refer to the special Android emulator loopback passthrough interface.
       Logger.debug(LOG_TAG, "Rewriting " + uri + " to point to " + ANDROID_LOOPBACK_IP + ".");
@@ -100,6 +101,7 @@ public class BaseResource implements Resource {
     } else {
       this.uri = uri;
     }
+    Logger.info(LOG_TAG, "this.uri is " + this.uri + ".");
   }
 
   public static synchronized HttpResponseObserver getHttpResponseObserver() {

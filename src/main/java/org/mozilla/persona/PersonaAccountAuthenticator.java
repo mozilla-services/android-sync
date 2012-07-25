@@ -4,7 +4,10 @@
 
 package org.mozilla.persona;
 
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.persona.crypto.JWCrypto;
+import org.mozilla.persona.crypto.RSAJWCrypto;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -20,10 +23,13 @@ public class PersonaAccountAuthenticator extends AbstractAccountAuthenticator {
 
   public static final String ACCOUNT_TYPE_PERSONA = "org.mozilla.persona";
 
-  private Context mContext;
+  protected final Context context;
+  protected final AccountManager accountManager;
+
   public PersonaAccountAuthenticator(Context context) {
     super(context);
-    mContext = context;
+    this.context = context;
+    this.accountManager = AccountManager.get(context);
   }
 
   @Override
@@ -31,7 +37,7 @@ public class PersonaAccountAuthenticator extends AbstractAccountAuthenticator {
       String accountType, String authTokenType, String[] requiredFeatures,
       Bundle options) throws NetworkErrorException {
     Logger.debug(LOG_TAG, "addAccount()");
-    final Intent intent = new Intent(mContext, PersonaAuthenticatorActivity.class);
+    final Intent intent = new Intent(context, PersonaAuthenticatorActivity.class);
     intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
     intent.putExtra("accountType", ACCOUNT_TYPE_PERSONA);
 
@@ -57,9 +63,59 @@ public class PersonaAccountAuthenticator extends AbstractAccountAuthenticator {
   }
 
   @Override
-  public Bundle getAuthToken(AccountAuthenticatorResponse response,
-      Account account, String authTokenType, Bundle options)
+  public Bundle getAuthToken(final AccountAuthenticatorResponse response,
+      final Account account, final String authTokenType, final Bundle options)
       throws NetworkErrorException {
+
+    final String MOCKMYID_SUFFIX = "@mockmyid.com";
+    if (!account.name.endsWith(MOCKMYID_SUFFIX)) {
+      Logger.warn(LOG_TAG, "Can't get auth token's for non-mockmyid.com accounts yet!");
+      return null;
+    }
+    final String username = account.name.substring(0, account.name.lastIndexOf(MOCKMYID_SUFFIX));
+
+    ExtendedJSONObject publicKey;
+    try {
+      publicKey = ExtendedJSONObject.parseJSONObject(accountManager.getUserData(account, "publicKey"));
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception extracting account's public key.", e);
+      return null;
+    }
+
+    ExtendedJSONObject privateKey;
+    try {
+      privateKey = ExtendedJSONObject.parseJSONObject(accountManager.getUserData(account, "privateKey"));
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception extracting account's private key.", e);
+      return null;
+    }
+
+    String certificate;
+    try {
+      certificate = JWCrypto.createMockMyIdCertificate(publicKey, username);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception creating mockmyid.com certificate.", e);
+      return null;
+    }
+
+    final String issuer = "127.0.0.1";
+    final String audience = authTokenType;
+    String assertion;
+    try {
+      assertion = RSAJWCrypto.assertion(privateKey, certificate, issuer, audience);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception creating assertion.", e);
+      return null;
+    }
+
+    final Bundle result = new Bundle();
+    result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
+    result.putString(AccountManager.KEY_ACCOUNT_TYPE, PersonaAccountAuthenticator.ACCOUNT_TYPE_PERSONA);
+    result.putString(AccountManager.KEY_AUTHTOKEN, assertion);
+
+    Logger.info(LOG_TAG, "Returning assertion " + assertion + ".");
+
+    return result;
 /*    Logger.debug(LOG_TAG, "getAuthToken()");
     if (!authTokenType.equals(Constants.AUTHTOKEN_TYPE_PLAIN)) {
       final Bundle result = new Bundle();
@@ -106,8 +162,8 @@ public class PersonaAccountAuthenticator extends AbstractAccountAuthenticator {
       result.putString(AccountManager.KEY_AUTHTOKEN, password);
       return result;
     }*/
-    Logger.warn(LOG_TAG, "Returning null bundle for getAuthToken.");
-    return null;
+//    Logger.warn(LOG_TAG, "Returning null bundle for getAuthToken.");
+//    return null;
   }
 
   @Override

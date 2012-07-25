@@ -20,6 +20,10 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
  * Implement JSON Web Crypto via RSA.
  */
 public class RSAJWCrypto {
+  private RSAJWCrypto() {
+    // Prevent anyone from instantiating this class.
+  }
+
   protected static String base64urlEncode(final String s) throws UnsupportedEncodingException {
     return Base64.encodeBase64URLSafeString(s.getBytes("UTF-8"));
   }
