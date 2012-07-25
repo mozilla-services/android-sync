@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/RelativeLayout1"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical" >
+
+	<RelativeLayout
+		android:id="@+id/todo_top"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentTop="true" >
+
+		<ImageView
+			android:id="@+id/todo_account_logo"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentLeft="true"
+			android:src="@drawable/persona_logo"
+			/>
+
+		<Spinner
+			android:id="@+id/todo_account_spinner"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_centerVertical="true"
+			android:layout_toRightOf="@id/todo_account_logo"
+			android:spinnerMode="dropdown" />
+	</RelativeLayout>
+
+	<ListView
+		android:id="@+id/todo_list"
+		android:layout_below="@+id/todo_top"
+		android:layout_above="@+id/todo_bottom"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" >
+	</ListView>
+
+	<LinearLayout
+		android:id="@+id/todo_bottom"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentBottom="true" >
+
+		<AutoCompleteTextView
+			android:id="@+id/autoCompleteTextView1"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+			android:text="AutoCompleteTextView" >
+
+			<requestFocus />
+		</AutoCompleteTextView>
+
+		<Button
+			android:id="@+id/todo_add_button"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Add" />
+
+	</LinearLayout>
+</RelativeLayout>

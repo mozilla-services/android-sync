@@ -33,6 +33,8 @@
 #include manifests/AppsAndroidManifest_services.xml.in
 #include manifests/AppsAndroidManifest_providers.xml.in
 
+#include manifests/TodoAndroidManifest_activities.xml.in
+
     </application>
 
     <instrumentation

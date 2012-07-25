@@ -1,0 +1,3 @@
+        <activity
+            android:name="org.mozilla.todo.activities.TodoActivity"
+            />
