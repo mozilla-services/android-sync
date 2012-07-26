@@ -442,7 +442,7 @@ public class SyncAccounts {
     protected final Context context;
     protected final CountDownLatch latch;
 
-    public SyncAccountParameters syncAccountParameters = null;
+    public String authToken = null;
 
     public SyncAccountVersion0Callback(final Context context, final CountDownLatch latch) {
       this.context = context;
@@ -456,15 +456,11 @@ public class SyncAccounts {
         if (bundle.containsKey("KEY_INTENT")) {
           throw new IllegalStateException("KEY_INTENT included in AccountManagerFuture bundle.");
         }
-        final String username  = bundle.getString(Constants.OPTION_USERNAME); // Encoded by Utils.usernameFromAccount.
-        final String syncKey   = bundle.getString(Constants.OPTION_SYNCKEY);
-        final String serverURL = bundle.getString(Constants.OPTION_SERVER);
-        final String password  = bundle.getString(AccountManager.KEY_AUTHTOKEN);
 
-        syncAccountParameters = new SyncAccountParameters(this.context, null, username, syncKey, password, serverURL);
+        authToken = bundle.getString(AccountManager.KEY_AUTHTOKEN);
       } catch (Exception e) {
-        // Do nothing -- caller will find null syncAccountParameters.
-        Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters.", e);
+        // Do nothing -- caller will find null authToken.
+        Logger.warn(LOG_TAG, "Got exception fetching auth token.", e);
       } finally {
         latch.countDown();
       }
@@ -476,10 +472,6 @@ public class SyncAccounts {
    * 0, using plain auth token type.
    * <p>
    * Safe to call from main thread.
-   * <p>
-   * Invalidates existing auth token first, which is necessary because Android
-   * caches only the auth token string, not the complete bundle. By invalidating
-   * the existing token, we generate a new (complete) bundle every invocation.
    *
    * @param context
    * @param accountManager
@@ -495,29 +487,26 @@ public class SyncAccounts {
     new Thread(new Runnable() {
       @Override
       public void run() {
-        try {
-          // Get old auth token, with incomplete bundle.
-          String oldToken = accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null).getResult().getString(AccountManager.KEY_AUTHTOKEN);
-          // Invalidate it.
-          accountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, oldToken); // Not the token type, the account type!
-        } catch (Exception e) {
-          Logger.warn(LOG_TAG, "Got exception invalidating old token.", e);
-          latch.notify();
-        } finally {
-        }
-
-        // Get the new auth token, with complete bundle.
+        // Get an auth token.
         accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, null);
       }
     }).start();
 
     try {
       latch.await();
+
+      final String password  = callback.authToken;
+      final String username  = Utils.usernameFromAccount(account.name);
+      final String syncKey   = accountManager.getUserData(account, Constants.OPTION_SYNCKEY);
+      final String serverURL = accountManager.getUserData(account, Constants.OPTION_SERVER);
+
+      return new SyncAccountParameters(context, accountManager, username, syncKey, password, serverURL);
     } catch (InterruptedException e) {
       Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters.", e);
       return null;
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters.", e);
+      return null;
     }
-
-    return callback.syncAccountParameters;
   }
 }
