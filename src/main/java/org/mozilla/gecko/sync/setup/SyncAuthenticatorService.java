@@ -57,10 +57,12 @@ public class SyncAuthenticatorService extends Service {
    * keys in this bundle, it needs to invalidate the token (so that the bundle
    * is re-generated).
    *
-   * @param response
+   * @param context
+   *          Android context.
    * @param account
-   * @param options
-   * @return a <code>Bundle</code> instance containing a subset of the keys:
+   *          Android account.
+   * @return a <code>Bundle</code> instance containing a subset of the following
+   *         keys: (caller's must check for missing keys)
    *         <ul>
    *         <li><code>AccountManager.KEY_ACCOUNT_TYPE</code>: the Android
    *         Account's type</li>
