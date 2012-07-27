@@ -276,8 +276,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     this.syncResult   = syncResult;
     this.localAccount = account;
 
-    Logger.LOG_PERSONAL_INFORMATION = true;
-
     SyncAccountParameters params;
     try {
       params = SyncAccounts.blockingFromAndroidAccountV0(mContext, AccountManager.get(mContext), this.localAccount);

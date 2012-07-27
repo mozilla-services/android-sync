@@ -495,8 +495,12 @@ public class SyncAccounts {
     public void run(AccountManagerFuture<Bundle> future) {
       try {
         Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
-        if (bundle.containsKey("KEY_INTENT")) {
+        if (bundle.containsKey(AccountManager.KEY_INTENT)) {
           throw new IllegalStateException("KEY_INTENT included in AccountManagerFuture bundle.");
+        }
+        if (bundle.containsKey(AccountManager.KEY_ERROR_MESSAGE)) {
+          throw new IllegalStateException("KEY_ERROR_MESSAGE (= " + bundle.getString(AccountManager.KEY_ERROR_MESSAGE) + ") "
+              + " included in AccountManagerFuture bundle.");
         }
 
         authToken = bundle.getString(AccountManager.KEY_AUTHTOKEN);
