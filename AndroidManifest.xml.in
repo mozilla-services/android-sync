@@ -8,7 +8,7 @@
 
     <uses-library android:name="android.test.runner" />
 
-    <uses-sdk android:minSdkVersion="8"
+    <uses-sdk android:minSdkVersion="11"
               android:targetSdkVersion="14" />
 
 #include manifests/SyncAndroidManifest_permissions.xml.in
