@@ -5,14 +5,18 @@
 package org.mozilla.gecko.sync.setup;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
@@ -45,6 +49,44 @@ public class SyncAccounts {
   private static final String MOTO_BLUR_PACKAGE           = "com.motorola.blur.setup";
 
   public final static String DEFAULT_SERVER = "https://auth.services.mozilla.com/";
+
+  /**
+   * Return Sync accounts.
+   *
+   * @param c Android context.
+   * @return Sync accounts.
+   */
+  public static Account[] syncAccounts(final Context c) {
+    return AccountManager.get(c).getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
+  }
+
+  /**
+   * Asynchronously invalidate the auth token for a Sync account.
+   *
+   * @param accountManager Android account manager.
+   * @param account Android account.
+   */
+  public static void invalidateAuthToken(final AccountManager accountManager, final Account account) {
+    if (account == null) {
+      return;
+    }
+
+    // blockingGetAuthToken must not be called from the main thread.
+    ThreadPool.run(new Runnable() {
+      @Override
+      public void run() {
+        String authToken;
+        try {
+          authToken = accountManager.blockingGetAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true);
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Got exception while invalidating auth token.", e);
+          return;
+        }
+
+        accountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, authToken);
+      }
+    });
+  }
 
   /**
    * Returns true if a Sync account is set up, or we have a pickled Sync account
@@ -478,9 +520,11 @@ public class SyncAccounts {
    *          Android account manager.
    * @param account
    *          Android account.
-   * @return Sync account parameters.
+   * @return Sync account parameters, always non-null; fields username,
+   *         password, serverURL, and syncKey always non-null.
    */
-  public static SyncAccountParameters blockingFromAndroidAccountV0(final Context context, final AccountManager accountManager, final Account account) {
+  public static SyncAccountParameters blockingFromAndroidAccountV0(final Context context, final AccountManager accountManager, final Account account)
+      throws CredentialException {
     final CountDownLatch latch = new CountDownLatch(1);
     final SyncAccountVersion0Callback callback = new SyncAccountVersion0Callback(context, latch);
 
@@ -494,19 +538,50 @@ public class SyncAccounts {
 
     try {
       latch.await();
-
-      final String password  = callback.authToken;
-      final String username  = Utils.usernameFromAccount(account.name);
-      final String syncKey   = accountManager.getUserData(account, Constants.OPTION_SYNCKEY);
-      final String serverURL = accountManager.getUserData(account, Constants.OPTION_SERVER);
-
-      return new SyncAccountParameters(context, accountManager, username, syncKey, password, serverURL);
     } catch (InterruptedException e) {
       Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters.", e);
-      return null;
+      throw new CredentialException.MissingAllCredentialsException();
+    }
+
+    String username;
+    try {
+      username = Utils.usernameFromAccount(account.name);
+    } catch (NoSuchAlgorithmException e) {
+      throw new CredentialException.MissingCredentialException("username");
+    } catch (UnsupportedEncodingException e) {
+      throw new CredentialException.MissingCredentialException("username");
+    }
+
+    final String password  = callback.authToken;
+    final String syncKey   = accountManager.getUserData(account, Constants.OPTION_SYNCKEY);
+    final String serverURL = accountManager.getUserData(account, Constants.OPTION_SERVER);
+
+    if (password  == null &&
+        username  == null &&
+        syncKey   == null &&
+        serverURL == null) {
+      throw new CredentialException.MissingAllCredentialsException();
+    }
+
+    if (password == null) {
+      throw new CredentialException.MissingCredentialException("password");
+    }
+
+    if (syncKey == null) {
+      throw new CredentialException.MissingCredentialException("syncKey");
+    }
+
+    if (serverURL == null) {
+      throw new CredentialException.MissingCredentialException("serverURL");
+    }
+
+    try {
+      // SyncAccountParameters constructor throws on null inputs. This shouldn't
+      // happen, but let's be safe.
+      return new SyncAccountParameters(context, accountManager, username, syncKey, password, serverURL);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters.", e);
-      return null;
+      throw new CredentialException.MissingAllCredentialsException();
     }
   }
 }

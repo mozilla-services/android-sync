@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.AlreadySyncingException;
+import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
@@ -85,8 +86,19 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     edit.commit();
   }
 
-  private void handleException(Exception e, SyncResult syncResult) {
+  /**
+   * Handle an exception: update stats, invalidate auth token, log errors, etc.
+   *
+   * @param globalSession
+   *          current global session, or null.
+   * @param e
+   *          Exception to handle.
+   */
+  protected void processException(final GlobalSession globalSession, final Exception e) {
     try {
+      // Just in case, invalidate auth token.
+      SyncAccounts.invalidateAuthToken(AccountManager.get(mContext), localAccount);
+
       if (e instanceof SQLiteConstraintException) {
         Logger.error(LOG_TAG, "Constraint exception. Aborting sync.", e);
         syncResult.stats.numParseExceptions++;       // This is as good as we can do.
@@ -112,10 +124,50 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         e.printStackTrace();
         return;
       }
-      syncResult.stats.numIoExceptions++;
+
+      // Blanket stats updating for SyncException subclasses.
+      if (e instanceof SyncException) {
+        ((SyncException) e).updateStats(globalSession, syncResult);
+      } else {
+        // Generic exception.
+        syncResult.stats.numIoExceptions++;
+      }
+
+      if (e instanceof CredentialException.MissingAllCredentialsException) {
+        // This is bad: either we couldn't fetch credentials, or the credentials
+        // were totally blank. Most likely the user has two copies of Firefox
+        // installed, and something is misbehaving.
+        // Either way, disable this account.
+        if (localAccount == null) {
+          // Should not happen, but be safe.
+          Logger.error(LOG_TAG, "No credentials attached to account. Aborting sync.");
+          return;
+        }
+
+        Logger.error(LOG_TAG, "No credentials attached to account " + localAccount.name + ". Aborting sync.");
+        try {
+          SyncAccounts.setSyncAutomatically(localAccount, false);
+        } catch (Exception ex) {
+          Logger.error(LOG_TAG, "Unable to disable account " + localAccount.name + ".", ex);
+        }
+        return;
+      }
+
+      if (e instanceof CredentialException.MissingCredentialException) {
+        Logger.error(LOG_TAG, "Credentials attached to account, but missing " +
+            ((CredentialException.MissingCredentialException) e).missingCredential + ". Aborting sync.");
+        return;
+      }
+
+      if (e instanceof CredentialException) {
+        Logger.error(LOG_TAG, "Credentials attached to account were bad.");
+        return;
+      }
+
+      // Generic exception.
       Logger.error(LOG_TAG, "Unknown exception. Aborting sync.", e);
-    } finally {
-      notifyMonitor();
+    } catch (Exception ex) {
+      Logger.error(LOG_TAG, "Unknown exception. Aborting sync.", e);
     }
   }
 
@@ -226,7 +278,20 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
 
     Logger.LOG_PERSONAL_INFORMATION = true;
 
-    final SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(mContext, AccountManager.get(mContext), this.localAccount);
+    SyncAccountParameters params;
+    try {
+      params = SyncAccounts.blockingFromAndroidAccountV0(mContext, AccountManager.get(mContext), this.localAccount);
+    } catch (Exception e) {
+      // Updates syncResult and (harmlessly) calls notifyMonitor().
+      processException(null, e);
+      return;
+    }
+
+    // params and the following fields are non-null at this point.
+    final String username  = params.username; // Encoded with Utils.usernameFromAccount.
+    final String password  = params.password;
+    final String serverURL = params.serverURL;
+    final String syncKey   = params.syncKey;
 
     final AtomicBoolean setNextSync = new AtomicBoolean(true);
     final SyncAdapter self = this;
@@ -236,18 +301,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         Logger.trace(LOG_TAG, "AccountManagerCallback invoked.");
         // TODO: N.B.: Future must not be used on the main thread.
         try {
-          if (params == null) {
-            Logger.error(LOG_TAG, "No account parameters: aborting sync.");
-            syncResult.stats.numAuthExceptions++;
-            notifyMonitor();
-            return;
-          }
+          Logger.info(LOG_TAG, "Syncing account named " + account.name +
+              " for authority " + authority + ".");
 
-          String username  = params.username; // Encoded with Utils.usernameFromAccount.
-          String password  = params.password;
-          String serverURL = params.serverURL;
-          String syncKey   = params.syncKey;
-
+          // We dump this information right away to help with debugging.
           Logger.debug(LOG_TAG, "Username: " + username);
           Logger.debug(LOG_TAG, "Server:   " + serverURL);
           if (Logger.LOG_PERSONAL_INFORMATION) {
@@ -258,41 +315,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
             Logger.debug(LOG_TAG, "Sync key? " + (syncKey != null));
           }
 
-          if (password  == null &&
-              username  == null &&
-              syncKey   == null &&
-              serverURL == null) {
-
-            // Totally blank. Most likely the user has two copies of Firefox
-            // installed, and something is misbehaving.
-            // Disable this account.
-            Logger.error(LOG_TAG, "No credentials attached to account. Aborting sync.");
-            try {
-              SyncAccounts.setSyncAutomatically(account, false);
-            } catch (Exception e) {
-              Logger.error(LOG_TAG, "Unable to disable account " + account.name + " for " + authority + ".", e);
-            }
-            syncResult.stats.numAuthExceptions++;
-            localAccount = null;
-            notifyMonitor();
-            return;
-          }
-
-          // Now catch the individual cases.
-          if (password == null) {
-            Logger.error(LOG_TAG, "No password: aborting sync.");
-            syncResult.stats.numAuthExceptions++;
-            notifyMonitor();
-            return;
-          }
-
-          if (syncKey == null) {
-            Logger.error(LOG_TAG, "No sync key: aborting sync.");
-            syncResult.stats.numAuthExceptions++;
-            notifyMonitor();
-            return;
-          }
-
           // Support multiple accounts by mapping each server/account pair to a branch of the
           // shared preferences space.
           final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
@@ -301,10 +323,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           self.accountSharedPreferences = Utils.getSharedPreferences(mContext, product, username, serverURL, profile, version);
 
           Logger.info(LOG_TAG,
-              "Syncing account named " + account.name +
-              " for client named '" + getClientName() +
-              "' with client guid " + getAccountGUID() +
-              " (sync account has " + getClientsCount() + " clients).");
+              "Client is named '" + getClientName() + "'" +
+              ", has client guid " + getAccountGUID() +
+              ", and has " + getClientsCount() + " clients.");
 
           thisSyncIsForced = (extras != null) && (extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false));
           long delay = delayMilliseconds();
@@ -325,7 +346,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           self.performSync(account, extras, authority, provider, syncResult,
               username, password, prefsPath, serverURL, syncKey);
         } catch (Exception e) {
-          self.handleException(e, syncResult);
+          self.processException(null, e);
+          notifyMonitor();
           return;
         }
       }
@@ -375,10 +397,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     return MULTI_DEVICE_INTERVAL_MILLISECONDS;
   }
 
-
   /**
    * Now that we have a sync key and password, go ahead and do the work.
-   * @param prefsPath TODO
    * @throws NoSuchAlgorithmException
    * @throws IllegalArgumentException
    * @throws SyncConfigurationException
@@ -460,7 +480,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   @Override
   public void handleError(GlobalSession globalSession, Exception ex) {
     Logger.info(LOG_TAG, "GlobalSession indicated error.");
-    this.updateStats(globalSession, ex);
+    this.processException(globalSession, ex);
     notifyMonitor();
   }
 
@@ -468,22 +488,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public void handleAborted(GlobalSession globalSession, String reason) {
     Logger.warn(LOG_TAG, "Sync aborted: " + reason);
     notifyMonitor();
-  }
-
-  /**
-   * Introspect the exception, incrementing the appropriate stat counters.
-   * TODO: increment number of inserts, deletes, conflicts.
-   *
-   * @param globalSession
-   * @param ex
-   */
-  private void updateStats(GlobalSession globalSession,
-                           Exception ex) {
-    if (ex instanceof SyncException) {
-      ((SyncException) ex).updateStats(globalSession, syncResult);
-    }
-    // TODO: non-SyncExceptions.
-    // TODO: wouldn't it be nice to update stats for *every* exception we get?
   }
 
   @Override
