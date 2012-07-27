@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.sync.receivers;
 
+import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
@@ -30,8 +31,8 @@ public class UpgradeReceiver extends BroadcastReceiver {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
-        AccountManager accountManager = AccountManager.get(context);
-        Account[] accounts = accountManager.getAccounts();
+        final Account[] accounts = SyncAccounts.syncAccounts(context);
+        final AccountManager accountManager = AccountManager.get(context);
         for (Account a : accounts) {
           if ("1".equals(accountManager.getUserData(a, Constants.DATA_ENABLE_ON_UPGRADE))) {
             SyncAccounts.setSyncAutomatically(a, true);
@@ -53,9 +54,11 @@ public class UpgradeReceiver extends BroadcastReceiver {
         for (Account account : accounts) {
           Logger.info(LOG_TAG, "Migrating preferences on upgrade for Android account named " + account.name + ".");
 
-          SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
-          if (params == null) {
-            Logger.warn(LOG_TAG, "Could not fetch account parameters for Android account; not migrating.");
+          SyncAccountParameters params;
+          try {
+            params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+          } catch (CredentialException e) {
+            Logger.warn(LOG_TAG, "Caught exception fetching account parameters while trying to migrate preferences; ignoring.", e);
             continue;
           }
 

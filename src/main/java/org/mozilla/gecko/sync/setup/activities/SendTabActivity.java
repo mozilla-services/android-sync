@@ -9,6 +9,7 @@ import java.util.List;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandRunner;
+import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
@@ -28,8 +29,8 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
@@ -116,8 +117,10 @@ public class SendTabActivity extends Activity {
       return null;
     }
 
-    SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(getApplicationContext(), accountManager, localAccount);
-    if (params == null) {
+    SyncAccountParameters params;
+    try {
+      params = SyncAccounts.blockingFromAndroidAccountV0(this, accountManager, localAccount);
+    } catch (CredentialException e) {
       Logger.warn(LOG_TAG, "Could not get sync account parameters; aborting.");
       return null;
     }
