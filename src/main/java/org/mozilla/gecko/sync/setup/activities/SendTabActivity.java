@@ -4,7 +4,10 @@
 
 package org.mozilla.gecko.sync.setup.activities;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.CommandProcessor;
@@ -28,18 +31,20 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 public class SendTabActivity extends Activity {
   public static final String LOG_TAG = "SendTabActivity";
-  private ClientRecordArrayAdapter arrayAdapter;
-  private AccountManager accountManager;
-  private Account localAccount;
+
+  protected ClientRecordArrayAdapter deviceAdapter;
+  protected Map<String, Account> accountMap;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -52,15 +57,21 @@ public class SendTabActivity extends Activity {
     Logger.info(LOG_TAG, "Called SendTabActivity.onResume.");
     super.onResume();
 
+    // We can't send tabs if there are no Sync accounts. Instead, we'll prompt
+    // the user to set up Sync.
     redirectIfNoSyncAccount();
+    // We never send commands that we don't know about, so we need to register the command here.
     registerDisplayURICommand();
 
     setContentView(R.layout.sync_send_tab);
-    final ListView listview = (ListView) findViewById(R.id.device_list);
-    listview.setItemsCanFocus(true);
-    listview.setTextFilterEnabled(true);
-    listview.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
+    final ListView deviceListview = (ListView) findViewById(R.id.device_list);
+    deviceListview.setItemsCanFocus(true);
+    deviceListview.setTextFilterEnabled(true);
+    deviceListview.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     enableSend(false);
+
+    final Spinner accountSpinner = (Spinner) findViewById(R.id.sendtab_account_spinner);
 
     // Fetching the client list hits the clients database, so we spin this onto
     // a background task.
@@ -75,29 +86,42 @@ public class SendTabActivity extends Activity {
       @Override
       protected void onPostExecute(final ClientRecord[] clientArray) {
         // We're allowed to update the UI from here.
-        arrayAdapter = new ClientRecordArrayAdapter(context, R.layout.sync_list_item, clientArray);
-        listview.setAdapter(arrayAdapter);
+        deviceAdapter = new ClientRecordArrayAdapter(context, R.layout.sync_list_item, clientArray);
+        deviceListview.setAdapter(deviceAdapter);
+      }
+    }.execute();
+
+    // Fetching the list of Sync accounts hits a system database, so we
+    // background this too.
+    new AsyncTask<Void, Void, Account[]>() {
+
+      @Override
+      protected Account[] doInBackground(Void... params) {
+        return SyncAccounts.syncAccounts(context);
+      }
+
+      @Override
+      protected void onPostExecute(final Account[] syncAccounts) {
+        // We're allowed to update the UI from here.
+        accountMap = new HashMap<String, Account>();
+        for (Account syncAccount : syncAccounts) {
+          accountMap.put(syncAccount.name, syncAccount);
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(context,
+            android.R.layout.simple_spinner_dropdown_item,
+            new ArrayList<String>(accountMap.keySet()));
+        accountSpinner.setAdapter(adapter);
       }
     }.execute();
   }
 
-  private static void registerDisplayURICommand() {
-    final CommandProcessor processor = CommandProcessor.getProcessor();
-    processor.registerCommand("displayURI", new CommandRunner(3) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        CommandProcessor.displayURI(args, session.getContext());
-      }
-    });
-  }
-
-  private void redirectIfNoSyncAccount() {
-    accountManager = AccountManager.get(getApplicationContext());
-    Account[] accts = accountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
-
-    // A Sync account exists.
-    if (accts.length > 0) {
-      localAccount = accts[0];
+  /**
+   * If no Sync accounts exist, suggest that the user set up Sync and then
+   * finish the Send Tab activity.
+   */
+  protected void redirectIfNoSyncAccount() {
+    if (SyncAccounts.syncAccountsExist(getApplicationContext())) {
       return;
     }
 
@@ -108,30 +132,68 @@ public class SendTabActivity extends Activity {
   }
 
   /**
-   * @return Return null if there is no account set up. Return the account GUID otherwise.
+   * We never send commands we don't know about, so we need to make sure the
+   * command processor knows the "displayURI" command at send time.
    */
-  private String getAccountGUID() {
-    if (localAccount == null) {
-      Logger.warn(LOG_TAG, "Null local account; aborting.");
-      return null;
-    }
+  protected static void registerDisplayURICommand() {
+    final CommandProcessor processor = CommandProcessor.getProcessor();
+    processor.registerCommand("displayURI", new CommandRunner(3) {
+      @Override
+      public void executeCommand(final GlobalSession session, List<String> args) {
+        CommandProcessor.displayURI(args, session.getContext());
+      }
+    });
+  }
 
-    SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(getApplicationContext(), accountManager, localAccount);
+  /**
+   * Get selected Account.
+   *
+   * @return selected Account.
+   */
+  protected Account getSelectedAccount() {
+    final Spinner accountSpinner = (Spinner) findViewById(R.id.sendtab_account_spinner);
+    final String selectedAccountName = (String) accountSpinner.getSelectedItem();
+    return accountMap.get(selectedAccountName);
+  }
+
+  /**
+   * Get account's client GUID.
+   * <p>
+   * This hits the shared prefs, so don't call from the main thread!
+   *
+   * @return client GUID, or null on error.
+   */
+  protected String getAccountGUID(final Account account) {
+    final Context context = getApplicationContext();
+    final AccountManager accountManager = AccountManager.get(context);
+
+    final SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
     if (params == null) {
       Logger.warn(LOG_TAG, "Could not get sync account parameters; aborting.");
       return null;
     }
 
-    SharedPreferences prefs;
+    Logger.debug(LOG_TAG, "Fetching client GUID for account named " + params.username +
+        " with server URL " + params.serverURL + ".");
     try {
       final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
       final String profile = Constants.DEFAULT_PROFILE;
       final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
-      prefs = Utils.getSharedPreferences(getApplicationContext(), product, params.username, params.serverURL, profile, version);
+      final SharedPreferences prefs = Utils.getSharedPreferences(context, product, params.username, params.serverURL, profile, version);
       return prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null);
     } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception fetching sync account parameters.", e);
       return null;
     }
+  }
+
+  /**
+   * Get selected device client GUIDs.
+   *
+   * @return non-null list of GUIDs.
+   */
+  protected List<String> getSelectedDeviceGUIDs() {
+    return deviceAdapter.getCheckedGUIDs();
   }
 
   public void sendClickHandler(View view) {
@@ -141,37 +203,54 @@ public class SendTabActivity extends Activity {
     final String title = extras.getString(Intent.EXTRA_SUBJECT);
     final CommandProcessor processor = CommandProcessor.getProcessor();
 
-    final String clientGUID = getAccountGUID();
-    final List<String> guids = arrayAdapter.getCheckedGUIDs();
-
-    if (clientGUID == null || guids == null) {
-      // Should never happen.
-      Logger.warn(LOG_TAG, "clientGUID? " + (clientGUID == null) + " or guids? " + (guids == null) +
-          " was null; aborting without sending tab.");
+    // Fetching the account interacts with the UI only.
+    final Account account = getSelectedAccount();
+    if (account == null) {
+      Logger.warn(LOG_TAG, "account is null; aborting without sending tab.");
       finish();
       return;
     }
 
-    // Perform tab sending on another thread.
-    new Thread() {
+    // Fetching the device GUIDs also interacts with the UI only.
+    final List<String> deviceGuids = getSelectedDeviceGUIDs();
+    if (deviceGuids == null) {
+      Logger.warn(LOG_TAG, "device guids was null; aborting without sending tab.");
+      finish();
+      return;
+    }
+
+    // Fetching the sending client's GUID hits prefs, so we background this.
+    new AsyncTask<Void, Void, String>() {
+
       @Override
-      public void run() {
-        final String accountGUID = getAccountGUID();
-        Logger.debug(LOG_TAG, "Retrieved account GUID '" + accountGUID + "'.");
-        if (accountGUID == null) {
+      protected String doInBackground(Void... params) {
+        return getAccountGUID(account);
+      }
+
+      @Override
+      protected void onPostExecute(final String clientGuid) {
+        // We're allowed to update the UI from here.
+        if (clientGuid == null) {
+          Logger.warn(LOG_TAG, "client guid is null; aborting without sending tab.");
+          finish();
           return;
         }
 
-        for (String guid : guids) {
-          processor.sendURIToClientForDisplay(uri, guid, title, accountGUID, getApplicationContext());
+        Logger.info(LOG_TAG, "Sending tab for Sync account named " + account.name +
+            " with client GUID " + clientGuid + (deviceGuids.size() > 1 ?
+                " to " + deviceGuids.size() + " clients." :
+                " to 1 client."));
+
+        for (String deviceGuid : deviceGuids) {
+          processor.sendURIToClientForDisplay(uri, deviceGuid, title, clientGuid, getApplicationContext());
         }
 
         Logger.info(LOG_TAG, "Requesting immediate clients stage sync.");
-        SyncAdapter.requestImmediateSync(localAccount, new String[] { SyncClientsEngineStage.COLLECTION_NAME });
-      }
-    }.start();
+        SyncAdapter.requestImmediateSync(account, new String[] { SyncClientsEngineStage.COLLECTION_NAME });
 
-    notifyAndFinish();
+        notifyAndFinish();
+      }
+    }.execute();
   }
 
   /**
@@ -182,19 +261,26 @@ public class SendTabActivity extends Activity {
    * verify that the commands were successfully received by the intended remote
    * client, so we lie and say they were sent.
    */
-  private void notifyAndFinish() {
+  protected void notifyAndFinish() {
     Toast.makeText(this, R.string.sync_text_tab_sent, Toast.LENGTH_LONG).show();
     finish();
   }
 
-  public void enableSend(boolean shouldEnable) {
+  protected void enableSend(boolean shouldEnable) {
     View sendButton = findViewById(R.id.send_button);
     sendButton.setEnabled(shouldEnable);
     sendButton.setClickable(shouldEnable);
   }
 
+  /**
+   * Fetch all known clients from the database.
+   * <p>
+   * This hits the database, so do not call from main thread!
+   *
+   * @return client records.
+   */
   protected ClientRecord[] getClientArray() {
-    ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(this.getApplicationContext());
+    final ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(this.getApplicationContext());
 
     try {
       return db.fetchAllClients().values().toArray(new ClientRecord[0]);

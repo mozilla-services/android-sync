@@ -47,14 +47,24 @@ public class SyncAccounts {
   public final static String DEFAULT_SERVER = "https://auth.services.mozilla.com/";
 
   /**
+   * Return Sync accounts.
+   *
+   * @param c Android context.
+   * @return Sync accounts.
+   */
+  public static Account[] syncAccounts(final Context c) {
+    return AccountManager.get(c).getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
+  }
+
+  /**
    * Returns true if a Sync account is set up, or we have a pickled Sync account
    * on disk that should be un-pickled (Bug 769745). If we have a pickled Sync
    * account, try to un-pickle it and create the corresponding Sync account.
    * <p>
    * Do not call this method from the main thread.
    */
-  public static boolean syncAccountsExist(Context c) {
-    final boolean accountsExist = AccountManager.get(c).getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC).length > 0;
+  public static boolean syncAccountsExist(final Context c) {
+    final boolean accountsExist = syncAccounts(c).length > 0;
     if (accountsExist) {
       return true;
     }
@@ -296,7 +306,7 @@ public class SyncAccounts {
     // Add sync key and server URL.
     userbundle.putString(Constants.OPTION_SYNCKEY, syncKey);
     userbundle.putString(Constants.OPTION_SERVER, serverURL);
-    Logger.debug(LOG_TAG, "Adding account for " + GlobalConstants.ACCOUNTTYPE_SYNC);
+    Logger.debug(LOG_TAG, "Adding account of type " + GlobalConstants.ACCOUNTTYPE_SYNC + ".");
     boolean result = false;
     try {
       result = accountManager.addAccountExplicitly(account, password, userbundle);

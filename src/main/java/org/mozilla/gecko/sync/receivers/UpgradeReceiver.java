@@ -24,18 +24,21 @@ public class UpgradeReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(final Context context, Intent intent) {
+    final Account[] syncAccounts = SyncAccounts.syncAccounts(context);
+    final AccountManager accountManager = AccountManager.get(context);
+
     Logger.debug(LOG_TAG, "Broadcast received.");
     // Should filter for specific MY_PACKAGE_REPLACED intent, but Android does
     // not expose it.
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
-        AccountManager accountManager = AccountManager.get(context);
-        Account[] accounts = accountManager.getAccounts();
-        for (Account a : accounts) {
-          if ("1".equals(accountManager.getUserData(a, Constants.DATA_ENABLE_ON_UPGRADE))) {
-            SyncAccounts.setSyncAutomatically(a, true);
-            accountManager.setUserData(a, Constants.DATA_ENABLE_ON_UPGRADE, "0");
+        for (Account account : syncAccounts) {
+          if ("1".equals(accountManager.getUserData(account, Constants.DATA_ENABLE_ON_UPGRADE))) {
+            Logger.info(LOG_TAG, "Enabling syncing on upgrade for Android account named " + account.name + ".");
+
+            SyncAccounts.setSyncAutomatically(account, true);
+            accountManager.setUserData(account, Constants.DATA_ENABLE_ON_UPGRADE, "0");
           }
         }
       }
@@ -47,10 +50,8 @@ public class UpgradeReceiver extends BroadcastReceiver {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
-        AccountManager accountManager = AccountManager.get(context);
-        Account[] accounts = accountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
 
-        for (Account account : accounts) {
+        for (Account account : syncAccounts) {
           Logger.info(LOG_TAG, "Migrating preferences on upgrade for Android account named " + account.name + ".");
 
           SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);

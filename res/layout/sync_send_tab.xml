@@ -17,6 +17,12 @@
   <LinearLayout
     android:id="@id/sendtab_bottom"
     style="@style/SyncBottom" >
+
+    <Spinner
+      android:id="@+id/sendtab_account_spinner"
+      android:layout_width="200dp"
+      android:layout_height="wrap_content" />
+
     <Button
       style="@style/SyncButton"
       android:id="@+id/send_button"
