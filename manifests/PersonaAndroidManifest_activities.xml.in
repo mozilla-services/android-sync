@@ -3,3 +3,14 @@
             android:name="org.mozilla.persona.PersonaAuthenticatorActivity"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
             android:windowSoftInputMode="adjustResize"/>
+        <activity
+            android:clearTaskOnLaunch="true"
+            android:name="org.mozilla.persona.client.ProviderActivity"
+            android:label="Persona IdP"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+            
