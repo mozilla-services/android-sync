@@ -56,4 +56,11 @@ public class TestSyncAuthenticatorService extends AndroidSyncTestCase {
     assertEquals(TEST_SYNCKEY, bundle.getString(Constants.OPTION_SYNCKEY));
     assertEquals(TEST_SERVERURL, bundle.getString(Constants.OPTION_SERVER));
   }
+
+  public void testGetBadTokenType() throws Exception {
+    account = SyncAccounts.createSyncAccount(syncAccount, false);
+    assertNotNull(account);
+
+    assertNull(accountManager.blockingGetAuthToken(account, "BAD_TOKEN_TYPE", false));
+  }
 }
