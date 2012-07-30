@@ -506,7 +506,7 @@ public class SyncAccounts {
         authToken = bundle.getString(AccountManager.KEY_AUTHTOKEN);
       } catch (Exception e) {
         // Do nothing -- caller will find null authToken.
-        Logger.warn(LOG_TAG, "Got exception fetching auth token.", e);
+        Logger.warn(LOG_TAG, "Got exception fetching auth token; ignoring and returning null auth token instead.", e);
       } finally {
         latch.countDown();
       }
@@ -543,8 +543,8 @@ public class SyncAccounts {
     try {
       latch.await();
     } catch (InterruptedException e) {
-      Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters.", e);
-      throw new CredentialException.MissingAllCredentialsException();
+      Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters; throwing.");
+      throw new CredentialException.MissingAllCredentialsException(e);
     }
 
     String username;
@@ -556,9 +556,23 @@ public class SyncAccounts {
       throw new CredentialException.MissingCredentialException("username");
     }
 
-    final String password  = callback.authToken;
-    final String syncKey   = accountManager.getUserData(account, Constants.OPTION_SYNCKEY);
-    final String serverURL = accountManager.getUserData(account, Constants.OPTION_SERVER);
+    final String password = callback.authToken;
+
+    /*
+     * If we are accessing an Account that we don't own, Android will throw an
+     * unchecked <code>SecurityException</code> saying
+     * "W FxSync(XXXX) java.lang.SecurityException: caller uid XXXXX is different than the authenticator's uid".
+     * We catch that error and throw accordingly.
+     */
+    String syncKey;
+    String serverURL;
+    try {
+      syncKey = accountManager.getUserData(account, Constants.OPTION_SYNCKEY);
+      serverURL = accountManager.getUserData(account, Constants.OPTION_SERVER);
+    } catch (SecurityException e) {
+      Logger.warn(LOG_TAG, "Got security exception fetching Sync account parameters; throwing.");
+      throw new CredentialException.MissingAllCredentialsException(e);
+    }
 
     if (password  == null &&
         username  == null &&
@@ -584,8 +598,8 @@ public class SyncAccounts {
       // happen, but let's be safe.
       return new SyncAccountParameters(context, accountManager, username, syncKey, password, serverURL);
     } catch (Exception e) {
-      Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters.", e);
-      throw new CredentialException.MissingAllCredentialsException();
+      Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters; throwing.");
+      throw new CredentialException.MissingAllCredentialsException(e);
     }
   }
 }
