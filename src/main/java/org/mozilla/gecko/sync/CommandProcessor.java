@@ -152,7 +152,11 @@ public class CommandProcessor {
 
   @SuppressWarnings("unchecked")
   public void sendURIToClientForDisplay(String uri, String clientID, String title, String sender, Context context) {
-    Logger.info(LOG_TAG, "Sending URI to client: " + uri + " -> " + clientID + " (" + title + ")");
+    if (Logger.LOG_PERSONAL_INFORMATION) {
+      Logger.pii(LOG_TAG, "Sending URI to client: " + uri + " -> " + clientID + " (" + title + ").");
+    } else {
+      Logger.info(LOG_TAG, "Sending URI to client " + clientID + ".");
+    }
 
     JSONArray args = new JSONArray();
     args.add(uri);
