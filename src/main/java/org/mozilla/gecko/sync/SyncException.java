@@ -7,14 +7,15 @@ package org.mozilla.gecko.sync;
 import android.content.SyncResult;
 
 public abstract class SyncException extends Exception {
-  public Exception cause = null;
-  public SyncException(Exception ex) {
-    cause = ex;
-  }
+  private static final long serialVersionUID = -6928990004393234738L;
+
   public SyncException() {
+    super();
   }
 
-  private static final long serialVersionUID = -6928990004393234738L;
+  public SyncException(final Throwable e) {
+    super(e);
+  }
 
   /**
    * Update sync result statistics with information particular to this

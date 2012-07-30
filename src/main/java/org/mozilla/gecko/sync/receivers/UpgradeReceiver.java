@@ -31,8 +31,9 @@ public class UpgradeReceiver extends BroadcastReceiver {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
-        final Account[] accounts = SyncAccounts.syncAccounts(context);
         final AccountManager accountManager = AccountManager.get(context);
+        final Account[] accounts = SyncAccounts.syncAccounts(context);
+
         for (Account a : accounts) {
           if ("1".equals(accountManager.getUserData(a, Constants.DATA_ENABLE_ON_UPGRADE))) {
             SyncAccounts.setSyncAutomatically(a, true);
@@ -49,7 +50,7 @@ public class UpgradeReceiver extends BroadcastReceiver {
       @Override
       public void run() {
         AccountManager accountManager = AccountManager.get(context);
-        Account[] accounts = accountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
+        final Account[] accounts = SyncAccounts.syncAccounts(context);
 
         for (Account account : accounts) {
           Logger.info(LOG_TAG, "Migrating preferences on upgrade for Android account named " + account.name + ".");
