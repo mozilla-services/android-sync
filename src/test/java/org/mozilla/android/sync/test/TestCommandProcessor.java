@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.json.simple.parser.ParseException;
@@ -26,6 +27,7 @@ public class TestCommandProcessor extends CommandProcessor {
   public static final String commandWithNoArgs = "{\"command\":\"displayURI\"}";
   public static final String commandWithNoType = "{\"args\":[\"https://bugzilla.mozilla.org/show_bug.cgi?id=731341\",\"PKsljsuqYbGg\"]}";
   public static final String wellFormedCommand = "{\"args\":[\"https://bugzilla.mozilla.org/show_bug.cgi?id=731341\",\"PKsljsuqYbGg\"],\"command\":\"displayURI\"}";
+  public static final String wellFormedCommandWithNullArgs = "{\"args\":[\"https://bugzilla.mozilla.org/show_bug.cgi?id=731341\",null,\"PKsljsuqYbGg\",null],\"command\":\"displayURI\"}";
 
   private boolean commandExecuted;
 
@@ -94,5 +96,20 @@ public class TestCommandProcessor extends CommandProcessor {
     assertNotNull(parsedCommand);
     assertEquals(2, parsedCommand.args.size());
     assertEquals(commandType, parsedCommand.commandType);
+  }
+
+  @Test
+  public void testParseCommandNullArg() throws NonObjectJSONException, IOException, ParseException {
+    ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(wellFormedCommandWithNullArgs);
+    Command parsedCommand = CommandProcessor.parseCommand(unparsedCommand);
+    assertNotNull(parsedCommand);
+    assertEquals(4, parsedCommand.args.size());
+    assertEquals(commandType, parsedCommand.commandType);
+    final List<String> expectedArgs = new ArrayList<String>();
+    expectedArgs.add("https://bugzilla.mozilla.org/show_bug.cgi?id=731341");
+    expectedArgs.add(null);
+    expectedArgs.add("PKsljsuqYbGg");
+    expectedArgs.add(null);
+    assertEquals(expectedArgs, parsedCommand.getArgsList());
   }
 }
