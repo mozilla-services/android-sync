@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
@@ -178,17 +179,32 @@ public class SyncAuthenticatorService extends Service {
     public Bundle getAccountRemovalAllowed(AccountAuthenticatorResponse response, Account account) throws NetworkErrorException {
       Bundle result = super.getAccountRemovalAllowed(response, account);
 
-      if (result != null &&
-          result.containsKey(AccountManager.KEY_BOOLEAN_RESULT) &&
-          !result.containsKey(AccountManager.KEY_INTENT)) {
-        final boolean removalAllowed = result.getBoolean(AccountManager.KEY_BOOLEAN_RESULT);
-
-        if (removalAllowed) {
-          Logger.info(LOG_TAG, "Account named " + account.name + " being removed; " +
-              "deleting saved pickle file '" + Constants.ACCOUNT_PICKLE_FILENAME + "'.");
-          AccountPickler.deletePickle(mContext, Constants.ACCOUNT_PICKLE_FILENAME);
-        }
+      if (result == null ||
+          !result.containsKey(AccountManager.KEY_BOOLEAN_RESULT) ||
+          result.containsKey(AccountManager.KEY_INTENT)) {
+        return result;
       }
+
+      final boolean removalAllowed = result.getBoolean(AccountManager.KEY_BOOLEAN_RESULT);
+      if (!removalAllowed) {
+        return result;
+      }
+
+      // Delete the Account pickle in the background.
+      final String accountName = account.name;
+      ThreadPool.run(new Runnable() {
+        @Override
+        public void run() {
+          Logger.info(LOG_TAG, "Account named " + accountName + " being removed; " +
+              "deleting saved pickle file '" + Constants.ACCOUNT_PICKLE_FILENAME + "'.");
+          try {
+            AccountPickler.deletePickle(mContext, Constants.ACCOUNT_PICKLE_FILENAME);
+          } catch (Exception e) {
+            // This should never happen, but we really don't want to die in a background thread.
+            Logger.warn(LOG_TAG, "Got exception deleting saved pickle file; ignoring.", e);
+          }
+        }
+      });
 
       return result;
     }
