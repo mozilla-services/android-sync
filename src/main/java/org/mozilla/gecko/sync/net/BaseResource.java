@@ -134,7 +134,9 @@ public class BaseResource implements Resource {
    */
   public static Header getBasicAuthHeader(final String credentials) {
     Credentials creds = new UsernamePasswordCredentials(credentials);
-    return BasicScheme.authenticate(creds, "US-ASCII", false);
+
+    // This must be UTF-8 to generate the same Basic Auth headers as desktop for non-ASCII passwords.
+    return BasicScheme.authenticate(creds, "UTF-8", false);
   }
 
   /**

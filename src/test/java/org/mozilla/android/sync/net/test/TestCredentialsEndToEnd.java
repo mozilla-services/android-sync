@@ -35,6 +35,7 @@ public class TestCredentialsEndToEnd {
     return authenticate.getValue();
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testUTF8() throws UnsupportedEncodingException {
     final String in  = "pÃ¯gÃ©ons1";
@@ -60,6 +61,7 @@ public class TestCredentialsEndToEnd {
     System.out.println("Rescued password:   " + decoded);
 
     assertEquals(getCreds(expected), getCreds(decoded));
+    assertEquals(getCreds(decoded), DESKTOP_BASIC_AUTH);
   }
 
   // Note that we do *not* have a test for the J-PAKE setup process
