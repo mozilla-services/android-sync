@@ -3,6 +3,8 @@ package org.mozilla.persona.client;
 import java.util.HashMap;
 
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 public class PersonaUserAgent {
 
@@ -41,7 +43,7 @@ public class PersonaUserAgent {
    */
   public void selectIdentity(final String identity,
       final OnCompleteCallback callback) {
-    
+
     addIdentity(identity);
 
     this.callback = callback;
@@ -62,20 +64,21 @@ public class PersonaUserAgent {
     });
   }
 
-  public void discoverProvider(final String identity, final OnCompleteCallback callback) {
+  public void discoverProvider(final String identity,
+      final OnCompleteCallback callback) {
     final String domain = parseEmail(identity);
-    
+
     fetchWellKnown(domain, new OnCompleteCallback() {
-      
+
       @Override
       public void onSuccess(Bundle idpParams) {
         callback.onSuccess(idpParams);
       }
-      
+
       @Override
       public void onError(String message, Exception e) {
         // TODO Auto-generated method stub
-        
+
       }
     });
   }
@@ -86,9 +89,51 @@ public class PersonaUserAgent {
     return "eyedee.me";
   }
 
-  protected class Indentity {
+  public class Indentity implements Parcelable {
+    public String email;
     public String cert;
-    public String keyPair;
+    public String publicKey;
+    public String privateKey;
+
+    public Indentity() {
+    }
+
+    public Indentity(Parcel in) {
+      readFromParcel(in);
+    }
+
+    @Override
+    public int describeContents() {
+      return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+      dest.writeString(email);
+      dest.writeString(cert);
+      dest.writeString(publicKey);
+      dest.writeString(privateKey);
+    }
+
+    private void readFromParcel(Parcel in) {
+      email = in.readString();
+      cert = in.readString();
+      publicKey = in.readString();
+      privateKey = in.readString();
+    }
+
+    // public static final Parcelable.Creator CREATOR = new Parcelable.Creator()
+    // {
+    // public Indentity createFromParcel(
+    // Parcel in) {
+    // return new Indentity(in);
+    // }
+    //
+    // public Indentity[] newArray(
+    // int size) {
+    // return new Indentity[size];
+    // }
+    // };
   }
 
   protected void fetchWellKnown(String domain, OnCompleteCallback callback) {
