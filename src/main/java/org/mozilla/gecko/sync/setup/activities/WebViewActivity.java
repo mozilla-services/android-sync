@@ -10,6 +10,8 @@ import org.mozilla.gecko.sync.Logger;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Window;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -24,6 +26,7 @@ public class WebViewActivity extends Activity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    getWindow().requestFeature(Window.FEATURE_PROGRESS);
     setContentView(R.layout.sync_setup_webview);
     // Extract URI to launch from Intent.
     Uri uri = this.getIntent().getData();
@@ -33,8 +36,16 @@ public class WebViewActivity extends Activity {
     }
 
     WebView wv = (WebView) findViewById(R.id.web_engine);
+    // Add a progress bar.
+    final Activity activity = this;
+    wv.setWebChromeClient(new WebChromeClient() {
+      public void onProgressChanged(WebView view, int progress) {
+        // Activities and WebViews measure progress with different scales.
+        // The progress meter will automatically disappear when we reach 100%
+        activity.setProgress(progress * 100);
+      }
+    });
     wv.setWebViewClient(new WebViewClient() {
-      
       // Handle url loading in this WebView, instead of asking the ActivityManager.
       @Override
       public boolean shouldOverrideUrlLoading(WebView view, String url) {
