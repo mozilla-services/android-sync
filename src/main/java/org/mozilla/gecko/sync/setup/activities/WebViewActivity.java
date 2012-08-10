@@ -14,26 +14,21 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 /**
- * Displays Uri in an embedded WebView. Closes if there no Uri is passed in.
+ * Displays URI in an embedded WebView. Closes if there no URI is passed in.
  * @author liuche
  *
  */
 public class WebViewActivity extends Activity {
-  private final String LOG_TAG = "WebViewActivity";
-
-  public WebViewActivity() {
-    super();
-    Logger.info(LOG_TAG, "WebViewActivty constructor called.");
-  }
+  private final static String LOG_TAG = "WebViewActivity";
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.sync_setup_webview);
-    // Extract uri to launch from Intent.
+    // Extract URI to launch from Intent.
     Uri uri = this.getIntent().getData();
     if (uri == null) {
-      Logger.debug(LOG_TAG, "No Uri passed to display.");
+      Logger.debug(LOG_TAG, "No URI passed to display.");
       finish();
     }
 
