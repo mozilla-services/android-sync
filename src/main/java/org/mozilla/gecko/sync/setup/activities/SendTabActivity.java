@@ -22,7 +22,6 @@ import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
-import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -186,7 +185,7 @@ public class SendTabActivity extends Activity {
         }
 
         Logger.info(LOG_TAG, "Requesting immediate clients stage sync.");
-        SyncAdapter.requestImmediateSync(localAccount, new String[] { SyncClientsEngineStage.COLLECTION_NAME });
+        SyncAccounts.requestImmediateSync(localAccount, new String[] { SyncClientsEngineStage.COLLECTION_NAME });
 
         return true;
       }

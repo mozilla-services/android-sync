@@ -10,7 +10,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.GlobalConstants;
@@ -249,29 +248,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     }
   }
 
-  /**
-   * Asynchronously request an immediate sync, optionally syncing only the given
-   * named stages.
-   * <p>
-   * Returns immediately.
-   *
-   * @param account
-   *          the Android <code>Account</code> instance to sync.
-   * @param stageNames
-   *          stage names to sync, or <code>null</code> to sync all known stages.
-   */
-  public static void requestImmediateSync(final Account account, final String[] stageNames) {
-    if (account == null) {
-      Logger.warn(LOG_TAG, "Not requesting immediate sync because Android Account is null.");
-      return;
-    }
-
-    final Bundle extras = new Bundle();
-    Utils.putStageNamesToSync(extras, stageNames, null);
-    extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-    ContentResolver.requestSync(account, BrowserContract.AUTHORITY, extras);
-  }
-
   @Override
   public void onPerformSync(final Account account,
                             final Bundle extras,
@@ -333,6 +309,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
               "Client is named '" + getClientName() + "'" +
               ", has client guid " + getAccountGUID() +
               ", and has " + getClientsCount() + " clients.");
+
+          Logger.debug(LOG_TAG, "Extras bundle is: " + extras + ".");
 
           thisSyncIsForced = (extras != null) && (extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false));
           long delay = delayMilliseconds();
