@@ -23,13 +23,13 @@
             android:theme="@style/SyncTheme"
             android:clearTaskOnLaunch="true"
             android:name="org.mozilla.gecko.sync.setup.activities.AccountActivity"
-            android:windowSoftInputMode="adjustPan|stateHidden"/>
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
 
         <activity
             android:theme="@style/SyncTheme"
             android:clearTaskOnLaunch="true"
             android:name="org.mozilla.gecko.sync.setup.activities.RedirectToSetupActivity"
-            android:windowSoftInputMode="adjustPan|stateHidden"/>
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
 
         <activity
             android:theme="@style/SyncTheme"
