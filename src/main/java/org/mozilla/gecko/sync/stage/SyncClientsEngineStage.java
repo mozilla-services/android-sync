@@ -120,7 +120,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
       // Hang onto the server's last modified timestamp to use
       // in X-If-Unmodified-Since for upload.
-      session.config.persistServerClientsTimestamp(response.normalizedWeaveTimestamp());
+      session.config.persistServerClientsTimestamp(response.getNormalizedTimestamp());
       BaseResource.consumeEntity(response);
 
       // Wipe the clients table if it still hasn't been wiped but needs to be.
@@ -253,7 +253,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
       // X-Weave-Timestamp is the modified time of uploaded records.
       // Always persist this.
-      final long responseTimestamp = response.normalizedWeaveTimestamp();
+      final long responseTimestamp = response.getNormalizedTimestamp();
       Logger.trace(LOG_TAG, "Timestamp from header is: " + responseTimestamp);
 
       if (responseTimestamp == -1) {

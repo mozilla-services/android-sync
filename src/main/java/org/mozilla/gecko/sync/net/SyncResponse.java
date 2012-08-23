@@ -192,22 +192,39 @@ public class SyncResponse {
     }
   }
 
+  public static final String TIMESTAMP_HEADER = "X-Weave-Timestamp";
+
   /**
+   * Return the timestamp header from <code>response</code>, or the current time
+   * if it is missing.
+   * <p>
    * The timestamp returned from a Sync server is a decimal number of seconds,
-   * e.g., 1323393518.04.
+   * e.g., 1323393518.04, which we convert to milliseconds since the epoch.
+   * <p>
+   * <b>Warning:</b> this can cause the timestamp of <code>response</code> to
+   * cross domains (from server clock to local clock), which could cause records
+   * to be skipped on account of clock drift. This should never happen, because
+   * <i>every</i> server response should have a well-formed timestamp header.
    *
-   * We want milliseconds since epoch.
-   *
-   * @return milliseconds since the epoch, as a long, or -1 if the header
-   *         was missing or invalid.
+   * @return milliseconds since the epoch, as a long, or the current time if the
+   *         header was missing or invalid.
    */
-  public long normalizedWeaveTimestamp() {
-    String h = "x-weave-timestamp";
-    if (!this.hasHeader(h)) {
-      return -1;
+  public long getNormalizedTimestamp() {
+    long normalizedTimestamp = -1;
+    try {
+      if (this.hasHeader(TIMESTAMP_HEADER)) {
+        normalizedTimestamp = Utils.decimalSecondsToMilliseconds(this.response.getFirstHeader(TIMESTAMP_HEADER).getValue());
+      }
+    } catch (NumberFormatException e) {
+      Logger.warn(LOG_TAG, "Malformed timestamp header received.", e);
     }
 
-    return Utils.decimalSecondsToMilliseconds(this.response.getFirstHeader(h).getValue());
+    if (-1 == normalizedTimestamp) {
+      Logger.warn(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
+      normalizedTimestamp = System.currentTimeMillis();
+    }
+
+    return normalizedTimestamp;
   }
 
   public int weaveRecords() throws NumberFormatException {

@@ -845,7 +845,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response);
-        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
+        wipeDelegate.onWiped(response.getNormalizedTimestamp());
       }
 
       @Override
