@@ -246,7 +246,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      uploadHeaderTimestamp = response.normalizedWeaveTimestamp();
+      uploadHeaderTimestamp = response.getNormalizedTimestamp();
       super.handleRequestSuccess(response);
     }
 

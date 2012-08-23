@@ -64,34 +64,6 @@ public class Server11RepositorySession extends RepositorySession {
   private static final int PER_BATCH_OVERHEAD    = 5 - PER_RECORD_OVERHEAD;
 
   /**
-   * Return the X-Weave-Timestamp header from <code>response</code>, or the
-   * current time if it is missing.
-   * <p>
-   * <b>Warning:</b> this can cause the timestamp of <code>response</code> to
-   * cross domains (from server clock to local clock), which could cause records
-   * to be skipped on account of clock drift. This should never happen, because
-   * <i>every</i> server response should have a well-formed X-Weave-Timestamp
-   * header.
-   *
-   * @param response
-   *          The <code>SyncStorageResponse</code> to interrogate.
-   * @return Normalized timestamp in milliseconds.
-   */
-  public static long getNormalizedTimestamp(SyncStorageResponse response) {
-    long normalizedTimestamp = -1;
-    try {
-      normalizedTimestamp = response.normalizedWeaveTimestamp();
-    } catch (NumberFormatException e) {
-      Logger.warn(LOG_TAG, "Malformed X-Weave-Timestamp header received.", e);
-    }
-    if (-1 == normalizedTimestamp) {
-      Logger.warn(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
-      normalizedTimestamp = System.currentTimeMillis();
-    }
-    return normalizedTimestamp;
-  }
-
-  /**
    * Used to track outstanding requests, so that we can abort them as needed.
    */
   private Set<SyncStorageCollectionRequest> pending = Collections.synchronizedSet(new HashSet<SyncStorageCollectionRequest>());
@@ -122,6 +94,7 @@ public class Server11RepositorySession extends RepositorySession {
     public void setRequest(SyncStorageCollectionRequest request) {
       this.request = request;
     }
+
     private void removeRequestFromPending() {
       if (this.request == null) {
         return;
@@ -149,7 +122,7 @@ public class Server11RepositorySession extends RepositorySession {
       Logger.debug(LOG_TAG, "Fetch done.");
       removeRequestFromPending();
 
-      final long normalizedTimestamp = getNormalizedTimestamp(response);
+      final long normalizedTimestamp = response.getNormalizedTimestamp();
       Logger.debug(LOG_TAG, "Fetch completed. Timestamp is " + normalizedTimestamp);
 
       // When we're done processing other events, finish.
@@ -165,6 +138,7 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      removeRequestFromPending();
       // TODO: ensure that delegate methods don't get called more than once.
       this.handleRequestError(new HTTPFailureException(response));
     }
@@ -265,14 +239,6 @@ public class Server11RepositorySession extends RepositorySession {
     delegate.setRequest(request);
     pending.add(request);
     request.get();
-  }
-
-  public void fetchSince(long timestamp, long limit, String sort, RepositorySessionFetchRecordsDelegate delegate) {
-    try {
-      this.fetchWithParameters(timestamp, limit, true, sort, null, new RequestFetchDelegateAdapter(delegate));
-    } catch (URISyntaxException e) {
-      delegate.onFetchFailed(e, null);
-    }
   }
 
   @Override
@@ -490,7 +456,7 @@ public class Server11RepositorySession extends RepositorySession {
             }
           }
 
-          long normalizedTimestamp = getNormalizedTimestamp(response);
+          long normalizedTimestamp = response.getNormalizedTimestamp();
           Logger.trace(LOG_TAG, "Passing back upload X-Weave-Timestamp: " + normalizedTimestamp);
           bumpUploadTimestamp(normalizedTimestamp);
         }

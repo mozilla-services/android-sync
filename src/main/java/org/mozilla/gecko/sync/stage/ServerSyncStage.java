@@ -375,7 +375,7 @@ public abstract class ServerSyncStage implements
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response);
         resetLocal();
-        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
+        wipeDelegate.onWiped(response.getNormalizedTimestamp());
       }
 
       @Override
