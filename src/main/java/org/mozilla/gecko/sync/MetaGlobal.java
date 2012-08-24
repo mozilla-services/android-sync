@@ -246,7 +246,13 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     return this.credentials;
   }
 
-  public String ifUnmodifiedSince() {
+  @Override
+  public Long ifModifiedSince() {
+    return null;
+  }
+
+  @Override
+  public Long ifUnmodifiedSince() {
     return null;
   }
 

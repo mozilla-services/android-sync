@@ -107,7 +107,7 @@ public abstract class ServerSyncStage implements
     Integer version = getStorageVersion();
     if (version == null) {
       Logger.warn(LOG_TAG, "null storage version for " + this + "; using version 0.");
-      version = new Integer(0);
+      version = Integer.valueOf(0);
     }
 
     SynchronizerConfiguration config = this.getConfig();
@@ -367,7 +367,12 @@ public abstract class ServerSyncStage implements
     request.delegate = new SyncStorageRequestDelegate() {
 
       @Override
-      public String ifUnmodifiedSince() {
+      public Long ifUnmodifiedSince() {
+        return null;
+      }
+
+      @Override
+      public Long ifModifiedSince() {
         return null;
       }
 

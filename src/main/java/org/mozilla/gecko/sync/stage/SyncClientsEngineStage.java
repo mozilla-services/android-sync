@@ -21,7 +21,6 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
@@ -110,8 +109,13 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
+    public Long ifUnmodifiedSince() {
       // TODO last client download time?
+      return null;
+    }
+
+    @Override
+    public Long ifModifiedSince() {
       return null;
     }
 
@@ -235,7 +239,12 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
+    public Long ifModifiedSince() {
+      return null;
+    }
+
+    @Override
+    public Long ifUnmodifiedSince() {
       Long timestampInMilliseconds = currentlyUploadingRecordTimestamp;
 
       // It's the first upload so we don't care about X-If-Unmodified-Since.
@@ -243,7 +252,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
         return null;
       }
 
-      return Utils.millisecondsToDecimalSecondsString(timestampInMilliseconds);
+      return Long.valueOf(timestampInMilliseconds);
     }
 
     @Override

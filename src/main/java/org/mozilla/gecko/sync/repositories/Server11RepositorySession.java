@@ -113,7 +113,12 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
+    public Long ifModifiedSince() {
+      return null;
+    }
+
+    @Override
+    public Long ifUnmodifiedSince() {
       return null;
     }
 
@@ -413,7 +418,12 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
+    public Long ifModifiedSince() {
+      return null;
+    }
+
+    @Override
+    public Long ifUnmodifiedSince() {
       return null;
     }
 

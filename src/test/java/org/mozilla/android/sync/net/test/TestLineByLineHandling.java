@@ -64,7 +64,12 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
+    public Long ifUnmodifiedSince() {
+      return null;
+    }
+
+    @Override
+    public Long ifModifiedSince() {
       return null;
     }
 

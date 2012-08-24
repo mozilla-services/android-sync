@@ -77,8 +77,13 @@ implements SyncStorageRequestDelegate {
   }
 
   @Override
-  public String ifUnmodifiedSince() {
+  public Long ifUnmodifiedSince() {
     // TODO: last key time!
+    return null;
+  }
+
+  @Override
+  public Long ifModifiedSince() {
     return null;
   }
 

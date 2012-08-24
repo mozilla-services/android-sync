@@ -12,6 +12,7 @@ import java.util.HashMap;
 
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Utils;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -133,12 +134,21 @@ public class SyncStorageRequest implements Resource {
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, GlobalConstants.USER_AGENT);
 
-      // Clients can use their delegate interface to specify X-If-Unmodified-Since.
-      String ifUnmodifiedSince = this.request.delegate.ifUnmodifiedSince();
+      // Clients can use their delegate interface to specify X-If-Unmodified-Since and X-If-Modified-Since.
+      final Long ifUnmodifiedSince = this.request.delegate.ifUnmodifiedSince();
       if (ifUnmodifiedSince != null) {
-        Logger.debug(LOG_TAG, "Making request with X-If-Unmodified-Since = " + ifUnmodifiedSince);
-        request.setHeader("x-if-unmodified-since", ifUnmodifiedSince);
+        final String h = Utils.millisecondsToDecimalSecondsString(ifUnmodifiedSince.longValue());
+        Logger.debug(LOG_TAG, "Making request with X-If-Unmodified-Since = " + h);
+        request.setHeader("x-if-unmodified-since", h);
       }
+
+      final Long ifModifiedSince = this.request.delegate.ifModifiedSince();
+      if (ifModifiedSince != null) {
+        final String h = Utils.millisecondsToDecimalSecondsString(ifModifiedSince.longValue());
+        Logger.debug(LOG_TAG, "Making request with X-If-Modified-Since = " + h);
+        request.setHeader("x-if-modified-since", h);
+      }
+
       if (request.getMethod().equalsIgnoreCase("DELETE")) {
         request.addHeader("x-confirm-delete", "1");
       }

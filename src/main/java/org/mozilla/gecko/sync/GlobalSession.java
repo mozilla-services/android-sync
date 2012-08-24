@@ -576,7 +576,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     request.delegate = new SyncStorageRequestDelegate() {
 
       @Override
-      public String ifUnmodifiedSince() {
+      public Long ifModifiedSince() {
+        return null;
+      }
+
+      @Override
+      public Long ifUnmodifiedSince() {
         return null;
       }
 
@@ -838,7 +843,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     request.delegate = new SyncStorageRequestDelegate() {
 
       @Override
-      public String ifUnmodifiedSince() {
+      public Long ifUnmodifiedSince() {
+        return null;
+      }
+
+      @Override
+      public Long ifModifiedSince() {
         return null;
       }
 
