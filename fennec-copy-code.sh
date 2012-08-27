@@ -60,6 +60,7 @@ echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -not -name 'icon.png' 
 echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
 echo "SYNC_RES_LAYOUT := $(find res/layout -name '*.xml' | xargs)"  >> $MKFILE
 echo "SYNC_RES_VALUES := res/values/sync_styles.xml" >> $MKFILE
+echo "SYNC_RES_VALUES_LARGE_V11 := res/values-large-v11/sync_styles.xml" >> $MKFILE
 # XML resources that do not need to be preprocessed.
 echo "SYNC_RES_XML :=" >> $MKFILE
 # XML resources that need to be preprocessed.
@@ -92,13 +93,14 @@ rsync -a --exclude "icon.png" res/drawable-hdpi $ANDROID/base/resources/
 rsync -a --exclude "icon.png" res/drawable-mdpi $ANDROID/base/resources/
 rsync -a --exclude "icon.png" res/drawable-ldpi $ANDROID/base/resources/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
-rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/values/sync_styles.xml $ANDROID/base/resources/values/
+rsync -a res/values-large-v11/sync_styles.xml $ANDROID/base/resources/values-large-v11/
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -a strings/strings.xml.in $SYNC/
 rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
 
 echo "res/values/sync_styles.xml " > $SYNC/android-values-resources.mn
+echo "res/values-large-v11/sync_styles.xml " > $SYNC/android-values-resources.mn
 find res/layout         -name '*.xml' > $SYNC/android-layout-resources.mn
 find res/drawable       -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-resources.mn
 find res/drawable-ldpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-ldpi-resources.mn
