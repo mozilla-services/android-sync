@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.sync.repositories;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Server11PreviousPostFailedException;
 import org.mozilla.gecko.sync.Server11RecordPostFailedException;
 import org.mozilla.gecko.sync.UnexpectedJSONException;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.ByteArraysEntity;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
@@ -149,12 +147,6 @@ public class Server11RepositorySession extends RepositorySession {
       } finally {
         workTracker.decrementOutstanding();
       }
-    }
-
-    // TODO: this implies that we've screwed up our inheritance chain somehow.
-    @Override
-    public KeyBundle keyBundle() {
-      return null;
     }
   }
 
