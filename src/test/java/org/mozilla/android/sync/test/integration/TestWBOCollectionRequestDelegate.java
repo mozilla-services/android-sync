@@ -42,7 +42,7 @@ public class TestWBOCollectionRequestDelegate {
     @Override
     public String ifUnmodifiedSince() {
       return null;
-    }    
+    }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
@@ -52,6 +52,7 @@ public class TestWBOCollectionRequestDelegate {
         for (CryptoRecord record : this.wbos) {
           try {
             // TODO: make this an actual test. Return data locally.
+            record.keyBundle = this.bookmarksBundle;
             CryptoRecord decrypted = (CryptoRecord)(record.decrypt());
             Logger.debug(LOG_TAG, decrypted.payload.toJSONString());
           } catch (Exception e) {
@@ -83,11 +84,6 @@ public class TestWBOCollectionRequestDelegate {
     public void handleWBO(CryptoRecord record) {
       this.wbos.add(record);
     }
-
-    @Override
-    public KeyBundle keyBundle() {
-      return this.bookmarksBundle;
-    }
   }
 
   @Test
@@ -102,6 +98,6 @@ public class TestWBOCollectionRequestDelegate {
     String hmacKey   = "11GN34O9QWXkjR06g8t0gWE1sGgQeWL0qxxWwl8Dmxs=";
     delegate.bookmarksBundle = KeyBundle.fromBase64EncodedKeys(encrKey, hmacKey);
 
-    r.get(); 
+    r.get();
   }
 }

@@ -28,9 +28,9 @@ import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
+import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
-import org.mozilla.gecko.sync.net.WBORequestDelegate;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
@@ -189,6 +189,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     public void handleWBO(CryptoRecord record) {
       ClientRecord r;
       try {
+        record.keyBundle = keyBundle();
         r = (ClientRecord) factory.createRecord(record.decrypt());
         if (clientsDelegate.isLocalGUID(r.guid)) {
           Logger.info(LOG_TAG, "Local client GUID exists on server and was downloaded");
@@ -208,7 +209,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       }
     }
 
-    @Override
     public KeyBundle keyBundle() {
       try {
         return session.keyBundleForCollection(COLLECTION_NAME);
@@ -218,7 +218,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
-  public class ClientUploadDelegate extends WBORequestDelegate {
+  public class ClientUploadDelegate implements SyncStorageRequestDelegate {
     protected static final String LOG_TAG = "ClientUploadDelegate";
     public Long currentlyUploadingRecordTimestamp;
     public boolean currentlyUploadingLocalRecord;
@@ -313,7 +313,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       session.abort(ex, "Client upload failed.");
     }
 
-    @Override
     public KeyBundle keyBundle() {
       try {
         return session.keyBundleForCollection(COLLECTION_NAME);

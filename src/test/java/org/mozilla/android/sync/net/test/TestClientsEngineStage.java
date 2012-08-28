@@ -209,6 +209,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     public void handleWBO(CryptoRecord record) {
       ClientRecord r;
       try {
+        record.keyBundle = keyBundle();
         r = (ClientRecord) factory.createRecord(record.decrypt());
         downloadedClients.add(r);
         numRecordsFromGetRequest++;
