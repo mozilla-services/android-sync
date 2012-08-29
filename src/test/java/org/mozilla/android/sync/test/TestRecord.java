@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -22,6 +23,7 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 public class TestRecord {
@@ -168,6 +170,38 @@ public class TestRecord {
     assertEquals("", zero.icon);
     assertEquals("http://example.com", zero.history.get(0));
     assertEquals(0L, zero.lastUsed);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testTabsRecordCreation() throws Exception {
+    final TabsRecord record = new TabsRecord("testGuid");
+    record.clientName = "test client name";
+
+    final JSONArray history1 = new JSONArray();
+    history1.add("http://test.com/test1.html");
+    final Tab tab1 = new Tab("test title 1", "http://test.com/test1.png", history1, 1000);
+
+    final JSONArray history2 = new JSONArray();
+    history2.add("http://test.com/test2.html#1");
+    history2.add("http://test.com/test2.html#2");
+    history2.add("http://test.com/test2.html#3");
+    final Tab tab2 = new Tab("test title 2", "http://test.com/test2.png", history2, 2000);
+
+    record.tabs = new ArrayList<Tab>();
+    record.tabs.add(tab1);
+    record.tabs.add(tab2);
+
+    final TabsRecord parsed = new TabsRecord();
+    parsed.initFromEnvelope(CryptoRecord.fromJSONRecord(record.getEnvelope().toJSONString()));
+
+    assertEquals(record.guid, parsed.guid);
+    assertEquals(record.clientName, parsed.clientName);
+    assertEquals(record.tabs, parsed.tabs);
+
+    // Verify that equality test doesn't always return true.
+    parsed.tabs.get(0).history.add("http://test.com/different.html");
+    assertFalse(record.tabs.equals(parsed.tabs));
   }
 
   public static class URITestBookmarkRecord extends BookmarkRecord {
