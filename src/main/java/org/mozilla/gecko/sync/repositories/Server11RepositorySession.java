@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.sync.repositories;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -214,8 +215,8 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestProgress(String progress) throws Exception {
-      guids.add((String) ExtendedJSONObject.parse(progress));
+    public void handleRequestProgress(String progress) {
+      guids.add(progress);
     }
 
     @Override
@@ -252,8 +253,22 @@ public class Server11RepositorySession extends RepositorySession {
   @Override
   public void guidsSince(long timestamp,
                          RepositorySessionGuidsSinceDelegate delegate) {
-    // TODO Auto-generated method stub
+    URI collectionURI;
+    try {
+      String sort = serverRepository.getDefaultSort();
+      collectionURI = serverRepository.collectionURI(false, timestamp, -1, sort, null);
+    } catch (URISyntaxException e) {
+      delegate.onGuidsSinceFailed(e);
+      return;
+    }
 
+    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
+    RequestGuidsDelegateAdapter adapter = new RequestGuidsDelegateAdapter(delegate);
+    // So it can clean up.
+    adapter.setRequest(request);
+    request.delegate = adapter;
+    pending.add(request);
+    request.get();
   }
 
   protected void fetchWithParameters(long newer,
