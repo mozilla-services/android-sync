@@ -22,14 +22,9 @@ implements KeyBundleProvider {
   public abstract void handleWBO(CryptoRecord record);
 
   @Override
-  public void handleRequestProgress(String progress) {
-    try {
-      CryptoRecord record = CryptoRecord.fromJSONRecord(progress);
-      record.keyBundle = this.keyBundle();
-      this.handleWBO(record);
-    } catch (Exception e) {
-      this.handleRequestError(e);
-      // TODO: abort?! Allow exception to propagate to fail?
-    }
+  public void handleRequestProgress(String progress) throws Exception {
+    CryptoRecord record = CryptoRecord.fromJSONRecord(progress);
+    record.keyBundle = this.keyBundle();
+    this.handleWBO(record);
   }
 }

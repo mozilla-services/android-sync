@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.sync.repositories;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import org.mozilla.gecko.sync.UnexpectedJSONException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.ByteArraysEntity;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
+import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -192,6 +194,66 @@ public class Server11RepositorySession extends RepositorySession {
       b.append(",");
     }
     return b.substring(0, b.length() - 1);
+  }
+
+  public class RequestGuidsDelegateAdapter extends SyncStorageCollectionRequestDelegate {
+    public ArrayList<String> guids = new ArrayList<String>();
+
+    public RepositorySessionGuidsSinceDelegate delegate = null;
+
+    public RequestGuidsDelegateAdapter(RepositorySessionGuidsSinceDelegate delegate) {
+      this.delegate = delegate;
+    }
+
+    // So that we can clean up.
+    private SyncStorageCollectionRequest request;
+
+    public void setRequest(SyncStorageCollectionRequest request) {
+      this.request = request;
+    }
+
+    private void removeRequestFromPending() {
+      if (this.request == null) {
+        return;
+      }
+      pending.remove(this.request);
+      this.request = null;
+    }
+
+    @Override
+    public void handleRequestProgress(String progress) throws Exception {
+      guids.add((String) ExtendedJSONObject.parse(progress));
+    }
+
+    @Override
+    public String credentials() {
+      return serverRepository.credentialsSource.credentials();
+    }
+
+    @Override
+    public String ifUnmodifiedSince() {
+      return null;
+    }
+
+    @Override
+    public void handleRequestSuccess(SyncStorageResponse response) {
+      Logger.debug(LOG_TAG, "guidsSince done.");
+      String[] guidsArray = new String[guids.size()];
+      guids.toArray(guidsArray);
+      delegate.onGuidsSinceSucceeded(guidsArray);
+    }
+
+    @Override
+    public void handleRequestFailure(SyncStorageResponse response) {
+      this.handleRequestError(new HTTPFailureException(response));
+    }
+
+    @Override
+    public void handleRequestError(Exception ex) {
+      removeRequestFromPending();
+      Logger.warn(LOG_TAG, "guidsSince got error.", ex);
+      delegate.onGuidsSinceFailed(ex);
+    }
   }
 
   @Override

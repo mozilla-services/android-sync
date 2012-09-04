@@ -5,5 +5,15 @@
 package org.mozilla.gecko.sync.net;
 
 public interface SyncStorageRequestIncrementalDelegate {
-  void handleRequestProgress(String progress);  // For line-by-line.
+  /**
+   * Called once for each line returned by the server.
+   * <p>
+   * If this throws an exception, the incremental request is terminated
+   * immediately; see {@link SyncStorageCollectionRequest#handleHttpResponse}.
+   *
+   * @param progress
+   *          line returned by the server.
+   * @throws Exception
+   */
+  void handleRequestProgress(String progress) throws Exception;
 }
