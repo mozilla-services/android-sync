@@ -21,6 +21,8 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
 
 public class SyncStorageRequest implements Resource {
+  public static final String LOG_TAG = "SyncStorageRequest";
+
   public static HashMap<String, String> SERVER_ERROR_MESSAGES;
   static {
     HashMap<String, String> errors = new HashMap<String, String>();
@@ -78,6 +80,22 @@ public class SyncStorageRequest implements Resource {
     this.resource.delegate = this.resourceDelegate;
   }
 
+  protected volatile boolean aborting = false;
+
+  /**
+   * Instruct the request that it should process no more records,
+   * and decline to notify any more delegate callbacks.
+   */
+  public void abort() {
+    aborting = true;
+    try {
+      this.resource.request.abort();
+    } catch (Exception e) {
+      // Just in case.
+      Logger.warn(LOG_TAG, "Got exception in abort: " + e);
+    }
+  }
+
   /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
@@ -97,6 +115,10 @@ public class SyncStorageRequest implements Resource {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
+      if (aborting) {
+        return;
+      }
+
       Logger.debug(LOG_TAG, "SyncStorageResourceDelegate handling response: " + response.getStatusLine() + ".");
       SyncStorageRequestDelegate d = this.request.delegate;
       SyncStorageResponse res = new SyncStorageResponse(response);

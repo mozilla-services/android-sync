@@ -33,22 +33,6 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
     super(uri);
   }
 
-  protected volatile boolean aborting = false;
-
-  /**
-   * Instruct the request that it should process no more records,
-   * and decline to notify any more delegate callbacks.
-   */
-  public void abort() {
-    aborting = true;
-    try {
-      this.resource.request.abort();
-    } catch (Exception e) {
-      // Just in case.
-      Logger.warn(LOG_TAG, "Got exception in abort: " + e);
-    }
-  }
-
   @Override
   protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
     return new SyncCollectionResourceDelegate((SyncStorageCollectionRequest) request);
@@ -90,6 +74,8 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
         super.handleHttpResponse(response);
         return;
       }
+
+      Logger.debug(LOG_TAG, "SyncCollectionResourceDelegate handling response: " + response.getStatusLine() + ".");
 
       // TODO: at this point we can access X-Weave-Timestamp, compare
       // that to our local timestamp, and compute an estimate of clock
