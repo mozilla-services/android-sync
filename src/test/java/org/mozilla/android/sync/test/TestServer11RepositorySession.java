@@ -40,6 +40,9 @@ import org.simpleframework.http.Response;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 
+/**
+ * Test <code>Server11RepositorySession</code> against a local (mock) server.
+ */
 public class TestServer11RepositorySession implements CredentialsSource {
 
   public class POSTMockServer extends MockServer {
