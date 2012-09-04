@@ -429,8 +429,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     for (String key : enginesToRemove) {
       engines.remove(key);
     }
-    // Persist updated engines of meta/global to SyncConfiguration, so persisted meta/global will match what is uploaded.
-    config.enabledEngineNames = config.metaGlobal.getEnabledEngineNames();
 
     enginesToRemove.clear();
     enginesToUpdate.clear();

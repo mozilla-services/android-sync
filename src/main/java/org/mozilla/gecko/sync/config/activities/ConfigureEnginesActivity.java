@@ -14,7 +14,6 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
-import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -36,11 +35,11 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
   public final static String LOG_TAG = "ConfigureEnginesAct";
   private ListView selectionsList;
 
-  protected interface AccountConsumer {
-    public void run(SyncAccountParameters syncParams, SharedPreferences prefs);
-  }
-
-  protected String[] _options = new String[] { "Bookmarks", "Passwords", "History", "Tabs" };
+  final String[] _options = new String[] {
+      getString(R.string.sync_configure_engines_title_bookmarks),
+      getString(R.string.sync_configure_engines_title_passwords),
+      getString(R.string.sync_configure_engines_title_history),
+      getString(R.string.sync_configure_engines_title_tabs) };
   protected boolean[] _selections = new boolean[_options.length];
   private final boolean[] _origSelections = new boolean[_options.length];
 
