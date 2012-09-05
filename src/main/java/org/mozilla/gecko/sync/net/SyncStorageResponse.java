@@ -59,8 +59,8 @@ public class SyncStorageResponse extends SyncResponse {
   }
 
 
-  public SyncStorageResponse(HttpResponse res) {
-    this.response = res;
+  public SyncStorageResponse(final HttpResponse response) {
+    super(response);
   }
 
   public String getErrorMessage() throws IllegalStateException, IOException {

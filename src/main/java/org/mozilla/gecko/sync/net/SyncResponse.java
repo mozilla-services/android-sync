@@ -25,13 +25,9 @@ public class SyncResponse {
   private static final String HEADER_RETRY_AFTER = "retry-after";
   private static final String LOG_TAG = "SyncResponse";
 
-  protected HttpResponse response;
+  protected final HttpResponse response;
 
-  public SyncResponse() {
-    super();
-  }
-
-  public SyncResponse(HttpResponse res) {
+  public SyncResponse(final HttpResponse res) {
     response = res;
   }
 
