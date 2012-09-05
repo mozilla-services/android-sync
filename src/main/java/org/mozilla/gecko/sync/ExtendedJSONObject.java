@@ -166,6 +166,10 @@ public class ExtendedJSONObject {
     map.put(key, value);
   }
 
+  public void remove(String key) {
+    this.object.remove(key);
+  }
+
   public ExtendedJSONObject getObject(String key) throws NonObjectJSONException {
     Object o = this.object.get(key);
     if (o == null) {
