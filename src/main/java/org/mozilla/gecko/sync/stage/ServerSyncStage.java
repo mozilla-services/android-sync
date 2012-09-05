@@ -15,6 +15,7 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobalException;
+import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalEngineStateChangedException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
@@ -37,12 +38,14 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
+import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerSession;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 /**
  * Fetch from a server collection into a local repository, encrypting
@@ -84,9 +87,13 @@ public abstract class ServerSyncStage implements
       // Fall through; null engineSettings will pass below.
     }
 
-    // We can be disabled by the server's meta/global record, or malformed in the server's meta/global record.
+    // We can be disabled by the server's meta/global record, or malformed in the server's meta/global record,
+    // or by the user manually in Sync Settings.
     // We catch the subclasses of MetaGlobalException to trigger various resets and wipes in execute().
     boolean enabledInMetaGlobal = session.engineIsEnabled(this.getEngineName(), engineSettings);
+
+    // Check for manual changes to engines by the user.
+    checkAndUpdateManualEngines(enabledInMetaGlobal);
     if (!enabledInMetaGlobal) {
       Logger.debug(LOG_TAG, "Stage " + this.getEngineName() + " disabled by server meta/global.");
       return false;
@@ -101,6 +108,22 @@ public abstract class ServerSyncStage implements
       Logger.debug(LOG_TAG, "Stage " + this.getEngineName() + " disabled just for this sync.");
     }
     return enabledThisSync;
+  }
+
+  /**
+   * Compares meta/global to manually selected engines and throws an exception if they don't match and meta/global needs to be updated.
+   * @param enabledInMetaGlobal
+   * @throws MetaGlobalEngineStateChangedException
+   */
+  protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalEngineStateChangedException {
+    SharedPreferences selectedEngines = session.getPrefs(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
+    if (selectedEngines.contains(this.getEngineName())) {
+      boolean enabledInSelection = selectedEngines.getBoolean(this.getEngineName(), false);
+      if (enabledInMetaGlobal != enabledInSelection) {
+        // Engine enable state has been changed by the user.
+        throw new MetaGlobalException.MetaGlobalEngineStateChangedException(enabledInSelection);
+      }
+    }
   }
 
   protected EngineSettings getEngineSettings() throws NonObjectJSONException, IOException, ParseException {
@@ -487,6 +510,24 @@ public abstract class ServerSyncStage implements
       Logger.warn(LOG_TAG, "Remote engine syncID different from local engine syncID:" +
                            " resetting local engine and assuming remote engine syncID.");
       this.resetLocal(e.serverSyncID);
+    } catch (MetaGlobalException.MetaGlobalEngineStateChangedException e) {
+      // Engine sync status has changed. Update MetaGlobal.
+      if (!e.isEnabled) {
+        // Engine has been disabled; remove from MetaGlobal and progress to next stage.
+        session.removeEngineFromMetaGlobal(name);
+        session.advance();
+        return;
+      } else {
+        // Add engine with new syncID to MetaGlobal and continue syncing the stage.
+        try {
+          session.updateMetaGlobalWith(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
+          Logger.info(LOG_TAG, "Wiping server because new engine needs to be added for syncing.");
+          wipeServer();
+          Logger.info(LOG_TAG, "Wiped server because new engine needs to be added for syncing.");
+        } catch (Exception ex) {
+          session.abort(ex, "Failed to wipe server after new engine needs to be synced.");
+        }
+      }
     } catch (MetaGlobalException e) {
       session.abort(e, "Inappropriate meta/global; refusing to execute " + name + " stage.");
       return;
