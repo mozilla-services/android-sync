@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
-import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalEngineStateChangedException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.ConstrainedServer11Repository;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
@@ -90,7 +89,7 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
    * Forms engine state should match History, because there is no manual way to control Forms syncing.
    */
   @Override
-  protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalEngineStateChangedException {
+  protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalException {
     SharedPreferences selectedEngines = session.getPrefs(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
     if (selectedEngines.contains("history")) {
       boolean enabledInSelection = selectedEngines.getBoolean("history", false);

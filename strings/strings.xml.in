@@ -55,6 +55,10 @@
   <string name="sync_configure_engines_title">&sync.configure.engines.title.label;</string>
   <string name="sync_configure_engines_summary">&sync.configure.engines.summary.label;</string>
   <string name="sync_configure_engines_sync_my_title">&sync.configure.engines.sync.my.title.label;</string>
+  <string name="sync_configure_engines_title_bookmarks">&sync.configure.engines.title.bookmarks;</string>
+  <string name="sync_configure_engines_title_passwords">&sync.configure.engines.title.passwords;</string>
+  <string name="sync_configure_engines_title_history">&sync.configure.engines.title.history;</string>
+  <string name="sync_configure_engines_title_tabs">&sync.configure.engines.title.tabs;</string>
 
   <!-- Common text -->
   <string name="sync_button_cancel">&sync.button.cancel.label;</string>
