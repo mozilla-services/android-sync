@@ -15,7 +15,6 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobalException;
-import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalEngineStateChangedException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
@@ -111,11 +110,17 @@ public abstract class ServerSyncStage implements
   }
 
   /**
-   * Compares meta/global to manually selected engines and throws an exception if they don't match and meta/global needs to be updated.
+   * Compares meta/global engine state to manually selected engines from Sync
+   * Settings and throws an exception if they don't match and meta/global needs
+   * to be updated.
+   *
    * @param enabledInMetaGlobal
-   * @throws MetaGlobalEngineStateChangedException
+   *          boolean of engine sync state in meta/global
+   * @throws MetaGlobalException
+   *           if engine sync state has been changed in Sync Settings, with new
+   *           engine sync state.
    */
-  protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalEngineStateChangedException {
+  protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalException {
     SharedPreferences selectedEngines = session.getPrefs(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
     if (selectedEngines.contains(this.getEngineName())) {
       boolean enabledInSelection = selectedEngines.getBoolean(this.getEngineName(), false);

@@ -77,6 +77,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Map from engine name to new settings for an updated meta/global record.
    */
   public final Map<String, EngineSettings> enginesToUpdate = new HashMap<String, EngineSettings>();
+
+  /**
+   * Track engine names to be removed from an updated meta/global record.
+   */
   public final Set<String> enginesToRemove = new HashSet<String>();
 
   /*
@@ -394,6 +398,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     enginesToUpdate.put(engineName, engineSettings);
   }
 
+  /**
+   * Adds engineName to be removed when updating meta/global to be uploaded.
+   * @param engineName
+   */
   public void removeEngineFromMetaGlobal(String engineName) {
     enginesToRemove.add(engineName);
   }
@@ -405,9 +413,9 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
 
     if (Logger.shouldLogVerbose(LOG_TAG)) {
-      Logger.trace(LOG_TAG, "Uploading updated meta/global record since there are engines requesting upload [" +
-          Utils.toCommaSeparatedString(enginesToUpdate.keySet()) +
-          "] or engines to remove [" + Utils.toCommaSeparatedString(enginesToRemove));
+      Logger.trace(LOG_TAG, "Uploading updated meta/global record since there are engine changes to meta/global.");
+      Logger.trace(LOG_TAG, "Engines requesting upload [" + Utils.toCommaSeparatedString(enginesToUpdate.keySet()) + "]");
+      Logger.trace(LOG_TAG, "Engines to remove [" + Utils.toCommaSeparatedString(enginesToRemove) + "]");
     }
 
     return true;
@@ -964,11 +972,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     if (config.enabledEngineNames != null) {
       return config.enabledEngineNames;
     }
-    Set<String> engineNames = new HashSet<String>();
-    for (Stage stage : Stage.getNamedStages()) {
-      engineNames.add(stage.getRepositoryName());
-    }
-    return engineNames;
+    return SyncConfiguration.validEngineNames();
   }
 
   /**

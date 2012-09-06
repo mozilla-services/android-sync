@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
+import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -248,6 +249,16 @@ public class SyncConfiguration implements CredentialsSource {
     return prefsSource.getPrefs(prefsPath, Utils.SHARED_PREFERENCES_MODE);
   }
 
+  /**
+   * @return Set<String> of valid engine names that Android Sync implements.
+   */
+  public static Set<String> validEngineNames() {
+    Set<String> engineNames = new HashSet<String>();
+    for (Stage stage : Stage.getNamedStages()) {
+      engineNames.add(stage.getRepositoryName());
+    }
+    return engineNames;
+  }
   /**
    * Return a convenient accessor for part of prefs.
    * @return

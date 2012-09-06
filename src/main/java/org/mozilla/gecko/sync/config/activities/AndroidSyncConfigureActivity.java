@@ -21,7 +21,6 @@ import android.os.Bundle;
 
 /**
  * Activity for configuring Firefox Sync settings, that does work of fetching account information.
- * @author liuche
  *
  */
 public abstract class AndroidSyncConfigureActivity extends Activity {

@@ -166,8 +166,19 @@ public class ExtendedJSONObject {
     map.put(key, value);
   }
 
-  public void remove(String key) {
-    this.object.remove(key);
+  /**
+   * Remove key-value pair from JSONObject.
+   * @param key
+   * @return true if key exists and was removed, false otherwise.
+   *
+   */
+  public boolean remove(String key) {
+    Object res = this.object.remove(key);
+    if (res == null) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   public ExtendedJSONObject getObject(String key) throws NonObjectJSONException {

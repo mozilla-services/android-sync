@@ -24,7 +24,12 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 /**
- * Configure which engines to Sync.
+ * Provides a user-facing interface for selecting engines to sync. This activity can be launched
+ * from the Sync Settings preferences screen, and will save the selected engines to a pref.
+ * 
+ * On launch, it loads from either the saved pref of selected engines (if it exists) or from
+ * SyncConfiguration. During a sync, this pref will be read and cleared.
+ * 
  */
 public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     implements DialogInterface.OnClickListener, DialogInterface.OnMultiChoiceClickListener {
@@ -35,7 +40,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     public void run(SyncAccountParameters syncParams, SharedPreferences prefs);
   }
 
-  protected String[]  _options = new String[] { "Bookmarks", "History", "Passwords", "Tabs" };
+  protected String[] _options = new String[] { "Bookmarks", "Passwords", "History", "Tabs" };
   protected boolean[] _selections = new boolean[_options.length];
   private final boolean[] _origSelections = new boolean[_options.length];
 
@@ -48,12 +53,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
 
       @Override
       public void run(SharedPreferences prefs) {
-        // Extract enabled-engine state.
-        Set<String> enabledEngineNames = getEnabledEngines(prefs);
-        if (enabledEngineNames == null) {
-          enabledEngineNames = new HashSet<String>();
-        }
-        setSelections(enabledEngineNames);
+        setSelections(getEnginesToSelect(prefs));
 
         new AlertDialog.Builder(self)
             .setTitle(R.string.sync_configure_engines_sync_my_title)
@@ -65,7 +65,17 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     });
   }
 
-  private Set<String> getEnabledEngines(SharedPreferences syncPrefs) {
+  /**
+   * Fetches the engine names that should be displayed as selected for syncing.
+   * Check first for the selection pref set by this activity, then the set of
+   * enabled engines from SyncConfiguration, and finally use the set of valid
+   * engine names for Android Sync.
+   *
+   * @param syncPrefs
+   * @return Set<String> of engine names to display as selected. Should never be
+   *         null.
+   */
+  private Set<String> getEnginesToSelect(SharedPreferences syncPrefs) {
     Set<String> engines;
     // Check engine SharedPrefs first.
     SharedPreferences engineConfigPrefs = mContext.getSharedPreferences(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
@@ -82,17 +92,22 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
       return engines;
     }
     Logger.warn(LOG_TAG, "No previous engine prefs");
-    // No previously stored engine prefs.
-    return SyncConfiguration.getEnabledEngineNames(syncPrefs);
+    // No previously stored engine prefs. Fetch from config.
+
+    engines = SyncConfiguration.getEnabledEngineNames(syncPrefs);
+    if (engines == null) {
+      engines = SyncConfiguration.validEngineNames();
+    }
+    return engines;
   }
 
   // Hardcoded engines.
-  public void setSelections(Set<String> enabled) {
-    _selections[0] = enabled.contains("bookmarks");
+  public void setSelections(Set<String> selected) {
+    _selections[0] = selected.contains("bookmarks");
     // Omit Forms, because there is no way to enable/disable Forms in desktop UI.
-    _selections[1] = enabled.contains("history");
-    _selections[2] = enabled.contains("passwords");
-    _selections[3] = enabled.contains("tabs");
+    _selections[1] = selected.contains("history");
+    _selections[2] = selected.contains("passwords");
+    _selections[3] = selected.contains("tabs");
 
     // Cache original selections for comparing changes.
     System.arraycopy(_selections, 0, _origSelections, 0, _selections.length);
@@ -100,7 +115,9 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
 
   @Override
   public void onClick(DialogInterface dialog, int which) {
-    if (which == DialogInterface.BUTTON_POSITIVE && saveEngines()) {
+    if (which == DialogInterface.BUTTON_POSITIVE && _selections.equals(_origSelections)) {
+      Logger.debug(LOG_TAG, "Saving selected engines.");
+      saveSelections();
       setResult(RESULT_OK);
       Toast.makeText(this, R.string.sync_notification_savedprefs, Toast.LENGTH_SHORT).show();
     } else {
@@ -120,13 +137,10 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
   }
 
   /**
-   * Persists enabled engines to SharedPreferences if changed.
+   * Persists selected engines to SharedPreferences if changed.
    * @return true if changed, false otherwise.
    */
-  private boolean saveEngines() {
-    if (_selections.equals(_origSelections)) {
-      return false;
-    }
+  private void saveSelections() {
     // Persist to SharedPreferences.
     SharedPreferences prefs = mContext.getSharedPreferences(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
     Editor enginePrefsEditor = prefs.edit();
@@ -136,6 +150,5 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
       }
     }
     enginePrefsEditor.commit();
-    return true;
   }
 }
