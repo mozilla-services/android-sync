@@ -35,19 +35,24 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
   public final static String LOG_TAG = "ConfigureEnginesAct";
   private ListView selectionsList;
 
-  final String[] _options = new String[] {
-      getString(R.string.sync_configure_engines_title_bookmarks),
-      getString(R.string.sync_configure_engines_title_passwords),
-      getString(R.string.sync_configure_engines_title_history),
-      getString(R.string.sync_configure_engines_title_tabs) };
-  protected boolean[] _selections = new boolean[_options.length];
-  private final boolean[] _origSelections = new boolean[_options.length];
+  private String[] _options;
+  protected boolean[] _selections;
+  private boolean[] _origSelections;
 
   @Override
   public void onResume() {
     super.onResume();
     final ConfigureEnginesActivity self = this;
+    Logger.warn(LOG_TAG, "bookmarks");
+    Logger.warn(LOG_TAG, getString(R.string.sync_configure_engines_title_bookmarks));
+    _options = new String[] {
+        getString(R.string.sync_configure_engines_title_bookmarks),
+        getString(R.string.sync_configure_engines_title_passwords),
+        getString(R.string.sync_configure_engines_title_history),
+        getString(R.string.sync_configure_engines_title_tabs) };
     // Display engine configure UI.
+    _selections = new boolean[_options.length];
+    _origSelections = new boolean[_options.length];
     fetchPrefsAndConsume(new PrefsConsumer() {
 
       @Override
@@ -104,8 +109,8 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
   public void setSelections(Set<String> selected) {
     _selections[0] = selected.contains("bookmarks");
     // Omit Forms, because there is no way to enable/disable Forms in desktop UI.
-    _selections[1] = selected.contains("history");
-    _selections[2] = selected.contains("passwords");
+    _selections[1] = selected.contains("passwords");
+    _selections[2] = selected.contains("history");
     _selections[3] = selected.contains("tabs");
 
     // Cache original selections for comparing changes.
@@ -114,7 +119,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
 
   @Override
   public void onClick(DialogInterface dialog, int which) {
-    if (which == DialogInterface.BUTTON_POSITIVE && _selections.equals(_origSelections)) {
+    if (which == DialogInterface.BUTTON_POSITIVE) {
       Logger.debug(LOG_TAG, "Saving selected engines.");
       saveSelections();
       setResult(RESULT_OK);

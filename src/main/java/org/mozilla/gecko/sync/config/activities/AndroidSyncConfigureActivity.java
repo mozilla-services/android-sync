@@ -1,7 +1,6 @@
 package org.mozilla.gecko.sync.config.activities;
 
 
-import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
@@ -44,7 +43,7 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
-        Account[] accounts = mAccountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
+        Account[] accounts = SyncAccounts.syncAccounts(mContext);
         if (accounts.length == 0) {
           Logger.error(LOG_TAG, "Failed to get account!");
           finish();
@@ -53,8 +52,13 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
           // Only supports one account per type.
           Account account = accounts[0];
           try {
-            SharedPreferences prefs = SyncAccounts.getPrefsFromDefaultAccount(mContext, mAccountManager, account);
-            accountConsumer.run(prefs);
+            final SharedPreferences prefs = SyncAccounts.getPrefsFromDefaultAccount(mContext, mAccountManager, account);
+            runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                accountConsumer.run(prefs);
+              }
+            });
           } catch (Exception e) {
             Logger.error(LOG_TAG, "Failed to get sync account info or shared preferences.", e);
             finish();

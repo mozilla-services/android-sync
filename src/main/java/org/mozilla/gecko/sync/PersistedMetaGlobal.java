@@ -10,7 +10,7 @@ import org.mozilla.gecko.sync.Logger;
 import android.content.SharedPreferences;
 
 /**
- * Persisted version of meta/global from server. This should be exactly what is downloaded.
+ * Persisted version of meta/global from server. This should match what is downloaded.
  *
  */
 public class PersistedMetaGlobal {
