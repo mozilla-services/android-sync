@@ -35,6 +35,7 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
@@ -76,6 +77,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Map from engine name to new settings for an updated meta/global record.
    */
   public final Map<String, EngineSettings> enginesToUpdate = new HashMap<String, EngineSettings>();
+
+  /**
+   * Track engine names to be removed from an updated meta/global record.
+   */
+  public final Set<String> enginesToRemove = new HashSet<String>();
 
   /*
    * Key accessors.
@@ -392,15 +398,24 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     enginesToUpdate.put(engineName, engineSettings);
   }
 
+  /**
+   * Adds engineName to be removed when updating meta/global to be uploaded.
+   * @param engineName
+   */
+  public void removeEngineFromMetaGlobal(String engineName) {
+    enginesToRemove.add(engineName);
+  }
+
   public boolean hasUpdatedMetaGlobal() {
-    if (enginesToUpdate.isEmpty()) {
+    if (enginesToUpdate.isEmpty() && enginesToRemove.isEmpty()) {
       Logger.info(LOG_TAG, "Not uploading updated meta/global record since there are no engines requesting upload.");
       return false;
     }
 
     if (Logger.shouldLogVerbose(LOG_TAG)) {
-      Logger.trace(LOG_TAG, "Uploading updated meta/global record since there are engines requesting upload: " +
-          Utils.toCommaSeparatedString(enginesToUpdate.keySet()));
+      Logger.trace(LOG_TAG, "Uploading updated meta/global record since there are engine changes to meta/global.");
+      Logger.trace(LOG_TAG, "Engines requesting upload [" + Utils.toCommaSeparatedString(enginesToUpdate.keySet()) + "]");
+      Logger.trace(LOG_TAG, "Engines to remove [" + Utils.toCommaSeparatedString(enginesToRemove) + "]");
     }
 
     return true;
@@ -411,7 +426,15 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     for (Entry<String, EngineSettings> pair : enginesToUpdate.entrySet()) {
       engines.put(pair.getKey(), pair.getValue().toJSONObject());
     }
+    for (String key : enginesToRemove) {
+      engines.remove(key);
+    }
+
+    enginesToRemove.clear();
     enginesToUpdate.clear();
+
+    // Clear SharedPrefs for engine state.
+    context.getSharedPreferences(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE).edit().clear().commit();
   }
 
   /**
@@ -627,6 +650,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public void processMetaGlobal(MetaGlobal global) {
     config.metaGlobal = global;
+    config.metaGlobal.metaURL = config.metaURL();
+    config.metaGlobal.credentials = this.credentials();
 
     Long storageVersion = global.getStorageVersion();
     if (storageVersion == null) {
@@ -945,11 +970,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     if (config.enabledEngineNames != null) {
       return config.enabledEngineNames;
     }
-    Set<String> engineNames = new HashSet<String>();
-    for (Stage stage : Stage.getNamedStages()) {
-      engineNames.add(stage.getRepositoryName());
-    }
-    return engineNames;
+    return SyncConfiguration.validEngineNames();
   }
 
   /**

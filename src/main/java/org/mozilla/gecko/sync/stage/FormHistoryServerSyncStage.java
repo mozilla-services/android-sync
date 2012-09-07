@@ -8,6 +8,8 @@ import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.MetaGlobalException;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.ConstrainedServer11Repository;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -15,6 +17,9 @@ import org.mozilla.gecko.sync.repositories.android.FormHistoryRepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
+import org.mozilla.gecko.sync.setup.Constants;
+
+import android.content.SharedPreferences;
 
 public class FormHistoryServerSyncStage extends ServerSyncStage {
 
@@ -75,5 +80,23 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
   @Override
   protected RecordFactory getRecordFactory() {
     return new FormHistoryRecordFactory();
+  }
+
+  /*
+   * (non-Javadoc)
+   * @see org.mozilla.gecko.sync.stage.ServerSyncStage#checkAndUpdateManualEngines(boolean)
+   *
+   * Forms engine state should match History, because there is no manual way to control Forms syncing.
+   */
+  @Override
+  protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalException {
+    SharedPreferences selectedEngines = session.getPrefs(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
+    if (selectedEngines.contains("history")) {
+      boolean enabledInSelection = selectedEngines.getBoolean("history", false);
+      if (enabledInMetaGlobal != enabledInSelection) {
+        // Engine enable state has been changed by the user.
+        throw new MetaGlobalException.MetaGlobalEngineStateChangedException(enabledInSelection);
+      }
+    }
   }
 }
