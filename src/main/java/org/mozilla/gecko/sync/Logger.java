@@ -21,6 +21,7 @@ import android.util.Log;
 public class Logger {
   public static final String LOG_TAG = "Logger";
 
+  // TODO: make this a ThreadLocal, so that Snippets can use it with a different global tag.
   public static final String GLOBAL_LOG_TAG = "FxSync";
 
   // For extra debugging.
