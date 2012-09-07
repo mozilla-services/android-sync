@@ -4,23 +4,26 @@ then
   exit 1;
 fi
   
-echo "Copying to $ANDROID ($SYNC)..."
+echo "Copying to $ANDROID ($SERVICES)..."
 
 WARNING="These files are managed in the android-sync repo. Do not modify directly, or your changes will be lost."
 echo "Creating README.txt."
-echo $WARNING > $SYNC/README.txt
+echo $WARNING > $SERVICES/README.txt
 
 echo "Copying manifests..."
-rsync -a manifests $SYNC/
+rsync -a manifests $SERVICES/
 
 echo "Copying sources. All use of R must be compiled with Fennec."
-SOURCEDIR="src/main/java/org/mozilla/gecko/sync"
-SOURCEFILES=$(find "$SOURCEDIR" -name '*.java' -not -name 'GlobalConstants.java' -and -not -name 'BrowserContract.java' | sed "s,$SOURCEDIR/,sync/,")
-rsync -C --exclude 'GlobalConstants.java' --exclude 'BrowserContract.java' --exclude '*.in' -a $SOURCEDIR $ANDROID/base/
+SOURCEROOT="src/main/java/org/mozilla/gecko"
+SYNCSOURCEDIR="$SOURCEROOT/sync"
+BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
+SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" -name '*.java' -not -name 'GlobalConstants.java' -and -not -name 'BrowserContract.java' | sed "s,$SOURCEROOT/,,")
+rsync -C --exclude 'GlobalConstants.java' --exclude 'BrowserContract.java' --exclude '*.in' -a $SYNCSOURCEDIR $ANDROID/base/
+rsync -C --exclude '*.in' -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed GlobalConstants file."
 PREPROCESS_FILES="sync/GlobalConstants.java"
-cp $SOURCEDIR/GlobalConstants.java.in $ANDROID/base/sync/
+cp $SYNCSOURCEDIR/GlobalConstants.java.in $ANDROID/base/sync/
 
 echo "Copying preprocessed sync_authenticator.xml."
 cp sync_authenticator.xml.template $ANDROID/base/resources/xml/sync_authenticator.xml.in
@@ -47,7 +50,7 @@ rsync -C -a $JSONLIB/ $ANDROID/base/json-simple/
 cp external/json-simple-1.1/LICENSE.txt $ANDROID/base/json-simple/
 
 # Creating Makefile for Mozilla.
-MKFILE=$ANDROID/base/android-sync-files.mk
+MKFILE=$ANDROID/base/android-services-files.mk
 echo "Creating makefile for including in the Mozilla build system at $MKFILE"
 cat tools/makefile_mpl.txt > $MKFILE
 echo "# $WARNING" >> $MKFILE
@@ -68,22 +71,22 @@ echo "SYNC_PP_RES_XML := res/xml/sync_syncadapter.xml res/xml/sync_options.xml r
 
 # Finished creating Makefile for Mozilla.
 
-true > $SYNC/preprocess-sources.mn
+true > $SERVICES/preprocess-sources.mn
 for f in $PREPROCESS_FILES ; do
-    echo $f >> $SYNC/preprocess-sources.mn
+    echo $f >> $SERVICES/preprocess-sources.mn
 done
 
 echo "Writing README."
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $WARNING > $ANDROID/base/httpclientandroidlib/README.txt
-true > $SYNC/java-sources.mn
+true > $SERVICES/java-sources.mn
 for f in $SOURCEFILES ; do
-    echo $f >> $SYNC/java-sources.mn
+    echo $f >> $SERVICES/java-sources.mn
 done
 
-true > $SYNC/java-third-party-sources.mn
+true > $SERVICES/java-third-party-sources.mn
 for f in $HTTPLIBFILES $JSONLIBFILES $APACHEFILES ; do
-    echo $f >> $SYNC/java-third-party-sources.mn
+    echo $f >> $SERVICES/java-third-party-sources.mn
 done
 
 echo "Copying resources..."
@@ -96,16 +99,16 @@ rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/values/sync_styles.xml $ANDROID/base/resources/values/
 rsync -a res/values-large-v11/sync_styles.xml $ANDROID/base/resources/values-large-v11/
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
-rsync -a strings/strings.xml.in $SYNC/
+rsync -a strings/strings.xml.in $SERVICES/
 rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
 
-echo "res/values/sync_styles.xml " > $SYNC/android-values-resources.mn
-echo "res/values-large-v11/sync_styles.xml " > $SYNC/android-values-resources.mn
-find res/layout         -name '*.xml' > $SYNC/android-layout-resources.mn
-find res/drawable       -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-resources.mn
-find res/drawable-ldpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-ldpi-resources.mn
-find res/drawable-mdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-mdpi-resources.mn
-find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SYNC/android-drawable-hdpi-resources.mn
+echo "res/values/sync_styles.xml " > $SERVICES/android-values-resources.mn
+echo "res/values-large-v11/sync_styles.xml " > $SERVICES/android-values-resources.mn
+find res/layout         -name '*.xml' > $SERVICES/android-layout-resources.mn
+find res/drawable       -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-resources.mn
+find res/drawable-ldpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-ldpi-resources.mn
+find res/drawable-mdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-mdpi-resources.mn
+find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-hdpi-resources.mn
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.
