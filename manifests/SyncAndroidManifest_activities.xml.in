@@ -49,9 +49,9 @@
             android:name="org.mozilla.gecko.sync.setup.activities.SetupSuccessActivity" />
 
         <activity
+            android:theme="@style/SyncTheme"
             android:excludeFromRecents="true"
             android:taskAffinity="org.mozilla.gecko.sync.setup"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:name="org.mozilla.gecko.sync.config.activities.ConfigureEnginesActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
