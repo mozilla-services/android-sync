@@ -12,24 +12,24 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDe
 import android.content.Context;
 
 /**
- * A Server11Repository implements fetching and storing against the Sync 1.1 API.
+ * Fetch and store against the Sync 2.0 HTTP API, documented at
+ * <a href="http://docs.services.mozilla.com/storage/apis-2.0.html">http://docs.services.mozilla.com/storage/apis-2.0.html</a>.
+ * <p>
  * It doesn't do crypto: that's the job of the middleware.
- *
- * @author rnewman
  */
-public class Server11Repository extends ServerRepository {
-  public static final String API_VERSION = "1.1";
+public class Server20Repository extends ServerRepository {
+  public static final String API_VERSION = "2.0";
 
   /**
    * @param serverURI
-   *        URI of the Sync 1.1 server (string)
+   *        URI of the Sync 2.0 server (string)
    * @param username
    *        Username on the server (string)
    * @param collection
    *        Name of the collection (string)
    * @throws URISyntaxException
    */
-  public Server11Repository(String serverURI, String username, String collection, CredentialsSource credentialsSource) throws URISyntaxException {
+  public Server20Repository(String serverURI, String username, String collection, CredentialsSource credentialsSource) throws URISyntaxException {
     super(serverURI, API_VERSION, username, collection, credentialsSource);
   }
 
