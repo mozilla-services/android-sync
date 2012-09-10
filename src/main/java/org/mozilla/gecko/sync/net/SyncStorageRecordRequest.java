@@ -145,7 +145,7 @@ public class SyncStorageRecordRequest {
   /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
-  public class SyncStorageResourceDelegate extends BaseResourceDelegate {
+  protected static class SyncStorageResourceDelegate extends BaseResourceDelegate {
     private static final String LOG_TAG = "SSResourceDelegate";
     protected SyncStorageRecordRequest request;
 
@@ -161,7 +161,7 @@ public class SyncStorageRecordRequest {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
-      if (aborting) {
+      if (this.request.aborting) {
         return;
       }
 

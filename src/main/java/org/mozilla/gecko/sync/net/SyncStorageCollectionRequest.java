@@ -39,7 +39,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
   }
 
   // TODO: this is awful.
-  public class SyncCollectionResourceDelegate extends
+  protected static class SyncCollectionResourceDelegate extends
       SyncStorageResourceDelegate {
 
     private static final String CONTENT_TYPE_INCREMENTAL = "application/newlines";
@@ -58,7 +58,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
-      if (aborting) {
+      if (this.request.aborting) {
         return;
       }
 
@@ -93,7 +93,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
         String line;
 
         // This relies on connection timeouts at the HTTP layer.
-        while (!aborting &&
+        while (!this.request.aborting &&
                null != (line = br.readLine())) {
           try {
             delegate.handleRequestProgress(line);
@@ -103,12 +103,12 @@ public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
             return;
           }
         }
-        if (aborting) {
+        if (this.request.aborting) {
           // So we don't hit the success case below.
           return;
         }
       } catch (IOException ex) {
-        if (!aborting) {
+        if (!this.request.aborting) {
           delegate.handleRequestError(ex);
         }
         BaseResource.consumeEntity(entity);
