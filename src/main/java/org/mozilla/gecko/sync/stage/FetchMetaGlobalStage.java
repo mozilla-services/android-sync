@@ -10,7 +10,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.PersistedMetaGlobal;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.gecko.sync.net.SyncServer11Response;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
   public FetchMetaGlobalStage(GlobalSession session) {

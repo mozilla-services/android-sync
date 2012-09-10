@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.sync.net;
+package org.mozilla.gecko.sync.net.server11;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -14,6 +14,8 @@ import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -93,7 +95,7 @@ public class SyncServer11RecordRequest {
   public void abort() {
     aborting = true;
     try {
-      this.resource.request.abort();
+      this.resource.abort();
     } catch (Exception e) {
       // Just in case.
       Logger.warn(LOG_TAG, "Got exception in abort: " + e);

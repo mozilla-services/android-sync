@@ -16,9 +16,9 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedSyncIDException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedVersionException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
-import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
-import org.mozilla.gecko.sync.net.SyncServer11Response;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public class MetaGlobal implements SyncServer11RequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";

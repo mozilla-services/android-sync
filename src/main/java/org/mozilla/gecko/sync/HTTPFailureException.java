@@ -4,7 +4,7 @@
 
 package org.mozilla.gecko.sync;
 
-import org.mozilla.gecko.sync.net.SyncServer11Response;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 import android.content.SyncResult;
 

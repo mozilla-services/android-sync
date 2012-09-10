@@ -17,9 +17,9 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncServer11CollectionRequest;
-import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11CollectionRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public class TestWBOCollectionRequestDelegate {
   public static final String LOG_TAG = "TestWBOCollReqDel";

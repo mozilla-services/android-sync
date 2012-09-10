@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync.net;
 
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.net.server11.SyncServer11CollectionRequestDelegate;
 
 /**
  * Subclass this to handle collection fetches.

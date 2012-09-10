@@ -5,7 +5,7 @@
 package org.mozilla.gecko.sync.delegates;
 
 import org.mozilla.gecko.sync.InfoCollections;
-import org.mozilla.gecko.sync.net.SyncServer11Response;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public interface InfoCollectionsDelegate {
   public void handleSuccess(InfoCollections global);

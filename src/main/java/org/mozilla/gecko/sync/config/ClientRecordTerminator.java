@@ -9,9 +9,9 @@ import java.net.URI;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
-import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
-import org.mozilla.gecko.sync.net.SyncServer11Response;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 /**
  * Bug 770785: when an Android Account is deleted, we need to (try to) delete

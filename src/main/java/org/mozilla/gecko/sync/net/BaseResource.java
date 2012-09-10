@@ -17,6 +17,7 @@ import java.security.SecureRandom;
 import javax.net.ssl.SSLContext;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
@@ -342,6 +343,13 @@ public class BaseResource implements Resource {
     HttpPut request = new HttpPut(this.uri);
     request.setEntity(body);
     this.go(request);
+  }
+
+  /**
+   * Abort the underlying request.
+   */
+  public void abort() {
+    this.request.abort();
   }
 
   /**

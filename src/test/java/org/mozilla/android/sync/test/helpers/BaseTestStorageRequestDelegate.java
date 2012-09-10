@@ -8,8 +8,8 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
-import org.mozilla.gecko.sync.net.SyncServer11Response;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public class BaseTestStorageRequestDelegate implements
     SyncServer11RequestDelegate {

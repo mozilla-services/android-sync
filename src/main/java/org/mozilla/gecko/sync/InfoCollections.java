@@ -13,9 +13,9 @@ import java.util.Set;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
-import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
-import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
-import org.mozilla.gecko.sync.net.SyncServer11Response;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public class InfoCollections implements SyncServer11RequestDelegate {
   private static final String LOG_TAG = "InfoCollections";
