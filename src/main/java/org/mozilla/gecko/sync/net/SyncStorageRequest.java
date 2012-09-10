@@ -65,7 +65,7 @@ public class SyncStorageRequest {
 
   public SyncStorageRequestDelegate delegate;
 
-  protected SyncResourceDelegate resourceDelegate;
+  protected BaseResourceDelegate resourceDelegate;
   protected BaseResource resource;
 
   /**
@@ -95,7 +95,7 @@ public class SyncStorageRequest {
   /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
-  public class SyncStorageResourceDelegate extends SyncResourceDelegate {
+  public class SyncStorageResourceDelegate extends BaseResourceDelegate {
     private static final String LOG_TAG = "SSResourceDelegate";
     protected SyncStorageRequest request;
 
@@ -164,7 +164,7 @@ public class SyncStorageRequest {
   }
 
   // Default implementation. Override this.
-  protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
+  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
     return new SyncStorageResourceDelegate(request);
   }
 

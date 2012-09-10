@@ -15,7 +15,7 @@ import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.jpake.JPakeResponse;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.Resource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import ch.boye.httpclientandroidlib.Header;
@@ -100,7 +100,7 @@ public class GetRequestStage extends JPakeStage {
 
   private Resource createGetRequest(final GetRequestStageDelegate callbackDelegate, final JPakeClient jpakeClient) throws URISyntaxException {
     BaseResource httpResource = new BaseResource(jpakeClient.channelUrl);
-    httpResource.delegate = new SyncResourceDelegate() {
+    httpResource.delegate = new BaseResourceDelegate() {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {

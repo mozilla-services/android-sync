@@ -10,12 +10,12 @@ import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.Resource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
-public class MockResourceDelegate extends SyncResourceDelegate {
+public class MockResourceDelegate extends BaseResourceDelegate {
   public WaitHelper waitHelper = null;
   public static String USER_PASS    = "john:password";
   public static String EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
