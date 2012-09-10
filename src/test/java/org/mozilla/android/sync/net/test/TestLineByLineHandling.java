@@ -20,7 +20,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -69,7 +69,7 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       Logger.info(LOG_TAG, "Request success.");
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
@@ -83,7 +83,7 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       Logger.info(LOG_TAG, "Got request failure: " + response);
       BaseResource.consumeEntity(response);
       fail("Should not be called.");

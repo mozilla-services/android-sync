@@ -18,7 +18,7 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -40,7 +40,7 @@ public class TestSyncStorageRequest {
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
@@ -60,12 +60,12 @@ public class TestSyncStorageRequest {
       BaseTestStorageRequestDelegate {
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse res) {
+    public void handleRequestFailure(SyncServer11Response res) {
       assertTrue(!res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
       try {
         String responseMessage = res.getErrorMessage();
-        String expectedMessage = SyncStorageResponse.SERVER_ERROR_MESSAGES.get(EXPECTED_ERROR_CODE);
+        String expectedMessage = SyncServer11Response.SERVER_ERROR_MESSAGES.get(EXPECTED_ERROR_CODE);
         assertEquals(expectedMessage, responseMessage);
       } catch (Exception e) {
         fail("Got exception fetching error message.");
@@ -113,7 +113,7 @@ public class TestSyncStorageRequest {
   BaseTestStorageRequestDelegate {
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse res) {
+    public void handleRequestFailure(SyncServer11Response res) {
       assertTrue(!res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("Retry-After"));
       assertEquals(res.retryAfterInSeconds(), 3001);
@@ -155,7 +155,7 @@ public class TestSyncStorageRequest {
   TestSyncStorageRequestDelegate {
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       assertTrue(res.httpResponse().containsHeader("X-Weave-Backoff"));
       assertEquals(res.weaveBackoffInSeconds(), 1801);
       super.handleRequestSuccess(res);
@@ -188,7 +188,7 @@ public class TestSyncStorageRequest {
   TestSyncStorageRequestDelegate {
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       assertTrue(res.httpResponse().containsHeader("X-Weave-Quota-Remaining"));
       assertTrue(res.httpResponse().containsHeader("X-Weave-Alert"));
       assertTrue(res.httpResponse().containsHeader("X-Weave-Records"));

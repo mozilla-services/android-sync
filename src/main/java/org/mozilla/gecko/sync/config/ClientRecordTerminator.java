@@ -11,7 +11,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 /**
  * Bug 770785: when an Android Account is deleted, we need to (try to) delete
@@ -50,13 +50,13 @@ public class ClientRecordTerminator {
       }
 
       @Override
-      public void handleRequestSuccess(SyncStorageResponse response) {
+      public void handleRequestSuccess(SyncServer11Response response) {
         Logger.info(LOG_TAG, "Deleted client record with GUID " + clientGuid + " from server.");
         BaseResource.consumeEntity(response);
       }
 
       @Override
-      public void handleRequestFailure(SyncStorageResponse response) {
+      public void handleRequestFailure(SyncServer11Response response) {
         Logger.warn(LOG_TAG, "Failed to delete client record with GUID " + clientGuid + " from server.");
         try {
           Logger.warn(LOG_TAG, "Server error message was: " + response.getErrorMessage());

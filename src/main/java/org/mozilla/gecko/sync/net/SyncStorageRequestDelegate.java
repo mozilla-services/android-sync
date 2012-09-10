@@ -16,22 +16,22 @@ public interface SyncStorageRequestDelegate {
    * Override this to handle a successful SyncStorageRequest.
    *
    * SyncStorageResourceDelegate implementers <b>must</b> ensure that the HTTP
-   * responses underlying SyncStorageResponses are fully consumed to ensure that
+   * responses underlying the Sync responses are fully consumed to ensure that
    * connections are returned to the pool, for example by calling
    * <code>BaseResource.consumeEntity(response)</code>.
    */
-  void handleRequestSuccess(SyncStorageResponse response);
+  void handleRequestSuccess(SyncServer11Response response);
 
   /**
    * Override this to handle a failed SyncStorageRequest.
    *
    *
    * SyncStorageResourceDelegate implementers <b>must</b> ensure that the HTTP
-   * responses underlying SyncStorageResponses are fully consumed to ensure that
+   * responses underlying the Sync responses are fully consumed to ensure that
    * connections are returned to the pool, for example by calling
    * <code>BaseResource.consumeEntity(response)</code>.
    */
-  void handleRequestFailure(SyncStorageResponse response);
+  void handleRequestFailure(SyncServer11Response response);
 
   void handleRequestError(Exception ex);
 }

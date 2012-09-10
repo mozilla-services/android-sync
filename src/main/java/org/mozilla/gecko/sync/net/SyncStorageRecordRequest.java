@@ -125,7 +125,7 @@ public class SyncStorageRecordRequest {
 
       Logger.debug(LOG_TAG, "SyncStorageResourceDelegate handling response: " + response.getStatusLine() + ".");
       SyncStorageRequestDelegate d = this.request.delegate;
-      SyncStorageResponse res = new SyncStorageResponse(response);
+      SyncServer11Response res = new SyncServer11Response(response);
       // It is the responsibility of the delegate handlers to completely consume the response.
       if (res.wasSuccessful()) {
         d.handleRequestSuccess(res);

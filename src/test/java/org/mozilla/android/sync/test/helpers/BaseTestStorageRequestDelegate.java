@@ -9,7 +9,7 @@ import java.io.IOException;
 
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class BaseTestStorageRequestDelegate implements
     SyncStorageRequestDelegate {
@@ -26,13 +26,13 @@ public class BaseTestStorageRequestDelegate implements
   }
 
   @Override
-  public void handleRequestSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncServer11Response response) {
     BaseResource.consumeEntity(response);
     fail("Should not be called.");
   }
 
   @Override
-  public void handleRequestFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncServer11Response response) {
     System.out.println("Response: " + response.httpResponse().getStatusLine().getStatusCode());
     BaseResource.consumeEntity(response);
     fail("Should not be called.");

@@ -6,7 +6,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
@@ -23,8 +23,8 @@ public class TestRetryAfter {
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
     response.addHeader("Retry-After", Long.toString(TEST_SECONDS)); // Retry-After given in seconds.
 
-    final SyncStorageResponse SyncStorageResponse = new SyncStorageResponse(response);
-    assertEquals(TEST_SECONDS, SyncStorageResponse.retryAfterInSeconds());
+    final SyncServer11Response res = new SyncServer11Response(response);
+    assertEquals(TEST_SECONDS, res.retryAfterInSeconds());
   }
 
   @Test
@@ -35,9 +35,9 @@ public class TestRetryAfter {
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
     response.addHeader("Retry-After", DateUtils.formatDate(future));
 
-    final SyncStorageResponse SyncStorageResponse = new SyncStorageResponse(response);
-    assertTrue(SyncStorageResponse.retryAfterInSeconds() > TEST_SECONDS - 15);
-    assertTrue(SyncStorageResponse.retryAfterInSeconds() < TEST_SECONDS + 15);
+    final SyncServer11Response res = new SyncServer11Response(response);
+    assertTrue(res.retryAfterInSeconds() > TEST_SECONDS - 15);
+    assertTrue(res.retryAfterInSeconds() < TEST_SECONDS + 15);
   }
 
   @Test
@@ -46,8 +46,8 @@ public class TestRetryAfter {
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
     response.addHeader("Retry-After", "10X");
 
-    final SyncStorageResponse SyncStorageResponse = new SyncStorageResponse(response);
-    assertEquals(-1, SyncStorageResponse.retryAfterInSeconds());
+    final SyncServer11Response res = new SyncServer11Response(response);
+    assertEquals(-1, res.retryAfterInSeconds());
   }
 
   @Test
@@ -55,8 +55,8 @@ public class TestRetryAfter {
     final HttpResponse response = new BasicHttpResponse(
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
-    final SyncStorageResponse SyncStorageResponse = new SyncStorageResponse(response);
-    assertEquals(-1, SyncStorageResponse.retryAfterInSeconds());
+    final SyncServer11Response res = new SyncServer11Response(response);
+    assertEquals(-1, res.retryAfterInSeconds());
   }
 
   @Test
@@ -66,8 +66,8 @@ public class TestRetryAfter {
     response.addHeader("Retry-After", Long.toString(TEST_SECONDS + 1));
     response.addHeader("X-Weave-Backoff", Long.toString(TEST_SECONDS));
 
-    final SyncStorageResponse SyncStorageResponse = new SyncStorageResponse(response);
-    assertEquals(1000 * (TEST_SECONDS + 1), SyncStorageResponse.totalBackoffInMilliseconds());
+    final SyncServer11Response res = new SyncServer11Response(response);
+    assertEquals(1000 * (TEST_SECONDS + 1), res.totalBackoffInMilliseconds());
   }
 
   @Test
@@ -77,7 +77,7 @@ public class TestRetryAfter {
     response.addHeader("Retry-After", Long.toString(TEST_SECONDS));
     response.addHeader("X-Weave-Backoff", Long.toString(TEST_SECONDS + 1));
 
-    final SyncStorageResponse SyncStorageResponse = new SyncStorageResponse(response);
-    assertEquals(1000 * (TEST_SECONDS + 1), SyncStorageResponse.totalBackoffInMilliseconds());
+    final SyncServer11Response res = new SyncServer11Response(response);
+    assertEquals(1000 * (TEST_SECONDS + 1), res.totalBackoffInMilliseconds());
   }
 }

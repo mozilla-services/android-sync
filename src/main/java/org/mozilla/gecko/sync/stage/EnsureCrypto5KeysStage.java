@@ -23,7 +23,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class EnsureCrypto5KeysStage
 extends AbstractNonRepositorySyncStage
@@ -131,7 +131,7 @@ implements SyncStorageRequestDelegate {
   }
 
   @Override
-  public void handleRequestSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncServer11Response response) {
     // Take the timestamp from the response since it is later than the timestamp from info/collections.
     long responseTimestamp = response.getNormalizedTimestamp();
     CollectionKeys keys = new CollectionKeys();
@@ -189,7 +189,7 @@ implements SyncStorageRequestDelegate {
   }
 
   @Override
-  public void handleRequestFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncServer11Response response) {
     if (retrying) {
       // Should happen very rarely -- this means we uploaded our crypto/keys
       // successfully, but failed to re-download.

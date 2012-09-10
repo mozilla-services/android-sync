@@ -31,7 +31,7 @@ import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
@@ -103,7 +103,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       Logger.debug(LOG_TAG, "Fetch done.");
       removeRequestFromPending();
 
@@ -147,7 +147,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       removeRequestFromPending();
       // TODO: ensure that delegate methods don't get called more than once.
       this.handleRequestError(new HTTPFailureException(response));
@@ -283,7 +283,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       Logger.debug(LOG_TAG, "guidsSince done.");
       String[] guidsArray = new String[guids.size()];
       guids.toArray(guidsArray);
@@ -291,7 +291,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       this.handleRequestError(new HTTPFailureException(response));
     }
 
@@ -521,7 +521,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       Logger.trace(LOG_TAG, "POST of " + outgoing.size() + " records done.");
 
       ExtendedJSONObject body;
@@ -584,7 +584,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       // TODO: call session.interpretHTTPFailure.
       this.handleRequestError(new HTTPFailureException(response));
     }

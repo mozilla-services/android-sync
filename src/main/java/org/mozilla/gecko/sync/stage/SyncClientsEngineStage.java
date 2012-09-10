@@ -29,7 +29,7 @@ import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
@@ -116,7 +116,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
 
       // Hang onto the server's last modified timestamp to use
       // in X-If-Unmodified-Since for upload.
@@ -160,7 +160,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       BaseResource.consumeEntity(response); // We don't need the response at all, and any exception handling shouldn't need the response body.
       localAccountGUIDDownloaded = false;
 
@@ -247,7 +247,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       Logger.debug(LOG_TAG, "Upload succeeded.");
       uploadAttemptsCount.set(0);
 
@@ -282,7 +282,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       int statusCode = response.getStatusCode();
 
       // If upload failed because of `ifUnmodifiedSince` then there are new

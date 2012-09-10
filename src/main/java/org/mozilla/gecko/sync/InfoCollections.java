@@ -15,7 +15,7 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class InfoCollections implements SyncStorageRequestDelegate {
   private static final String LOG_TAG = "InfoCollections";
@@ -142,7 +142,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     return null;
   }
 
-  public void handleRequestSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncServer11Response response) {
     if (response.wasSuccessful()) {
       try {
         this.setFromRecord(response.jsonObjectBody());
@@ -158,7 +158,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     this.callback = null;
   }
 
-  public void handleRequestFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncServer11Response response) {
     this.callback.handleFailure(response);
     this.callback = null;
   }

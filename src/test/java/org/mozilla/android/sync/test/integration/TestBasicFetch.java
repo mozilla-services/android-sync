@@ -20,7 +20,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class TestBasicFetch {
   // TODO: switch these to be the local server, with appropriate setup.
@@ -49,7 +49,7 @@ public class TestBasicFetch {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       try {
         assertTrue(res.wasSuccessful());
         assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
@@ -62,7 +62,7 @@ public class TestBasicFetch {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       BaseResource.consumeEntity(response);
       WaitHelper.getTestWaiter().performNotify(new RuntimeException());
     }

@@ -42,7 +42,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
@@ -128,7 +128,7 @@ public class TestGlobalSession {
           new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
         response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
-        session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
+        session.handleHTTPError(new SyncServer11Response(response), "Failure fetching info/collections.");
       }
     }
 
@@ -157,7 +157,7 @@ public class TestGlobalSession {
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
-          session.handleHTTPError(new SyncStorageResponse(response), "Illegal method/protocol");
+          session.handleHTTPError(new SyncServer11Response(response), "Illegal method/protocol");
         }
       }));
 

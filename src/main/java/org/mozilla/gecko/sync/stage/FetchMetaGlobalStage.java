@@ -10,7 +10,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.PersistedMetaGlobal;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
   public FetchMetaGlobalStage(GlobalSession session) {
@@ -28,7 +28,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
     }
 
     @Override
-    public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
+    public void handleSuccess(MetaGlobal global, SyncServer11Response response) {
       Logger.trace(LOG_TAG, "Persisting fetched meta/global and last modified.");
       PersistedMetaGlobal pmg = session.config.persistedMetaGlobal();
       pmg.persistMetaGlobal(global);
@@ -39,7 +39,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
     }
 
     @Override
-    public void handleFailure(SyncStorageResponse response) {
+    public void handleFailure(SyncServer11Response response) {
       session.handleHTTPError(response, "Failure fetching meta/global.");
     }
 
@@ -49,7 +49,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
     }
 
     @Override
-    public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+    public void handleMissing(MetaGlobal global, SyncServer11Response response) {
       session.processMissingMetaGlobal(global);
     }
   }

@@ -15,7 +15,7 @@ import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.Resource;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import ch.boye.httpclientandroidlib.Header;
@@ -49,7 +49,7 @@ public class GetRequestStage extends JPakeStage {
           Logger.debug(LOG_TAG, "Finished; returning.");
           return;
         }
-        final SyncStorageResponse res = new SyncStorageResponse(response);
+        final SyncServer11Response res = new SyncServer11Response(response);
 
         Header etagHeader = response.getFirstHeader("etag");
         if (etagHeader == null) {

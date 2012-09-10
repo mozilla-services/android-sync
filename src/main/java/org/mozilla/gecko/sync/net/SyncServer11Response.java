@@ -22,8 +22,8 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.impl.cookie.DateParseException;
 import ch.boye.httpclientandroidlib.impl.cookie.DateUtils;
 
-public class SyncStorageResponse {
-  public static final String LOG_TAG = "SyncStorageResponse";
+public class SyncServer11Response {
+  public static final String LOG_TAG = "SyncServer11Response";
 
   public static final String TIMESTAMP_HEADER = "X-Weave-Timestamp";
   protected static final String HEADER_RETRY_AFTER = "retry-after";
@@ -82,12 +82,12 @@ public class SyncStorageResponse {
   private String body = null;
 
 
-  public SyncStorageResponse(final HttpResponse response) {
+  public SyncServer11Response(final HttpResponse response) {
     this.response = response;
   }
 
   public String getErrorMessage() throws IllegalStateException, IOException {
-    return SyncStorageResponse.getServerErrorMessage(this.body().trim());
+    return SyncServer11Response.getServerErrorMessage(this.body().trim());
   }
 
   public HttpResponse httpResponse() {

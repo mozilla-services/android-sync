@@ -45,7 +45,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
@@ -192,7 +192,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       super.handleRequestFailure(response);
       assertTrue(getMockDataAccessor().closed);
       fail("Should not error.");
@@ -225,7 +225,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       super.handleRequestFailure(response);
       assertTrue(getMockDataAccessor().closed);
       fail("Should not error.");
@@ -246,13 +246,13 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       uploadHeaderTimestamp = response.getNormalizedTimestamp();
       super.handleRequestSuccess(response);
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       super.handleRequestFailure(response);
       fail("Should not fail.");
     }
@@ -271,7 +271,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       super.handleRequestSuccess(response);
       fail("Should not succeed.");
     }

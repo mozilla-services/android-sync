@@ -388,9 +388,9 @@ public class BaseResource implements Resource {
    * This releases the connection back to the connection pool.
    *
    * @param response
-   *          The SyncStorageResponse to be consumed.
+   *          to be consumed.
    */
-  public static void consumeEntity(SyncStorageResponse response) {
+  public static void consumeEntity(SyncServer11Response response) {
     if (response.httpResponse() == null) {
       return;
     }

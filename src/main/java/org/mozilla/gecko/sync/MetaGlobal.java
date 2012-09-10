@@ -18,7 +18,7 @@ import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedVersionExce
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class MetaGlobal implements SyncStorageRequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";
@@ -251,7 +251,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     return null;
   }
 
-  public void handleRequestSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncServer11Response response) {
     if (this.isUploading) {
       this.handleUploadSuccess(response);
     } else {
@@ -259,11 +259,11 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     }
   }
 
-  private void handleUploadSuccess(SyncStorageResponse response) {
+  private void handleUploadSuccess(SyncServer11Response response) {
     this.callback.handleSuccess(this, response);
   }
 
-  private void handleDownloadSuccess(SyncStorageResponse response) {
+  private void handleDownloadSuccess(SyncServer11Response response) {
     if (response.wasSuccessful()) {
       try {
         CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
@@ -277,7 +277,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback.handleFailure(response);
   }
 
-  public void handleRequestFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncServer11Response response) {
     if (response.getStatusCode() == 404) {
       this.callback.handleMissing(this, response);
       return;

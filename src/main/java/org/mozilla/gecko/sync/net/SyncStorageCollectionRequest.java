@@ -125,7 +125,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
       }
       // We're done processing the entity. Don't let fetching the body succeed!
       BaseResource.consumeEntity(entity);
-      delegate.handleRequestSuccess(new SyncStorageResponse(response));
+      delegate.handleRequestSuccess(new SyncServer11Response(response));
     }
   }
 }

@@ -4,15 +4,15 @@
 
 package org.mozilla.gecko.sync;
 
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 import android.content.SyncResult;
 
 public class HTTPFailureException extends SyncException {
   private static final long serialVersionUID = -5415864029780770619L;
-  public SyncStorageResponse response;
+  public SyncServer11Response response;
 
-  public HTTPFailureException(SyncStorageResponse response) {
+  public HTTPFailureException(SyncServer11Response response) {
     this.response = response;
   }
 

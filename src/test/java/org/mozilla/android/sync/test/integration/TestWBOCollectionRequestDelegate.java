@@ -18,7 +18,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 
 public class TestWBOCollectionRequestDelegate {
@@ -45,7 +45,7 @@ public class TestWBOCollectionRequestDelegate {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       try {
         Logger.debug(LOG_TAG, "WBOs: " + this.wbos.size());
         assertTrue(13 < wbos.size());
@@ -66,7 +66,7 @@ public class TestWBOCollectionRequestDelegate {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       BaseResource.consumeEntity(response);
       fail("Should not fail.");
     }
