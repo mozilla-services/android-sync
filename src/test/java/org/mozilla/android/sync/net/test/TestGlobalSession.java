@@ -256,7 +256,7 @@ public class TestGlobalSession {
       public void run() {
         try {
           final BaseResource r = new BaseResource(TEST_CLUSTER_URL);
-          r.delegate = new MockResourceDelegate(innerWaitHelper);
+          r.delegate = new MockResourceDelegate(innerWaitHelper, r);
           r.get();
         } catch (URISyntaxException e) {
           innerWaitHelper.performNotify(e);
@@ -375,7 +375,7 @@ public class TestGlobalSession {
     // Verify we fill in all of our known engines when none are persisted.
     session.config.enabledEngineNames = null;
     MetaGlobal mg = session.generateNewMetaGlobal();
-    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
     assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
     assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
 
@@ -400,7 +400,7 @@ public class TestGlobalSession {
     session.config.enabledEngineNames.add("prefs");
 
     MetaGlobal mg = session.generateNewMetaGlobal();
-    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
     assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
     assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
     assertEquals(0, mg.getEngines().getObject("addons").getIntegerSafely("version").intValue());

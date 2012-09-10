@@ -42,7 +42,7 @@ public class TestResource {
 
   public MockResourceDelegate doGet() throws URISyntaxException {
     final BaseResource r = new BaseResource(TEST_SERVER + "/foo/bar");
-    MockResourceDelegate delegate = new MockResourceDelegate();
+    MockResourceDelegate delegate = new MockResourceDelegate(WaitHelper.getTestWaiter(), r);
     r.delegate = delegate;
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
