@@ -10,9 +10,9 @@ import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
-import org.mozilla.gecko.sync.jpake.JPakeResponse;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
+import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -88,7 +88,7 @@ public class GetChannelStage extends JPakeStage {
       @Override
       public void handleHttpResponse(HttpResponse response) {
         try {
-          JPakeResponse res = new JPakeResponse(response);
+          final SyncResponse res = new SyncResponse(response);
           Object body = null;
           try {
             body = res.jsonBody();
