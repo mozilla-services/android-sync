@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,9 +50,9 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback = delegate;
     try {
       this.isUploading = false;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(this.metaURL));
       r.delegate = this;
-      r.deferGet();
+      r.get();
     } catch (URISyntaxException e) {
       this.callback.handleError(e);
     }
@@ -60,7 +61,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   public void upload(MetaGlobalDelegate callback) {
     try {
       this.isUploading = true;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(this.metaURL));
 
       r.delegate = this;
       this.callback = callback;

@@ -23,7 +23,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
+import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -107,7 +107,7 @@ public abstract class ServerSyncStage implements
     Integer version = getStorageVersion();
     if (version == null) {
       Logger.warn(LOG_TAG, "null storage version for " + this + "; using version 0.");
-      version = new Integer(0);
+      version = Integer.valueOf(0);
     }
 
     SynchronizerConfiguration config = this.getConfig();
@@ -354,10 +354,10 @@ public abstract class ServerSyncStage implements
    * Asynchronously wipe collection on server.
    */
   protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRequest request;
+    SyncStorageRecordRequest request;
 
     try {
-      request = new SyncStorageRequest(session.config.collectionURI(getCollection()));
+      request = new SyncStorageRecordRequest(session.config.collectionURI(getCollection()));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);

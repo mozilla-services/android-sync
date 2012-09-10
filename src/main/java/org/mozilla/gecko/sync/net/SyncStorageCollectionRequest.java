@@ -26,7 +26,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
  * @author rnewman
  *
  */
-public class SyncStorageCollectionRequest extends SyncStorageRequest {
+public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
   private static final String LOG_TAG = "CollectionRequest";
 
   public SyncStorageCollectionRequest(URI uri) {
@@ -34,7 +34,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
   }
 
   @Override
-  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
+  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRecordRequest request) {
     return new SyncCollectionResourceDelegate((SyncStorageCollectionRequest) request);
   }
 

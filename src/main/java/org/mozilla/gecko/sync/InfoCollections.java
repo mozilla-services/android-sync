@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -86,7 +87,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
 
   private void doFetch() {
     try {
-      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL);
+      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(this.infoURL));
       r.delegate = this;
       // TODO: it might be nice to make Resource include its
       // own thread pool, and automatically run asynchronously.
