@@ -828,7 +828,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRequest(config.storageURL(false));
+      request = new SyncStorageRequest(new URI(config.storageURL(false)));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);

@@ -6,7 +6,6 @@ package org.mozilla.gecko.sync.net;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 
@@ -20,7 +19,7 @@ import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
 
-public class SyncStorageRequest implements Resource {
+public class SyncStorageRequest {
   public static final String LOG_TAG = "SyncStorageRequest";
 
   public static HashMap<String, String> SERVER_ERROR_MESSAGES;
@@ -56,6 +55,7 @@ public class SyncStorageRequest implements Resource {
     errors.put("\"server issue: database marked as down\"",              "server issue: database marked as down");
     SERVER_ERROR_MESSAGES = errors;
   }
+
   public static String getServerErrorMessage(String body) {
     if (SERVER_ERROR_MESSAGES.containsKey(body)) {
       return SERVER_ERROR_MESSAGES.get(body);
@@ -63,21 +63,17 @@ public class SyncStorageRequest implements Resource {
     return body;
   }
 
-  /**
-   * @param uri
-   * @throws URISyntaxException
-   */
-  public SyncStorageRequest(String uri) throws URISyntaxException {
-    this(new URI(uri));
-  }
+  public SyncStorageRequestDelegate delegate;
+
+  protected SyncResourceDelegate resourceDelegate;
+  protected BaseResource resource;
 
   /**
    * @param uri
    */
   public SyncStorageRequest(URI uri) {
     this.resource = new BaseResource(uri);
-    this.resourceDelegate = this.makeResourceDelegate(this);
-    this.resource.delegate = this.resourceDelegate;
+    this.resource.delegate = this.makeResourceDelegate(this);
   }
 
   protected volatile boolean aborting = false;
@@ -165,14 +161,6 @@ public class SyncStorageRequest implements Resource {
         request.addHeader("x-confirm-delete", "1");
       }
     }
-  }
-
-  protected SyncResourceDelegate resourceDelegate;
-  public SyncStorageRequestDelegate delegate;
-  protected BaseResource resource;
-
-  public SyncStorageRequest() {
-    super();
   }
 
   // Default implementation. Override this.
