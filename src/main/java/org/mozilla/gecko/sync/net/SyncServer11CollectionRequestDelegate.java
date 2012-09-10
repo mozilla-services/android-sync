@@ -4,16 +4,16 @@
 
 package org.mozilla.gecko.sync.net;
 
-public interface SyncStorageRequestIncrementalDelegate {
+public abstract class SyncServer11CollectionRequestDelegate implements SyncServer11RequestDelegate {
   /**
    * Called once for each line returned by the server.
    * <p>
    * If this throws an exception, the incremental request is terminated
-   * immediately; see {@link SyncStorageCollectionRequest#handleHttpResponse}.
+   * immediately; see {@link SyncServer11CollectionRequest#handleHttpResponse}.
    *
    * @param progress
    *          line returned by the server.
    * @throws Exception
    */
-  void handleRequestProgress(String progress) throws Exception;
+  public abstract void handleRequestProgress(String progress) throws Exception;
 }

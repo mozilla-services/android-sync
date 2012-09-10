@@ -19,7 +19,7 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class TestBasicFetch {
@@ -97,7 +97,7 @@ public class TestBasicFetch {
   }
 
   public static LiveDelegate realLiveFetch(String username, String password, String url) throws URISyntaxException {
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url));
+    final SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(url));
     LiveDelegate delegate = new LiveDelegate(username, password);
     r.delegate = delegate;
     WaitHelper.getTestWaiter().performWait(new Runnable() {
@@ -110,7 +110,7 @@ public class TestBasicFetch {
   }
 
   public static LiveDelegate realLivePut(String username, String password, String url, final CryptoRecord record) throws URISyntaxException {
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url));
+    final SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(url));
     LiveDelegate delegate = new LiveDelegate(username, password);
     r.delegate = delegate;
     WaitHelper.getTestWaiter().performWait(new Runnable() {

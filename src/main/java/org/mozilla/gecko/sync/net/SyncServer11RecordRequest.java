@@ -43,8 +43,8 @@ import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
  * * JSON parsing
  * * Content-Type and Content-Length validation.
  */
-public class SyncStorageRecordRequest {
-  public static final String LOG_TAG = "SyncStorageRecordRequest";
+public class SyncServer11RecordRequest {
+  public static final String LOG_TAG = "SyncS11RecordRequest";
 
   protected static StringEntity stringEntity(String s)
       throws UnsupportedEncodingException {
@@ -71,7 +71,7 @@ public class SyncStorageRecordRequest {
         return stringEntity(toPOST.toJSONString());
       }
 
-  public SyncStorageRequestDelegate delegate;
+  public SyncServer11RequestDelegate delegate;
 
   protected BaseResourceDelegate resourceDelegate;
   protected BaseResource resource;
@@ -79,7 +79,7 @@ public class SyncStorageRecordRequest {
   /**
    * @param uri
    */
-  public SyncStorageRecordRequest(URI uri) {
+  public SyncServer11RecordRequest(URI uri) {
     this.resource = new BaseResource(uri);
     this.resource.delegate = this.makeResourceDelegate(this);
   }
@@ -105,9 +105,9 @@ public class SyncStorageRecordRequest {
    */
   protected static class SyncStorageResourceDelegate extends BaseResourceDelegate {
     private static final String LOG_TAG = "SSResourceDelegate";
-    protected SyncStorageRecordRequest request;
+    protected SyncServer11RecordRequest request;
 
-    SyncStorageResourceDelegate(SyncStorageRecordRequest request) {
+    SyncStorageResourceDelegate(SyncServer11RecordRequest request) {
       super();
       this.request = request;
     }
@@ -124,7 +124,7 @@ public class SyncStorageRecordRequest {
       }
 
       Logger.debug(LOG_TAG, "SyncStorageResourceDelegate handling response: " + response.getStatusLine() + ".");
-      SyncStorageRequestDelegate d = this.request.delegate;
+      SyncServer11RequestDelegate d = this.request.delegate;
       SyncServer11Response res = new SyncServer11Response(response);
       // It is the responsibility of the delegate handlers to completely consume the response.
       if (res.wasSuccessful()) {
@@ -175,7 +175,7 @@ public class SyncStorageRecordRequest {
     this.resource.get();
   }
 
-  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRecordRequest request) {
+  protected BaseResourceDelegate makeResourceDelegate(SyncServer11RecordRequest request) {
     return new SyncStorageResourceDelegate(request);
   }
 

@@ -21,13 +21,13 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class EnsureCrypto5KeysStage
 extends AbstractNonRepositorySyncStage
-implements SyncStorageRequestDelegate {
+implements SyncServer11RequestDelegate {
 
   public EnsureCrypto5KeysStage(GlobalSession session) {
     super(session);
@@ -63,7 +63,7 @@ implements SyncStorageRequestDelegate {
     // We need an update: fetch fresh keys.
     Logger.debug(LOG_TAG, "Fetching fresh collection keys for this session.");
     try {
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
+      SyncServer11RecordRequest request = new SyncServer11RecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
       request.delegate = this;
       request.get();
     } catch (URISyntaxException e) {

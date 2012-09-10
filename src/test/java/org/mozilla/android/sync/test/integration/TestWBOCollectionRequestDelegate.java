@@ -17,7 +17,7 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
+import org.mozilla.gecko.sync.net.SyncServer11CollectionRequest;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 
@@ -89,7 +89,7 @@ public class TestWBOCollectionRequestDelegate {
   @Test
   public void testRealLiveBookmarks() throws URISyntaxException, UnsupportedEncodingException {
     URI u = new URI(REMOTE_BOOKMARKS_URL);
-    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(u);
+    SyncServer11CollectionRequest r = new SyncServer11CollectionRequest(u);
     LiveDelegate delegate = new LiveDelegate();
     r.delegate = delegate;
 

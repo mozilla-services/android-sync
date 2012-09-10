@@ -13,11 +13,11 @@ import java.util.Set;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 
-public class InfoCollections implements SyncStorageRequestDelegate {
+public class InfoCollections implements SyncServer11RequestDelegate {
   private static final String LOG_TAG = "InfoCollections";
   protected String infoURL;
   protected String credentials;
@@ -87,7 +87,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
 
   private void doFetch() {
     try {
-      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(this.infoURL));
+      final SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(this.infoURL));
       r.delegate = this;
       // TODO: it might be nice to make Resource include its
       // own thread pool, and automatically run asynchronously.

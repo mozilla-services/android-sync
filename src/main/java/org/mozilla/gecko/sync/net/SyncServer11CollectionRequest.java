@@ -26,16 +26,16 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
  * @author rnewman
  *
  */
-public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
-  private static final String LOG_TAG = "CollectionRequest";
+public class SyncServer11CollectionRequest extends SyncServer11RecordRequest {
+  private static final String LOG_TAG = "SyncS11CollectionRequest";
 
-  public SyncStorageCollectionRequest(URI uri) {
+  public SyncServer11CollectionRequest(URI uri) {
     super(uri);
   }
 
   @Override
-  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRecordRequest request) {
-    return new SyncCollectionResourceDelegate((SyncStorageCollectionRequest) request);
+  protected BaseResourceDelegate makeResourceDelegate(SyncServer11RecordRequest request) {
+    return new SyncCollectionResourceDelegate((SyncServer11CollectionRequest) request);
   }
 
   // TODO: this is awful.
@@ -45,7 +45,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
     private static final String CONTENT_TYPE_INCREMENTAL = "application/newlines";
     private static final int FETCH_BUFFER_SIZE = 16 * 1024;   // 16K chars.
 
-    SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
+    SyncCollectionResourceDelegate(SyncServer11CollectionRequest request) {
       super(request);
     }
 
@@ -84,7 +84,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
       // it processes. Bug 721887.
 
       // Line-by-line processing, then invoke success.
-      SyncStorageCollectionRequestDelegate delegate = (SyncStorageCollectionRequestDelegate) this.request.delegate;
+      SyncServer11CollectionRequestDelegate delegate = (SyncServer11CollectionRequestDelegate) this.request.delegate;
       InputStream content = null;
       BufferedReader br = null;
       try {

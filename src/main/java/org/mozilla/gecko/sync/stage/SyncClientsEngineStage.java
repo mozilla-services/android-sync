@@ -26,9 +26,9 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11CollectionRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
@@ -218,7 +218,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
-  public class ClientUploadDelegate implements SyncStorageRequestDelegate {
+  public class ClientUploadDelegate implements SyncServer11RequestDelegate {
     protected static final String LOG_TAG = "ClientUploadDelegate";
     public Long currentlyUploadingRecordTimestamp;
     public boolean currentlyUploadingLocalRecord;
@@ -513,7 +513,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
     try {
       final URI getURI = session.config.collectionURI(COLLECTION_NAME, true);
-      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI);
+      final SyncServer11CollectionRequest request = new SyncServer11CollectionRequest(getURI);
       request.delegate = clientDownloadDelegate;
 
       Logger.trace(LOG_TAG, "Downloading client records.");
@@ -527,7 +527,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.trace(LOG_TAG, "Uploading " + records.size() + " client records.");
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME, false);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncServer11RecordRequest request = new SyncServer11RecordRequest(postURI);
       request.delegate = clientUploadDelegate;
       request.post(records);
     } catch (URISyntaxException e) {
@@ -544,7 +544,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.debug(LOG_TAG, "Uploading client record " + record.guid);
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncServer11RecordRequest request = new SyncServer11RecordRequest(postURI);
       request.delegate = clientUploadDelegate;
       request.post(record);
     } catch (URISyntaxException e) {

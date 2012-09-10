@@ -27,10 +27,10 @@ import org.mozilla.gecko.sync.Server11PreviousPostFailedException;
 import org.mozilla.gecko.sync.Server11RecordPostFailedException;
 import org.mozilla.gecko.sync.UnexpectedJSONException;
 import org.mozilla.gecko.sync.net.ByteArraysEntity;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11CollectionRequest;
+import org.mozilla.gecko.sync.net.SyncServer11CollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -49,12 +49,12 @@ public class Server11RepositorySession extends RepositorySession {
   /**
    * Used to track outstanding requests, so that we can abort them as needed.
    */
-  private Set<SyncStorageCollectionRequest> pending = Collections.synchronizedSet(new HashSet<SyncStorageCollectionRequest>());
+  private Set<SyncServer11CollectionRequest> pending = Collections.synchronizedSet(new HashSet<SyncServer11CollectionRequest>());
 
   @Override
   public void abort() {
     super.abort();
-    for (SyncStorageCollectionRequest request : pending) {
+    for (SyncServer11CollectionRequest request : pending) {
       request.abort();
     }
     pending.clear();
@@ -72,11 +72,11 @@ public class Server11RepositorySession extends RepositorySession {
     private DelayedWorkTracker workTracker = new DelayedWorkTracker();
 
     // So that we can clean up.
-    private SyncStorageCollectionRequest request;
+    private SyncServer11CollectionRequest request;
 
     public AtomicInteger numRecordsProcessed = new AtomicInteger(0);
 
-    public void setRequest(SyncStorageCollectionRequest request) {
+    public void setRequest(SyncServer11CollectionRequest request) {
       this.request = request;
     }
 
@@ -239,7 +239,7 @@ public class Server11RepositorySession extends RepositorySession {
     return b.substring(0, b.length() - 1);
   }
 
-  public class RequestGuidsDelegateAdapter extends SyncStorageCollectionRequestDelegate {
+  public class RequestGuidsDelegateAdapter extends SyncServer11CollectionRequestDelegate {
     public ArrayList<String> guids = new ArrayList<String>();
 
     public RepositorySessionGuidsSinceDelegate delegate = null;
@@ -249,9 +249,9 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     // So that we can clean up.
-    private SyncStorageCollectionRequest request;
+    private SyncServer11CollectionRequest request;
 
-    public void setRequest(SyncStorageCollectionRequest request) {
+    public void setRequest(SyncServer11CollectionRequest request) {
       this.request = request;
     }
 
@@ -315,7 +315,7 @@ public class Server11RepositorySession extends RepositorySession {
       return;
     }
 
-    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
+    SyncServer11CollectionRequest request = new SyncServer11CollectionRequest(collectionURI);
     RequestGuidsDelegateAdapter adapter = new RequestGuidsDelegateAdapter(delegate);
     // So it can clean up.
     adapter.setRequest(request);
@@ -333,7 +333,7 @@ public class Server11RepositorySession extends RepositorySession {
                                          throws URISyntaxException {
 
     URI collectionURI = serverRepository.collectionURI(full, newer, limit, sort, ids);
-    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
+    SyncServer11CollectionRequest request = new SyncServer11CollectionRequest(collectionURI);
     request.delegate = delegate;
 
     // So it can clean up.
@@ -491,7 +491,7 @@ public class Server11RepositorySession extends RepositorySession {
    * @author rnewman
    *
    */
-  protected class RecordUploadRunnable implements Runnable, SyncStorageRequestDelegate {
+  protected class RecordUploadRunnable implements Runnable, SyncServer11RequestDelegate {
 
     public final String LOG_TAG = "RecordUploadRunnable";
     private ArrayList<byte[]> outgoing;
@@ -625,7 +625,7 @@ public class Server11RepositorySession extends RepositorySession {
       }
 
       URI u = serverRepository.collectionURI();
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(u);
+      SyncServer11RecordRequest request = new SyncServer11RecordRequest(u);
 
       request.delegate = this;
 

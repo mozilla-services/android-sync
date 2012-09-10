@@ -4,7 +4,7 @@
 
 package org.mozilla.gecko.sync.net;
 
-public interface SyncStorageRequestDelegate {
+public interface SyncServer11RequestDelegate {
   String credentials();
   String ifUnmodifiedSince();
 

@@ -23,8 +23,8 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -354,17 +354,17 @@ public abstract class ServerSyncStage implements
    * Asynchronously wipe collection on server.
    */
   protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRecordRequest request;
+    SyncServer11RecordRequest request;
 
     try {
-      request = new SyncStorageRecordRequest(session.config.collectionURI(getCollection()));
+      request = new SyncServer11RecordRequest(session.config.collectionURI(getCollection()));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
       return;
     }
 
-    request.delegate = new SyncStorageRequestDelegate() {
+    request.delegate = new SyncServer11RequestDelegate() {
 
       @Override
       public String ifUnmodifiedSince() {

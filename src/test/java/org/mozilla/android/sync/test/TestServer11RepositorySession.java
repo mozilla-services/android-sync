@@ -22,7 +22,7 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -118,7 +118,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
     session.enqueueRecord(new MockRecord(Utils.generateGuid(), null, 0, false));
 
     URI uri = new URI(LOCAL_REQUEST_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(uri);
+    SyncServer11RecordRequest r = new SyncServer11RecordRequest(uri);
     TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;

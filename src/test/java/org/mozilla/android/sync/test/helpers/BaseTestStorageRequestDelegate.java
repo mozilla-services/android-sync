@@ -8,11 +8,11 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 public class BaseTestStorageRequestDelegate implements
-    SyncStorageRequestDelegate {
+    SyncServer11RequestDelegate {
   public String _credentials;
 
   @Override

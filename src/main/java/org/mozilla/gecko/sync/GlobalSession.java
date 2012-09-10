@@ -30,8 +30,8 @@ import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
@@ -562,16 +562,16 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public void uploadKeys(final CollectionKeys keys,
                          final KeyUploadDelegate keyUploadDelegate) {
-    SyncStorageRecordRequest request;
+    SyncServer11RecordRequest request;
     final GlobalSession self = this;
     try {
-      request = new SyncStorageRecordRequest(this.config.keysURI());
+      request = new SyncServer11RecordRequest(this.config.keysURI());
     } catch (URISyntaxException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
     }
 
-    request.delegate = new SyncStorageRequestDelegate() {
+    request.delegate = new SyncServer11RequestDelegate() {
 
       @Override
       public String ifUnmodifiedSince() {
@@ -822,18 +822,18 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   // If sync ID mismatch: take that syncID and reset client.
 
   protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRecordRequest request;
+    SyncServer11RecordRequest request;
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRecordRequest(new URI(config.storageURL(false)));
+      request = new SyncServer11RecordRequest(new URI(config.storageURL(false)));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
       return;
     }
 
-    request.delegate = new SyncStorageRequestDelegate() {
+    request.delegate = new SyncServer11RequestDelegate() {
 
       @Override
       public String ifUnmodifiedSince() {

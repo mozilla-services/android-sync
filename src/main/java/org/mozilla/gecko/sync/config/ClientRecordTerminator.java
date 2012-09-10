@@ -9,8 +9,8 @@ import java.net.URI;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 
 /**
@@ -37,8 +37,8 @@ public class ClientRecordTerminator {
     final URI wboURI = new URI(clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage/" + collection + "/" + clientGuid);
 
     // Would prefer to break this out into a self-contained client library.
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(wboURI);
-    r.delegate = new SyncStorageRequestDelegate() {
+    final SyncServer11RecordRequest r = new SyncServer11RecordRequest(wboURI);
+    r.delegate = new SyncServer11RequestDelegate() {
       @Override
       public String credentials() {
         return username + ":" + password;

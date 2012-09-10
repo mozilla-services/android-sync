@@ -16,11 +16,11 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedSyncIDException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedVersionException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.SyncServer11RequestDelegate;
 import org.mozilla.gecko.sync.net.SyncServer11Response;
 
-public class MetaGlobal implements SyncStorageRequestDelegate {
+public class MetaGlobal implements SyncServer11RequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";
   protected String metaURL;
   protected String credentials;
@@ -50,7 +50,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback = delegate;
     try {
       this.isUploading = false;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(this.metaURL));
+      SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(this.metaURL));
       r.delegate = this;
       r.get();
     } catch (URISyntaxException e) {
@@ -61,7 +61,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   public void upload(MetaGlobalDelegate callback) {
     try {
       this.isUploading = true;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(this.metaURL));
+      SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(this.metaURL));
 
       r.delegate = this;
       this.callback = callback;
