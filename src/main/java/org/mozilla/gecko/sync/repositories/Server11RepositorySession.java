@@ -5,17 +5,19 @@
 package org.mozilla.gecko.sync.repositories;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.JSONArray;
+import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.DelayedWorkTracker;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -24,12 +26,13 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Server11PreviousPostFailedException;
 import org.mozilla.gecko.sync.Server11RecordPostFailedException;
 import org.mozilla.gecko.sync.UnexpectedJSONException;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.ByteArraysEntity;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11CollectionRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11CollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFetchRecordsDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
@@ -37,69 +40,21 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
-import ch.boye.httpclientandroidlib.entity.ContentProducer;
-import ch.boye.httpclientandroidlib.entity.EntityTemplate;
-
 public class Server11RepositorySession extends RepositorySession {
-  private static byte[] recordsStart;
-  private static byte[] recordSeparator;
-  private static byte[] recordsEnd;
-
-  static {
-    try {
-      recordsStart    = "[\n".getBytes("UTF-8");
-      recordSeparator = ",\n".getBytes("UTF-8");
-      recordsEnd      = "\n]\n".getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      // These won't fail.
-    }
-  }
-
   public static final String LOG_TAG = "Server11Session";
 
-  private static final int UPLOAD_BYTE_THRESHOLD = 1024 * 1024;    // 1MB.
-  private static final int UPLOAD_ITEM_THRESHOLD = 50;
-  private static final int PER_RECORD_OVERHEAD   = 2;              // Comma, newline.
-  // {}, newlines, but we get to skip one record overhead.
-  private static final int PER_BATCH_OVERHEAD    = 5 - PER_RECORD_OVERHEAD;
-
-  /**
-   * Return the X-Weave-Timestamp header from <code>response</code>, or the
-   * current time if it is missing.
-   * <p>
-   * <b>Warning:</b> this can cause the timestamp of <code>response</code> to
-   * cross domains (from server clock to local clock), which could cause records
-   * to be skipped on account of clock drift. This should never happen, because
-   * <i>every</i> server response should have a well-formed X-Weave-Timestamp
-   * header.
-   *
-   * @param response
-   *          The <code>SyncStorageResponse</code> to interrogate.
-   * @return Normalized timestamp in milliseconds.
-   */
-  public static long getNormalizedTimestamp(SyncStorageResponse response) {
-    long normalizedTimestamp = -1;
-    try {
-      normalizedTimestamp = response.normalizedWeaveTimestamp();
-    } catch (NumberFormatException e) {
-      Logger.warn(LOG_TAG, "Malformed X-Weave-Timestamp header received.", e);
-    }
-    if (-1 == normalizedTimestamp) {
-      Logger.warn(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
-      normalizedTimestamp = System.currentTimeMillis();
-    }
-    return normalizedTimestamp;
-  }
+  protected static final int UPLOAD_BYTE_THRESHOLD = 1024 * 1024 - 512;    // 1MB minus some characters for wrapping in a JSON array.
+  protected static final int UPLOAD_ITEM_THRESHOLD = 50;
 
   /**
    * Used to track outstanding requests, so that we can abort them as needed.
    */
-  private Set<SyncStorageCollectionRequest> pending = Collections.synchronizedSet(new HashSet<SyncStorageCollectionRequest>());
+  private Set<SyncServer11CollectionRequest> pending = Collections.synchronizedSet(new HashSet<SyncServer11CollectionRequest>());
 
   @Override
   public void abort() {
     super.abort();
-    for (SyncStorageCollectionRequest request : pending) {
+    for (SyncServer11CollectionRequest request : pending) {
       request.abort();
     }
     pending.clear();
@@ -117,11 +72,14 @@ public class Server11RepositorySession extends RepositorySession {
     private DelayedWorkTracker workTracker = new DelayedWorkTracker();
 
     // So that we can clean up.
-    private SyncStorageCollectionRequest request;
+    private SyncServer11CollectionRequest request;
 
-    public void setRequest(SyncStorageCollectionRequest request) {
+    public AtomicInteger numRecordsProcessed = new AtomicInteger(0);
+
+    public void setRequest(SyncServer11CollectionRequest request) {
       this.request = request;
     }
+
     private void removeRequestFromPending() {
       if (this.request == null) {
         return;
@@ -145,26 +103,52 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       Logger.debug(LOG_TAG, "Fetch done.");
       removeRequestFromPending();
 
-      final long normalizedTimestamp = getNormalizedTimestamp(response);
+      final long normalizedTimestamp = response.getNormalizedTimestamp();
       Logger.debug(LOG_TAG, "Fetch completed. Timestamp is " + normalizedTimestamp);
+
+      final AtomicInteger numRecordsExpected = new AtomicInteger(-1);
+      try {
+        numRecordsExpected.set(response.weaveRecords());
+      } catch (NumberFormatException e) {
+        // We just won't verify.
+      }
 
       // When we're done processing other events, finish.
       workTracker.delayWorkItem(new Runnable() {
         @Override
         public void run() {
-          Logger.debug(LOG_TAG, "Delayed onFetchCompleted running.");
-          // TODO: verify number of returned records.
-          delegate.onFetchCompleted(normalizedTimestamp);
+          finish(numRecordsExpected.get(), numRecordsProcessed.get(), normalizedTimestamp);
         }
       });
     }
 
+    /**
+     * Called after a successful request.
+     *
+     * @param expected The number of records expected, based on the server's response.
+     * @param gotten The number of records received and processed.
+     * @param end The timestamp of the server's response.
+     */
+    public void finish(int expected, int gotten, long end) {
+      if (expected >= 0 && expected != gotten) {
+        Logger.debug(LOG_TAG, "Expected "
+            + expected + " records but got "
+            + gotten + " records, failing.");
+        delegate.onFetchFailed(null, null);
+        return;
+      }
+
+      Logger.debug(LOG_TAG, "Expected and got " + expected + " records; running delayed onFetchCompleted.");
+      delegate.onFetchCompleted(end);
+    }
+
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
+      removeRequestFromPending();
       // TODO: ensure that delegate methods don't get called more than once.
       this.handleRequestError(new HTTPFailureException(response));
     }
@@ -188,6 +172,7 @@ public class Server11RepositorySession extends RepositorySession {
       workTracker.incrementOutstanding();
       try {
         delegate.onFetchedRecord(record);
+        numRecordsProcessed.incrementAndGet();
       } catch (Exception ex) {
         Logger.warn(LOG_TAG, "Got exception calling onFetchedRecord with WBO.", ex);
         // TODO: handle this better.
@@ -196,14 +181,7 @@ public class Server11RepositorySession extends RepositorySession {
         workTracker.decrementOutstanding();
       }
     }
-
-    // TODO: this implies that we've screwed up our inheritance chain somehow.
-    @Override
-    public KeyBundle keyBundle() {
-      return null;
-    }
   }
-
 
   Server11Repository serverRepository;
   AtomicLong uploadTimestamp = new AtomicLong(0);
@@ -225,6 +203,25 @@ public class Server11RepositorySession extends RepositorySession {
     serverRepository = (Server11Repository) repository;
   }
 
+  /**
+   * URL-encode the provided string. If the input is null,
+   * the empty string is returned.
+   *
+   * @param in the string to encode.
+   * @return a URL-encoded version of the input.
+   */
+  protected static String encode(String in) {
+    if (in == null) {
+      return "";
+    }
+    try {
+      return URLEncoder.encode(in, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // Will never occur.
+      return null;
+    }
+  }
+
   private String flattenIDs(String[] guids) {
     // Consider using Utils.toDelimitedString if and when the signature changes
     // to Collection<String> guids.
@@ -236,17 +233,95 @@ public class Server11RepositorySession extends RepositorySession {
     }
     StringBuilder b = new StringBuilder();
     for (String guid : guids) {
-      b.append(guid);
+      b.append(encode(guid));
       b.append(",");
     }
     return b.substring(0, b.length() - 1);
   }
 
+  public class RequestGuidsDelegateAdapter extends SyncServer11CollectionRequestDelegate {
+    public ArrayList<String> guids = new ArrayList<String>();
+
+    public RepositorySessionGuidsSinceDelegate delegate = null;
+
+    public RequestGuidsDelegateAdapter(RepositorySessionGuidsSinceDelegate delegate) {
+      this.delegate = delegate;
+    }
+
+    // So that we can clean up.
+    private SyncServer11CollectionRequest request;
+
+    public void setRequest(SyncServer11CollectionRequest request) {
+      this.request = request;
+    }
+
+    private void removeRequestFromPending() {
+      if (this.request == null) {
+        return;
+      }
+      pending.remove(this.request);
+      this.request = null;
+    }
+
+    @Override
+    public void handleRequestProgress(String progress) {
+      try {
+        guids.add((String) ExtendedJSONObject.parse(progress));
+      } catch (IOException e) {
+      } catch (ParseException e) {
+      }
+    }
+
+    @Override
+    public String credentials() {
+      return serverRepository.credentialsSource.credentials();
+    }
+
+    @Override
+    public String ifUnmodifiedSince() {
+      return null;
+    }
+
+    @Override
+    public void handleRequestSuccess(SyncServer11Response response) {
+      Logger.debug(LOG_TAG, "guidsSince done.");
+      String[] guidsArray = new String[guids.size()];
+      guids.toArray(guidsArray);
+      delegate.onGuidsSinceSucceeded(guidsArray);
+    }
+
+    @Override
+    public void handleRequestFailure(SyncServer11Response response) {
+      this.handleRequestError(new HTTPFailureException(response));
+    }
+
+    @Override
+    public void handleRequestError(Exception ex) {
+      removeRequestFromPending();
+      Logger.warn(LOG_TAG, "guidsSince got error.", ex);
+      delegate.onGuidsSinceFailed(ex);
+    }
+  }
+
   @Override
   public void guidsSince(long timestamp,
                          RepositorySessionGuidsSinceDelegate delegate) {
-    // TODO Auto-generated method stub
+    URI collectionURI;
+    try {
+      String sort = serverRepository.getDefaultSort();
+      collectionURI = serverRepository.collectionURI(false, timestamp, -1, sort, null);
+    } catch (URISyntaxException e) {
+      delegate.onGuidsSinceFailed(e);
+      return;
+    }
 
+    SyncServer11CollectionRequest request = new SyncServer11CollectionRequest(collectionURI);
+    RequestGuidsDelegateAdapter adapter = new RequestGuidsDelegateAdapter(delegate);
+    // So it can clean up.
+    adapter.setRequest(request);
+    request.delegate = adapter;
+    pending.add(request);
+    request.get();
   }
 
   protected void fetchWithParameters(long newer,
@@ -258,21 +333,13 @@ public class Server11RepositorySession extends RepositorySession {
                                          throws URISyntaxException {
 
     URI collectionURI = serverRepository.collectionURI(full, newer, limit, sort, ids);
-    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
+    SyncServer11CollectionRequest request = new SyncServer11CollectionRequest(collectionURI);
     request.delegate = delegate;
 
     // So it can clean up.
     delegate.setRequest(request);
     pending.add(request);
     request.get();
-  }
-
-  public void fetchSince(long timestamp, long limit, String sort, RepositorySessionFetchRecordsDelegate delegate) {
-    try {
-      this.fetchWithParameters(timestamp, limit, true, sort, null, new RequestFetchDelegateAdapter(delegate));
-    } catch (URISyntaxException e) {
-      delegate.onFetchFailed(e, null);
-    }
   }
 
   @Override
@@ -298,7 +365,9 @@ public class Server11RepositorySession extends RepositorySession {
     // TODO: watch out for URL length limits!
     try {
       String ids = flattenIDs(guids);
-      this.fetchWithParameters(-1, -1, true, "index", ids, new RequestFetchDelegateAdapter(delegate));
+      long limit = -1;
+      String sort = serverRepository.getDefaultSort();
+      this.fetchWithParameters(-1, limit, true, sort, ids, new RequestFetchDelegateAdapter(delegate));
     } catch (URISyntaxException e) {
       delegate.onFetchFailed(e, null);
     }
@@ -333,7 +402,7 @@ public class Server11RepositorySession extends RepositorySession {
    * Access should be synchronized on <code>recordsBufferMonitor</code>.
    */
   protected ArrayList<String> recordGuidsBuffer = new ArrayList<String>();
-  protected int byteCount = PER_BATCH_OVERHEAD;
+  protected int byteCount = 0;
 
   @Override
   public void store(Record record) throws NoStoreDelegateException {
@@ -362,7 +431,7 @@ public class Server11RepositorySession extends RepositorySession {
       }
       recordsBuffer.add(json);
       recordGuidsBuffer.add(record.guid);
-      byteCount += PER_RECORD_OVERHEAD + delta;
+      byteCount += delta;
     }
   }
 
@@ -377,7 +446,7 @@ public class Server11RepositorySession extends RepositorySession {
 
       recordsBuffer = new ArrayList<byte[]>();
       recordGuidsBuffer = new ArrayList<String>();
-      byteCount = PER_BATCH_OVERHEAD;
+      byteCount = 0;
     }
   }
 
@@ -422,7 +491,7 @@ public class Server11RepositorySession extends RepositorySession {
    * @author rnewman
    *
    */
-  protected class RecordUploadRunnable implements Runnable, SyncStorageRequestDelegate {
+  protected class RecordUploadRunnable implements Runnable, SyncServer11RequestDelegate {
 
     public final String LOG_TAG = "RecordUploadRunnable";
     private ArrayList<byte[]> outgoing;
@@ -452,7 +521,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       Logger.trace(LOG_TAG, "POST of " + outgoing.size() + " records done.");
 
       ExtendedJSONObject body;
@@ -490,7 +559,7 @@ public class Server11RepositorySession extends RepositorySession {
             }
           }
 
-          long normalizedTimestamp = getNormalizedTimestamp(response);
+          long normalizedTimestamp = response.getNormalizedTimestamp();
           Logger.trace(LOG_TAG, "Passing back upload X-Weave-Timestamp: " + normalizedTimestamp);
           bumpUploadTimestamp(normalizedTimestamp);
         }
@@ -515,7 +584,7 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       // TODO: call session.interpretHTTPFailure.
       this.handleRequestError(new HTTPFailureException(response));
     }
@@ -531,46 +600,6 @@ public class Server11RepositorySession extends RepositorySession {
         delegate.onRecordStoreFailed(ex, guid);
       }
       return;
-    }
-
-    public class ByteArraysContentProducer implements ContentProducer {
-
-      ArrayList<byte[]> outgoing;
-      public ByteArraysContentProducer(ArrayList<byte[]> arrays) {
-        outgoing = arrays;
-      }
-
-      @Override
-      public void writeTo(OutputStream outstream) throws IOException {
-        int count = outgoing.size();
-        outstream.write(recordsStart);
-        outstream.write(outgoing.get(0));
-        for (int i = 1; i < count; ++i) {
-          outstream.write(recordSeparator);
-          outstream.write(outgoing.get(i));
-        }
-        outstream.write(recordsEnd);
-      }
-    }
-
-    public class ByteArraysEntity extends EntityTemplate {
-      private long count;
-      public ByteArraysEntity(ArrayList<byte[]> arrays, long totalBytes) {
-        super(new ByteArraysContentProducer(arrays));
-        this.count = totalBytes;
-        this.setContentType("application/json");
-        // charset is set in BaseResource.
-      }
-
-      @Override
-      public long getContentLength() {
-        return count;
-      }
-
-      @Override
-      public boolean isRepeatable() {
-        return true;
-      }
     }
 
     public ByteArraysEntity getBodyEntity() {
@@ -596,7 +625,7 @@ public class Server11RepositorySession extends RepositorySession {
       }
 
       URI u = serverRepository.collectionURI();
-      SyncStorageRequest request = new SyncStorageRequest(u);
+      SyncServer11RecordRequest request = new SyncServer11RecordRequest(u);
 
       request.delegate = this;
 

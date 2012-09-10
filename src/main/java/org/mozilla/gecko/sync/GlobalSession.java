@@ -30,11 +30,9 @@ import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
-import org.mozilla.gecko.sync.net.SyncResponse;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
@@ -430,7 +428,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       public void run() {
         config.metaGlobal.upload(new MetaGlobalDelegate() {
           @Override
-          public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
+          public void handleSuccess(MetaGlobal global, SyncServer11Response response) {
             Logger.info(LOG_TAG, "Successfully uploaded updated meta/global record.");
             synchronized (monitor) {
               monitor.notify();
@@ -438,7 +436,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
           }
 
           @Override
-          public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+          public void handleMissing(MetaGlobal global, SyncServer11Response response) {
             Logger.warn(LOG_TAG, "Got 404 missing uploading updated meta/global record; shouldn't happen.  Ignoring.");
             synchronized (monitor) {
               monitor.notify();
@@ -446,7 +444,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
           }
 
           @Override
-          public void handleFailure(SyncStorageResponse response) {
+          public void handleFailure(SyncServer11Response response) {
             Logger.warn(LOG_TAG, "Failed to upload updated meta/global record; ignoring.");
             synchronized (monitor) {
               monitor.notify();
@@ -493,7 +491,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.callback.handleError(this, e);
   }
 
-  public void handleHTTPError(SyncStorageResponse response, String reason) {
+  public void handleHTTPError(SyncServer11Response response, String reason) {
     // TODO: handling of 50x (backoff), 401 (node reassignment or auth error).
     // Fall back to aborting.
     Logger.warn(LOG_TAG, "Aborting sync due to HTTP " + response.getStatusCode());
@@ -506,7 +504,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public void interpretHTTPFailure(HttpResponse response) {
     // TODO: handle permanent rejection.
-    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds();
+    long responseBackoff = (new SyncServer11Response(response)).totalBackoffInMilliseconds();
     if (responseBackoff > 0) {
       callback.requestBackoff(responseBackoff);
     }
@@ -516,7 +514,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       switch(statusCode) {
 
       case 400:
-        SyncStorageResponse storageResponse = new SyncStorageResponse(response);
+        SyncServer11Response storageResponse = new SyncServer11Response(response);
         this.interpretHTTPBadRequestBody(storageResponse);
         break;
 
@@ -532,13 +530,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
-  protected void interpretHTTPBadRequestBody(final SyncStorageResponse storageResponse) {
+  protected void interpretHTTPBadRequestBody(final SyncServer11Response storageResponse) {
     try {
       final String body = storageResponse.body();
       if (body == null) {
         return;
       }
-      if (SyncStorageResponse.RESPONSE_CLIENT_UPGRADE_REQUIRED.equals(body)) {
+      if (SyncServer11Response.RESPONSE_CLIENT_UPGRADE_REQUIRED.equals(body)) {
         callback.informUpgradeRequiredResponse(this);
         return;
       }
@@ -564,16 +562,16 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public void uploadKeys(final CollectionKeys keys,
                          final KeyUploadDelegate keyUploadDelegate) {
-    SyncStorageRecordRequest request;
+    SyncServer11RecordRequest request;
     final GlobalSession self = this;
     try {
-      request = new SyncStorageRecordRequest(this.config.keysURI());
+      request = new SyncServer11RecordRequest(this.config.keysURI());
     } catch (URISyntaxException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
     }
 
-    request.delegate = new SyncStorageRequestDelegate() {
+    request.delegate = new SyncServer11RequestDelegate() {
 
       @Override
       public String ifUnmodifiedSince() {
@@ -581,14 +579,14 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
 
       @Override
-      public void handleRequestSuccess(SyncStorageResponse response) {
+      public void handleRequestSuccess(SyncServer11Response response) {
         Logger.debug(LOG_TAG, "Keys uploaded.");
         BaseResource.consumeEntity(response); // We don't need the response at all.
         keyUploadDelegate.onKeysUploaded();
       }
 
       @Override
-      public void handleRequestFailure(SyncStorageResponse response) {
+      public void handleRequestFailure(SyncServer11Response response) {
         Logger.debug(LOG_TAG, "Failed to upload keys.");
         self.interpretHTTPFailure(response.httpResponse());
         BaseResource.consumeEntity(response); // The exception thrown should not need the body of the response.
@@ -742,7 +740,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
         // (bug 693893), so we're going to defer this until bug 692700.
         mg.upload(new MetaGlobalDelegate() {
           @Override
-          public void handleSuccess(MetaGlobal uploadedGlobal, SyncStorageResponse uploadResponse) {
+          public void handleSuccess(MetaGlobal uploadedGlobal, SyncServer11Response uploadResponse) {
             Logger.info(LOG_TAG, "Uploaded new meta/global with sync ID " + uploadedGlobal.syncID + ".");
 
             // Generate new keys.
@@ -776,14 +774,14 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
           }
 
           @Override
-          public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+          public void handleMissing(MetaGlobal global, SyncServer11Response response) {
             // Shouldn't happen on upload.
             Logger.warn(LOG_TAG, "Got 'missing' response uploading new meta/global.");
             freshStartDelegate.onFreshStartFailed(new Exception("meta/global missing while uploading."));
           }
 
           @Override
-          public void handleFailure(SyncStorageResponse response) {
+          public void handleFailure(SyncServer11Response response) {
             Logger.warn(LOG_TAG, "Got failure " + response.getStatusCode() + " uploading new meta/global.");
             session.interpretHTTPFailure(response.httpResponse());
             freshStartDelegate.onFreshStartFailed(new HTTPFailureException(response));
@@ -824,18 +822,18 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   // If sync ID mismatch: take that syncID and reset client.
 
   protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRequest request;
+    SyncServer11RecordRequest request;
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRequest(config.storageURL(false));
+      request = new SyncServer11RecordRequest(new URI(config.storageURL(false)));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
       return;
     }
 
-    request.delegate = new SyncStorageRequestDelegate() {
+    request.delegate = new SyncServer11RequestDelegate() {
 
       @Override
       public String ifUnmodifiedSince() {
@@ -843,13 +841,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
 
       @Override
-      public void handleRequestSuccess(SyncStorageResponse response) {
+      public void handleRequestSuccess(SyncServer11Response response) {
         BaseResource.consumeEntity(response);
-        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
+        wipeDelegate.onWiped(response.getNormalizedTimestamp());
       }
 
       @Override
-      public void handleRequestFailure(SyncStorageResponse response) {
+      public void handleRequestFailure(SyncServer11Response response) {
         Logger.warn(LOG_TAG, "Got request failure " + response.getStatusCode() + " in wipeServer.");
         // Process HTTP failures here to pick up backoffs, etc.
         self.interpretHTTPFailure(response.httpResponse());
@@ -1079,7 +1077,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   @Override
   public void observeHttpResponse(HttpResponse response) {
-    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
+    long responseBackoff = (new SyncServer11Response(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
     if (responseBackoff <= 0) {
       return;
     }

@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.sync.net;
+package org.mozilla.gecko.sync.net.server11;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,6 +11,9 @@ import java.io.InputStreamReader;
 import java.net.URI;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
+import org.mozilla.gecko.sync.net.HandleProgressException;
 
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
@@ -26,42 +29,26 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
  * @author rnewman
  *
  */
-public class SyncStorageCollectionRequest extends SyncStorageRequest {
-  private static final String LOG_TAG = "CollectionRequest";
+public class SyncServer11CollectionRequest extends SyncServer11RecordRequest {
+  private static final String LOG_TAG = "SyncS11CollectionRequest";
 
-  public SyncStorageCollectionRequest(URI uri) {
+  public SyncServer11CollectionRequest(URI uri) {
     super(uri);
   }
 
-  protected volatile boolean aborting = false;
-
-  /**
-   * Instruct the request that it should process no more records,
-   * and decline to notify any more delegate callbacks.
-   */
-  public void abort() {
-    aborting = true;
-    try {
-      this.resource.request.abort();
-    } catch (Exception e) {
-      // Just in case.
-      Logger.warn(LOG_TAG, "Got exception in abort: " + e);
-    }
-  }
-
   @Override
-  protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
-    return new SyncCollectionResourceDelegate((SyncStorageCollectionRequest) request);
+  protected BaseResourceDelegate makeResourceDelegate(SyncServer11RecordRequest request) {
+    return new SyncCollectionResourceDelegate((SyncServer11CollectionRequest) request);
   }
 
   // TODO: this is awful.
-  public class SyncCollectionResourceDelegate extends
+  protected static class SyncCollectionResourceDelegate extends
       SyncStorageResourceDelegate {
 
     private static final String CONTENT_TYPE_INCREMENTAL = "application/newlines";
     private static final int FETCH_BUFFER_SIZE = 16 * 1024;   // 16K chars.
 
-    SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
+    SyncCollectionResourceDelegate(SyncServer11CollectionRequest request) {
       super(request);
     }
 
@@ -74,7 +61,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
-      if (aborting) {
+      if (this.request.aborting) {
         return;
       }
 
@@ -91,6 +78,8 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
         return;
       }
 
+      Logger.debug(LOG_TAG, "SyncCollectionResourceDelegate handling response: " + response.getStatusLine() + ".");
+
       // TODO: at this point we can access X-Weave-Timestamp, compare
       // that to our local timestamp, and compute an estimate of clock
       // skew. We can provide this to the incremental delegate, which
@@ -98,7 +87,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
       // it processes. Bug 721887.
 
       // Line-by-line processing, then invoke success.
-      SyncStorageCollectionRequestDelegate delegate = (SyncStorageCollectionRequestDelegate) this.request.delegate;
+      SyncServer11CollectionRequestDelegate delegate = (SyncServer11CollectionRequestDelegate) this.request.delegate;
       InputStream content = null;
       BufferedReader br = null;
       try {
@@ -107,7 +96,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
         String line;
 
         // This relies on connection timeouts at the HTTP layer.
-        while (!aborting &&
+        while (!this.request.aborting &&
                null != (line = br.readLine())) {
           try {
             delegate.handleRequestProgress(line);
@@ -117,12 +106,12 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
             return;
           }
         }
-        if (aborting) {
+        if (this.request.aborting) {
           // So we don't hit the success case below.
           return;
         }
       } catch (IOException ex) {
-        if (!aborting) {
+        if (!this.request.aborting) {
           delegate.handleRequestError(ex);
         }
         BaseResource.consumeEntity(entity);
@@ -139,7 +128,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
       }
       // We're done processing the entity. Don't let fetching the body succeed!
       BaseResource.consumeEntity(entity);
-      delegate.handleRequestSuccess(new SyncStorageResponse(response));
+      delegate.handleRequestSuccess(new SyncServer11Response(response));
     }
   }
 }

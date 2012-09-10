@@ -17,6 +17,7 @@ import java.security.SecureRandom;
 import javax.net.ssl.SSLContext;
 
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
@@ -345,6 +346,13 @@ public class BaseResource implements Resource {
   }
 
   /**
+   * Abort the underlying request.
+   */
+  public void abort() {
+    this.request.abort();
+  }
+
+  /**
    * Best-effort attempt to ensure that the entity has been fully consumed and
    * that the underlying stream has been closed.
    *
@@ -388,9 +396,9 @@ public class BaseResource implements Resource {
    * This releases the connection back to the connection pool.
    *
    * @param response
-   *          The SyncStorageResponse to be consumed.
+   *          to be consumed.
    */
-  public static void consumeEntity(SyncStorageResponse response) {
+  public static void consumeEntity(SyncServer11Response response) {
     if (response.httpResponse() == null) {
       return;
     }

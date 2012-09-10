@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 
 public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
@@ -19,14 +19,14 @@ public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       assertTrue(response.wasSuccessful());
       data.stopHTTPServer();
       super.handleRequestSuccess(response);
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       BaseResource.consumeEntity(response);
       data.stopHTTPServer();
       super.handleRequestFailure(response);
@@ -48,7 +48,7 @@ public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse response) {
+    public void handleRequestSuccess(SyncServer11Response response) {
       assertTrue(response.wasSuccessful());
       BaseResource.consumeEntity(response);
       data.stopHTTPServer();
@@ -56,7 +56,7 @@ public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       BaseResource.consumeEntity(response);
       super.handleRequestFailure(response);
       data.stopHTTPServer();

@@ -17,8 +17,8 @@ import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -40,7 +40,7 @@ public class TestSyncStorageRequest {
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
@@ -60,12 +60,12 @@ public class TestSyncStorageRequest {
       BaseTestStorageRequestDelegate {
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse res) {
+    public void handleRequestFailure(SyncServer11Response res) {
       assertTrue(!res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
       try {
         String responseMessage = res.getErrorMessage();
-        String expectedMessage = SyncStorageResponse.SERVER_ERROR_MESSAGES.get(EXPECTED_ERROR_CODE);
+        String expectedMessage = SyncServer11Response.SERVER_ERROR_MESSAGES.get(EXPECTED_ERROR_CODE);
         assertEquals(expectedMessage, responseMessage);
       } catch (Exception e) {
         fail("Got exception fetching error message.");
@@ -80,7 +80,7 @@ public class TestSyncStorageRequest {
   public void testSyncStorageRequest() throws URISyntaxException, IOException {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer();
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL));
+    SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(LOCAL_META_URL));
     TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
@@ -99,7 +99,7 @@ public class TestSyncStorageRequest {
   public void testErrorResponse() throws URISyntaxException {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new ErrorMockServer());
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL));
+    SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(LOCAL_BAD_REQUEST_URL));
     TestBadSyncStorageRequestDelegate delegate = new TestBadSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
@@ -113,7 +113,7 @@ public class TestSyncStorageRequest {
   BaseTestStorageRequestDelegate {
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse res) {
+    public void handleRequestFailure(SyncServer11Response res) {
       assertTrue(!res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("Retry-After"));
       assertEquals(res.retryAfterInSeconds(), 3001);
@@ -142,7 +142,7 @@ public class TestSyncStorageRequest {
   public void testRetryAfterResponse() throws URISyntaxException {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new RetryAfterMockServer());
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL)); // URL not used -- we 503 every response
+    SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(LOCAL_BAD_REQUEST_URL)); // URL not used -- we 503 every response
     TestRetryAfterSyncStorageRequestDelegate delegate = new TestRetryAfterSyncStorageRequestDelegate();
     r.delegate = delegate;
     r.post(new JSONObject());
@@ -155,7 +155,7 @@ public class TestSyncStorageRequest {
   TestSyncStorageRequestDelegate {
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       assertTrue(res.httpResponse().containsHeader("X-Weave-Backoff"));
       assertEquals(res.weaveBackoffInSeconds(), 1801);
       super.handleRequestSuccess(res);
@@ -174,7 +174,7 @@ public class TestSyncStorageRequest {
   public void testWeaveBackoffResponse() throws URISyntaxException {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new WeaveBackoffMockServer());
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
     TestWeaveBackoffSyncStorageRequestDelegate delegate = new TestWeaveBackoffSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
@@ -188,7 +188,7 @@ public class TestSyncStorageRequest {
   TestSyncStorageRequestDelegate {
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       assertTrue(res.httpResponse().containsHeader("X-Weave-Quota-Remaining"));
       assertTrue(res.httpResponse().containsHeader("X-Weave-Alert"));
       assertTrue(res.httpResponse().containsHeader("X-Weave-Records"));
@@ -216,7 +216,7 @@ public class TestSyncStorageRequest {
   public void testHeadersResponse() throws URISyntaxException {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new HeadersMockServer());
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
     TestHeadersSyncStorageRequestDelegate delegate = new TestHeadersSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;
@@ -237,7 +237,7 @@ public class TestSyncStorageRequest {
   public void testDelete() throws URISyntaxException {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new DeleteMockServer());
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
+    SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
     TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
     delegate._credentials = USER_PASS;
     r.delegate = delegate;

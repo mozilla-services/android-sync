@@ -9,9 +9,9 @@ import java.net.URI;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 /**
  * Bug 770785: when an Android Account is deleted, we need to (try to) delete
@@ -37,8 +37,8 @@ public class ClientRecordTerminator {
     final URI wboURI = new URI(clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage/" + collection + "/" + clientGuid);
 
     // Would prefer to break this out into a self-contained client library.
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(wboURI);
-    r.delegate = new SyncStorageRequestDelegate() {
+    final SyncServer11RecordRequest r = new SyncServer11RecordRequest(wboURI);
+    r.delegate = new SyncServer11RequestDelegate() {
       @Override
       public String credentials() {
         return username + ":" + password;
@@ -50,13 +50,13 @@ public class ClientRecordTerminator {
       }
 
       @Override
-      public void handleRequestSuccess(SyncStorageResponse response) {
+      public void handleRequestSuccess(SyncServer11Response response) {
         Logger.info(LOG_TAG, "Deleted client record with GUID " + clientGuid + " from server.");
         BaseResource.consumeEntity(response);
       }
 
       @Override
-      public void handleRequestFailure(SyncStorageResponse response) {
+      public void handleRequestFailure(SyncServer11Response response) {
         Logger.warn(LOG_TAG, "Failed to delete client record with GUID " + clientGuid + " from server.");
         try {
           Logger.warn(LOG_TAG, "Server error message was: " + response.getErrorMessage());

@@ -18,9 +18,9 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11CollectionRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11CollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -51,7 +51,7 @@ public class TestLineByLineHandling {
   }
 
   public class BaseLineByLineDelegate extends
-      SyncStorageCollectionRequestDelegate {
+      SyncServer11CollectionRequestDelegate {
 
     @Override
     public void handleRequestProgress(String progress) {
@@ -69,7 +69,7 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
+    public void handleRequestSuccess(SyncServer11Response res) {
       Logger.info(LOG_TAG, "Request success.");
       assertTrue(res.wasSuccessful());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
@@ -83,7 +83,7 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public void handleRequestFailure(SyncStorageResponse response) {
+    public void handleRequestFailure(SyncServer11Response response) {
       Logger.info(LOG_TAG, "Got request failure: " + response);
       BaseResource.consumeEntity(response);
       fail("Should not be called.");
@@ -108,8 +108,8 @@ public class TestLineByLineHandling {
 
     data.startHTTPServer(new LineByLineMockServer());
     Logger.info(LOG_TAG, "Server started.");
-    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
-    SyncStorageCollectionRequestDelegate delegate = new BaseLineByLineDelegate();
+    SyncServer11CollectionRequest r = new SyncServer11CollectionRequest(new URI(STORAGE_URL));
+    SyncServer11CollectionRequestDelegate delegate = new BaseLineByLineDelegate();
     r.delegate = delegate;
     r.get();
     // Server is stopped in the callback.

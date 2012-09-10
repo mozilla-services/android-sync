@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.Resource;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -21,12 +23,9 @@ public class MockResourceDelegate extends BaseResourceDelegate {
   public boolean handledHttpResponse = false;
   public HttpResponse httpResponse = null;
 
-  public MockResourceDelegate(WaitHelper waitHelper) {
+  public MockResourceDelegate(WaitHelper waitHelper, final Resource resource) {
+    super();
     this.waitHelper = waitHelper;
-  }
-
-  public MockResourceDelegate() {
-    this.waitHelper = WaitHelper.getTestWaiter();
   }
 
   @Override

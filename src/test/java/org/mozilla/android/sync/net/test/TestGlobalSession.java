@@ -42,7 +42,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
@@ -128,7 +128,7 @@ public class TestGlobalSession {
           new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
         response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
-        session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
+        session.handleHTTPError(new SyncServer11Response(response), "Failure fetching info/collections.");
       }
     }
 
@@ -157,7 +157,7 @@ public class TestGlobalSession {
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
-          session.handleHTTPError(new SyncStorageResponse(response), "Illegal method/protocol");
+          session.handleHTTPError(new SyncServer11Response(response), "Illegal method/protocol");
         }
       }));
 
@@ -256,7 +256,7 @@ public class TestGlobalSession {
       public void run() {
         try {
           final BaseResource r = new BaseResource(TEST_CLUSTER_URL);
-          r.delegate = new MockResourceDelegate(innerWaitHelper);
+          r.delegate = new MockResourceDelegate(innerWaitHelper, r);
           r.get();
         } catch (URISyntaxException e) {
           innerWaitHelper.performNotify(e);
@@ -375,7 +375,7 @@ public class TestGlobalSession {
     // Verify we fill in all of our known engines when none are persisted.
     session.config.enabledEngineNames = null;
     MetaGlobal mg = session.generateNewMetaGlobal();
-    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
     assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
     assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
 
@@ -400,7 +400,7 @@ public class TestGlobalSession {
     session.config.enabledEngineNames.add("prefs");
 
     MetaGlobal mg = session.generateNewMetaGlobal();
-    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
     assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
     assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
     assertEquals(0, mg.getEngines().getObject("addons").getIntegerSafely("version").intValue());

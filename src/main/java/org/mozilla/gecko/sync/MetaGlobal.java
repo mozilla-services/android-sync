@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,11 +16,11 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedSyncIDException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedVersionException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
-public class MetaGlobal implements SyncStorageRequestDelegate {
+public class MetaGlobal implements SyncServer11RequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";
   protected String metaURL;
   protected String credentials;
@@ -49,9 +50,9 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback = delegate;
     try {
       this.isUploading = false;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(this.metaURL));
       r.delegate = this;
-      r.deferGet();
+      r.get();
     } catch (URISyntaxException e) {
       this.callback.handleError(e);
     }
@@ -60,7 +61,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   public void upload(MetaGlobalDelegate callback) {
     try {
       this.isUploading = true;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(this.metaURL));
 
       r.delegate = this;
       this.callback = callback;
@@ -250,7 +251,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     return null;
   }
 
-  public void handleRequestSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncServer11Response response) {
     if (this.isUploading) {
       this.handleUploadSuccess(response);
     } else {
@@ -258,11 +259,11 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     }
   }
 
-  private void handleUploadSuccess(SyncStorageResponse response) {
+  private void handleUploadSuccess(SyncServer11Response response) {
     this.callback.handleSuccess(this, response);
   }
 
-  private void handleDownloadSuccess(SyncStorageResponse response) {
+  private void handleDownloadSuccess(SyncServer11Response response) {
     if (response.wasSuccessful()) {
       try {
         CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
@@ -276,7 +277,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback.handleFailure(response);
   }
 
-  public void handleRequestFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncServer11Response response) {
     if (response.getStatusCode() == 404) {
       this.callback.handleMissing(this, response);
       return;

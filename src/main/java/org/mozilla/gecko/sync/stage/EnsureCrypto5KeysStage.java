@@ -21,13 +21,13 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public class EnsureCrypto5KeysStage
 extends AbstractNonRepositorySyncStage
-implements SyncStorageRequestDelegate {
+implements SyncServer11RequestDelegate {
 
   public EnsureCrypto5KeysStage(GlobalSession session) {
     super(session);
@@ -63,7 +63,7 @@ implements SyncStorageRequestDelegate {
     // We need an update: fetch fresh keys.
     Logger.debug(LOG_TAG, "Fetching fresh collection keys for this session.");
     try {
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
+      SyncServer11RecordRequest request = new SyncServer11RecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
       request.delegate = this;
       request.get();
     } catch (URISyntaxException e) {
@@ -131,9 +131,9 @@ implements SyncStorageRequestDelegate {
   }
 
   @Override
-  public void handleRequestSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncServer11Response response) {
     // Take the timestamp from the response since it is later than the timestamp from info/collections.
-    long responseTimestamp = response.normalizedWeaveTimestamp();
+    long responseTimestamp = response.getNormalizedTimestamp();
     CollectionKeys keys = new CollectionKeys();
     try {
       ExtendedJSONObject body = response.jsonObjectBody();
@@ -184,12 +184,12 @@ implements SyncStorageRequestDelegate {
     // New keys don't differ from old keys; persist timestamp and move on.
     Logger.trace(LOG_TAG, "Fetched keys are the same as persisted keys; persisting only last modified.");
     session.config.setCollectionKeys(oldKeys);
-    pck.persistLastModified(response.normalizedWeaveTimestamp());
+    pck.persistLastModified(response.getNormalizedTimestamp());
     session.advance();
   }
 
   @Override
-  public void handleRequestFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncServer11Response response) {
     if (retrying) {
       // Should happen very rarely -- this means we uploaded our crypto/keys
       // successfully, but failed to re-download.

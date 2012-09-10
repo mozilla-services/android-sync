@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,11 +13,11 @@ import java.util.Set;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
-public class InfoCollections implements SyncStorageRequestDelegate {
+public class InfoCollections implements SyncServer11RequestDelegate {
   private static final String LOG_TAG = "InfoCollections";
   protected String infoURL;
   protected String credentials;
@@ -86,7 +87,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
 
   private void doFetch() {
     try {
-      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL);
+      final SyncServer11RecordRequest r = new SyncServer11RecordRequest(new URI(this.infoURL));
       r.delegate = this;
       // TODO: it might be nice to make Resource include its
       // own thread pool, and automatically run asynchronously.
@@ -141,7 +142,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     return null;
   }
 
-  public void handleRequestSuccess(SyncStorageResponse response) {
+  public void handleRequestSuccess(SyncServer11Response response) {
     if (response.wasSuccessful()) {
       try {
         this.setFromRecord(response.jsonObjectBody());
@@ -157,7 +158,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     this.callback = null;
   }
 
-  public void handleRequestFailure(SyncStorageResponse response) {
+  public void handleRequestFailure(SyncServer11Response response) {
     this.callback.handleFailure(response);
     this.callback = null;
   }

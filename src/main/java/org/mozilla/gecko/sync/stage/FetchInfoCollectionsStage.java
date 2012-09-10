@@ -9,7 +9,7 @@ import java.net.URISyntaxException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 
 public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
   public FetchInfoCollectionsStage(GlobalSession session) {
@@ -24,7 +24,7 @@ public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
     }
 
     @Override
-    public void handleFailure(SyncStorageResponse response) {
+    public void handleFailure(SyncServer11Response response) {
       session.handleHTTPError(response, "Failure fetching info/collections.");
     }
 

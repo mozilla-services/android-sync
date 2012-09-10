@@ -26,7 +26,7 @@ import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -67,23 +67,23 @@ public class TestMetaGlobal {
   public class MockMetaGlobalFetchDelegate implements MetaGlobalDelegate {
     boolean             successCalled   = false;
     MetaGlobal          successGlobal   = null;
-    SyncStorageResponse successResponse = null;
+    SyncServer11Response successResponse = null;
     boolean             failureCalled   = false;
-    SyncStorageResponse failureResponse = null;
+    SyncServer11Response failureResponse = null;
     boolean             errorCalled     = false;
     Exception           errorException  = null;
     boolean             missingCalled   = false;
     MetaGlobal          missingGlobal   = null;
-    SyncStorageResponse missingResponse = null;
+    SyncServer11Response missingResponse = null;
 
-    public void handleSuccess(MetaGlobal global, SyncStorageResponse response) {
+    public void handleSuccess(MetaGlobal global, SyncServer11Response response) {
       successCalled = true;
       successGlobal = global;
       successResponse = response;
       WaitHelper.getTestWaiter().performNotify();
     }
 
-    public void handleFailure(SyncStorageResponse response) {
+    public void handleFailure(SyncServer11Response response) {
       failureCalled = true;
       failureResponse = response;
       WaitHelper.getTestWaiter().performNotify();
@@ -95,7 +95,7 @@ public class TestMetaGlobal {
       WaitHelper.getTestWaiter().performNotify();
     }
 
-    public void handleMissing(MetaGlobal global, SyncStorageResponse response) {
+    public void handleMissing(MetaGlobal global, SyncServer11Response response) {
       missingCalled = true;
       missingGlobal = global;
       missingResponse = response;

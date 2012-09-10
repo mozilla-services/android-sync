@@ -23,9 +23,9 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RecordRequest;
+import org.mozilla.gecko.sync.net.server11.SyncServer11RequestDelegate;
+import org.mozilla.gecko.sync.net.server11.SyncServer11Response;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
@@ -107,7 +107,7 @@ public abstract class ServerSyncStage implements
     Integer version = getStorageVersion();
     if (version == null) {
       Logger.warn(LOG_TAG, "null storage version for " + this + "; using version 0.");
-      version = new Integer(0);
+      version = Integer.valueOf(0);
     }
 
     SynchronizerConfiguration config = this.getConfig();
@@ -354,17 +354,17 @@ public abstract class ServerSyncStage implements
    * Asynchronously wipe collection on server.
    */
   protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRequest request;
+    SyncServer11RecordRequest request;
 
     try {
-      request = new SyncStorageRequest(session.config.collectionURI(getCollection()));
+      request = new SyncServer11RecordRequest(session.config.collectionURI(getCollection()));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
       return;
     }
 
-    request.delegate = new SyncStorageRequestDelegate() {
+    request.delegate = new SyncServer11RequestDelegate() {
 
       @Override
       public String ifUnmodifiedSince() {
@@ -372,14 +372,14 @@ public abstract class ServerSyncStage implements
       }
 
       @Override
-      public void handleRequestSuccess(SyncStorageResponse response) {
+      public void handleRequestSuccess(SyncServer11Response response) {
         BaseResource.consumeEntity(response);
         resetLocal();
-        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
+        wipeDelegate.onWiped(response.getNormalizedTimestamp());
       }
 
       @Override
-      public void handleRequestFailure(SyncStorageResponse response) {
+      public void handleRequestFailure(SyncServer11Response response) {
         Logger.warn(LOG_TAG, "Got request failure " + response.getStatusCode() + " in wipeServer.");
         // Process HTTP failures here to pick up backoffs, etc.
         session.interpretHTTPFailure(response.httpResponse());
@@ -568,7 +568,7 @@ public abstract class ServerSyncStage implements
     // This failure could be due to a 503 or a 401 and it could have headers.
     // Interrogate the headers but only abort the global session if Retry-After header is set.
     if (lastException instanceof HTTPFailureException) {
-      SyncStorageResponse response = ((HTTPFailureException)lastException).response;
+      SyncServer11Response response = ((HTTPFailureException)lastException).response;
       if (response.retryAfterInSeconds() > 0) {
         session.handleHTTPError(response, reason); // Calls session.abort().
         return;
