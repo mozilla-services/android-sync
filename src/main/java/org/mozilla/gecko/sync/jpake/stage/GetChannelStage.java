@@ -12,7 +12,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
-import org.mozilla.gecko.sync.net.SyncResponse;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -88,7 +88,7 @@ public class GetChannelStage extends JPakeStage {
       @Override
       public void handleHttpResponse(HttpResponse response) {
         try {
-          final SyncResponse res = new SyncResponse(response);
+          final SyncStorageResponse res = new SyncStorageResponse(response);
           Object body = null;
           try {
             body = res.jsonBody();
