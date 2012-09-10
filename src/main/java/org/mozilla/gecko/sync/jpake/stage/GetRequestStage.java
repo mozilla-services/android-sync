@@ -100,7 +100,7 @@ public class GetRequestStage extends JPakeStage {
 
   private Resource createGetRequest(final GetRequestStageDelegate callbackDelegate, final JPakeClient jpakeClient) throws URISyntaxException {
     BaseResource httpResource = new BaseResource(jpakeClient.channelUrl);
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new SyncResourceDelegate() {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {

@@ -72,7 +72,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
     Logger.info(LOG_TAG, "In fetchClusterURL: node/weave is " + nodeWeaveURL);
 
     BaseResource resource = new BaseResource(nodeWeaveURL);
-    resource.delegate = new SyncResourceDelegate(resource) {
+    resource.delegate = new SyncResourceDelegate() {
 
       /**
        * Handle the response for GET https://server/pathname/version/username/node/weave.

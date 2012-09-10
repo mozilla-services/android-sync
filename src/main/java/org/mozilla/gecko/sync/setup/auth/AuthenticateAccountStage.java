@@ -95,7 +95,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
   // Made public for testing.
   public void authenticateAccount(final AuthenticateAccountStageDelegate callbackDelegate, final String authRequestUrl, final String authHeader) throws URISyntaxException {
     final BaseResource httpResource = new BaseResource(authRequestUrl);
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new SyncResourceDelegate() {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {

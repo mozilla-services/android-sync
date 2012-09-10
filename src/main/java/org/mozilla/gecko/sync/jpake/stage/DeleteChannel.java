@@ -35,7 +35,7 @@ public class DeleteChannel {
       jClient.displayAbort(reason);
       return;
     }
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new SyncResourceDelegate() {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {

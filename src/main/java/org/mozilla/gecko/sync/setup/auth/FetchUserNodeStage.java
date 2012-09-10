@@ -77,7 +77,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
   private BaseResource makeFetchNodeRequest(final FetchNodeStageDelegate callbackDelegate, String fetchNodeUrl) throws URISyntaxException {
     // Fetch node containing user.
     final BaseResource httpResource = new BaseResource(fetchNodeUrl);
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new SyncResourceDelegate() {
 
       @Override
       public void handleHttpResponse(HttpResponse response) {

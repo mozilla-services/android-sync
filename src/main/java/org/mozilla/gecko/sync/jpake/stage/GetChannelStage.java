@@ -78,7 +78,7 @@ public class GetChannelStage extends JPakeStage {
 
   private void makeChannelRequest(final GetChannelStageDelegate callbackDelegate, String getChannelUrl, final String clientId) throws URISyntaxException {
     final BaseResource httpResource = new BaseResource(getChannelUrl);
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new SyncResourceDelegate() {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {

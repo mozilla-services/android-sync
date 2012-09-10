@@ -104,7 +104,7 @@ public class SyncStorageRequest implements Resource {
     protected SyncStorageRequest request;
 
     SyncStorageResourceDelegate(SyncStorageRequest request) {
-      super(request);
+      super();
       this.request = request;
     }
 
