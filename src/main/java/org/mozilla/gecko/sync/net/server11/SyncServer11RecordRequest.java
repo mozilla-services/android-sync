@@ -5,7 +5,6 @@
 package org.mozilla.gecko.sync.net.server11;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 
@@ -21,7 +20,6 @@ import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
 
@@ -47,31 +45,6 @@ import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
  */
 public class SyncServer11RecordRequest {
   public static final String LOG_TAG = "SyncS11RecordRequest";
-
-  protected static StringEntity stringEntity(String s)
-      throws UnsupportedEncodingException {
-        StringEntity e = new StringEntity(s, "UTF-8");
-        e.setContentType("application/json");
-        return e;
-      }
-
-  /**
-   * Helper for turning a JSON object into a payload.
-   * @throws UnsupportedEncodingException
-   */
-  protected static StringEntity jsonEntity(JSONObject body)
-      throws UnsupportedEncodingException {
-        return stringEntity(body.toJSONString());
-      }
-
-  /**
-   * Helper for turning a JSON array into a payload.
-   * @throws UnsupportedEncodingException
-   */
-  protected static HttpEntity jsonEntity(JSONArray toPOST)
-      throws UnsupportedEncodingException {
-        return stringEntity(toPOST.toJSONString());
-      }
 
   public SyncServer11RequestDelegate delegate;
 
@@ -193,35 +166,16 @@ public class SyncServer11RecordRequest {
     this.resource.put(body);
   }
 
-  @SuppressWarnings("unchecked")
   public void post(JSONObject body) {
-    // Let's do this the trivial way for now.
-    // Note that POSTs should be an array, so we wrap here.
-    final JSONArray toPOST = new JSONArray();
-    toPOST.add(body);
-    try {
-      this.resource.post(jsonEntity(toPOST));
-    } catch (UnsupportedEncodingException e) {
-      this.delegate.handleRequestError(e);
-    }
+    this.resource.post(body);
   }
 
   public void post(JSONArray body) {
-    // Let's do this the trivial way for now.
-    try {
-      this.resource.post(jsonEntity(body));
-    } catch (UnsupportedEncodingException e) {
-      this.delegate.handleRequestError(e);
-    }
+    this.resource.post(body);
   }
 
   public void put(JSONObject body) {
-    // Let's do this the trivial way for now.
-    try {
-      this.resource.put(jsonEntity(body));
-    } catch (UnsupportedEncodingException e) {
-      this.delegate.handleRequestError(e);
-    }
+    this.resource.put(body);
   }
 
   public void post(CryptoRecord record) {
