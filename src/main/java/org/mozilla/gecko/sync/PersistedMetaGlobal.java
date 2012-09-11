@@ -9,6 +9,10 @@ import org.mozilla.gecko.sync.Logger;
 
 import android.content.SharedPreferences;
 
+/**
+ * Persisted version of meta/global from server. This should match what is downloaded.
+ *
+ */
 public class PersistedMetaGlobal {
   public static final String LOG_TAG = "PersistedMetaGlobal";
 

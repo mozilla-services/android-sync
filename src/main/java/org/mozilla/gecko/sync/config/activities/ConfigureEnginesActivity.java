@@ -43,18 +43,19 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     "tabs"
   };
 
-  final String[] _options = new String[] {
-      getString(R.string.sync_configure_engines_title_bookmarks),
-      getString(R.string.sync_configure_engines_title_passwords),
-      getString(R.string.sync_configure_engines_title_history),
-      getString(R.string.sync_configure_engines_title_tabs) };
   final boolean[] _selections = new boolean[_collectionsNames.length];
-  private final boolean[] _origSelections = new boolean[_options.length];
+  private final boolean[] _origSelections = new boolean[_collectionsNames.length];
+  private String[] _options;
 
   @Override
   public void onResume() {
     super.onResume();
     final ConfigureEnginesActivity self = this;
+    _options = new String[] {
+        getString(R.string.sync_configure_engines_title_bookmarks),
+        getString(R.string.sync_configure_engines_title_passwords),
+        getString(R.string.sync_configure_engines_title_history),
+        getString(R.string.sync_configure_engines_title_tabs) };
 
     // Display engine configure UI.
     fetchPrefsAndConsume(new PrefsConsumer() {
@@ -119,7 +120,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
 
   @Override
   public void onClick(DialogInterface dialog, int which) {
-    if (which == DialogInterface.BUTTON_POSITIVE && _selections.equals(_origSelections)) {
+    if (which == DialogInterface.BUTTON_POSITIVE) {
       Logger.debug(LOG_TAG, "Saving selected engines.");
       saveSelections();
       setResult(RESULT_OK);

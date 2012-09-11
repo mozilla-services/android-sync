@@ -1,19 +1,12 @@
 package org.mozilla.gecko.sync.config.activities;
 
 
-import java.util.concurrent.TimeUnit;
-
-import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.ThreadPool;
-import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.setup.Constants;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -39,66 +32,38 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
     mAccountManager = AccountManager.get(mContext);
   }
 
-  private void invalidateAuthToken(Account account) {
-    AccountManagerFuture<Bundle> future = mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, null, null);
-    String token;
-    try {
-      token = future.getResult().getString(AccountManager.KEY_AUTHTOKEN);
-      mAccountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, token);
-    } catch (Exception e) {
-      Logger.error(LOG_TAG, "Couldn't invalidate auth token: " + e);
-    }
-  }
-
-  protected Account getAccount() {
-    Account[] accounts = mAccountManager.getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
-    if (accounts.length == 0) {
-      return null;
-    } else {
-      // Only support one account per type.
-      return accounts[0];
-    }
-  }
-
+  /**
+   * Fetches the prefs associated with a Sync account, and passes the prefs to
+   * the PrefsConsumer.
+   *
+   * @param accountConsumer interface for consuming prefs from an Account.
+   */
   public void fetchPrefsAndConsume(final PrefsConsumer accountConsumer) {
-    final Account account = getAccount();
-    if (account == null) {
-      Logger.error(LOG_TAG, "Failed to get account!");
-      finish();
-      return;
-    }
-
-    // Get authToken and pass to AccountConsumer.
+    // Run Account management on separate thread to avoid strict mode policy violations.
     ThreadPool.run(new Runnable() {
-
       @Override
       public void run() {
-        // Hack to fix broken Account creation.
-        invalidateAuthToken(account);
-        mAccountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, new AccountManagerCallback<Bundle>() {
-
-          @Override
-          public void run(AccountManagerFuture<Bundle> future) {
-            Logger.trace(LOG_TAG, "AccountManagerCallback invoked.");
-            // TODO: N.B.: Future must not be used on the main thread.
-            try {
-              Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
-              // Ignoring KEY_INTENT check.
-              String username = bundle.getString(Constants.OPTION_USERNAME);
-              String serverURL = bundle.getString(Constants.OPTION_SERVER);
-              Logger.debug(LOG_TAG, "username null? " + (null == username) + ", serverURL null? " + (null == serverURL));
-              // Get SharedPreferences and display configuration editor.
-              // Prefs path args are taken directly from constants right now, because prefs are automatically migrated.
-              String prefsPath = Utils.getPrefsPath(GlobalConstants.BROWSER_INTENT_PACKAGE, username, serverURL, Constants.DEFAULT_PROFILE, SyncConfiguration.CURRENT_PREFS_VERSION);
-              SharedPreferences prefs = mContext.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
-              accountConsumer.run(prefs);
-            } catch (Exception e) {
-              Logger.error(LOG_TAG, "Failed to get sync information or shared preferences.", e);
-              finish();
-              return;
-            }
+        Account[] accounts = SyncAccounts.syncAccounts(mContext);
+        if (accounts.length == 0) {
+          Logger.error(LOG_TAG, "Failed to get account!");
+          finish();
+          return;
+        } else {
+          // Only supports one account per type.
+          Account account = accounts[0];
+          try {
+            final SharedPreferences prefs = SyncAccounts.getPrefsFromDefaultAccount(mContext, mAccountManager, account);
+            runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                accountConsumer.run(prefs);
+              }
+            });
+          } catch (Exception e) {
+            Logger.error(LOG_TAG, "Failed to get sync account info or shared preferences.", e);
+            finish();
           }
-        }, null);
+        }
       }
     });
   }
