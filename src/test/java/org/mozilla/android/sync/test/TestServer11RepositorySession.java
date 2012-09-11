@@ -81,9 +81,9 @@ public class TestServer11RepositorySession implements CredentialsSource {
       super(repository);
     }
 
-    public RecordUploadRunnable getRecordUploadRunnable() {
+    public Server11RecordUploadRunnable getRecordUploadRunnable() {
       // TODO: implement upload delegate in the class, too!
-      return new RecordUploadRunnable(null, recordsBuffer, recordGuidsBuffer, byteCount);
+      return new Server11RecordUploadRunnable(null, recordsBuffer, recordGuidsBuffer, byteCount);
     }
 
     public void enqueueRecord(Record r) {
