@@ -35,7 +35,6 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
-import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
@@ -435,8 +434,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     enginesToRemove.clear();
     enginesToUpdate.clear();
 
-    // Clear SharedPrefs for engine state.
-    context.getSharedPreferences(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE).edit().clear().commit();
+    // Clear selected engines because they are merged with meta/global.
+    config.selectedEngines = null;
   }
 
   /**

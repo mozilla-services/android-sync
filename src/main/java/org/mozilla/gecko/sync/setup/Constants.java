@@ -41,9 +41,6 @@ public class Constants {
    */
   public static final String EXTRAS_KEY_STAGES_TO_SKIP = "skip";
 
-  // SharedPreferences filenames.
-  public static final String PREFS_ENGINE_SELECTION = "sync.prefs.engine-selection";
-
   // Constants for Activities.
   public static final String INTENT_EXTRA_IS_SETUP        = "isSetup";
   public static final String INTENT_EXTRA_IS_PAIR         = "isPair";

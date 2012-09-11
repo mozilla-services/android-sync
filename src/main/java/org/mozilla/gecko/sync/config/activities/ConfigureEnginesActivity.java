@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.sync.config.activities;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,13 +13,10 @@ import java.util.Set;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.setup.Constants;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -46,6 +44,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
   final boolean[] _selections = new boolean[_collectionsNames.length];
   private final boolean[] _origSelections = new boolean[_collectionsNames.length];
   private String[] _options;
+  private SharedPreferences accountPrefs;
 
   @Override
   public void onResume() {
@@ -61,6 +60,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     fetchPrefsAndConsume(new PrefsConsumer() {
       @Override
       public void run(SharedPreferences prefs) {
+        self.accountPrefs = prefs;
         setSelections(getEnginesToSelect(prefs));
 
         new AlertDialog.Builder(self)
@@ -85,14 +85,11 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
    */
   private Set<String> getEnginesToSelect(SharedPreferences syncPrefs) {
     Set<String> engines;
-    // Check engine SharedPrefs first.
-    SharedPreferences engineConfigPrefs = mContext.getSharedPreferences(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
-    @SuppressWarnings("unchecked")
-    // We only add booleans to this SharedPreference.
-    Map<String, Boolean> engineMap = (Map<String, Boolean>) engineConfigPrefs.getAll();
-    if (!engineMap.isEmpty()) {
+    // Check stored selections first.
+    Map<String, Boolean> engineSelections = SyncConfiguration.getEnginesToSelect(syncPrefs);
+    if (engineSelections != null) {
       engines = new HashSet<String>();
-      for (Entry<String, Boolean> pair : engineMap.entrySet()) {
+      for (Entry<String, Boolean> pair : engineSelections.entrySet()) {
         if (pair.getValue()) {
           engines.add(pair.getKey());
         }
@@ -100,8 +97,8 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
       return engines;
     }
     Logger.warn(LOG_TAG, "No previous engine prefs");
-    // No previously stored engine prefs. Fetch from config.
 
+    // No previously stored engine prefs. Fetch from config.
     engines = SyncConfiguration.getEnabledEngineNames(syncPrefs);
     if (engines == null) {
       engines = SyncConfiguration.validEngineNames();
@@ -146,14 +143,12 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
    * @return true if changed, false otherwise.
    */
   private void saveSelections() {
-    // Persist to SharedPreferences.
-    SharedPreferences prefs = mContext.getSharedPreferences(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
-    Editor enginePrefsEditor = prefs.edit();
+    Map<String, Boolean> engineSelections = new HashMap<String, Boolean>();
     for (int i = 0; i < _selections.length; i++) {
       if (_selections[i] != _origSelections[i]) {
-        enginePrefsEditor.putBoolean(_collectionsNames[i], _selections[i]);
+        engineSelections.put(_collectionsNames[i], _selections[i]);
       }
     }
-    enginePrefsEditor.commit();
+    SyncConfiguration.storeSelectedEngines(accountPrefs, engineSelections);
   }
 }

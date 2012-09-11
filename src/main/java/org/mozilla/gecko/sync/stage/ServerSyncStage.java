@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.stage;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import org.json.simple.parser.ParseException;
@@ -37,14 +38,12 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
-import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerSession;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 
 /**
  * Fetch from a server collection into a local repository, encrypting
@@ -121,9 +120,9 @@ public abstract class ServerSyncStage implements
    *           engine sync state.
    */
   protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalException {
-    SharedPreferences selectedEngines = session.getPrefs(Constants.PREFS_ENGINE_SELECTION, Utils.SHARED_PREFERENCES_MODE);
-    if (selectedEngines.contains(this.getEngineName())) {
-      boolean enabledInSelection = selectedEngines.getBoolean(this.getEngineName(), false);
+    Map<String, Boolean> selectedEngines = session.config.selectedEngines;
+    if (selectedEngines != null && selectedEngines.containsKey(this.getEngineName())) {
+      boolean enabledInSelection = selectedEngines.get(this.getEngineName());
       if (enabledInMetaGlobal != enabledInSelection) {
         // Engine enable state has been changed by the user.
         throw new MetaGlobalException.MetaGlobalEngineStateChangedException(enabledInSelection);
