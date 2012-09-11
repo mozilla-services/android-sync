@@ -29,7 +29,7 @@ public abstract class ServerRepositorySession extends RepositorySession {
 
   public ServerRepositorySession(final Repository repository) {
     super(repository);
-    serverRepository = (Server11Repository) repository;
+    serverRepository = (ServerRepository) repository;
   }
 
   @Override
