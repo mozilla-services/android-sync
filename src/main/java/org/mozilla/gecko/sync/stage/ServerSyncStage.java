@@ -125,6 +125,7 @@ public abstract class ServerSyncStage implements
       boolean enabledInSelection = selectedEngines.get(this.getEngineName());
       if (enabledInMetaGlobal != enabledInSelection) {
         // Engine enable state has been changed by the user.
+        Logger.debug(LOG_TAG, "Engine state has been changed by user. Throwing exception.");
         throw new MetaGlobalException.MetaGlobalEngineStateChangedException(enabledInSelection);
       }
     }
@@ -515,22 +516,35 @@ public abstract class ServerSyncStage implements
                            " resetting local engine and assuming remote engine syncID.");
       this.resetLocal(e.serverSyncID);
     } catch (MetaGlobalException.MetaGlobalEngineStateChangedException e) {
-      // Engine sync status has changed. Update MetaGlobal.
-      if (!e.isEnabled) {
-        // Engine has been disabled; remove from MetaGlobal and progress to next stage.
+      boolean isEnabled = e.isEnabled;
+      if (!isEnabled) {
+        // Engine has been disabled; update meta/global with engine removal for upload.
         session.removeEngineFromMetaGlobal(name);
-        session.advance();
-        return;
       } else {
-        // Add engine with new syncID to MetaGlobal and continue syncing the stage.
+        // Add engine with new syncID to meta/global for upload.
+        String uuid = Utils.generateGuid();
+        session.updateMetaGlobalWith(name, new EngineSettings(uuid, this.getStorageVersion()));
+        // Update SynchronizerConfiguration w/ new engine syncID.
         try {
-          session.updateMetaGlobalWith(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
-          Logger.info(LOG_TAG, "Wiping server because new engine needs to be added for syncing.");
-          wipeServer();
-          Logger.info(LOG_TAG, "Wiped server because new engine needs to be added for syncing.");
+          SynchronizerConfiguration synchronizerConfiguration = getConfig();
+          synchronizerConfiguration.syncID = uuid;
+          persistConfig(synchronizerConfiguration);
         } catch (Exception ex) {
-          session.abort(ex, "Failed to wipe server after new engine needs to be synced.");
+          session.abort(ex, "Failed to persist new engine syncID to SynchronizerConfiguration.");
         }
+      }
+      try {
+        // Engine sync status has changed. Wipe server.
+        Logger.warn(LOG_TAG, "Wiping server because engine sync state changed.");
+        wipeServer();
+        Logger.warn(LOG_TAG, "Wiped server because engine sync state changed.");
+        if (!isEnabled) {
+          Logger.warn(LOG_TAG, "Stage has been disabled. Advancing to next stage.");
+          session.advance();
+          return;
+        }
+      } catch (Exception ex) {
+        session.abort(ex, "Failed to wipe server after engine sync state changed");
       }
     } catch (MetaGlobalException e) {
       session.abort(e, "Inappropriate meta/global; refusing to execute " + name + " stage.");
