@@ -351,7 +351,7 @@ public class SyncConfiguration implements CredentialsSource {
    * @param selectedEngines
    *          Map<String, Boolean> of engine name to sync state
    */
-  public static void storeSelectedEngines(SharedPreferences prefs, Map<String, Boolean> selectedEngines) {
+  public static void storeSelectedEnginesToPrefs(SharedPreferences prefs, Map<String, Boolean> selectedEngines) {
     ExtendedJSONObject jObj = new ExtendedJSONObject();
     for (Entry<String, Boolean> e : selectedEngines.entrySet()) {
       jObj.put(e.getKey(), e.getValue());

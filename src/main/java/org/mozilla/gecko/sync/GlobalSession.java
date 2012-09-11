@@ -434,6 +434,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     enginesToRemove.clear();
     enginesToUpdate.clear();
 
+    // Update enabledEngineNames to persist to prefs.
+    config.enabledEngineNames = config.metaGlobal.getEnabledEngineNames();
     // Clear selected engines because they are merged with meta/global.
     config.selectedEngines = null;
   }
