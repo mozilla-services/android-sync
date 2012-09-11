@@ -24,7 +24,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 import ch.boye.httpclientandroidlib.HttpStatus;
 
 public class TestServer20Client implements CredentialsSource {
-  public static final String LOG_TAG = "TestServer20";
+  public static final String LOG_TAG = "TestServer20Client";
 
   public static final long   TEST_PORT         = 8080;
   public static final String TEST_SERVER_URL   = "http://localhost" + ":" + TEST_PORT + "/";
