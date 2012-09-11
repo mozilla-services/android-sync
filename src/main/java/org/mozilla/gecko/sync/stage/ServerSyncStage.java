@@ -121,8 +121,9 @@ public abstract class ServerSyncStage implements
    */
   protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalException {
     Map<String, Boolean> selectedEngines = session.config.selectedEngines;
-    if (selectedEngines != null && selectedEngines.containsKey(this.getEngineName())) {
-      boolean enabledInSelection = selectedEngines.get(this.getEngineName());
+    String thisEngine = this.getEngineName();
+    if (selectedEngines != null && selectedEngines.containsKey(thisEngine)) {
+      boolean enabledInSelection = selectedEngines.get(thisEngine);
       if (enabledInMetaGlobal != enabledInSelection) {
         // Engine enable state has been changed by the user.
         Logger.debug(LOG_TAG, "Engine state has been changed by user. Throwing exception.");

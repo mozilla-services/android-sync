@@ -104,7 +104,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
   }
 
   public void setSelections(Set<String> selected, boolean[] array) {
-    for (int i = 0; i < _selections.length; i++) {
+    for (int i = 0; i < _collectionsNames.length; i++) {
       array[i] = selected.contains(_collectionsNames[i]);
     }
   }
@@ -143,6 +143,10 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     for (int i = 0; i < _selections.length; i++) {
       if (_selections[i] != origSelections[i]) {
         engineSelections.put(_collectionsNames[i], _selections[i]);
+        // Special case for forms and history, because forms depends on history.
+        if (getString(R.string.sync_configure_engines_title_history).equals(_options[i])) {
+          engineSelections.put("forms", _selections[i]);
+        }
       }
     }
     // No GlobalSession.config, so store directly to prefs.

@@ -5,11 +5,9 @@
 package org.mozilla.gecko.sync.stage;
 
 import java.net.URISyntaxException;
-import java.util.Map;
 
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.repositories.ConstrainedServer11Repository;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -77,23 +75,5 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
   @Override
   protected RecordFactory getRecordFactory() {
     return new FormHistoryRecordFactory();
-  }
-
-  /*
-   * (non-Javadoc)
-   * @see org.mozilla.gecko.sync.stage.ServerSyncStage#checkAndUpdateManualEngines(boolean)
-   *
-   * Forms engine state should match History, because there is no manual way to control Forms syncing.
-   */
-  @Override
-  protected void checkAndUpdateManualEngines(boolean enabledInMetaGlobal) throws MetaGlobalException {
-    Map<String, Boolean> selectedEngines = session.config.selectedEngines;
-    if (selectedEngines != null && selectedEngines.containsKey("history")) {
-      boolean enabledInSelection = selectedEngines.get("history");
-      if (enabledInMetaGlobal != enabledInSelection) {
-        // Engine enable state has been changed by the user.
-        throw new MetaGlobalException.MetaGlobalEngineStateChangedException(enabledInSelection);
-      }
-    }
   }
 }
