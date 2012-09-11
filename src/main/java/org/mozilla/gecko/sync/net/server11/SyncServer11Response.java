@@ -150,14 +150,14 @@ public class SyncServer11Response {
    * @throws ParseException
    * @throws NonObjectJSONException
    */
-  public ExtendedJSONObject jsonObjectBody() throws IllegalStateException, IOException,
-      ParseException, NonObjectJSONException {
-        Object body = this.jsonBody();
-        if (body instanceof ExtendedJSONObject) {
-          return (ExtendedJSONObject) body;
-        }
-        throw new NonObjectJSONException(body);
-      }
+  public ExtendedJSONObject jsonObjectBody()
+      throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
+    Object body = this.jsonBody();
+    if (body instanceof ExtendedJSONObject) {
+      return (ExtendedJSONObject) body;
+    }
+    throw new NonObjectJSONException(body);
+  }
 
 
   private boolean hasHeader(String h) {
@@ -186,20 +186,20 @@ public class SyncServer11Response {
     if (!this.hasHeader(HEADER_RETRY_AFTER)) {
       return -1;
     }
-  
+
     Header header = this.response.getFirstHeader(HEADER_RETRY_AFTER);
     String retryAfter = header.getValue();
     if (missingHeader(retryAfter)) {
       Logger.warn(LOG_TAG, "Retry-After header present but empty.");
       return -1;
     }
-  
+
     try {
       return Integer.parseInt(retryAfter, 10);
     } catch (NumberFormatException e) {
       // Fall through to try date format.
     }
-  
+
     try {
       final long then = DateUtils.parseDate(retryAfter).getTime();
       final long now  = System.currentTimeMillis();
@@ -230,13 +230,13 @@ public class SyncServer11Response {
       retryAfterInSeconds = retryAfterInSeconds();
     } catch (NumberFormatException e) {
     }
-  
+
     int weaveBackoffInSeconds = -1;
     try {
       weaveBackoffInSeconds = weaveBackoffInSeconds();
     } catch (NumberFormatException e) {
     }
-  
+
     long totalBackoff = (long) Math.max(retryAfterInSeconds, weaveBackoffInSeconds);
     if (totalBackoff < 0) {
       return -1;
@@ -270,12 +270,12 @@ public class SyncServer11Response {
     } catch (NumberFormatException e) {
       Logger.warn(LOG_TAG, "Malformed timestamp header received.", e);
     }
-  
+
     if (-1 == normalizedTimestamp) {
       Logger.warn(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
       normalizedTimestamp = System.currentTimeMillis();
     }
-  
+
     return normalizedTimestamp;
   }
 
