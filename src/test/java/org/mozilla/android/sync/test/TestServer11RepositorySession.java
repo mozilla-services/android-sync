@@ -114,10 +114,8 @@ public class TestServer11RepositorySession implements CredentialsSource {
     session.enqueueRecord(new MockRecord(Utils.generateGuid(), null, 0, false));
     session.enqueueRecord(new MockRecord(Utils.generateGuid(), null, 0, false));
 
-    URI uri = new URI(LOCAL_REQUEST_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(uri);
+    SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_REQUEST_URL), this);
     TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
     r.delegate = delegate;
     r.post(session.getEntity());
   }

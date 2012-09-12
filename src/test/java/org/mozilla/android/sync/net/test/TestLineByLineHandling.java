@@ -58,11 +58,6 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public String credentials() {
-      return null;
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       Logger.info(LOG_TAG, "Request success.");
       assertTrue(res.wasSuccessful());
@@ -102,7 +97,7 @@ public class TestLineByLineHandling {
 
     data.startHTTPServer(new LineByLineMockServer());
     Logger.info(LOG_TAG, "Server started.");
-    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
+    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL), null);
     SyncStorageRequestIncrementalDelegate delegate = new BaseLineByLineDelegate();
     r.delegate = delegate;
     r.get();

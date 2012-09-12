@@ -18,8 +18,8 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class InfoCollections implements SyncStorageRequestDelegate {
   private static final String LOG_TAG = "InfoCollections";
-  protected String infoURL;
-  protected String credentials;
+  protected final String infoURL;
+  protected final CredentialsSource credentialsSource;
 
   /**
    * Fields fetched from the server, or <code>null</code> if not yet fetched.
@@ -74,9 +74,9 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   // Temporary location to store our callback.
   private InfoCollectionsDelegate callback;
 
-  public InfoCollections(String metaURL, String credentials) {
+  public InfoCollections(String metaURL, CredentialsSource credentialsSource) {
     this.infoURL     = metaURL;
-    this.credentials = credentials;
+    this.credentialsSource = credentialsSource;
   }
 
   public void fetch(InfoCollectionsDelegate callback) {
@@ -86,7 +86,7 @@ public class InfoCollections implements SyncStorageRequestDelegate {
 
   private void doFetch() {
     try {
-      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL);
+      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL, credentialsSource);
       r.delegate = this;
       // TODO: it might be nice to make Resource include its
       // own thread pool, and automatically run asynchronously.
@@ -130,15 +130,6 @@ public class InfoCollections implements SyncStorageRequestDelegate {
       Logger.warn(LOG_TAG, "Skipping info/collections entry for " + key);
     }
     this.timestamps = map;
-  }
-
-  // SyncStorageRequestDelegate methods for fetching.
-  public String credentials() {
-    return this.credentials;
-  }
-
-  public String ifUnmodifiedSince() {
-    return null;
   }
 
   public void handleRequestSuccess(SyncStorageResponse response) {

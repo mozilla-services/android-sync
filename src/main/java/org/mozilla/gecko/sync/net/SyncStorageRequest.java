@@ -11,6 +11,7 @@ import java.security.GeneralSecurityException;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
@@ -41,18 +42,26 @@ public abstract class SyncStorageRequest implements Resource {
    */
   public Long locallyModifiedVersion = null;
 
+  protected BaseResource resource;
+  protected SyncResourceDelegate resourceDelegate;
+
+  public SyncStorageRequestDelegate delegate;
+
+  protected final CredentialsSource credentialsSource;
+
   /**
    * @param uri
    * @throws URISyntaxException
    */
-  public SyncStorageRequest(String uri) throws URISyntaxException {
-    this(new URI(uri));
+  public SyncStorageRequest(String uri, CredentialsSource credentialsSource) throws URISyntaxException {
+    this(new URI(uri), credentialsSource);
   }
 
   /**
    * @param uri
    */
-  public SyncStorageRequest(URI uri) {
+  public SyncStorageRequest(URI uri, CredentialsSource credentialsSource) {
+    this.credentialsSource = credentialsSource;
     this.resource = new BaseResource(uri);
     this.resourceDelegate = this.makeResourceDelegate(this);
     this.resource.delegate = this.resourceDelegate;
@@ -131,7 +140,7 @@ public abstract class SyncStorageRequest implements Resource {
   /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
-  public class SyncStorageResourceDelegate extends SyncResourceDelegate {
+  public static class SyncStorageResourceDelegate extends SyncResourceDelegate {
     private static final String LOG_TAG = "SSResourceDelegate";
     protected SyncStorageRequest request;
 
@@ -142,12 +151,15 @@ public abstract class SyncStorageRequest implements Resource {
 
     @Override
     public String getCredentials() {
-      return this.request.delegate.credentials();
+      if (this.request.credentialsSource == null) {
+        return null;
+      }
+      return this.request.credentialsSource.credentials();
     }
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
-      if (aborting) {
+      if (this.request.aborting) {
         return;
       }
 
@@ -189,14 +201,6 @@ public abstract class SyncStorageRequest implements Resource {
 
       this.request.addHeaders(request, client);
     }
-  }
-
-  protected SyncResourceDelegate resourceDelegate;
-  public SyncStorageRequestDelegate delegate;
-  protected BaseResource resource;
-
-  public SyncStorageRequest() {
-    super();
   }
 
   // Default implementation. Override this.

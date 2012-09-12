@@ -104,11 +104,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     boolean localAccountGUIDDownloaded = false;
 
     @Override
-    public String credentials() {
-      return session.credentials();
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
 
       // Hang onto the server's last modified timestamp to use
@@ -215,11 +210,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     protected static final String LOG_TAG = "ClientUploadDelegate";
     public Long currentlyUploadingRecordTimestamp;
     public boolean currentlyUploadingLocalRecord;
-
-    @Override
-    public String credentials() {
-      return session.credentials();
-    }
 
     private void setUploadDetails(boolean isLocalRecord) {
       // Use the timestamp for the whole collection per Sync storage 1.1 spec.
@@ -489,15 +479,15 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected void downloadClientRecords() {
+    Logger.trace(LOG_TAG, "Downloading client records.");
     shouldWipe = true;
     clientDownloadDelegate = makeClientDownloadDelegate();
 
     try {
       final URI getURI = session.config.collectionURI(COLLECTION_NAME, true);
-      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI);
+      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI, session);
       request.delegate = clientDownloadDelegate;
 
-      Logger.trace(LOG_TAG, "Downloading client records.");
       request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
@@ -508,7 +498,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.trace(LOG_TAG, "Uploading " + records.size() + " client records.");
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME, false);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI, session);
       request.delegate = clientUploadDelegate;
       request.locallyModifiedVersion = Math.max(0, clientUploadDelegate.currentlyUploadingRecordTimestamp);
       request.post(records);
@@ -526,7 +516,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.debug(LOG_TAG, "Uploading client record " + record.guid);
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI, session);
       request.delegate = clientUploadDelegate;
       request.post(record);
     } catch (URISyntaxException e) {

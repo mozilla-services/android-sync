@@ -13,6 +13,7 @@ import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -45,7 +46,6 @@ public class TestBasicFetch {
     public LiveDelegate(String username, String password) {
       this.username = username;
       this.password = password;
-      this._credentials = username + ":" + password;
     }
 
     @Override
@@ -96,10 +96,17 @@ public class TestBasicFetch {
     }
   }
 
-  public static LiveDelegate realLiveFetch(String username, String password, String url) throws URISyntaxException {
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url));
+  public static LiveDelegate realLiveFetch(final String username, final String password, String url) throws URISyntaxException {
+    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url), new CredentialsSource() {
+      @Override
+      public String credentials() {
+        return username + ":" + password;
+      }
+    });
+
     LiveDelegate delegate = new LiveDelegate(username, password);
     r.delegate = delegate;
+
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
@@ -109,10 +116,17 @@ public class TestBasicFetch {
     return delegate;
   }
 
-  public static LiveDelegate realLivePut(String username, String password, String url, final CryptoRecord record) throws URISyntaxException {
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url));
+  public static LiveDelegate realLivePut(final String username, final String password, String url, final CryptoRecord record) throws URISyntaxException {
+    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url), new CredentialsSource() {
+      @Override
+      public String credentials() {
+        return username + ":" + password;
+      }
+    });
+
     LiveDelegate delegate = new LiveDelegate(username, password);
     r.delegate = delegate;
+
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {

@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync.net;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.CryptoRecord;
 
 /**
@@ -37,12 +38,12 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     }
   }
 
-  public SyncStorageRecordRequest(URI uri) {
-    super(uri);
+  public SyncStorageRecordRequest(URI uri, CredentialsSource credentialsSource) {
+    super(uri, credentialsSource);
   }
 
-  public SyncStorageRecordRequest(String url) throws URISyntaxException {
-    this(new URI(url));
+  public SyncStorageRecordRequest(String url, CredentialsSource credentialsSource) throws URISyntaxException {
+    this(new URI(url), credentialsSource);
   }
 
   @Override

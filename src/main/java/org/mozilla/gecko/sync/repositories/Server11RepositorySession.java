@@ -86,11 +86,6 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String credentials() {
-      return serverRepository.credentialsSource.credentials();
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.debug(LOG_TAG, "Fetch done.");
       removeRequestFromPending();
@@ -213,11 +208,6 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String credentials() {
-      return serverRepository.credentialsSource.credentials();
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.debug(LOG_TAG, "guidsSince done.");
       String[] guidsArray = new String[guids.size()];
@@ -254,7 +244,7 @@ public class Server11RepositorySession extends RepositorySession {
                                          throws URISyntaxException {
 
     URI collectionURI = serverRepository.collectionURI(full, newer, limit, sort, ids);
-    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
+    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI, serverRepository.credentialsSource);
     request.delegate = delegate;
 
     // So it can clean up.
@@ -430,11 +420,6 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String credentials() {
-      return serverRepository.credentialsSource.credentials();
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.trace(LOG_TAG, "POST of " + outgoing.size() + " records done.");
 
@@ -539,8 +524,7 @@ public class Server11RepositorySession extends RepositorySession {
       }
 
       URI u = serverRepository.collectionURI();
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(u);
-
+      SyncStorageRecordRequest request = new SyncStorageRecordRequest(u, serverRepository.credentialsSource);
       request.delegate = this;
 
       // We don't want the task queue to proceed until this request completes.

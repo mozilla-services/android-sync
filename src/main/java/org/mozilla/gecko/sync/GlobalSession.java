@@ -548,7 +548,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
     if (this.config.infoCollections == null) {
-      this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
+      this.config.infoCollections = new InfoCollections(config.infoURL(), this);
     }
     this.config.infoCollections.fetch(callback);
   }
@@ -566,7 +566,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     SyncStorageRecordRequest request;
     final GlobalSession self = this;
     try {
-      request = new SyncStorageRecordRequest(this.config.keysURI());
+      request = new SyncStorageRecordRequest(this.config.keysURI(), this);
     } catch (URISyntaxException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
@@ -592,11 +592,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       public void handleRequestError(Exception ex) {
         Logger.warn(LOG_TAG, "Got exception trying to upload keys", ex);
         keyUploadDelegate.onKeyUploadFailed(ex);
-      }
-
-      @Override
-      public String credentials() {
-        return self.credentials();
       }
     };
 
@@ -821,7 +816,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRecordRequest(config.storageURL(false));
+      request = new SyncStorageRecordRequest(config.storageURL(false), this);
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
@@ -848,11 +843,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       public void handleRequestError(Exception ex) {
         Logger.warn(LOG_TAG, "Got exception in wipeServer.", ex);
         wipeDelegate.onWipeFailed(ex);
-      }
-
-      @Override
-      public String credentials() {
-        return credentials.credentials();
       }
     };
     request.delete();
@@ -955,7 +945,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   public MetaGlobal generateNewMetaGlobal() {
     final String newSyncID   = Utils.generateGuid();
     final String metaURL     = this.config.metaURL();
-    final String credentials = this.credentials();
 
     ExtendedJSONObject engines = new ExtendedJSONObject();
     for (String engineName : enabledEngineNames()) {
@@ -975,7 +964,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       engines.put(engineName, engineSettings.toJSONObject());
     }
 
-    MetaGlobal metaGlobal = new MetaGlobal(metaURL, credentials);
+    MetaGlobal metaGlobal = new MetaGlobal(metaURL, this);
     metaGlobal.setSyncID(newSyncID);
     metaGlobal.setStorageVersion(STORAGE_VERSION);
     metaGlobal.setEngines(engines);

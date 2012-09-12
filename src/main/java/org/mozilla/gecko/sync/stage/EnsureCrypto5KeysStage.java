@@ -63,17 +63,13 @@ implements SyncStorageRequestDelegate {
     // We need an update: fetch fresh keys.
     Logger.debug(LOG_TAG, "Fetching fresh collection keys for this session.");
     try {
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
+      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"), session);
       request.delegate = this;
+
       request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
     }
-  }
-
-  @Override
-  public String credentials() {
-    return session.credentials();
   }
 
   protected void setAndPersist(PersistedCrypto5Keys pck, CollectionKeys keys, long timestamp) {

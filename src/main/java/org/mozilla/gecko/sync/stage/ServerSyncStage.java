@@ -353,11 +353,11 @@ public abstract class ServerSyncStage implements
   /**
    * Asynchronously wipe collection on server.
    */
-  protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
+  protected void wipeServer(final CredentialsSource credentialsSource, final WipeServerDelegate wipeDelegate) {
     SyncStorageRecordRequest request;
 
     try {
-      request = new SyncStorageRecordRequest(session.config.collectionURI(getCollection()));
+      request = new SyncStorageRecordRequest(session.config.collectionURI(getCollection()), credentialsSource);
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
@@ -385,11 +385,6 @@ public abstract class ServerSyncStage implements
       public void handleRequestError(Exception ex) {
         Logger.warn(LOG_TAG, "Got exception in wipeServer.", ex);
         wipeDelegate.onWipeFailed(ex);
-      }
-
-      @Override
-      public String credentials() {
-        return credentials.credentials();
       }
     };
 

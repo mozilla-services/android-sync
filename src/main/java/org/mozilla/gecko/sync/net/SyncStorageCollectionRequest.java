@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 
+import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.Logger;
 
 import ch.boye.httpclientandroidlib.Header;
@@ -29,8 +30,8 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 public class SyncStorageCollectionRequest extends SyncStorageRequest {
   private static final String LOG_TAG = "CollectionRequest";
 
-  public SyncStorageCollectionRequest(URI uri) {
-    super(uri);
+  public SyncStorageCollectionRequest(URI uri, CredentialsSource credentialsSource) {
+    super(uri, credentialsSource);
   }
 
   @Override

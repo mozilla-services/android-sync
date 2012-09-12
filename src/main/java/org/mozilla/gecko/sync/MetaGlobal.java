@@ -21,8 +21,8 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class MetaGlobal implements SyncStorageRequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";
-  protected String metaURL;
-  protected String credentials;
+  protected final String metaURL;
+  protected final CredentialsSource credentialsSource;
 
   // Fields.
   protected ExtendedJSONObject  engines;
@@ -40,16 +40,16 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   // A little hack so we can use the same delegate implementation for upload and download.
   private boolean isUploading;
 
-  public MetaGlobal(String metaURL, String credentials) {
+  public MetaGlobal(String metaURL, CredentialsSource credentialsSource) {
     this.metaURL     = metaURL;
-    this.credentials = credentials;
+    this.credentialsSource = credentialsSource;
   }
 
   public void fetch(MetaGlobalDelegate delegate) {
     this.callback = delegate;
     try {
       this.isUploading = false;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL, credentialsSource);
       r.delegate = this;
       r.get();
     } catch (URISyntaxException e) {
@@ -60,7 +60,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   public void upload(MetaGlobalDelegate callback) {
     try {
       this.isUploading = true;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL, credentialsSource);
 
       r.delegate = this;
       this.callback = callback;
@@ -239,15 +239,6 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
 
   public void setSyncID(String syncID) {
     this.syncID = syncID;
-  }
-
-  // SyncStorageRequestDelegate methods for fetching.
-  public String credentials() {
-    return this.credentials;
-  }
-
-  public String ifUnmodifiedSince() {
-    return null;
   }
 
   public void handleRequestSuccess(SyncStorageResponse response) {

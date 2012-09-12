@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.config;
 
 import java.net.URI;
 
+import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -37,13 +38,14 @@ public class ClientRecordTerminator {
     final URI wboURI = new URI(clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage/" + collection + "/" + clientGuid);
 
     // Would prefer to break this out into a self-contained client library.
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(wboURI);
-    r.delegate = new SyncStorageRequestDelegate() {
+    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(wboURI, new CredentialsSource() {
       @Override
       public String credentials() {
         return username + ":" + password;
       }
+    });
 
+    r.delegate = new SyncStorageRequestDelegate() {
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         Logger.info(LOG_TAG, "Deleted client record with GUID " + clientGuid + " from server.");

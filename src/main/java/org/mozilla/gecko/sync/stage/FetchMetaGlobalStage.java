@@ -77,7 +77,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
 
     // We need an update: fetch or upload meta/global as necessary.
     Logger.info(LOG_TAG, "Fetching fresh meta/global for this session.");
-    MetaGlobal global = new MetaGlobal(session.config.metaURL(), session.credentials());
+    MetaGlobal global = new MetaGlobal(session.config.metaURL(), session);
     global.fetch(new StageMetaGlobalDelegate(session));
   }
 }

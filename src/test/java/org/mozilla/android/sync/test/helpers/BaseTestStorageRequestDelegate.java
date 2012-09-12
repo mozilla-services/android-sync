@@ -13,13 +13,6 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class BaseTestStorageRequestDelegate implements
     SyncStorageRequestDelegate {
-  public String _credentials;
-
-  @Override
-  public String credentials() {
-    return _credentials;
-  }
-
   @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
     BaseResource.consumeEntity(response);
