@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
-import org.mozilla.gecko.sync.ThreadPool;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
@@ -116,23 +115,5 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
 
   public void put(CryptoRecord record) {
     this.put(record.toJSONObject());
-  }
-
-  public void deferGet() {
-    final SyncStorageRecordRequest self = this;
-    ThreadPool.run(new Runnable() {
-      @Override
-      public void run() {
-        self.get();
-      }});
-  }
-
-  public void deferPut(final JSONObject body) {
-    final SyncStorageRecordRequest self = this;
-    ThreadPool.run(new Runnable() {
-      @Override
-      public void run() {
-        self.put(body);
-      }});
   }
 }
