@@ -76,12 +76,6 @@ implements SyncStorageRequestDelegate {
     return session.credentials();
   }
 
-  @Override
-  public String ifUnmodifiedSince() {
-    // TODO: last key time!
-    return null;
-  }
-
   protected void setAndPersist(PersistedCrypto5Keys pck, CollectionKeys keys, long timestamp) {
     session.config.setCollectionKeys(keys);
     pck.persistKeys(keys);

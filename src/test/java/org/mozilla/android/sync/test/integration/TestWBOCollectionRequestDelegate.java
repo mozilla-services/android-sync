@@ -40,11 +40,6 @@ public class TestWBOCollectionRequestDelegate {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
-      return null;
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       try {
         Logger.debug(LOG_TAG, "WBOs: " + this.wbos.size());

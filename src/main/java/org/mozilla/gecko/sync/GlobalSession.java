@@ -32,7 +32,6 @@ import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
 import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
@@ -574,12 +573,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
 
     request.delegate = new SyncStorageRequestDelegate() {
-
-      @Override
-      public String ifUnmodifiedSince() {
-        return null;
-      }
-
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         Logger.debug(LOG_TAG, "Keys uploaded.");
@@ -824,11 +817,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   // If sync ID mismatch: take that syncID and reset client.
 
   protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRequest request;
+    SyncStorageRecordRequest request;
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRequest(config.storageURL(false));
+      request = new SyncStorageRecordRequest(config.storageURL(false));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
@@ -836,12 +829,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
 
     request.delegate = new SyncStorageRequestDelegate() {
-
-      @Override
-      public String ifUnmodifiedSince() {
-        return null;
-      }
-
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response);

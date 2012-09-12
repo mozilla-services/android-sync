@@ -45,11 +45,6 @@ public class ClientRecordTerminator {
       }
 
       @Override
-      public String ifUnmodifiedSince() {
-        return null;
-      }
-
-      @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         Logger.info(LOG_TAG, "Deleted client record with GUID " + clientGuid + " from server.");
         BaseResource.consumeEntity(response);

@@ -6,7 +6,6 @@ package org.mozilla.gecko.sync.net;
 
 public interface SyncStorageRequestDelegate {
   String credentials();
-  String ifUnmodifiedSince();
 
   // TODO: at this point we can access X-Weave-Timestamp, compare
   // that to our local timestamp, and compute an estimate of clock

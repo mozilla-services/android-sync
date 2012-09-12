@@ -21,7 +21,6 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
@@ -107,12 +106,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     @Override
     public String credentials() {
       return session.credentials();
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      // TODO last client download time?
-      return null;
     }
 
     @Override
@@ -232,18 +225,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       // Use the timestamp for the whole collection per Sync storage 1.1 spec.
       currentlyUploadingRecordTimestamp = session.config.getPersistedServerClientsTimestamp();
       currentlyUploadingLocalRecord = isLocalRecord;
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      Long timestampInMilliseconds = currentlyUploadingRecordTimestamp;
-
-      // It's the first upload so we don't care about X-If-Unmodified-Since.
-      if (timestampInMilliseconds <= 0) {
-        return null;
-      }
-
-      return Utils.millisecondsToDecimalSecondsString(timestampInMilliseconds);
     }
 
     @Override
@@ -529,6 +510,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME, false);
       final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
       request.delegate = clientUploadDelegate;
+      request.locallyModifiedVersion = Math.max(0, clientUploadDelegate.currentlyUploadingRecordTimestamp);
       request.post(records);
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");

@@ -91,11 +91,6 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
-      return null;
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       Logger.debug(LOG_TAG, "Fetch done.");
       removeRequestFromPending();
@@ -220,11 +215,6 @@ public class Server11RepositorySession extends RepositorySession {
     @Override
     public String credentials() {
       return serverRepository.credentialsSource.credentials();
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      return null;
     }
 
     @Override
@@ -442,11 +432,6 @@ public class Server11RepositorySession extends RepositorySession {
     @Override
     public String credentials() {
       return serverRepository.credentialsSource.credentials();
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      return null;
     }
 
     @Override

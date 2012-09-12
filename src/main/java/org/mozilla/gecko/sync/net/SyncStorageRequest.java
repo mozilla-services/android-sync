@@ -12,15 +12,20 @@ import java.util.HashMap;
 
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Utils;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
+import ch.boye.httpclientandroidlib.client.methods.HttpGet;
+import ch.boye.httpclientandroidlib.client.methods.HttpPost;
+import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
 
-public class SyncStorageRequest implements Resource {
+public abstract class SyncStorageRequest implements Resource {
   public static final String LOG_TAG = "SyncStorageRequest";
 
   public static HashMap<String, String> SERVER_ERROR_MESSAGES;
@@ -56,12 +61,25 @@ public class SyncStorageRequest implements Resource {
     errors.put("\"server issue: database marked as down\"",              "server issue: database marked as down");
     SERVER_ERROR_MESSAGES = errors;
   }
+
   public static String getServerErrorMessage(String body) {
     if (SERVER_ERROR_MESSAGES.containsKey(body)) {
       return SERVER_ERROR_MESSAGES.get(body);
     }
     return body;
   }
+
+  protected volatile boolean aborting = false;
+
+  /**
+   * Set this to the timestamp of the most recent local version of the remote
+   * server data to make this storage request conditional.
+   * <p>
+   * This timestamp is interpreted differently depending on the underlying HTTP
+   * request's method; see {@link #allowIfUnmodified} and
+   * {@link #allowIfModified}.
+   */
+  public Long locallyModifiedVersion = null;
 
   /**
    * @param uri
@@ -80,11 +98,65 @@ public class SyncStorageRequest implements Resource {
     this.resource.delegate = this.resourceDelegate;
   }
 
-  protected volatile boolean aborting = false;
+  /**
+   * Whether to populate the X-If-Unmodified-Since header for this storage
+   * request.
+   *
+   * @param request
+   *          underlying HTTP request.
+   * @return <code>true</code> if yes; <code>false</code> otherwise.
+   */
+  protected boolean allowIfUnmodified(HttpRequestBase request) {
+    final String method = request.getMethod();
+    return method.equalsIgnoreCase(HttpPut.METHOD_NAME) ||
+        method.equalsIgnoreCase(HttpPost.METHOD_NAME) ||
+        method.equalsIgnoreCase(HttpDelete.METHOD_NAME);
+  }
 
   /**
-   * Instruct the request that it should process no more records,
-   * and decline to notify any more delegate callbacks.
+   * Whether to populate the X-If-Modified-Since header for this storage
+   * request.
+   *
+   * @param request
+   *          underlying HTTP request.
+   * @return <code>true</code> if yes; <code>false</code> otherwise.
+   */
+  protected boolean allowIfModified(HttpRequestBase request) {
+    final String method = request.getMethod();
+    return method.equalsIgnoreCase(HttpGet.METHOD_NAME);
+  }
+
+  /**
+   * Populate headers for the HTTP request underlying this storage request.
+   *
+   * @param request
+   *          underlying HTTP request to populate.
+   * @param client
+   *          executing the underlying HTTP request.
+   */
+  protected void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    // Sync 1.1 header to allow deletion.
+    if (request.getMethod().equalsIgnoreCase(HttpDelete.METHOD_NAME)) {
+      request.addHeader("x-confirm-delete", "1");
+    }
+
+    // Sync 1.1 and 2.0 headers.
+    if (locallyModifiedVersion != null) {
+      final String header = Utils.millisecondsToDecimalSecondsString(locallyModifiedVersion.longValue());
+
+      if (allowIfUnmodified(request)) {
+        Logger.debug(LOG_TAG, "Making request with X-If-Unmodified-Since = " + header);
+        request.setHeader("x-if-unmodified-since", header);
+      } else if (allowIfModified(request)) {
+        Logger.debug(LOG_TAG, "Making request with X-If-Modified-Since = " + header);
+        request.setHeader("x-if-modified-since", header);
+      }
+    }
+  }
+
+  /**
+   * Instruct the request that it should process no more records, and decline to
+   * notify any more delegate callbacks.
    */
   public void abort() {
     aborting = true;
@@ -155,15 +227,7 @@ public class SyncStorageRequest implements Resource {
     public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
       client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, GlobalConstants.USER_AGENT);
 
-      // Clients can use their delegate interface to specify X-If-Unmodified-Since.
-      String ifUnmodifiedSince = this.request.delegate.ifUnmodifiedSince();
-      if (ifUnmodifiedSince != null) {
-        Logger.debug(LOG_TAG, "Making request with X-If-Unmodified-Since = " + ifUnmodifiedSince);
-        request.setHeader("x-if-unmodified-since", ifUnmodifiedSince);
-      }
-      if (request.getMethod().equalsIgnoreCase("DELETE")) {
-        request.addHeader("x-confirm-delete", "1");
-      }
+      this.request.addHeaders(request, client);
     }
   }
 

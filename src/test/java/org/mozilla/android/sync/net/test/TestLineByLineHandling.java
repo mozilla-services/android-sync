@@ -64,11 +64,6 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public String ifUnmodifiedSince() {
-      return null;
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       Logger.info(LOG_TAG, "Request success.");
       assertTrue(res.wasSuccessful());

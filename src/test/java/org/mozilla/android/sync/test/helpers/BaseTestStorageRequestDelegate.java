@@ -21,11 +21,6 @@ public class BaseTestStorageRequestDelegate implements
   }
 
   @Override
-  public String ifUnmodifiedSince() {
-    return null;
-  }
-
-  @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
     BaseResource.consumeEntity(response);
     fail("Should not be called.");
