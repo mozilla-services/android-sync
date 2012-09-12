@@ -67,6 +67,24 @@ public class SyncStorageResponse extends SyncResponse {
     return SyncStorageResponse.getServerErrorMessage(this.body().trim());
   }
 
+
+  public int weaveRecords() throws NumberFormatException {
+    return this.getIntegerHeader("x-weave-records");
+  }
+
+
+  public int weaveQuotaRemaining() throws NumberFormatException {
+    return this.getIntegerHeader("x-weave-quota-remaining");
+  }
+
+
+  public String weaveAlert() {
+    if (this.hasHeader("x-weave-alert")) {
+      return this.response.getFirstHeader("x-weave-alert").getValue();
+    }
+    return null;
+  }
+
   // TODO: Content-Type and Content-Length validation.
 
 }

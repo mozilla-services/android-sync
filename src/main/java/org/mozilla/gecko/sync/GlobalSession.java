@@ -30,7 +30,6 @@ import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
-import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -505,7 +504,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public void interpretHTTPFailure(HttpResponse response) {
     // TODO: handle permanent rejection.
-    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds();
+    long responseBackoff = (new SyncStorageResponse(response)).totalBackoffInMilliseconds();
     if (responseBackoff > 0) {
       callback.requestBackoff(responseBackoff);
     }
@@ -1055,7 +1054,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   @Override
   public void observeHttpResponse(HttpResponse response) {
-    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
+    long responseBackoff = (new SyncStorageResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
     if (responseBackoff <= 0) {
       return;
     }

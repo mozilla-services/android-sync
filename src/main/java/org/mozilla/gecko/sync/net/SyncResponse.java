@@ -21,7 +21,7 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.impl.cookie.DateParseException;
 import ch.boye.httpclientandroidlib.impl.cookie.DateUtils;
 
-public class SyncResponse {
+public abstract class SyncResponse {
   private static final String HEADER_RETRY_AFTER = "retry-after";
   private static final String LOG_TAG = "SyncResponse";
 
@@ -102,7 +102,7 @@ public class SyncResponse {
     throw new NonObjectJSONException(body);
   }
 
-  private boolean hasHeader(String h) {
+  protected boolean hasHeader(String h) {
     return this.response.containsHeader(h);
   }
 
@@ -111,7 +111,7 @@ public class SyncResponse {
            value.trim().length() == 0;
   }
 
-  private int getIntegerHeader(String h) throws NumberFormatException {
+  protected int getIntegerHeader(String h) throws NumberFormatException {
     if (this.hasHeader(h)) {
       Header header = this.response.getFirstHeader(h);
       String value  = header.getValue();
@@ -221,20 +221,5 @@ public class SyncResponse {
     }
 
     return normalizedTimestamp;
-  }
-
-  public int weaveRecords() throws NumberFormatException {
-    return this.getIntegerHeader("x-weave-records");
-  }
-
-  public int weaveQuotaRemaining() throws NumberFormatException {
-    return this.getIntegerHeader("x-weave-quota-remaining");
-  }
-
-  public String weaveAlert() {
-    if (this.hasHeader("x-weave-alert")) {
-      return this.response.getFirstHeader("x-weave-alert").getValue();
-    }
-    return null;
   }
 }
