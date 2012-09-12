@@ -23,9 +23,9 @@ import org.mozilla.gecko.sync.Server11RecordPostFailedException;
 import org.mozilla.gecko.sync.UnexpectedJSONException;
 import org.mozilla.gecko.sync.net.ByteArraysEntity;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncStorageRequestIncrementalDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDelegate;
@@ -183,7 +183,7 @@ public class Server11RepositorySession extends RepositorySession {
     return b.substring(0, b.length() - 1);
   }
 
-  public class RequestGuidsDelegateAdapter extends SyncStorageCollectionRequestDelegate {
+  public class RequestGuidsDelegateAdapter implements SyncStorageRequestIncrementalDelegate {
     public ArrayList<String> guids = new ArrayList<String>();
 
     public RepositorySessionGuidsSinceDelegate delegate = null;

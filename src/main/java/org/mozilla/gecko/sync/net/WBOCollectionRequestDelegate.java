@@ -9,8 +9,7 @@ import org.mozilla.gecko.sync.CryptoRecord;
 /**
  * Subclass this to handle collection fetches.
  */
-public abstract class WBOCollectionRequestDelegate
-    extends SyncStorageCollectionRequestDelegate {
+public abstract class WBOCollectionRequestDelegate implements SyncStorageRequestIncrementalDelegate {
 
   /**
    * Override this to handle an individual Sync record.

@@ -19,7 +19,7 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncStorageRequestIncrementalDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -50,8 +50,7 @@ public class TestLineByLineHandling {
     }
   }
 
-  public class BaseLineByLineDelegate extends
-      SyncStorageCollectionRequestDelegate {
+  public class BaseLineByLineDelegate implements SyncStorageRequestIncrementalDelegate {
 
     @Override
     public void handleRequestProgress(String progress) {
@@ -104,7 +103,7 @@ public class TestLineByLineHandling {
     data.startHTTPServer(new LineByLineMockServer());
     Logger.info(LOG_TAG, "Server started.");
     SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
-    SyncStorageCollectionRequestDelegate delegate = new BaseLineByLineDelegate();
+    SyncStorageRequestIncrementalDelegate delegate = new BaseLineByLineDelegate();
     r.delegate = delegate;
     r.get();
     // Server is stopped in the callback.

@@ -84,7 +84,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
       // it processes. Bug 721887.
 
       // Line-by-line processing, then invoke success.
-      SyncStorageCollectionRequestDelegate delegate = (SyncStorageCollectionRequestDelegate) this.request.delegate;
+      SyncStorageRequestIncrementalDelegate delegate = (SyncStorageRequestIncrementalDelegate) this.request.delegate;
       InputStream content = null;
       BufferedReader br = null;
       try {

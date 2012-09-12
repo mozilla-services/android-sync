@@ -4,7 +4,7 @@
 
 package org.mozilla.gecko.sync.net;
 
-public interface SyncStorageRequestIncrementalDelegate {
+public interface SyncStorageRequestIncrementalDelegate extends SyncStorageRequestDelegate {
   /**
    * Called once for each line returned by the server.
    * <p>
