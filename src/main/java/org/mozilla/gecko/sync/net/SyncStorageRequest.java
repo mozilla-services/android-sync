@@ -43,7 +43,7 @@ public abstract class SyncStorageRequest implements Resource {
   public Long locallyModifiedVersion = null;
 
   protected BaseResource resource;
-  protected SyncResourceDelegate resourceDelegate;
+  protected BaseResourceDelegate resourceDelegate;
 
   public SyncStorageRequestDelegate delegate;
 
@@ -140,7 +140,7 @@ public abstract class SyncStorageRequest implements Resource {
   /**
    * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
    */
-  public static class SyncStorageResourceDelegate extends SyncResourceDelegate {
+  public static class SyncStorageResourceDelegate extends BaseResourceDelegate {
     private static final String LOG_TAG = "SSResourceDelegate";
     protected SyncStorageRequest request;
 
@@ -204,7 +204,7 @@ public abstract class SyncStorageRequest implements Resource {
   }
 
   // Default implementation. Override this.
-  protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
+  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
     return new SyncStorageResourceDelegate(request);
   }
 

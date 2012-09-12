@@ -35,7 +35,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
   }
 
   @Override
-  protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
+  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
     return new SyncCollectionResourceDelegate((SyncStorageCollectionRequest) request);
   }
 

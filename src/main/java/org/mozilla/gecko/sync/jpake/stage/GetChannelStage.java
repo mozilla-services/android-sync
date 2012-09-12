@@ -11,7 +11,7 @@ import java.security.GeneralSecurityException;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.setup.Constants;
 
@@ -78,7 +78,7 @@ public class GetChannelStage extends JPakeStage {
 
   private void makeChannelRequest(final GetChannelStageDelegate callbackDelegate, String getChannelUrl, final String clientId) throws URISyntaxException {
     final BaseResource httpResource = new BaseResource(getChannelUrl);
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new BaseResourceDelegate(httpResource) {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
