@@ -8,15 +8,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 
-import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -43,13 +39,10 @@ import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
  * * JSON parsing
  * * Content-Type and Content-Length validation.
  */
-public class SyncServer11RecordRequest {
+public class SyncServer11RecordRequest extends SyncServerRequest {
   public static final String LOG_TAG = "SyncS11RecordRequest";
 
   public SyncServer11RequestDelegate delegate;
-
-  protected BaseResourceDelegate resourceDelegate;
-  protected BaseResource resource;
 
   /**
    * @param uri
@@ -59,20 +52,8 @@ public class SyncServer11RecordRequest {
     this.resource.delegate = this.makeResourceDelegate(this);
   }
 
-  protected volatile boolean aborting = false;
-
-  /**
-   * Instruct the request that it should process no more records,
-   * and decline to notify any more delegate callbacks.
-   */
-  public void abort() {
-    aborting = true;
-    try {
-      this.resource.abort();
-    } catch (Exception e) {
-      // Just in case.
-      Logger.warn(LOG_TAG, "Got exception in abort: " + e);
-    }
+  protected BaseResourceDelegate makeResourceDelegate(SyncServer11RecordRequest request) {
+    return new SyncStorageResourceDelegate(request);
   }
 
   /**
@@ -144,45 +125,5 @@ public class SyncServer11RecordRequest {
         request.addHeader("x-confirm-delete", "1");
       }
     }
-  }
-
-  public void get() {
-    this.resource.get();
-  }
-
-  protected BaseResourceDelegate makeResourceDelegate(SyncServer11RecordRequest request) {
-    return new SyncStorageResourceDelegate(request);
-  }
-
-  public void delete() {
-    this.resource.delete();
-  }
-
-  public void post(HttpEntity body) {
-    this.resource.post(body);
-  }
-
-  public void put(HttpEntity body) {
-    this.resource.put(body);
-  }
-
-  public void post(JSONObject body) {
-    this.resource.post(body);
-  }
-
-  public void post(JSONArray body) {
-    this.resource.post(body);
-  }
-
-  public void put(JSONObject body) {
-    this.resource.put(body);
-  }
-
-  public void post(CryptoRecord record) {
-    this.post(record.toJSONObject());
-  }
-
-  public void put(CryptoRecord record) {
-    this.put(record.toJSONObject());
   }
 }

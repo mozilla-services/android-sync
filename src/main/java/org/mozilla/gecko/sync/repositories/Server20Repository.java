@@ -35,6 +35,6 @@ public class Server20Repository extends ServerRepository {
 
   @Override
   public void createSession(final RepositorySessionCreationDelegate delegate, final Context context) {
-    delegate.onSessionCreated(new Server11RepositorySession(this));
+    delegate.onSessionCreated(new Server20RepositorySession(this));
   }
 }
