@@ -13,19 +13,27 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.Utils;
 
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.impl.cookie.DateParseException;
-import ch.boye.httpclientandroidlib.impl.cookie.DateUtils;
 
+/**
+ * An abstract HTTP response from a Sync server.
+ * <p>
+ * All Sync responses provide:
+ * <ul>
+ * <li>a status code;</li>
+ * <li>a server specific error message;</li>
+ * <li>access to the response body;</li>
+ * <li>access to server specific retry after and backoff headers.</li>
+ * </ul>
+ */
 public abstract class SyncResponse {
-  private static final String HEADER_RETRY_AFTER = "retry-after";
   private static final String LOG_TAG = "SyncResponse";
 
   protected final HttpResponse response;
+  protected String body = null;
 
   public SyncResponse(final HttpResponse res) {
     response = res;
@@ -43,7 +51,6 @@ public abstract class SyncResponse {
     return this.getStatusCode() == 200;
   }
 
-  private String body = null;
   public String body() throws IllegalStateException, IOException {
     if (body != null) {
       return body;
@@ -106,7 +113,7 @@ public abstract class SyncResponse {
     return this.response.containsHeader(h);
   }
 
-  private static boolean missingHeader(String value) {
+  protected static boolean missingHeader(String value) {
     return value == null ||
            value.trim().length() == 0;
   }
@@ -125,101 +132,39 @@ public abstract class SyncResponse {
   }
 
   /**
-   * @return A number of seconds, or -1 if the 'Retry-After' header was not present.
+   * Return any server specific error message.
+   *
+   * @return error message, or null if none was present or well formed.
    */
-  public int retryAfterInSeconds() throws NumberFormatException {
-    if (!this.hasHeader(HEADER_RETRY_AFTER)) {
-      return -1;
-    }
-
-    Header header = this.response.getFirstHeader(HEADER_RETRY_AFTER);
-    String retryAfter = header.getValue();
-    if (missingHeader(retryAfter)) {
-      Logger.warn(LOG_TAG, "Retry-After header present but empty.");
-      return -1;
-    }
-
-    try {
-      return Integer.parseInt(retryAfter, 10);
-    } catch (NumberFormatException e) {
-      // Fall through to try date format.
-    }
-
-    try {
-      final long then = DateUtils.parseDate(retryAfter).getTime();
-      final long now  = System.currentTimeMillis();
-      return (int)((then - now) / 1000);     // Convert milliseconds to seconds.
-    } catch (DateParseException e) {
-      Logger.warn(LOG_TAG, "Retry-After header neither integer nor date: " + retryAfter);
-      return -1;
-    }
-  }
+  public abstract String getErrorMessage();
 
   /**
-   * @return A number of seconds, or -1 if the 'X-Weave-Backoff' header was not
-   *         present.
-   */
-  public int weaveBackoffInSeconds() throws NumberFormatException {
-    return this.getIntegerHeader("x-weave-backoff");
-  }
-
-  /**
-   * @return A number of milliseconds, or -1 if neither the 'Retry-After' or
-   *         'X-Weave-Backoff' header was present.
-   */
-  public long totalBackoffInMilliseconds() {
-    int retryAfterInSeconds = -1;
-    try {
-      retryAfterInSeconds = retryAfterInSeconds();
-    } catch (NumberFormatException e) {
-    }
-
-    int weaveBackoffInSeconds = -1;
-    try {
-      weaveBackoffInSeconds = weaveBackoffInSeconds();
-    } catch (NumberFormatException e) {
-    }
-
-    long totalBackoff = (long) Math.max(retryAfterInSeconds, weaveBackoffInSeconds);
-    if (totalBackoff < 0) {
-      return -1;
-    } else {
-      return 1000 * totalBackoff;
-    }
-  }
-
-  public static final String TIMESTAMP_HEADER = "X-Weave-Timestamp";
-
-  /**
-   * Return the timestamp header from <code>response</code>, or the current time
-   * if it is missing.
-   * <p>
-   * The timestamp returned from a Sync server is a decimal number of seconds,
-   * e.g., 1323393518.04, which we convert to milliseconds since the epoch.
-   * <p>
-   * <b>Warning:</b> this can cause the timestamp of <code>response</code> to
-   * cross domains (from server clock to local clock), which could cause records
-   * to be skipped on account of clock drift. This should never happen, because
-   * <i>every</i> server response should have a well-formed timestamp header.
+   * Return the timestamp from this response, or the current time if it is
+   * missing.
    *
    * @return milliseconds since the epoch, as a long, or the current time if the
-   *         header was missing or invalid.
+   *         timestamp was missing or invalid.
    */
-  public long getNormalizedTimestamp() {
-    long normalizedTimestamp = -1;
-    try {
-      if (this.hasHeader(TIMESTAMP_HEADER)) {
-        normalizedTimestamp = Utils.decimalSecondsToMilliseconds(this.response.getFirstHeader(TIMESTAMP_HEADER).getValue());
-      }
-    } catch (NumberFormatException e) {
-      Logger.warn(LOG_TAG, "Malformed timestamp header received.", e);
-    }
+  public abstract long getNormalizedTimestamp();
 
-    if (-1 == normalizedTimestamp) {
-      Logger.warn(LOG_TAG, "Computing stand-in timestamp from local clock. Clock drift could cause records to be skipped.");
-      normalizedTimestamp = System.currentTimeMillis();
-    }
+  /**
+   * Query the server retry after header.
+   *
+   * @return number of seconds, or -1 if the retry after header was malformed or missing.
+   */
+  public abstract int retryAfterInSeconds();
 
-    return normalizedTimestamp;
-  }
+  /**
+   * Query the server backoff header.
+   *
+   * @return number of seconds, or -1 if the backoff header was malformed or missing.
+   */
+  public abstract int backoffInSeconds();
+
+  /**
+   * Get the maximum the server retry and backoff headers.
+   *
+   * @return number of milliseconds, or -1 if neither the retry after or backoff header was well formed or present.
+   */
+  public abstract long totalBackoffInMilliseconds();
 }

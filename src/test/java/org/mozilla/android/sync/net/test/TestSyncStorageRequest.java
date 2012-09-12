@@ -161,7 +161,7 @@ public class TestSyncStorageRequest implements CredentialsSource {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.httpResponse().containsHeader("X-Weave-Backoff"));
-      assertEquals(res.weaveBackoffInSeconds(), 1801);
+      assertEquals(res.backoffInSeconds(), 1801);
       super.handleRequestSuccess(res);
     }
   }
