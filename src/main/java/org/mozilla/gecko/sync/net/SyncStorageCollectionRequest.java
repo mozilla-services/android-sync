@@ -20,33 +20,33 @@ import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 
 /**
- * A request class that handles line-by-line responses. Eventually this will
- * handle real stream processing; for now, just parse the returned body
- * line-by-line.
+ * A streaming HTTP request to a Sync 1.1 server.
+ * <p>
+ * Implements expected headers and processing for Sync protocol 1.1. Handles
+ * line-by-line responses. Eventually this will handle real stream processing;
+ * for now, just parse the returned body line-by-line.
  *
- * @author rnewman
- *
+ * @see <a href="http://docs.services.mozilla.com/storage/apis-1.1.html">the Sync 1.1 API documentation</a>.
  */
-public class SyncStorageCollectionRequest extends SyncStorageRequest {
-  private static final String LOG_TAG = "CollectionRequest";
-
+public class SyncStorageCollectionRequest extends SyncStorageRecordRequest {
   public SyncStorageCollectionRequest(URI uri, CredentialsSource credentialsSource) {
     super(uri, credentialsSource);
   }
 
   @Override
   protected BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
-    return new SyncCollectionResourceDelegate((SyncStorageCollectionRequest) request);
+    return new SyncStorageCollectionResourceDelegate((SyncStorageCollectionRequest) request);
   }
 
   // TODO: this is awful.
-  public class SyncCollectionResourceDelegate extends
-      SyncStorageResourceDelegate {
+  protected static class SyncStorageCollectionResourceDelegate extends
+      SyncStorageRecordResourceDelegate {
+    private static final String LOG_TAG = "SSCollResDelegate";
 
     private static final String CONTENT_TYPE_INCREMENTAL = "application/newlines";
     private static final int FETCH_BUFFER_SIZE = 16 * 1024;   // 16K chars.
 
-    SyncCollectionResourceDelegate(SyncStorageCollectionRequest request) {
+    SyncStorageCollectionResourceDelegate(SyncStorageCollectionRequest request) {
       super(request);
     }
 
@@ -59,7 +59,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
-      if (aborting) {
+      if (request.aborting) {
         return;
       }
 
@@ -94,7 +94,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
         String line;
 
         // This relies on connection timeouts at the HTTP layer.
-        while (!aborting &&
+        while (!request.aborting &&
                null != (line = br.readLine())) {
           try {
             delegate.handleRequestProgress(line);
@@ -104,12 +104,12 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
             return;
           }
         }
-        if (aborting) {
+        if (request.aborting) {
           // So we don't hit the success case below.
           return;
         }
       } catch (IOException ex) {
-        if (!aborting) {
+        if (!request.aborting) {
           delegate.handleRequestError(ex);
         }
         BaseResource.consumeEntity(entity);

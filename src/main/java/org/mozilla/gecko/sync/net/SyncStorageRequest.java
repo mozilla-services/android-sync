@@ -4,30 +4,34 @@
 
 package org.mozilla.gecko.sync.net;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.GeneralSecurityException;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CredentialsSource;
-import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
-import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.HttpStatus;
-import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
 import ch.boye.httpclientandroidlib.client.methods.HttpPost;
 import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
-import ch.boye.httpclientandroidlib.params.CoreProtocolPNames;
 
+/**
+ * An abstract HTTP request to a Sync server.
+ * <p>
+ * All Sync requests compose:
+ * <ul>
+ * <li>an underlying HTTP request;</li>
+ * <li>credentials;</li>
+ * <li>locally modified version timestamp;</li>
+ * <li>a simplified delegate.</li>
+ * </ul>
+ */
 public abstract class SyncStorageRequest implements Resource {
   public static final String LOG_TAG = "SyncStorageRequest";
 
@@ -67,6 +71,15 @@ public abstract class SyncStorageRequest implements Resource {
     this.resourceDelegate = this.makeResourceDelegate(this);
     this.resource.delegate = this.resourceDelegate;
   }
+
+  /**
+   * Make a delegate that turns <code>BaseResourceDelegate</code> callbacks into
+   * <code>SyncStorageRequestDelegate</code> callbacks.
+   *
+   * @param request to delegate for.
+   * @return delegate.
+   */
+  protected abstract BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request);
 
   /**
    * Whether to populate the X-If-Unmodified-Since header for this storage
@@ -136,77 +149,6 @@ public abstract class SyncStorageRequest implements Resource {
       // Just in case.
       Logger.warn(LOG_TAG, "Got exception in abort: " + e);
     }
-  }
-
-  /**
-   * A ResourceDelegate that mediates between Resource-level notifications and the SyncStorageRequest.
-   */
-  public static class SyncStorageResourceDelegate extends BaseResourceDelegate {
-    private static final String LOG_TAG = "SSResourceDelegate";
-    protected SyncStorageRequest request;
-
-    SyncStorageResourceDelegate(SyncStorageRequest request) {
-      super(request);
-      this.request = request;
-    }
-
-    @Override
-    public String getCredentials() {
-      if (this.request.credentialsSource == null) {
-        return null;
-      }
-      return this.request.credentialsSource.credentials();
-    }
-
-    @Override
-    public void handleHttpResponse(HttpResponse response) {
-      if (this.request.aborting) {
-        return;
-      }
-
-      Logger.debug(LOG_TAG, "SyncStorageResourceDelegate handling response: " + response.getStatusLine() + ".");
-      SyncStorageRequestDelegate d = this.request.delegate;
-      SyncStorageResponse res = new SyncStorageResponse(response);
-      // It is the responsibility of the delegate handlers to completely consume the response.
-      if (HttpStatus.SC_OK == res.getStatusCode()) {
-        d.handleRequestSuccess(res);
-      } else {
-        Logger.warn(LOG_TAG, "HTTP request failed.");
-        try {
-          Logger.warn(LOG_TAG, "HTTP response body: " + res.getErrorMessage());
-        } catch (Exception e) {
-          Logger.error(LOG_TAG, "Can't fetch HTTP response body.", e);
-        }
-        d.handleRequestFailure(res);
-      }
-    }
-
-    @Override
-    public void handleHttpProtocolException(ClientProtocolException e) {
-      this.request.delegate.handleRequestError(e);
-    }
-
-    @Override
-    public void handleHttpIOException(IOException e) {
-      this.request.delegate.handleRequestError(e);
-    }
-
-    @Override
-    public void handleTransportException(GeneralSecurityException e) {
-      this.request.delegate.handleRequestError(e);
-    }
-
-    @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
-      client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, GlobalConstants.USER_AGENT);
-
-      this.request.addHeaders(request, client);
-    }
-  }
-
-  // Default implementation. Override this.
-  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
-    return new SyncStorageResourceDelegate(request);
   }
 
   public void get() {
