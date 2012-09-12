@@ -53,7 +53,8 @@ public class SyncAccounts {
   /**
    * Return Sync accounts.
    *
-   * @param c Android context.
+   * @param c
+   *          Android context.
    * @return Sync accounts.
    */
   public static Account[] syncAccounts(final Context c) {
@@ -63,8 +64,10 @@ public class SyncAccounts {
   /**
    * Asynchronously invalidate the auth token for a Sync account.
    *
-   * @param accountManager Android account manager.
-   * @param account Android account.
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account.
    */
   public static void invalidateAuthToken(final AccountManager accountManager, final Account account) {
     if (account == null) {
@@ -616,6 +619,7 @@ public class SyncAccounts {
    * account.
    *
    * @param context
+   *          Android context
    * @param accountManager
    *          Android account manager
    * @param account

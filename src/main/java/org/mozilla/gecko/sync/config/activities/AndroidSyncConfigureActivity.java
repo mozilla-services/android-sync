@@ -13,8 +13,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 /**
- * Activity for configuring Firefox Sync settings, that does work of fetching account information.
- *
+ * Activity for configuring Firefox Sync settings, that does work of fetching
+ * account information.
  */
 public abstract class AndroidSyncConfigureActivity extends Activity {
   public final static String LOG_TAG = "AndroidSyncConfigAct";
@@ -36,7 +36,8 @@ public abstract class AndroidSyncConfigureActivity extends Activity {
    * Fetches the prefs associated with a Sync account, and passes the prefs to
    * the PrefsConsumer.
    *
-   * @param accountConsumer interface for consuming prefs from an Account.
+   * @param accountConsumer
+   *          interface for consuming prefs from an Account.
    */
   public void fetchPrefsAndConsume(final PrefsConsumer accountConsumer) {
     // Run Account management on separate thread to avoid strict mode policy violations.

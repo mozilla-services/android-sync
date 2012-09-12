@@ -276,6 +276,8 @@ public class SyncConfiguration implements CredentialsSource {
   }
 
   /**
+   * Valid engines supported by Android Sync.
+   *
    * @return Set<String> of valid engine names that Android Sync implements.
    */
   public static Set<String> validEngineNames() {
@@ -285,6 +287,7 @@ public class SyncConfiguration implements CredentialsSource {
     }
     return engineNames;
   }
+
   /**
    * Return a convenient accessor for part of prefs.
    * @return

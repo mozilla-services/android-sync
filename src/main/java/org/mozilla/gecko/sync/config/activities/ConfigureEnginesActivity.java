@@ -20,12 +20,18 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 /**
- * Provides a user-facing interface for selecting engines to sync. This activity can be launched
- * from the Sync Settings preferences screen, and will save the selected engines to a pref.
+ * Provides a user-facing interface for selecting engines to sync. This activity
+ * can be launched from the Sync Settings preferences screen, and will save the
+ * selected engines to the
+ * <code>SyncConfiguration.PREF_USER_SELECTED_ENGINES_TO_SYNC</code> pref.
  *
- * On launch, it loads from either the saved pref of selected engines (if it exists) or from
- * SyncConfiguration. During a sync, this pref will be read and cleared.
+ * On launch, it displays the engines stored in the saved pref if it exists, or
+ * <code>SyncConfiguration.enabledEngineNames</code> if it doesn't, defaulting
+ * to <code>SyncConfiguration.validEngineNames()</code> if neither exists.
  *
+ * During a sync, the
+ * <code>SyncConfiguration.PREF_USER_SELECTED_ENGINES_TO_SYNC</code> pref will
+ * be cleared after the engine changes are applied to meta/global.
  */
 public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     implements DialogInterface.OnClickListener, DialogInterface.OnMultiChoiceClickListener {
@@ -40,8 +46,10 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     "tabs"
   };
 
-  final boolean[] _selections = new boolean[_collectionsNames.length];
+  // Engine names localized for display in Sync Settings.
   private String[] _options;
+  // Selection state of engines corresponding to _options array.
+  final boolean[] _selections = new boolean[_collectionsNames.length];
   private SharedPreferences accountPrefs;
 
   @Override
@@ -59,7 +67,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
       @Override
       public void run(SharedPreferences prefs) {
         self.accountPrefs = prefs;
-        setSelections(getEnginesToSelect(prefs), _selections);
+        setSelectionsInArray(getEnginesToSelect(prefs), _selections);
 
         new AlertDialog.Builder(self)
             .setTitle(R.string.sync_configure_engines_sync_my_title)
@@ -78,13 +86,15 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     }
     return engines;
   }
+
   /**
    * Fetches the engine names that should be displayed as selected for syncing.
-   * Check first for the selection pref set by this activity, then the set of
-   * enabled engines from SyncConfiguration, and finally use the set of valid
-   * engine names for Android Sync.
+   * Check first for selected engines set by this activity, then the enabled
+   * engines, and finally default to the set of valid engine names for Android
+   * Sync if neither exists.
    *
    * @param syncPrefs
+   *          <code>SharedPreferences</code> of Account being modified.
    * @return Set<String> of engine names to display as selected. Should never be
    *         null.
    */
@@ -103,7 +113,7 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
     return engines;
   }
 
-  public void setSelections(Set<String> selected, boolean[] array) {
+  public void setSelectionsInArray(Set<String> selected, boolean[] array) {
     for (int i = 0; i < _collectionsNames.length; i++) {
       array[i] = selected.contains(_collectionsNames[i]);
     }
@@ -133,12 +143,13 @@ public class ConfigureEnginesActivity extends AndroidSyncConfigureActivity
   }
 
   /**
-   * Persists selected engines to SharedPreferences if changed.
+   * Persists engine selection state to SharedPreferences if it has changed.
+   *
    * @return true if changed, false otherwise.
    */
   private void saveSelections() {
     boolean[] origSelections = new boolean[_options.length];
-    setSelections(getEnginesFromPrefs(accountPrefs), origSelections);
+    setSelectionsInArray(getEnginesFromPrefs(accountPrefs), origSelections);
     Map<String, Boolean> engineSelections = new HashMap<String, Boolean>();
     for (int i = 0; i < _selections.length; i++) {
       if (_selections[i] != origSelections[i]) {

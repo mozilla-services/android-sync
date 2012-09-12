@@ -398,8 +398,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   /**
-   * Adds engineName to be removed when updating meta/global to be uploaded.
+   * Record that an updated meta/global record should be uploaded without the
+   * given engine name.
+   *
    * @param engineName
+   *          engine to remove.
    */
   public void removeEngineFromMetaGlobal(String engineName) {
     enginesToRemove.add(engineName);
