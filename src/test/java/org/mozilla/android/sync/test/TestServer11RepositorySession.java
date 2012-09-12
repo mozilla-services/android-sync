@@ -96,7 +96,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
       BaseTestStorageRequestDelegate {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
-      assertTrue(res.wasSuccessful());
+      assertTrue(200 == res.getStatusCode());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
       BaseResource.consumeEntity(res);
       data.stopHTTPServer();

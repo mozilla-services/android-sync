@@ -51,7 +51,7 @@ public class TestBasicFetch {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       try {
-        assertTrue(res.wasSuccessful());
+        assertTrue(200 == res.getStatusCode());
         assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
         body = res.body();
       } catch (Exception e) {

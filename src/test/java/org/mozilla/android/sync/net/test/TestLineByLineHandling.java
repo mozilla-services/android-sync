@@ -60,7 +60,7 @@ public class TestLineByLineHandling {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       Logger.info(LOG_TAG, "Request success.");
-      assertTrue(res.wasSuccessful());
+      assertTrue(200 == res.getStatusCode());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
       assertEquals(lines.size(), 4);

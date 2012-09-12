@@ -18,6 +18,7 @@ import org.mozilla.gecko.sync.Utils;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.HttpStatus;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
@@ -167,7 +168,7 @@ public abstract class SyncStorageRequest implements Resource {
       SyncStorageRequestDelegate d = this.request.delegate;
       SyncStorageResponse res = new SyncStorageResponse(response);
       // It is the responsibility of the delegate handlers to completely consume the response.
-      if (res.wasSuccessful()) {
+      if (HttpStatus.SC_OK == res.getStatusCode()) {
         d.handleRequestSuccess(res);
       } else {
         Logger.warn(LOG_TAG, "HTTP request failed.");

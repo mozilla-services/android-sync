@@ -47,10 +47,6 @@ public abstract class SyncResponse {
     return this.response.getStatusLine().getStatusCode();
   }
 
-  public boolean wasSuccessful() {
-    return this.getStatusCode() == 200;
-  }
-
   public String body() throws IllegalStateException, IOException {
     if (body != null) {
       return body;

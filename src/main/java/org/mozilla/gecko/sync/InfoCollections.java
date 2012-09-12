@@ -133,28 +133,19 @@ public class InfoCollections implements SyncStorageRequestDelegate {
   }
 
   public void handleRequestSuccess(SyncStorageResponse response) {
-    if (response.wasSuccessful()) {
-      try {
-        this.setFromRecord(response.jsonObjectBody());
-        this.callback.handleSuccess(this);
-        this.callback = null;
-      } catch (Exception e) {
-        this.callback.handleError(e);
-        this.callback = null;
-      }
-      return;
+    try {
+      this.setFromRecord(response.jsonObjectBody());
+      this.callback.handleSuccess(this);
+    } catch (Exception e) {
+      this.callback.handleError(e);
     }
-    this.callback.handleFailure(response);
-    this.callback = null;
   }
 
   public void handleRequestFailure(SyncStorageResponse response) {
     this.callback.handleFailure(response);
-    this.callback = null;
   }
 
   public void handleRequestError(Exception e) {
     this.callback.handleError(e);
-    this.callback = null;
   }
 }

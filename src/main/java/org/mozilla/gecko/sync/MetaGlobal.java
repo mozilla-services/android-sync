@@ -254,17 +254,13 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   }
 
   private void handleDownloadSuccess(SyncStorageResponse response) {
-    if (response.wasSuccessful()) {
-      try {
-        CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
-        this.setFromRecord(record);
-        this.callback.handleSuccess(this, response);
-      } catch (Exception e) {
-        this.callback.handleError(e);
-      }
-      return;
+    try {
+      CryptoRecord record = CryptoRecord.fromJSONRecord(response.jsonObjectBody());
+      this.setFromRecord(record);
+      this.callback.handleSuccess(this, response);
+    } catch (Exception e) {
+      this.callback.handleError(e);
     }
-    this.callback.handleFailure(response);
   }
 
   public void handleRequestFailure(SyncStorageResponse response) {

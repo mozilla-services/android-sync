@@ -47,7 +47,7 @@ public class TestSyncStorageRequest implements CredentialsSource {
       BaseTestStorageRequestDelegate {
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
-      assertTrue(res.wasSuccessful());
+      assertEquals(200, res.getStatusCode());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
       // Make sure we consume the rest of the body, so we can reuse the
@@ -67,7 +67,7 @@ public class TestSyncStorageRequest implements CredentialsSource {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse res) {
-      assertTrue(!res.wasSuccessful());
+      assertTrue(200 != res.getStatusCode());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
       try {
         String responseMessage = res.getErrorMessage();
@@ -118,7 +118,7 @@ public class TestSyncStorageRequest implements CredentialsSource {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse res) {
-      assertTrue(!res.wasSuccessful());
+      assertTrue(200 != res.getStatusCode());
       assertTrue(res.httpResponse().containsHeader("Retry-After"));
       assertEquals(res.retryAfterInSeconds(), 3001);
       try {
