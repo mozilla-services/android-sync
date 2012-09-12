@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,6 +17,8 @@ import java.security.SecureRandom;
 
 import javax.net.ssl.SSLContext;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.Logger;
 
 import ch.boye.httpclientandroidlib.Header;
@@ -38,6 +41,7 @@ import ch.boye.httpclientandroidlib.conn.scheme.PlainSocketFactory;
 import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
 import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
+import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.impl.auth.BasicScheme;
 import ch.boye.httpclientandroidlib.impl.client.BasicAuthCache;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
@@ -410,6 +414,59 @@ public class BaseResource implements Resource {
       reader.close();
     } catch (IOException e) {
       // Do nothing.
+    }
+  }
+
+  protected static StringEntity stringEntity(String s) throws UnsupportedEncodingException {
+    StringEntity e = new StringEntity(s, "UTF-8");
+    e.setContentType("application/json");
+    return e;
+  }
+
+  /**
+   * Helper for turning a JSON object into a payload.
+   * @throws UnsupportedEncodingException
+   */
+  protected static StringEntity jsonEntity(JSONObject body) throws UnsupportedEncodingException {
+    return stringEntity(body.toJSONString());
+  }
+
+  /**
+   * Helper for turning a JSON array into a payload.
+   * @throws UnsupportedEncodingException
+   */
+  protected static HttpEntity jsonEntity(JSONArray toPOST) throws UnsupportedEncodingException {
+    return stringEntity(toPOST.toJSONString());
+  }
+
+  public void post(JSONArray body) {
+    // Let's do this the trivial way for now.
+    try {
+      post(jsonEntity(body));
+    } catch (UnsupportedEncodingException e) {
+      delegate.handleHttpIOException(e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public void post(JSONObject body) {
+    // Let's do this the trivial way for now.
+    // Note that POSTs should be an array, so we wrap here.
+    final JSONArray toPOST = new JSONArray();
+    toPOST.add(body);
+    try {
+      post(jsonEntity(toPOST));
+    } catch (UnsupportedEncodingException e) {
+      delegate.handleHttpIOException(e);
+    }
+  }
+
+  public void put(JSONObject body) {
+    // Let's do this the trivial way for now.
+    try {
+      put(jsonEntity(body));
+    } catch (UnsupportedEncodingException e) {
+      delegate.handleHttpIOException(e);
     }
   }
 }

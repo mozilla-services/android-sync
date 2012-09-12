@@ -10,6 +10,8 @@ import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
@@ -256,7 +258,19 @@ public abstract class SyncStorageRequest implements Resource {
     this.resource.post(body);
   }
 
+  public void post(JSONObject body) {
+    this.resource.post(body);
+  }
+
+  public void post(JSONArray body) {
+    this.resource.post(body);
+  }
+
   public void put(HttpEntity body) {
+    this.resource.put(body);
+  }
+
+  public void put(JSONObject body) {
     this.resource.put(body);
   }
 }
