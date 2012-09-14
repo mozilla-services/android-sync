@@ -42,6 +42,8 @@ public class Server20Client {
     public int statusCode;
     public String responseBody = null;
     public ExtendedJSONObject responseObject = null;
+    public Long timestamp = null;
+    public Long lastModified = null;
 
     @Override
     public String getCredentials() {
@@ -52,6 +54,19 @@ public class Server20Client {
     public void handleHttpResponse(HttpResponse response) {
       this.response = response;
       statusCode = response.getStatusLine().getStatusCode();
+
+      try {
+        timestamp = Long.valueOf(response.getFirstHeader("X-Timestamp").getValue());
+      } catch (Exception e) {
+        // Do nothing.
+      }
+
+      try {
+        lastModified = Long.valueOf(response.getFirstHeader("X-Last-Modified").getValue());
+      } catch (Exception e) {
+        // Do nothing.
+      }
+
       try {
         InputStream content = response.getEntity().getContent();
         BufferedReader reader = new BufferedReader(new InputStreamReader(content, "UTF-8"), 1024);
