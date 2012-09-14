@@ -18,10 +18,8 @@ public class HTTPFailureException extends SyncException {
 
   @Override
   public String toString() {
-    String errorMessage;
-    try {
-      errorMessage = this.response.getErrorMessage();
-    } catch (Exception e) {
+    String errorMessage = this.response.getErrorMessage();
+    if (errorMessage == null) {
       // Oh well.
       errorMessage = "[unknown error message]";
     }

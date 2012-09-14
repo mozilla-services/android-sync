@@ -102,7 +102,7 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
       } else {
         Logger.warn(LOG_TAG, "HTTP request failed.");
         try {
-          Logger.warn(LOG_TAG, "HTTP response body: " + res.getErrorMessage());
+          Logger.warn(LOG_TAG, "HTTP response error message: " + res.getErrorMessage());
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Can't fetch HTTP response body.", e);
         }
