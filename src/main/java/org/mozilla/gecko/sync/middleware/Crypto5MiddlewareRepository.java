@@ -5,7 +5,6 @@
 package org.mozilla.gecko.sync.middleware;
 
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.repositories.IdentityRecordFactory;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
@@ -23,7 +22,7 @@ import android.content.Context;
  */
 public class Crypto5MiddlewareRepository extends MiddlewareRepository {
 
-  public RecordFactory recordFactory = new IdentityRecordFactory();
+  public final RecordFactory recordFactory;
 
   public class Crypto5MiddlewareRepositorySessionCreationDelegate extends MiddlewareRepository.SessionCreationDelegate {
     private Crypto5MiddlewareRepository repository;
@@ -55,11 +54,13 @@ public class Crypto5MiddlewareRepository extends MiddlewareRepository {
   public KeyBundle keyBundle;
   private Repository inner;
 
-  public Crypto5MiddlewareRepository(Repository inner, KeyBundle keys) {
+  public Crypto5MiddlewareRepository(Repository inner, KeyBundle keys, RecordFactory recordFactory) {
     super();
     this.inner = inner;
     this.keyBundle = keys;
+    this.recordFactory = recordFactory;
   }
+
   @Override
   public void createSession(RepositorySessionCreationDelegate delegate, Context context) {
     Crypto5MiddlewareRepositorySessionCreationDelegate delegateWrapper = new Crypto5MiddlewareRepositorySessionCreationDelegate(this, delegate);

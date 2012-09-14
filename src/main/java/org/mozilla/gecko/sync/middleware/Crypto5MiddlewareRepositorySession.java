@@ -58,8 +58,8 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
  *
  */
 public class Crypto5MiddlewareRepositorySession extends MiddlewareRepositorySession {
-  private KeyBundle keyBundle;
-  private RecordFactory recordFactory;
+  protected final KeyBundle keyBundle;
+  protected final RecordFactory recordFactory;
 
   public Crypto5MiddlewareRepositorySession(RepositorySession session, Crypto5MiddlewareRepository repository, RecordFactory recordFactory) {
     super(session, repository);

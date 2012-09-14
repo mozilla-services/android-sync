@@ -139,8 +139,7 @@ public abstract class ServerSyncStage implements
   protected Repository wrappedServerRepo() throws NoCollectionKeysSetException, URISyntaxException {
     String collection = this.getCollection();
     KeyBundle collectionKey = session.keyBundleForCollection(collection);
-    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(getRemoteRepository(), collectionKey);
-    cryptoRepo.recordFactory = getRecordFactory();
+    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(getRemoteRepository(), collectionKey, getRecordFactory());
     return cryptoRepo;
   }
 

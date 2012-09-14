@@ -62,8 +62,7 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
     return new FormHistoryRepositorySession.FormHistoryRepository();
   }
 
-  public class FormHistoryRecordFactory extends RecordFactory {
-
+  public static class FormHistoryRecordFactory extends RecordFactory {
     @Override
     public Record createRecord(Record record) {
       FormHistoryRecord r = new FormHistoryRecord();

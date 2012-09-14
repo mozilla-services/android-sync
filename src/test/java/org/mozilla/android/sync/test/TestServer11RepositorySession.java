@@ -75,8 +75,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
     final TrackingWBORepository local = getLocal(100);
     final Server11Repository remote = new Server11Repository(TEST_SERVER, USERNAME, COLLECTION, this);
     KeyBundle collectionKey = new KeyBundle(USERNAME, SYNC_KEY);
-    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey);
-    cryptoRepo.recordFactory = new BookmarkRecordFactory();
+    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey, new BookmarkRecordFactory());
 
     final Synchronizer synchronizer = new ServerLocalSynchronizer();
     synchronizer.repositoryA = cryptoRepo;
