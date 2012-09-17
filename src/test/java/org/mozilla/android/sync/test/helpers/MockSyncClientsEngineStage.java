@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.mozilla.gecko.sync.GlobalSession;
@@ -20,7 +21,7 @@ public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      assertTrue(response.wasSuccessful());
+      assertEquals(200, response.getStatusCode());
       data.stopHTTPServer();
       super.handleRequestSuccess(response);
     }
@@ -49,7 +50,7 @@ public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      assertTrue(response.wasSuccessful());
+      assertTrue(200 == response.getStatusCode());
       BaseResource.consumeEntity(response);
       data.stopHTTPServer();
       super.handleRequestSuccess(response);

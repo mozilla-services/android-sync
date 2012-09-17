@@ -12,10 +12,11 @@ import java.util.TimerTask;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
-import org.mozilla.gecko.sync.jpake.JPakeResponse;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.Resource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.SyncResponse;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import ch.boye.httpclientandroidlib.Header;
@@ -49,7 +50,7 @@ public class GetRequestStage extends JPakeStage {
           Logger.debug(LOG_TAG, "Finished; returning.");
           return;
         }
-        JPakeResponse res = new JPakeResponse(response);
+        final SyncResponse res = new SyncStorageResponse(response);
 
         Header etagHeader = response.getFirstHeader("etag");
         if (etagHeader == null) {
@@ -100,7 +101,7 @@ public class GetRequestStage extends JPakeStage {
 
   private Resource createGetRequest(final GetRequestStageDelegate callbackDelegate, final JPakeClient jpakeClient) throws URISyntaxException {
     BaseResource httpResource = new BaseResource(jpakeClient.channelUrl);
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new BaseResourceDelegate(httpResource) {
 
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {

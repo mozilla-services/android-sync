@@ -30,9 +30,7 @@ import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
-import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
@@ -506,7 +504,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public void interpretHTTPFailure(HttpResponse response) {
     // TODO: handle permanent rejection.
-    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds();
+    long responseBackoff = (new SyncStorageResponse(response)).totalBackoffInMilliseconds();
     if (responseBackoff > 0) {
       callback.requestBackoff(responseBackoff);
     }
@@ -549,7 +547,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
     if (this.config.infoCollections == null) {
-      this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
+      this.config.infoCollections = new InfoCollections(config.infoURL(), this);
     }
     this.config.infoCollections.fetch(callback);
   }
@@ -567,19 +565,13 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     SyncStorageRecordRequest request;
     final GlobalSession self = this;
     try {
-      request = new SyncStorageRecordRequest(this.config.keysURI());
+      request = new SyncStorageRecordRequest(this.config.keysURI(), this);
     } catch (URISyntaxException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
     }
 
     request.delegate = new SyncStorageRequestDelegate() {
-
-      @Override
-      public String ifUnmodifiedSince() {
-        return null;
-      }
-
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         Logger.debug(LOG_TAG, "Keys uploaded.");
@@ -599,11 +591,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       public void handleRequestError(Exception ex) {
         Logger.warn(LOG_TAG, "Got exception trying to upload keys", ex);
         keyUploadDelegate.onKeyUploadFailed(ex);
-      }
-
-      @Override
-      public String credentials() {
-        return self.credentials();
       }
     };
 
@@ -824,11 +811,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   // If sync ID mismatch: take that syncID and reset client.
 
   protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRequest request;
+    SyncStorageRecordRequest request;
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRequest(config.storageURL(false));
+      request = new SyncStorageRecordRequest(config.storageURL(false), this);
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
@@ -836,16 +823,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
 
     request.delegate = new SyncStorageRequestDelegate() {
-
-      @Override
-      public String ifUnmodifiedSince() {
-        return null;
-      }
-
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response);
-        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
+        wipeDelegate.onWiped(response.getNormalizedTimestamp());
       }
 
       @Override
@@ -861,11 +842,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       public void handleRequestError(Exception ex) {
         Logger.warn(LOG_TAG, "Got exception in wipeServer.", ex);
         wipeDelegate.onWipeFailed(ex);
-      }
-
-      @Override
-      public String credentials() {
-        return credentials.credentials();
       }
     };
     request.delete();
@@ -968,7 +944,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   public MetaGlobal generateNewMetaGlobal() {
     final String newSyncID   = Utils.generateGuid();
     final String metaURL     = this.config.metaURL();
-    final String credentials = this.credentials();
 
     ExtendedJSONObject engines = new ExtendedJSONObject();
     for (String engineName : enabledEngineNames()) {
@@ -988,7 +963,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       engines.put(engineName, engineSettings.toJSONObject());
     }
 
-    MetaGlobal metaGlobal = new MetaGlobal(metaURL, credentials);
+    MetaGlobal metaGlobal = new MetaGlobal(metaURL, this);
     metaGlobal.setSyncID(newSyncID);
     metaGlobal.setStorageVersion(STORAGE_VERSION);
     metaGlobal.setEngines(engines);
@@ -1079,7 +1054,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   @Override
   public void observeHttpResponse(HttpResponse response) {
-    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
+    long responseBackoff = (new SyncStorageResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
     if (responseBackoff <= 0) {
       return;
     }

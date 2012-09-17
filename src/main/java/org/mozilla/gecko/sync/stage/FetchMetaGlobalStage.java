@@ -33,7 +33,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
       PersistedMetaGlobal pmg = session.config.persistedMetaGlobal();
       pmg.persistMetaGlobal(global);
       // Take the timestamp from the response since it is later than the timestamp from info/collections.
-      pmg.persistLastModified(response.normalizedWeaveTimestamp());
+      pmg.persistLastModified(response.getNormalizedTimestamp());
 
       session.processMetaGlobal(global);
     }
@@ -77,7 +77,7 @@ public class FetchMetaGlobalStage extends AbstractNonRepositorySyncStage {
 
     // We need an update: fetch or upload meta/global as necessary.
     Logger.info(LOG_TAG, "Fetching fresh meta/global for this session.");
-    MetaGlobal global = new MetaGlobal(session.config.metaURL(), session.credentials());
+    MetaGlobal global = new MetaGlobal(session.config.metaURL(), session);
     global.fetch(new StageMetaGlobalDelegate(session));
   }
 }

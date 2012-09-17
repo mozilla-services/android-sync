@@ -21,16 +21,15 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
+import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
-import org.mozilla.gecko.sync.net.WBORequestDelegate;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
@@ -105,22 +104,11 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     boolean localAccountGUIDDownloaded = false;
 
     @Override
-    public String credentials() {
-      return session.credentials();
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      // TODO last client download time?
-      return null;
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
 
       // Hang onto the server's last modified timestamp to use
       // in X-If-Unmodified-Since for upload.
-      session.config.persistServerClientsTimestamp(response.normalizedWeaveTimestamp());
+      session.config.persistServerClientsTimestamp(response.getNormalizedTimestamp());
       BaseResource.consumeEntity(response);
 
       // Wipe the clients table if it still hasn't been wiped but needs to be.
@@ -189,6 +177,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     public void handleWBO(CryptoRecord record) {
       ClientRecord r;
       try {
+        record.keyBundle = keyBundle();
         r = (ClientRecord) factory.createRecord(record.decrypt());
         if (clientsDelegate.isLocalGUID(r.guid)) {
           Logger.info(LOG_TAG, "Local client GUID exists on server and was downloaded");
@@ -208,7 +197,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       }
     }
 
-    @Override
     public KeyBundle keyBundle() {
       try {
         return session.keyBundleForCollection(COLLECTION_NAME);
@@ -218,32 +206,15 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
   }
 
-  public class ClientUploadDelegate extends WBORequestDelegate {
+  public class ClientUploadDelegate implements SyncStorageRequestDelegate {
     protected static final String LOG_TAG = "ClientUploadDelegate";
     public Long currentlyUploadingRecordTimestamp;
     public boolean currentlyUploadingLocalRecord;
-
-    @Override
-    public String credentials() {
-      return session.credentials();
-    }
 
     private void setUploadDetails(boolean isLocalRecord) {
       // Use the timestamp for the whole collection per Sync storage 1.1 spec.
       currentlyUploadingRecordTimestamp = session.config.getPersistedServerClientsTimestamp();
       currentlyUploadingLocalRecord = isLocalRecord;
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      Long timestampInMilliseconds = currentlyUploadingRecordTimestamp;
-
-      // It's the first upload so we don't care about X-If-Unmodified-Since.
-      if (timestampInMilliseconds <= 0) {
-        return null;
-      }
-
-      return Utils.millisecondsToDecimalSecondsString(timestampInMilliseconds);
     }
 
     @Override
@@ -253,7 +224,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
 
       // X-Weave-Timestamp is the modified time of uploaded records.
       // Always persist this.
-      final long responseTimestamp = response.normalizedWeaveTimestamp();
+      final long responseTimestamp = response.getNormalizedTimestamp();
       Logger.trace(LOG_TAG, "Timestamp from header is: " + responseTimestamp);
 
       if (responseTimestamp == -1) {
@@ -313,7 +284,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       session.abort(ex, "Client upload failed.");
     }
 
-    @Override
     public KeyBundle keyBundle() {
       try {
         return session.keyBundleForCollection(COLLECTION_NAME);
@@ -509,15 +479,15 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   }
 
   protected void downloadClientRecords() {
+    Logger.trace(LOG_TAG, "Downloading client records.");
     shouldWipe = true;
     clientDownloadDelegate = makeClientDownloadDelegate();
 
     try {
       final URI getURI = session.config.collectionURI(COLLECTION_NAME, true);
-      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI);
+      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI, session);
       request.delegate = clientDownloadDelegate;
 
-      Logger.trace(LOG_TAG, "Downloading client records.");
       request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
@@ -528,8 +498,9 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.trace(LOG_TAG, "Uploading " + records.size() + " client records.");
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME, false);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI, session);
       request.delegate = clientUploadDelegate;
+      request.locallyModifiedVersion = Math.max(0, clientUploadDelegate.currentlyUploadingRecordTimestamp);
       request.post(records);
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
@@ -545,7 +516,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     Logger.debug(LOG_TAG, "Uploading client record " + record.guid);
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI, session);
       request.delegate = clientUploadDelegate;
       request.post(record);
     } catch (URISyntaxException e) {

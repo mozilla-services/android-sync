@@ -209,6 +209,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     public void handleWBO(CryptoRecord record) {
       ClientRecord r;
       try {
+        record.keyBundle = keyBundle();
         r = (ClientRecord) factory.createRecord(record.decrypt());
         downloadedClients.add(r);
         numRecordsFromGetRequest++;
@@ -246,7 +247,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
-      uploadHeaderTimestamp = response.normalizedWeaveTimestamp();
+      uploadHeaderTimestamp = response.getNormalizedTimestamp();
       super.handleRequestSuccess(response);
     }
 

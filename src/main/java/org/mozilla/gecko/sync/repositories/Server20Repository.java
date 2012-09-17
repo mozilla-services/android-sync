@@ -9,36 +9,35 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.mozilla.gecko.sync.CredentialsSource;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;
 
 /**
- * A Server11Repository implements fetching and storing against the Sync 1.1 API.
+ * Fetch and store against the Sync 2.0 HTTP API, documented at
+ * <a href="http://docs.services.mozilla.com/storage/apis-2.0.html">http://docs.services.mozilla.com/storage/apis-2.0.html</a>.
+ * <p>
  * It doesn't do crypto: that's the job of the middleware.
- *
- * @author rnewman
  */
-public class Server11Repository extends ServerRepository {
-  public static final String API_VERSION = "1.1";
+public class Server20Repository extends ServerRepository {
+  public static final String API_VERSION = "2.0";
 
   /**
    * @param serverURI
-   *        URI of the Sync 1.1 server (string)
+   *        URI of the Sync 2.0 server (string)
    * @param username
    *        Username on the server (string)
    * @param collection
    *        Name of the collection (string)
    * @throws URISyntaxException
    */
-  public Server11Repository(String serverURI, String username, String collection, CredentialsSource credentialsSource) throws URISyntaxException {
+  public Server20Repository(String serverURI, String username, String collection, CredentialsSource credentialsSource) throws URISyntaxException {
     super(serverURI, API_VERSION, username, collection, credentialsSource);
   }
 
   @Override
   public void createSession(final RepositorySessionCreationDelegate delegate, final Context context) {
-    delegate.onSessionCreated(new Server11RepositorySession(this));
+    delegate.onSessionCreated(new Server20RepositorySession(this));
   }
 
   public URI collectionURI(boolean full, long newer, long limit, String sort, String ids) throws URISyntaxException {
@@ -47,9 +46,7 @@ public class Server11Repository extends ServerRepository {
       params.add("full=1");
     }
     if (newer >= 0) {
-      // Translate local millisecond timestamps into server decimal seconds.
-      String newerString = Utils.millisecondsToDecimalSecondsString(newer);
-      params.add("newer=" + newerString);
+      params.add("newer=" + newer);
     }
     if (limit > 0) {
       params.add("limit=" + limit);

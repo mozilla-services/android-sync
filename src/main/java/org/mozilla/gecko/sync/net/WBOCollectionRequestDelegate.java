@@ -4,32 +4,27 @@
 
 package org.mozilla.gecko.sync.net;
 
-import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.CryptoRecord;
-import org.mozilla.gecko.sync.KeyBundleProvider;
 
 /**
  * Subclass this to handle collection fetches.
- * @author rnewman
- *
  */
-public abstract class WBOCollectionRequestDelegate
-extends SyncStorageCollectionRequestDelegate
-implements KeyBundleProvider {
+public abstract class WBOCollectionRequestDelegate implements SyncStorageRequestIncrementalDelegate {
 
-  @Override
-  public abstract KeyBundle keyBundle();
+  /**
+   * Override this to handle an individual Sync record.
+   * <p>
+   * Each Sync record is as it comes from the server, which (usually) means it
+   * is encrypted.
+   *
+   * @param record
+   *          CryptoRecord from the server.
+   */
   public abstract void handleWBO(CryptoRecord record);
 
   @Override
-  public void handleRequestProgress(String progress) {
-    try {
-      CryptoRecord record = CryptoRecord.fromJSONRecord(progress);
-      record.keyBundle = this.keyBundle();
-      this.handleWBO(record);
-    } catch (Exception e) {
-      this.handleRequestError(e);
-      // TODO: abort?! Allow exception to propagate to fail?
-    }
+  public void handleRequestProgress(String progress) throws Exception {
+    CryptoRecord record = CryptoRecord.fromJSONRecord(progress);
+    this.handleWBO(record);
   }
 }

@@ -5,40 +5,27 @@ package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.junit.Test;
 import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
-import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
-import org.mozilla.android.sync.test.helpers.MockRecord;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
-import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
-import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.Server11Repository;
-import org.mozilla.gecko.sync.repositories.Server11RepositorySession;
 import org.mozilla.gecko.sync.repositories.StoreFailedException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecordFactory;
-import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.simpleframework.http.ContentType;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
-
-import ch.boye.httpclientandroidlib.HttpEntity;
 
 public class TestServer11RepositorySession implements CredentialsSource {
 
@@ -73,55 +60,6 @@ public class TestServer11RepositorySession implements CredentialsSource {
 
   private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
 
-  public class MockServer11RepositorySession extends Server11RepositorySession {
-    public MockServer11RepositorySession(Repository repository) {
-      super(repository);
-    }
-
-    public RecordUploadRunnable getRecordUploadRunnable() {
-      // TODO: implement upload delegate in the class, too!
-      return new RecordUploadRunnable(null, recordsBuffer, recordGuidsBuffer, byteCount);
-    }
-
-    public void enqueueRecord(Record r) {
-      super.enqueue(r);
-    }
-
-    public HttpEntity getEntity() {
-      return this.getRecordUploadRunnable().getBodyEntity();
-    }
-  }
-
-  public class TestSyncStorageRequestDelegate extends
-      BaseTestStorageRequestDelegate {
-    @Override
-    public void handleRequestSuccess(SyncStorageResponse res) {
-      assertTrue(res.wasSuccessful());
-      assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
-      BaseResource.consumeEntity(res);
-      data.stopHTTPServer();
-    }
-  }
-
-  @Test
-  public void test() throws URISyntaxException {
-
-    BaseResource.rewriteLocalhost = false;
-    data.startHTTPServer(new POSTMockServer());
-
-    MockServer11RepositorySession session = new MockServer11RepositorySession(
-        null);
-    session.enqueueRecord(new MockRecord(Utils.generateGuid(), null, 0, false));
-    session.enqueueRecord(new MockRecord(Utils.generateGuid(), null, 0, false));
-
-    URI uri = new URI(LOCAL_REQUEST_URL);
-    SyncStorageRecordRequest r = new SyncStorageRecordRequest(uri);
-    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
-    r.delegate = delegate;
-    r.post(session.getEntity());
-  }
-
   protected TrackingWBORepository getLocal(int numRecords) {
     final TrackingWBORepository local = new TrackingWBORepository();
     for (int i = 0; i < numRecords; i++) {
@@ -137,8 +75,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
     final TrackingWBORepository local = getLocal(100);
     final Server11Repository remote = new Server11Repository(TEST_SERVER, USERNAME, COLLECTION, this);
     KeyBundle collectionKey = new KeyBundle(USERNAME, SYNC_KEY);
-    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey);
-    cryptoRepo.recordFactory = new BookmarkRecordFactory();
+    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey, new BookmarkRecordFactory());
 
     final Synchronizer synchronizer = new ServerLocalSynchronizer();
     synchronizer.repositoryA = cryptoRepo;

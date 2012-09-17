@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.junit.Test;
+import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -21,7 +22,7 @@ import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 
-public class TestWBOCollectionRequestDelegate {
+public class TestWBOCollectionRequestDelegate implements CredentialsSource {
   public static final String LOG_TAG = "TestWBOCollReqDel";
 
   static final String REMOTE_BOOKMARKS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
@@ -29,20 +30,15 @@ public class TestWBOCollectionRequestDelegate {
   static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
 
+  @Override
+  public String credentials() {
+    return USER_PASS;
+  }
+
   public class LiveDelegate extends WBOCollectionRequestDelegate {
 
     public KeyBundle bookmarksBundle = null;
     public ArrayList<CryptoRecord> wbos = new ArrayList<CryptoRecord>();
-
-    @Override
-    public String credentials() {
-      return USER_PASS;
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      return null;
-    }    
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
@@ -52,6 +48,7 @@ public class TestWBOCollectionRequestDelegate {
         for (CryptoRecord record : this.wbos) {
           try {
             // TODO: make this an actual test. Return data locally.
+            record.keyBundle = this.bookmarksBundle;
             CryptoRecord decrypted = (CryptoRecord)(record.decrypt());
             Logger.debug(LOG_TAG, decrypted.payload.toJSONString());
           } catch (Exception e) {
@@ -83,17 +80,12 @@ public class TestWBOCollectionRequestDelegate {
     public void handleWBO(CryptoRecord record) {
       this.wbos.add(record);
     }
-
-    @Override
-    public KeyBundle keyBundle() {
-      return this.bookmarksBundle;
-    }
   }
 
   @Test
   public void testRealLiveBookmarks() throws URISyntaxException, UnsupportedEncodingException {
     URI u = new URI(REMOTE_BOOKMARKS_URL);
-    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(u);
+    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(u, this);
     LiveDelegate delegate = new LiveDelegate();
     r.delegate = delegate;
 
@@ -102,6 +94,6 @@ public class TestWBOCollectionRequestDelegate {
     String hmacKey   = "11GN34O9QWXkjR06g8t0gWE1sGgQeWL0qxxWwl8Dmxs=";
     delegate.bookmarksBundle = KeyBundle.fromBase64EncodedKeys(encrKey, hmacKey);
 
-    r.get(); 
+    r.get();
   }
 }

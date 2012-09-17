@@ -63,23 +63,13 @@ implements SyncStorageRequestDelegate {
     // We need an update: fetch fresh keys.
     Logger.debug(LOG_TAG, "Fetching fresh collection keys for this session.");
     try {
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
+      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"), session);
       request.delegate = this;
+
       request.get();
     } catch (URISyntaxException e) {
       session.abort(e, "Invalid URI.");
     }
-  }
-
-  @Override
-  public String credentials() {
-    return session.credentials();
-  }
-
-  @Override
-  public String ifUnmodifiedSince() {
-    // TODO: last key time!
-    return null;
   }
 
   protected void setAndPersist(PersistedCrypto5Keys pck, CollectionKeys keys, long timestamp) {
@@ -133,7 +123,7 @@ implements SyncStorageRequestDelegate {
   @Override
   public void handleRequestSuccess(SyncStorageResponse response) {
     // Take the timestamp from the response since it is later than the timestamp from info/collections.
-    long responseTimestamp = response.normalizedWeaveTimestamp();
+    long responseTimestamp = response.getNormalizedTimestamp();
     CollectionKeys keys = new CollectionKeys();
     try {
       ExtendedJSONObject body = response.jsonObjectBody();
@@ -184,7 +174,7 @@ implements SyncStorageRequestDelegate {
     // New keys don't differ from old keys; persist timestamp and move on.
     Logger.trace(LOG_TAG, "Fetched keys are the same as persisted keys; persisting only last modified.");
     session.config.setCollectionKeys(oldKeys);
-    pck.persistLastModified(response.normalizedWeaveTimestamp());
+    pck.persistLastModified(response.getNormalizedTimestamp());
     session.advance();
   }
 

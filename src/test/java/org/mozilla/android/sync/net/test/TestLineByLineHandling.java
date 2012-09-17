@@ -19,7 +19,7 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
-import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncStorageRequestIncrementalDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -50,8 +50,7 @@ public class TestLineByLineHandling {
     }
   }
 
-  public class BaseLineByLineDelegate extends
-      SyncStorageCollectionRequestDelegate {
+  public class BaseLineByLineDelegate implements SyncStorageRequestIncrementalDelegate {
 
     @Override
     public void handleRequestProgress(String progress) {
@@ -59,19 +58,9 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public String credentials() {
-      return null;
-    }
-
-    @Override
-    public String ifUnmodifiedSince() {
-      return null;
-    }
-
-    @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       Logger.info(LOG_TAG, "Request success.");
-      assertTrue(res.wasSuccessful());
+      assertTrue(200 == res.getStatusCode());
       assertTrue(res.httpResponse().containsHeader("X-Weave-Timestamp"));
 
       assertEquals(lines.size(), 4);
@@ -108,8 +97,8 @@ public class TestLineByLineHandling {
 
     data.startHTTPServer(new LineByLineMockServer());
     Logger.info(LOG_TAG, "Server started.");
-    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL));
-    SyncStorageCollectionRequestDelegate delegate = new BaseLineByLineDelegate();
+    SyncStorageCollectionRequest r = new SyncStorageCollectionRequest(new URI(STORAGE_URL), null);
+    SyncStorageRequestIncrementalDelegate delegate = new BaseLineByLineDelegate();
     r.delegate = delegate;
     r.get();
     // Server is stopped in the callback.

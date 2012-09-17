@@ -31,6 +31,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepositorySession;
+import org.mozilla.gecko.sync.repositories.IdentityRecordFactory;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
@@ -72,7 +73,7 @@ public class TestCrypto5MiddlewareRepositorySession {
   public void setUp() throws CryptoException {
     wboRepo = new WBORepository();
     keyBundle = KeyBundle.withRandomKeys();
-    cmwRepo = new Crypto5MiddlewareRepository(wboRepo, keyBundle);
+    cmwRepo = new Crypto5MiddlewareRepository(wboRepo, keyBundle, new IdentityRecordFactory());
     cmwSession = null;
   }
 

@@ -23,7 +23,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageRequest;
+import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -139,8 +139,7 @@ public abstract class ServerSyncStage implements
   protected Repository wrappedServerRepo() throws NoCollectionKeysSetException, URISyntaxException {
     String collection = this.getCollection();
     KeyBundle collectionKey = session.keyBundleForCollection(collection);
-    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(getRemoteRepository(), collectionKey);
-    cryptoRepo.recordFactory = getRecordFactory();
+    Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(getRemoteRepository(), collectionKey, getRecordFactory());
     return cryptoRepo;
   }
 
@@ -353,11 +352,11 @@ public abstract class ServerSyncStage implements
   /**
    * Asynchronously wipe collection on server.
    */
-  protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
-    SyncStorageRequest request;
+  protected void wipeServer(final CredentialsSource credentialsSource, final WipeServerDelegate wipeDelegate) {
+    SyncStorageRecordRequest request;
 
     try {
-      request = new SyncStorageRequest(session.config.collectionURI(getCollection()));
+      request = new SyncStorageRecordRequest(session.config.collectionURI(getCollection()), credentialsSource);
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
@@ -365,17 +364,11 @@ public abstract class ServerSyncStage implements
     }
 
     request.delegate = new SyncStorageRequestDelegate() {
-
-      @Override
-      public String ifUnmodifiedSince() {
-        return null;
-      }
-
       @Override
       public void handleRequestSuccess(SyncStorageResponse response) {
         BaseResource.consumeEntity(response);
         resetLocal();
-        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
+        wipeDelegate.onWiped(response.getNormalizedTimestamp());
       }
 
       @Override
@@ -391,11 +384,6 @@ public abstract class ServerSyncStage implements
       public void handleRequestError(Exception ex) {
         Logger.warn(LOG_TAG, "Got exception in wipeServer.", ex);
         wipeDelegate.onWipeFailed(ex);
-      }
-
-      @Override
-      public String credentials() {
-        return credentials.credentials();
       }
     };
 

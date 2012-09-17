@@ -9,11 +9,14 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.ResourceDelegate;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
+import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 
-public class MockResourceDelegate extends BaseResourceDelegate {
+public class MockResourceDelegate implements ResourceDelegate {
   public WaitHelper waitHelper = null;
   public static String USER_PASS    = "john:password";
   public static String EXPECT_BASIC = "Basic am9objpwYXNzd29yZA==";
@@ -27,6 +30,20 @@ public class MockResourceDelegate extends BaseResourceDelegate {
 
   public MockResourceDelegate() {
     this.waitHelper = WaitHelper.getTestWaiter();
+  }
+
+  @Override
+  public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+  }
+
+  @Override
+  public int connectionTimeout() {
+    return 0;
+  }
+
+  @Override
+  public int socketTimeout() {
+    return 0;
   }
 
   @Override
