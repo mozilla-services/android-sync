@@ -81,9 +81,6 @@ public class TestClientRecordTerminator {
       rec.encrypt();
       final String RECORD_URL = session.config.wboURI(COLLECTION, guid).toString();
       LiveDelegate ld = TestBasicFetch.realLivePut(TEST_USERNAME, TEST_PASSWORD, RECORD_URL, rec);
-      if (ld.testFailureIgnored) {
-        return;
-      }
       assertNotNull(ld.body());
     }
 
