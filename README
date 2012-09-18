@@ -20,6 +20,7 @@
 * To run the unit and integration test suites:
   * `mvn test`
   * `mvn integration-test` with an emulator running or a device connected.
+  * Use Jenkins.
 
 * To merge to mozilla-central:
 
