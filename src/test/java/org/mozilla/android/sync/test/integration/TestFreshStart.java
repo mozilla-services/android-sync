@@ -20,6 +20,7 @@ import java.util.List;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
@@ -39,6 +40,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
+@Category(IntegrationTestCategory.class)
 public class TestFreshStart {
   // TODO: switch this to use a local server, with appropriate setup.
   static final String TEST_CLUSTER_URL  = "https://scl2-sync1283.services.mozilla.com/";
@@ -131,7 +133,7 @@ public class TestFreshStart {
     assertNotNull(o);
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(o));
-    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
     List<String> namesList = new ArrayList<String>(mg.getEnabledEngineNames());
     Collections.sort(namesList);
     String[] names = namesList.toArray(new String[namesList.size()]);

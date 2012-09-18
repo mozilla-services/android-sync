@@ -15,6 +15,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
 import org.mozilla.android.sync.test.integration.TestBasicFetch.LiveDelegate;
@@ -30,6 +31,7 @@ import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 import org.mozilla.gecko.sync.stage.FormHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.ServerSyncStage;
 
+@Category(IntegrationTestCategory.class)
 public class TestWipeServer {
   // TODO: switch this to use a local server, with appropriate setup.
   static final String TEST_CLUSTER_URL  = "https://scl2-sync1283.services.mozilla.com/";
