@@ -16,6 +16,7 @@
   <properties>
     <project.basedir>../</project.basedir>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <mozilla.externalPackages>ch.boye.*:org.json.*:org.mozilla.apache.*</mozilla.externalPackages>
   </properties>
   <dependencies>
