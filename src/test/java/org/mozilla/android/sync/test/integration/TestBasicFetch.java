@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
@@ -22,6 +23,7 @@ import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
+@Category(IntegrationTestCategory.class)
 public class TestBasicFetch {
   // TODO: switch these to be the local server, with appropriate setup.
   static final String REMOTE_BOOKMARKS_URL        = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
