@@ -72,9 +72,6 @@ public class TestWipeServer {
     rec.setKeyBundle(syncKeyBundle);
     rec.encrypt();
     LiveDelegate ld = TestBasicFetch.realLivePut(TEST_USERNAME, TEST_PASSWORD, RECORD_URL, rec);
-    if (ld.testFailureIgnored) {
-      return;
-    }
     assertNotNull(ld.body());
 
     // Make sure record appears in collection guids.
