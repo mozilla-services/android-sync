@@ -15,6 +15,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
 import org.mozilla.android.sync.test.integration.TestBasicFetch.LiveDelegate;
@@ -29,6 +30,7 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 
+@Category(IntegrationTestCategory.class)
 public class TestClientRecordTerminator {
   // TODO: switch this to use a local server, with appropriate setup.
   static final String TEST_CLUSTER_URL  = "https://scl2-sync1283.services.mozilla.com/";
@@ -79,9 +81,6 @@ public class TestClientRecordTerminator {
       rec.encrypt();
       final String RECORD_URL = session.config.wboURI(COLLECTION, guid).toString();
       LiveDelegate ld = TestBasicFetch.realLivePut(TEST_USERNAME, TEST_PASSWORD, RECORD_URL, rec);
-      if (ld.testFailureIgnored) {
-        return;
-      }
       assertNotNull(ld.body());
     }
 

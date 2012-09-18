@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
@@ -22,6 +23,7 @@ import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
+@Category(IntegrationTestCategory.class)
 public class TestBasicFetch {
   // TODO: switch these to be the local server, with appropriate setup.
   static final String REMOTE_BOOKMARKS_URL        = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
@@ -39,8 +41,6 @@ public class TestBasicFetch {
 
     protected final String username;
     protected final String password;
-
-    public boolean testFailureIgnored = false;
 
     public LiveDelegate(String username, String password) {
       this.username = username;
@@ -69,13 +69,6 @@ public class TestBasicFetch {
 
     @Override
     public void handleRequestError(Exception e) {
-      if (e instanceof IOException) {
-        System.out.println("WARNING: TEST FAILURE IGNORED!");
-        testFailureIgnored = true;
-        // Assume that this is because Jenkins doesn't have network access.
-        WaitHelper.getTestWaiter().performNotify();
-        return;
-      }
       WaitHelper.getTestWaiter().performNotify(e);
     }
 
@@ -125,27 +118,18 @@ public class TestBasicFetch {
   @Test
   public void testRealLiveMetaGlobal() throws Exception {
     LiveDelegate ld = realLiveFetch(USERNAME, PASSWORD, REMOTE_META_URL);
-    if (ld.testFailureIgnored) {
-      return;
-    }
     System.out.println(ld.body());
   }
 
   @Test
   public void testRealLiveCryptoKeys() throws Exception {
     LiveDelegate ld = realLiveFetch(USERNAME, PASSWORD, REMOTE_KEYS_URL);
-    if (ld.testFailureIgnored) {
-      return;
-    }
     System.out.println(ld.decrypt(SYNC_KEY));
   }
 
   @Test
   public void testRealLiveInfoCollections() throws Exception {
     LiveDelegate ld = realLiveFetch(USERNAME, PASSWORD, REMOTE_INFO_COLLECTIONS_URL);
-    if (ld.testFailureIgnored) {
-      return;
-    }
     System.out.println(ld.body());
   }
 }
