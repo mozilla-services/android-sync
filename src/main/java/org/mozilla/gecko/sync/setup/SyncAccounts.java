@@ -463,6 +463,7 @@ public class SyncAccounts {
    * Safe to call from main thread.
    *
    * @param context
+   *          Android context.
    * @param accountManager
    *          Android account manager.
    * @param account
@@ -526,5 +527,57 @@ public class SyncAccounts {
       Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters; throwing.");
       throw new CredentialException.MissingAllCredentialsException(e);
     }
+  }
+
+  /**
+   * Bug 790931: create an intent announcing that a Sync account will be
+   * deleted.
+   * <p>
+   * This intent <b>must</b> be broadcast with secure permissions, because it
+   * contains sensitive user information including the Sync account password and
+   * Sync key.
+   * <p>
+   * Version 1 of the created intent includes extras with keys
+   * <code>Constants.JSON_KEY_VERSION</code>,
+   * <code>Constants.JSON_KEY_TIMESTAMP</code>, and
+   * <code>Constants.JSON_KEY_ACCOUNT</code> (which is the Android Account name,
+   * not the encoded Sync Account name).
+   * <p>
+   * If possible, it contains the key <code>Constants.JSON_KEY_PAYLOAD</code>
+   * with value the Sync account parameters as JSON, <b>except the Sync key has
+   * been replaced with the empty string</b>. (We replace, rather than remove,
+   * the Sync key because SyncAccountParameters expects a non-null Sync key.)
+   *
+   * @see SyncAccountParameters#asJSON
+   *
+   * @param context
+   *          Android context.
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account being removed.
+   * @return <code>Intent</code> to broadcast.
+   */
+  public static Intent makeSyncAccountDeletedIntent(final Context context, final AccountManager accountManager, final Account account) {
+    final Intent intent = new Intent(GlobalConstants.SYNC_ACCOUNT_DELETED_ACTION);
+
+    intent.putExtra(Constants.JSON_KEY_VERSION, Long.valueOf(GlobalConstants.SYNC_ACCOUNT_DELETED_INTENT_VERSION));
+    intent.putExtra(Constants.JSON_KEY_TIMESTAMP, Long.valueOf(System.currentTimeMillis()));
+    intent.putExtra(Constants.JSON_KEY_ACCOUNT, account.name);
+
+    SyncAccountParameters accountParameters = null;
+    try {
+      accountParameters = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Caught exception fetching account parameters.", e);
+    }
+
+    if (accountParameters != null) {
+      ExtendedJSONObject json = accountParameters.asJSON();
+      json.put(Constants.JSON_KEY_SYNCKEY, ""); // Reduce attack surface area by removing Sync key.
+      intent.putExtra(Constants.JSON_KEY_PAYLOAD, json.toJSONString());
+    }
+
+    return intent;
   }
 }
