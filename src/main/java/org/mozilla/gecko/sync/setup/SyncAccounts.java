@@ -53,7 +53,8 @@ public class SyncAccounts {
   /**
    * Return Sync accounts.
    *
-   * @param c Android context.
+   * @param c
+   *          Android context.
    * @return Sync accounts.
    */
   public static Account[] syncAccounts(final Context c) {
@@ -63,8 +64,10 @@ public class SyncAccounts {
   /**
    * Asynchronously invalidate the auth token for a Sync account.
    *
-   * @param accountManager Android account manager.
-   * @param account Android account.
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account.
    */
   public static void invalidateAuthToken(final AccountManager accountManager, final Account account) {
     if (account == null) {
@@ -609,5 +612,57 @@ public class SyncAccounts {
       Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters; throwing.");
       throw new CredentialException.MissingAllCredentialsException(e);
     }
+  }
+
+  /**
+   * Synchronously fetch SharedPreferences of a profile associated with a Sync
+   * account.
+   *
+   * @param context
+   *          Android context
+   * @param accountManager
+   *          Android account manager
+   * @param account
+   *          Android Account
+   * @param product
+   *          String of product package
+   * @param profile
+   *          String name of profile of account
+   * @param version
+   * @return SharedPreferences associated with params
+   * @throws CredentialException
+   * @throws NoSuchAlgorithmException
+   * @throws UnsupportedEncodingException
+   */
+  public static SharedPreferences getPrefsFromAccount(final Context context, final AccountManager accountManager, final Account account, final String product, final String profile, final long version) throws CredentialException, NoSuchAlgorithmException, UnsupportedEncodingException {
+    SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+    String prefsPath = Utils.getPrefsPath(product, params.username, params.serverURL, profile, version);
+    SharedPreferences prefs = context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
+    return prefs;
+  }
+
+  /**
+   * Synchronously fetch SharedPreferences of the default profile associated
+   * with a Sync account. Uses the default package, default profile, and current
+   * version associated with this installation.
+   *
+   * @param context
+   * @param accountManager
+   *          Android account manager
+   * @param account
+   *          Android Account
+   * @return
+   * @throws CredentialException
+   * @throws NoSuchAlgorithmException
+   * @throws UnsupportedEncodingException
+   */
+  public static SharedPreferences getPrefsFromDefaultAccount(final Context context, final AccountManager accountManager, final Account account) throws CredentialException, NoSuchAlgorithmException, UnsupportedEncodingException {
+    final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+    final String profile = Constants.DEFAULT_PROFILE;
+    final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+    SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+    String prefsPath = Utils.getPrefsPath(product, params.username, params.serverURL, profile, version);
+    SharedPreferences prefs = context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
+    return prefs;
   }
 }

@@ -77,6 +77,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public final Map<String, EngineSettings> enginesToUpdate = new HashMap<String, EngineSettings>();
 
+  /**
+   * Track engine names to be removed from an updated meta/global record.
+   */
+  public final Set<String> enginesToRemove = new HashSet<String>();
+
   /*
    * Key accessors.
    */
@@ -392,15 +397,27 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     enginesToUpdate.put(engineName, engineSettings);
   }
 
+  /**
+   * Record that an updated meta/global record should be uploaded without the
+   * given engine name.
+   *
+   * @param engineName
+   *          engine to remove.
+   */
+  public void removeEngineFromMetaGlobal(String engineName) {
+    enginesToRemove.add(engineName);
+  }
+
   public boolean hasUpdatedMetaGlobal() {
-    if (enginesToUpdate.isEmpty()) {
+    if (enginesToUpdate.isEmpty() && enginesToRemove.isEmpty()) {
       Logger.info(LOG_TAG, "Not uploading updated meta/global record since there are no engines requesting upload.");
       return false;
     }
 
     if (Logger.shouldLogVerbose(LOG_TAG)) {
-      Logger.trace(LOG_TAG, "Uploading updated meta/global record since there are engines requesting upload: " +
-          Utils.toCommaSeparatedString(enginesToUpdate.keySet()));
+      Logger.trace(LOG_TAG, "Uploading updated meta/global record since there are engine changes to meta/global.");
+      Logger.trace(LOG_TAG, "Engines requesting upload [" + Utils.toCommaSeparatedString(enginesToUpdate.keySet()) + "]");
+      Logger.trace(LOG_TAG, "Engines to remove [" + Utils.toCommaSeparatedString(enginesToRemove) + "]");
     }
 
     return true;
@@ -411,7 +428,19 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     for (Entry<String, EngineSettings> pair : enginesToUpdate.entrySet()) {
       engines.put(pair.getKey(), pair.getValue().toJSONObject());
     }
+    for (String key : enginesToRemove) {
+      engines.remove(key);
+    }
+    // Persist updated engines of meta/global to SyncConfiguration, so persisted meta/global will match what is uploaded.
+    config.enabledEngineNames = config.metaGlobal.getEnabledEngineNames();
+
+    enginesToRemove.clear();
     enginesToUpdate.clear();
+
+    // Update enabledEngineNames to reflect updated meta/global and persist to prefs.
+    config.enabledEngineNames = config.metaGlobal.getEnabledEngineNames();
+    // Clear selected engines because they are updated in config and meta/global.
+    config.selectedEngines = null;
   }
 
   /**
@@ -435,6 +464,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
             synchronized (monitor) {
               monitor.notify();
             }
+            // Purge persisted meta/global because it is stale. We have uploaded a new one.
+            config.persistedMetaGlobal().purge();
           }
 
           @Override
@@ -627,6 +658,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   public void processMetaGlobal(MetaGlobal global) {
     config.metaGlobal = global;
+    config.metaGlobal.metaURL = config.metaURL();
+    config.metaGlobal.credentials = this.credentials();
 
     Long storageVersion = global.getStorageVersion();
     if (storageVersion == null) {
@@ -945,11 +978,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     if (config.enabledEngineNames != null) {
       return config.enabledEngineNames;
     }
-    Set<String> engineNames = new HashSet<String>();
-    for (Stage stage : Stage.getNamedStages()) {
-      engineNames.add(stage.getRepositoryName());
-    }
-    return engineNames;
+    return SyncConfiguration.validEngineNames();
   }
 
   /**
