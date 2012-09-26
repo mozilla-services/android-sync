@@ -1,6 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.android.sync.test;
 
@@ -11,6 +10,7 @@ import java.net.URI;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -20,16 +20,14 @@ import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
+import org.mozilla.gecko.sync.setup.test.TestSyncAccounts;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
@@ -69,37 +67,8 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     return "1".equals(accountManager.getUserData(a, Constants.DATA_ENABLE_ON_UPGRADE));
   }
 
-  private static void deleteAccount(final Account account, final AccountManager accountManager) {
-    final Object monitor = new Object();
-    if (account != null) {
-      Thread me = new Thread() {
-        @Override
-        public void run() {
-          // Ensure our test account is gone.
-          accountManager.removeAccount(account, new AccountManagerCallback<Boolean>() {
-            @Override
-            public void run(AccountManagerFuture<Boolean> success) {
-              Log.i(LOG_TAG, "Removed account: " + success);
-              synchronized (monitor) {
-                monitor.notify();
-              }
-            }
-          }, null);
-        }
-      };
-      synchronized (monitor) {
-        me.start();
-        try {
-          monitor.wait();
-        } catch (InterruptedException e) {
-          fail("Should not occur.");
-        }
-      }
-    }
-  }
-
   private static Account getTestAccount(AccountManager accountManager) {
-    final String type = Constants.ACCOUNTTYPE_SYNC;
+    final String type = GlobalConstants.ACCOUNTTYPE_SYNC;
     Account[] existing = accountManager.getAccountsByType(type);
     for (Account account : existing) {
       if (account.name.equals(TEST_USERNAME)) {
@@ -115,7 +84,7 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     if (found == null) {
       return;
     }
-    deleteAccount(found, accountManager);
+    TestSyncAccounts.deleteAccount(this, accountManager, found);
   }
 
   @Override
@@ -127,9 +96,10 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
 
     // Set up and enable Sync accounts.
     SyncAccountParameters syncAccountParams = new SyncAccountParameters(context, accountManager, TEST_USERNAME, TEST_PASSWORD, TEST_SYNC_KEY, TEST_SERVER, null, null, null);
-    final Account account = SyncAccounts.createSyncAccount(syncAccountParams);
+    final Account account = SyncAccounts.createSyncAccount(syncAccountParams, true);
     assertNotNull(account);
-    SyncAccounts.setSyncAutomatically(account);
+    assertTrue(syncsAutomatically(account));
+    assertTrue(isSyncable(account));
   }
 
   /**

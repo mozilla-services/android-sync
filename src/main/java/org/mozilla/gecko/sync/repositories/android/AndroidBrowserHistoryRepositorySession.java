@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.android;
 
@@ -23,7 +23,6 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 
 public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserRepositorySession {
   public static final String LOG_TAG = "ABHistoryRepoSess";
@@ -104,7 +103,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
   }
 
   private Record addVisitsToRecord(Record record) throws NullCursorException {
-    Log.d(LOG_TAG, "Adding visits for GUID " + record.guid);
+    Logger.debug(LOG_TAG, "Adding visits for GUID " + record.guid);
     HistoryRecord hist = (HistoryRecord) record;
     JSONArray visitsArray = getDataExtender().visitsForGUID(hist.guid);
     long missingRecords = hist.fennecVisitCount - visitsArray.size();
@@ -214,7 +213,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
       // Something failed; most pessimistic action is to declare that all insertions failed.
       // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
       for (HistoryRecord failed : outgoing) {
-        delegate.onRecordStoreFailed(new RuntimeException("Failed to insert history item with guid " + failed.guid + "."));
+        delegate.onRecordStoreFailed(new RuntimeException("Failed to insert history item with guid " + failed.guid + "."), failed.guid);
       }
       return;
     }
@@ -234,7 +233,7 @@ public class AndroidBrowserHistoryRepositorySession extends AndroidBrowserReposi
         throw e;
       }
       trackRecord(succeeded);
-      delegate.onRecordStoreSucceeded(succeeded); // At this point, we are really inserted.
+      delegate.onRecordStoreSucceeded(succeeded.guid); // At this point, we are really inserted.
     }
   }
 

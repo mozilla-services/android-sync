@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.domain;
 
@@ -116,7 +116,7 @@ public class HistoryRecord extends Record {
   @Override
   public boolean equalPayloads(Object o) {
     if (o == null || !(o instanceof HistoryRecord)) {
-      Logger.debug(LOG_TAG, "Not a HistoryRecord: " + o);
+      Logger.debug(LOG_TAG, "Not a HistoryRecord: " + o.getClass());
       return false;
     }
     HistoryRecord other = (HistoryRecord) o;
@@ -146,10 +146,10 @@ public class HistoryRecord extends Record {
 
   private boolean checkVisitsEquals(HistoryRecord other) {
     Logger.debug(LOG_TAG, "Checking visits.");
-    if (Logger.logVerbose(LOG_TAG)) {
+    if (Logger.LOG_PERSONAL_INFORMATION) {
       // Don't JSON-encode unless we're logging.
-      Logger.trace(LOG_TAG, ">> Mine:   " + ((this.visits == null) ? "null" : this.visits.toJSONString()));
-      Logger.trace(LOG_TAG, ">> Theirs: " + ((other.visits == null) ? "null" : other.visits.toJSONString()));
+      Logger.pii(LOG_TAG, ">> Mine:   " + ((this.visits == null) ? "null" : this.visits.toJSONString()));
+      Logger.pii(LOG_TAG, ">> Theirs: " + ((other.visits == null) ? "null" : other.visits.toJSONString()));
     }
 
     // Handle nulls.

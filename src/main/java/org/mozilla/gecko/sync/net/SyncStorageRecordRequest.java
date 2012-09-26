@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.net;
 
@@ -87,6 +87,15 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     toPOST.add(body);
     try {
       this.resource.post(jsonEntity(toPOST));
+    } catch (UnsupportedEncodingException e) {
+      this.delegate.handleRequestError(e);
+    }
+  }
+
+  public void post(JSONArray body) {
+    // Let's do this the trivial way for now.
+    try {
+      this.resource.post(jsonEntity(body));
     } catch (UnsupportedEncodingException e) {
       this.delegate.handleRequestError(e);
     }

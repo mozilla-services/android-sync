@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.delegates;
 
@@ -22,21 +22,6 @@ public interface RepositorySessionFetchRecordsDelegate {
    *        E.g., the (normalized) value of the X-Weave-Timestamp header.
    */
   public void onFetchCompleted(final long fetchEnd);
-
-  /**
-   * Shorthand for calling onFetchedRecord for each record in turn, then
-   * calling onFetchCompleted.
-   *
-   * @param records
-   *        An array of fetched records. Can be empty.
-   *
-   * @param fetchEnd
-   *        A millisecond-resolution timestamp indicating the *remote* timestamp
-   *        at the end of the range of records. Usually this is the timestamp at
-   *        which the request was received.
-   *        E.g., the (normalized) value of the X-Weave-Timestamp header.
-   */
-  public void onFetchSucceeded(Record[] records, final long fetchEnd);
 
   public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(ExecutorService executor);
 }

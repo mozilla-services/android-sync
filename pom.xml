@@ -12,6 +12,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <mozilla.externalPackages>ch.boye.*:org.json.*:org.mozilla.apache.*</mozilla.externalPackages>
   </properties>
 
@@ -55,7 +56,7 @@
           <version>3.1.0</version>
           <configuration>
             <sdk>
-              <platform>10</platform>
+              <platform>14</platform>
             </sdk>
             <emulator>
               <avd>23</avd>

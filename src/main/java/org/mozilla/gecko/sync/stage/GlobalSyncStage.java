@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.stage;
 
@@ -23,7 +23,7 @@ public interface GlobalSyncStage {
     ensureSpecialRecords,
     updateEngineTimestamps,
     */
-    syncClientsEngine("clients"),
+    syncClientsEngine(SyncClientsEngineStage.STAGE_NAME),
     /*
     processFirstSyncPref,
     processClientCommands,
@@ -34,6 +34,8 @@ public interface GlobalSyncStage {
     syncBookmarks("bookmarks"),
     syncHistory("history"),
     syncFormHistory("forms"),
+
+    uploadMetaGlobal,
     completed;
 
     // Maintain a mapping from names ("bookmarks") to Stage enumerations (syncBookmarks).
@@ -78,4 +80,11 @@ public interface GlobalSyncStage {
   public void execute() throws NoSuchStageException;
   public void resetLocal();
   public void wipeLocal() throws Exception;
+  /**
+   * What storage version number this engine supports.
+   * <p>
+   * Used to generate a fresh meta/global record for upload.
+   * @return a version number or <code>null</code> to never include this engine in a fresh meta/global record.
+   */
+  public Integer getStorageVersion();
 }

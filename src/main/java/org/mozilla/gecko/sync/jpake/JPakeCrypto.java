@@ -1,57 +1,22 @@
-/* ***** BEGIN LICENSE BLOCK *****
- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
- *
- * The contents of this file are subject to the Mozilla Public License Version
- * 1.1 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * http://www.mozilla.org/MPL/
- *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
- * for the specific language governing rights and limitations under the
- * License.
- *
- * The Original Code is Android Sync Client.
- *
- * The Initial Developer of the Original Code is
- * the Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2011
- * the Initial Developer. All Rights Reserved.
- *
- * Contributor(s):
- *   Chenxia Liu <liuche@mozilla.com>
- *   Richard Newman <rnewman@mozilla.com>
- *
- * Alternatively, the contents of this file may be used under the terms of
- * either the GNU General Public License Version 2 or later (the "GPL"), or
- * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
- * in which case the provisions of the GPL or the LGPL are applicable instead
- * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
- * use your version of this file under the terms of the MPL, indicate your
- * decision by deleting the provisions above and replace them with the notice
- * and other provisions required by the GPL or the LGPL. If you do not delete
- * the provisions above, a recipient may use your version of this file under
- * the terms of any one of the MPL, the GPL or the LGPL.
- *
- * ***** END LICENSE BLOCK ***** */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.jpake;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.crypto.HKDF;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-
-import android.util.Log;
-import java.security.InvalidKeyException;
 
 public class JPakeCrypto {
   private static final String LOG_TAG = "JPakeCrypto";
@@ -125,7 +90,7 @@ public class JPakeCrypto {
       throws IncorrectZkpException, NoSuchAlgorithmException,
       Gx3OrGx4IsZeroOrOneException, UnsupportedEncodingException {
 
-    Log.d(LOG_TAG, "round2 started.");
+    Logger.debug(LOG_TAG, "round2 started.");
 
     // checkZkp does some additional checks, but we can throw a more informative exception here.
     if (BigInteger.ZERO.compareTo(jp.gx3) == 0 || BigInteger.ONE.compareTo(jp.gx3) == 0 ||
@@ -145,7 +110,7 @@ public class JPakeCrypto {
     jp.thisZkpA = createZkp(y1, y2, a, jp.signerId, gen);
     jp.thisA = a;
 
-    Log.d(LOG_TAG, "round2 finished.");
+    Logger.debug(LOG_TAG, "round2 finished.");
   }
 
   /**
@@ -153,7 +118,7 @@ public class JPakeCrypto {
    */
   public static KeyBundle finalRound(BigInteger secretValue, JPakeParty jp)
       throws IncorrectZkpException, NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
-    Log.d(LOG_TAG, "Final round started.");
+    Logger.debug(LOG_TAG, "Final round started.");
     BigInteger gb = jp.gx1.multiply(jp.gx2).mod(P).multiply(jp.gx3)
         .mod(P);
     checkZkp(gb, jp.otherA, jp.otherZkpA);
@@ -167,7 +132,7 @@ public class JPakeCrypto {
     byte[] hmac = new byte[32];
     generateKeyAndHmac(k, enc, hmac);
 
-    Log.d(LOG_TAG, "Final round finished; returning key.");
+    Logger.debug(LOG_TAG, "Final round finished; returning key.");
     return new KeyBundle(enc, hmac);
   }
 
@@ -181,7 +146,7 @@ public class JPakeCrypto {
       hmacSha256.init(secret_key);
       result = hmacSha256.doFinal(data);
     } catch (GeneralSecurityException e) {
-      Log.d(LOG_TAG, e.toString());
+      Logger.error(LOG_TAG, "Got exception calculating HMAC.", e);
     }
     return result;
   }
@@ -202,7 +167,7 @@ public class JPakeCrypto {
 
     // Calculate the ZKP b value = (r-x*h) % q.
     BigInteger h = computeBHash(g, gr, gx, id);
-    Log.e(LOG_TAG, "myhash: " + h.toString(16));
+    Logger.debug(LOG_TAG, "myhash: " + h.toString(16));
 
     // ZKP value = b = r-x*h
     BigInteger b = r.subtract(x.multiply(h)).mod(Q);
@@ -221,31 +186,30 @@ public class JPakeCrypto {
     // Check parameters of zkp, and compare to computed hash. These shouldn't
     // fail.
     if (gx.compareTo(BigInteger.ONE) < 1) { // g^x > 1.
-      Log.e(LOG_TAG, "g^x > 1 fails.");
+      Logger.error(LOG_TAG, "g^x > 1 fails.");
       throw new IncorrectZkpException();
     }
     if (gx.compareTo(P.subtract(BigInteger.ONE)) > -1) { // g^x < p-1
-      Log.e(LOG_TAG, "g^x < p-1 fails.");
+      Logger.error(LOG_TAG, "g^x < p-1 fails.");
       throw new IncorrectZkpException();
     }
     if (gx.modPow(Q, P).compareTo(BigInteger.ONE) != 0) {
-      Log.e(LOG_TAG, "g^x^q % p = 1 fails.");
+      Logger.error(LOG_TAG, "g^x^q % p = 1 fails.");
       throw new IncorrectZkpException();
     }
     if (zkp.gr.compareTo(g.modPow(zkp.b, P).multiply(gx.modPow(h, P)).mod(P)) != 0) {
       // b = r-h*x ==> g^r = g^b*g^x^(h)
-      Log.i(LOG_TAG, "gb*g(xh) = "
-          + g.modPow(zkp.b, P).multiply(gx.modPow(h, P)).mod(P).toString(16));
-      Log.d(LOG_TAG, "gr = " + zkp.gr.toString(16));
-      Log.d(LOG_TAG, "b = " + zkp.b.toString(16));
-      Log.d(LOG_TAG, "g^b = " + g.modPow(zkp.b, P).toString(16));
-      Log.d(LOG_TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
-      Log.d(LOG_TAG, "gx = " + gx.toString(16));
-      Log.d(LOG_TAG, "h = " + h.toString(16));
-      Log.e(LOG_TAG, "zkp calculation incorrect.");
+      Logger.debug(LOG_TAG, "gb*g(xh) = " + g.modPow(zkp.b, P).multiply(gx.modPow(h, P)).mod(P).toString(16));
+      Logger.debug(LOG_TAG, "gr = " + zkp.gr.toString(16));
+      Logger.debug(LOG_TAG, "b = " + zkp.b.toString(16));
+      Logger.debug(LOG_TAG, "g^b = " + g.modPow(zkp.b, P).toString(16));
+      Logger.debug(LOG_TAG, "g^(xh) = " + gx.modPow(h, P).toString(16));
+      Logger.debug(LOG_TAG, "gx = " + gx.toString(16));
+      Logger.debug(LOG_TAG, "h = " + h.toString(16));
+      Logger.error(LOG_TAG, "zkp calculation incorrect.");
       throw new IncorrectZkpException();
     }
-    Log.d(LOG_TAG, "*** ZKP SUCCESS ***");
+    Logger.debug(LOG_TAG, "*** ZKP SUCCESS ***");
   }
 
   /*

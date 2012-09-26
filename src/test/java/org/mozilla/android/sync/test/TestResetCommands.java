@@ -122,7 +122,7 @@ public class TestResetCommands {
     final String resetBookmarks = "{\"args\":[\"bookmarks\"],\"command\":\"resetEngine\"}";
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(resetBookmarks);
     CommandProcessor processor = CommandProcessor.getProcessor();
-    processor.processCommand(unparsedCommand);
+    processor.processCommand(session, unparsedCommand);
 
     assertTrue(yes.called);
     assertFalse(no.called);

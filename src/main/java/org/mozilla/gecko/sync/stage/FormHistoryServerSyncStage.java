@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.stage;
 
@@ -14,6 +14,7 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.FormHistoryRepositorySession;
 import org.mozilla.gecko.sync.repositories.domain.FormHistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
 public class FormHistoryServerSyncStage extends ServerSyncStage {
 
@@ -35,9 +36,15 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
   protected String getCollection() {
     return "forms";
   }
+
   @Override
   protected String getEngineName() {
     return "forms";
+  }
+
+  @Override
+  public Integer getStorageVersion() {
+    return VersionConstants.FORMS_ENGINE_VERSION;
   }
 
   @Override

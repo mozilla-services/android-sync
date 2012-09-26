@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.android;
 
@@ -214,7 +214,7 @@ public class RepoUtils {
   }
 
   public static void logClient(ClientRecord rec) {
-    if (Logger.logVerbose(LOG_TAG)) {
+    if (Logger.shouldLogVerbose(LOG_TAG)) {
       Logger.trace(LOG_TAG, "Returning client record " + rec.guid + " (" + rec.androidID + ")");
       Logger.trace(LOG_TAG, "Client Name:   " + rec.name);
       Logger.trace(LOG_TAG, "Client Type:   " + rec.type);

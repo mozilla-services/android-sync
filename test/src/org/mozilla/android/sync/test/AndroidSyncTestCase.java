@@ -7,8 +7,6 @@ import junit.framework.AssertionFailedError;
 
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.StubActivity;
-import org.mozilla.gecko.sync.repositories.InactiveSessionException;
-import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
@@ -44,18 +42,6 @@ public class AndroidSyncTestCase extends ActivityInstrumentationTestCase2<StubAc
 
   public static void performNotify(Throwable e) {
     WaitHelper.getTestWaiter().performNotify(e);
-  }
-
-  public static void performNotify(InactiveSessionException e) {
-    AssertionFailedError er = new AssertionFailedError("Inactive session.");
-    er.initCause(e);
-    WaitHelper.getTestWaiter().performNotify(er);
-  }
-  
-  public static void performNotify(InvalidSessionTransitionException e) {
-    AssertionFailedError er = new AssertionFailedError("Invalid session transition.");
-    er.initCause(e);
-    WaitHelper.getTestWaiter().performNotify(er);
   }
 
   public static void performNotify(String reason, Throwable e) {

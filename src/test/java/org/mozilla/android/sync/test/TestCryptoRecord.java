@@ -46,9 +46,7 @@ public class TestCryptoRecord {
     assertTrue(record.payload.get("ciphertext") != null);
     assertEquals(expectedGUID, record.guid);
     assertEquals(expectedGUID, record.toJSONObject().get("id"));
-    System.out.println("Encrypted JSON: " + record.toJSONString());
     record.decrypt();
-    System.out.println("Decrypted JSON: " + record.toJSONString());
     assertEquals(expectedGUID, record.toJSONObject().get("id"));
   }
 
@@ -111,7 +109,6 @@ public class TestCryptoRecord {
     record.keyBundle = new KeyBundle(decodedKey, decodedHMAC);
 
     record.decrypt();
-    System.out.println(record.payload);
     String id = (String) record.payload.get("id");
     assertTrue(id.equals("5qRsgXWRJZXr"));
   }
@@ -123,16 +120,12 @@ public class TestCryptoRecord {
     String user = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
     
     // Check our friendly base32 decoding.
-    System.out.println("Decodes to " + new String(Base64.encodeBase64(Utils.decodeFriendlyBase32(key))));
-    System.out.println("Expecting  " + "8xbKrJfQYwbFkguKmlSm/g==");
     assertTrue(Arrays.equals(Utils.decodeFriendlyBase32(key), Base64.decodeBase64("8xbKrJfQYwbFkguKmlSm/g==".getBytes("UTF-8"))));
     KeyBundle bundle = new KeyBundle(user, key);
     String expectedEncryptKeyBase64 = "/8RzbFT396htpZu5rwgIg2WKfyARgm7dLzsF5pwrVz8=";
     String expectedHMACKeyBase64    = "NChGjrqoXYyw8vIYP2334cvmMtsjAMUZNqFwV2LGNkM=";
     byte[] computedEncryptKey       = bundle.getEncryptionKey();
     byte[] computedHMACKey          = bundle.getHMACKey();
-    System.out.println("Got encryption key:      " + new String(Base64.encodeBase64(computedEncryptKey)));
-    System.out.println("Expected encryption key: " + expectedEncryptKeyBase64);
     assertTrue(Arrays.equals(computedEncryptKey, Base64.decodeBase64(expectedEncryptKeyBase64.getBytes("UTF-8"))));
     assertTrue(Arrays.equals(computedHMACKey,    Base64.decodeBase64(expectedHMACKeyBase64.getBytes("UTF-8"))));
   }

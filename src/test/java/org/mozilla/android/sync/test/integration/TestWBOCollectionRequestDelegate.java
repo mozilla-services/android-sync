@@ -13,14 +13,18 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mozilla.gecko.sync.CryptoRecord;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
 
+@Category(IntegrationTestCategory.class)
 public class TestWBOCollectionRequestDelegate {
+  public static final String LOG_TAG = "TestWBOCollReqDel";
 
   static final String REMOTE_BOOKMARKS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
   static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
@@ -45,13 +49,13 @@ public class TestWBOCollectionRequestDelegate {
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {
       try {
-        System.out.println("WBOs: " + this.wbos.size());
+        Logger.debug(LOG_TAG, "WBOs: " + this.wbos.size());
         assertTrue(13 < wbos.size());
         for (CryptoRecord record : this.wbos) {
           try {
             // TODO: make this an actual test. Return data locally.
             CryptoRecord decrypted = (CryptoRecord)(record.decrypt());
-            System.out.println(decrypted.payload.toJSONString());
+            Logger.debug(LOG_TAG, decrypted.payload.toJSONString());
           } catch (Exception e) {
             e.printStackTrace();
             fail("Decryption failed.");

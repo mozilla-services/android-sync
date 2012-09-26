@@ -1,6 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.android.sync.test;
 
@@ -43,7 +42,6 @@ public class TestSyncKeyVerification {
     }
     sb.append(validBasicKey.substring(prev));
     String hString = sb.toString();
-    System.out.println("hString:" + hString);
     try {
       ActivityUtils.validateSyncKey(hString);
     } catch (InvalidSyncKeyException e) {
@@ -59,7 +57,6 @@ public class TestSyncKeyVerification {
       mutatedKey[i] = Character.toUpperCase(validBasicKey.charAt(i));
     }
     String mKey = new String(mutatedKey);
-    System.out.println("mKey:" + mKey.toString());
     try {
       ActivityUtils.validateSyncKey(mKey);
     } catch (InvalidSyncKeyException e) {

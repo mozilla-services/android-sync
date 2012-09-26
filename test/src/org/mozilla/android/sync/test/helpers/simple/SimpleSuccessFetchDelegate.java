@@ -16,14 +16,6 @@ public abstract class SimpleSuccessFetchDelegate extends DefaultDelegate impleme
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records, long end) {
-    for (Record record : records) {
-      this.onFetchedRecord(record);
-    }
-    this.onFetchCompleted(end);
-  }
-
-  @Override
   public RepositorySessionFetchRecordsDelegate deferredFetchDelegate(ExecutorService executor) {
     return this;
   }

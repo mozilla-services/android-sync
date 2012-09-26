@@ -1,11 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+  <!-- Used for setup success. -->
+  <string name="brand_short_name">&brandShortName;</string>
+
   <string name="sync_app_name">&sync.app.name.label;</string>
   <string name="sync_title_connect">&sync.title.adddevice.label;</string>
   <string name="sync_title_pair">&sync.title.pair.label;</string>
 
   <!-- J-PAKE PIN Screen -->
-  <string name="sync_subtitle_header">&sync.subtitle.header.label;</string>
-  <string name="sync_subtitle_connect">&sync.subtitle.connectlocation.label;</string>
-  <string name="sync_subtitle_pair">&sync.subtitle.pair.label;</string>
+  <string name="sync_subtitle_header">&sync.subtitle.header2.label;</string>
+  <string name="sync_subtitle_connect">&sync.subtitle.connectlocation2.label;</string>
+  <string name="sync_subtitle_pair">&sync.pair.connectlocation.label;</string>
   <string name="sync_pin_default">&sync.pin.oneline.label;</string>
   <string name="sync_link_show"><u>&sync.link.show.label;</u></string>
   <string name="sync_link_advancedsetup"><u>&sync.link.advancedsetup.label;</u></string>
@@ -28,12 +35,14 @@
   <string name="sync_button_tryagain">&sync.button.tryagain.label;</string>
   <string name="sync_button_manual">&sync.button.manual.label;</string>
   <string name="sync_subtitle_nointernet">&sync.subtitle.nointernet.label;</string>
+  <string name="sync_subtitle_failaccount">&sync.subtitle.failaccount.label;</string>
+  <string name="sync_subtitle_failmultiple">&sync.subtitle.failmultiple.label;</string>
   
   <!-- Setup Success -->
   <string name="sync_title_success">&sync.title.success.label;</string>
-  <string name="sync_subtitle_success">&sync.subtitle.success.label;</string>
+  <string name="sync_subtitle_success">&sync.subtitle.success.label1;</string>
   <string name="sync_settings">&sync.settings.label;</string>
-  <string name="sync_subtitle_manage">&sync.subtitle.manage.label;</string>
+  <string name="sync_subtitle_manage">&sync.subtitle.manage.label1;</string>
   
   <!-- Pair Device -->
   <string name="sync_pair_tryagain">&sync.pair.tryagain.label;</string>
@@ -57,40 +66,23 @@
   <string name="bookmarks_folder_unfiled">&bookmarks.folder.unfiled.label;</string>
   <string name="bookmarks_folder_desktop">&bookmarks.folder.desktop.label;</string>
   <string name="bookmarks_folder_mobile">&bookmarks.folder.mobile.label;</string>
+  <string name="bookmarks_folder_reading_list">&bookmarks.folder.readinglist.label;</string>
 
   <!-- Notification strings -->
   <string name="sync_notification_oneaccount">&sync.notification.oneaccount.label;</string>
 
-  <!-- Push tab to device strings -->
-  <string name="sync_new_tab">&new_tab;</string>
-
   <!-- Incorrect settings and changing credentials. -->
-  <string name="sync.invalidemail.label">&sync.invalidemail.label;</string>
-  <string name="sync.invalidserver.label">&sync.invalidserver.label;</string>
-  <string name="sync.usernamenotavailable.label">&sync.usernamenotavailable.label;</string>
-  <string name="sync.verifying.label">&sync.verifying.label;</string>
+  <string name="sync_invalidcreds_label">&sync.invalidcreds.label;</string>
+  <string name="sync_invalidserver_label">&sync.invalidserver.label;</string>
+  <string name="sync_verifying_label">&sync.verifying.label;</string>
+  <string name="sync_new_recoverykey_status_incorrect">&sync.new.recoverykey.status.incorrect;</string>
 
-  <string name="sync.change.password.title">&sync.change.password.title;</string>
-  <string name="sync.change.password.acceptbutton">&sync.change.password.acceptbutton;</string>
-  <string name="sync.change.password.status.active">&sync.change.password.status.active;</string>
-  <string name="sync.change.password.status.success">&sync.change.password.status.success;</string>
-  <string name="sync.change.password.status.error">&sync.change.password.status.error;</string>
-  <string name="sync.change.password.introText">&sync.change.password.introText;</string>
-  <string name="sync.change.password.warningText">&sync.change.password.warningText;</string>
-
-  <string name="sync.change.recoverykey.title">&sync.change.recoverykey.title;</string>
-  <string name="sync.change.recoverykey.acceptButton">&sync.change.recoverykey.acceptButton;</string>
-  <string name="sync.change.recoverykey.label">&sync.change.recoverykey.label;</string>
-  <string name="sync.change.recoverykey.error">&sync.change.recoverykey.error;</string>
-  <string name="sync.change.recoverykey.success">&sync.change.recoverykey.success;</string>
-
-  <string name="sync.new.password.introtext">&sync.new.password.introtext;</string>
-  <string name="sync.new.password.label">&sync.new.password.label;</string>
-  <string name="sync.new.password.confirm">&sync.new.password.confirm;</string>
-  <string name="sync.new.password.acceptButton">&sync.new.password.acceptButton;</string>
-  <string name="sync.new.password.status.incorrect">&sync.new.password.status.incorrect;</string>
-
-  <string name="sync.new.recoverykey.title">&sync.new.recoverykey.title;</string>
-  <string name="sync.new.recoverykey.introtext">&sync.new.recoverykey.introtext;</string>
-  <string name="sync.new.recoverykey.acceptbutton">&sync.new.recoverykey.acceptbutton;</string>
-  <string name="sync.new.recoverykey.status.incorrect">&sync.new.recoverykey.status.incorrect;</string>
+  <!-- Send tab to device. -->
+  <string name="sync_new_tab">&new_tab;</string>
+  <string name="sync_title_send_tab">&sync.title.send.tab.label;</string>
+  <string name="sync_button_send">&sync.button.send.label;</string>
+  <string name="sync_button_set_up_sync">&sync.button.set.up.sync.label;</string>
+  <string name="sync_title_redirect_to_set_up_sync">&sync.title.redirect.to.set.up.sync.label;</string>
+  <string name="sync_text_redirect_to_set_up_sync">&sync.text.redirect.to.set.up.sync.label;</string>
+  <string name="sync_text_tab_sent">&sync.text.tab.sent.label;</string>
+  <string name="sync_text_tab_not_sent">&sync.text.tab.not.sent.label;</string>

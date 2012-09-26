@@ -20,7 +20,6 @@ import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
 
-import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class TestResource {
@@ -31,9 +30,7 @@ public class TestResource {
 
   @Before
   public void setUp() {
-    Log.i("TestResource", "Faking SSL context.");
     BaseResource.enablePlainHTTPConnectionManager();
-    Log.i("TestResource", "Disabling URI rewriting.");
     BaseResource.rewriteLocalhost = false;
   }
 

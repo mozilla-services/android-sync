@@ -2,13 +2,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.mozilla.gecko"
-    sharedUserId="notSharedUserId"
+    sharedUserId="@MOZ_ANDROID_SHARED_ID@"
     android:versionCode="1"
     android:versionName="1.0" >
 
     <uses-library android:name="android.test.runner" />
 
-    <uses-sdk android:minSdkVersion="5" />
+    <uses-sdk android:minSdkVersion="8"
+              android:targetSdkVersion="14" />
 
 #include manifests/SyncAndroidManifest_permissions.xml.in
 
@@ -18,6 +19,7 @@
     <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.PASSWORD_PROVIDER"/>
 
     <application android:debuggable="true"
+                 android:icon="@drawable/icon"
                  android:label="@string/sync_app_name">
 
 #include manifests/SyncAndroidManifest_activities.xml.in

@@ -1,11 +1,12 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.synchronizer;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -59,7 +60,7 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
  * @author rnewman
  *
  */
-class RecordsChannel implements
+public class RecordsChannel implements
   RepositorySessionFetchRecordsDelegate,
   RepositorySessionStoreDelegate,
   RecordsConsumerDelegate,
@@ -71,6 +72,11 @@ class RecordsChannel implements
   private RecordsChannelDelegate delegate;
   private long timestamp;
   private long fetchEnd = -1;
+
+  protected final AtomicInteger numFetched = new AtomicInteger();
+  protected final AtomicInteger numFetchFailed = new AtomicInteger();
+  protected final AtomicInteger numStored = new AtomicInteger();
+  protected final AtomicInteger numStoreFailed = new AtomicInteger();
 
   public RecordsChannel(RepositorySession source, RepositorySession sink, RecordsChannelDelegate delegate) {
     this.source    = source;
@@ -102,22 +108,39 @@ class RecordsChannel implements
   }
 
   /**
-   * Attempt to abort an outstanding fetch. Finish both sessions, and
-   * halt the consumer if it exists.
+   * Get the number of records fetched so far.
+   *
+   * @return number of fetches.
    */
-  public void abort() {
-    if (source.isActive()) {
-      source.abort();
-    }
-    if (sink.isActive()) {
-      sink.abort();
-    }
+  public int getFetchCount() {
+    return numFetched.get();
+  }
 
-    toProcess.clear();
-    if (consumer == null) {
-      return;
-    }
-    consumer.halt();
+  /**
+   * Get the number of fetch failures recorded so far.
+   *
+   * @return number of fetch failures.
+   */
+  public int getFetchFailureCount() {
+    return numFetchFailed.get();
+  }
+
+  /**
+   * Get the number of store attempts (successful or not) so far.
+   *
+   * @return number of stores attempted.
+   */
+  public int getStoreCount() {
+    return numStored.get();
+  }
+
+  /**
+   * Get the number of store failures recorded so far.
+   *
+   * @return number of store failures.
+   */
+  public int getStoreFailureCount() {
+    return numStoreFailed.get();
   }
 
   /**
@@ -130,8 +153,13 @@ class RecordsChannel implements
         failed = sink;
       }
       this.delegate.onFlowBeginFailed(this, new SessionNotBegunException(failed));
+      return;
     }
     sink.setStoreDelegate(this);
+    numFetched.set(0);
+    numFetchFailed.set(0);
+    numStored.set(0);
+    numStoreFailed.set(0);
     // Start a consumer thread.
     this.consumer = new ConcurrentRecordConsumer(this);
     ThreadPool.run(this.consumer);
@@ -144,60 +172,56 @@ class RecordsChannel implements
    * @throws InvalidSessionTransitionException 
    */
   public void beginAndFlow() throws InvalidSessionTransitionException {
-    Logger.info(LOG_TAG, "Beginning source.");
+    Logger.trace(LOG_TAG, "Beginning source.");
     source.begin(this);
   }
 
   @Override
   public void store(Record record) {
+    numStored.incrementAndGet();
     try {
       sink.store(record);
     } catch (NoStoreDelegateException e) {
       Logger.error(LOG_TAG, "Got NoStoreDelegateException in RecordsChannel.store(). This should not occur. Aborting.", e);
-      delegate.onFlowStoreFailed(this, e);
-      this.abort();
+      delegate.onFlowStoreFailed(this, e, record.guid);
     }
   }
 
   @Override
   public void onFetchFailed(Exception ex, Record record) {
     Logger.warn(LOG_TAG, "onFetchFailed. Calling for immediate stop.", ex);
+    numFetchFailed.incrementAndGet();
     this.consumer.halt();
     delegate.onFlowFetchFailed(this, ex);
   }
 
   @Override
   public void onFetchedRecord(Record record) {
+    numFetched.incrementAndGet();
     this.toProcess.add(record);
     this.consumer.doNotify();
   }
 
   @Override
-  public void onFetchSucceeded(Record[] records, final long fetchEnd) {
-    for (Record record : records) {
-      this.toProcess.add(record);
-    }
-    this.consumer.doNotify();
-    this.onFetchCompleted(fetchEnd);
-  }
-
-  @Override
   public void onFetchCompleted(final long fetchEnd) {
-    Logger.info(LOG_TAG, "onFetchCompleted. Stopping consumer once stores are done.");
-    Logger.info(LOG_TAG, "Fetch timestamp is " + fetchEnd);
+    Logger.trace(LOG_TAG, "onFetchCompleted. Stopping consumer once stores are done.");
+    Logger.trace(LOG_TAG, "Fetch timestamp is " + fetchEnd);
     this.fetchEnd = fetchEnd;
     this.consumer.queueFilled();
   }
 
   @Override
-  public void onRecordStoreFailed(Exception ex) {
+  public void onRecordStoreFailed(Exception ex, String recordGuid) {
+    Logger.trace(LOG_TAG, "Failed to store record with guid " + recordGuid);
+    numStoreFailed.incrementAndGet();
     this.consumer.stored();
-    delegate.onFlowStoreFailed(this, ex);
+    delegate.onFlowStoreFailed(this, ex, recordGuid);
     // TODO: abort?
   }
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(String guid) {
+    Logger.trace(LOG_TAG, "Stored record with guid " + guid);
     this.consumer.stored();
   }
 
@@ -213,8 +237,8 @@ class RecordsChannel implements
 
   @Override
   public void onStoreCompleted(long storeEnd) {
-    Logger.info(LOG_TAG, "onStoreCompleted. Notifying delegate of onFlowCompleted. " +
-                         "Fetch end is " + fetchEnd + ", store end is " + storeEnd);
+    Logger.trace(LOG_TAG, "onStoreCompleted. Notifying delegate of onFlowCompleted. " +
+                          "Fetch end is " + fetchEnd + ", store end is " + storeEnd);
     // TODO: synchronize on consumer callback?
     delegate.onFlowCompleted(this, fetchEnd, storeEnd);
   }
@@ -227,15 +251,16 @@ class RecordsChannel implements
   @Override
   public void onBeginSucceeded(RepositorySession session) {
     if (session == source) {
-      Logger.info(LOG_TAG, "Source session began. Beginning sink session.");
+      Logger.trace(LOG_TAG, "Source session began. Beginning sink session.");
       try {
         sink.begin(this);
       } catch (InvalidSessionTransitionException e) {
         onBeginFailed(e);
+        return;
       }
     }
     if (session == sink) {
-      Logger.info(LOG_TAG, "Sink session began. Beginning flow.");
+      Logger.trace(LOG_TAG, "Sink session began. Beginning flow.");
       this.flow();
       return;
     }

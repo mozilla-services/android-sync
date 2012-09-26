@@ -5,13 +5,12 @@ package org.mozilla.android.sync.test.helpers;
 
 import static junit.framework.Assert.assertNotNull;
 
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 
 import android.content.Context;
-import android.util.Log;
 
 public class SessionTestHelper {
 
@@ -35,10 +34,10 @@ public class SessionTestHelper {
       @Override
       public void onSessionCreated(final RepositorySession session) {
         assertNotNull(session);
-        Log.i(logTag, "Setting session to " + session);
+        Logger.info(logTag, "Setting session to " + session);
         setSession(session);
         if (begin) {
-          Log.i(logTag, "Calling session.begin on new session.");
+          Logger.info(logTag, "Calling session.begin on new session.");
           // The begin callbacks will notify.
           try {
             session.begin(new ExpectBeginDelegate());
@@ -46,7 +45,7 @@ public class SessionTestHelper {
             testWaiter.performNotify(e);
           }
         } else {
-          Log.i(logTag, "Notifying after setting new session.");
+          Logger.info(logTag, "Notifying after setting new session.");
           testWaiter.performNotify();
         }
       }
@@ -62,10 +61,10 @@ public class SessionTestHelper {
       };
       testWaiter.performWait(runnable);
     } catch (IllegalArgumentException ex) {
-      Log.w(logTag, "Caught IllegalArgumentException.");
+      Logger.warn(logTag, "Caught IllegalArgumentException.");
     }
 
-    Log.i(logTag, "Retrieving new session.");
+    Logger.info(logTag, "Retrieving new session.");
     final RepositorySession session = delegate.getSession();
     assertNotNull(session);
 

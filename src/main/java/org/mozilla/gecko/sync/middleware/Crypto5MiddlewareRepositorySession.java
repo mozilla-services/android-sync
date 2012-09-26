@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.middleware;
 
@@ -110,18 +110,6 @@ public class Crypto5MiddlewareRepositorySession extends MiddlewareRepositorySess
     }
 
     @Override
-    public void onFetchSucceeded(Record[] records, long fetchEnd) {
-      for (Record record : records) {
-        try {
-          this.onFetchedRecord(record);
-        } catch (Exception e) {
-          this.onFetchFailed(e, record);
-        }
-      }
-      this.onFetchCompleted(fetchEnd);
-    }
-
-    @Override
     public void onFetchCompleted(final long fetchEnd) {
       next.onFetchCompleted(fetchEnd);
     }
@@ -175,10 +163,10 @@ public class Crypto5MiddlewareRepositorySession extends MiddlewareRepositorySess
     try {
       rec.encrypt();
     } catch (UnsupportedEncodingException e) {
-      delegate.onRecordStoreFailed(e);
+      delegate.onRecordStoreFailed(e, record.guid);
       return;
     } catch (CryptoException e) {
-      delegate.onRecordStoreFailed(e);
+      delegate.onRecordStoreFailed(e, record.guid);
       return;
     }
     // Allow the inner session to do delegate handling.

@@ -1,18 +1,19 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.domain;
 
 import java.util.ArrayList;
 
-import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 import android.content.ContentValues;
 
@@ -80,7 +81,27 @@ public class TabsRecord extends Record {
       out.put(BrowserContract.Tabs.URL,       (String) this.history.get(0));
       out.put(BrowserContract.Tabs.HISTORY,   this.history.toJSONString());
       return out;
+    }
 
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof Tab)) {
+        return false;
+      }
+      final Tab other = (Tab) o;
+
+      if (!RepoUtils.stringsEqual(this.title, other.title)) {
+        return false;
+      }
+      if (!RepoUtils.stringsEqual(this.icon, other.icon)) {
+        return false;
+      }
+
+      if (!(this.lastUsed == other.lastUsed)) {
+        return false;
+      }
+
+      return Utils.sameArrays(this.history, other.history);
     }
   }
 

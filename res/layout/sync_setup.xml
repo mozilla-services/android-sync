@@ -1,84 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  style="@style/SyncLayout" >
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-  <LinearLayout
-    android:id="@+id/setup_top"
-    style="@style/SyncTop" >
-    <ImageView
-      style="@style/SyncTopIcon" />
-    <TextView
-      android:id="@+id/setup_title"
-      style="@style/SyncTextTitle"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  style="@style/SyncContainer" >
+
+  <TextView
+      style="@style/SyncTop"
       android:text="@string/sync_title_connect" />
-  </LinearLayout>
 
   <ScrollView
-    style="@style/SyncLayout"
-    android:fillViewport="true"
-    android:layout_below="@id/setup_top"
-    android:layout_above="@+id/setup_bottom" >
+    style="@style/SyncMiddle"
+    android:padding="@dimen/SyncSpace" >
 
     <LinearLayout
-        style="@style/SyncLayout.Vertical"
-        android:layout_height="fill_parent"
-        android:padding="15dp" >
+        style="@style/SyncLayout.Vertical" >
 
       <TextView
         android:id="@+id/setup_header"
         style="@style/SyncTextItem"
         android:gravity="left"
-        android:layout_marginTop="15dp"
+        android:paddingBottom="@dimen/SyncSpace"
         android:text="@string/sync_subtitle_header"
-        android:textStyle="bold" />
-      <TextView
-        android:id="@+id/setup_subtitle"
-        style="@style/SyncTextItem"
-        android:gravity="left"
-        android:layout_marginTop="2dp"
-        android:text="@string/sync_subtitle_connect" />
+        android:textStyle="bold"
+        android:focusable="true"
+        android:nextFocusDown="@+id/setup_subtitle" />
 
       <TextView
-        android:id="@+id/setup_showme"
+        android:id="@id/setup_subtitle"
+        style="@style/SyncTextItem"
+        android:gravity="left"
+        android:text="@string/sync_subtitle_connect"
+        android:focusable="true"
+        android:nextFocusDown="@+id/setup_showme"
+        android:nextFocusUp="@id/setup_header" />
+
+      <TextView
+        android:id="@id/setup_showme"
         style="@style/SyncLinkItem"
-        android:layout_marginTop="2dp"
+        android:paddingBottom="@dimen/SyncSpace"
         android:onClick="showClickHandler"
-        android:text="@string/sync_link_show" />
+        android:text="@string/sync_link_show"
+        android:focusable="true"
+        android:nextFocusDown="@+id/text_pin1"
+        android:nextFocusUp="@id/setup_subtitle" />
 
       <LinearLayout
         style="@style/SyncLayout"
         android:layout_height="wrap_content"
-        android:paddingTop="30dp"
-        android:paddingBottom="30dp"
-        android:paddingLeft="-15dp"
+        android:paddingBottom="@dimen/SyncSpace"
         android:orientation="vertical" >
         <TextView
-          android:id="@+id/text_pin1"
-          style="@style/SyncPinText" />
+          android:id="@id/text_pin1"
+          style="@style/SyncPinText"
+          android:focusable="true"
+          android:nextFocusDown="@+id/text_pin2"
+          android:nextFocusUp="@id/setup_showme" />
         <TextView
-          android:id="@+id/text_pin2"
-          style="@style/SyncPinText" />
+          android:id="@id/text_pin2"
+          style="@style/SyncPinText"
+          android:focusable="true"
+          android:nextFocusDown="@+id/text_pin3"
+          android:nextFocusUp="@id/text_pin1" />
         <TextView
-          android:id="@+id/text_pin3"
-          style="@style/SyncPinText" />
+          android:id="@id/text_pin3"
+          style="@style/SyncPinText"
+          android:focusable="true"
+          android:nextFocusDown="@+id/link_nodevice"
+          android:nextFocusUp="@id/text_pin2" />
       </LinearLayout>
       <TextView
-        android:id="@+id/link_nodevice"
+        android:id="@id/link_nodevice"
         style="@style/SyncLinkItem"
         android:gravity="center"
-        android:paddingBottom="5dp"
         android:onClick="manualClickHandler"
-        android:text="@string/sync_link_advancedsetup" />
+        android:text="@string/sync_link_advancedsetup"
+        android:focusable="true"
+        android:nextFocusUp="@id/text_pin3" />
     </LinearLayout>
   </ScrollView>
+
   <LinearLayout
-    android:id="@id/setup_bottom"
     style="@style/SyncBottom"
     android:orientation="horizontal" >
+
     <Button
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      style="@style/SyncButton"
       android:onClick="cancelClickHandler"
       android:text="@string/sync_button_cancel" />
   </LinearLayout>
-</RelativeLayout>
+</LinearLayout>

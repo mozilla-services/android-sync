@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -21,6 +22,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Test;
+import org.mozilla.android.sync.test.helpers.CommandHelpers;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockClientsDataDelegate;
 import org.mozilla.android.sync.test.helpers.MockClientsDatabaseAccessor;
@@ -30,9 +32,11 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.MockSyncClientsEngineStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
+import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
@@ -51,6 +55,7 @@ import org.simpleframework.http.Response;
 import ch.boye.httpclientandroidlib.HttpStatus;
 
 public class TestClientsEngineStage extends MockSyncClientsEngineStage {
+  public final static String LOG_TAG = "TestClientsEngSta";
 
   public TestClientsEngineStage() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
     super(initializeSession());
@@ -147,6 +152,16 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
     data.startHTTPServer(currentUploadMockServer);
     super.uploadClientRecord(record);
+  }
+
+  @Override
+  protected void uploadClientRecords(JSONArray records) {
+    BaseResource.rewriteLocalhost = false;
+    if (stubUpload) {
+      return;
+    }
+    data.startHTTPServer(currentUploadMockServer);
+    super.uploadClientRecords(records);
   }
 
   public static class MockClientsGlobalSession extends MockGlobalSession {
@@ -273,7 +288,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
       final long now = cr.lastModified;
       final BigDecimal modified = Utils.millisecondsToDecimalSeconds(now);
 
-      System.out.println("Now is " + now + " (" + modified + ")");
+      Logger.debug(LOG_TAG, "Now is " + now + " (" + modified + ")");
       final JSONArray idArray = new JSONArray();
       idArray.add(cr.guid);
 
@@ -293,7 +308,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
 
     protected void handleUploadPUT(Request request, Response response) throws Exception {
-      System.out.println("Handling PUT: " + request.getPath());
+      Logger.debug(LOG_TAG, "Handling PUT: " + request.getPath());
 
       // Save uploadedRecord to test against.
       CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(request.getContent());
@@ -314,16 +329,16 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     }
 
     protected void handleUploadPOST(Request request, Response response) throws Exception {
-      System.out.println("Handling POST: " + request.getPath());
+      Logger.debug(LOG_TAG, "Handling POST: " + request.getPath());
       String content = request.getContent();
-      System.out.println("Content is " + content);
+      Logger.debug(LOG_TAG, "Content is " + content);
       JSONArray array = (JSONArray) new JSONParser().parse(content);
 
-      System.out.println("Content is " + array);
+      Logger.debug(LOG_TAG, "Content is " + array);
 
       KeyBundle keyBundle = session.keyBundleForCollection(COLLECTION_NAME);
       if (array.size() != 1) {
-        System.out.println("Expecting only one record! Fail!");
+        Logger.debug(LOG_TAG, "Expecting only one record! Fail!");
         PrintStream bodyStream = this.handleBasicHeaders(request, response, 400, "text/plain");
         bodyStream.println("Expecting only one record! Fail!");
         bodyStream.close();
@@ -336,12 +351,12 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
       cr.collection = lastComputedLocalClientRecord.collection;
       uploadedRecord = cr;
 
-      System.out.println("Record is " + cr);
+      Logger.debug(LOG_TAG, "Record is " + cr);
       long now = System.currentTimeMillis();
       PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json", now);
       cr.lastModified = now;
       final String responseBody = postBodyForRecord(cr);
-      System.out.println("Response is " + responseBody);
+      Logger.debug(LOG_TAG, "Response is " + responseBody);
       bodyStream.println(responseBody);
       bodyStream.close();
     }
@@ -350,7 +365,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     public void handle(Request request, Response response) {
       try {
         String method = request.getMethod();
-        System.out.println("Handling " + method);
+        Logger.debug(LOG_TAG, "Handling " + method);
         if (method.equalsIgnoreCase("post")) {
           handleUploadPOST(request, response);
         } else if (method.equalsIgnoreCase("put")) {
@@ -396,7 +411,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         CryptoRecord cryptoRecord = cryptoFromClient(record);
         JSONObject object = cryptoRecord.toJSONObject();
         final long modified = (setRecentClientRecordTimestamp() + 10000) / 1000;
-        System.out.println("Setting modified to " + modified);
+        Logger.debug(LOG_TAG, "Setting modified to " + modified);
         object.put("modified", modified);
         bodyStream.print(object.toJSONString() + "\n");
         bodyStream.close();
@@ -475,7 +490,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertFalse(shouldWipe);
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertFalse(getMockDataAccessor().wiped);
+    assertFalse(getMockDataAccessor().clientsTableWiped);
     assertTrue(getMockDataAccessor().storedRecord);
   }
 
@@ -485,7 +500,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     shouldWipe = true;
     wipeAndStore(new ClientRecord());
     assertFalse(shouldWipe);
-    assertTrue(getMockDataAccessor().wiped);
+    assertTrue(getMockDataAccessor().clientsTableWiped);
     assertTrue(getMockDataAccessor().storedRecord);
   }
 
@@ -528,8 +543,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     });
 
     // Test ClientUploadDelegate.handleRequestSuccess().
-    System.out.println("Last computed local client record: " + lastComputedLocalClientRecord.guid);
-    System.out.println("Uploaded client record: " + uploadedRecord.guid);
+    Logger.debug(LOG_TAG, "Last computed local client record: " + lastComputedLocalClientRecord.guid);
+    Logger.debug(LOG_TAG, "Uploaded client record: " + uploadedRecord.guid);
     assertTrue(lastComputedLocalClientRecord.equalPayloads(uploadedRecord));
     assertEquals(0, uploadAttemptsCount.get());
     assertTrue(callback.calledSuccess);
@@ -676,5 +691,25 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     performFailingUpload();
     assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
     assertTrue(callback.calledError);
+  }
+
+  class TestAddCommandsMockClientsDatabaseAccessor extends MockClientsDatabaseAccessor {
+    @Override
+    public List<Command> fetchCommandsForClient(String accountGUID) throws NullCursorException {
+      List<Command> commands = new ArrayList<Command>();
+      commands.add(CommandHelpers.getCommand1());
+      commands.add(CommandHelpers.getCommand2());
+      commands.add(CommandHelpers.getCommand3());
+      commands.add(CommandHelpers.getCommand4());
+      return commands;
+    }
+  }
+
+  @Test
+  public void testAddCommands() throws NullCursorException {
+    db = new TestAddCommandsMockClientsDatabaseAccessor();
+    this.addCommands(new ClientRecord());
+    assertEquals(1, toUpload.size());
+    assertEquals(4, toUpload.get(0).commands.size());
   }
 }

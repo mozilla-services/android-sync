@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.jpake.stage;
 
@@ -12,6 +12,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.setup.auth.AccountAuthenticator;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -85,7 +86,7 @@ public class DeleteChannel {
       }
     };
 
-    JPakeClient.runOnThread(new Runnable() {
+    AccountAuthenticator.runOnThread(new Runnable() {
       @Override
       public void run() {
         httpResource.delete();

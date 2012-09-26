@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.android;
 
@@ -289,7 +289,7 @@ public class FormHistoryRepositorySession extends
 
   @Override
   public void fetchSince(final long timestamp, final RepositorySessionFetchRecordsDelegate delegate) {
-    Logger.info(LOG_TAG, "Running fetchSince(" + timestamp + ").");
+    Logger.trace(LOG_TAG, "Running fetchSince(" + timestamp + ").");
 
     /*
      * We need to be careful about the timestamp we complete the fetch with. If
@@ -321,13 +321,13 @@ public class FormHistoryRepositorySession extends
 
   @Override
   public void fetchAll(RepositorySessionFetchRecordsDelegate delegate) {
-    Logger.info(LOG_TAG, "Running fetchAll.");
+    Logger.trace(LOG_TAG, "Running fetchAll.");
     fetchSince(0, delegate);
   }
 
   @Override
   public void fetch(final String[] guids, final RepositorySessionFetchRecordsDelegate delegate) {
-    Logger.info(LOG_TAG, "Running fetch.");
+    Logger.trace(LOG_TAG, "Running fetch.");
 
     final long sharedEnd = now();
     final String where = RepoUtils.computeSQLInClause(guids.length, FormHistory.GUID);
@@ -450,7 +450,7 @@ public class FormHistoryRepositorySession extends
         try {
           flushInsertQueue();
         } catch (Exception e) {
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         }
       }
@@ -491,7 +491,8 @@ public class FormHistoryRepositorySession extends
           }
           storeDone(now());
         } catch (Exception e) {
-          delegate.onRecordStoreFailed(e);
+          // XXX TODO
+          delegate.onRecordStoreFailed(e, null);
         }
       }
     };
@@ -562,7 +563,7 @@ public class FormHistoryRepositorySession extends
       public void run() {
         if (!isActive()) {
           Logger.warn(LOG_TAG, "FormHistoryRepositorySession is inactive. Store failing.");
-          delegate.onRecordStoreFailed(new InactiveSessionException(null));
+          delegate.onRecordStoreFailed(new InactiveSessionException(null), record.guid);
           return;
         }
 
@@ -605,7 +606,7 @@ public class FormHistoryRepositorySession extends
               Logger.trace(LOG_TAG, "Remote modified, local not. Deleting.");
               deleteExistingRecord(existingRecord);
               trackRecord(record);
-              delegate.onRecordStoreSucceeded(record);
+              delegate.onRecordStoreSucceeded(record.guid);
               return;
             }
 
@@ -614,7 +615,7 @@ public class FormHistoryRepositorySession extends
               Logger.trace(LOG_TAG, "Remote is newer, and deleted. Purging local.");
               deleteExistingRecord(existingRecord);
               trackRecord(record);
-              delegate.onRecordStoreSucceeded(record);
+              delegate.onRecordStoreSucceeded(record.guid);
               return;
             }
 
@@ -638,7 +639,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "No match. Inserting.");
             insertNewRegularRecord(record);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 
@@ -650,7 +651,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "Remote guid different from local guid. Storing to keep remote guid.");
             replaceExistingRecordWithRegularRecord(record, existingRecord);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 
@@ -660,7 +661,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "Remote modified, local not. Storing.");
             replaceExistingRecordWithRegularRecord(record, existingRecord);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 
@@ -669,7 +670,7 @@ public class FormHistoryRepositorySession extends
             Logger.trace(LOG_TAG, "Remote is newer, and not deleted. Storing.");
             replaceExistingRecordWithRegularRecord(record, existingRecord);
             trackRecord(record);
-            delegate.onRecordStoreSucceeded(record);
+            delegate.onRecordStoreSucceeded(record.guid);
             return;
           }
 
@@ -680,7 +681,7 @@ public class FormHistoryRepositorySession extends
           return;
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         }
       }

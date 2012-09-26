@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.stage;
 
@@ -21,14 +21,13 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
-import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class EnsureCrypto5KeysStage
 extends AbstractNonRepositorySyncStage
-implements SyncStorageRequestDelegate, KeyUploadDelegate {
+implements SyncStorageRequestDelegate {
 
   public EnsureCrypto5KeysStage(GlobalSession session) {
     super(session);
@@ -50,19 +49,19 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     long lastModified = pck.lastModified();
     if (retrying || !infoCollections.updateNeeded(CRYPTO_COLLECTION, lastModified)) {
       // Try to use our local collection keys for this session.
-      Logger.info(LOG_TAG, "Trying to use persisted collection keys for this session.");
+      Logger.debug(LOG_TAG, "Trying to use persisted collection keys for this session.");
       CollectionKeys keys = pck.keys();
       if (keys != null) {
-        Logger.info(LOG_TAG, "Using persisted collection keys for this session.");
+        Logger.trace(LOG_TAG, "Using persisted collection keys for this session.");
         session.config.setCollectionKeys(keys);
         session.advance();
         return;
       }
-      Logger.info(LOG_TAG, "Failed to use persisted collection keys for this session.");
+      Logger.trace(LOG_TAG, "Failed to use persisted collection keys for this session.");
     }
 
-    // We need an update: fetch or upload keys as necessary.
-    Logger.info(LOG_TAG, "Fetching fresh collection keys for this session.");
+    // We need an update: fetch fresh keys.
+    Logger.debug(LOG_TAG, "Fetching fresh collection keys for this session.");
     try {
       SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
       request.delegate = this;
@@ -109,17 +108,17 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     }
 
     if (newDefaultKeyBundle == null) {
-      Logger.info(LOG_TAG, "New default key not provided; returning changed individual keys.");
+      Logger.trace(LOG_TAG, "New default key not provided; returning changed individual keys.");
       return changedKeys;
     }
 
     if (!defaultKeyChanged) {
-      Logger.info(LOG_TAG, "New default key is the same as old default key; returning changed individual keys.");
+      Logger.trace(LOG_TAG, "New default key is the same as old default key; returning changed individual keys.");
       return changedKeys;
     }
 
     // New keys have a different default/sync key; check known collections against the default key.
-    Logger.info(LOG_TAG, "New default key is not the same as old default key.");
+    Logger.debug(LOG_TAG, "New default key is not the same as old default key.");
     for (Stage stage : Stage.getNamedStages()) {
       String name = stage.getRepositoryName();
       if (!newKeys.keyBundleForCollectionIsNotDefault(name)) {
@@ -163,7 +162,7 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     PersistedCrypto5Keys pck = session.config.persistedCryptoKeys();
     if (!pck.persistedKeysExist()) {
       // New keys, and no old keys! Persist keys and server timestamp.
-      Logger.info(LOG_TAG, "Setting fetched keys for this session; persisting fetched keys and last modified.");
+      Logger.trace(LOG_TAG, "Setting fetched keys for this session; persisting fetched keys and last modified.");
       setAndPersist(pck, keys, responseTimestamp);
       session.advance();
       return;
@@ -174,7 +173,7 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     Set<String> changedCollections = collectionsToUpdate(oldKeys, keys);
     if (!changedCollections.isEmpty()) {
       // New keys, different from old keys.
-      Logger.info(LOG_TAG, "Fetched keys are not the same as persisted keys; " +
+      Logger.trace(LOG_TAG, "Fetched keys are not the same as persisted keys; " +
           "setting fetched keys for this session before resetting changed engines.");
       setAndPersist(pck, keys, responseTimestamp);
       session.resetStagesByName(changedCollections);
@@ -199,41 +198,16 @@ implements SyncStorageRequestDelegate, KeyUploadDelegate {
     }
 
     int statusCode = response.getStatusCode();
-    Logger.debug(LOG_TAG, "Got " + statusCode + " fetching keys.");
     if (statusCode == 404) {
-      // No keys. Generate and upload, then refetch.
-      CollectionKeys keys;
-      try {
-        keys = CollectionKeys.generateCollectionKeys();
-      } catch (CryptoException e) {
-        session.abort(e, "Couldn't generate new key bundle.");
-        return;
-      }
-      session.uploadKeys(keys, this);
+      Logger.info(LOG_TAG, "Got 404 fetching keys.  Fresh starting since keys are missing on server.");
+      session.freshStart();
       return;
     }
-    session.handleHTTPError(response, "Failure fetching keys.");
+    session.handleHTTPError(response, "Failure fetching keys: got response status code " + statusCode);
   }
 
   @Override
   public void handleRequestError(Exception ex) {
     session.abort(ex, "Failure fetching keys.");
-  }
-
-  @Override
-  public void onKeysUploaded() {
-    Logger.debug(LOG_TAG, "New keys uploaded. Persisting before starting stage again.");
-    try {
-      retrying = true;
-      this.execute();
-    } catch (NoSuchStageException e) {
-      session.abort(e, "No such stage.");
-    }
-  }
-
-  @Override
-  public void onKeyUploadFailed(Exception e) {
-    Logger.warn(LOG_TAG, "Key upload failed. Aborting sync.");
-    session.abort(e, "Key upload failed.");
   }
 }

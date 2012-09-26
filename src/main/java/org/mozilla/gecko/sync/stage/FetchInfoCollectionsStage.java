@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.stage;
 
@@ -11,11 +11,7 @@ import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
-import android.util.Log;
-
 public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
-  private static final String LOG_TAG = "FetchInfoCollStage";
-
   public FetchInfoCollectionsStage(GlobalSession session) {
     super(session);
   }
@@ -24,9 +20,6 @@ public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
 
     @Override
     public void handleSuccess(InfoCollections global) {
-      Log.i(LOG_TAG, "Got timestamps: ");
-
-      // TODO: decide whether more work needs to be done?
       session.advance();
     }
 

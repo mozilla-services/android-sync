@@ -30,7 +30,6 @@ public class ExpectManyStoredDelegate extends DefaultStoreDelegate {
   public void onStoreCompleted(long storeEnd) {
     try {
       assertEquals(expectedGUIDs.size(), stored.get());
-      System.out.println("Notifying in onStoreCompleted.");
       performNotify();
     } catch (AssertionFailedError e) {
       performNotify(e);
@@ -38,9 +37,9 @@ public class ExpectManyStoredDelegate extends DefaultStoreDelegate {
   }
 
   @Override
-  public void onRecordStoreSucceeded(Record record) {
+  public void onRecordStoreSucceeded(String guid) {
     try {
-      assertTrue(expectedGUIDs.contains(record.guid));
+      assertTrue(expectedGUIDs.contains(guid));
     } catch (AssertionFailedError e) {
       performNotify(e);
     }

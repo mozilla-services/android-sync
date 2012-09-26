@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories;
 
@@ -123,7 +123,7 @@ public abstract class RepositorySession {
   }
 
   public void storeDone(final long end) {
-    Logger.debug(LOG_TAG, "Scheduling onStoreCompleted for after storing is done.");
+    Logger.debug(LOG_TAG, "Scheduling onStoreCompleted for after storing is done: " + end);
     Runnable command = new Runnable() {
       @Override
       public void run() {
@@ -240,12 +240,10 @@ public abstract class RepositorySession {
       delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
     } catch (InvalidSessionTransitionException e) {
       Logger.error(LOG_TAG, "Tried to finish() an unstarted or already finished session");
-      InactiveSessionException ex = new InactiveSessionException(null);
-      ex.initCause(e);
-      throw ex;
+      throw new InactiveSessionException(e);
     }
 
-    Logger.info(LOG_TAG, "Shutting down work queues.");
+    Logger.trace(LOG_TAG, "Shutting down work queues.");
     storeWorkQueue.shutdown();
     delegateQueue.shutdown();
   }

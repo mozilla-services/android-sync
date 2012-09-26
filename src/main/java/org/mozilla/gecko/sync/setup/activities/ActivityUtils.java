@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.setup.activities;
 
@@ -11,10 +11,9 @@ public class ActivityUtils {
    * Sync key should be a 26-character string, and can include arbitrary
    * capitalization and hyphenation.
    *
-   * @param String
-   *          sync key Sync key entered by user in account setup.
-   * @return String formatted key Sync key in correct format (lower-cased and
-   *         de-hyphenated)
+   * @param key
+   *          Sync key entered by user in account setup.
+   * @return Sync key in correct format (lower-case, no hyphens).
    * @throws InvalidSyncKeyException
    */
   public static String validateSyncKey(String key) throws InvalidSyncKeyException {

@@ -27,7 +27,7 @@ public class TestClientsStage extends AndroidSyncTestCase {
 
   public void setUp() {
     ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(getApplicationContext());
-    db.wipe();
+    db.wipeDB();
     db.close();
   }
 
@@ -72,8 +72,12 @@ public class TestClientsStage extends AndroidSyncTestCase {
 
     stage.wipeLocal();
 
-    assertEquals(0, dataAccessor.clientsCount());
-    assertEquals(0L, session.config.getPersistedServerClientRecordTimestamp());
-    assertEquals(0, session.getClientsDelegate().getClientsCount());
+    try {
+      assertEquals(0, dataAccessor.clientsCount());
+      assertEquals(0L, session.config.getPersistedServerClientRecordTimestamp());
+      assertEquals(0, session.getClientsDelegate().getClientsCount());
+    } finally {
+      dataAccessor.close();
+    }
   }
 }

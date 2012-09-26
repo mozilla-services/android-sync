@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.domain;
 
@@ -14,8 +14,6 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
-
-import android.util.Log;
 
 /**
  * Covers the fields used by all bookmark objects.
@@ -180,7 +178,7 @@ public class BookmarkRecord extends Record {
       try {
         this.children = payload.getArray("children");
       } catch (NonArrayJSONException e) {
-        Log.e(LOG_TAG, "Got non-array children in bookmark record " + this.guid, e);
+        Logger.error(LOG_TAG, "Got non-array children in bookmark record " + this.guid, e);
         // Let's see if we can recover later by using the parentid pointers.
         this.children = new JSONArray();
       }

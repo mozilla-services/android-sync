@@ -3,6 +3,7 @@ if [ -z "$DESTDIR" ]; then
   echo "No destination directory specified."
   exit 1
 fi
+shift
 
 ANDROID=$DESTDIR/mobile/android
 if [ ! -d $ANDROID ]; then
@@ -22,8 +23,16 @@ fi
 echo "Preprocessing."
 ./preprocess.sh
 
-echo "Running tests."
-mvn clean test
+mvn clean compile || { echo 'mvn clean compile failed'; exit 1; }
+
+if [ "$1" = "notests" ]
+then
+  echo "Not running tests."
+else
+  echo "Running tests."
+  mvn test || { echo 'mvn test failed'; exit 1; }
+fi
+shift
 
 echo "Copying."
 ANDROID="$ANDROID" SYNC="$SYNC" ./fennec-copy-code.sh

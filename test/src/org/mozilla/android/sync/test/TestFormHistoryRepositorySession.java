@@ -75,7 +75,6 @@ public class TestFormHistoryRepositorySession extends AndroidSyncTestCase {
           final FormHistoryRepositorySession session = new FormHistoryRepositorySession(this, context) {
             @Override
             protected synchronized void trackGUID(String guid) {
-              System.out.println("Ignoring trackGUID call: this is a test!");
             }
           };
           delegate.onSessionCreated(session);
@@ -397,8 +396,8 @@ public class TestFormHistoryRepositorySession extends AndroidSyncTestCase {
 
   public static class ExpectNoStoreDelegate extends ExpectStoreCompletedDelegate {
     @Override
-    public void onRecordStoreSucceeded(Record record) {
-      performNotify("Should not have stored record " + record.guid, null);
+    public void onRecordStoreSucceeded(String guid) {
+      performNotify("Should not have stored record " + guid, null);
     }
   }
 

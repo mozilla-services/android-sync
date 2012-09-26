@@ -43,7 +43,12 @@ def update_file_named(filename):
             print filename + ": skipped."
         return
 
-    fdata = file(filename, "r+").read()
+    try:
+        fdata = file(filename, "r+").read()
+    except IOError:
+        if (args.verbose):
+            print filename + ": skipped!"
+        return
 
     firstline = FIRSTLINE_REGEXP.search(fdata)
     if (firstline is None):

@@ -25,6 +25,7 @@ import org.mozilla.android.sync.test.helpers.ExpectStoredDelegate;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
@@ -38,13 +39,12 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.util.Log;
 
 public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   protected static String LOG_TAG = "BrowserRepositoryTest";
 
   protected static void wipe(AndroidBrowserRepositoryDataAccessor helper) {
-    Log.i(LOG_TAG, "Wiping.");
+    Logger.debug(LOG_TAG, "Wiping.");
     try {
       helper.wipe();
     } catch (NullPointerException e) {
@@ -54,7 +54,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
       // error shouldn't occur in the future, but results from
       // trying to access content providers before Fennec has
       // been run at least once.
-      Log.e(LOG_TAG, "ProfileDatabaseException seen in wipe. Begin should fail");
+      Logger.error(LOG_TAG, "ProfileDatabaseException seen in wipe. Begin should fail");
       fail("NullPointerException in wipe.");
     }
   }
@@ -162,7 +162,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    *
    * @param session
    * @param record
-   * @return
+   * @return Runnable.
    */
   public static Runnable quietStoreRunnable(final RepositorySession session, final Record record) {
     return storeRunnable(session, record, new ExpectStoreCompletedDelegate());
@@ -286,9 +286,9 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   }
   
   protected void basicFetchAllTest(Record[] expected) {
-    Log.i("rnewman", "Starting testFetchAll.");
+    Logger.debug("rnewman", "Starting testFetchAll.");
     RepositorySession session = createAndBeginSession();
-    Log.i("rnewman", "Prepared.");
+    Logger.debug("rnewman", "Prepared.");
 
     AndroidBrowserRepositoryDataAccessor helper = getDataAccessor();
     helper.dumpDB();
@@ -347,9 +347,9 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     expected[0] = record0.guid;
     expected[1] = record1.guid;
 
-    Log.i(getName(), "Storing two records...");
+    Logger.debug(getName(), "Storing two records...");
     performWait(storeManyRunnable(session, new Record[] { record0, record1 }));
-    Log.i(getName(), "Getting guids since " + timestamp + "; expecting " + expected.length);
+    Logger.debug(getName(), "Getting guids since " + timestamp + "; expecting " + expected.length);
     performWait(guidsSinceRunnable(session, timestamp, expected));
     dispose(session);
   }
@@ -373,26 +373,26 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
     performWait(storeRunnable(session, record0));
     long timestamp = System.currentTimeMillis();
-    Log.i("fetchSinceOneRecord", "Entering synchronized section. Timestamp " + timestamp);
+    Logger.debug("fetchSinceOneRecord", "Entering synchronized section. Timestamp " + timestamp);
     synchronized(this) {
       try {
         wait(1000);
       } catch (InterruptedException e) {
-        Log.w("fetchSinceOneRecord", "Interrupted.", e);
+        Logger.warn("fetchSinceOneRecord", "Interrupted.", e);
       }
     }
-    Log.i("fetchSinceOneRecord", "Storing.");
+    Logger.debug("fetchSinceOneRecord", "Storing.");
     performWait(storeRunnable(session, record1));
 
-    Log.i("fetchSinceOneRecord", "Fetching record 1.");
+    Logger.debug("fetchSinceOneRecord", "Fetching record 1.");
     String[] expectedOne = new String[] { record1.guid };
     performWait(fetchSinceRunnable(session, timestamp + 10, expectedOne));
 
-    Log.i("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
+    Logger.debug("fetchSinceOneRecord", "Fetching both, relying on inclusiveness.");
     String[] expectedBoth = new String[] { record0.guid, record1.guid };
     performWait(fetchSinceRunnable(session, timestamp - 3000, expectedBoth));
 
-    Log.i("fetchSinceOneRecord", "Done.");
+    Logger.debug("fetchSinceOneRecord", "Done.");
     dispose(session);
   }
   
@@ -586,24 +586,24 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
   // should have its guid replaced (the assumption is that the record existed locally
   // and then sync was enabled and this record existed on another sync'd device).
   public void storeIdenticalExceptGuid(Record record0) {
-    Log.i("storeIdenticalExceptGuid", "Started.");
+    Logger.debug("storeIdenticalExceptGuid", "Started.");
     final RepositorySession session = createAndBeginSession();
-    Log.i("storeIdenticalExceptGuid", "Session is " + session);
+    Logger.debug("storeIdenticalExceptGuid", "Session is " + session);
     performWait(storeRunnable(session, record0));
-    Log.i("storeIdenticalExceptGuid", "Stored record0.");
+    Logger.debug("storeIdenticalExceptGuid", "Stored record0.");
     DefaultFetchDelegate timestampDelegate = getTimestampDelegate(record0.guid);
 
     performWait(fetchRunnable(session, new String[] { record0.guid }, timestampDelegate));
-    Log.i("storeIdenticalExceptGuid", "fetchRunnable done.");
+    Logger.debug("storeIdenticalExceptGuid", "fetchRunnable done.");
     record0.lastModified = timestampDelegate.records.get(0).lastModified + 3000;
     record0.guid = Utils.generateGuid();
-    Log.i("storeIdenticalExceptGuid", "Storing modified...");
+    Logger.debug("storeIdenticalExceptGuid", "Storing modified...");
     performWait(storeRunnable(session, record0));
-    Log.i("storeIdenticalExceptGuid", "Stored modified.");
+    Logger.debug("storeIdenticalExceptGuid", "Stored modified.");
     
     Record[] expected = new Record[] { record0 };
     performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));
-    Log.i("storeIdenticalExceptGuid", "Fetched all. Returning.");
+    Logger.debug("storeIdenticalExceptGuid", "Fetched all. Returning.");
     dispose(session);
   }
   
@@ -624,33 +624,33 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * and was not marked deleted (so keep it)
    */
   protected void deleteLocalNewer(Record local, Record remote) {
-    Log.d("deleteLocalNewer", "Begin.");
+    Logger.debug("deleteLocalNewer", "Begin.");
     final RepositorySession session = createAndBeginSession();
 
-    Log.d("deleteLocalNewer", "Storing local...");
+    Logger.debug("deleteLocalNewer", "Storing local...");
     performWait(storeRunnable(session, local));
 
     // Create an older version of a record with the same GUID.
     remote.guid = local.guid;
 
-    Log.d("deleteLocalNewer", "Fetching...");
+    Logger.debug("deleteLocalNewer", "Fetching...");
 
     // Get the timestamp and make remote older than it
     Record[] expected = new Record[] { local };
     ExpectFetchDelegate timestampDelegate = preparedExpectFetchDelegate(expected);
     performWait(fetchRunnable(session, new String[] { remote.guid }, timestampDelegate));
 
-    Log.d("deleteLocalNewer", "Fetched.");
+    Logger.debug("deleteLocalNewer", "Fetched.");
     remote.lastModified = timestampDelegate.records.get(0).lastModified - 1000;
 
-    Log.d("deleteLocalNewer", "Last modified is " + remote.lastModified);
+    Logger.debug("deleteLocalNewer", "Last modified is " + remote.lastModified);
     remote.deleted = true;
-    Log.d("deleteLocalNewer", "Storing deleted...");
+    Logger.debug("deleteLocalNewer", "Storing deleted...");
     performWait(quietStoreRunnable(session, remote));      // This appears to do a lot of work...?!
 
     // Do a fetch and make sure that we get back the first (local) record.
     performWait(fetchAllRunnable(session, preparedExpectFetchDelegate(expected)));
-    Log.d("deleteLocalNewer", "Fetched and done!");
+    Logger.debug("deleteLocalNewer", "Fetched and done!");
     dispose(session);
   }
   
@@ -677,7 +677,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
    * These tests don't need to be overriden in subclasses, they will just work.
    */
   public void testCreateSessionNullContext() {
-    Log.i(LOG_TAG, "In testCreateSessionNullContext.");
+    Logger.debug(LOG_TAG, "In testCreateSessionNullContext.");
     Repository repo = getRepository();
     try {
       repo.createSession(new DefaultSessionCreationDelegate(), null);
@@ -734,11 +734,11 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
     try {
       session.begin(new ExpectBeginFailDelegate());
     } catch (InvalidSessionTransitionException e) {
-      Log.i(getName(), "Yay! Got an exception.", e);
+      Logger.debug(getName(), "Yay! Got an exception.", e);
       dispose(session);
       return;
     } catch (Exception e) {
-      Log.i(getName(), "Yay! Got an exception.", e);
+      Logger.debug(getName(), "Yay! Got an exception.", e);
       dispose(session);
       return;
     }
@@ -771,7 +771,7 @@ public abstract class AndroidBrowserRepositoryTest extends AndroidSyncTestCase {
 
   public void testFetchOnFinishedSession() {
     final RepositorySession session = createAndBeginSession();
-    Log.i(getName(), "Finishing...");
+    Logger.debug(getName(), "Finishing...");
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
     try {
       session.fetch(new String[] { Utils.generateGuid() }, new DefaultFetchDelegate());

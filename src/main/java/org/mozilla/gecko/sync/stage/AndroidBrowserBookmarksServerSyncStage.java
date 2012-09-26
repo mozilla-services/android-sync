@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.stage;
 
@@ -15,6 +15,7 @@ import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.AndroidBrowserBookmarksRepository;
 import org.mozilla.gecko.sync.repositories.android.FennecControlHelper;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecordFactory;
+import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
 public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   protected static final String LOG_TAG = "BookmarksStage";
@@ -32,9 +33,15 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   protected String getCollection() {
     return "bookmarks";
   }
+
   @Override
   protected String getEngineName() {
     return "bookmarks";
+  }
+
+  @Override
+  public Integer getStorageVersion() {
+    return VersionConstants.BOOKMARKS_ENGINE_VERSION;
   }
 
   @Override

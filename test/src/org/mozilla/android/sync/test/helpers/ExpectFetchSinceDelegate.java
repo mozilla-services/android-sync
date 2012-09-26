@@ -12,7 +12,6 @@ import java.util.Arrays;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 import junit.framework.AssertionFailedError;
-import android.util.Log;
 
 public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
   private String[] expected;
@@ -26,9 +25,7 @@ public class ExpectFetchSinceDelegate extends DefaultFetchDelegate {
 
   @Override
   public void onFetchCompleted(final long fetchEnd) {
-    Log.i("ExpectFetchSinceDelegate", "onFetchCompleted.");
     AssertionFailedError err = null;
-    Log.i("ExpectFetchSinceDelegate", "recordsSize:" + records.size());
     try {
       int countSpecials = 0;
       for (Record record : records) {

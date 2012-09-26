@@ -3,7 +3,12 @@
 
 package org.mozilla.android.sync.test;
 
+import org.json.simple.JSONArray;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
+import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
+import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
@@ -19,6 +24,15 @@ import android.os.RemoteException;
  *
  */
 public class TestFennecTabsStorage extends AndroidSyncTestCase {
+  public static final String TEST_CLIENT_GUID = "test guid"; // Real GUIDs never contain spaces.
+  public static final String TEST_CLIENT_NAME = "test client name";
+
+  public static final String TABS_CLIENT_GUID_IS = BrowserContract.Tabs.CLIENT_GUID + " = ?";
+
+  protected Tab testTab1;
+  protected Tab testTab2;
+  protected Tab testTab3;
+
   private ContentProviderClient getClientsClient() {
     final ContentResolver cr = getApplicationContext().getContentResolver();
     return cr.acquireContentProviderClient(BrowserContract.Clients.CONTENT_URI);
@@ -27,6 +41,39 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
   private ContentProviderClient getTabsClient() {
     final ContentResolver cr = getApplicationContext().getContentResolver();
     return cr.acquireContentProviderClient(BrowserContract.Tabs.CONTENT_URI);
+  }
+
+  protected int deleteAllTestTabs(final ContentProviderClient tabsClient) throws RemoteException {
+    if (tabsClient == null) {
+      return -1;
+    }
+    return tabsClient.delete(BrowserContract.Tabs.CONTENT_URI, TABS_CLIENT_GUID_IS, new String[] { TEST_CLIENT_GUID });
+  }
+
+  protected void tearDown() throws Exception {
+    deleteAllTestTabs(getTabsClient());
+  }
+
+  @SuppressWarnings("unchecked")
+  private void insertSomeTestTabs(ContentProviderClient tabsClient) throws RemoteException {
+    final JSONArray history1 = new JSONArray();
+    history1.add("http://test.com/test1.html");
+    testTab1 = new Tab("test title 1", "http://test.com/test1.png", history1, 1000);
+
+    final JSONArray history2 = new JSONArray();
+    history2.add("http://test.com/test2.html#1");
+    history2.add("http://test.com/test2.html#2");
+    history2.add("http://test.com/test2.html#3");
+    testTab2 = new Tab("test title 2", "http://test.com/test2.png", history2, 2000);
+
+    final JSONArray history3 = new JSONArray();
+    history3.add("http://test.com/test3.html#1");
+    history3.add("http://test.com/test3.html#2");
+    testTab3 = new Tab("test title 3", "http://test.com/test3.png", history3, 3000);
+
+    tabsClient.insert(BrowserContract.Tabs.CONTENT_URI, testTab1.toContentValues(TEST_CLIENT_GUID, 0));
+    tabsClient.insert(BrowserContract.Tabs.CONTENT_URI, testTab2.toContentValues(TEST_CLIENT_GUID, 1));
+    tabsClient.insert(BrowserContract.Tabs.CONTENT_URI, testTab3.toContentValues(TEST_CLIENT_GUID, 2));
   }
 
   // Sanity.
@@ -52,13 +99,12 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
   }
 
   public void testWipeTabs() throws RemoteException {
-    final Uri uri = BrowserContract.Tabs.CONTENT_URI;
     final ContentProviderClient tabsClient = getTabsClient();
 
     // Have to ensure that it's empty…
-    tabsClient.delete(uri, null, null);
+    deleteAllTestTabs(tabsClient);
 
-    int deleted = tabsClient.delete(uri, null, null);
+    int deleted = deleteAllTestTabs(tabsClient);
     assertEquals(0, deleted);
   }
 
@@ -115,5 +161,116 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
 
     int deleted = clientsClient.delete(uri, null, null);
     assertEquals(2, deleted);
+  }
+
+  public void testTabFromCursor() throws Exception {
+    final ContentProviderClient tabsClient = getTabsClient();
+
+    deleteAllTestTabs(tabsClient);
+    insertSomeTestTabs(tabsClient);
+
+    final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
+    Cursor cursor = null;
+    try {
+      cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, TABS_CLIENT_GUID_IS, new String[] { TEST_CLIENT_GUID }, positionAscending);
+      assertEquals(3, cursor.getCount());
+
+      cursor.moveToFirst();
+      final Tab parsed1 = FennecTabsRepository.tabFromCursor(cursor);
+      assertEquals(testTab1, parsed1);
+
+      cursor.moveToNext();
+      final Tab parsed2 = FennecTabsRepository.tabFromCursor(cursor);
+      assertEquals(testTab2, parsed2);
+
+      cursor.moveToPosition(2);
+      final Tab parsed3 = FennecTabsRepository.tabFromCursor(cursor);
+      assertEquals(testTab3, parsed3);
+    } finally {
+      cursor.close();
+    }
+  }
+
+  public void testTabsRecordFromCursor() throws Exception {
+    final ContentProviderClient tabsClient = getTabsClient();
+
+    deleteAllTestTabs(tabsClient);
+    insertSomeTestTabs(tabsClient);
+
+    final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
+    Cursor cursor = null;
+    try {
+      cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, TABS_CLIENT_GUID_IS, new String[] { TEST_CLIENT_GUID }, positionAscending);
+      assertEquals(3, cursor.getCount());
+
+      cursor.moveToPosition(1);
+
+      final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
+
+      // Make sure we clean up after ourselves.
+      assertEquals(1, cursor.getPosition());
+
+      assertEquals(TEST_CLIENT_GUID, tabsRecord.guid);
+      assertEquals(TEST_CLIENT_NAME, tabsRecord.clientName);
+
+      assertEquals(3, tabsRecord.tabs.size());
+      assertEquals(testTab1, tabsRecord.tabs.get(0));
+      assertEquals(testTab2, tabsRecord.tabs.get(1));
+      assertEquals(testTab3, tabsRecord.tabs.get(2));
+
+      assertEquals(Math.max(Math.max(testTab1.lastUsed, testTab2.lastUsed), testTab3.lastUsed), tabsRecord.lastModified);
+    } finally {
+      cursor.close();
+    }
+  }
+
+  // Verify that we can fetch a record when there are no local tabs at all.
+  public void testEmptyTabsRecordFromCursor() throws Exception {
+    final ContentProviderClient tabsClient = getTabsClient();
+
+    deleteAllTestTabs(tabsClient);
+
+    final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
+    Cursor cursor = null;
+    try {
+      cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, TABS_CLIENT_GUID_IS, new String[] { TEST_CLIENT_GUID }, positionAscending);
+      assertEquals(0, cursor.getCount());
+
+      final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
+
+      assertEquals(TEST_CLIENT_GUID, tabsRecord.guid);
+      assertEquals(TEST_CLIENT_NAME, tabsRecord.clientName);
+
+      assertNotNull(tabsRecord.tabs);
+      assertEquals(0, tabsRecord.tabs.size());
+
+      assertEquals(0, tabsRecord.lastModified);
+    } finally {
+      cursor.close();
+    }
+  }
+
+  // Not much of a test, but verifies the tabs record at least agrees with the
+  // disk data and doubles as a database inspector.
+  public void testLocalTabs() throws Exception {
+    final ContentProviderClient tabsClient = getTabsClient();
+
+    final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
+    Cursor cursor = null;
+    try {
+      // Keep this in sync with the Fennec schema.
+      cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, BrowserContract.Tabs.CLIENT_GUID + " IS NULL", null, positionAscending);
+      RepoUtils.dumpCursor(cursor);
+
+      final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
+
+      assertEquals(TEST_CLIENT_GUID, tabsRecord.guid);
+      assertEquals(TEST_CLIENT_NAME, tabsRecord.clientName);
+
+      assertNotNull(tabsRecord.tabs);
+      assertEquals(cursor.getCount(), tabsRecord.tabs.size());
+    } finally {
+      cursor.close();
+    }
   }
 }

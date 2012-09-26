@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.stage;
 
@@ -9,6 +9,8 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.sync.CredentialsSource;
+import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
@@ -16,8 +18,14 @@ import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncStorageRequest;
+import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
@@ -29,8 +37,10 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionBeginDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
+import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
+import org.mozilla.gecko.sync.synchronizer.SynchronizerSession;
 
 import android.content.Context;
 
@@ -49,6 +59,9 @@ public abstract class ServerSyncStage implements
 
   protected final GlobalSession session;
 
+  protected long stageStartTimestamp = -1;
+  protected long stageCompleteTimestamp = -1;
+
   public ServerSyncStage(GlobalSession session) {
     if (session == null) {
       throw new IllegalArgumentException("session must not be null.");
@@ -63,9 +76,45 @@ public abstract class ServerSyncStage implements
    * @throws MetaGlobalException
    */
   protected boolean isEnabled() throws MetaGlobalException {
-    // TODO: pass EngineSettings here to check syncID and storage version.
-    // Catch the subclasses of MetaGlobalException to trigger various resets and wipes.
-    return session.engineIsEnabled(this.getEngineName(), null);
+    EngineSettings engineSettings = null;
+    try {
+       engineSettings = getEngineSettings();
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Unable to get engine settings for " + this + ": fetching config failed.", e);
+      // Fall through; null engineSettings will pass below.
+    }
+
+    // We can be disabled by the server's meta/global record, or malformed in the server's meta/global record.
+    // We catch the subclasses of MetaGlobalException to trigger various resets and wipes in execute().
+    boolean enabledInMetaGlobal = session.engineIsEnabled(this.getEngineName(), engineSettings);
+    if (!enabledInMetaGlobal) {
+      Logger.debug(LOG_TAG, "Stage " + this.getEngineName() + " disabled by server meta/global.");
+      return false;
+    }
+
+    // We can also be disabled just for this sync.
+    if (session.config.stagesToSync == null) {
+      return true;
+    }
+    boolean enabledThisSync = session.config.stagesToSync.contains(this.getEngineName()); // For ServerSyncStage, stage name == engine name.
+    if (!enabledThisSync) {
+      Logger.debug(LOG_TAG, "Stage " + this.getEngineName() + " disabled just for this sync.");
+    }
+    return enabledThisSync;
+  }
+
+  protected EngineSettings getEngineSettings() throws NonObjectJSONException, IOException, ParseException {
+    Integer version = getStorageVersion();
+    if (version == null) {
+      Logger.warn(LOG_TAG, "null storage version for " + this + "; using version 0.");
+      version = new Integer(0);
+    }
+
+    SynchronizerConfiguration config = this.getConfig();
+    if (config == null) {
+      return new EngineSettings(null, version.intValue());
+    }
+    return new EngineSettings(config.syncID, version.intValue());
   }
 
   protected abstract String getCollection();
@@ -110,20 +159,27 @@ public abstract class ServerSyncStage implements
   public Synchronizer getConfiguredSynchronizer(GlobalSession session) throws NoCollectionKeysSetException, URISyntaxException, NonObjectJSONException, IOException, ParseException {
     Repository remote = wrappedServerRepo();
 
-    Synchronizer synchronizer = new Synchronizer();
+    Synchronizer synchronizer = new ServerLocalSynchronizer();
     synchronizer.repositoryA = remote;
     synchronizer.repositoryB = this.getLocalRepository();
+    synchronizer.load(getConfig());
 
-    SynchronizerConfiguration config = this.getConfig();
-    synchronizer.load(config);
-
-    // TODO: should wipe in either direction?
-    // TODO: syncID?!
     return synchronizer;
   }
 
+  /**
+   * Reset timestamps.
+   */
   @Override
   public void resetLocal() {
+    resetLocal(null);
+  }
+
+  /**
+   * Reset timestamps and possibly set syncID.
+   * @param syncID if non-null, new syncID to persist.
+   */
+  protected void resetLocal(String syncID) {
     // Clear both timestamps.
     SynchronizerConfiguration config;
     try {
@@ -133,10 +189,14 @@ public abstract class ServerSyncStage implements
       return;
     }
 
+    if (syncID != null) {
+      config.syncID = syncID;
+      Logger.info(LOG_TAG, "Setting syncID for " + this + " to '" + syncID + "'.");
+    }
     config.localBundle.setTimestamp(0L);
     config.remoteBundle.setTimestamp(0L);
-    Logger.info(LOG_TAG, "Reset timestamps for " + this);
     persistConfig(config);
+    Logger.info(LOG_TAG, "Reset timestamps for " + this);
   }
 
   // Not thread-safe. Use with caution.
@@ -156,8 +216,8 @@ public abstract class ServerSyncStage implements
   /**
    * Synchronously wipe this stage by instantiating a local repository session
    * and wiping that.
-   *
-   * Logs and rethrows an exception on failure.
+   * <p>
+   * Logs and re-throws an exception on failure.
    */
   @Override
   public void wipeLocal() throws Exception {
@@ -290,22 +350,147 @@ public abstract class ServerSyncStage implements
     Logger.info(LOG_TAG, "Wiping stage complete.");
   }
 
+  /**
+   * Asynchronously wipe collection on server.
+   */
+  protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
+    SyncStorageRequest request;
+
+    try {
+      request = new SyncStorageRequest(session.config.collectionURI(getCollection()));
+    } catch (URISyntaxException ex) {
+      Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
+      wipeDelegate.onWipeFailed(ex);
+      return;
+    }
+
+    request.delegate = new SyncStorageRequestDelegate() {
+
+      @Override
+      public String ifUnmodifiedSince() {
+        return null;
+      }
+
+      @Override
+      public void handleRequestSuccess(SyncStorageResponse response) {
+        BaseResource.consumeEntity(response);
+        resetLocal();
+        wipeDelegate.onWiped(response.normalizedWeaveTimestamp());
+      }
+
+      @Override
+      public void handleRequestFailure(SyncStorageResponse response) {
+        Logger.warn(LOG_TAG, "Got request failure " + response.getStatusCode() + " in wipeServer.");
+        // Process HTTP failures here to pick up backoffs, etc.
+        session.interpretHTTPFailure(response.httpResponse());
+        BaseResource.consumeEntity(response); // The exception thrown should not need the body of the response.
+        wipeDelegate.onWipeFailed(new HTTPFailureException(response));
+      }
+
+      @Override
+      public void handleRequestError(Exception ex) {
+        Logger.warn(LOG_TAG, "Got exception in wipeServer.", ex);
+        wipeDelegate.onWipeFailed(ex);
+      }
+
+      @Override
+      public String credentials() {
+        return credentials.credentials();
+      }
+    };
+
+    request.delete();
+  }
+
+  /**
+   * Synchronously wipe the server.
+   * <p>
+   * Logs and re-throws an exception on failure.
+   */
+  public void wipeServer() throws Exception {
+    final WipeWaiter monitor = new WipeWaiter();
+
+    final Runnable doWipe = new Runnable() {
+      @Override
+      public void run() {
+        wipeServer(session, new WipeServerDelegate() {
+          @Override
+          public void onWiped(long timestamp) {
+            synchronized (monitor) {
+              monitor.notify();
+            }
+          }
+
+          @Override
+          public void onWipeFailed(Exception e) {
+            synchronized (monitor) {
+              monitor.notify(e, false);
+            }
+          }
+        });
+      }
+    };
+
+    final Thread wiping = new Thread(doWipe);
+    synchronized (monitor) {
+      wiping.start();
+      try {
+        monitor.wait();
+      } catch (InterruptedException e) {
+        Logger.error(LOG_TAG, "Server wipe interrupted.");
+      }
+    }
+
+    if (!monitor.wipeSucceeded) {
+      Logger.error(LOG_TAG, "Failed to wipe server.");
+      throw monitor.error;
+    }
+
+    Logger.info(LOG_TAG, "Wiping server complete.");
+  }
+
   @Override
   public void execute() throws NoSuchStageException {
     final String name = getEngineName();
     Logger.debug(LOG_TAG, "Starting execute for " + name);
 
+    stageStartTimestamp = System.currentTimeMillis();
+
     try {
       if (!this.isEnabled()) {
-        Logger.info(LOG_TAG, "Stage " + name + " disabled; skipping.");
+        Logger.info(LOG_TAG, "Skipping stage " + name + ".");
         session.advance();
         return;
       }
+    } catch (MetaGlobalException.MetaGlobalMalformedSyncIDException e) {
+      // Bad engine syncID. This should never happen. Wipe the server.
+      try {
+        session.updateMetaGlobalWith(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
+        Logger.info(LOG_TAG, "Wiping server because malformed engine sync ID was found in meta/global.");
+        wipeServer();
+        Logger.info(LOG_TAG, "Wiped server after malformed engine sync ID found in meta/global.");
+      } catch (Exception ex) {
+        session.abort(ex, "Failed to wipe server after malformed engine sync ID found in meta/global.");
+      }
+    } catch (MetaGlobalException.MetaGlobalMalformedVersionException e) {
+      // Bad engine version. This should never happen. Wipe the server.
+      try {
+        session.updateMetaGlobalWith(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
+        Logger.info(LOG_TAG, "Wiping server because malformed engine version was found in meta/global.");
+        wipeServer();
+        Logger.info(LOG_TAG, "Wiped server after malformed engine version found in meta/global.");
+      } catch (Exception ex) {
+        session.abort(ex, "Failed to wipe server after malformed engine version found in meta/global.");
+      }
+    } catch (MetaGlobalException.MetaGlobalStaleClientSyncIDException e) {
+      // Our syncID is wrong. Reset client and take the server syncID.
+      Logger.warn(LOG_TAG, "Remote engine syncID different from local engine syncID:" +
+                           " resetting local engine and assuming remote engine syncID.");
+      this.resetLocal(e.serverSyncID);
     } catch (MetaGlobalException e) {
       session.abort(e, "Inappropriate meta/global; refusing to execute " + name + " stage.");
       return;
     }
-
 
     Synchronizer synchronizer;
     try {
@@ -332,38 +517,68 @@ public abstract class ServerSyncStage implements
     Logger.debug(LOG_TAG, "Reached end of execute.");
   }
 
+  /**
+   * Express the duration taken by this stage as a String, like "0.56 seconds".
+   *
+   * @return formatted string.
+   */
+  protected String getStageDurationString() {
+    return Utils.formatDuration(stageStartTimestamp, stageCompleteTimestamp);
+  }
+
+  /**
+   * We synced this engine!  Persist timestamps and advance the session.
+   *
+   * @param synchronizer the <code>Synchronizer</code> that succeeded.
+   */
   @Override
   public void onSynchronized(Synchronizer synchronizer) {
+    stageCompleteTimestamp = System.currentTimeMillis();
     Logger.debug(LOG_TAG, "onSynchronized.");
 
-    SynchronizerConfiguration synchronizerConfiguration = synchronizer.save();
-    if (synchronizerConfiguration != null) {
-      persistConfig(synchronizerConfiguration);
+    SynchronizerConfiguration newConfig = synchronizer.save();
+    if (newConfig != null) {
+      persistConfig(newConfig);
     } else {
-      Logger.warn(LOG_TAG, "Didn't get configuration from synchronizer after success");
+      Logger.warn(LOG_TAG, "Didn't get configuration from synchronizer after success.");
     }
 
+    final SynchronizerSession synchronizerSession = synchronizer.getSynchronizerSession();
+    int inboundCount = synchronizerSession.getInboundCount();
+    int outboundCount = synchronizerSession.getOutboundCount();
+    Logger.info(LOG_TAG, "Received " + inboundCount + " and sent " + outboundCount +
+        " records in " + getStageDurationString() + ".");
     Logger.info(LOG_TAG, "Advancing session.");
     session.advance();
   }
 
+  /**
+   * We failed to sync this engine! Do not persist timestamps (which means that
+   * the next sync will include this sync's data), but do advance the session
+   * (if we didn't get a Retry-After header).
+   *
+   * @param synchronizer the <code>Synchronizer</code> that failed.
+   */
   @Override
   public void onSynchronizeFailed(Synchronizer synchronizer,
                                   Exception lastException, String reason) {
-    Logger.debug(LOG_TAG, "onSynchronizeFailed: " + reason);
+    stageCompleteTimestamp = System.currentTimeMillis();
+    Logger.warn(LOG_TAG, "Synchronize failed: " + reason, lastException);
 
     // This failure could be due to a 503 or a 401 and it could have headers.
+    // Interrogate the headers but only abort the global session if Retry-After header is set.
     if (lastException instanceof HTTPFailureException) {
-      session.handleHTTPError(((HTTPFailureException)lastException).response, reason);
-    } else {
-      session.abort(lastException, reason);
+      SyncStorageResponse response = ((HTTPFailureException)lastException).response;
+      if (response.retryAfterInSeconds() > 0) {
+        session.handleHTTPError(response, reason); // Calls session.abort().
+        return;
+      } else {
+        session.interpretHTTPFailure(response.httpResponse()); // Does not call session.abort().
+      }
     }
-  }
 
-  @Override
-  public void onSynchronizeAborted(Synchronizer synchronize) {
-    Logger.info(LOG_TAG, "onSynchronizeAborted.");
-
-    session.abort(null, "Synchronization was aborted.");
+    Logger.info(LOG_TAG, "Advancing session even though stage failed (took " + getStageDurationString() +
+        "). Timestamps not persisted.");
+    session.advance();
   }
 }

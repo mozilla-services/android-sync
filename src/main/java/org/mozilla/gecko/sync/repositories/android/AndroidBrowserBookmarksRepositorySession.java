@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.android;
 
@@ -195,6 +195,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    */
   public static boolean forbiddenGUID(String recordGUID) {
     return recordGUID == null ||
+           "readinglist".equals(recordGUID) ||      // Temporary: Bug 762118
            "places".equals(recordGUID) ||
            "tags".equals(recordGUID);
   }
@@ -298,19 +299,20 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
    * @param persist
    *        True if generated positions should be written to the database. The modified
    *        time of the parent folder is only bumped if this is true.
+   * @param childArray
+   *        A new, empty JSONArray which will be populated with an array of GUIDs.
    * @return
-   *        An array of GUIDs.
+   *        True if the resulting array is "clean" (i.e., reflects the content of the database).
    * @throws NullCursorException
    */
   @SuppressWarnings("unchecked")
-  private JSONArray getChildrenArray(long folderID, boolean persist) throws NullCursorException {
+  private boolean getChildrenArray(long folderID, boolean persist, JSONArray childArray) throws NullCursorException {
     trace("Calling getChildren for androidID " + folderID);
-    JSONArray childArray = new JSONArray();
     Cursor children = dataAccessor.getChildren(folderID);
     try {
       if (!children.moveToFirst()) {
         trace("No children: empty cursor.");
-        return childArray;
+        return true;
       }
       final int positionIndex = children.getColumnIndex(BrowserContract.Bookmarks.POSITION);
       final int count = children.getCount();
@@ -344,6 +346,9 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         if (atPos > 1 || pos != i) {
           changed = true;
         }
+
+        ++i;
+
         for (String guid : entry.getValue()) {
           if (!forbiddenGUID(guid)) {
             childArray.add(guid);
@@ -351,18 +356,19 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         }
       }
 
-      if (Logger.logVerbose(LOG_TAG)) {
+      if (Logger.shouldLogVerbose(LOG_TAG)) {
         // Don't JSON-encode unless we're logging.
         Logger.trace(LOG_TAG, "Output child array: " + childArray.toJSONString());
       }
 
       if (!changed) {
         Logger.debug(LOG_TAG, "Nothing moved! Database reflects child array.");
-        return childArray;
+        return true;
       }
 
       if (!persist) {
-        return childArray;
+        Logger.debug(LOG_TAG, "Returned array does not match database, and not persisting.");
+        return false;
       }
 
       Logger.debug(LOG_TAG, "Generating child array required moving records. Updating DB.");
@@ -371,11 +377,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Logger.debug(LOG_TAG, "Bumping parent time to " + time + ".");
         dataAccessor.bumpModified(folderID, time);
       }
+      return true;
     } finally {
       children.close();
     }
-
-    return childArray;
   }
 
   protected static boolean isDeleted(Cursor cur) {
@@ -488,10 +493,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     }
 
     long androidID = parentGuidToIDMap.get(recordGUID);
-    JSONArray childArray = getChildrenArray(androidID, persist);
-    if (childArray == null) {
-      return null;
-    }
+    JSONArray childArray = new JSONArray();
+    getChildrenArray(androidID, persist, childArray);
 
     Logger.debug(LOG_TAG, "Fetched " + childArray.size() + " children for " + recordGUID);
     return childArray;
@@ -509,6 +512,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     if (forbiddenGUID(bmk.guid)) {
       Logger.debug(LOG_TAG, "Ignoring forbidden record with guid: " + bmk.guid);
+      return true;
+    }
+
+    if ("readinglist".equals(bmk.parentID)) {      // Temporary: Bug 762118
+      Logger.debug(LOG_TAG,  "Ignoring reading list item with guid: " + bmk.guid);
       return true;
     }
 
@@ -586,7 +594,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     try {
       Uri recordURI = dbHelper.insert(toStore);
       if (recordURI == null) {
-        delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."));
+        delegate.onRecordStoreFailed(new RuntimeException("Got null URI inserting folder with guid " + toStore.guid + "."), record.guid);
         return false;
       }
       toStore.androidID = ContentUris.parseId(recordURI);
@@ -594,11 +602,11 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
       updateBookkeeping(toStore);
     } catch (Exception e) {
-      delegate.onRecordStoreFailed(e);
+      delegate.onRecordStoreFailed(e, record.guid);
       return false;
     }
     trackRecord(toStore);
-    delegate.onRecordStoreSucceeded(toStore);
+    delegate.onRecordStoreSucceeded(record.guid);
     return true;
   }
 
@@ -621,12 +629,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         // Something failed; most pessimistic action is to declare that all insertions failed.
         // TODO: perform the bulkInsert in a transaction and rollback unless all insertions succeed?
         for (Record failed : toStores) {
-          delegate.onRecordStoreFailed(new RuntimeException("Possibly failed to bulkInsert non-folder with guid " + failed.guid + "."));
+          delegate.onRecordStoreFailed(new RuntimeException("Possibly failed to bulkInsert non-folder with guid " + failed.guid + "."), failed.guid);
         }
         return;
       }
     } catch (NullCursorException e) {
-      delegate.onRecordStoreFailed(e); // TODO: include which records failed.
+      for (Record failed : toStores) {
+        delegate.onRecordStoreFailed(e, failed.guid);
+      }
       return;
     }
 
@@ -638,7 +648,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         Logger.warn(LOG_TAG, "Got exception updating bookkeeping of non-folder with guid " + succeeded.guid + ".", e);
       }
       trackRecord(succeeded);
-      delegate.onRecordStoreSucceeded(succeeded);
+      delegate.onRecordStoreSucceeded(succeeded.guid);
     }
   }
 
@@ -681,6 +691,12 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     // For now we *always* use the remote record's children array as a starting point.
     // We won't write it into the database yet; we'll record it and process as we go.
     reconciled.children = ((BookmarkRecord) remoteRecord).children;
+
+    // *Always* track folders, though: if we decide we need to reposition items, we'll
+    // untrack later.
+    if (reconciled.isFolder()) {
+      trackRecord(reconciled);
+    }
     return reconciled;
   }
 
@@ -699,7 +715,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     if (parentName == null) {
       return;
     }
-    if (Logger.logVerbose(LOG_TAG)) {
+    if (Logger.shouldLogVerbose(LOG_TAG)) {
       Logger.trace(LOG_TAG, "Replacing parent name \"" + r.parentName + "\" with \"" + parentName + "\".");
     }
     r.parentName = parentName;
@@ -805,7 +821,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
 
     JSONArray childArray = bmk.children;
 
-    if (Logger.logVerbose(LOG_TAG)) {
+    if (Logger.shouldLogVerbose(LOG_TAG)) {
       Logger.trace(LOG_TAG, bmk.guid + " has children " + childArray.toJSONString());
     }
     parentToChildArray.put(bmk.guid, childArray);
@@ -874,12 +890,14 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
         JSONArray onServer = entry.getValue();
         try {
           final long folderID = getIDForGUID(guid);
-          JSONArray inDB = getChildrenArray(folderID, false);
+          final JSONArray inDB = new JSONArray();
+          final boolean clean = getChildrenArray(folderID, false, inDB);
+          final boolean sameArrays = Utils.sameArrays(onServer, inDB);
 
           // If the local children and the remote children are already
           // the same, then we don't need to bump the modified time of the
           // parent: we wouldn't upload a different record, so avoid the cycle.
-          if (!Utils.sameArrays(onServer, inDB)) {
+          if (!sameArrays) {
             int added = 0;
             for (Object o : inDB) {
               if (!onServer.contains(o)) {
@@ -888,18 +906,16 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
               }
             }
             Logger.debug(LOG_TAG, "Added " + added + " items locally.");
+            Logger.debug(LOG_TAG, "Untracking and bumping " + guid + "(" + folderID + ")");
             dataAccessor.bumpModified(folderID, now());
-            // Wow, this is spectacularly wasteful.
-            Logger.debug(LOG_TAG, "Untracking " + guid);
-            final Record record = retrieveByGUIDDuringStore(guid);
-            if (record == null) {
-              return;
-            }
-            untrackRecord(record);
+            untrackGUID(guid);
           }
-          // Until getChildrenArray can tell us if it needed to make
-          // any changes at all, always update positions.
-          dataAccessor.updatePositions(new ArrayList<String>(onServer));
+
+          // If the arrays are different, or they're the same but not flushed to disk,
+          // write them out now.
+          if (!sameArrays || !clean) {
+            dataAccessor.updatePositions(new ArrayList<String>(onServer));
+          }
         } catch (Exception e) {
           Logger.warn(LOG_TAG, "Error repositioning children for " + guid, e);
         }

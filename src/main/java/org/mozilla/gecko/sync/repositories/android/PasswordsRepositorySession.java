@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.sync.repositories.android;
 
@@ -257,13 +257,13 @@ public class PasswordsRepositorySession extends
       public void run() {
         if (!isActive()) {
           Logger.warn(LOG_TAG, "RepositorySession is inactive. Store failing.");
-          delegate.onRecordStoreFailed(new InactiveSessionException(null));
+          delegate.onRecordStoreFailed(new InactiveSessionException(null), record.guid);
           return;
         }
 
         final String guid = remoteRecord.guid;
         if (guid == null) {
-          delegate.onRecordStoreFailed(new RuntimeException("Can't store record with null GUID."));
+          delegate.onRecordStoreFailed(new RuntimeException("Can't store record with null GUID."), record.guid);
           return;
         }
 
@@ -272,10 +272,10 @@ public class PasswordsRepositorySession extends
           existingRecord = retrieveByGUID(guid);
         } catch (NullCursorException e) {
           // Indicates a serious problem.
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         } catch (RemoteException e) {
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         }
 
@@ -330,7 +330,15 @@ public class PasswordsRepositorySession extends
         // Now we're processing a non-deleted incoming record.
         if (existingRecord == null) {
           trace("Looking up match for record " + remoteRecord.guid);
-          existingRecord = findExistingRecord(remoteRecord);
+          try {
+            existingRecord = findExistingRecord(remoteRecord);
+          } catch (RemoteException e) {
+            Logger.error(LOG_TAG, "Remote exception in findExistingRecord.");
+            delegate.onRecordStoreFailed(e, record.guid);
+          } catch (NullCursorException e) {
+            Logger.error(LOG_TAG, "Null cursor in findExistingRecord.");
+            delegate.onRecordStoreFailed(e, record.guid);
+          }
         }
 
         if (existingRecord == null) {
@@ -342,17 +350,17 @@ public class PasswordsRepositorySession extends
             inserted = insert(remoteRecord);
           } catch (RemoteException e) {
             Logger.debug(LOG_TAG, "Record insert caused a RemoteException.");
-            delegate.onRecordStoreFailed(e);
+            delegate.onRecordStoreFailed(e, record.guid);
             return;
           }
           trackRecord(inserted);
-          delegate.onRecordStoreSucceeded(inserted);
+          delegate.onRecordStoreSucceeded(inserted.guid);
           return;
         }
 
         // We found a local dupe.
         trace("Incoming record " + remoteRecord.guid + " dupes to local record " + existingRecord.guid);
-        Logger.debug(LOG_TAG, "remote " + remoteRecord + " dupes to " + existingRecord);
+        Logger.debug(LOG_TAG, "remote " + remoteRecord.guid + " dupes to " + existingRecord.guid);
         Record toStore = reconcileRecords(remoteRecord, existingRecord, lastRemoteRetrieval, lastLocalRetrieval);
 
         if (toStore == null) {
@@ -362,14 +370,12 @@ public class PasswordsRepositorySession extends
 
         // TODO: pass in timestamps?
         Logger.debug(LOG_TAG, "Replacing " + existingRecord.guid + " with record " + toStore.guid);
-        Logger.debug(LOG_TAG, "existing: " + existingRecord);
-        Logger.debug(LOG_TAG, "toStore: " + toStore);
         Record replaced = null;
         try {
           replaced = replace(existingRecord, toStore);
         } catch (RemoteException e) {
           Logger.debug(LOG_TAG, "Record replace caused a RemoteException.");
-          delegate.onRecordStoreFailed(e);
+          delegate.onRecordStoreFailed(e, record.guid);
           return;
         }
 
@@ -377,7 +383,7 @@ public class PasswordsRepositorySession extends
         // of reconcileRecords.
         Logger.debug(LOG_TAG, "Calling delegate callback with guid " + replaced.guid +
                               "(" + replaced.androidID + ")");
-        delegate.onRecordStoreSucceeded(replaced);
+        delegate.onRecordStoreSucceeded(record.guid);
         return;
       }
     };
@@ -435,8 +441,9 @@ public class PasswordsRepositorySession extends
 
   /**
    * Insert record and return the record with its updated androidId set.
-   * @param record
-   * @return
+   *
+   * @param record the record to insert.
+   * @return updated record.
    * @throws RemoteException
    */
   public PasswordRecord insert(PasswordRecord record) throws RemoteException {
@@ -530,7 +537,7 @@ public class PasswordsRepositorySession extends
         Record r = deleted ? deletedPasswordRecordFromCursor(cursor) : passwordRecordFromCursor(cursor);
         if (r != null) {
           if (filter == null || !filter.excludeRecord(r)) {
-            Logger.debug(LOG_TAG, "Fetched record " + r);
+            Logger.debug(LOG_TAG, "Processing record " + r.guid);
             delegate.onFetchedRecord(r);
           } else {
             Logger.debug(LOG_TAG, "Skipping filtered record " + r.guid);
@@ -581,7 +588,7 @@ public class PasswordsRepositorySession extends
     Passwords.USERNAME_FIELD  + " = ? AND " +
     Passwords.PASSWORD_FIELD  + " = ?";
 
-  private PasswordRecord findExistingRecord(PasswordRecord record) {
+  private PasswordRecord findExistingRecord(PasswordRecord record) throws NullCursorException, RemoteException {
     PasswordRecord foundRecord = null;
     Cursor cursor = null;
     // Only check the data table.
@@ -604,18 +611,12 @@ public class PasswordsRepositorySession extends
         // We don't have the keys for encrypting our query,
         // so we run a more general query and then filter
         // the returned records for a matching username.
-        Logger.trace(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
+        Logger.pii(LOG_TAG, "Checking incoming [" + record.encryptedUsername + "] to [" + foundRecord.encryptedUsername + "]");
         if (record.encryptedUsername.equals(foundRecord.encryptedUsername)) {
-          Logger.trace(LOG_TAG, "Found matching record: " + foundRecord);
+          Logger.trace(LOG_TAG, "Found matching record: " + foundRecord.guid);
           return foundRecord;
         }
       }
-    } catch (RemoteException e) {
-      Logger.error(LOG_TAG, "Remote exception in findExistingRecord.");
-      delegate.onRecordStoreFailed(e);
-    } catch (NullCursorException e) {
-      Logger.error(LOG_TAG, "Null cursor in findExistingRecord.");
-      delegate.onRecordStoreFailed(e);
     } finally {
       if (cursor != null) {
         cursor.close();
@@ -630,10 +631,10 @@ public class PasswordsRepositorySession extends
       deleteGUID(record.guid);
     } catch (RemoteException e) {
       Logger.error(LOG_TAG, "RemoteException in password delete.");
-      delegate.onRecordStoreFailed(e);
+      delegate.onRecordStoreFailed(e, record.guid);
       return;
     }
-    delegate.onRecordStoreSucceeded(record);
+    delegate.onRecordStoreSucceeded(record.guid);
   }
 
   /**

@@ -1,6 +1,10 @@
 #filter substitution
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE resources [
+
+<!-- For standalone running. -->
+<!ENTITY brandShortName "Firefox">
+
 <!-- Sync strings. -->
 #include sync_strings.dtd.in
 
