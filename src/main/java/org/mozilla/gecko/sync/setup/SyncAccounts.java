@@ -615,8 +615,8 @@ public class SyncAccounts {
   }
 
   /**
-   * Synchronously fetch SharedPreferences of a profile associated with a Sync
-   * account.
+   * Synchronously fetch SharedPreferences of a profile associated with the
+   * default Firefox profile of a Sync Account.
    * <p>
    * Uses the default package, default profile, and current version.
    * <p>
