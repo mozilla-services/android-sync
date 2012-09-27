@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
@@ -21,6 +22,7 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.test.InstrumentationTestCase;
 
@@ -369,25 +371,60 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
       account = SyncAccounts.createSyncAccount(syncAccount);
       assertNotNull(account);
 
-      // Test fetching parameters multiple times, since we need to invalidate this token type every fetch.
+      // Test fetching parameters multiple times. Historically, we needed to
+      // invalidate this token type every fetch; now we don't, but we'd like
+      // to ensure multiple fetches work.
       SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
       assertParams(params);
 
       params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
       assertParams(params);
 
-      // Would like to test this on the main thread, too, but there seems to be
-      // a problem: SyncAuthenticatorService ANR's, possibly because we block
-      // the main thread?
-      /*
+      // Test this works on the main thread.
       this.runTestOnUiThread(new Runnable() {
         @Override
         public void run() {
-          SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
-          assertParams(params);
+          SyncAccountParameters params;
+          try {
+            params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+            assertParams(params);
+          } catch (Exception e) {
+            fail("Fetching Sync account parameters failed on UI thread.");
+          }
         }
       });
-      */
+    } finally {
+      if (account != null) {
+        deleteAccount(this, accountManager, account);
+        account = null;
+      }
+    }
+  }
+
+  public void testMakeSyncAccountDeletedIntent() throws Throwable {
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
+    try {
+      account = SyncAccounts.createSyncAccount(syncAccount);
+      assertNotNull(account);
+
+      Intent intent = SyncAccounts.makeSyncAccountDeletedIntent(context, accountManager, account);
+      assertEquals(GlobalConstants.SYNC_ACCOUNT_DELETED_ACTION, intent.getAction());
+      assertEquals(GlobalConstants.SYNC_ACCOUNT_DELETED_INTENT_VERSION, intent.getLongExtra(Constants.JSON_KEY_VERSION, 0));
+      assertEquals(TEST_USERNAME, intent.getStringExtra(Constants.JSON_KEY_ACCOUNT));
+      assertTrue(Math.abs(intent.getLongExtra(Constants.JSON_KEY_TIMESTAMP, 0) - System.currentTimeMillis()) < 1000);
+
+      String payload = intent.getStringExtra(Constants.JSON_KEY_PAYLOAD);
+      assertNotNull(payload);
+
+      SyncAccountParameters params = new SyncAccountParameters(context, accountManager, ExtendedJSONObject.parseJSONObject(payload));
+      // Can't use assertParams because Sync key is deleted.
+      assertNotNull(params);
+      assertEquals(context, params.context);
+      assertEquals(Utils.usernameFromAccount(TEST_USERNAME), params.username);
+      assertEquals(TEST_PASSWORD, params.password);
+      assertEquals(TEST_SERVERURL, params.serverURL);
+      assertEquals("", params.syncKey);
     } finally {
       if (account != null) {
         deleteAccount(this, accountManager, account);
