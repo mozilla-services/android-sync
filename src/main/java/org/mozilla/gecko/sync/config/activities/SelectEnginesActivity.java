@@ -14,6 +14,7 @@ import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
+import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -201,5 +202,8 @@ public class SelectEnginesActivity extends Activity implements
 
     // No GlobalSession.config, so store directly to prefs.
     SyncConfiguration.storeSelectedEnginesToPrefs(accountPrefs, engineSelections);
+
+    // Request immediate sync.
+    SyncAdapter.requestImmediateSync(account, null);
   }
 }
