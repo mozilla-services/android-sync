@@ -56,7 +56,7 @@
            provided stubs will be found first by the class loader. -->
       <groupId>com.google.android</groupId>
       <artifactId>android</artifactId>
-      <version>2.3.3</version>
+      <version>4.1.1.4</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -120,7 +120,7 @@
         <artifactId>android-maven-plugin</artifactId>
         <configuration>
           <sdk>
-            <platform>14</platform>
+            <platform>15</platform>
           </sdk>
           <emulator>
             <!-- the name of the avd device to use for starting the emulator -->
