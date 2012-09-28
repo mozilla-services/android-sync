@@ -12,6 +12,16 @@ public class GlobalConstants {
   public static final String PRODUCT_NAME = "@MOZ_APP_DISPLAYNAME@";
   public static final String ANDROID_CPU_ARCH = "@ANDROID_CPU_ARCH@";
 
+  // One of 'beta', 'aurora', 'nightly', 'default'.
+  // If this is an official build, 'default' means 'release'.
+  // Otherwise, it means 'dev'.
+  public static final String MOZ_UPDATE_CHANNEL = "@MOZ_UPDATE_CHANNEL@";
+#ifdef MOZ_OFFICIAL_BRANDING
+  public static final boolean MOZ_OFFICIAL_BRANDING = true;
+#else
+  public static final boolean MOZ_OFFICIAL_BRANDING = false;
+#endif
+
   public static final String MOZ_APP_VERSION = "@MOZ_APP_VERSION@";
   public static final String SYNC_MAJOR_VERSION  = "1";
   public static final String SYNC_MINOR_VERSION  = "0";
