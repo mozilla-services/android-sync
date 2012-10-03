@@ -681,6 +681,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       config.purgeCryptoKeys();
       config.syncID = remoteSyncID;
     }
+    // Compare lastModified timestamps for remote/local engine selection times.
+    Logger.debug(LOG_TAG, "Comparing local engine selection timestamp [" + config.userSelectedEnginesTimestamp + "] to server meta/global timestamp [" + config.persistedMetaGlobal().lastModified() + "].");
+    if (config.userSelectedEnginesTimestamp < config.persistedMetaGlobal().lastModified()) {
+      // Remote has later meta/global timestamp. Don't upload engine changes.
+      config.userSelectedEngines = null;
+    }
     // Persist enabled engine names.
     config.enabledEngineNames = global.getEnabledEngineNames();
     if (config.enabledEngineNames == null) {

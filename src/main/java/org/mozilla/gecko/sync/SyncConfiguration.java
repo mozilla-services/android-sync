@@ -234,6 +234,7 @@ public class SyncConfiguration implements CredentialsSource {
    * state to meta/global, to be uploaded.
    */
   public Map<String, Boolean> userSelectedEngines;
+  public long userSelectedEnginesTimestamp;
 
   // Fields that maintain a reference to a SharedPreferences instance, used for
   // persistence.
@@ -252,6 +253,7 @@ public class SyncConfiguration implements CredentialsSource {
 
   public static final String PREF_ENABLED_ENGINE_NAMES = "enabledEngineNames";
   public static final String PREF_USER_SELECTED_ENGINES_TO_SYNC = "userSelectedEngines";
+  public static final String PREF_USER_SELECTED_ENGINES_TO_SYNC_TIMESTAMP = "userSelectedEnginesTimestamp";
 
   public static final String PREF_EARLIEST_NEXT_SYNC = "earliestnextsync";
   public static final String PREF_CLUSTER_URL_IS_STALE = "clusterurlisstale";
@@ -370,7 +372,12 @@ public class SyncConfiguration implements CredentialsSource {
       jObj.put(e.getKey(), e.getValue());
     }
     String json = jObj.toJSONString();
-    prefs.edit().putString(PREF_USER_SELECTED_ENGINES_TO_SYNC, json).commit();
+    long currentTime = System.currentTimeMillis();
+    Editor edit = prefs.edit();
+    edit.putString(PREF_USER_SELECTED_ENGINES_TO_SYNC, json);
+    edit.putLong(PREF_USER_SELECTED_ENGINES_TO_SYNC_TIMESTAMP, currentTime);
+    Logger.error(LOG_TAG, "Storing user-selected engines at [" + currentTime + "].");
+    edit.commit();
   }
 
   public void loadFromPrefs(SharedPreferences prefs) {
@@ -390,6 +397,7 @@ public class SyncConfiguration implements CredentialsSource {
     }
     enabledEngineNames = getEnabledEngineNames(prefs);
     userSelectedEngines = getUserSelectedEngines(prefs);
+    userSelectedEnginesTimestamp = prefs.getLong(PREF_USER_SELECTED_ENGINES_TO_SYNC_TIMESTAMP, 0);
     // We don't set crypto/keys here because we need the syncKeyBundle to decrypt the JSON
     // and we won't have it on construction.
     // TODO: MetaGlobal, password, infoCollections.
@@ -420,6 +428,7 @@ public class SyncConfiguration implements CredentialsSource {
     }
     if (userSelectedEngines == null) {
       edit.remove(PREF_USER_SELECTED_ENGINES_TO_SYNC);
+      edit.remove(PREF_USER_SELECTED_ENGINES_TO_SYNC_TIMESTAMP);
     }
     // Don't bother saving userSelectedEngines - these should only be changed by
     // SelectEnginesActivity.
