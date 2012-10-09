@@ -48,6 +48,9 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   public static final String TEST_PROFILE = Constants.DEFAULT_PROFILE;
   public static final long TEST_VERSION = SyncConfiguration.CURRENT_PREFS_VERSION;
 
+  public static final String TEST_PREFERENCE = "testPreference";
+  public static final String TEST_SYNC_ID = "testSyncID";
+
   private Account account;
   private Context context;
   private AccountManager accountManager;
@@ -333,8 +336,6 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
    * Verify that creating an account preserves settings in Shared Preferences when asked.
    */
   public void testCreateSyncAccountWithExistingPreferences() throws Exception {
-    final String TEST_PREFERENCE = "testPreference";
-    final String TEST_SYNC_ID = "testSyncID";
 
     SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
         TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
@@ -431,5 +432,23 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
         account = null;
       }
     }
+  }
+
+  public void testBlockingPrefsFromAndroidAccountV0() throws Exception {
+    // Create test account with prefs.
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT,
+        TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
+    prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
+
+    syncAccount = new SyncAccountParameters(context, null,
+      TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
+    account = SyncAccounts.createSyncAccountPreservingExistingPreferences(syncAccount, false);
+    assertNotNull(account);
+
+    // Fetch account and check prefs.
+    SharedPreferences sharedPreferences = SyncAccounts.blockingPrefsFromAndroidAccountV0(context, accountManager,
+        account, TEST_PRODUCT, TEST_PROFILE, TEST_VERSION);
+    assertNotNull(sharedPreferences);
+    assertEquals(TEST_SYNC_ID, sharedPreferences.getString(TEST_PREFERENCE, null));
   }
 }
