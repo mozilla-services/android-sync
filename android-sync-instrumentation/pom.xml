@@ -78,6 +78,7 @@
         <configuration>
           <androidManifestFile>${project.basedir}/../test/AndroidManifest.xml</androidManifestFile>
           <resourceDirectory>${project.basedir}/../test/res</resourceDirectory>
+          <assetsDirectory>${project.basedir}/../test/assets</assetsDirectory>
 
           <test>
             <createReport>true</createReport>
