@@ -6,6 +6,7 @@ package org.mozilla.gecko.sync.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,6 +17,9 @@ import java.security.SecureRandom;
 
 import javax.net.ssl.SSLContext;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 
 import ch.boye.httpclientandroidlib.Header;
@@ -38,6 +42,7 @@ import ch.boye.httpclientandroidlib.conn.scheme.PlainSocketFactory;
 import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
 import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
+import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.impl.auth.BasicScheme;
 import ch.boye.httpclientandroidlib.impl.client.BasicAuthCache;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
@@ -153,7 +158,7 @@ public class BaseResource implements Resource {
    * @throws NoSuchAlgorithmException
    * @throws KeyManagementException
    */
-  private void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
+  protected void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
     context = new BasicHttpContext();
 
     // We could reuse these client instances, except that we mess around
@@ -333,6 +338,36 @@ public class BaseResource implements Resource {
     this.go(request);
   }
 
+  public static StringEntity stringEntity(String s) throws UnsupportedEncodingException {
+    StringEntity e = new StringEntity(s, "UTF-8");
+    e.setContentType("application/json");
+    return e;
+  }
+
+  /**
+   * Helper for turning a JSON object into a payload.
+   * @throws UnsupportedEncodingException
+   */
+  public static StringEntity jsonEntity(JSONObject body) throws UnsupportedEncodingException {
+    return stringEntity(body.toJSONString());
+  }
+
+  /**
+   * Helper for turning an extended JSON object into a payload.
+   * @throws UnsupportedEncodingException
+   */
+  public static StringEntity jsonEntity(ExtendedJSONObject body) throws UnsupportedEncodingException {
+    return stringEntity(body.toJSONString());
+  }
+
+  /**
+   * Helper for turning a JSON array into a payload.
+   * @throws UnsupportedEncodingException
+   */
+  public static HttpEntity jsonEntity(JSONArray toPOST) throws UnsupportedEncodingException {
+    return stringEntity(toPOST.toJSONString());
+  }
+
   /**
    * Best-effort attempt to ensure that the entity has been fully consumed and
    * that the underlying stream has been closed.
@@ -400,5 +435,17 @@ public class BaseResource implements Resource {
     } catch (IOException e) {
       // Do nothing.
     }
+  }
+
+  public void post(JSONArray jsonArray) throws UnsupportedEncodingException {
+    post(jsonEntity(jsonArray));
+  }
+
+  public void put(JSONObject jsonObject) throws UnsupportedEncodingException {
+    put(jsonEntity(jsonObject));
+  }
+
+  public void post(ExtendedJSONObject o) throws UnsupportedEncodingException {
+    post(jsonEntity(o));
   }
 }
