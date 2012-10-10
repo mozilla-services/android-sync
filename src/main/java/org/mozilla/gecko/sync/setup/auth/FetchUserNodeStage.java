@@ -13,7 +13,7 @@ import java.security.GeneralSecurityException;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -77,7 +77,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
   private BaseResource makeFetchNodeRequest(final FetchNodeStageDelegate callbackDelegate, String fetchNodeUrl) throws URISyntaxException {
     // Fetch node containing user.
     final BaseResource httpResource = new BaseResource(fetchNodeUrl);
-    httpResource.delegate = new SyncResourceDelegate(httpResource) {
+    httpResource.delegate = new BaseResourceDelegate(httpResource) {
 
       @Override
       public void handleHttpResponse(HttpResponse response) {

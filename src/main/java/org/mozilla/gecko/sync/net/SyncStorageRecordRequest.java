@@ -50,7 +50,7 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
   }
 
   @Override
-  protected SyncResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
+  protected BaseResourceDelegate makeResourceDelegate(SyncStorageRequest request) {
     return new SyncStorageRecordResourceDelegate(request);
   }
 
