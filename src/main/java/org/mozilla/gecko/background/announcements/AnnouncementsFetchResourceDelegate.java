@@ -15,6 +15,7 @@ import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonArrayJSONException;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.Resource;
@@ -157,7 +158,7 @@ public class AnnouncementsFetchResourceDelegate extends BaseResourceDelegate {
    * We never want this to be an authenticated request.
    */
   @Override
-  public String getCredentials() {
+  public AuthHeaderProvider getAuthHeaderProvider() {
     return null;
   }
 }

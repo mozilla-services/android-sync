@@ -26,8 +26,6 @@ import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.HttpVersion;
-import ch.boye.httpclientandroidlib.auth.Credentials;
-import ch.boye.httpclientandroidlib.auth.UsernamePasswordCredentials;
 import ch.boye.httpclientandroidlib.client.AuthCache;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
@@ -43,7 +41,6 @@ import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
 import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
-import ch.boye.httpclientandroidlib.impl.auth.BasicScheme;
 import ch.boye.httpclientandroidlib.impl.client.BasicAuthCache;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -135,30 +132,11 @@ public class BaseResource implements Resource {
   }
 
   /**
-   * Return a Header object representing an Authentication header for HTTP Basic.
-   */
-  public static Header getBasicAuthHeader(final String credentials) {
-    Credentials creds = new UsernamePasswordCredentials(credentials);
-
-    // This must be UTF-8 to generate the same Basic Auth headers as desktop for non-ASCII passwords.
-    return BasicScheme.authenticate(creds, "UTF-8", false);
-  }
-
-  /**
-   * Apply the provided credentials string to the provided request.
-   * @param credentials a string, "user:pass".
-   */
-  private static void applyCredentials(String credentials, HttpUriRequest request, HttpContext context) {
-    request.addHeader(getBasicAuthHeader(credentials));
-    Logger.trace(LOG_TAG, "Adding Basic Auth header.");
-  }
-
-  /**
    * Invoke this after delegate and request have been set.
    * @throws NoSuchAlgorithmException
    * @throws KeyManagementException
    */
-  protected void prepareClient() throws KeyManagementException, NoSuchAlgorithmException {
+  protected void prepareClient() throws KeyManagementException, NoSuchAlgorithmException, GeneralSecurityException {
     context = new BasicHttpContext();
 
     // We could reuse these client instances, except that we mess around
@@ -167,9 +145,13 @@ public class BaseResource implements Resource {
 
     // TODO: Eventually we should use Apache HttpAsyncClient. It's not out of alpha yet.
     // Until then, we synchronously make the request, then invoke our delegate's callback.
-    String credentials = delegate.getCredentials();
-    if (credentials != null) {
-      BaseResource.applyCredentials(credentials, request, context);
+    AuthHeaderProvider authHeaderProvider = delegate.getAuthHeaderProvider();
+    if (authHeaderProvider != null) {
+      Header authHeader = authHeaderProvider.getAuthHeader(request, context, client);
+      if (authHeader != null) {
+        request.addHeader(authHeader);
+        Logger.debug(LOG_TAG, "Added auth header.");
+      }
     }
 
     addAuthCacheToContext(request, context);
@@ -298,6 +280,10 @@ public class BaseResource implements Resource {
       delegate.handleTransportException(e);
       return;
     } catch (NoSuchAlgorithmException e) {
+      Logger.error(LOG_TAG, "Couldn't prepare client.", e);
+      delegate.handleTransportException(e);
+      return;
+    } catch (GeneralSecurityException e) {
       Logger.error(LOG_TAG, "Couldn't prepare client.", e);
       delegate.handleTransportException(e);
       return;
