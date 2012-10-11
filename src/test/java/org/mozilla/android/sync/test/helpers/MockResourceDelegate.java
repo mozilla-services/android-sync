@@ -8,7 +8,9 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -47,8 +49,8 @@ public class MockResourceDelegate implements ResourceDelegate {
   }
 
   @Override
-  public String getCredentials() {
-    return USER_PASS;
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return new BasicAuthHeaderProvider(USER_PASS);
   }
 
   @Override

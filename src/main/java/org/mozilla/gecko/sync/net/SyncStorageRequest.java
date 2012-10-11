@@ -91,8 +91,13 @@ public class SyncStorageRequest implements Resource {
     }
 
     @Override
-    public String getCredentials() {
-      return this.request.delegate.credentials();
+    public AuthHeaderProvider getAuthHeaderProvider() {
+      String credentials = request.delegate.credentials();
+      if (credentials == null) {
+        return null;
+      }
+
+      return new BasicAuthHeaderProvider(credentials);
     }
 
     @Override

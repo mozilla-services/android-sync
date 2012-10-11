@@ -34,7 +34,7 @@ public abstract class BaseResourceDelegate implements ResourceDelegate {
   }
 
   @Override
-  public String getCredentials() {
+  public AuthHeaderProvider getAuthHeaderProvider() {
     return null;
   }
 
