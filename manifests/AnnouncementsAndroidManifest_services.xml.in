@@ -1,0 +1,8 @@
+        <service
+		        android:exported="false"
+		        android:name="org.mozilla.gecko.background.AnnouncementsService" >
+        </service>
+        <service
+		        android:exported="false"
+		        android:name="org.mozilla.gecko.background.AnnouncementsBroadcastService" >
+        </service>
