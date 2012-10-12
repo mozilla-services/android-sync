@@ -21,6 +21,12 @@ import android.net.Uri;
  */
 public class AnnouncementPresenter {
 
+  // "Your notifications shouldn't use a different color unless the
+  // user has explicitly customized it.". Sorry, Android. This entire
+  // feature violates the Android design guidelines for Notifications,
+  // so might as well make it easier to distinguish.
+  static final int LED_COLOR = 0x5ee73b07;        // Firefox orange, tuned for 3 LEDs.
+
   /**
    * Display the provided snippet.
    * @param context
@@ -55,7 +61,12 @@ public class AnnouncementPresenter {
     // Deprecated approach to building a notification.
     final long when = System.currentTimeMillis();
     Notification notification = new Notification(icon, title, when);
-    notification.flags = Notification.FLAG_AUTO_CANCEL;
+    notification.ledARGB = LED_COLOR;
+    notification.ledOnMS = 250;
+    notification.ledOffMS = 2000;
+
+    notification.flags = Notification.FLAG_AUTO_CANCEL |
+                         Notification.FLAG_SHOW_LIGHTS;
     notification.setLatestEventInfo(context, title, body, contentIntent);
 
     // Notification.Builder since API 11.
