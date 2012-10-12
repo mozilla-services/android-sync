@@ -10,6 +10,7 @@ import android.app.AlarmManager;
 
 @SuppressWarnings("unused")    // Unused until test code switched back to constant.
 public class BackgroundServiceConstants {
+  public static final String ACTION_ANNOUNCEMENTS_PREF = "org.mozilla.gecko.ANNOUNCEMENTS_PREF";
 
   static final String PREFS_BRANCH = "background";
   static final String PREF_LAST_FETCH  = "last_fetch";

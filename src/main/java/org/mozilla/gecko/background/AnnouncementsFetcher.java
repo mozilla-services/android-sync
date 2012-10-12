@@ -15,7 +15,9 @@ import org.mozilla.gecko.sync.net.BaseResource;
 
 public class AnnouncementsFetcher {
 
+  // We use "Gecko" here to facilitate log filtering.
   private static final String LOG_TAG = "GeckoAnnounce";
+
   private static final long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
   public static URI getSnippetURI(String base, String channel,
@@ -34,7 +36,7 @@ public class AnnouncementsFetcher {
     }
   }
 
-  protected static URI getAnnounceURI(final String baseURL, final long lastLaunch) throws URISyntaxException {
+  public static URI getAnnounceURI(final String baseURL, final long lastLaunch) throws URISyntaxException {
     final String channel = getChannel();
     final String version = getVersion();
     final String platform = getPlatform();
@@ -47,12 +49,15 @@ public class AnnouncementsFetcher {
   protected static String getChannel() {
     return BackgroundServiceConstants.ANNOUNCE_CHANNEL;
   }
+
   protected static String getVersion() {
     return GlobalConstants.MOZ_APP_VERSION;
   }
+
   protected static String getPlatform() {
     return GlobalConstants.ANDROID_CPU_ARCH;
   }
+
   protected static int getIdleDays(final long lastLaunch) {
     if (lastLaunch == 0) {
       return -1;
@@ -64,9 +69,7 @@ public class AnnouncementsFetcher {
   public static void fetchAnnouncements(URI uri, AnnouncementsFetchDelegate delegate) {
     BaseResource r = new BaseResource(uri);
     r.delegate = new AnnouncementsFetchResourceDelegate(r, delegate);
-
-    // We rely on this being synchronous.
-    r.get();
+    r.getBlocking();
   }
 
   /**

@@ -6,12 +6,13 @@ package org.mozilla.gecko.background;
 
 import org.mozilla.gecko.sync.Logger;
 
+import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
 /**
- * Periodically start the announcements service when instructed.
+ * Start the announcements service when instructed by the {@link AlarmManager}.
  */
 public class AnnouncementsStartReceiver extends BroadcastReceiver {
 

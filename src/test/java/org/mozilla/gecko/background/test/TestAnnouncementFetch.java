@@ -237,7 +237,7 @@ public class TestAnnouncementFetch {
     announcement.setPlatformRegex("^arm.*$");
     announcement.setTargetLocale(new Locale("en", "gb"));
     announcement.setVersionRegex("^17\\..*$");
-    System.out.println("Adding snippet:\n" + announcement.asJSON());
+    debug("Adding snippet:\n" + announcement.asJSON());
     return announcement;
   }
 
@@ -251,7 +251,7 @@ public class TestAnnouncementFetch {
     mockServer.addAnnouncement(prepareTestAnnouncementOne());
 
     data.startHTTPServer(mockServer);
-    System.out.println("Server started.");
+    debug("Server started.");
 
     // Make a request that matches.
     final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "17.0a1", "armeabi-v7a", 4);

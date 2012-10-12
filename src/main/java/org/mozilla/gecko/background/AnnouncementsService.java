@@ -184,7 +184,7 @@ public class AnnouncementsService extends IntentService implements Announcements
     if (scheme == null) {
       throw new IllegalArgumentException("url must have a scheme.");
     }
-    if (!scheme.startsWith("http")) {
+    if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
       throw new IllegalArgumentException("url must be http or https.");
     }
     SharedPreferences p = this.getSharedPreferences();

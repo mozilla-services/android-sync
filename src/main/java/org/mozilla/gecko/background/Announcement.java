@@ -33,16 +33,25 @@ public class Announcement {
   }
 
   public static Announcement parseAnnouncement(ExtendedJSONObject body) throws URISyntaxException, IllegalArgumentException {
-    final int id       = body.getIntegerSafely(KEY_ID);
-    final String title = body.getString(KEY_TITLE);
-    final String uri   = body.getString(KEY_URL);
-    final String text  = body.getString(KEY_TEXT);
-
-    if (title == null ||
-        text  == null ||
-        uri   == null) {
-      throw new IllegalArgumentException("Invalid JSON object.");
+    final Integer id = body.getIntegerSafely(KEY_ID);
+    if (id == null) {
+      throw new IllegalArgumentException("No id provided in JSON.");
     }
+    final String title = body.getString(KEY_TITLE);
+    if (title == null || title.trim().length() == 0) {
+      throw new IllegalArgumentException("Missing or empty announcement title.");
+    }
+    final String uri = body.getString(KEY_URL);
+    if (uri == null) {
+      // Empty or otherwise unhappy URI will throw a URISyntaxException.
+      throw new IllegalArgumentException("Missing announcement URI.");
+    }
+
+    final String text = body.getString(KEY_TEXT);
+    if (text == null) {
+      throw new IllegalArgumentException("Missing announcement body.");
+    }
+
     return new Announcement(id, title, text, new URI(uri));
   }
 
