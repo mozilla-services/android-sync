@@ -220,7 +220,7 @@ public class SyncAccounts {
       try {
         return createSyncAccount(syncAccount, syncAutomatically);
       } catch (Exception e) {
-        Log.e(Logger.GLOBAL_LOG_TAG, "Unable to create account.", e);
+        Log.e(GlobalConstants.GLOBAL_LOG_TAG, "Unable to create account.", e);
         return null;
       }
     }
@@ -315,13 +315,13 @@ public class SyncAccounts {
       // We use Log rather than Logger here to avoid possibly hiding these errors.
       final String message = e.getMessage();
       if (message != null && (message.indexOf("is different than the authenticator's uid") > 0)) {
-        Log.wtf(Logger.GLOBAL_LOG_TAG,
+        Log.wtf(GlobalConstants.GLOBAL_LOG_TAG,
                 "Unable to create account. " +
                 "If you have more than one version of " +
                 "Firefox/Beta/Aurora/Nightly/Fennec installed, that's why.",
                 e);
       } else {
-        Log.e(Logger.GLOBAL_LOG_TAG, "Unable to create account.", e);
+        Log.e(GlobalConstants.GLOBAL_LOG_TAG, "Unable to create account.", e);
       }
     }
 
