@@ -46,6 +46,7 @@ public class SendTabActivity extends Activity {
 
   @Override
   public void onResume() {
+    ActivityUtils.prepareLogging();
     Logger.info(LOG_TAG, "Called SendTabActivity.onResume.");
     super.onResume();
 
