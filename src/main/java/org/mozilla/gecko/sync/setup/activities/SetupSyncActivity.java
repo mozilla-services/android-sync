@@ -69,6 +69,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    ActivityUtils.prepareLogging();
     Logger.info(LOG_TAG, "Called SetupSyncActivity.onCreate.");
     super.onCreate(savedInstanceState);
 
@@ -87,6 +88,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
   @Override
   public void onResume() {
+    ActivityUtils.prepareLogging();
     Logger.info(LOG_TAG, "Called SetupSyncActivity.onResume.");
     super.onResume();
 
@@ -105,6 +107,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
+        ActivityUtils.prepareLogging();
         Account[] accts = mAccountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
         finishResume(accts);
       }

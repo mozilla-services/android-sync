@@ -63,6 +63,8 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.sync_account);
+
+    ActivityUtils.prepareLogging();
     mContext = getApplicationContext();
     Logger.debug(LOG_TAG, "AccountManager.get(" + mContext + ")");
     mAccountManager = AccountManager.get(mContext);
@@ -110,6 +112,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   @Override
   public void onResume() {
     super.onResume();
+    ActivityUtils.prepareLogging();
     clearCredentials();
     usernameInput.requestFocus();
     cancelButton.setOnClickListener(new OnClickListener() {
