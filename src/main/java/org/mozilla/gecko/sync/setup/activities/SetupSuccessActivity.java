@@ -36,7 +36,6 @@ public class SetupSuccessActivity extends Activity {
 
   @Override
   public void onDestroy() {
-    Logger.debug(LOG_TAG, "onDestroy() called.");
     super.onDestroy();
   }
 
