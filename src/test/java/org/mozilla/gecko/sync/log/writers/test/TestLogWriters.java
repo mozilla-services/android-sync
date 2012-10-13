@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.log.writers.LevelFilteringLogWriter;
 import org.mozilla.gecko.sync.log.writers.PrintLogWriter;
-import org.mozilla.gecko.sync.log.writers.SingleTagLogWriter;
+import org.mozilla.gecko.sync.log.writers.SimpleTagLogWriter;
 import org.mozilla.gecko.sync.log.writers.StringLogWriter;
 
 import android.util.Log;
@@ -65,7 +65,7 @@ public class TestLogWriters {
     final String SINGLE_TAG = "XXX";
     StringLogWriter lw = new StringLogWriter();
 
-    Logger.startLoggingTo(new SingleTagLogWriter(SINGLE_TAG, lw));
+    Logger.startLoggingTo(new SimpleTagLogWriter(SINGLE_TAG, lw));
     Logger.error(TEST_LOG_TAG_1, TEST_MESSAGE_1);
     Logger.warn(TEST_LOG_TAG_2, TEST_MESSAGE_2);
 

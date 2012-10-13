@@ -275,6 +275,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final String authority,
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
+    Logger.setThreadLogTag(GlobalConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
     Utils.reseedSharedRandom(); // Make sure we don't work with the same random seed for too long.
 

@@ -10,6 +10,7 @@ package org.mozilla.gecko.sync;
  */
 public class GlobalConstants {
   public static final String PRODUCT_NAME = "@MOZ_APP_DISPLAYNAME@";
+  public static final String GLOBAL_LOG_TAG = "FxSync";
   public static final String ANDROID_CPU_ARCH = "@ANDROID_CPU_ARCH@";
 
   // One of 'beta', 'aurora', 'nightly', 'default'.
