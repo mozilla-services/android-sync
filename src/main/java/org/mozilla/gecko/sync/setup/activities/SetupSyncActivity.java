@@ -9,8 +9,8 @@ import java.util.HashMap;
 
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.jpake.JPakeClient;
@@ -64,7 +64,6 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
 
   public SetupSyncActivity() {
     super();
-    Logger.info(LOG_TAG, "SetupSyncActivity constructor called.");
   }
 
   /** Called when the activity is first created. */
@@ -319,7 +318,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "static-method" })
   protected JSONObject makeAccountJSON(String username, String password,
                                        String syncKey, String serverURL) {
 
