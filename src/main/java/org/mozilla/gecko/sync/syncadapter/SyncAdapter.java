@@ -238,11 +238,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
    * @param backoff time to wait in milliseconds.
    */
   @Override
-  public void requestBackoff(long backoff) {
+  public void requestBackoff(final long backoff) {
     if (backoff > 0) {
       // Fuzz the backoff time (up to 25% more) to prevent client lock-stepping; agrees with desktop.
-      backoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
-      this.extendEarliestNextSync(System.currentTimeMillis() + backoff);
+      final long fuzzedBackoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
+      this.extendEarliestNextSync(System.currentTimeMillis() + fuzzedBackoff);
     }
   }
 
