@@ -2,7 +2,7 @@
              As well as these system actions, we also listen for pref notifications
              sent by Fennec: org.mozilla.gecko.SNIPPETS_PREF.
           -->
-        <receiver android:name="org.mozilla.gecko.background.AnnouncementsBroadcastReceiver" >
+        <receiver android:name="org.mozilla.gecko.background.announcements.AnnouncementsBroadcastReceiver" >
             <intent-filter>
                 <!-- Startup. -->
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -16,5 +16,5 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="org.mozilla.gecko.background.AnnouncementsStartReceiver" >
+        <receiver android:name="org.mozilla.gecko.background.announcements.AnnouncementsStartReceiver" >
         </receiver>
