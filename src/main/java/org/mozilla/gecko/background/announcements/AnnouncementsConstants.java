@@ -8,7 +8,6 @@ import org.mozilla.gecko.sync.GlobalConstants;
 
 import android.app.AlarmManager;
 
-@SuppressWarnings("unused")    // Unused until test code switched back to constant.
 public class AnnouncementsConstants {
   public static final String GLOBAL_LOG_TAG = "GeckoAnnounce";
   public static final String ACTION_ANNOUNCEMENTS_PREF = "org.mozilla.gecko.ANNOUNCEMENTS_PREF";
