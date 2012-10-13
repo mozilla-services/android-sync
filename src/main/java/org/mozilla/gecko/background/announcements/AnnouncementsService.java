@@ -54,12 +54,13 @@ import android.os.IBinder;
  */
 public class AnnouncementsService extends IntentService implements AnnouncementsFetchDelegate {
   private static final String WORKER_THREAD_NAME = "AnnouncementsServiceWorker";
-  private static final String LOG_TAG = "GeckoAnnounce";
+  private static final String LOG_TAG = "AnnounceService";
 
   private static final long MINIMUM_FETCH_INTERVAL_MSEC = 60 * 60 * 1000;   // 1 hour.
 
   public AnnouncementsService() {
     super(WORKER_THREAD_NAME);
+    Logger.setThreadLogTag(AnnouncementsConstants.GLOBAL_LOG_TAG);
     Logger.debug(LOG_TAG, "Creating AnnouncementsService.");
   }
 
@@ -103,6 +104,7 @@ public class AnnouncementsService extends IntentService implements Announcements
    */
   @Override
   public void onHandleIntent(Intent intent) {
+    Logger.setThreadLogTag(AnnouncementsConstants.GLOBAL_LOG_TAG);
     Logger.debug(LOG_TAG, "Running AnnouncementsService.");
 
     if (!shouldFetchAnnouncements()) {

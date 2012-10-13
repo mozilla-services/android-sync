@@ -32,7 +32,7 @@ import ch.boye.httpclientandroidlib.impl.cookie.DateUtils;
 public class AnnouncementsFetchResourceDelegate extends SyncResourceDelegate {
   private static final String ACCEPT_HEADER = "application/json;charset=utf-8";
 
-  private static final String LOG_TAG = "GeckoAnnounce";
+  private static final String LOG_TAG = "AnnounceFetchRD";
 
   protected final long startTime;
   protected AnnouncementsFetchDelegate delegate;

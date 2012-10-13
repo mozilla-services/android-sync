@@ -16,7 +16,7 @@ import android.content.Intent;
  */
 public class AnnouncementsStartReceiver extends BroadcastReceiver {
 
-  private static final String LOG_TAG = "GeckoSnippets";
+  private static final String LOG_TAG = "AnnounceStartRec";
 
   @Override
   public void onReceive(Context context, Intent intent) {

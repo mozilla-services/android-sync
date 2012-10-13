@@ -16,7 +16,7 @@ import org.mozilla.gecko.sync.net.BaseResource;
 public class AnnouncementsFetcher {
 
   // We use "Gecko" here to facilitate log filtering.
-  private static final String LOG_TAG = "GeckoAnnounce";
+  private static final String LOG_TAG = "AnnounceFetch";
 
   private static final long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 

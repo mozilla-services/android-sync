@@ -25,7 +25,7 @@ import android.content.SharedPreferences.Editor;
  */
 public class AnnouncementsBroadcastService extends IntentService {
   private static final String WORKER_THREAD_NAME = "AnnouncementsBroadcastServiceWorker";
-  private static final String LOG_TAG = "GeckoAnnounce";
+  private static final String LOG_TAG = "AnnounceBrSvc";
 
   public AnnouncementsBroadcastService() {
     super(WORKER_THREAD_NAME);
@@ -70,6 +70,7 @@ public class AnnouncementsBroadcastService extends IntentService {
 
   @Override
   protected void onHandleIntent(Intent intent) {
+    Logger.setThreadLogTag(AnnouncementsConstants.GLOBAL_LOG_TAG);
     final String action = intent.getAction();
     Logger.debug(LOG_TAG, "Broadcast onReceive. Intent is " + action);
 
