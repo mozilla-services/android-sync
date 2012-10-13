@@ -2,11 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.background;
+package org.mozilla.gecko.background.announcements;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.mozilla.gecko.background.BackgroundConstants;
 import org.mozilla.gecko.sync.Logger;
 
 import android.app.AlarmManager;
@@ -23,10 +24,11 @@ import android.content.SharedPreferences.Editor;
  * {@link AnnouncementsStartReceiver} with the {@link AlarmManager}.
  */
 public class AnnouncementsBroadcastService extends IntentService {
+  private static final String WORKER_THREAD_NAME = "AnnouncementsBroadcastServiceWorker";
   private static final String LOG_TAG = "GeckoAnnounce";
 
   public AnnouncementsBroadcastService() {
-    super("AnnouncementsBroadcastServiceWorker");
+    super(WORKER_THREAD_NAME);
   }
 
   private void toggleAlarm(final Context context, boolean enabled) {
@@ -52,18 +54,18 @@ public class AnnouncementsBroadcastService extends IntentService {
   }
 
   private void recordLastLaunch(final Context context) {
-    final SharedPreferences preferences = context.getSharedPreferences(BackgroundServiceConstants.PREFS_BRANCH, BackgroundServiceConstants.SHARED_PREFERENCES_MODE);
-    preferences.edit().putLong(BackgroundServiceConstants.PREF_LAST_LAUNCH, System.currentTimeMillis()).commit();
+    final SharedPreferences preferences = context.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, BackgroundConstants.SHARED_PREFERENCES_MODE);
+    preferences.edit().putLong(AnnouncementsConstants.PREF_LAST_LAUNCH, System.currentTimeMillis()).commit();
   }
 
   public static long getPollInterval(final Context context) {
-    SharedPreferences preferences = context.getSharedPreferences(BackgroundServiceConstants.PREFS_BRANCH, BackgroundServiceConstants.SHARED_PREFERENCES_MODE);
-    return preferences.getLong(BackgroundServiceConstants.PREF_ANNOUNCE_FETCH_INTERVAL_MSEC, BackgroundServiceConstants.DEFAULT_ANNOUNCE_FETCH_INTERVAL_MSEC);
+    SharedPreferences preferences = context.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, BackgroundConstants.SHARED_PREFERENCES_MODE);
+    return preferences.getLong(AnnouncementsConstants.PREF_ANNOUNCE_FETCH_INTERVAL_MSEC, AnnouncementsConstants.DEFAULT_ANNOUNCE_FETCH_INTERVAL_MSEC);
   }
 
   public static void setPollInterval(final Context context, long interval) {
-    SharedPreferences preferences = context.getSharedPreferences(BackgroundServiceConstants.PREFS_BRANCH, BackgroundServiceConstants.SHARED_PREFERENCES_MODE);
-    preferences.edit().putLong(BackgroundServiceConstants.PREF_ANNOUNCE_FETCH_INTERVAL_MSEC, interval).commit();
+    SharedPreferences preferences = context.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, BackgroundConstants.SHARED_PREFERENCES_MODE);
+    preferences.edit().putLong(AnnouncementsConstants.PREF_ANNOUNCE_FETCH_INTERVAL_MSEC, interval).commit();
   }
 
   @Override
@@ -71,7 +73,7 @@ public class AnnouncementsBroadcastService extends IntentService {
     final String action = intent.getAction();
     Logger.debug(LOG_TAG, "Broadcast onReceive. Intent is " + action);
 
-    if (BackgroundServiceConstants.ACTION_ANNOUNCEMENTS_PREF.equals(action)) {
+    if (AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF.equals(action)) {
       handlePrefIntent(intent);
       return;
     }
@@ -101,15 +103,15 @@ public class AnnouncementsBroadcastService extends IntentService {
   protected void handleSystemLifetimeIntent() {
     // Ask the browser to tell us the current state of the preference.
     try {
-      Class<?> geckoPreferences = Class.forName(BackgroundServiceConstants.GECKO_PREFERENCES_CLASS);
-      Method broadcastSnippetsPref = geckoPreferences.getMethod(BackgroundServiceConstants.GECKO_BROADCAST_METHOD, Context.class);
+      Class<?> geckoPreferences = Class.forName(BackgroundConstants.GECKO_PREFERENCES_CLASS);
+      Method broadcastSnippetsPref = geckoPreferences.getMethod(BackgroundConstants.GECKO_BROADCAST_METHOD, Context.class);
       broadcastSnippetsPref.invoke(null, this);
       return;
     } catch (ClassNotFoundException e) {
-      Logger.error(LOG_TAG, "Class " + BackgroundServiceConstants.GECKO_PREFERENCES_CLASS + " not found!");
+      Logger.error(LOG_TAG, "Class " + BackgroundConstants.GECKO_PREFERENCES_CLASS + " not found!");
       return;
     } catch (NoSuchMethodException e) {
-      Logger.error(LOG_TAG, "Method " + BackgroundServiceConstants.GECKO_PREFERENCES_CLASS + "/" + BackgroundServiceConstants.GECKO_BROADCAST_METHOD + " not found!");
+      Logger.error(LOG_TAG, "Method " + BackgroundConstants.GECKO_PREFERENCES_CLASS + "/" + BackgroundConstants.GECKO_BROADCAST_METHOD + " not found!");
       return;
     } catch (IllegalArgumentException e) {
       // Fall through.
@@ -118,7 +120,7 @@ public class AnnouncementsBroadcastService extends IntentService {
     } catch (InvocationTargetException e) {
       // Fall through.
     }
-    Logger.error(LOG_TAG, "Got exception invoking " + BackgroundServiceConstants.GECKO_BROADCAST_METHOD + ".");
+    Logger.error(LOG_TAG, "Got exception invoking " + BackgroundConstants.GECKO_BROADCAST_METHOD + ".");
   }
 
   /**
@@ -144,11 +146,11 @@ public class AnnouncementsBroadcastService extends IntentService {
     // Primarily intended for debugging and testing, but this doesn't do any harm.
     if (!enabled) {
       Logger.info(LOG_TAG, "!enabled: clearing last fetch.");
-      final SharedPreferences sharedPreferences = this.getSharedPreferences(BackgroundServiceConstants.PREFS_BRANCH,
-                                                                            BackgroundServiceConstants.SHARED_PREFERENCES_MODE);
+      final SharedPreferences sharedPreferences = this.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH,
+                                                                            BackgroundConstants.SHARED_PREFERENCES_MODE);
       final Editor editor = sharedPreferences.edit();
-      editor.remove(BackgroundServiceConstants.PREF_LAST_FETCH);
-      editor.remove(BackgroundServiceConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH);
+      editor.remove(AnnouncementsConstants.PREF_LAST_FETCH);
+      editor.remove(AnnouncementsConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH);
       editor.commit();
     }
   }

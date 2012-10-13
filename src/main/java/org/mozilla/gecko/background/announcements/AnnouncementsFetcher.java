@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.background;
+package org.mozilla.gecko.background.announcements;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -47,7 +47,7 @@ public class AnnouncementsFetcher {
   }
 
   protected static String getChannel() {
-    return BackgroundServiceConstants.ANNOUNCE_CHANNEL;
+    return AnnouncementsConstants.ANNOUNCE_CHANNEL;
   }
 
   protected static String getVersion() {

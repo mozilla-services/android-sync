@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.background;
+package org.mozilla.gecko.background.announcements;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -10,6 +10,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 
+import org.mozilla.gecko.background.BackgroundConstants;
 import org.mozilla.gecko.sync.Logger;
 
 import android.app.IntentService;
@@ -52,13 +53,13 @@ import android.os.IBinder;
  * * Prioritization.
  */
 public class AnnouncementsService extends IntentService implements AnnouncementsFetchDelegate {
-
+  private static final String WORKER_THREAD_NAME = "AnnouncementsServiceWorker";
   private static final String LOG_TAG = "GeckoAnnounce";
 
   private static final long MINIMUM_FETCH_INTERVAL_MSEC = 60 * 60 * 1000;   // 1 hour.
 
   public AnnouncementsService() {
-    super("AnnouncementsServiceWorker");
+    super(WORKER_THREAD_NAME);
     Logger.debug(LOG_TAG, "Creating AnnouncementsService.");
   }
 
@@ -136,11 +137,11 @@ public class AnnouncementsService extends IntentService implements Announcements
   }
 
   protected long getLastLaunch() {
-    return getSharedPreferences().getLong(BackgroundServiceConstants.PREF_LAST_LAUNCH, 0);
+    return getSharedPreferences().getLong(AnnouncementsConstants.PREF_LAST_LAUNCH, 0);
   }
 
   private SharedPreferences getSharedPreferences() {
-    return this.getSharedPreferences(BackgroundServiceConstants.PREFS_BRANCH, BackgroundServiceConstants.SHARED_PREFERENCES_MODE);
+    return this.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, BackgroundConstants.SHARED_PREFERENCES_MODE);
   }
 
   @Override
@@ -153,21 +154,21 @@ public class AnnouncementsService extends IntentService implements Announcements
                  ", last Firefox activity: " + lastLaunch + "\n");
   }
 
-  protected void setEarliestNextFetch(final long earliest) {
-    this.getSharedPreferences().edit().putLong(BackgroundServiceConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH, earliest).commit();
+  protected void setEarliestNextFetch(final long earliestInMsec) {
+    this.getSharedPreferences().edit().putLong(AnnouncementsConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH, earliestInMsec).commit();
   }
 
   protected long getEarliestNextFetch() {
-    return this.getSharedPreferences().getLong(BackgroundServiceConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH, 0L);
+    return this.getSharedPreferences().getLong(AnnouncementsConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH, 0L);
   }
 
   protected void setLastFetch(final long fetch) {
-    this.getSharedPreferences().edit().putLong(BackgroundServiceConstants.PREF_LAST_FETCH, fetch).commit();
+    this.getSharedPreferences().edit().putLong(AnnouncementsConstants.PREF_LAST_FETCH, fetch).commit();
   }
 
   @Override
   public long getLastFetch() {
-    return getSharedPreferences().getLong(BackgroundServiceConstants.PREF_LAST_FETCH, 0L);
+    return getSharedPreferences().getLong(AnnouncementsConstants.PREF_LAST_FETCH, 0L);
   }
 
   /**
@@ -188,13 +189,13 @@ public class AnnouncementsService extends IntentService implements Announcements
       throw new IllegalArgumentException("url must be http or https.");
     }
     SharedPreferences p = this.getSharedPreferences();
-    p.edit().putString(BackgroundServiceConstants.PREF_ANNOUNCE_SERVER_URL, url.toASCIIString()).commit();
+    p.edit().putString(AnnouncementsConstants.PREF_ANNOUNCE_SERVER_URL, url.toASCIIString()).commit();
   }
 
   @Override
   public String getServerURL() {
     SharedPreferences p = this.getSharedPreferences();
-    return p.getString(BackgroundServiceConstants.PREF_ANNOUNCE_SERVER_URL, BackgroundServiceConstants.DEFAULT_ANNOUNCE_SERVER_URL);
+    return p.getString(AnnouncementsConstants.PREF_ANNOUNCE_SERVER_URL, AnnouncementsConstants.DEFAULT_ANNOUNCE_SERVER_URL);
   }
 
   @Override
@@ -204,7 +205,7 @@ public class AnnouncementsService extends IntentService implements Announcements
 
   @Override
   public String getUserAgent() {
-    return BackgroundServiceConstants.BACKGROUND_USER_AGENT;
+    return AnnouncementsConstants.ANNOUNCE_USER_AGENT;
   }
 
   @Override
@@ -243,7 +244,7 @@ public class AnnouncementsService extends IntentService implements Announcements
   @Override
   public void onBackoff(int retryAfterInSeconds) {
     Logger.info(LOG_TAG, "Got retry after: " + retryAfterInSeconds);
-    final long delay = (Math.max(retryAfterInSeconds, BackgroundServiceConstants.DEFAULT_BACKOFF) * 1000);
-    setEarliestNextFetch(delay + System.currentTimeMillis());
+    final long delayInMsec = Math.max(retryAfterInSeconds * 1000, AnnouncementsConstants.DEFAULT_BACKOFF_MSEC);
+    setEarliestNextFetch(delayInMsec + System.currentTimeMillis());
   }
 }
