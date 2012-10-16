@@ -39,12 +39,12 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
 public class TestEnsureClusterURLStage {
-  private static final int     TEST_PORT        = 15325;
+  private static final int     TEST_PORT        = HTTPServerTestHelper.getTestPort();
   private static final String  TEST_SERVER      = "http://localhost:" + TEST_PORT + "/";
   private static final String  TEST_OLD_CLUSTER_URL = TEST_SERVER + "cluster/old/";
   private static final String  TEST_NEW_CLUSTER_URL = TEST_SERVER + "cluster/new/";
   static String                TEST_NW_URL      = TEST_SERVER + "/1.0/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/node/weave"; // GET https://server/pathname/version/username/node/weave
-  private HTTPServerTestHelper data             = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data             = new HTTPServerTestHelper();
 
   private final String TEST_USERNAME            = "johndoe";
   private final String TEST_PASSWORD            = "password";

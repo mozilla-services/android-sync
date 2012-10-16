@@ -34,8 +34,6 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
  * Test that reset commands properly invoke the reset methods on the correct stage.
  */
 public class TestResetCommands {
-  private static int          TEST_PORT        = 15325;
-  private static final String TEST_CLUSTER_URL = "http://localhost:" + TEST_PORT;
   private static final String TEST_USERNAME    = "johndoe";
   private static final String TEST_PASSWORD    = "password";
   private static final String TEST_SYNC_KEY    = "abcdeabcdeabcdeabcdeabcdea";
@@ -79,7 +77,7 @@ public class TestResetCommands {
     // Side-effect: modifies global command processor.
     final GlobalSession session = new MockPrefsGlobalSession(
         SyncConfiguration.DEFAULT_USER_API,
-        TEST_CLUSTER_URL,
+        null,
         TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
         callback, null, null, null) {

@@ -31,8 +31,7 @@ import org.mozilla.gecko.sync.synchronizer.Synchronizer;
  * See also "TestResetCommands" in the unit test suite.
  */
 public class TestResetting extends AndroidSyncTestCase {
-  private static int          TEST_PORT        = 15325;
-  private static final String TEST_CLUSTER_URL = "http://localhost:" + TEST_PORT;
+  private static final String TEST_CLUSTER_URL = "http://not.used";
   private static final String TEST_USERNAME    = "johndoe";
   private static final String TEST_PASSWORD    = "password";
   private static final String TEST_SYNC_KEY    = "abcdeabcdeabcdeabcdeabcdea";

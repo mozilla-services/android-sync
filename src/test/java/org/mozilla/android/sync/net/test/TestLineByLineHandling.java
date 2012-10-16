@@ -25,11 +25,11 @@ import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
 public class TestLineByLineHandling {
-  private static final int     TEST_PORT   = 15325;
+  private static final int     TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String  TEST_SERVER = "http://localhost:" + TEST_PORT;
   private static final String  LOG_TAG     = "TestLineByLineHandling";
   static String                STORAGE_URL = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/lines";
-  private HTTPServerTestHelper data        = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data        = new HTTPServerTestHelper();
 
   public ArrayList<String>     lines       = new ArrayList<String>();
 

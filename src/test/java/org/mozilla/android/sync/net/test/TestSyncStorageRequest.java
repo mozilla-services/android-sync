@@ -23,7 +23,7 @@ import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
 public class TestSyncStorageRequest {
-  private static final int    TEST_PORT   = 15325;
+  private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
   private static final String LOCAL_META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
@@ -35,7 +35,7 @@ public class TestSyncStorageRequest {
   // Corresponds to rnewman+testandroid@mozilla.com.
   private static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {

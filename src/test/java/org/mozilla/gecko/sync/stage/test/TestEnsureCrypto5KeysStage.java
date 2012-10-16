@@ -42,7 +42,7 @@ import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
 public class TestEnsureCrypto5KeysStage {
-  private int          TEST_PORT                = 15325;
+  private int          TEST_PORT                = HTTPServerTestHelper.getTestPort();
   private final String TEST_CLUSTER_URL         = "http://localhost:" + TEST_PORT;
   private final String TEST_USERNAME            = "johndoe";
   private final String TEST_PASSWORD            = "password";
@@ -55,7 +55,7 @@ public class TestEnsureCrypto5KeysStage {
   private final String TEST_JSON_NEW_CRYPTO =
       "{\"history\":1.3319567131E9,\"crypto\":3.1E9}";
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
   private InfoCollections infoCollections;
   private KeyBundle syncKeyBundle;

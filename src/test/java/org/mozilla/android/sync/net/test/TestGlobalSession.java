@@ -61,7 +61,7 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
 public class TestGlobalSession {
-  private int          TEST_PORT                = 15325;
+  private int          TEST_PORT                = HTTPServerTestHelper.getTestPort();
   private final String TEST_CLUSTER_URL         = "http://localhost:" + TEST_PORT;
   private final String TEST_USERNAME            = "johndoe";
   private final String TEST_PASSWORD            = "password";
@@ -241,7 +241,7 @@ public class TestGlobalSession {
     }
   }
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
   @Before
   public void setUp() {

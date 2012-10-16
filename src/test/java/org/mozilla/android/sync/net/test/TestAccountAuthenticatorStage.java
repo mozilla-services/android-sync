@@ -31,14 +31,14 @@ import ch.boye.httpclientandroidlib.HttpResponse;
  *
  */
 public class TestAccountAuthenticatorStage {
-  private static final int TEST_PORT      = 15325;
+  private static final int TEST_PORT      = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
   private static final String USERNAME  = "john-hashed";
   private static final String PASSWORD  = "password";
 
   private MockServer authServer;
-  private HTTPServerTestHelper serverHelper = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper serverHelper = new HTTPServerTestHelper();
   private AuthenticateAccountStage authStage = new AuthenticateAccountStage();
   private AuthenticateAccountStageDelegate testCallback;
 

@@ -19,8 +19,7 @@ import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import android.content.Context;
 
 public class TestClientsStage extends AndroidSyncTestCase {
-  private static int          TEST_PORT        = 15325;
-  private static final String TEST_CLUSTER_URL = "http://localhost:" + TEST_PORT;
+  private static final String TEST_CLUSTER_URL = "http://not.used";
   private static final String TEST_USERNAME    = "johndoe";
   private static final String TEST_PASSWORD    = "password";
   private static final String TEST_SYNC_KEY    = "abcdeabcdeabcdeabcdeabcdea";
