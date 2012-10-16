@@ -25,26 +25,84 @@ import org.simpleframework.transport.connect.SocketConnection;
  * <b>unchecked</b> exception thrown contains a stack trace pointing to where
  * the new server is being created and where the pre-existing server was
  * created.
+ * <p>
+ * Parses a system property to determine current test port, which is fixed for
+ * the duration of a test execution.
  */
 public class HTTPServerTestHelper {
   private static final String LOG_TAG = "HTTPServerTestHelper";
+
+  /**
+   * Port to run HTTP servers on during this test execution.
+   * <p>
+   * Lazily initialized on first call to {@link #getTestPort}.
+   */
+  public static Integer testPort = null;
+
+  public static final String LOCAL_HTTP_PORT_PROPERTY = "android.sync.local.http.port";
+  public static final int    LOCAL_HTTP_PORT_DEFAULT = 15125;
 
   public final int port;
 
   public Connection connection;
   public MockServer server;
 
+  /**
+   * Create a helper to bind <code>MockServer</code> instances.
+   * <p>
+   * Use {@link #getTestPort} to determine the port this helper will bind to.
+   */
   public HTTPServerTestHelper() {
     this.port = getTestPort();
-  }
-
-  public synchronized static int getTestPort() {
-    return 5000;
   }
 
   // For testing only.
   protected HTTPServerTestHelper(int port) {
     this.port = port;
+  }
+
+  /**
+   * Lazily initialize test port for this test execution.
+   * <p>
+   * Only called from {@link #getTestPort}.
+   * <p>
+   * If the test port has not been determined, we try to parse it from a system
+   * property; if that fails, we return the default test port.
+   */
+  protected synchronized static void ensureTestPort() {
+    if (testPort != null) {
+      return;
+    }
+
+    String value = System.getProperty(LOCAL_HTTP_PORT_PROPERTY);
+    if (value != null) {
+      try {
+        testPort = Integer.valueOf(value);
+      } catch (NumberFormatException e) {
+        Logger.warn(LOG_TAG, "Got exception parsing local test port; ignoring. ", e);
+      }
+    }
+
+    if (testPort == null) {
+      testPort = Integer.valueOf(LOCAL_HTTP_PORT_DEFAULT);
+    }
+  }
+
+  /**
+   * The port to which all HTTP servers will be found for the duration of this
+   * test execution.
+   * <p>
+   * We try to parse the port from a system property; if that fails, we return
+   * the default test port.
+   *
+   * @return port number.
+   */
+  public synchronized static int getTestPort() {
+    if (testPort == null) {
+      ensureTestPort();
+    }
+
+    return testPort.intValue();
   }
 
   /**
@@ -121,7 +179,6 @@ public class HTTPServerTestHelper {
     }
 
     try {
-      Logger.info(LOG_TAG, "Starting HTTP server on port " + port + "...");
       this.server = server;
       connection = new SocketConnection(server);
       SocketAddress address = new InetSocketAddress(port);
@@ -129,9 +186,9 @@ public class HTTPServerTestHelper {
 
       registerServerAsRunning(this);
 
-      Logger.info(LOG_TAG, "Starting HTTP server on port " + port + "... DONE");
+      Logger.info(LOG_TAG, "Started HTTP server on port " + port + ".");
     } catch (IOException ex) {
-      Logger.error(LOG_TAG, "Error starting HTTP server on port " + port + "... DONE", ex);
+      Logger.error(LOG_TAG, "Error starting HTTP server on port " + port + ".", ex);
       fail(ex.toString());
     }
 
@@ -147,7 +204,6 @@ public class HTTPServerTestHelper {
   }
 
   public void stopHTTPServer() {
-    Logger.info(LOG_TAG, "Stopping HTTP server on port " + port + "...");
     try {
       if (connection != null) {
         unregisterServerAsRunning(this);
@@ -156,11 +212,13 @@ public class HTTPServerTestHelper {
       }
       server = null;
       connection = null;
-      Logger.info(LOG_TAG, "Closing connection pool...");
+
+      Logger.info(LOG_TAG, "Stopped HTTP server on port " + port + ".");
+
+      Logger.debug(LOG_TAG, "Closing connection pool...");
       BaseResource.shutdownConnectionManager();
-      Logger.info(LOG_TAG, "Stopping HTTP server on port " + port + "... DONE");
     } catch (IOException ex) {
-      Logger.error(LOG_TAG, "Error stopping HTTP server on port " + port + "... DONE", ex);
+      Logger.error(LOG_TAG, "Error stopping HTTP server on port " + port + ".", ex);
       fail(ex.toString());
     }
   }
