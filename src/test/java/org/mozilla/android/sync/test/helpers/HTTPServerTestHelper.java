@@ -29,11 +29,21 @@ import org.simpleframework.transport.connect.SocketConnection;
 public class HTTPServerTestHelper {
   private static final String LOG_TAG = "HTTPServerTestHelper";
 
-  public int port;
+  public final int port;
+
   public Connection connection;
   public MockServer server;
 
-  public HTTPServerTestHelper(int port) {
+  public HTTPServerTestHelper() {
+    this.port = getTestPort();
+  }
+
+  public synchronized static int getTestPort() {
+    return 5000;
+  }
+
+  // For testing only.
+  protected HTTPServerTestHelper(int port) {
     this.port = port;
   }
 

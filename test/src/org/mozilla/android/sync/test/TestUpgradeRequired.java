@@ -46,8 +46,7 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
  *
  */
 public class TestUpgradeRequired extends AndroidSyncTestCase {
-  private final int     TEST_PORT        = 15325;
-  private final String  TEST_SERVER      = "http://localhost:" + TEST_PORT + "/";
+  private final String  TEST_SERVER      = "http://test.ser.ver/";
 
   private static final String TEST_USERNAME     = "user1";
   private static final String TEST_PASSWORD     = "pass1";

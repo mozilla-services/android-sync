@@ -33,13 +33,13 @@ import org.simpleframework.http.Response;
 public class TestMetaGlobal {
   public static Object monitor = new Object();
 
-  private static final int    TEST_PORT    = 15325;
+  private static final int    TEST_PORT    = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER  = "http://localhost:" + TEST_PORT;
   private static final String TEST_SYNC_ID = "foobar";
 
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   public static final String META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  private HTTPServerTestHelper data    = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data    = new HTTPServerTestHelper();
 
   public static final String TEST_META_GLOBAL_RESPONSE = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
   public static final String TEST_META_GLOBAL_NO_PAYLOAD_RESPONSE = "{\"id\":\"global\"," +

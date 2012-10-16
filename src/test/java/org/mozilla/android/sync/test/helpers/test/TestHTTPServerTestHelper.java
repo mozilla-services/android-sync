@@ -18,7 +18,7 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper.HTTPServerAlreadyRunningError;
 
 public class TestHTTPServerTestHelper {
-  public static final int TEST_PORT = 15325;
+  public static final int TEST_PORT = HTTPServerTestHelper.getTestPort();
 
   protected MockServer mockServer = new MockServer();
 
@@ -26,7 +26,7 @@ public class TestHTTPServerTestHelper {
   public void testStartStop() {
     // Need to be able to start and stop multiple times.
     for (int i = 0; i < 2; i++) {
-      HTTPServerTestHelper httpServer = new HTTPServerTestHelper(TEST_PORT);
+      HTTPServerTestHelper httpServer = new HTTPServerTestHelper();
 
       assertNull(httpServer.connection);
       httpServer.startHTTPServer(mockServer);
@@ -37,13 +37,13 @@ public class TestHTTPServerTestHelper {
   }
 
   public void startAgain() {
-    HTTPServerTestHelper httpServer = new HTTPServerTestHelper(TEST_PORT);
+    HTTPServerTestHelper httpServer = new HTTPServerTestHelper();
     httpServer.startHTTPServer(mockServer);
   }
 
   @Test
   public void testStartTwice() {
-    HTTPServerTestHelper httpServer = new HTTPServerTestHelper(TEST_PORT);
+    HTTPServerTestHelper httpServer = new HTTPServerTestHelper();
 
     httpServer.startHTTPServer(mockServer);
     assertNotNull(httpServer.connection);
@@ -72,10 +72,17 @@ public class TestHTTPServerTestHelper {
     }
   }
 
+  protected static class LeakyHTTPServerTestHelper extends HTTPServerTestHelper {
+    // Make this constructor public, just for this test.
+    public LeakyHTTPServerTestHelper(int port) {
+      super(port);
+    }
+  }
+
   @Test
   public void testForceStartTwice() {
-    HTTPServerTestHelper httpServer1 = new HTTPServerTestHelper(TEST_PORT);
-    HTTPServerTestHelper httpServer2 = new HTTPServerTestHelper(TEST_PORT + 1);
+    HTTPServerTestHelper httpServer1 = new HTTPServerTestHelper();
+    HTTPServerTestHelper httpServer2 = new LeakyHTTPServerTestHelper(httpServer1.port + 1);
 
     // Should be able to start multiple times if we specify it.
     try {
