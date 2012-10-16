@@ -96,12 +96,6 @@ public class TestLineByLineHandling {
     }
   }
 
-  @Before
-  public void setUp() {
-    Logger.info(LOG_TAG, "Faking SSL context.");
-    BaseResource.enablePlainHTTPConnectionManager();
-  }
-
   @Test
   public void testLineByLine() throws URISyntaxException {
     BaseResource.rewriteLocalhost = false;
