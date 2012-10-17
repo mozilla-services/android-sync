@@ -72,14 +72,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     return session;
   }
 
-  private static final int TEST_PORT      = 15325;
+  private static final int TEST_PORT      = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
   private static final String USERNAME  = "john";
   private static final String PASSWORD  = "password";
   private static final String SYNC_KEY  = "abcdeabcdeabcdeabcdeabcdea";
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data = new HTTPServerTestHelper();
   private int numRecordsFromGetRequest = 0;
 
   private ArrayList<ClientRecord> expectedClients = new ArrayList<ClientRecord>();

@@ -23,10 +23,10 @@ import org.mozilla.gecko.sync.net.HttpResponseObserver;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class TestResource {
-  private static final int    TEST_PORT   = 15325;
+  private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
-  private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
 
   @Before
   public void setUp() {

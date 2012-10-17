@@ -31,8 +31,6 @@ import org.mozilla.gecko.sync.synchronizer.Synchronizer;
  * See also "TestResetCommands" in the unit test suite.
  */
 public class TestResetting extends AndroidSyncTestCase {
-  private static int          TEST_PORT        = 15325;
-  private static final String TEST_CLUSTER_URL = "http://localhost:" + TEST_PORT;
   private static final String TEST_USERNAME    = "johndoe";
   private static final String TEST_PASSWORD    = "password";
   private static final String TEST_SYNC_KEY    = "abcdeabcdeabcdeabcdeabcdea";
@@ -160,7 +158,7 @@ public class TestResetting extends AndroidSyncTestCase {
   private GlobalSession createDefaultGlobalSession(final GlobalSessionCallback callback) throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     return new GlobalSession(
         SyncConfiguration.DEFAULT_USER_API,
-        TEST_CLUSTER_URL,
+        null,
         TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
         callback, getApplicationContext(), null, null) {

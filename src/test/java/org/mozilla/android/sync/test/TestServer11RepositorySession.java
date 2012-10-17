@@ -57,7 +57,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
     }
   }
 
-  private static final int    TEST_PORT   = 15325;
+  private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT + "/";
   static final String LOCAL_REQUEST_URL   = TEST_SERVER + "1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
 
@@ -71,7 +71,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
     return USER_PASS;
   }
 
-  private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
 
   public class MockServer11RepositorySession extends Server11RepositorySession {
     public MockServer11RepositorySession(Repository repository) {
