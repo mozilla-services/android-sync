@@ -26,11 +26,17 @@ import org.simpleframework.transport.connect.SocketConnection;
  * the new server is being created and where the pre-existing server was
  * created.
  * <p>
- * Parses a system property to determine current test port.
+ * Parses a system property to determine current test port, which is fixed for
+ * the duration of a test execution.
  */
 public class HTTPServerTestHelper {
   private static final String LOG_TAG = "HTTPServerTestHelper";
 
+  /**
+   * Port to run HTTP servers on during this test execution.
+   * <p>
+   * Lazily initialized on first call to {@link #getTestPort}.
+   */
   public static Integer testPort = null;
 
   public static final String LOCAL_HTTP_PORT_PROPERTY = "android.sync.local.http.port";
@@ -41,6 +47,11 @@ public class HTTPServerTestHelper {
   public Connection connection;
   public MockServer server;
 
+  /**
+   * Create a helper to bind <code>MockServer</code> instances.
+   * <p>
+   * Use {@link #getTestPort} to determine the port this helper will bind to.
+   */
   public HTTPServerTestHelper() {
     this.port = getTestPort();
   }
@@ -50,7 +61,15 @@ public class HTTPServerTestHelper {
     this.port = port;
   }
 
-  public synchronized static void ensureTestPort() {
+  /**
+   * Lazily initialize test port for this test execution.
+   * <p>
+   * Only called from {@link #getTestPort}.
+   * <p>
+   * If the test port has not been determined, we try to parse it from a system
+   * property; if that fails, we return the default test port.
+   */
+  protected synchronized static void ensureTestPort() {
     if (testPort != null) {
       return;
     }
@@ -69,6 +88,15 @@ public class HTTPServerTestHelper {
     }
   }
 
+  /**
+   * The port to which all HTTP servers will be found for the duration of this
+   * test execution.
+   * <p>
+   * We try to parse the port from a system property; if that fails, we return
+   * the default test port.
+   *
+   * @return port number.
+   */
   public synchronized static int getTestPort() {
     if (testPort == null) {
       ensureTestPort();
