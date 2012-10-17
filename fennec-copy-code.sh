@@ -3,6 +3,12 @@ then
   echo "No ANDROID dir set. Aborting."
   exit 1;
 fi
+
+if [ -z "$SERVICES" ]
+then
+  echo "No SERVICES dir set. Aborting."
+  exit 1;
+fi
   
 echo "Copying to $ANDROID ($SERVICES)..."
 

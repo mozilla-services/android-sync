@@ -7,17 +7,17 @@ shift
 
 ANDROID=$DESTDIR/mobile/android
 if [ ! -d $ANDROID ]; then
-  echo "No android dir."
+  echo "No Android dir."
   exit 1
 fi
 
-SYNC=$DESTDIR/mobile/android/sync
+SERVICES=$DESTDIR/mobile/android/services
 
-if [ -d $SYNC ]; then
-  echo "Sync directory already exists. Updating."
+if [ -d $SERVICES ]; then
+  echo "Services directory already exists. Updating."
 else
-  echo "No Sync directory. Creating directory structure."
-  mkdir -p $SYNC
+  echo "No Services directory. Creating directory structure."
+  mkdir -p $SERVICES
 fi
 
 echo "Preprocessing."
@@ -35,4 +35,4 @@ fi
 shift
 
 echo "Copying."
-ANDROID="$ANDROID" SYNC="$SYNC" ./fennec-copy-code.sh
+ANDROID="$ANDROID" SERVICES="$SERVICES" ./fennec-copy-code.sh
