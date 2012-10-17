@@ -19,7 +19,6 @@ import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import android.content.Context;
 
 public class TestClientsStage extends AndroidSyncTestCase {
-  private static final String TEST_CLUSTER_URL = "http://not.used";
   private static final String TEST_USERNAME    = "johndoe";
   private static final String TEST_PASSWORD    = "password";
   private static final String TEST_SYNC_KEY    = "abcdeabcdeabcdeabcdeabcdea";
@@ -43,7 +42,7 @@ public class TestClientsStage extends AndroidSyncTestCase {
 
     final GlobalSession session = new GlobalSession(
         SyncConfiguration.DEFAULT_USER_API,
-        TEST_CLUSTER_URL,
+        null,
         TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
         callback, context, null, delegate);
