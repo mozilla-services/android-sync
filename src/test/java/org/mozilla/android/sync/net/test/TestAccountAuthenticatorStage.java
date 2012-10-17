@@ -49,16 +49,17 @@ public class TestAccountAuthenticatorStage {
       @Override
       protected void handle(Request request, Response response, int code, String body) {
         try {
+          final int c;
           String responseAuth = request.getValue("Authorization");
           // Trim whitespace, HttpResponse has an extra space?
           if (expectedBasicAuthHeader.equals(responseAuth.trim())) {
-            code = 200;
+            c = 200;
           } else {
-            code = 401;
+            c = 401;
           }
 
           Logger.debug(LOG_TAG, "Handling request...");
-          PrintStream bodyStream = this.handleBasicHeaders(request, response, code, "application/json");
+          PrintStream bodyStream = this.handleBasicHeaders(request, response, c, "application/json");
           bodyStream.println(body);
           bodyStream.close();
         } catch (IOException e) {
@@ -131,7 +132,7 @@ public class TestAccountAuthenticatorStage {
     });
   }
 
-  protected WaitHelper testWaiter() {
+  protected static WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
 }

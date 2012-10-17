@@ -17,6 +17,7 @@ public class TestJSONParsing {
   public static String exampleJSON = "{\"modified\":1233702554.25,\"success\":[\"{GXS58IDC}12\",\"{GXS58IDC}13\",\"{GXS58IDC}15\",\"{GXS58IDC}16\",\"{GXS58IDC}18\",\"{GXS58IDC}19\"],\"failed\":{\"{GXS58IDC}11\":[\"invalid parentid\"],\"{GXS58IDC}14\":[\"invalid parentid\"],\"{GXS58IDC}17\":[\"invalid parentid\"],\"{GXS58IDC}20\":[\"invalid parentid\"]}}";
   public static String exampleIntegral = "{\"modified\":1233702554,}";
 
+  @SuppressWarnings("static-method")
   @Test
   public void testFractional() throws IOException, ParseException, NonObjectJSONException {
     ExtendedJSONObject o = new ExtendedJSONObject(exampleJSON);
@@ -28,10 +29,11 @@ public class TestJSONParsing {
     assertFalse(o.containsKey("foo"));
     assertTrue(o.get("modified") instanceof Number);
     assertTrue(o.get("modified").equals(Double.parseDouble("1233702554.25")));
-    assertEquals(new Long(1233702554250L), o.getTimestamp("modified"));
+    assertEquals(Long.valueOf(1233702554250L), o.getTimestamp("modified"));
     assertEquals(null, o.getTimestamp("foo"));
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testIntegral() throws IOException, ParseException, NonObjectJSONException {
     ExtendedJSONObject o = new ExtendedJSONObject(exampleIntegral);
@@ -39,7 +41,7 @@ public class TestJSONParsing {
     assertFalse(o.containsKey("success"));
     assertTrue(o.get("modified") instanceof Number);
     assertTrue(o.get("modified").equals(Long.parseLong("1233702554")));
-    assertEquals(new Long(1233702554000L), o.getTimestamp("modified"));
+    assertEquals(Long.valueOf(1233702554000L), o.getTimestamp("modified"));
     assertEquals(null, o.getTimestamp("foo"));
   }
 
@@ -53,17 +55,18 @@ public class TestJSONParsing {
     }
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testSafeInteger() {
     ExtendedJSONObject o = new ExtendedJSONObject();
-    o.put("integer", new Integer(5));
-    o.put("double",  new Double(1.2));
+    o.put("integer", Integer.valueOf(5));
+    o.put("double",  Double.valueOf(1.2));
     o.put("string",  "66");
     o.put("object",  new ExtendedJSONObject());
     o.put("null",    null);
 
-    assertEquals(new Integer(5),  o.getIntegerSafely("integer"));
-    assertEquals(new Integer(66), o.getIntegerSafely("string"));
+    assertEquals(Integer.valueOf(5),  o.getIntegerSafely("integer"));
+    assertEquals(Integer.valueOf(66), o.getIntegerSafely("string"));
     assertNull(o.getIntegerSafely(null));
   }
 }

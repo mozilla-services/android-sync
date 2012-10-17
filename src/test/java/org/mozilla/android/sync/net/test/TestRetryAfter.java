@@ -40,6 +40,7 @@ public class TestRetryAfter {
     assertTrue(syncResponse.retryAfterInSeconds() < TEST_SECONDS + 15);
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testRetryAfterParsesMalformed() {
     final HttpResponse response = new BasicHttpResponse(
@@ -50,6 +51,7 @@ public class TestRetryAfter {
     assertEquals(-1, syncResponse.retryAfterInSeconds());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testRetryAfterParsesNeither() {
     final HttpResponse response = new BasicHttpResponse(
