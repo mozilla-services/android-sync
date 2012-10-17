@@ -10,6 +10,7 @@ import org.mozilla.gecko.sync.Utils;
 
 public class TestHeaderParsing {
 
+  @SuppressWarnings("static-method")
   @Test
   public void testDecimalSecondsToMilliseconds() {
     assertEquals(Utils.decimalSecondsToMilliseconds(""),         -1);

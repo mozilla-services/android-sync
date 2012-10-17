@@ -51,11 +51,13 @@ public class TestMetaGlobal {
       "\"payload\":\"{}\"," +
       "\"username\":\"5817483\",\"modified\":1.32046073744E9}";
 
+  @SuppressWarnings("static-method")
   @Before
   public void setUp() {
     BaseResource.rewriteLocalhost = false;
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testSyncID() {
     MetaGlobal g = new MetaGlobal(META_URL, USER_PASS);
@@ -146,7 +148,7 @@ public class TestMetaGlobal {
     assertEquals(200, delegate.successResponse.getStatusCode());
     assertEquals("zPSQTm7WBVWB", global.getSyncID());
     assertTrue(global.getEngines() instanceof ExtendedJSONObject);
-    assertEquals(new Long(5), global.getStorageVersion());
+    assertEquals(Long.valueOf(5), global.getStorageVersion());
   }
 
   /**
@@ -194,15 +196,17 @@ public class TestMetaGlobal {
     assertEquals(ParseException.class, delegate.errorException.getClass());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testSetFromRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
     assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
-    assertEquals(new Long(5), mg.getStorageVersion());
+    assertEquals(Long.valueOf(5), mg.getStorageVersion());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testAsCryptoRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
@@ -212,9 +216,10 @@ public class TestMetaGlobal {
     mg.setFromRecord(rec);
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
     assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
-    assertEquals(new Long(5), mg.getStorageVersion());
+    assertEquals(Long.valueOf(5), mg.getStorageVersion());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testGetEnabledEngineNames() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
@@ -246,7 +251,7 @@ public class TestMetaGlobal {
     String TEST_SYNC_ID = "testSyncID";
     MetaGlobal mg = new MetaGlobal(META_URL, USER_PASS);
     mg.setSyncID(TEST_SYNC_ID);
-    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
+    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
     final AtomicBoolean mgUploaded = new AtomicBoolean(false);
     final MetaGlobal uploadedMg = new MetaGlobal(null, null);

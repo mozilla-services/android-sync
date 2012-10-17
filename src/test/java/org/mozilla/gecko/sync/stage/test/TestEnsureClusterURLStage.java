@@ -50,6 +50,7 @@ public class TestEnsureClusterURLStage {
   private final String TEST_PASSWORD            = "password";
   private final String TEST_SYNC_KEY            = "abcdeabcdeabcdeabcdeabcdea";
 
+  @SuppressWarnings("static-method")
   @Before
   public void setUp() {
     // BaseResource rewrites localhost to 10.0.2.2, which works on Android but not on desktop.

@@ -18,6 +18,7 @@ public class TestServer11Repository {
     assertEquals(expected, u.getRawQuery());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testCollectionURI() throws URISyntaxException {
     Server11Repository r = new Server11Repository(SERVER_URI, USERNAME, COLLECTION, null);
@@ -27,5 +28,4 @@ public class TestServer11Repository {
     assertQueryEquals("full=1&newer=5000.000&sort=index",   r.collectionURI(true,  5000000L,  0, "index", null));
     assertQueryEquals("full=1&ids=123,abc",                 r.collectionURI(true,       -1L, -1,    null, "123,abc"));
   }
-
 }

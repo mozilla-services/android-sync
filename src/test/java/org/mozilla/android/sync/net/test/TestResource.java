@@ -28,17 +28,20 @@ public class TestResource {
 
   private HTTPServerTestHelper data     = new HTTPServerTestHelper();
 
+  @SuppressWarnings("static-method")
   @Before
   public void setUp() {
     BaseResource.rewriteLocalhost = false;
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testLocalhostRewriting() throws URISyntaxException {
     BaseResource r = new BaseResource("http://localhost:5000/foo/bar", true);
     assertEquals("http://10.0.2.2:5000/foo/bar", r.getURI().toASCIIString());
   }
 
+  @SuppressWarnings("static-method")
   public MockResourceDelegate doGet() throws URISyntaxException {
     final BaseResource r = new BaseResource(TEST_SERVER + "/foo/bar");
     MockResourceDelegate delegate = new MockResourceDelegate();
