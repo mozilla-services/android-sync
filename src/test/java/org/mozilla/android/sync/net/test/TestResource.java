@@ -30,7 +30,6 @@ public class TestResource {
 
   @Before
   public void setUp() {
-    BaseResource.enablePlainHTTPConnectionManager();
     BaseResource.rewriteLocalhost = false;
   }
 

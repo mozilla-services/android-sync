@@ -3,17 +3,22 @@
 
 package org.mozilla.gecko.sync.log.writers.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.log.writers.LevelFilteringLogWriter;
+import org.mozilla.gecko.sync.log.writers.LogWriter;
 import org.mozilla.gecko.sync.log.writers.PrintLogWriter;
-import org.mozilla.gecko.sync.log.writers.SingleTagLogWriter;
+import org.mozilla.gecko.sync.log.writers.SimpleTagLogWriter;
 import org.mozilla.gecko.sync.log.writers.StringLogWriter;
+import org.mozilla.gecko.sync.log.writers.ThreadLocalTagLogWriter;
 
 import android.util.Log;
 
@@ -65,7 +70,7 @@ public class TestLogWriters {
     final String SINGLE_TAG = "XXX";
     StringLogWriter lw = new StringLogWriter();
 
-    Logger.startLoggingTo(new SingleTagLogWriter(SINGLE_TAG, lw));
+    Logger.startLoggingTo(new SimpleTagLogWriter(SINGLE_TAG, lw));
     Logger.error(TEST_LOG_TAG_1, TEST_MESSAGE_1);
     Logger.warn(TEST_LOG_TAG_2, TEST_MESSAGE_2);
 
@@ -96,5 +101,59 @@ public class TestLogWriters {
     assertFalse(s.contains(PrintLogWriter.INFO));
     assertFalse(s.contains(PrintLogWriter.DEBUG));
     assertFalse(s.contains(PrintLogWriter.VERBOSE));
+  }
+
+  @Test
+  public void testThreadLocalLogWriter() throws InterruptedException {
+    final InheritableThreadLocal<String> logTag = new InheritableThreadLocal<String>() {
+      @Override
+      protected String initialValue() {
+        return "PARENT";
+      }
+    };
+
+    final StringLogWriter stringLogWriter = new StringLogWriter();
+    final LogWriter logWriter = new ThreadLocalTagLogWriter(logTag, stringLogWriter);
+
+    try {
+      Logger.startLoggingTo(logWriter);
+
+      Logger.info("parent tag before", "parent message before");
+
+      int threads = 3;
+      final CountDownLatch latch = new CountDownLatch(threads);
+
+      for (int thread = 0; thread < threads; thread++) {
+        final int threadNumber = thread;
+
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              logTag.set("CHILD" + threadNumber);
+              Logger.info("child tag " + threadNumber, "child message " + threadNumber);
+            } finally {
+              latch.countDown();
+            }
+          }
+        }).start();
+      }
+
+      latch.await();
+
+      Logger.info("parent tag after", "parent message after");
+
+      String s = stringLogWriter.toString();
+      String[] lines = s.split("\n");
+      assertEquals(5, lines.length);
+      assertEquals("PARENT :: I :: parent tag before :: parent message before", lines[0]);
+      assertEquals("PARENT :: I :: parent tag after :: parent message after", lines[4]);
+
+      for (int thread = 0; thread < threads; thread++) {
+        assertTrue(s.contains("CHILD" + thread + " :: I :: child tag " + thread + " :: child message " + thread));
+      }
+    } finally {
+      Logger.stopLoggingTo(logWriter);
+    }
   }
 }

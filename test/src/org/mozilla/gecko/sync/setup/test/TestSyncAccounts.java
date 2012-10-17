@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
@@ -42,7 +43,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   private static final String TEST_SERVERURL  = "test.server.url/";
   private static final String TEST_CLUSTERURL = "test.cluster.url/";
 
-  public static final String TEST_ACCOUNTTYPE = GlobalConstants.ACCOUNTTYPE_SYNC;
+  public static final String TEST_ACCOUNTTYPE = SyncConstants.ACCOUNTTYPE_SYNC;
 
   public static final String TEST_PRODUCT = GlobalConstants.BROWSER_INTENT_PACKAGE;
   public static final String TEST_PROFILE = Constants.DEFAULT_PROFILE;
@@ -410,8 +411,8 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
       assertNotNull(account);
 
       Intent intent = SyncAccounts.makeSyncAccountDeletedIntent(context, accountManager, account);
-      assertEquals(GlobalConstants.SYNC_ACCOUNT_DELETED_ACTION, intent.getAction());
-      assertEquals(GlobalConstants.SYNC_ACCOUNT_DELETED_INTENT_VERSION, intent.getLongExtra(Constants.JSON_KEY_VERSION, 0));
+      assertEquals(SyncConstants.SYNC_ACCOUNT_DELETED_ACTION, intent.getAction());
+      assertEquals(SyncConstants.SYNC_ACCOUNT_DELETED_INTENT_VERSION, intent.getLongExtra(Constants.JSON_KEY_VERSION, 0));
       assertEquals(TEST_USERNAME, intent.getStringExtra(Constants.JSON_KEY_ACCOUNT));
       assertTrue(Math.abs(intent.getLongExtra(Constants.JSON_KEY_TIMESTAMP, 0) - System.currentTimeMillis()) < 1000);
 

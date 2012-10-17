@@ -53,7 +53,6 @@ public class TestMetaGlobal {
 
   @Before
   public void setUp() {
-    BaseResource.enablePlainHTTPConnectionManager();
     BaseResource.rewriteLocalhost = false;
   }
 

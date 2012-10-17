@@ -14,6 +14,7 @@ import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
@@ -30,7 +31,7 @@ import android.content.SharedPreferences;
 
 public class TestAccountPickler extends AndroidSyncTestCase {
   public static final String TEST_FILENAME = "test.json";
-  public static final String TEST_ACCOUNTTYPE = GlobalConstants.ACCOUNTTYPE_SYNC;
+  public static final String TEST_ACCOUNTTYPE = SyncConstants.ACCOUNTTYPE_SYNC;
 
   // Test account names must start with TEST_USERNAME in order to be recognized
   // as test accounts and deleted in tearDown.

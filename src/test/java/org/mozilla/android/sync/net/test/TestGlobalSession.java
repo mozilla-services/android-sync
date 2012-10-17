@@ -245,7 +245,6 @@ public class TestGlobalSession {
 
   @Before
   public void setUp() {
-    BaseResource.enablePlainHTTPConnectionManager();
     BaseResource.rewriteLocalhost = false;
   }
 
