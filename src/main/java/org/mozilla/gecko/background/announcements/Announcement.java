@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.Logger;
 
 /**
  * Represents a retrieved product announcement.
@@ -15,6 +16,8 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
  * Instances of this class are immutable.
  */
 public class Announcement {
+  private static final String LOG_TAG   = "Announcement";
+
   private static final String KEY_ID    = "id";
   private static final String KEY_TITLE = "title";
   private static final String KEY_URL   = "url";
@@ -78,5 +81,31 @@ public class Announcement {
     out.put(KEY_URL,   uri.toASCIIString());
     out.put(KEY_TEXT,  text);
     return out;
+  }
+
+  /**
+   * Return false if the provided Announcement is in some way invalid,
+   * regardless of being well-formed.
+   */
+  public static boolean isValidAnnouncement(final Announcement an) {
+    final URI uri = an.getUri();
+    if (uri == null) {
+      Logger.warn(LOG_TAG, "No URI: announcement not valid.");
+      return false;
+    }
+
+    final String scheme = uri.getScheme();
+    if (scheme == null) {
+      Logger.warn(LOG_TAG, "Null scheme: announcement not valid.");
+      return false;
+    }
+
+    // Only allow HTTP and HTTPS URLs.
+    if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) {
+      Logger.warn(LOG_TAG, "Scheme '" + scheme + "' forbidden: announcement not valid.");
+      return false;
+    }
+
+    return true;
   }
 }
