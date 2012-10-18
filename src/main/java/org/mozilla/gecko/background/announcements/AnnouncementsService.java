@@ -90,9 +90,26 @@ public class AnnouncementsService extends IntentService implements Announcements
     return true;
   }
 
-  protected void processAnnouncements(List<Announcement> announcements) {
+  /**
+   * Display the first valid announcement in the list.
+   */
+  protected void processAnnouncements(final List<Announcement> announcements) {
+    if (announcements == null) {
+      Logger.warn(LOG_TAG, "No announcements to present.");
+      return;
+    }
+
+    boolean presented = false;
     for (Announcement an : announcements) {
-      AnnouncementPresenter.displayAnnouncement(this, an);
+      // Do this so we at least log, rather than just returning.
+      if (presented) {
+        Logger.warn(LOG_TAG, "Skipping announcement \"" + an.getTitle() + "\": one already shown.");
+        continue;
+      }
+      if (Announcement.isValidAnnouncement(an)) {
+        presented = true;
+        AnnouncementPresenter.displayAnnouncement(this, an);
+      }
     }
   }
 
