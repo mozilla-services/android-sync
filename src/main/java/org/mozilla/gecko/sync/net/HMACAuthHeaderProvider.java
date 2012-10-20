@@ -11,6 +11,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.tokenserver.TokenServerToken;
 
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -32,6 +33,10 @@ public class HMACAuthHeaderProvider implements AuthHeaderProvider {
   public HMACAuthHeaderProvider(String identifier, String key) {
     this.identifier = identifier;
     this.key = key;
+  }
+
+  public HMACAuthHeaderProvider(TokenServerToken token) {
+    this(token.id, token.key);
   }
 
   @Override

@@ -1,0 +1,28 @@
+        <activity
+            android:theme="@style/SyncTheme"
+            android:icon="@drawable/icon"
+            android:label="@string/sync_app_name"
+            android:clearTaskOnLaunch="true"
+            android:name="org.mozilla.gecko.fxaccount.activities.FxAccountSetupActivity"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!-- Adding a launcher will make Firefox Sync appear
+                     on the Apps screen, which we only want when testing. -->
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+
+        <activity
+            android:name="org.mozilla.gecko.fxaccount.activities.FxAccountSetupNewAccountActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity
+            android:name="org.mozilla.gecko.fxaccount.activities.FxAccountSetupExistingAccountActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity
+            android:name="org.mozilla.gecko.fxaccount.activities.FxAccountAvatarStatusActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity
+            android:name="org.mozilla.gecko.fxaccount.activities.FxAccountAvatarUpdateActivity"
+            android:windowSoftInputMode="adjustResize"/>

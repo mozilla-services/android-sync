@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	style="@style/FxAccountContainer" >
+
+	<LinearLayout style="@style/FxAccountMiddle" >
+
+		<TextView
+			style="@style/FxAccountTop"
+			android:text="Create a Firefox account" />
+
+		<EditText
+			android:id="@+id/fxaccount_email"
+			style="@style/FxAccountEditItem"
+			android:layout_marginBottom="10dp"
+			android:ems="10"
+			android:hint="Email address"
+			android:inputType="textEmailAddress"
+			android:text="foo@foo.com" >
+
+			<requestFocus />
+		</EditText>
+
+		<EditText
+			android:id="@+id/fxaccount_password"
+			style="@style/FxAccountEditItem"
+			android:layout_marginBottom="10dp"
+			android:ems="10"
+			android:hint="Password"
+			android:inputType="textPassword"
+			android:text="foo" />
+
+		<EditText
+			android:id="@+id/fxaccount_password2"
+			style="@style/FxAccountEditItem"
+			android:layout_marginBottom="10dp"
+			android:ems="10"
+			android:hint="Retype password"
+			android:inputType="textPassword"
+			android:text="foo" />
+
+		<TextView
+			style="@style/FxAccountTextItem"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:gravity="center_horizontal"
+			android:text="We use Mozilla&apos;s safe and secure Persona ID to create your account." />
+
+		<TextView
+			style="@style/FxAccountLinkItem"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="40dp"
+			android:gravity="center_horizontal"
+			android:text="Learn more." />
+
+		<Button
+			style="@style/FxAccountButton"
+			android:layout_marginBottom="20dp"
+			android:onClick="onNext"
+			android:text="Next" />
+	</LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	style="@style/FxAccountContainer" >
+
+	<TextView
+		style="@style/FxAccountTop"
+		android:text="Status" />
+
+	<ScrollView
+		style="@style/SyncMiddle"
+		android:layout_marginLeft="10dp"
+		android:layout_marginRight="10dp" >
+
+		<LinearLayout
+			android:layout_width="fill_parent"
+			android:layout_height="fill_parent"
+			android:orientation="vertical" >
+
+			<LinearLayout
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"
+				android:layout_marginBottom="10dp"
+				android:orientation="horizontal" >
+
+				<TextView
+					style="@style/FxAccountHeaderItem"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Account:  " />
+
+				<TextView
+					style="@style/FxAccountTextItem"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="account name here" />
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_gravity="center_horizontal"
+				android:layout_marginBottom="30dp"
+				android:orientation="horizontal" >
+
+				<TextView
+					style="@style/FxAccountHeaderItem"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="Last updated:  " />
+
+				<TextView
+					style="@style/FxAccountTextItem"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="update time here" />
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginBottom="10dp"
+				android:orientation="vertical" >
+
+				<TextView
+					style="@style/FxAccountHeaderItem"
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:gravity="center_horizontal"
+					android:text="Devices using account:" />
+
+				<TextView
+					style="@style/FxAccountTextItem"
+                    android:singleLine="false"
+					android:layout_width="fill_parent"
+					android:layout_height="wrap_content"
+					android:gravity="center_horizontal"
+					android:text="Device one here
+Device two here" />
+			</LinearLayout>
+		</LinearLayout>
+	</ScrollView>
+
+</LinearLayout>
