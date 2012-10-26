@@ -19,8 +19,7 @@ public class AnnouncementsConstants {
   static final String PREF_EARLIEST_NEXT_ANNOUNCE_FETCH = "earliest_next_announce_fetch";
   static final String PREF_ANNOUNCE_FETCH_INTERVAL_MSEC = "announce_fetch_interval_msec";
 
-  // TODO
-  static final String DEFAULT_ANNOUNCE_SERVER_URL = "http://people.mozilla.com/~rnewman/announce/";
+  static final String DEFAULT_ANNOUNCE_SERVER_URL = "https://announce.services.mozilla.com/announce/";
 
   public static final long DEFAULT_ANNOUNCE_FETCH_INTERVAL_MSEC = AlarmManager.INTERVAL_HALF_DAY;
   public static final long DEFAULT_BACKOFF_MSEC = 2 * 24 * 60 * 60 * 1000;   // Two days. Used if no Retry-After header.
