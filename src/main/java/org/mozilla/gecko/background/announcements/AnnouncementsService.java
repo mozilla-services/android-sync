@@ -268,6 +268,8 @@ public class AnnouncementsService extends IntentService implements Announcements
   public void onBackoff(int retryAfterInSeconds) {
     Logger.info(LOG_TAG, "Got retry after: " + retryAfterInSeconds);
     final long delayInMsec = Math.max(retryAfterInSeconds * 1000, AnnouncementsConstants.DEFAULT_BACKOFF_MSEC);
-    setEarliestNextFetch(delayInMsec + System.currentTimeMillis());
+    final long fuzzedBackoffInMsec = delayInMsec + Math.round(((double) delayInMsec * 0.25d * Math.random()));
+    Logger.debug(LOG_TAG, "Fuzzed backoff: " + fuzzedBackoffInMsec + "ms.");
+    setEarliestNextFetch(fuzzedBackoffInMsec + System.currentTimeMillis());
   }
 }
