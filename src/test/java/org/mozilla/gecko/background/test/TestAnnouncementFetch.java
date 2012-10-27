@@ -305,7 +305,7 @@ public class TestAnnouncementFetch {
       }
 
       @Override
-      public String getServerURL() {
+      public String getServiceURL() {
         return BASE_URI;
       }
 

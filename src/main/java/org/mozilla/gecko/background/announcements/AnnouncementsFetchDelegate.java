@@ -26,7 +26,7 @@ public interface AnnouncementsFetchDelegate {
   /**
    * @return the server URL to interrogate, including path.
    */
-  public String getServerURL();
+  public String getServiceURL();
 
   /*
    * Callback methods.

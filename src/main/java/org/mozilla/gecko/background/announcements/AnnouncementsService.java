@@ -198,9 +198,9 @@ public class AnnouncementsService extends IntentService implements Announcements
    * Use this to write the persisted server URL, overriding
    * the default value.
    * @param url a URI identifying the full request path, e.g.,
-   *            "http://foo.com:1234/snippets/"
+   *            "http://foo.com:1234/announce/"
    */
-  public void setAnnouncementsServerURL(final URI url) {
+  public void setAnnouncementsServerBaseURL(final URI url) {
     if (url == null) {
       throw new IllegalArgumentException("url cannot be null.");
     }
@@ -212,13 +212,19 @@ public class AnnouncementsService extends IntentService implements Announcements
       throw new IllegalArgumentException("url must be http or https.");
     }
     SharedPreferences p = this.getSharedPreferences();
-    p.edit().putString(AnnouncementsConstants.PREF_ANNOUNCE_SERVER_URL, url.toASCIIString()).commit();
+    p.edit().putString(AnnouncementsConstants.PREF_ANNOUNCE_SERVER_BASE_URL, url.toASCIIString()).commit();
   }
 
+  /**
+   * Return the service URL, including protocol version and application identifier. E.g.,
+   *
+   *   "https://campaigns.services.mozilla.com/announce/1/android/"
+   */
   @Override
-  public String getServerURL() {
+  public String getServiceURL() {
     SharedPreferences p = this.getSharedPreferences();
-    return p.getString(AnnouncementsConstants.PREF_ANNOUNCE_SERVER_URL, AnnouncementsConstants.DEFAULT_ANNOUNCE_SERVER_URL);
+    String base = p.getString(AnnouncementsConstants.PREF_ANNOUNCE_SERVER_BASE_URL, AnnouncementsConstants.DEFAULT_ANNOUNCE_SERVER_BASE_URL);
+    return base + AnnouncementsConstants.ANNOUNCE_PATH_SUFFIX;
   }
 
   @Override

@@ -77,7 +77,7 @@ public class AnnouncementsFetcher {
     final long now = System.currentTimeMillis();
     Logger.debug(LOG_TAG, "Fetching announcements. Last launch: " + lastLaunch + "; now: " + now);
     try {
-      final String base = delegate.getServerURL();
+      final String base = delegate.getServiceURL();
       final URI uri = getAnnounceURI(base, lastLaunch);
       Logger.info(LOG_TAG, "Fetching announcements from " + uri.toASCIIString());
       fetchAnnouncements(uri, delegate);
