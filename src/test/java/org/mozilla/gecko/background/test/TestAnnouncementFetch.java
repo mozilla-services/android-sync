@@ -19,6 +19,7 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.announcements.Announcement;
+import org.mozilla.gecko.background.announcements.AnnouncementsConstants;
 import org.mozilla.gecko.background.announcements.AnnouncementsFetchDelegate;
 import org.mozilla.gecko.background.announcements.AnnouncementsFetcher;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -31,12 +32,85 @@ public class TestAnnouncementFetch {
   private static final String TEST_SERVER = "http://127.0.0.1:" + TEST_PORT;
   private static final String TEST_USER_AGENT = "TEST USER AGENT";
   private static final String BASE_PATH   = "/announce/";
-  private static final String BASE_URI    = TEST_SERVER + BASE_PATH;
+  private static final String BASE_URI    = TEST_SERVER + BASE_PATH + AnnouncementsConstants.ANNOUNCE_PATH_SUFFIX;
 
   private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
   private static void debug(String s) {
     System.out.println(s);
+  }
+
+  public static final class MockFetchDelegate implements AnnouncementsFetchDelegate {
+    private final long now;
+    public List<Announcement> fetchedAnnouncements;
+
+    public MockFetchDelegate(long now) {
+      this.now = now;
+    }
+
+    private void done() {
+      WaitHelper.getTestWaiter().performNotify();
+    }
+
+    private void done(Exception e) {
+      e.printStackTrace();
+      Assert.fail("Error. " + e);
+      done();
+    }
+
+    @Override
+    public void onNewAnnouncements(List<Announcement> announcements, long fetched) {
+      this.fetchedAnnouncements = announcements;
+      Assert.assertTrue(fetched >= now);
+      done();
+    }
+
+    @Override
+    public void onNoNewAnnouncements(long fetched) {
+      Assert.fail("No new announcements. Fetched = " + fetched);
+      done();
+    }
+
+    @Override
+    public void onRemoteError(Exception e) {
+      done(e);
+    }
+
+    @Override
+    public void onLocalError(Exception e) {
+      done(e);
+    }
+
+    @Override
+    public void onRemoteFailure(int status) {
+      Assert.fail("Failure. " + status);
+      done();
+    }
+
+    @Override
+    public Locale getLocale() {
+      return new Locale("en", "gb");
+    }
+
+    @Override
+    public long getLastFetch() {
+      return 0L;
+    }
+
+    @Override
+    public String getUserAgent() {
+      return TEST_USER_AGENT;
+    }
+
+    @Override
+    public String getServiceURL() {
+      return BASE_URI;
+    }
+
+    @Override
+    public void onBackoff(int retryAfterInSeconds) {
+      // Do nothing.
+    }
   }
 
   public class TestAnnouncement extends Announcement {
@@ -142,12 +216,12 @@ public class TestAnnouncementFetch {
    * Respond to an announce API request by returning announcement JSON or
    * response codes per
    *
-   * https://wiki.mozilla.org/User:Mconnor/Current/Snippets_Service
+   * https://wiki.mozilla.org/Services/Roadmaps/Campaign-Manager#Client_API
    *
    */
   public class AnnouncementFetchMockServer extends MockServer {
-    // announcements/channel/version/platform
-    private static final int    EXPECTED_PATH_LENGTH = 4;
+    // announce/1/android/channel/version/platform
+    private static final int    EXPECTED_PATH_LENGTH = 6;
 
     private final ArrayList<TestAnnouncement> announcements = new ArrayList<TestAnnouncement>();
 
@@ -162,6 +236,7 @@ public class TestAnnouncementFetch {
         debug("Locales: " + locales + ", " + locales.get(0));
         final String method = request.getMethod();
         final Path path = request.getPath();
+        debug("Path: " + path);
 
         if (!method.equalsIgnoreCase("get")) {
           this.handleBasicHeaders(request, response, 405, "text/plain");
@@ -173,19 +248,23 @@ public class TestAnnouncementFetch {
         }
 
         // Don't bother with additional validation. This is test code!
-        String channel  = segments[1];
-        String version  = segments[2];
-        String platform = segments[3];
+        String protocol = segments[1];
+        String product  = segments[2];
+        String channel  = segments[3];
+        String version  = segments[4];
+        String platform = segments[5];
         int idle        = request.getQuery().getInteger("idle");
+
+        // These will cause the test to bomb out if they fail.
+        Assert.assertEquals("android", product);
+        Assert.assertEquals("1", protocol);
 
         JSONArray matchingAnnouncements = this.getAnnouncements(channel, version, platform, locales, idle);
         JSONObject body = new JSONObject();
         body.put("announcements", matchingAnnouncements);
-
         final PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/json");
         bodyStream.print(body.toJSONString());
         bodyStream.close();
-
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -247,73 +326,8 @@ public class TestAnnouncementFetch {
     // Make a request that matches.
     final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "17.0a1", "armeabi-v7a", 4);
     final long now = System.currentTimeMillis();
-    final AnnouncementsFetchDelegate delegate = new AnnouncementsFetchDelegate() {
 
-      private void done() {
-        WaitHelper.getTestWaiter().performNotify();
-      }
-
-      private void done(Exception e) {
-        e.printStackTrace();
-        Assert.fail("Error. " + e);
-        done();
-      }
-
-      @Override
-      public void onNewAnnouncements(List<Announcement> announcements, long fetched) {
-        Assert.assertTrue(fetched >= now);
-        Assert.assertEquals(1, announcements.size());
-        Assert.assertEquals(TEST_ANNOUNCEMENT_ONE_TITLE, announcements.get(0).getTitle());
-        done();
-      }
-
-      @Override
-      public void onNoNewAnnouncements(long fetched) {
-        Assert.fail("No new announcements. Fetched = " + fetched);
-        done();
-      }
-
-      @Override
-      public void onRemoteError(Exception e) {
-        done(e);
-      }
-
-      @Override
-      public void onLocalError(Exception e) {
-        done(e);
-      }
-
-      @Override
-      public void onRemoteFailure(int status) {
-        Assert.fail("Failure. " + status);
-        done();
-      }
-
-      @Override
-      public Locale getLocale() {
-        return new Locale("en", "gb");
-      }
-
-      @Override
-      public long getLastFetch() {
-        return 0L;
-      }
-
-      @Override
-      public String getUserAgent() {
-        return TEST_USER_AGENT;
-      }
-
-      @Override
-      public String getServiceURL() {
-        return BASE_URI;
-      }
-
-      @Override
-      public void onBackoff(int retryAfterInSeconds) {
-        // Do nothing.
-      }
-    };
+    final MockFetchDelegate delegate = new MockFetchDelegate(now);
 
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
@@ -321,6 +335,9 @@ public class TestAnnouncementFetch {
         AnnouncementsFetcher.fetchAnnouncements(uri, delegate);
       }
     });
+
+    Assert.assertEquals(1, delegate.fetchedAnnouncements.size());
+    Assert.assertEquals(TEST_ANNOUNCEMENT_ONE_TITLE, delegate.fetchedAnnouncements.get(0).getTitle());
     data.stopHTTPServer();
   }
 }
