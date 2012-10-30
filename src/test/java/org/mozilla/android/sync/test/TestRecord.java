@@ -31,8 +31,9 @@ public class TestRecord {
   @SuppressWarnings("static-method")
   @Test
   public void testQueryRecord() throws NonObjectJSONException, IOException, ParseException {
+    final String expectedGUID = "Bl3n3gpKag3s";
     final String testRecord =
-        "{\"id\":\"Bl3n3gpKag3s\"," +
+        "{\"id\":\"" + expectedGUID + "\"," +
         " \"type\":\"query\"," +
         " \"title\":\"Downloads\"," +
         " \"parentName\":\"\"," +
@@ -43,20 +44,21 @@ public class TestRecord {
         " \"loadInSidebar\":false," +
         " \"parentid\":\"BxfRgGiNeITG\"}";
 
-
     final ExtendedJSONObject o = new ExtendedJSONObject(testRecord);
     final CryptoRecord cr = new CryptoRecord(o);
-    cr.guid = "Bl3n3gpKag3s";
+    cr.guid = expectedGUID;
     cr.lastModified = System.currentTimeMillis();
     cr.collection = "bookmarks";
 
     final BookmarkRecord r = new BookmarkRecord("Bl3n3gpKag3s", "bookmarks");
     r.initFromEnvelope(cr);
-    assertEquals("Bl3n3gpKag3s", r.guid);
+    assertEquals(expectedGUID, r.guid);
     assertEquals("query", r.type);
     assertEquals("places:uri=place%3Atransition%3D7%26sort%3D4", r.bookmarkURI);
 
-    // Check round-tripping.
+    // Check that we get the same bookmark URI out the other end,
+    // once we've parsed it into a CryptoRecord, a BookmarkRecord, then
+    // back into a CryptoRecord.
     assertEquals("place:transition=7&sort=4", r.getEnvelope().payload.getString("bmkUri"));
   }
 
