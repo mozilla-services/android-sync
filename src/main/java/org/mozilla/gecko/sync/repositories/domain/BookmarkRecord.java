@@ -271,6 +271,7 @@ public class BookmarkRecord extends Record {
         Map<String, String> parts = Utils.extractURIComponents(PLACES_URI_PREFIX, this.bookmarkURI);
         putPayload(payload, "queryId", parts.get("queryId"));
         putPayload(payload, "folderName", parts.get("folderName"));
+        putPayload(payload, "bmkUri", parts.get("uri"));
         return;
       }
 
