@@ -28,6 +28,41 @@ import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 public class TestRecord {
 
+  @SuppressWarnings("static-method")
+  @Test
+  public void testQueryRecord() throws NonObjectJSONException, IOException, ParseException {
+    final String expectedGUID = "Bl3n3gpKag3s";
+    final String testRecord =
+        "{\"id\":\"" + expectedGUID + "\"," +
+        " \"type\":\"query\"," +
+        " \"title\":\"Downloads\"," +
+        " \"parentName\":\"\"," +
+        " \"bmkUri\":\"place:transition=7&sort=4\"," +
+        " \"tags\":[]," +
+        " \"keyword\":null," +
+        " \"description\":null," +
+        " \"loadInSidebar\":false," +
+        " \"parentid\":\"BxfRgGiNeITG\"}";
+
+    final ExtendedJSONObject o = new ExtendedJSONObject(testRecord);
+    final CryptoRecord cr = new CryptoRecord(o);
+    cr.guid = expectedGUID;
+    cr.lastModified = System.currentTimeMillis();
+    cr.collection = "bookmarks";
+
+    final BookmarkRecord r = new BookmarkRecord("Bl3n3gpKag3s", "bookmarks");
+    r.initFromEnvelope(cr);
+    assertEquals(expectedGUID, r.guid);
+    assertEquals("query", r.type);
+    assertEquals("places:uri=place%3Atransition%3D7%26sort%3D4", r.bookmarkURI);
+
+    // Check that we get the same bookmark URI out the other end,
+    // once we've parsed it into a CryptoRecord, a BookmarkRecord, then
+    // back into a CryptoRecord.
+    assertEquals("place:transition=7&sort=4", r.getEnvelope().payload.getString("bmkUri"));
+  }
+
+  @SuppressWarnings("static-method")
   @Test
   public void testRecordGUIDs() {
     for (int i = 0; i < 50; ++i) {
@@ -148,6 +183,7 @@ public class TestRecord {
     return object;
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testTabParsing() throws ParseException, NonArrayJSONException {
     String json = "{\"title\":\"mozilla-central mozilla/browser/base/content/syncSetup.js\"," +
@@ -172,7 +208,7 @@ public class TestRecord {
     assertEquals(0L, zero.lastUsed);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "static-method" })
   @Test
   public void testTabsRecordCreation() throws Exception {
     final TabsRecord record = new TabsRecord("testGuid");
@@ -210,11 +246,12 @@ public class TestRecord {
                    encodeUnsupportedTypeURI("abc&def baz", "p1", "123", "p2", "bar baz"));
       assertEquals("places:uri=abc%26def+baz&p1=123",
                    encodeUnsupportedTypeURI("abc&def baz", "p1", "123", null, "bar baz"));
-      assertEquals("places:p1=123&p2=",
+      assertEquals("places:p1=123",
                    encodeUnsupportedTypeURI(null, "p1", "123", "p2", null));
     }
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testEncodeURI() {
     URITestBookmarkRecord.doTest();
@@ -261,6 +298,7 @@ public class TestRecord {
     record.doTest();
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testTTL() {
     Record record = new HistoryRecord();
