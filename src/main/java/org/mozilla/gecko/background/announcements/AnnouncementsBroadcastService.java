@@ -136,8 +136,6 @@ public class AnnouncementsBroadcastService extends IntentService {
    * alarm service accordingly.
    */
   protected void handlePrefIntent(Intent intent) {
-    recordLastLaunch(this);               // TODO: wrong place!
-
     if (!intent.hasExtra("enabled")) {
       Logger.warn(LOG_TAG, "Got ANNOUNCEMENTS_PREF intent without enabled. Ignoring.");
       return;
