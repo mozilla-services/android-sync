@@ -269,7 +269,15 @@ public abstract class Record {
   }
 
   protected void putPayload(ExtendedJSONObject payload, String key, String value) {
+    this.putPayload(payload, key, value, false);
+  }
+
+  @SuppressWarnings("static-method")
+  protected void putPayload(ExtendedJSONObject payload, String key, String value, boolean excludeEmpty) {
     if (value == null) {
+      return;
+    }
+    if (excludeEmpty && value.equals("")) {
       return;
     }
     payload.put(key, value);
