@@ -239,6 +239,7 @@ public abstract class Record {
     return rec;
   }
 
+  @SuppressWarnings("static-method")
   public String toJSONString() {
     throw new RuntimeException("Cannot JSONify non-CryptoRecord Records.");
   }
@@ -259,6 +260,7 @@ public abstract class Record {
    * @param key
    * @param value
    */
+  @SuppressWarnings("static-method")
   protected void putPayload(CryptoRecord rec, String key, String value) {
     if (value == null) {
       return;

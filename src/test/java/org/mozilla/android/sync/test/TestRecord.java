@@ -28,6 +28,7 @@ import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 public class TestRecord {
 
+  @SuppressWarnings("static-method")
   @Test
   public void testRecordGUIDs() {
     for (int i = 0; i < 50; ++i) {
@@ -148,6 +149,7 @@ public class TestRecord {
     return object;
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testTabParsing() throws ParseException, NonArrayJSONException {
     String json = "{\"title\":\"mozilla-central mozilla/browser/base/content/syncSetup.js\"," +
@@ -172,7 +174,7 @@ public class TestRecord {
     assertEquals(0L, zero.lastUsed);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "static-method" })
   @Test
   public void testTabsRecordCreation() throws Exception {
     final TabsRecord record = new TabsRecord("testGuid");
@@ -215,6 +217,7 @@ public class TestRecord {
     }
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testEncodeURI() {
     URITestBookmarkRecord.doTest();
@@ -261,6 +264,7 @@ public class TestRecord {
     record.doTest();
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testTTL() {
     Record record = new HistoryRecord();
