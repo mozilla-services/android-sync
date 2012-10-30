@@ -55,7 +55,10 @@ public class AnnouncementsBroadcastService extends IntentService {
 
   /**
    * Record the last launch time of our version of Fennec.
-   * @param context the <code>Context</code> to use to gain access to <code>SharedPreferences</code>.
+   *
+   * @param context
+   *          the <code>Context</code> to use to gain access to
+   *          <code>SharedPreferences</code>.
    */
   public static void recordLastLaunch(final Context context) {
     final long now = System.currentTimeMillis();
