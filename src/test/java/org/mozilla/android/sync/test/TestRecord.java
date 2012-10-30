@@ -212,7 +212,7 @@ public class TestRecord {
                    encodeUnsupportedTypeURI("abc&def baz", "p1", "123", "p2", "bar baz"));
       assertEquals("places:uri=abc%26def+baz&p1=123",
                    encodeUnsupportedTypeURI("abc&def baz", "p1", "123", null, "bar baz"));
-      assertEquals("places:p1=123&p2=",
+      assertEquals("places:p1=123",
                    encodeUnsupportedTypeURI(null, "p1", "123", "p2", null));
     }
   }

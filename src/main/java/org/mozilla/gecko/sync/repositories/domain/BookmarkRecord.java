@@ -421,7 +421,7 @@ public class BookmarkRecord extends Record {
       b.append(encode(originalURI));
       previous = true;
     }
-    if (p1 != null) {
+    if (p1 != null && v1 != null) {
       if (previous) {
         b.append("&");
       }
@@ -430,7 +430,7 @@ public class BookmarkRecord extends Record {
       b.append(encode(v1));
       previous = true;
     }
-    if (p2 != null) {
+    if (p2 != null && v2 != null) {
       if (previous) {
         b.append("&");
       }
