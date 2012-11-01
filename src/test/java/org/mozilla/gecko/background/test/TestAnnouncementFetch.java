@@ -238,6 +238,9 @@ public class TestAnnouncementFetch {
         final Path path = request.getPath();
         debug("Path: " + path);
 
+        String connectionHeader = request.getValue("connection");
+        Assert.assertEquals("close", connectionHeader);
+
         if (!method.equalsIgnoreCase("get")) {
           this.handleBasicHeaders(request, response, 405, "text/plain");
         }
