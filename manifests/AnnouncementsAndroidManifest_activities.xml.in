@@ -1,6 +1,6 @@
         <!--
              As well as these system actions, we also listen for pref notifications
-             sent by Fennec: org.mozilla.gecko.SNIPPETS_PREF.
+             sent by Fennec: @ANDROID_PACKAGE_NAME@.ANNOUNCEMENTS_PREF.
           -->
         <receiver android:name="org.mozilla.gecko.background.announcements.AnnouncementsBroadcastReceiver" >
             <intent-filter>
