@@ -100,7 +100,7 @@ Run Vagrant to create virtual machine environment
 
 Now we should be able to create the virtual machine. ::
 
-  archo:android-sync ncalexan$ vagrant up
+  archo:android-sync ncalexan$ vagrant up develop
   [default] Importing base box 'precise32'...
   [default] The guest additions on this VM do not match the install version of
   VirtualBox! This may cause things such as forwarded ports, shared
@@ -139,7 +139,7 @@ Access virtual machine environment
 
 Now you should be able to connect to the virtual machine. ::
 
-  archo:android-sync ncalexan$ vagrant ssh
+  archo:android-sync ncalexan$ vagrant ssh develop
   Welcome to Ubuntu 12.04 LTS (GNU/Linux 3.2.0-23-generic-pae i686)
 
    * Documentation:  https://help.ubuntu.com/
