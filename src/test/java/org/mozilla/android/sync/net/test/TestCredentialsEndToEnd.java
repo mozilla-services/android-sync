@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 
 import ch.boye.httpclientandroidlib.Header;
 
@@ -31,7 +31,7 @@ public class TestCredentialsEndToEnd {
   public static final String DESKTOP_BASIC_AUTH    = "Basic dXR2bTNtazZobm5naWlyMnNwNGpzeGYydXZveWNydjY6cMOvZ8Opb25zMQ==";
 
   private String getCreds(String password) {
-    Header authenticate = BaseResource.getBasicAuthHeader(USERNAME + ":" + password);
+    Header authenticate = new BasicAuthHeaderProvider(USERNAME, password).getAuthHeader(null, null, null);
     return authenticate.getValue();
   }
 

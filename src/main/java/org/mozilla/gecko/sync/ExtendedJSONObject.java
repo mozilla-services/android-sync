@@ -239,4 +239,23 @@ public class ExtendedJSONObject {
   public int size() {
     return this.object.size();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ExtendedJSONObject)) {
+      return false;
+    }
+
+    ExtendedJSONObject e = (ExtendedJSONObject) o;
+    if (this.object == null) {
+      return e.object == null;
+    }
+
+    return this.object.equals(e);
+  }
+
+  @Override
+  public int hashCode() {
+    return this.object.hashCode();
+  }
 }

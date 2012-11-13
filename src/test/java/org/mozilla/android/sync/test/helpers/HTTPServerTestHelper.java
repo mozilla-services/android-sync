@@ -13,7 +13,7 @@ import java.util.Map;
 
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncResourceDelegate;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
 
@@ -172,7 +172,7 @@ public class HTTPServerTestHelper {
 
   public MockServer startHTTPServer(MockServer server, boolean allowMultipleServers) {
     BaseResource.rewriteLocalhost = false; // No sense rewriting when we're running the unit tests.
-    SyncResourceDelegate.connectionTimeoutInMillis = 1000; // No sense waiting a long time for a local connection.
+    BaseResourceDelegate.connectionTimeoutInMillis = 1000; // No sense waiting a long time for a local connection.
 
     if (!allowMultipleServers) {
       throwIfServerAlreadyRunning();

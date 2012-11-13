@@ -3,6 +3,7 @@
 
 package org.mozilla.android.sync.test.helpers;
 
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
 
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -14,7 +15,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 public abstract class BaseResourceDelegate implements ResourceDelegate {
 
   @Override
-  public String getCredentials() {
+  public AuthHeaderProvider getAuthHeaderProvider() {
     return null;
   }
 
