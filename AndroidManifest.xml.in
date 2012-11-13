@@ -11,6 +11,12 @@
     <uses-sdk android:minSdkVersion="8"
               android:targetSdkVersion="14" />
 
+    <!--
+       Note that we do not include the Announcements manifest fragments here:
+       the received intents call into Fennec, so there's minimal point right
+       now.
+      -->
+
 #include manifests/SyncAndroidManifest_permissions.xml.in
 
     <uses-permission android:name="android.permission.INTERNET"/>
