@@ -22,7 +22,7 @@ Vagrant::Config.run do |config|
   config.vm.box_url = "http://files.vagrantup.com/precise32.box"
 
   # Boot with a GUI so you can see the screen. (Default is headless)
-  config.vm.boot_mode = :gui
+  # config.vm.boot_mode = :gui
 
   # Assign this VM to a host-only network IP, allowing you to access it
   # via the IP. Host-only networks can talk to the host machine as well as
@@ -62,12 +62,30 @@ Vagrant::Config.run do |config|
   # #               Managed by Puppet.\n"
   # # }
 
-  # Pass installation procedure over to Puppet (see `support/puppet/manifests/project.pp`)
-  config.vm.provision :puppet do |puppet|
-    puppet.manifests_path = "puppet/manifests"
-    puppet.module_path    = "puppet/modules"
-    puppet.manifest_file  = "develop.pp"
-    # puppet.options        = [ "--verbose" ]
+  # define android-sync develop box
+  config.vm.define "develop" do |develop_config|
+    # Pass installation procedure over to Puppet (see `support/puppet/manifests/project.pp`)
+    develop_config.vm.customize ["modifyvm", :id, "--name", "android-sync: develop"]
+    develop_config.vm.provision :puppet do |puppet|
+      puppet.manifests_path = "puppet/manifests"
+      puppet.module_path    = "puppet/modules"
+      puppet.manifest_file  = "develop.pp"
+      # puppet.options        = [ "--verbose" ]
+    end
+    # develop_config.vm.network :hostonly, "11.11.11.10"
   end
 
+  # define sync server 2.0 box
+  config.vm.define "sync20" do |sync20_config|
+    # Pass installation procedure over to Puppet (see `support/puppet/manifests/project.pp`)
+    sync20_config.vm.customize ["modifyvm", :id, "--name", "android-sync: sync20"]
+    sync20_config.vm.provision :puppet do |puppet|
+      puppet.manifests_path = "puppet/manifests"
+      puppet.module_path    = "puppet/modules"
+      puppet.manifest_file  = "sync20.pp"
+      # puppet.options        = [ "--debug" ]
+    end
+    # sync20_config.vm.network :hostonly, "11.11.11.20"
+    sync20_config.vm.forward_port 5000, 5000 # VM port 5000 is host port 5000
+  end
 end
