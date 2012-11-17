@@ -7,13 +7,12 @@ package org.mozilla.gecko.sync.setup;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -23,8 +22,6 @@ import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -53,39 +50,12 @@ public class SyncAccounts {
   /**
    * Return Sync accounts.
    *
-   * @param c Android context.
+   * @param c
+   *          Android context.
    * @return Sync accounts.
    */
   public static Account[] syncAccounts(final Context c) {
-    return AccountManager.get(c).getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC);
-  }
-
-  /**
-   * Asynchronously invalidate the auth token for a Sync account.
-   *
-   * @param accountManager Android account manager.
-   * @param account Android account.
-   */
-  public static void invalidateAuthToken(final AccountManager accountManager, final Account account) {
-    if (account == null) {
-      return;
-    }
-
-    // blockingGetAuthToken must not be called from the main thread.
-    ThreadPool.run(new Runnable() {
-      @Override
-      public void run() {
-        String authToken;
-        try {
-          authToken = accountManager.blockingGetAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true);
-        } catch (Exception e) {
-          Logger.warn(LOG_TAG, "Got exception while invalidating auth token.", e);
-          return;
-        }
-
-        accountManager.invalidateAuthToken(GlobalConstants.ACCOUNTTYPE_SYNC, authToken);
-      }
-    });
+    return AccountManager.get(c).getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
   }
 
   /**
@@ -96,7 +66,7 @@ public class SyncAccounts {
    * Do not call this method from the main thread.
    */
   public static boolean syncAccountsExist(Context c) {
-    final boolean accountsExist = AccountManager.get(c).getAccountsByType(GlobalConstants.ACCOUNTTYPE_SYNC).length > 0;
+    final boolean accountsExist = AccountManager.get(c).getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC).length > 0;
     if (accountsExist) {
       return true;
     }
@@ -251,7 +221,7 @@ public class SyncAccounts {
       try {
         return createSyncAccount(syncAccount, syncAutomatically);
       } catch (Exception e) {
-        Log.e(Logger.GLOBAL_LOG_TAG, "Unable to create account.", e);
+        Log.e(SyncConstants.GLOBAL_LOG_TAG, "Unable to create account.", e);
         return null;
       }
     }
@@ -332,13 +302,13 @@ public class SyncAccounts {
       Logger.info(LOG_TAG, "Setting explicit server URL: " + serverURL);
     }
 
-    final Account account = new Account(username, GlobalConstants.ACCOUNTTYPE_SYNC);
+    final Account account = new Account(username, SyncConstants.ACCOUNTTYPE_SYNC);
     final Bundle userbundle = new Bundle();
 
     // Add sync key and server URL.
     userbundle.putString(Constants.OPTION_SYNCKEY, syncKey);
     userbundle.putString(Constants.OPTION_SERVER, serverURL);
-    Logger.debug(LOG_TAG, "Adding account for " + GlobalConstants.ACCOUNTTYPE_SYNC);
+    Logger.debug(LOG_TAG, "Adding account for " + SyncConstants.ACCOUNTTYPE_SYNC);
     boolean result = false;
     try {
       result = accountManager.addAccountExplicitly(account, password, userbundle);
@@ -346,13 +316,13 @@ public class SyncAccounts {
       // We use Log rather than Logger here to avoid possibly hiding these errors.
       final String message = e.getMessage();
       if (message != null && (message.indexOf("is different than the authenticator's uid") > 0)) {
-        Log.wtf(Logger.GLOBAL_LOG_TAG,
+        Log.wtf(SyncConstants.GLOBAL_LOG_TAG,
                 "Unable to create account. " +
                 "If you have more than one version of " +
                 "Firefox/Beta/Aurora/Nightly/Fennec installed, that's why.",
                 e);
       } else {
-        Log.e(Logger.GLOBAL_LOG_TAG, "Unable to create account.", e);
+        Log.e(SyncConstants.GLOBAL_LOG_TAG, "Unable to create account.", e);
       }
     }
 
@@ -488,39 +458,6 @@ public class SyncAccounts {
     return intent;
   }
 
-  protected static class SyncAccountVersion0Callback implements AccountManagerCallback<Bundle> {
-    protected final Context context;
-    protected final CountDownLatch latch;
-
-    public String authToken = null;
-
-    public SyncAccountVersion0Callback(final Context context, final CountDownLatch latch) {
-      this.context = context;
-      this.latch = latch;
-    }
-
-    @Override
-    public void run(AccountManagerFuture<Bundle> future) {
-      try {
-        Bundle bundle = future.getResult(60L, TimeUnit.SECONDS);
-        if (bundle.containsKey(AccountManager.KEY_INTENT)) {
-          throw new IllegalStateException("KEY_INTENT included in AccountManagerFuture bundle.");
-        }
-        if (bundle.containsKey(AccountManager.KEY_ERROR_MESSAGE)) {
-          throw new IllegalStateException("KEY_ERROR_MESSAGE (= " + bundle.getString(AccountManager.KEY_ERROR_MESSAGE) + ") "
-              + " included in AccountManagerFuture bundle.");
-        }
-
-        authToken = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-      } catch (Exception e) {
-        // Do nothing -- caller will find null authToken.
-        Logger.warn(LOG_TAG, "Got exception fetching auth token; ignoring and returning null auth token instead.", e);
-      } finally {
-        latch.countDown();
-      }
-    }
-  }
-
   /**
    * Synchronously extract Sync account parameters from Android account version
    * 0, using plain auth token type.
@@ -528,33 +465,16 @@ public class SyncAccounts {
    * Safe to call from main thread.
    *
    * @param context
+   *          Android context.
    * @param accountManager
    *          Android account manager.
    * @param account
-   *          Android account.
+   *          Android Account.
    * @return Sync account parameters, always non-null; fields username,
    *         password, serverURL, and syncKey always non-null.
    */
   public static SyncAccountParameters blockingFromAndroidAccountV0(final Context context, final AccountManager accountManager, final Account account)
       throws CredentialException {
-    final CountDownLatch latch = new CountDownLatch(1);
-    final SyncAccountVersion0Callback callback = new SyncAccountVersion0Callback(context, latch);
-
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        // Get an auth token.
-        accountManager.getAuthToken(account, Constants.AUTHTOKEN_TYPE_PLAIN, true, callback, null);
-      }
-    }).start();
-
-    try {
-      latch.await();
-    } catch (InterruptedException e) {
-      Logger.warn(LOG_TAG, "Got exception waiting for Sync account parameters; throwing.");
-      throw new CredentialException.MissingAllCredentialsException(e);
-    }
-
     String username;
     try {
       username = Utils.usernameFromAccount(account.name);
@@ -564,17 +484,17 @@ public class SyncAccounts {
       throw new CredentialException.MissingCredentialException("username");
     }
 
-    final String password = callback.authToken;
-
     /*
      * If we are accessing an Account that we don't own, Android will throw an
      * unchecked <code>SecurityException</code> saying
      * "W FxSync(XXXX) java.lang.SecurityException: caller uid XXXXX is different than the authenticator's uid".
      * We catch that error and throw accordingly.
      */
+    String password;
     String syncKey;
     String serverURL;
     try {
+      password = accountManager.getPassword(account);
       syncKey = accountManager.getUserData(account, Constants.OPTION_SYNCKEY);
       serverURL = accountManager.getUserData(account, Constants.OPTION_SERVER);
     } catch (SecurityException e) {
@@ -609,5 +529,117 @@ public class SyncAccounts {
       Logger.warn(LOG_TAG, "Got exception fetching Sync account parameters; throwing.");
       throw new CredentialException.MissingAllCredentialsException(e);
     }
+  }
+
+  /**
+   * Bug 790931: create an intent announcing that a Sync account will be
+   * deleted.
+   * <p>
+   * This intent <b>must</b> be broadcast with secure permissions, because it
+   * contains sensitive user information including the Sync account password and
+   * Sync key.
+   * <p>
+   * Version 1 of the created intent includes extras with keys
+   * <code>Constants.JSON_KEY_VERSION</code>,
+   * <code>Constants.JSON_KEY_TIMESTAMP</code>, and
+   * <code>Constants.JSON_KEY_ACCOUNT</code> (which is the Android Account name,
+   * not the encoded Sync Account name).
+   * <p>
+   * If possible, it contains the key <code>Constants.JSON_KEY_PAYLOAD</code>
+   * with value the Sync account parameters as JSON, <b>except the Sync key has
+   * been replaced with the empty string</b>. (We replace, rather than remove,
+   * the Sync key because SyncAccountParameters expects a non-null Sync key.)
+   *
+   * @see SyncAccountParameters#asJSON
+   *
+   * @param context
+   *          Android context.
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android account being removed.
+   * @return <code>Intent</code> to broadcast.
+   */
+  public static Intent makeSyncAccountDeletedIntent(final Context context, final AccountManager accountManager, final Account account) {
+    final Intent intent = new Intent(SyncConstants.SYNC_ACCOUNT_DELETED_ACTION);
+
+    intent.putExtra(Constants.JSON_KEY_VERSION, Long.valueOf(SyncConstants.SYNC_ACCOUNT_DELETED_INTENT_VERSION));
+    intent.putExtra(Constants.JSON_KEY_TIMESTAMP, Long.valueOf(System.currentTimeMillis()));
+    intent.putExtra(Constants.JSON_KEY_ACCOUNT, account.name);
+
+    SyncAccountParameters accountParameters = null;
+    try {
+      accountParameters = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Caught exception fetching account parameters.", e);
+    }
+
+    if (accountParameters != null) {
+      ExtendedJSONObject json = accountParameters.asJSON();
+      json.put(Constants.JSON_KEY_SYNCKEY, ""); // Reduce attack surface area by removing Sync key.
+      intent.putExtra(Constants.JSON_KEY_PAYLOAD, json.toJSONString());
+    }
+
+    return intent;
+  }
+
+  /**
+   * Synchronously fetch SharedPreferences of a profile associated with a Sync
+   * account.
+   * <p>
+   * Safe to call from main thread.
+   *
+   * @param context
+   *          Android context.
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android Account.
+   * @param product
+   *          package.
+   * @param profile
+   *          of account.
+   * @param version
+   *          number.
+   * @return SharedPreferences associated with Sync account.
+   * @throws CredentialException
+   * @throws NoSuchAlgorithmException
+   * @throws UnsupportedEncodingException
+   */
+  public static SharedPreferences blockingPrefsFromAndroidAccountV0(final Context context, final AccountManager accountManager, final Account account,
+      final String product, final String profile, final long version)
+          throws CredentialException, NoSuchAlgorithmException, UnsupportedEncodingException {
+    SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+    String prefsPath = Utils.getPrefsPath(product, params.username, params.serverURL, profile, version);
+
+    return context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
+  }
+
+  /**
+   * Synchronously fetch SharedPreferences of a profile associated with the
+   * default Firefox profile of a Sync Account.
+   * <p>
+   * Uses the default package, default profile, and current version.
+   * <p>
+   * Safe to call from main thread.
+   *
+   * @param context
+   *          Android context.
+   * @param accountManager
+   *          Android account manager.
+   * @param account
+   *          Android Account.
+   * @return SharedPreferences associated with Sync account.
+   * @throws CredentialException
+   * @throws NoSuchAlgorithmException
+   * @throws UnsupportedEncodingException
+   */
+  public static SharedPreferences blockingPrefsFromDefaultProfileV0(final Context context, final AccountManager accountManager, final Account account)
+      throws CredentialException, NoSuchAlgorithmException, UnsupportedEncodingException {
+    final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+    final String profile = Constants.DEFAULT_PROFILE;
+    final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+
+    return blockingPrefsFromAndroidAccountV0(context, accountManager, account, product, profile, version);
   }
 }

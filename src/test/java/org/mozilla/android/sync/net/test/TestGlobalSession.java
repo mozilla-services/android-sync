@@ -33,11 +33,14 @@ import org.mozilla.android.sync.test.helpers.MockResourceDelegate;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.EngineSettings;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -58,7 +61,7 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
 public class TestGlobalSession {
-  private int          TEST_PORT                = 15325;
+  private int          TEST_PORT                = HTTPServerTestHelper.getTestPort();
   private final String TEST_CLUSTER_URL         = "http://localhost:" + TEST_PORT;
   private final String TEST_USERNAME            = "johndoe";
   private final String TEST_PASSWORD            = "password";
@@ -238,11 +241,11 @@ public class TestGlobalSession {
     }
   }
 
-  private HTTPServerTestHelper data = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
+  @SuppressWarnings("static-method")
   @Before
   public void setUp() {
-    BaseResource.enablePlainHTTPConnectionManager();
     BaseResource.rewriteLocalhost = false;
   }
 
@@ -375,7 +378,7 @@ public class TestGlobalSession {
     // Verify we fill in all of our known engines when none are persisted.
     session.config.enabledEngineNames = null;
     MetaGlobal mg = session.generateNewMetaGlobal();
-    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
     assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
     assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
 
@@ -400,7 +403,7 @@ public class TestGlobalSession {
     session.config.enabledEngineNames.add("prefs");
 
     MetaGlobal mg = session.generateNewMetaGlobal();
-    assertEquals(new Long(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
     assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
     assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
     assertEquals(0, mg.getEngines().getObject("addons").getIntegerSafely("version").intValue());
@@ -411,5 +414,54 @@ public class TestGlobalSession {
     String[] names = namesList.toArray(new String[namesList.size()]);
     String[] expected = new String[] { "addons", "bookmarks", "clients", "prefs" };
     assertArrayEquals(expected, names);
+  }
+
+  @Test
+  public void testUploadUpdatedMetaGlobal() throws Exception {
+    // Set up session with meta/global.
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
+    session.config.metaGlobal = session.generateNewMetaGlobal();
+    session.enginesToUpdate.clear();
+
+    // Set enabledEngines in meta/global, including a "new engine."
+    String[] origEngines = new String[] { "bookmarks", "clients", "forms", "history", "tabs", "new-engine" };
+
+    ExtendedJSONObject origEnginesJSONObject = new ExtendedJSONObject();
+    for (String engineName : origEngines) {
+      EngineSettings mockEngineSettings = new EngineSettings(Utils.generateGuid(), Integer.valueOf(0));
+      origEnginesJSONObject.put(engineName, mockEngineSettings);
+    }
+    session.config.metaGlobal.setEngines(origEnginesJSONObject);
+
+    // Engines to remove.
+    String[] toRemove = new String[] { "bookmarks", "tabs" };
+    for (String name : toRemove) {
+      session.removeEngineFromMetaGlobal(name);
+    }
+
+    // Engines to add.
+    String[] toAdd = new String[] { "passwords" };
+    for (String name : toAdd) {
+      String syncId = Utils.generateGuid();
+      session.recordForMetaGlobalUpdate(name, new EngineSettings(syncId, Integer.valueOf(1)));
+    }
+
+    // Update engines.
+    session.uploadUpdatedMetaGlobal();
+
+    // Check resulting enabledEngines.
+    Set<String> expected = new HashSet<String>();
+    for (String name : origEngines) {
+      expected.add(name);
+    }
+    for (String name : toRemove) {
+      expected.remove(name);
+    }
+    for (String name : toAdd) {
+      expected.add(name);
+    }
+    assertEquals(expected, session.config.metaGlobal.getEnabledEngineNames());
   }
 }

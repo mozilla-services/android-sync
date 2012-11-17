@@ -14,6 +14,7 @@ import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -87,7 +88,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   }
 
   /**
-   * Handle an exception: update stats, invalidate auth token, log errors, etc.
+   * Handle an exception: update stats, log errors, etc.
    * Wakes up sleeping threads by calling notifyMonitor().
    *
    * @param globalSession
@@ -97,9 +98,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
    */
   protected void processException(final GlobalSession globalSession, final Exception e) {
     try {
-      // Just in case, invalidate auth token.
-      SyncAccounts.invalidateAuthToken(AccountManager.get(mContext), localAccount);
-
       if (e instanceof SQLiteConstraintException) {
         Logger.error(LOG_TAG, "Constraint exception. Aborting sync.", e);
         syncResult.stats.numParseExceptions++;       // This is as good as we can do.
@@ -241,11 +239,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
    * @param backoff time to wait in milliseconds.
    */
   @Override
-  public void requestBackoff(long backoff) {
+  public void requestBackoff(final long backoff) {
     if (backoff > 0) {
       // Fuzz the backoff time (up to 25% more) to prevent client lock-stepping; agrees with desktop.
-      backoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
-      this.extendEarliestNextSync(System.currentTimeMillis() + backoff);
+      final long fuzzedBackoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
+      this.extendEarliestNextSync(System.currentTimeMillis() + fuzzedBackoff);
     }
   }
 
@@ -278,6 +276,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final String authority,
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
+    Logger.setThreadLogTag(SyncConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
     Utils.reseedSharedRandom(); // Make sure we don't work with the same random seed for too long.
 
@@ -524,7 +523,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   public synchronized String getClientName() {
     String clientName = accountSharedPreferences.getString(SyncConfiguration.PREF_CLIENT_NAME, null);
     if (clientName == null) {
-      clientName = GlobalConstants.PRODUCT_NAME + " on " + android.os.Build.MODEL;
+      clientName = SyncConstants.PRODUCT_NAME + " on " + android.os.Build.MODEL;
       accountSharedPreferences.edit().putString(SyncConfiguration.PREF_CLIENT_NAME, clientName).commit();
     }
     return clientName;

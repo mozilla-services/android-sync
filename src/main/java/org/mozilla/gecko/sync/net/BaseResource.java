@@ -181,17 +181,6 @@ public class BaseResource implements Resource {
   private static Object connManagerMonitor = new Object();
   private static ClientConnectionManager connManager;
 
-  /**
-   * This method exists for test code.
-   */
-  public static ClientConnectionManager enablePlainHTTPConnectionManager() {
-    synchronized (connManagerMonitor) {
-      ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager();
-      connManager = cm;
-      return cm;
-    }
-  }
-
   // Call within a synchronized block on connManagerMonitor.
   private static ClientConnectionManager enableTLSConnectionManager() throws KeyManagementException, NoSuchAlgorithmException  {
     SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -320,6 +309,16 @@ public class BaseResource implements Resource {
   public void get() {
     Logger.debug(LOG_TAG, "HTTP GET " + this.uri.toASCIIString());
     this.go(new HttpGet(this.uri));
+  }
+
+  /**
+   * Perform an HTTP GET as with {@link BaseResource#get()}, returning only
+   * after callbacks have been invoked.
+   */
+  public void getBlocking() {
+    // Until we use the asynchronous Apache HttpClient, we can simply call
+    // through.
+    this.get();
   }
 
   @Override

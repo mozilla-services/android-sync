@@ -33,13 +33,13 @@ import org.simpleframework.http.Response;
 public class TestMetaGlobal {
   public static Object monitor = new Object();
 
-  private static final int    TEST_PORT    = 15325;
+  private static final int    TEST_PORT    = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER  = "http://localhost:" + TEST_PORT;
   private static final String TEST_SYNC_ID = "foobar";
 
   public static final String USER_PASS = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
   public static final String META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
-  private HTTPServerTestHelper data    = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data    = new HTTPServerTestHelper();
 
   public static final String TEST_META_GLOBAL_RESPONSE = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
   public static final String TEST_META_GLOBAL_NO_PAYLOAD_RESPONSE = "{\"id\":\"global\"," +
@@ -51,12 +51,13 @@ public class TestMetaGlobal {
       "\"payload\":\"{}\"," +
       "\"username\":\"5817483\",\"modified\":1.32046073744E9}";
 
+  @SuppressWarnings("static-method")
   @Before
   public void setUp() {
-    BaseResource.enablePlainHTTPConnectionManager();
     BaseResource.rewriteLocalhost = false;
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testSyncID() {
     MetaGlobal g = new MetaGlobal(META_URL, USER_PASS);
@@ -147,7 +148,7 @@ public class TestMetaGlobal {
     assertEquals(200, delegate.successResponse.getStatusCode());
     assertEquals("zPSQTm7WBVWB", global.getSyncID());
     assertTrue(global.getEngines() instanceof ExtendedJSONObject);
-    assertEquals(new Long(5), global.getStorageVersion());
+    assertEquals(Long.valueOf(5), global.getStorageVersion());
   }
 
   /**
@@ -195,15 +196,17 @@ public class TestMetaGlobal {
     assertEquals(ParseException.class, delegate.errorException.getClass());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testSetFromRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
     assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
-    assertEquals(new Long(5), mg.getStorageVersion());
+    assertEquals(Long.valueOf(5), mg.getStorageVersion());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testAsCryptoRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
@@ -213,9 +216,10 @@ public class TestMetaGlobal {
     mg.setFromRecord(rec);
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
     assertTrue(mg.getEngines() instanceof ExtendedJSONObject);
-    assertEquals(new Long(5), mg.getStorageVersion());
+    assertEquals(Long.valueOf(5), mg.getStorageVersion());
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testGetEnabledEngineNames() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
     MetaGlobal mg = new MetaGlobal(null, null);
@@ -247,7 +251,7 @@ public class TestMetaGlobal {
     String TEST_SYNC_ID = "testSyncID";
     MetaGlobal mg = new MetaGlobal(META_URL, USER_PASS);
     mg.setSyncID(TEST_SYNC_ID);
-    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
+    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
     final AtomicBoolean mgUploaded = new AtomicBoolean(false);
     final MetaGlobal uploadedMg = new MetaGlobal(null, null);

@@ -12,7 +12,6 @@
 <!ENTITY  awesomebar_all_pages_title "Top Sites">
 <!ENTITY  awesomebar_bookmarks_title "Bookmarks">
 <!ENTITY  awesomebar_history_title "History">
-<!ENTITY  awesomebar_search_engine "Search for \&quot;&#037;s\&quot;">
 
 <!ENTITY  crash_reporter_title "&brandShortName; Crash Reporter">
 <!ENTITY  crash_message "&brandShortName; has crashed. Your tabs should be listed on the &brandShortName; Start page when you restart.">
@@ -45,6 +44,8 @@
 <!ENTITY history_week_section "7 days ago">
 <!ENTITY history_older_section "Older than 7 days">
 
+<!ENTITY go "Go">
+<!ENTITY search "Search">
 <!ENTITY reload "Reload">
 <!ENTITY forward "Forward">
 <!ENTITY menu "Menu">
@@ -54,7 +55,8 @@
 
 <!ENTITY close_tab "Close Tab">
 <!ENTITY new_tab "New Tab">
-<!-- Localization note (num_tabs) : Number of tabs is always more than one. 
+<!ENTITY one_tab "1 tab">
+<!-- Localization note (num_tabs) : Number of tabs is always more than one.
      We can't use android plural forms, sadly. See bug #753859. -->
 <!ENTITY num_tabs "&#037;d tabs">
 <!ENTITY new_tab_opened "New tab opened">
@@ -79,22 +81,41 @@
 <!ENTITY pref_plugins_tap_to_play "Tap to play">
 <!ENTITY pref_plugins_disabled "Disabled">
 <!ENTITY pref_text_size "Text size">
+<!ENTITY pref_reflow_on_zoom2 "Pinch to reflow text">
 <!ENTITY pref_font_size_tiny "Tiny">
 <!ENTITY pref_font_size_small "Small">
 <!ENTITY pref_font_size_medium "Medium">
 <!ENTITY pref_font_size_large "Large">
 <!ENTITY pref_font_size_xlarge "Extra Large">
+<!ENTITY pref_font_size_set "Set">
+<!-- Localization note (pref_font_size_adjust_char): A button with a small version of this character
+(or combination of characters) is used to decrease the preview font size; a larger version of the
+same character/combination is used to increase the preview font size. It should be a concise
+representation of the language it is used in that will help show the text in the preview will change
+size. -->
+<!ENTITY pref_font_size_adjust_char "A">
+
+<!-- Localization note (pref_font_size_preview_text): This paragraph is used as an example to
+    demonstrate the font size setting.  It is meant to be whimsical and fun. -->
+<!ENTITY pref_font_size_preview_text "The quick orange fox jumps over your expectations with more speed, more flexibility and more security. As a non-profit, we\'re free to innovate on your behalf without any pressure to compromise. That means a better experience for you and a brighter future for the Web.">
+
 <!ENTITY pref_use_master_password "Use master password">
+<!ENTITY pref_show_product_announcements "Show product announcements">
 <!ENTITY pref_sync "Sync">
 <!ENTITY pref_search_suggestions "Show search suggestions">
 <!ENTITY pref_import_android "Import from Android">
 <!ENTITY pref_private_data_history "Browsing &amp; download history">
 <!ENTITY pref_private_data_formdata "Form &amp; search history">
-<!ENTITY pref_private_data_cookies "Cookies">
+<!ENTITY pref_private_data_cookies2 "Cookies &amp; active logins">
+<!ENTITY pref_private_data_passwords "Saved passwords">
 <!ENTITY pref_private_data_cache "Cache">
-<!ENTITY pref_private_data_sessions "Active logins">
 <!ENTITY pref_private_data_offlineApps "Offline website data">
 <!ENTITY pref_private_data_siteSettings "Site preferences">
+
+<!ENTITY pref_update_autodownload "Automatic updates">
+<!ENTITY pref_update_autodownload_wifi "Only over Wi-Fi">
+<!ENTITY pref_update_autodownload_disabled "Disabled">
+<!ENTITY pref_update_autodownload_enabled "Enabled">
 
 <!ENTITY quit "Quit">
 
@@ -105,9 +126,12 @@
 
 <!ENTITY share "Share">
 <!ENTITY share_title "Share via">
+<!ENTITY share_image_failed "Unable to share this image">
 <!ENTITY save_as_pdf "Save as PDF">
 <!ENTITY find_in_page "Find in Page">
 <!ENTITY desktop_mode "Request Desktop Site">
+<!ENTITY tools "Tools">
+<!ENTITY new_pb_tab "New Private Browsing Tab">
 
 <!-- Localization note (find_text, find_prev, find_next, find_close) : These strings are used
      as alternate text for accessibility. They are not visible in the UI. -->
@@ -117,6 +141,7 @@
 <!ENTITY find_close "Close">
 
 <!ENTITY contextmenu_open_new_tab "Open in New Tab">
+<!ENTITY contextmenu_open_in_reader "Open in Reader">
 <!ENTITY contextmenu_remove_history "Remove">
 <!ENTITY contextmenu_remove_bookmark "Remove">
 <!ENTITY contextmenu_add_to_launcher "Add to Home Screen">
@@ -135,7 +160,7 @@
 <!ENTITY bookmark_edit_location "Location">
 <!ENTITY bookmark_edit_keyword "Keyword">
 
-<!ENTITY site_settings_title        "Clear Site Settings">
+<!ENTITY site_settings_title2       "Site Settings…">
 <!ENTITY site_settings_cancel       "Cancel">
 <!ENTITY site_settings_clear        "Clear">
 <!ENTITY site_settings_no_settings  "There are no settings to clear.">
@@ -144,7 +169,7 @@
 <!ENTITY reading_list_added "Page added to your Reading List">
 <!ENTITY reading_list_removed "Page removed from your Reading List">
 <!ENTITY reading_list_failed "Failed to add page to your Reading List">
-<!ENTITY reader_mode "Reader Mode">
+<!ENTITY reader "Reader">
 
 <!ENTITY masterpassword_create_title "Create Master Password">
 <!ENTITY masterpassword_remove_title "Remove Master Password">
@@ -153,17 +178,30 @@
 
 <!ENTITY button_ok "OK">
 <!ENTITY button_cancel "Cancel">
+<!ENTITY button_yes "Yes">
+<!ENTITY button_no "No">
 <!ENTITY button_clear_data "Clear data">
+<!ENTITY button_set "Set">
+<!ENTITY button_clear "Clear">
 
 <!ENTITY abouthome_addons_title "Add-ons for your &brandShortName;">
 <!ENTITY abouthome_addons_browse "Browse all &brandShortName; add-ons">
 <!ENTITY abouthome_last_tabs_title "Your tabs from last time">
 <!ENTITY abouthome_last_tabs_open "Open all tabs from last time">
 <!ENTITY abouthome_top_sites_title "Top sites">
-<!ENTITY abouthome_top_sites_browse "Browse all your top sites">
-<!ENTITY abouthome_no_top_sites "You do not have any top sites yet. Tap the Title Bar to start browsing.">
-<!ENTITY abouthome_about_sync "Set up Firefox Sync to access bookmarks, history and tabs from your other devices">
+<!-- Localization note (abouthome_about_sync3, abouthome_about_apps2): The
+     chevron (ex: "»"; unicode= U+00BB) is used as an arrow to show that
+     clicking this text in the promotions box will perform some action. Note
+     that a non-breaking space (unicode= U+00A0) should be used between this
+     character and the remainder of the string to prevent word wrap. -->
+<!ENTITY abouthome_about_sync3 "Set up Firefox Sync to access bookmarks, history and tabs from your other devices&#x00A0;»">
+<!ENTITY abouthome_about_apps3 "Get apps from the Firefox Marketplace and discover the best the Web has to offer&#x00A0;»">
+<!-- Localization note (abouthome_sync_bold_name, abouthome_apps_bold_name):
+     These strings are accentuated as bold text in the "abouthome_about_..."
+     strings above. These strings should be a subset of the strings above and
+     generally be the name of the product the string describes. -->
 <!ENTITY abouthome_sync_bold_name "Firefox Sync">
+<!ENTITY abouthome_apps_bold_name2 "Firefox Marketplace">
 
 <!ENTITY filepicker_title "Choose File">
 <!ENTITY filepicker_audio_title "Choose or record a sound">
@@ -196,3 +234,24 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY bookmarkhistory_import_history "Importing history
                                          from Android">
 <!ENTITY bookmarkhistory_import_wait "Please wait...">
+
+<!-- Localization note (suggestions_prompt): The placeholder (&#037;s) should
+     be kept in the string; this will be replaced with the name of the search
+     engine. -->
+<!ENTITY suggestions_prompt "Would you like to turn on &#037;s search suggestions?">
+
+<!ENTITY webapp_generic_name "App">
+
+<!ENTITY searchable_description "Bookmarks and history">
+
+ <!-- Updater notifications -->
+<!ENTITY updater_start_title2 "Update available for &brandShortName;">
+<!ENTITY updater_start_select2 "Touch to download">
+
+<!ENTITY updater_downloading_title2 "Downloading &brandShortName;">
+<!ENTITY updater_downloading_title_failed2 "Download failed">
+<!ENTITY updater_downloading_select2 "Touch to apply update once downloaded">
+<!ENTITY updater_downloading_retry2 "Touch to retry">
+
+<!ENTITY updater_apply_title2 "Update available for &brandShortName;">
+<!ENTITY updater_apply_select2 "Touch to update">

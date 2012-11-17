@@ -10,7 +10,7 @@ import java.net.URI;
 import org.json.simple.parser.ParseException;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -46,8 +46,7 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
  *
  */
 public class TestUpgradeRequired extends AndroidSyncTestCase {
-  private final int     TEST_PORT        = 15325;
-  private final String  TEST_SERVER      = "http://localhost:" + TEST_PORT + "/";
+  private final String  TEST_SERVER      = "http://test.ser.ver/";
 
   private static final String TEST_USERNAME     = "user1";
   private static final String TEST_PASSWORD     = "pass1";
@@ -68,7 +67,7 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
   }
 
   private static Account getTestAccount(AccountManager accountManager) {
-    final String type = GlobalConstants.ACCOUNTTYPE_SYNC;
+    final String type = SyncConstants.ACCOUNTTYPE_SYNC;
     Account[] existing = accountManager.getAccountsByType(type);
     for (Account account : existing) {
       if (account.name.equals(TEST_USERNAME)) {

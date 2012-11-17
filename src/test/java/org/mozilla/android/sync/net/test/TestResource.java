@@ -23,23 +23,25 @@ import org.mozilla.gecko.sync.net.HttpResponseObserver;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class TestResource {
-  private static final int    TEST_PORT   = 15325;
+  private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
 
-  private HTTPServerTestHelper data     = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data     = new HTTPServerTestHelper();
 
+  @SuppressWarnings("static-method")
   @Before
   public void setUp() {
-    BaseResource.enablePlainHTTPConnectionManager();
     BaseResource.rewriteLocalhost = false;
   }
 
+  @SuppressWarnings("static-method")
   @Test
   public void testLocalhostRewriting() throws URISyntaxException {
     BaseResource r = new BaseResource("http://localhost:5000/foo/bar", true);
     assertEquals("http://10.0.2.2:5000/foo/bar", r.getURI().toASCIIString());
   }
 
+  @SuppressWarnings("static-method")
   public MockResourceDelegate doGet() throws URISyntaxException {
     final BaseResource r = new BaseResource(TEST_SERVER + "/foo/bar");
     MockResourceDelegate delegate = new MockResourceDelegate();

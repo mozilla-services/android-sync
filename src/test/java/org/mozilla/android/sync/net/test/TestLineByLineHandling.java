@@ -12,7 +12,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
@@ -25,11 +24,11 @@ import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
 public class TestLineByLineHandling {
-  private static final int     TEST_PORT   = 15325;
+  private static final int     TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String  TEST_SERVER = "http://localhost:" + TEST_PORT;
   private static final String  LOG_TAG     = "TestLineByLineHandling";
   static String                STORAGE_URL = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/lines";
-  private HTTPServerTestHelper data        = new HTTPServerTestHelper(TEST_PORT);
+  private HTTPServerTestHelper data        = new HTTPServerTestHelper();
 
   public ArrayList<String>     lines       = new ArrayList<String>();
 
@@ -94,12 +93,6 @@ public class TestLineByLineHandling {
       Logger.error(LOG_TAG, "Got request error: ", ex);
       fail("Should not be called.");
     }
-  }
-
-  @Before
-  public void setUp() {
-    Logger.info(LOG_TAG, "Faking SSL context.");
-    BaseResource.enablePlainHTTPConnectionManager();
   }
 
   @Test

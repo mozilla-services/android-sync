@@ -8,7 +8,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
@@ -21,6 +23,7 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.test.InstrumentationTestCase;
 
@@ -40,11 +43,14 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   private static final String TEST_SERVERURL  = "test.server.url/";
   private static final String TEST_CLUSTERURL = "test.cluster.url/";
 
-  public static final String TEST_ACCOUNTTYPE = GlobalConstants.ACCOUNTTYPE_SYNC;
+  public static final String TEST_ACCOUNTTYPE = SyncConstants.ACCOUNTTYPE_SYNC;
 
   public static final String TEST_PRODUCT = GlobalConstants.BROWSER_INTENT_PACKAGE;
   public static final String TEST_PROFILE = Constants.DEFAULT_PROFILE;
   public static final long TEST_VERSION = SyncConfiguration.CURRENT_PREFS_VERSION;
+
+  public static final String TEST_PREFERENCE = "testPreference";
+  public static final String TEST_SYNC_ID = "testSyncID";
 
   private Account account;
   private Context context;
@@ -331,8 +337,6 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
    * Verify that creating an account preserves settings in Shared Preferences when asked.
    */
   public void testCreateSyncAccountWithExistingPreferences() throws Exception {
-    final String TEST_PREFERENCE = "testPreference";
-    final String TEST_SYNC_ID = "testSyncID";
 
     SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
         TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
@@ -369,30 +373,83 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
       account = SyncAccounts.createSyncAccount(syncAccount);
       assertNotNull(account);
 
-      // Test fetching parameters multiple times, since we need to invalidate this token type every fetch.
+      // Test fetching parameters multiple times. Historically, we needed to
+      // invalidate this token type every fetch; now we don't, but we'd like
+      // to ensure multiple fetches work.
       SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
       assertParams(params);
 
       params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
       assertParams(params);
 
-      // Would like to test this on the main thread, too, but there seems to be
-      // a problem: SyncAuthenticatorService ANR's, possibly because we block
-      // the main thread?
-      /*
+      // Test this works on the main thread.
       this.runTestOnUiThread(new Runnable() {
         @Override
         public void run() {
-          SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
-          assertParams(params);
+          SyncAccountParameters params;
+          try {
+            params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
+            assertParams(params);
+          } catch (Exception e) {
+            fail("Fetching Sync account parameters failed on UI thread.");
+          }
         }
       });
-      */
     } finally {
       if (account != null) {
         deleteAccount(this, accountManager, account);
         account = null;
       }
     }
+  }
+
+  public void testMakeSyncAccountDeletedIntent() throws Throwable {
+    syncAccount = new SyncAccountParameters(context, null,
+        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, TEST_CLUSTERURL, null, null);
+    try {
+      account = SyncAccounts.createSyncAccount(syncAccount);
+      assertNotNull(account);
+
+      Intent intent = SyncAccounts.makeSyncAccountDeletedIntent(context, accountManager, account);
+      assertEquals(SyncConstants.SYNC_ACCOUNT_DELETED_ACTION, intent.getAction());
+      assertEquals(SyncConstants.SYNC_ACCOUNT_DELETED_INTENT_VERSION, intent.getLongExtra(Constants.JSON_KEY_VERSION, 0));
+      assertEquals(TEST_USERNAME, intent.getStringExtra(Constants.JSON_KEY_ACCOUNT));
+      assertTrue(Math.abs(intent.getLongExtra(Constants.JSON_KEY_TIMESTAMP, 0) - System.currentTimeMillis()) < 1000);
+
+      String payload = intent.getStringExtra(Constants.JSON_KEY_PAYLOAD);
+      assertNotNull(payload);
+
+      SyncAccountParameters params = new SyncAccountParameters(context, accountManager, ExtendedJSONObject.parseJSONObject(payload));
+      // Can't use assertParams because Sync key is deleted.
+      assertNotNull(params);
+      assertEquals(context, params.context);
+      assertEquals(Utils.usernameFromAccount(TEST_USERNAME), params.username);
+      assertEquals(TEST_PASSWORD, params.password);
+      assertEquals(TEST_SERVERURL, params.serverURL);
+      assertEquals("", params.syncKey);
+    } finally {
+      if (account != null) {
+        deleteAccount(this, accountManager, account);
+        account = null;
+      }
+    }
+  }
+
+  public void testBlockingPrefsFromAndroidAccountV0() throws Exception {
+    // Create test account with prefs.
+    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT,
+        TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
+    prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
+
+    syncAccount = new SyncAccountParameters(context, null,
+      TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
+    account = SyncAccounts.createSyncAccountPreservingExistingPreferences(syncAccount, false);
+    assertNotNull(account);
+
+    // Fetch account and check prefs.
+    SharedPreferences sharedPreferences = SyncAccounts.blockingPrefsFromAndroidAccountV0(context, accountManager,
+        account, TEST_PRODUCT, TEST_PROFILE, TEST_VERSION);
+    assertNotNull(sharedPreferences);
+    assertEquals(TEST_SYNC_ID, sharedPreferences.getString(TEST_PREFERENCE, null));
   }
 }
