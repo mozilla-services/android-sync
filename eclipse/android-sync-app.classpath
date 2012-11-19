@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="src/test/java"/>
+	<classpathentry including="**/*.java" kind="src" output="bin/test-classes" path="src/test/java"/>
 	<classpathentry including="**/*.java" kind="src" path="src/main/java"/>
-  <classpathentry including="**/*.java" kind="src" path="external/httpclientandroidlib/httpclientandroidlib/src"/>
-  <classpathentry including="**/*.java" kind="src" path="external/json-simple-1.1/src"/>
+	<classpathentry including="**/*.java" kind="src" path="external/httpclientandroidlib/httpclientandroidlib/src">
+		<attributes>
+			<attribute name="ignore_optional_problems" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry including="**/*.java" kind="src" path="external/json-simple-1.1/src">
+		<attributes>
+			<attribute name="ignore_optional_problems" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:@M2_REPO@/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1-javadoc.jar!/"/>
