@@ -8,9 +8,13 @@
 <!-- Sync strings. -->
 #include sync_strings.dtd.in
 
+<!-- Profile-in-the-Cloud strings. -->
+#include picl_strings.dtd.in
+
 <!-- Fennec strings. -->
 #include android_strings.dtd
 ]>
 <resources>
 #include strings.xml.in
+#include picl_strings.xml.in
 </resources>
