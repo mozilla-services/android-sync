@@ -9,7 +9,6 @@
 			<attribute name="javadoc_location" value="jar:file:/Users/rnewman/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/simpleframework/simple/4.1.21/simple-4.1.21.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/util/base64-unstub/1/base64-unstub-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/util/log-unstub/1/log-unstub-1.jar"/>

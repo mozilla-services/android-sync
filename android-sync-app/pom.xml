@@ -60,12 +60,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>javassist</groupId>
-      <artifactId>javassist</artifactId>
-      <version>3.12.1.GA</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.simpleframework</groupId>
       <artifactId>simple</artifactId>
       <version>4.1.21</version>
