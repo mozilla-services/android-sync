@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ ! -x ./preprocess.sh ];
+then
+    echo "preprocess.sh must be run from root of android-sync git repository."
+    exit 1
+fi
+
 # Or use the one in mozilla-central.
 USERNAME=$(whoami)
 PREPROCESSOR="python tools/Preprocessor.py"
