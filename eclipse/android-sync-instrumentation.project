@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>android-sync-test</name>
+	<name>android-sync-instrumentation</name>
 	<comment></comment>
 	<projects>
-		<project>android-sync</project>
+		<project>android-sync-app</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

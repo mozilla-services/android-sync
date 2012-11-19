@@ -1,0 +1,5 @@
+Support files defining two Eclipse projects.  Use
+`./eclipse/set_up_eclipse.sh` to move them into place.
+
+These files need to go in `./` (the root of the git repository) and in
+`./test/`, respectively.  They must be pre-processed first.
