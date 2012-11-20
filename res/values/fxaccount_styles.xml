@@ -53,7 +53,7 @@
 	</style>
 
 	<style name="FxAccountButton" parent="@android:style/Widget.Button">
-		<item name="android:background">@drawable/fxaccount_button</item>
+		<!-- <item name="android:background">@drawable/fxaccount_button</item> -->
 		<item name="android:textColor">#404040</item>
 		<item name="android:padding">10dp</item>
 		<item name="android:layout_width">fill_parent</item>

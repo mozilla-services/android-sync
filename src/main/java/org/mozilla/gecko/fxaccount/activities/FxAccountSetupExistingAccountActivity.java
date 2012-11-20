@@ -11,36 +11,18 @@ import org.mozilla.gecko.fxaccount.FxAccountCreationException;
 import org.mozilla.gecko.sync.Logger;
 
 import android.accounts.Account;
-import android.app.Activity;
 import android.content.Intent;
-import android.os.Bundle;
 import android.view.View;
-import android.widget.EditText;
 
-public class FxAccountSetupExistingAccountActivity extends Activity {
+public class FxAccountSetupExistingAccountActivity extends FxAccountAbstractSetupAccountActivity {
   private static final String LOG_TAG = FxAccountSetupExistingAccountActivity.class.getSimpleName();
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void onCreate(Bundle icicle) {
-    Logger.debug(LOG_TAG, "onCreate(" + icicle + ")");
-
-    super.onCreate(icicle);
-    setContentView(R.layout.fxaccount_setup_existing_account);
-
-    Bundle extras = getIntent().getExtras();
-    if (extras != null) {
-      setDefaultValues(extras);
-    }
+  public FxAccountSetupExistingAccountActivity() {
+    super(R.layout.fxaccount_setup_existing_account);
   }
 
   public void onNext(View view) {
     Logger.debug(LOG_TAG, "onNext");
-
-    EditText emailEdit = (EditText) findViewById(R.id.email);
-    EditText passwordEdit = (EditText) findViewById(R.id.password);
 
     final String email = emailEdit.getText().toString();
     final String password = passwordEdit.getText().toString();
@@ -58,36 +40,5 @@ public class FxAccountSetupExistingAccountActivity extends Activity {
     } catch (FxAccountCreationException e) {
       displayException(e);
     }
-  }
-
-  protected void setDefaultValues(Bundle icicle) {
-    if (icicle == null) {
-      return;
-    }
-
-    // Set default values if they are specified.
-    String email = icicle.getString(FxAccountConstants.PARAM_EMAIL);
-    if (email != null) {
-      EditText emailEdit = (EditText) findViewById(R.id.email);
-      if (emailEdit != null) {
-        emailEdit.setText(email);
-      }
-    }
-
-    String password = icicle.getString(FxAccountConstants.PARAM_PASSWORD);
-    if (password != null) {
-      EditText passwordEdit = (EditText) findViewById(R.id.password);
-      if (passwordEdit != null) {
-        passwordEdit.setText(password);
-      }
-    }
-  }
-
-  protected void displaySuccess(Account account) {
-    Logger.info(LOG_TAG, "Created account with email address " + account.name);
-  }
-
-  protected void displayException(FxAccountCreationException e) {
-    Logger.warn(LOG_TAG, "Got exception.", e);
   }
 }

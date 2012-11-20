@@ -33,6 +33,7 @@
 			android:inputType="textPassword" />
 
 		<Button
+			android:id="@+id/next"
 			style="@style/FxAccountButton"
 			android:layout_marginBottom="20dp"
 			android:onClick="onNext"
