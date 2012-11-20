@@ -34,6 +34,7 @@ echo "Using MOZ_APP_VERSION $MOZ_APP_VERSION."
 echo "Using MOZ_ANDROID_SHARED_ID $MOZ_ANDROID_SHARED_ID."
 echo "Using MOZ_ANDROID_SHARED_ACCOUNT_TYPE $MOZ_ANDROID_SHARED_ACCOUNT_TYPE."
 
+FXACCOUNT_CONSTANTS=src/main/java/org/mozilla/gecko/fxaccount/FxAccountConstants.java
 ANNOUNCEMENTSCONSTANTS=src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java
 GLOBALCONSTANTS=src/main/java/org/mozilla/gecko/sync/GlobalConstants.java
 SYNCCONSTANTS=src/main/java/org/mozilla/gecko/sync/SyncConstants.java
@@ -53,6 +54,7 @@ DEFINITIONS="$DEFINITIONS -DMOZ_ANDROID_SHARED_ID=$MOZ_ANDROID_SHARED_ID"
 DEFINITIONS="$DEFINITIONS -DMOZ_ANDROID_SHARED_ACCOUNT_TYPE=$MOZ_ANDROID_SHARED_ACCOUNT_TYPE"
 DEFINITIONS="$DEFINITIONS -DMOZ_APP_DISPLAYNAME=$MOZ_APP_DISPLAYNAME"
 
+$PREPROCESSOR $DEFINITIONS $FXACCOUNT_CONSTANTS.in > $FXACCOUNT_CONSTANTS
 $PREPROCESSOR $DEFINITIONS $ANNOUNCEMENTSCONSTANTS.in > $ANNOUNCEMENTSCONSTANTS
 $PREPROCESSOR $DEFINITIONS $GLOBALCONSTANTS.in > $GLOBALCONSTANTS
 $PREPROCESSOR $DEFINITIONS $SYNCCONSTANTS.in > $SYNCCONSTANTS
@@ -64,6 +66,8 @@ $PREPROCESSOR $DEFINITIONS strings/strings.xml.template > res/values/strings.xml
 $PREPROCESSOR $DEFINITIONS sync_authenticator.xml.template > res/xml/sync_authenticator.xml
 $PREPROCESSOR $DEFINITIONS sync_syncadapter.xml.template > res/xml/sync_syncadapter.xml
 $PREPROCESSOR $DEFINITIONS sync_options.xml.template > res/xml/sync_options.xml
+
+$PREPROCESSOR $DEFINITIONS fxaccount_authenticator.xml.template > res/xml/fxaccount_authenticator.xml
 
 # Now do the test project.
 TEST_MANIFEST=test/AndroidManifest.xml
