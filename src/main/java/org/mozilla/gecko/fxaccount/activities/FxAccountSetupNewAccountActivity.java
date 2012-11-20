@@ -5,44 +5,19 @@
 package org.mozilla.gecko.fxaccount.activities;
 
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.fxaccount.FxAccountAuthenticator;
 import org.mozilla.gecko.fxaccount.FxAccountConstants;
 import org.mozilla.gecko.fxaccount.FxAccountCreationException;
+import org.mozilla.gecko.fxaccount.FxAccountIntentService;
 import org.mozilla.gecko.sync.Logger;
 
-import android.accounts.Account;
 import android.content.Intent;
 import android.view.View;
 
 public class FxAccountSetupNewAccountActivity extends FxAccountAbstractSetupAccountActivity {
-  private static final String LOG_TAG = FxAccountSetupNewAccountActivity.class.getSimpleName();
+  public static final String LOG_TAG = FxAccountSetupNewAccountActivity.class.getSimpleName();
 
   public FxAccountSetupNewAccountActivity() {
     super(R.layout.fxaccount_setup_new_account);
-  }
-
-  public void onNext(View view) {
-    Logger.debug(LOG_TAG, "onNext");
-
-    String email = emailEdit.getText().toString();
-    String password = passwordEdit.getText().toString();
-    String password2 = password2Edit.getText().toString();
-
-    try {
-      ensureEmailAndPasswordsAreValid(email, password, password2);
-
-      Account account = FxAccountAuthenticator.createAndroidAccountForNewFxAccount(this, email, password);
-
-      displaySuccess(account);
-
-      Intent result = new Intent();
-      result.putExtra(FxAccountConstants.PARAM_ACCOUNT, account);
-
-      setResult(RESULT_OK, result);
-      finish();
-    } catch (FxAccountCreationException e) {
-      displayException(e);
-    }
   }
 
   /**
@@ -66,5 +41,31 @@ public class FxAccountSetupNewAccountActivity extends FxAccountAbstractSetupAcco
     if (!password.equals(password2)) {
       throw new FxAccountCreationException("Passwords must match.");
     }
+  }
+
+  public void onNext(View view) {
+    Logger.debug(LOG_TAG, "onNext");
+
+    String email = emailEdit.getText().toString();
+    String password = passwordEdit.getText().toString();
+    String password2 = password2Edit.getText().toString();
+
+    try {
+      ensureEmailAndPasswordsAreValid(email, password, password2);
+    } catch (FxAccountCreationException e) {
+      displayException(e);
+      return;
+    }
+
+    setWorkingState(true);
+
+    Intent serviceIntent = new Intent(this, FxAccountIntentService.class);
+    serviceIntent.setAction(FxAccountConstants.FXACCOUNT_CREATE_ANDROID_ACCOUNT_FOR_NEW_FX_ACCOUNT_ACTION);
+
+    serviceIntent.putExtra(FxAccountConstants.PARAM_RECEIVER, createResultReceiver());
+    serviceIntent.putExtra(FxAccountConstants.PARAM_EMAIL, email);
+    serviceIntent.putExtra(FxAccountConstants.PARAM_PASSWORD, password);
+
+    startService(serviceIntent);
   }
 }

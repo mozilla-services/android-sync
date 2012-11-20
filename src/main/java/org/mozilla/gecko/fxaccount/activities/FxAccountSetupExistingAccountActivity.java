@@ -5,43 +5,19 @@
 package org.mozilla.gecko.fxaccount.activities;
 
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.fxaccount.FxAccountAuthenticator;
 import org.mozilla.gecko.fxaccount.FxAccountConstants;
 import org.mozilla.gecko.fxaccount.FxAccountCreationException;
+import org.mozilla.gecko.fxaccount.FxAccountIntentService;
 import org.mozilla.gecko.sync.Logger;
 
-import android.accounts.Account;
 import android.content.Intent;
 import android.view.View;
 
 public class FxAccountSetupExistingAccountActivity extends FxAccountAbstractSetupAccountActivity {
-  private static final String LOG_TAG = FxAccountSetupExistingAccountActivity.class.getSimpleName();
+  public static final String LOG_TAG = FxAccountSetupExistingAccountActivity.class.getSimpleName();
 
   public FxAccountSetupExistingAccountActivity() {
     super(R.layout.fxaccount_setup_existing_account);
-  }
-
-  public void onNext(View view) {
-    Logger.debug(LOG_TAG, "onNext");
-
-    final String email = emailEdit.getText().toString();
-    final String password = passwordEdit.getText().toString();
-
-    try {
-      ensureEmailAndPasswordAreValid(email, password);
-
-      Account account = FxAccountAuthenticator.createAndroidAccountForExistingFxAccount(this, email, password);
-
-      displaySuccess(account);
-
-      Intent result = new Intent();
-      result.putExtra(FxAccountConstants.PARAM_ACCOUNT, account);
-
-      setResult(RESULT_OK, result);
-      finish();
-    } catch (FxAccountCreationException e) {
-      displayException(e);
-    }
   }
 
   /**
@@ -60,5 +36,30 @@ public class FxAccountSetupExistingAccountActivity extends FxAccountAbstractSetu
     if (password == null || password.trim().length() == 0) {
       throw new FxAccountCreationException("Password must be specified.");
     }
+  }
+
+  public void onNext(View view) {
+    Logger.debug(LOG_TAG, "onNext");
+
+    String email = emailEdit.getText().toString();
+    String password = passwordEdit.getText().toString();
+
+    try {
+      ensureEmailAndPasswordAreValid(email, password);
+    } catch (FxAccountCreationException e) {
+      displayException(e);
+      return;
+    }
+
+    setWorkingState(true);
+
+    Intent serviceIntent = new Intent(this, FxAccountIntentService.class);
+    serviceIntent.setAction(FxAccountConstants.FXACCOUNT_CREATE_ANDROID_ACCOUNT_FOR_EXISTING_FX_ACCOUNT_ACTION);
+
+    serviceIntent.putExtra(FxAccountConstants.PARAM_RECEIVER, createResultReceiver());
+    serviceIntent.putExtra(FxAccountConstants.PARAM_EMAIL, email);
+    serviceIntent.putExtra(FxAccountConstants.PARAM_PASSWORD, password);
+
+    startService(serviceIntent);
   }
 }

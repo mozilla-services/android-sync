@@ -7,7 +7,10 @@ import org.mozilla.gecko.sync.Logger;
 
 import android.accounts.Account;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -16,7 +19,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
-  protected static final String LOG_TAG = FxAccountSetupExistingAccountActivity.class.getSimpleName();
+  public static final String LOG_TAG = FxAccountSetupExistingAccountActivity.class.getSimpleName();
 
   protected final int contentViewId;
 
@@ -153,7 +156,7 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
   protected void displayException(FxAccountCreationException e) {
     Logger.warn(LOG_TAG, "Got exception.", e);
 
-    Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
+    Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
   }
 
   protected TextWatcher createTextChangedListener() {
@@ -202,5 +205,60 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     } else {
       password2Edit.setError(null);
     }
+  }
+
+  /**
+   * Helper to display or hide a "working" status indicator.
+   *
+   * @param working if true, display "working" status indicator; otherwise, hide it.
+   */
+  protected void setWorkingState(boolean working) {
+    Logger.debug(LOG_TAG, (working ? "Displaying" : "Hiding") + " working state.");
+
+    if (working) {
+      nextButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.mobile, 0, 0, 0);
+      return;
+    }
+
+    nextButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+  }
+
+  /**
+   * Helper to create a receiver that will receive the result of a
+   * "create Android account" request from a
+   * </code>FxAccountIntentService</code> instance.
+   *
+   * @return a <code>ResultReceiver</code> instance.
+   */
+  protected ResultReceiver createResultReceiver() {
+    Handler handler = new Handler(); // Ensure we get our result on the UI thread.
+
+    return new ResultReceiver(handler) {
+      @Override
+      protected void onReceiveResult(int resultCode, Bundle resultData) {
+        Logger.debug(LOG_TAG, "onReceiveResult " + resultCode + " " + resultData.keySet());
+
+        try {
+          if (resultCode == RESULT_OK) {
+            Account account = resultData.getParcelable(FxAccountConstants.PARAM_ACCOUNT);
+
+            displaySuccess(account);
+
+            Intent result = new Intent();
+            result.putExtra(FxAccountConstants.PARAM_ACCOUNT, account);
+
+            setResult(RESULT_OK, result);
+            finish();
+
+            return;
+          }
+
+          String error = resultData.getString(FxAccountConstants.PARAM_ERROR);
+          displayException(new FxAccountCreationException(error));
+        } finally {
+          setWorkingState(false);
+        }
+      }
+    };
   }
 }

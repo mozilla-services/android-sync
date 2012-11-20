@@ -10,4 +10,12 @@ public class FxAccountConstants {
   public static final String PARAM_ACCOUNT = "account";
   public static final String PARAM_EMAIL = "email";
   public static final String PARAM_PASSWORD = "password";
+
+  public static final String PARAM_RECEIVER = "receiver";
+  public static final String PARAM_ERROR = "error";
+
+  public static final String FXACCOUNT_CREATE_ANDROID_ACCOUNT_FOR_NEW_FX_ACCOUNT_ACTION =
+    "FXACCOUNT_CREATE_ANDROID_ACCOUNT_FOR_NEW_FX_ACCOUNT_ACTION";
+  public static final String FXACCOUNT_CREATE_ANDROID_ACCOUNT_FOR_EXISTING_FX_ACCOUNT_ACTION =
+    "FXACCOUNT_CREATE_ANDROID_ACCOUNT_FOR_EXISTING_FX_ACCOUNT_ACTION";
 }
