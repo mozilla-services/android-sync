@@ -20,7 +20,7 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
 
   protected final int contentViewId;
 
-  protected TextChangedListener textChangedListener;
+  protected TextWatcher textChangedListener;
 
   protected Button nextButton;
   protected EditText emailEdit;
@@ -54,12 +54,14 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
       setDefaultValues(extras);
     }
 
-    textChangedListener = new TextChangedListener();
+    textChangedListener = createTextChangedListener();
 
-    emailEdit.addTextChangedListener(textChangedListener);
-    passwordEdit.addTextChangedListener(textChangedListener);
-    if (password2Edit != null) {
-      password2Edit.addTextChangedListener(textChangedListener);
+    if (textChangedListener != null) {
+      emailEdit.addTextChangedListener(textChangedListener);
+      passwordEdit.addTextChangedListener(textChangedListener);
+      if (password2Edit != null) {
+        password2Edit.addTextChangedListener(textChangedListener);
+      }
     }
   }
 
@@ -70,13 +72,15 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
   public void onDestroy() {
     Logger.debug(LOG_TAG, "onDestroy");
 
-    emailEdit.removeTextChangedListener(textChangedListener);
-    passwordEdit.removeTextChangedListener(textChangedListener);
-    if (password2Edit != null) {
-      password2Edit.removeTextChangedListener(textChangedListener);
-    }
+    if (textChangedListener != null) {
+      emailEdit.removeTextChangedListener(textChangedListener);
+      passwordEdit.removeTextChangedListener(textChangedListener);
+      if (password2Edit != null) {
+        password2Edit.removeTextChangedListener(textChangedListener);
+      }
 
-    textChangedListener = null;
+      textChangedListener = null;
+    }
 
     super.onDestroy();
   }
@@ -121,30 +125,13 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     return view;
   }
 
-  protected class TextChangedListener implements TextWatcher {
-    @Override
-    public void afterTextChanged(Editable s) {
-      updateButtonEnabled();
-    }
-
-    @Override
-    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-      // Do nothing.
-    }
-
-    @Override
-    public void onTextChanged(CharSequence s, int start, int before, int count) {
-      // Do nothing.
-    }
-  }
-
   protected void updateButtonEnabled() {
     boolean enabled = true;
 
-    enabled = enabled && emailEdit.getText().toString().length() > 0;
-    enabled = enabled && passwordEdit.getText().toString().length() > 0;
+    enabled = enabled && (emailEdit.getError() == null);
+    enabled = enabled && (passwordEdit.getError() == null);
     if (password2Edit != null) {
-      enabled = enabled && password2Edit.getText().toString().length() > 0;
+      enabled = enabled && (password2Edit.getError() == null);
     }
 
     if (enabled == nextButton.isEnabled()) {
@@ -167,5 +154,53 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     Logger.warn(LOG_TAG, "Got exception.", e);
 
     Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
+  }
+
+  protected TextWatcher createTextChangedListener() {
+    return new TextWatcher() {
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        updateErrors();
+        updateButtonEnabled(); // Do this second, since it uses edit text error states.
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // Do nothing.
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        // Do nothing.
+      }
+    };
+  }
+
+  protected void updateErrors() {
+    String email = emailEdit.getText().toString();
+    String password = passwordEdit.getText().toString();
+
+    if (email.trim().length() == 0) {
+      emailEdit.setError("You must enter your email address.");
+    }
+
+    if (password.length() == 0) {
+      passwordEdit.setError("You must enter your password.");
+    }
+
+    // We might not have a second password input box.
+    if (password2Edit == null) {
+      return;
+    }
+
+    String password2 = password2Edit.getText().toString();
+
+    if (password2.length() == 0) {
+      password2Edit.setError("You must re-enter your password.");
+    } else if (!password.equals(password2)) {
+      password2Edit.setError("Your passwords must match.");
+    } else {
+      password2Edit.setError(null);
+    }
   }
 }

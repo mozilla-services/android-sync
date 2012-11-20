@@ -24,16 +24,13 @@ public class FxAccountSetupNewAccountActivity extends FxAccountAbstractSetupAcco
   public void onNext(View view) {
     Logger.debug(LOG_TAG, "onNext");
 
-    final String email = emailEdit.getText().toString();
-    final String password = passwordEdit.getText().toString();
+    String email = emailEdit.getText().toString();
+    String password = passwordEdit.getText().toString();
     String password2 = password2Edit.getText().toString();
 
-    if (email == null || password == null || !password.equals(password2)) {
-      Logger.warn(LOG_TAG, "No email, no password, or non-matching passwords.");
-      return;
-    }
-
     try {
+      ensureEmailAndPasswordsAreValid(email, password, password2);
+
       Account account = FxAccountAuthenticator.createAndroidAccountForNewFxAccount(this, email, password);
 
       displaySuccess(account);
@@ -45,6 +42,29 @@ public class FxAccountSetupNewAccountActivity extends FxAccountAbstractSetupAcco
       finish();
     } catch (FxAccountCreationException e) {
       displayException(e);
+    }
+  }
+
+  /**
+   * Helper to check that email and password are non-null and contain characters.
+   *
+   * @param email to check.
+   * @param password to check.
+   * @throws FxAccountCreationException if either email or password is invalid.
+   */
+  protected void ensureEmailAndPasswordsAreValid(String email, String password, String password2)
+      throws FxAccountCreationException {
+    if (email == null || email.trim().length() == 0) {
+      throw new FxAccountCreationException("Email address must be specified.");
+    }
+
+    if (password == null || password.trim().length() == 0 ||
+        password2 == null || password2.trim().length() == 0) {
+      throw new FxAccountCreationException("Passwords must be specified.");
+    }
+
+    if (!password.equals(password2)) {
+      throw new FxAccountCreationException("Passwords must match.");
     }
   }
 }

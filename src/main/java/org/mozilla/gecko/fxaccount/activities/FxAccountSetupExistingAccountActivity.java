@@ -28,6 +28,8 @@ public class FxAccountSetupExistingAccountActivity extends FxAccountAbstractSetu
     final String password = passwordEdit.getText().toString();
 
     try {
+      ensureEmailAndPasswordAreValid(email, password);
+
       Account account = FxAccountAuthenticator.createAndroidAccountForExistingFxAccount(this, email, password);
 
       displaySuccess(account);
@@ -39,6 +41,24 @@ public class FxAccountSetupExistingAccountActivity extends FxAccountAbstractSetu
       finish();
     } catch (FxAccountCreationException e) {
       displayException(e);
+    }
+  }
+
+  /**
+   * Helper to check that email and password are non-null and contain characters.
+   *
+   * @param email to check.
+   * @param password to check.
+   * @throws FxAccountCreationException if either email or password is invalid.
+   */
+  protected void ensureEmailAndPasswordAreValid(String email, String password)
+      throws FxAccountCreationException {
+    if (email == null || email.trim().length() == 0) {
+      throw new FxAccountCreationException("Email address must be specified.");
+    }
+
+    if (password == null || password.trim().length() == 0) {
+      throw new FxAccountCreationException("Password must be specified.");
     }
   }
 }
