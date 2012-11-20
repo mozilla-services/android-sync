@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.fxaccount;
 
+import org.mozilla.gecko.fxaccount.activities.FxAccountSetupActivity;
 import org.mozilla.gecko.sync.Logger;
 
 import android.accounts.AbstractAccountAuthenticator;
@@ -12,6 +13,7 @@ import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.accounts.NetworkErrorException;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
@@ -33,7 +35,15 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
           throws NetworkErrorException {
     Logger.debug(LOG_TAG, "addAccount");
 
-    throw new NetworkErrorException("Not yet implemented.");
+    final Intent intent = new Intent(context, FxAccountSetupActivity.class);
+
+    intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
+    intent.putExtra("accountType", FxAccountConstants.ACCOUNT_TYPE_FXACCOUNT);
+
+    final Bundle result = new Bundle();
+    result.putParcelable(AccountManager.KEY_INTENT, intent);
+
+    return result;
   }
 
   @Override
@@ -83,5 +93,24 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
     Logger.debug(LOG_TAG, "updateCredentials");
 
     return null;
+  }
+
+  public static Account createAndroidAccountForExistingFxAccount(Context context, String email, String password)
+      throws FxAccountCreationException {
+    Logger.debug(LOG_TAG, "createAndroidAccountForExistingFxAccount");
+
+    final Account account = new Account(email, FxAccountConstants.ACCOUNT_TYPE_FXACCOUNT);
+    final AccountManager accountManager = AccountManager.get(context);
+
+    accountManager.addAccountExplicitly(account, password, null);
+
+    return account;
+  }
+
+  public static Account createAndroidAccountForNewFxAccount(Context context, final String email, final String password)
+      throws FxAccountCreationException {
+    Logger.debug(LOG_TAG, "createAndroidAccountForNewFxAccount");
+
+    throw new FxAccountCreationException("Not yet implemented.");
   }
 }

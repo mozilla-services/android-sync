@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+  <style name="FxAccountTheme" parent="@style/Gecko" />
+
+	<style name="FxAccountContainer">
+		<item name="android:background">#dce3e8</item>
+		<item name="android:layout_width">fill_parent</item>
+		<item name="android:layout_height">fill_parent</item>
+		<item name="android:layout_weight">1</item>
+	</style>
+
+	<style name="FxAccountMiddle">
+		<item name="android:orientation">vertical</item>
+		<item name="android:layout_width">fill_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:layout_weight">1</item>
+		<item name="android:padding">10dp</item>
+	</style>
+
+	<style name="FxAccountTop">
+		<item name="android:textAppearance">@android:style/TextAppearance.Large</item>
+		<item name="android:textColor">#404040</item>
+		<item name="android:textSize">30dp</item>
+		<item name="android:textStyle">bold</item>
+		<item name="android:layout_width">fill_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:gravity">center</item>
+		<item name="android:padding">4dp</item>
+		<item name="android:layout_marginBottom">30dp</item>
+	</style>
+
+	<style name="FxAccountHeaderItem" parent="@style/FxAccountTextItem">
+		<item name="android:textColor">#404040</item>
+		<item name="android:textStyle">bold</item>
+	</style>
+
+	<style name="FxAccountTextItem" parent="@android:style/TextAppearance.Medium">
+		<item name="android:textColor">#404040</item>
+		<item name="android:layout_width">fill_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:textSize">15dp</item>
+	</style>
+
+	<style name="FxAccountLinkItem" parent="@style/FxAccountTextItem">
+		<item name="android:clickable">true</item>
+		<item name="android:textColor">#54b8e8</item>
+	</style>
+
+	<style name="FxAccountButton" parent="@android:style/Widget.Button">
+		<item name="android:background">@drawable/fxaccount_button</item>
+		<item name="android:textColor">#404040</item>
+		<item name="android:padding">10dp</item>
+		<item name="android:layout_width">fill_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+	</style>
+
+	<style name="FxAccountEditItem" parent="@android:style/Widget.EditText">
+		<item name="android:layout_width">match_parent</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:singleLine">true</item>
+		<item name="android:textColor">#404040</item>
+		<item name="android:textColorHint">#808080</item>
+	</style>
+
+</resources>

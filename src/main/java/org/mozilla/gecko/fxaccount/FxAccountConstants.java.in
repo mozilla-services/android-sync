@@ -6,4 +6,8 @@ package org.mozilla.gecko.fxaccount;
 
 public class FxAccountConstants {
   public static final String ACCOUNT_TYPE_FXACCOUNT = "org.mozilla.fxaccount";
+
+  public static final String PARAM_ACCOUNT = "account";
+  public static final String PARAM_EMAIL = "email";
+  public static final String PARAM_PASSWORD = "password";
 }
