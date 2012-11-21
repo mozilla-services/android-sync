@@ -55,21 +55,34 @@
 			android:gravity="center_horizontal"
 			android:text="Learn more." />
 
-		<TextView
-			android:id="@+id/error"
-			style="@style/FxAccountErrorTextItem"
+
+		<FrameLayout
 			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginBottom="20dp"
-			android:visibility="gone" />
+			android:layout_height="wrap_content" >
 
-		<Button
-			android:id="@+id/next"
-			style="@style/FxAccountButton"
-			android:drawableRight="@android:drawable/ic_popup_sync"
-			android:onClick="onNext"
-			android:text="Next" />
+			<Button
+				android:id="@+id/next"
+				style="@style/FxAccountButton"
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:onClick="onNext"
+				android:text="Next"
+				android:visibility="visible" />
 
+			<ProgressBar
+				android:id="@+id/progress"
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:background="@drawable/fxaccount_button_background"
+				android:visibility="invisible" />
+
+			<TextView
+				android:id="@+id/error"
+				style="@style/FxAccountErrorTextItem"
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:visibility="invisible" />
+		</FrameLayout>
 	</LinearLayout>
 
 </ScrollView>

@@ -14,11 +14,9 @@ import android.os.ResultReceiver;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,18 +25,52 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
 
   protected final int contentViewId;
 
+  protected enum State { READY, WORKING, ERROR };
+  protected State state;
+
   protected TextWatcher textChangedListener;
 
   protected EditText emailEdit;
   protected EditText passwordEdit;
   protected EditText password2Edit;
 
-  protected TextView errorTextView;
   protected Button nextButton;
+  protected ProgressBar progressBar;
+  protected TextView errorTextView;
 
   public FxAccountAbstractSetupAccountActivity(int contentViewId) {
     super();
     this.contentViewId = contentViewId;
+    this.state = State.READY;
+  }
+
+  protected void setState(State newState, String errorMessage) {
+    Logger.debug(LOG_TAG, "Setting state to " + newState + " (" + errorMessage + ").");
+
+    this.state = newState;
+
+    if (newState == State.READY) {
+      nextButton.setVisibility(View.VISIBLE);
+      progressBar.setVisibility(View.INVISIBLE);
+      errorTextView.setVisibility(View.INVISIBLE);
+
+      this.updateValidation();
+      this.updateButtonEnabled();
+    } else if (newState == State.WORKING) {
+      nextButton.setVisibility(View.INVISIBLE);
+      progressBar.setVisibility(View.VISIBLE);
+      errorTextView.setVisibility(View.INVISIBLE);
+
+      this.updateValidation();
+    } else if (newState == State.ERROR) {
+      nextButton.setVisibility(View.INVISIBLE);
+      progressBar.setVisibility(View.INVISIBLE);
+      errorTextView.setVisibility(View.VISIBLE);
+
+      errorTextView.setText(errorMessage);
+
+      this.updateValidation();
+    }
   }
 
   /**
@@ -56,9 +88,9 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     // password2Edit is allowed to be null.
     password2Edit = (EditText) findViewById(R.id.password2);
 
-    errorTextView = (TextView) ensureFindViewById(R.id.error, "error textview");
-
     nextButton = (Button) ensureFindViewById(R.id.next, "next button");
+    progressBar = (ProgressBar) ensureFindViewById(R.id.progress, "progress bar");
+    errorTextView = (TextView) ensureFindViewById(R.id.error, "error textview");
 
     // Need controls initialized in order to set default values.
     Bundle extras = getIntent().getExtras();
@@ -146,8 +178,6 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
       enabled = enabled && (password2Edit.getError() == null);
     }
 
-    enabled = enabled && (errorTextView.getVisibility() == View.GONE);
-
     if (enabled == nextButton.isEnabled()) {
       return;
     }
@@ -158,6 +188,8 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
   }
 
   protected void displaySuccess(Account account) {
+    setState(State.READY, null);
+
     String message = "Created account with email address " + account.name;
     Logger.info(LOG_TAG, message);
 
@@ -167,17 +199,17 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
   protected void displayException(FxAccountCreationException e) {
     Logger.warn(LOG_TAG, "Got exception.", e);
 
-    showErrorTextView(e.getMessage());
-
-    updateButtonEnabled();
+    setState(State.ERROR, e.getMessage());
   }
 
   protected TextWatcher createTextChangedListener() {
     return new TextWatcher() {
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
-        updateErrors();
+        updateValidation();
         updateButtonEnabled(); // Do this second, since it uses edit text error states.
+
+        setState(State.READY, null);
       }
 
       @Override
@@ -192,16 +224,20 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     };
   }
 
-  protected void updateErrors() {
+  protected void updateValidation() {
     String email = emailEdit.getText().toString();
     String password = passwordEdit.getText().toString();
 
-    if (email.trim().length() == 0) {
+    if (email.length() == 0) {
       emailEdit.setError("You must enter your email address.");
+    } else {
+      emailEdit.setError(null);
     }
 
     if (password.length() == 0) {
       passwordEdit.setError("You must enter your password.");
+    } else {
+      passwordEdit.setError(null);
     }
 
     // We might not have a second password input box.
@@ -218,63 +254,6 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     } else {
       password2Edit.setError(null);
     }
-
-    hideErrorTextView();
-  }
-
-  protected void showErrorTextView(String message) {
-    errorTextView.setText(message);
-
-    if (errorTextView.getVisibility() == View.VISIBLE) {
-      return;
-    }
-
-    Animation inAnimation = AnimationUtils.loadAnimation(this, R.anim.fadein);
-
-    errorTextView.setVisibility(View.VISIBLE);
-    errorTextView.startAnimation(inAnimation);
-  }
-
-  protected void hideErrorTextView() {
-    if (errorTextView.getVisibility() == View.GONE) {
-      return;
-    }
-
-    Animation outAnimation = AnimationUtils.loadAnimation(this, R.anim.fadeout);
-    outAnimation.setAnimationListener(new AnimationListener() {
-      @Override
-      public void onAnimationStart(Animation animation) {
-        // Do nothing.
-      }
-
-      @Override
-      public void onAnimationRepeat(Animation animation) {
-        // Do nothing.
-      }
-
-      @Override
-      public void onAnimationEnd(Animation animation) {
-        errorTextView.setVisibility(View.GONE);
-      }
-    });
-
-    errorTextView.startAnimation(outAnimation);
-  }
-
-  /**
-   * Helper to display or hide a "working" status indicator.
-   *
-   * @param working if true, display "working" status indicator; otherwise, hide it.
-   */
-  protected void setWorkingState(boolean working) {
-    Logger.debug(LOG_TAG, (working ? "Displaying" : "Hiding") + " working state.");
-
-    if (working) {
-      nextButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.mobile, 0, 0, 0);
-      return;
-    }
-
-    nextButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
   }
 
   /**
@@ -292,26 +271,23 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
       protected void onReceiveResult(int resultCode, Bundle resultData) {
         Logger.debug(LOG_TAG, "onReceiveResult " + resultCode + " " + resultData.keySet());
 
-        try {
-          if (resultCode == RESULT_OK) {
-            Account account = resultData.getParcelable(FxAccountConstants.PARAM_ACCOUNT);
+        if (resultCode == RESULT_OK) {
+          Account account = resultData.getParcelable(FxAccountConstants.PARAM_ACCOUNT);
 
-            displaySuccess(account);
+          displaySuccess(account);
 
-            Intent result = new Intent();
-            result.putExtra(FxAccountConstants.PARAM_ACCOUNT, account);
+          Intent result = new Intent();
+          result.putExtra(FxAccountConstants.PARAM_ACCOUNT, account);
 
-            setResult(RESULT_OK, result);
-            finish();
+          setResult(RESULT_OK, result);
+          finish();
 
-            return;
-          }
-
-          String error = resultData.getString(FxAccountConstants.PARAM_ERROR);
-          displayException(new FxAccountCreationException(error));
-        } finally {
-          setWorkingState(false);
+          return;
         }
+
+        String error = resultData.getString(FxAccountConstants.PARAM_ERROR);
+        displayException(new FxAccountCreationException(error));
+
       }
     };
   }

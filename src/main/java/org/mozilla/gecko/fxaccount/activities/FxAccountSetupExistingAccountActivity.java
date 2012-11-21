@@ -51,7 +51,7 @@ public class FxAccountSetupExistingAccountActivity extends FxAccountAbstractSetu
       return;
     }
 
-    setWorkingState(true);
+    setState(State.WORKING, null);
 
     Intent serviceIntent = new Intent(this, FxAccountIntentService.class);
     serviceIntent.setAction(FxAccountConstants.FXACCOUNT_CREATE_ANDROID_ACCOUNT_FOR_EXISTING_FX_ACCOUNT_ACTION);
