@@ -112,7 +112,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
     Logger.debug(LOG_TAG, "createAndroidAccountForNewFxAccount");
 
     try {
-      Thread.sleep(1000);
+      Thread.sleep(2000);
     } catch (InterruptedException e) {
       // Do nothing.
     }

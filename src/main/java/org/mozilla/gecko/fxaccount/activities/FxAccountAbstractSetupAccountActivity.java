@@ -14,6 +14,10 @@ import android.os.ResultReceiver;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -34,6 +38,8 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
   protected EditText passwordEdit;
   protected EditText password2Edit;
 
+  protected ViewGroup disabledLayer;
+
   protected Button nextButton;
   protected ProgressBar progressBar;
   protected TextView errorTextView;
@@ -42,6 +48,67 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     super();
     this.contentViewId = contentViewId;
     this.state = State.READY;
+  }
+
+  /**
+   * Helper to set enabled state of all input controls.
+   *
+   * @param enabled whether to enable or disable.
+   */
+  private void setControlsEnabled(boolean enabled) {
+    // Hide/show a light box over everything...
+    if (enabled) {
+      fadeOut(disabledLayer, 500);
+    } else {
+      fadeIn(disabledLayer, 0);
+    }
+
+    // ... because disabling doesn't look significantly different.
+    emailEdit.setEnabled(enabled);
+    passwordEdit.setEnabled(enabled);
+    if (password2Edit != null) {
+      password2Edit.setEnabled(enabled);
+    }
+  }
+
+  private void fadeIn(View view, long durationInMilliseconds) {
+    if (view.getVisibility() == View.VISIBLE) {
+      return;
+    }
+
+    Animation inAnimation = AnimationUtils.loadAnimation(this, R.anim.fadein);
+    inAnimation.setDuration(durationInMilliseconds);
+
+    view.setVisibility(View.VISIBLE);
+    view.startAnimation(inAnimation);
+  }
+
+  private void fadeOut(final View view, long durationInMilliseconds) {
+    if (view.getVisibility() == View.INVISIBLE) {
+      return;
+    }
+
+    Animation outAnimation = AnimationUtils.loadAnimation(this, R.anim.fadeout);
+    outAnimation.setDuration(durationInMilliseconds);
+
+    outAnimation.setAnimationListener(new AnimationListener() {
+      @Override
+      public void onAnimationStart(Animation animation) {
+        // Do nothing.
+      }
+
+      @Override
+      public void onAnimationRepeat(Animation animation) {
+        // Do nothing.
+      }
+
+      @Override
+      public void onAnimationEnd(Animation animation) {
+        view.setVisibility(View.INVISIBLE);
+      }
+    });
+
+    view.startAnimation(outAnimation);
   }
 
   protected void setState(State newState, String errorMessage) {
@@ -54,13 +121,14 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
       progressBar.setVisibility(View.INVISIBLE);
       errorTextView.setVisibility(View.INVISIBLE);
 
+      this.setControlsEnabled(true);
       this.updateValidation();
-      this.updateButtonEnabled();
     } else if (newState == State.WORKING) {
       nextButton.setVisibility(View.INVISIBLE);
       progressBar.setVisibility(View.VISIBLE);
       errorTextView.setVisibility(View.INVISIBLE);
 
+      this.setControlsEnabled(false);
       this.updateValidation();
     } else if (newState == State.ERROR) {
       nextButton.setVisibility(View.INVISIBLE);
@@ -69,6 +137,7 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
 
       errorTextView.setText(errorMessage);
 
+      this.setControlsEnabled(true);
       this.updateValidation();
     }
   }
@@ -91,6 +160,8 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     nextButton = (Button) ensureFindViewById(R.id.next, "next button");
     progressBar = (ProgressBar) ensureFindViewById(R.id.progress, "progress bar");
     errorTextView = (TextView) ensureFindViewById(R.id.error, "error textview");
+
+    disabledLayer = (ViewGroup) ensureFindViewById(R.id.disabledLayer, "disabled layer");
 
     // Need controls initialized in order to set default values.
     Bundle extras = getIntent().getExtras();
@@ -169,7 +240,7 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     return view;
   }
 
-  protected void updateButtonEnabled() {
+  private void updateButtonEnabled() {
     boolean enabled = true;
 
     enabled = enabled && (emailEdit.getError() == null);
@@ -207,7 +278,6 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
       @Override
       public void onTextChanged(CharSequence s, int start, int before, int count) {
         updateValidation();
-        updateButtonEnabled(); // Do this second, since it uses edit text error states.
 
         setState(State.READY, null);
       }
@@ -241,19 +311,20 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     }
 
     // We might not have a second password input box.
-    if (password2Edit == null) {
-      return;
+    if (password2Edit != null) {
+      String password2 = password2Edit.getText().toString();
+
+      if (password2.length() == 0) {
+        password2Edit.setError("You must re-enter your password.");
+      } else if (!password.equals(password2)) {
+        password2Edit.setError("Your passwords must match.");
+      } else {
+        password2Edit.setError(null);
+      }
     }
 
-    String password2 = password2Edit.getText().toString();
-
-    if (password2.length() == 0) {
-      password2Edit.setError("You must re-enter your password.");
-    } else if (!password.equals(password2)) {
-      password2Edit.setError("Your passwords must match.");
-    } else {
-      password2Edit.setError(null);
-    }
+    // This uses the error validation states, so do it last.
+    updateButtonEnabled();
   }
 
   /**
