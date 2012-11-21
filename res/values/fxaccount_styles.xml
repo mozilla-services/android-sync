@@ -53,8 +53,8 @@
 	</style>
 
 	<style name="FxAccountButton" parent="@android:style/Widget.Button">
-		<!-- <item name="android:background">@drawable/fxaccount_button</item> -->
-		<item name="android:textColor">#404040</item>
+		<item name="android:background">@drawable/fxaccount_button_background</item>
+		<item name="android:textColor">@drawable/fxaccount_button_color</item>
 		<item name="android:padding">10dp</item>
 		<item name="android:layout_width">fill_parent</item>
 		<item name="android:layout_height">wrap_content</item>
@@ -72,7 +72,7 @@
 		<item name="android:drawableRight">@android:drawable/ic_dialog_alert</item>
 		<item name="android:gravity">center</item>
 		<item name="android:padding">10dp</item>
-		<item name="android:background">@drawable/fxaccount_error</item>
+		<item name="android:background">@drawable/fxaccount_error_background</item>
 		<item name="android:text">Error</item>
 		<item name="android:visibility">gone</item>
   </style>
