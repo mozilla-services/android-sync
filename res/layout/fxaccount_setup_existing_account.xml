@@ -27,15 +27,23 @@
 		<EditText
 			android:id="@+id/password"
 			style="@style/FxAccountEditItem"
-			android:layout_marginBottom="10dp"
+			android:layout_marginBottom="20dp"
 			android:ems="10"
 			android:hint="Password"
 			android:inputType="textPassword" />
 
+		<TextView
+			android:id="@+id/error"
+			style="@style/FxAccountErrorTextItem"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="20dp"
+			android:visibility="gone" />
+
 		<Button
 			android:id="@+id/next"
 			style="@style/FxAccountButton"
-			android:layout_marginBottom="20dp"
+			android:drawableRight="@android:drawable/ic_popup_sync"
 			android:onClick="onNext"
 			android:text="Next" />
 	</LinearLayout>

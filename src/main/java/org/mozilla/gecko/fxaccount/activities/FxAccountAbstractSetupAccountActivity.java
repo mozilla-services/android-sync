@@ -14,8 +14,12 @@ import android.os.ResultReceiver;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
@@ -25,10 +29,12 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
 
   protected TextWatcher textChangedListener;
 
-  protected Button nextButton;
   protected EditText emailEdit;
   protected EditText passwordEdit;
   protected EditText password2Edit;
+
+  protected TextView errorTextView;
+  protected Button nextButton;
 
   public FxAccountAbstractSetupAccountActivity(int contentViewId) {
     super();
@@ -45,11 +51,14 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     super.onCreate(icicle);
     setContentView(contentViewId);
 
-    nextButton = (Button) ensureFindViewById(R.id.next, "next button");
     emailEdit = (EditText) ensureFindViewById(R.id.email, "email textedit");
     passwordEdit = (EditText) ensureFindViewById(R.id.password, "password textedit");
     // password2Edit is allowed to be null.
     password2Edit = (EditText) findViewById(R.id.password2);
+
+    errorTextView = (TextView) ensureFindViewById(R.id.error, "error textview");
+
+    nextButton = (Button) ensureFindViewById(R.id.next, "next button");
 
     // Need controls initialized in order to set default values.
     Bundle extras = getIntent().getExtras();
@@ -137,6 +146,8 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
       enabled = enabled && (password2Edit.getError() == null);
     }
 
+    enabled = enabled && (errorTextView.getVisibility() == View.GONE);
+
     if (enabled == nextButton.isEnabled()) {
       return;
     }
@@ -156,7 +167,9 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
   protected void displayException(FxAccountCreationException e) {
     Logger.warn(LOG_TAG, "Got exception.", e);
 
-    Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+    showErrorTextView(e.getMessage());
+
+    updateButtonEnabled();
   }
 
   protected TextWatcher createTextChangedListener() {
@@ -205,6 +218,47 @@ public abstract class FxAccountAbstractSetupAccountActivity extends Activity {
     } else {
       password2Edit.setError(null);
     }
+
+    hideErrorTextView();
+  }
+
+  protected void showErrorTextView(String message) {
+    errorTextView.setText(message);
+
+    if (errorTextView.getVisibility() == View.VISIBLE) {
+      return;
+    }
+
+    Animation inAnimation = AnimationUtils.loadAnimation(this, R.anim.fadein);
+
+    errorTextView.setVisibility(View.VISIBLE);
+    errorTextView.startAnimation(inAnimation);
+  }
+
+  protected void hideErrorTextView() {
+    if (errorTextView.getVisibility() == View.GONE) {
+      return;
+    }
+
+    Animation outAnimation = AnimationUtils.loadAnimation(this, R.anim.fadeout);
+    outAnimation.setAnimationListener(new AnimationListener() {
+      @Override
+      public void onAnimationStart(Animation animation) {
+        // Do nothing.
+      }
+
+      @Override
+      public void onAnimationRepeat(Animation animation) {
+        // Do nothing.
+      }
+
+      @Override
+      public void onAnimationEnd(Animation animation) {
+        errorTextView.setVisibility(View.GONE);
+      }
+    });
+
+    errorTextView.startAnimation(outAnimation);
   }
 
   /**

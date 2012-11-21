@@ -51,16 +51,25 @@
 			style="@style/FxAccountLinkItem"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
-			android:layout_marginBottom="40dp"
+			android:layout_marginBottom="20dp"
 			android:gravity="center_horizontal"
 			android:text="Learn more." />
+
+		<TextView
+			android:id="@+id/error"
+			style="@style/FxAccountErrorTextItem"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="20dp"
+			android:visibility="gone" />
 
 		<Button
 			android:id="@+id/next"
 			style="@style/FxAccountButton"
-			android:layout_marginBottom="20dp"
+			android:drawableRight="@android:drawable/ic_popup_sync"
 			android:onClick="onNext"
 			android:text="Next" />
+
 	</LinearLayout>
 
 </ScrollView>

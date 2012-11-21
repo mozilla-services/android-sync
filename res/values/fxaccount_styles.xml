@@ -68,4 +68,12 @@
 		<item name="android:textColorHint">#808080</item>
 	</style>
 
+	<style name="FxAccountErrorTextItem" parent="@style/FxAccountTextItem">
+		<item name="android:drawableRight">@android:drawable/ic_dialog_alert</item>
+		<item name="android:gravity">center</item>
+		<item name="android:padding">10dp</item>
+		<item name="android:background">@drawable/fxaccount_error</item>
+		<item name="android:text">Error</item>
+		<item name="android:visibility">gone</item>
+  </style>
 </resources>
