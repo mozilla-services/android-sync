@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
@@ -64,6 +67,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   public static final long STORAGE_VERSION = 5;
 
   public SyncConfiguration config = null;
+
+  /**
+   * A queue of Runnables which execute each GlobalSyncStage.
+   */
+  protected ExecutorService stageQueue  = Executors.newSingleThreadExecutor();
 
   protected Map<Stage, GlobalSyncStage> stages;
   public Stage currentState = Stage.idle;
@@ -310,14 +318,41 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       this.abort(e, "No such stage " + next);
       return;
     }
-    this.currentState = next;
-    Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
+
+    queueStage(next, nextStage);
+  }
+
+  /**
+   * Queue stage for execution.
+   *
+   * @param next Stage enumeration.
+   * @param nextStage GlobalSyncStage to execute.
+   */
+  protected void queueStage(final Stage next, final GlobalSyncStage nextStage) {
+    final GlobalSession self = this;
+
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        Logger.info(LOG_TAG, "Running stage " + next + " (" + nextStage + ").");
+
+        self.currentState = next;
+
+        try {
+          nextStage.execute();
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Caught exception running stage " + next + ".", e);
+          self.abort(e, "Uncaught exception in stage.");
+        }
+      }
+    };
+
+    Logger.info(LOG_TAG, "Queueing stage " + next + " (" + nextStage + ").");
     try {
-      nextStage.execute();
-    } catch (Exception ex) {
-      Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
-      this.abort(ex, "Uncaught exception in stage.");
-      return;
+      this.stageQueue.execute(runnable);
+    } catch (RejectedExecutionException e) {
+      Logger.warn(LOG_TAG, "Caught exception queueing stage " + next + ".", e);
+      self.abort(e, "Uncaught exception in stage.");
     }
   }
 
