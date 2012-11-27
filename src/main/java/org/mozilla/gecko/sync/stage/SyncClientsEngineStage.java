@@ -196,6 +196,11 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
           localAccountGUIDDownloaded = true;
           session.config.persistServerClientRecordTimestamp(r.lastModified);
           processCommands(r.commands);
+
+          // It is possible that there are commands in the database for the
+          // local GUID that did not come from the server, namely locally
+          // triggered "wipeAll", "resetAll", etc.
+          processLocalCommands(r.guid);
         } else {
           // Only need to store record if it isn't our local one.
           wipeAndStore(r);
@@ -430,6 +435,38 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
       record.commands.add(jsonCommand);
     }
     toUpload.add(record);
+  }
+
+  /**
+   * The clients database might have commands for the local client that were not
+   * downloaded from the server, namely locally generated "resetAll", "wipeAll",
+   * etc commands. We fetch them and process them here. They will be deleted
+   * when the clients database is wiped after successful upload.
+   *
+   * @param localGuid of local client.
+   * @throws NullCursorException
+   */
+  @SuppressWarnings("unchecked")
+  protected void processLocalCommands(String localGuid) throws NullCursorException {
+    List<Command> commands = getClientsDatabaseAccessor().fetchCommandsForClient(localGuid);
+
+    if (commands == null || commands.size() == 0) {
+      Logger.info(LOG_TAG, "No local commands to process for GUID " + localGuid + ".");
+      return;
+    }
+
+    Logger.info(LOG_TAG, "Processing " + commands.size() +
+        " local commands for GUID " + localGuid + ".");
+
+    // Convert to JSON array.
+    JSONArray jsonCommands = new JSONArray();
+    for (Command command : commands) {
+      JSONObject jsonCommand = command.asJSONObject();
+      jsonCommands.add(jsonCommand);
+    }
+
+    // And process locally.
+    processCommands(jsonCommands);
   }
 
   @SuppressWarnings("unchecked")
