@@ -61,6 +61,8 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   protected final AtomicInteger uploadAttemptsCount = new AtomicInteger();
   protected final List<ClientRecord> toUpload = new ArrayList<ClientRecord>();
 
+  protected CommandProcessor commandProcessor = null;
+
   public SyncClientsEngineStage(GlobalSession session) {
     if (session == null) {
       throw new IllegalArgumentException("session must not be null.");
@@ -85,6 +87,14 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
     db.close();
     db = null;
+  }
+
+  protected synchronized CommandProcessor getCommandProcessor() {
+    if (commandProcessor == null) {
+      commandProcessor = CommandProcessor.getProcessor();
+    }
+
+    return commandProcessor;
   }
 
   /**
@@ -410,7 +420,7 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
     }
 
     commandsProcessedShouldUpload = true;
-    CommandProcessor processor = CommandProcessor.getProcessor();
+    CommandProcessor processor = getCommandProcessor();
 
     for (Object o : commands) {
       processor.processCommand(session, new ExtendedJSONObject((JSONObject) o));

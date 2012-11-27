@@ -15,12 +15,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.CommandHelpers;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -32,7 +34,9 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.MockSyncClientsEngineStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
+import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandProcessor.Command;
+import org.mozilla.gecko.sync.CommandRunner;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -103,6 +107,12 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   protected ClientRecord newLocalClientRecord(ClientsDataDelegate delegate) {
     lastComputedLocalClientRecord = super.newLocalClientRecord(delegate);
     return lastComputedLocalClientRecord;
+  }
+
+  @Before
+  public void setUp() {
+    WaitHelper.resetTestWaiter();
+    this.db = null;
   }
 
   @After
@@ -581,6 +591,47 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     // Timestamp got updated (but not reset) since we downloaded our record
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
     assertTrue(initialTimestamp < session.config.getPersistedServerClientRecordTimestamp());
+    assertTrue(mockDataAccessorIsClosed());
+  }
+
+  @Test
+  public void testProcessLocalRecords() {
+    final String TEST_COMMAND_TYPE = "testCommandType";
+
+    // Make sure no upload occurs after a download so we can
+    // test download in isolation.
+    stubUpload = true;
+
+    final AtomicBoolean localCommandExecuted = new AtomicBoolean(false);
+
+    this.commandProcessor = new CommandProcessor();
+    this.commandProcessor.registerCommand(TEST_COMMAND_TYPE, new CommandRunner(0) {
+      @Override
+      public void executeCommand(GlobalSession session, List<String> args) {
+        localCommandExecuted.set(true);
+      }
+    });
+
+    this.db = new MockClientsDatabaseAccessor() {
+      @Override
+      public List<Command> fetchCommandsForClient(String accountGUID) throws NullCursorException {
+        List<Command> commands = new ArrayList<Command>();
+        commands.add(new Command(TEST_COMMAND_TYPE, new JSONArray()));
+        return commands;
+      }
+    };
+
+    currentDownloadMockServer = new DownloadLocalRecordMockServer();
+    // performNotify() occurs in MockGlobalSessionCallback.
+    testWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        clientDownloadDelegate = new TestHandleWBODownloadDelegate(data);
+        downloadClientRecords();
+      }
+    });
+
+    assertTrue(localCommandExecuted.get());
     assertTrue(mockDataAccessorIsClosed());
   }
 
