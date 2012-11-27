@@ -8,41 +8,24 @@ import java.util.List;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.CommandProcessor;
-import org.mozilla.gecko.sync.CommandRunner;
-import org.mozilla.gecko.sync.SyncConstants;
-import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
-import org.mozilla.gecko.sync.setup.Constants;
-import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
 import org.mozilla.gecko.sync.syncadapter.SyncAdapter;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class SendTabActivity extends Activity {
-  public static final String LOG_TAG = "SendTabActivity";
-  private ClientRecordArrayAdapter arrayAdapter;
-  private AccountManager accountManager;
-  private Account localAccount;
+public class SendTabActivity extends SyncAccountActivity {
+  public static final String LOG_TAG = SendTabActivity.class.getSimpleName();
 
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-  }
+  private ClientRecordArrayAdapter arrayAdapter;
 
   @Override
   public void onResume() {
@@ -50,8 +33,10 @@ public class SendTabActivity extends Activity {
     Logger.info(LOG_TAG, "Called SendTabActivity.onResume.");
     super.onResume();
 
-    redirectIfNoSyncAccount();
-    registerDisplayURICommand();
+    if (this.localAccount == null) {
+      Logger.warn(LOG_TAG, "No local Sync account.");
+      return;
+    }
 
     setContentView(R.layout.sync_send_tab);
     final ListView listview = (ListView) findViewById(R.id.device_list);
@@ -77,51 +62,6 @@ public class SendTabActivity extends Activity {
         listview.setAdapter(arrayAdapter);
       }
     }.execute();
-  }
-
-  private static void registerDisplayURICommand() {
-    final CommandProcessor processor = CommandProcessor.getProcessor();
-    processor.registerCommand("displayURI", new CommandRunner(3) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        CommandProcessor.displayURI(args, session.getContext());
-      }
-    });
-  }
-
-  private void redirectIfNoSyncAccount() {
-    accountManager = AccountManager.get(getApplicationContext());
-    Account[] accts = accountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
-
-    // A Sync account exists.
-    if (accts.length > 0) {
-      localAccount = accts[0];
-      return;
-    }
-
-    Intent intent = new Intent(this, RedirectToSetupActivity.class);
-    intent.setFlags(Constants.FLAG_ACTIVITY_REORDER_TO_FRONT_NO_ANIMATION);
-    startActivity(intent);
-    finish();
-  }
-
-  /**
-   * @return Return null if there is no account set up. Return the account GUID otherwise.
-   */
-  private String getAccountGUID() {
-    if (localAccount == null) {
-      Logger.warn(LOG_TAG, "Null local account; aborting.");
-      return null;
-    }
-
-    SharedPreferences prefs;
-    try {
-      prefs = SyncAccounts.blockingPrefsFromDefaultProfileV0(this, accountManager, localAccount);
-      return prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null);
-    } catch (Exception e) {
-      Logger.warn(LOG_TAG, "Could not get Sync account parameters or preferences; aborting.");
-      return null;
-    }
   }
 
   public void sendClickHandler(View view) {
