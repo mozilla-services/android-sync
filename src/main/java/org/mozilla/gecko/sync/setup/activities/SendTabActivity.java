@@ -8,11 +8,9 @@ import java.util.List;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.CommandProcessor;
-import org.mozilla.gecko.sync.CommandRunner;
-import org.mozilla.gecko.sync.SyncConstants;
-import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
@@ -51,7 +49,6 @@ public class SendTabActivity extends Activity {
     super.onResume();
 
     redirectIfNoSyncAccount();
-    registerDisplayURICommand();
 
     setContentView(R.layout.sync_send_tab);
     final ListView listview = (ListView) findViewById(R.id.device_list);
@@ -77,16 +74,6 @@ public class SendTabActivity extends Activity {
         listview.setAdapter(arrayAdapter);
       }
     }.execute();
-  }
-
-  private static void registerDisplayURICommand() {
-    final CommandProcessor processor = CommandProcessor.getProcessor();
-    processor.registerCommand("displayURI", new CommandRunner(3) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        CommandProcessor.displayURI(args, session.getContext());
-      }
-    });
   }
 
   private void redirectIfNoSyncAccount() {
