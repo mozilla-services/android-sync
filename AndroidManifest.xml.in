@@ -40,6 +40,10 @@
             android:theme="@android:style/Theme.NoDisplay"
             android:name="org.mozilla.gecko.sync.setup.activities.WipeAllStagesActivity" />
 
+        <activity
+            android:theme="@android:style/Theme.NoDisplay"
+            android:name="org.mozilla.gecko.sync.setup.activities.CreateTestAccountsActivity" />
+
 #include manifests/SyncAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
 
