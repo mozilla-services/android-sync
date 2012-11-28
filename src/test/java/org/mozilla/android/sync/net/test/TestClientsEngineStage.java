@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Test;
@@ -332,7 +331,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
       Logger.debug(LOG_TAG, "Handling POST: " + request.getPath());
       String content = request.getContent();
       Logger.debug(LOG_TAG, "Content is " + content);
-      JSONArray array = (JSONArray) new JSONParser().parse(content);
+      JSONArray array = ExtendedJSONObject.parseJSONArray(content);
 
       Logger.debug(LOG_TAG, "Content is " + array);
 
