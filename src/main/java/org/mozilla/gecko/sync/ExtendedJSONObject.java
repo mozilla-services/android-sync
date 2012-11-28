@@ -51,13 +51,35 @@ public class ExtendedJSONObject {
   }
 
   /**
-   * Helper method to get a JSONObject from a String. Input: String containing
-   * JSON. Output: Extracted JSONObject. Throws: Exception if JSON is invalid.
+   * Helper method to get a JSON array from a string.
    *
+   * @param jsonString input.
    * @throws ParseException
    * @throws IOException
-   * @throws NonObjectJSONException
-   *           If the object is valid JSON, but not an object.
+   * @throws NonObjectJSONException if the object is valid JSON, but not an array.
+   */
+  public static JSONArray parseJSONArray(String jsonString)
+      throws IOException, ParseException, NonArrayJSONException {
+    Object o = new JSONParser().parse(jsonString);
+
+    if (o == null) {
+      return null;
+    }
+
+    if (o instanceof JSONArray) {
+      return (JSONArray) o;
+    }
+
+    throw new NonArrayJSONException(o);
+  }
+
+  /**
+   * Helper method to get a JSON object from a string.
+   *
+   * @param jsonString input.
+   * @throws ParseException
+   * @throws IOException
+   * @throws NonObjectJSONException if the object is valid JSON, but not an object.
    */
   public static ExtendedJSONObject parseJSONObject(String jsonString)
                                                                      throws IOException,
@@ -79,6 +101,7 @@ public class ExtendedJSONObject {
       this.object = new JSONObject();
       return;
     }
+
     Reader in = new StringReader(jsonString);
     Object obj = new JSONParser().parse(in);
     if (obj instanceof JSONObject) {
@@ -115,7 +138,7 @@ public class ExtendedJSONObject {
       return (Integer) val;
     }
     if (val instanceof Long) {
-      return new Integer(((Long) val).intValue());
+      return Integer.valueOf(((Long) val).intValue());
     }
     if (val instanceof String) {
       return Integer.parseInt((String) val, 10);
@@ -135,11 +158,11 @@ public class ExtendedJSONObject {
     // This is absurd.
     if (val instanceof Double) {
       double millis = ((Double) val).doubleValue() * 1000;
-      return new Double(millis).longValue();
+      return Double.valueOf(millis).longValue();
     }
     if (val instanceof Float) {
       double millis = ((Float) val).doubleValue() * 1000;
-      return new Double(millis).longValue();
+      return Double.valueOf(millis).longValue();
     }
     if (val instanceof Number) {
       // Must be an integral number.

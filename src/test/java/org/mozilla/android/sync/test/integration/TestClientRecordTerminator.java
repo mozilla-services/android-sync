@@ -85,7 +85,7 @@ public class TestClientRecordTerminator {
     }
 
     // Make sure record appears in collection guids.
-    JSONArray a = (JSONArray) ExtendedJSONObject.parse(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
+    JSONArray a = ExtendedJSONObject.parseJSONArray(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
     for (String guid : RECS) {
       assertTrue(a.contains(guid));
     }
@@ -95,7 +95,7 @@ public class TestClientRecordTerminator {
     }
 
     // Make sure record does not appear in collection guids.
-    a = (JSONArray) ExtendedJSONObject.parse(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
+    a = ExtendedJSONObject.parseJSONArray(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
     for (String guid : KEEP) {
       assertTrue(a.contains(guid));
     }

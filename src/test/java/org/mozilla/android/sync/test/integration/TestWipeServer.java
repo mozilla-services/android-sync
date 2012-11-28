@@ -75,7 +75,7 @@ public class TestWipeServer {
     assertNotNull(ld.body());
 
     // Make sure record appears in collection guids.
-    JSONArray a = (JSONArray) ExtendedJSONObject.parse(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
+    JSONArray a = ExtendedJSONObject.parseJSONArray(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
     assertTrue(a.contains(record.guid));
 
     // Make sure record is really there.
@@ -88,7 +88,7 @@ public class TestWipeServer {
     stage.wipeServer(); // Synchronous!
 
     // Make sure record does not appear in collection guids.
-    a = (JSONArray) ExtendedJSONObject.parse(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
+    a = ExtendedJSONObject.parseJSONArray(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());
     assertTrue(a.isEmpty());
   }
 }
