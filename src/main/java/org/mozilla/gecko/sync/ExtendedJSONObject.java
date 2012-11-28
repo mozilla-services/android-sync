@@ -82,10 +82,21 @@ public class ExtendedJSONObject {
    * @throws NonObjectJSONException if the object is valid JSON, but not an object.
    */
   public static ExtendedJSONObject parseJSONObject(String jsonString)
-                                                                     throws IOException,
-                                                                     ParseException,
-                                                                     NonObjectJSONException {
+      throws IOException, ParseException, NonObjectJSONException {
     return new ExtendedJSONObject(jsonString);
+  }
+
+  /**
+   * Helper method to get a JSON object from a UTF-8 byte array.
+   *
+   * @param in UTF-8 bytes.
+   * @throws ParseException
+   * @throws NonObjectJSONException if the object is valid JSON, but not an object.
+   * @throws IOException
+   */
+  public static ExtendedJSONObject parseUTF8AsJSONObject(byte[] in)
+      throws ParseException, NonObjectJSONException, IOException {
+    return parseJSONObject(new String(in, "UTF-8"));
   }
 
   public ExtendedJSONObject() {
