@@ -1,1 +1,21 @@
-org.mozilla.fennec_@USERNAME@
+# Warning: no blank lines accepted!
+#
+# While developing Android Sync, you will build android-sync.apk and
+# android-sync-test.apk.  These two packages expect a working Fennec
+# installation with ContentProvider instances to talk to.
+#
+# Usually, you should download a recent Fennec Nightly build and use
+# `repackage-fennec.sh' to give Android Sync access to Fennec's
+# ContentProviders.  Such a package will be called
+#
+# org.mozilla.fennec
+#
+# If you are building your own Fennec package, the Fennec package will
+# be named:
+#
+# org.mozilla.fennec_@USERNAME@
+#
+# (The @USERNAME@ is automatically replaced with your username.)
+#
+# By default, we want Android Sync to talk to a repackaged Nightly:
+org.mozilla.fennec

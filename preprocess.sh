@@ -12,9 +12,19 @@ MOZ_APP_DISPLAYNAME="FxSync"
 MOZ_APP_VERSION="0"
 ANDROID_CPU_ARCH="armeabi-v7a"
 
-# Consistent with mobile/android/base/Makefile.in.
+# Keep MOZ_ANDROID_SHARED_ID consistent with
+# mobile/android/base/Makefile.in.  If the shared IDs are not the
+# same, the Android Sync package's SyncAdapter and instrumentation
+# tests will be denied access to the Fennec content provider.
 MOZ_ANDROID_SHARED_ID="${ANDROID_PACKAGE_NAME}.sharedID"
-MOZ_ANDROID_SHARED_ACCOUNT_TYPE="${ANDROID_PACKAGE_NAME}_sync"
+# We intentionally change the MOZ_ANDROID_SHARED_ACCOUNT_TYPE.  In
+# Fennec, this is:
+#
+# MOZ_ANDROID_SHARED_ACCOUNT_TYPE="${ANDROID_PACKAGE_NAME}_sync"
+#
+# Since we want to test without reference to the installed Fennec, we
+# define our own testing Android Account type:
+MOZ_ANDROID_SHARED_ACCOUNT_TYPE="${ANDROID_PACKAGE_NAME}_sync_test"
 
 echo "Using ANDROID_PACKAGE_NAME $ANDROID_PACKAGE_NAME."
 echo "Using ANDROID_CPU_ARCH $ANDROID_CPU_ARCH."
@@ -30,6 +40,10 @@ SYNCCONSTANTS=src/main/java/org/mozilla/gecko/sync/SyncConstants.java
 BROWSERCONTRACT=src/main/java/org/mozilla/gecko/db/BrowserContract.java
 MANIFEST=AndroidManifest.xml
 
+# All definitions used at Android Services preprocess time must be
+# present at Fennec build time.  You should never need to do this, but
+# see Bug 795499 for an example of adding a preprocessor definition to
+# Fennec.
 DEFINITIONS=""
 DEFINITIONS="$DEFINITIONS -DANDROID_PACKAGE_NAME=$ANDROID_PACKAGE_NAME"
 DEFINITIONS="$DEFINITIONS -DANDROID_CPU_ARCH=$ANDROID_CPU_ARCH"
