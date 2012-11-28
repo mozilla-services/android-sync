@@ -3,8 +3,6 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import static org.junit.Assert.assertEquals;
-
 import java.net.URI;
 
 import org.mozilla.gecko.sync.GlobalSession;
@@ -42,7 +40,6 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   @Override
   public void handleSuccess(GlobalSession globalSession) {
     this.calledSuccess = true;
-    assertEquals(0, this.stageCounter);
     this.testWaiter().performNotify();
   }
 
