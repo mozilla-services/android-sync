@@ -27,3 +27,5 @@ gen
 puppet/modules/data/files/*.tgz
 puppet/modules/data/files/*.zip
 puppet/modules/data/files/*.tar.gz
+*.apk
+docs/*.html
