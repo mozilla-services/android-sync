@@ -28,6 +28,10 @@
                  android:icon="@drawable/icon"
                  android:label="@string/sync_app_name">
 
+        <activity
+            android:theme="@android:style/Theme.NoDisplay"
+            android:name="org.mozilla.gecko.sync.setup.activities.SyncNowActivity" />
+
 #include manifests/SyncAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
 
