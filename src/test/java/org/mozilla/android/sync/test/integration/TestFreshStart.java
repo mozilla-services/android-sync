@@ -9,15 +9,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -30,11 +27,8 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.MetaGlobal;
-import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
@@ -55,9 +49,7 @@ public class TestFreshStart {
   private GlobalSession session;
 
   @Before
-  public void setUp()
-      throws IllegalStateException, NonObjectJSONException, IOException,
-      ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException, URISyntaxException {
+  public void setUp() throws Exception {
 
     keysToUpload = CollectionKeys.generateCollectionKeys();
     keysToUpload.setKeyBundleForCollection("addons", KeyBundle.withRandomKeys());
