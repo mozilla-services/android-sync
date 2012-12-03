@@ -17,7 +17,9 @@ import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockRecord;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CredentialsSource;
+import org.mozilla.gecko.sync.InfoCounts;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
@@ -26,12 +28,15 @@ import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.Server11Repository;
 import org.mozilla.gecko.sync.repositories.Server11RepositorySession;
 import org.mozilla.gecko.sync.repositories.StoreFailedException;
+import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecordFactory;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.stage.SafeConstrainedServer11Repository;
 import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 import org.simpleframework.http.ContentType;
@@ -59,12 +64,17 @@ public class TestServer11RepositorySession implements CredentialsSource {
 
   private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT + "/";
-  static final String LOCAL_REQUEST_URL   = TEST_SERVER + "1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks";
+  static final String LOCAL_BASE_URL      = TEST_SERVER + "1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/";
+  static final String LOCAL_REQUEST_URL   = LOCAL_BASE_URL + "storage/bookmarks";
+  static final String LOCAL_INFO_BASE_URL = LOCAL_BASE_URL + "info/";
 
   // Corresponds to rnewman+atest1@mozilla.com, local.
   static final String USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
   static final String USER_PASS         = "n6ec3u5bee3tixzp2asys7bs6fve4jfw:password";
   static final String SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
+
+  // Few-second timeout so that our longer operations don't time out and cause spurious error-handling results.
+  private static final int SHORT_TIMEOUT = 10000;
 
   @Override
   public String credentials() {
@@ -187,5 +197,53 @@ public class TestServer11RepositorySession implements CredentialsSource {
     Exception e = doSynchronize(server);
     assertNotNull(e);
     assertEquals(StoreFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testConstraints() throws Exception {
+    MockServer server = new MockServer() {
+      public void handle(Request request, Response response) {
+        if (request.getMethod().equals("GET")) {
+          if (request.getPath().getPath().endsWith("/info/collection_counts")) {
+            this.handle(request, response, 200, "{\"bookmarks\": 5001}");
+          }
+        }
+        this.handle(request, response, 400, "NOOOO");
+      }
+    };
+    final InfoCounts infoCounts = new InfoCounts(LOCAL_INFO_BASE_URL, this.credentials());
+    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", infoCounts);
+
+    data.startHTTPServer(server);
+    final boolean[] out = {false};
+
+    // Verify that shouldSkip returns true due to a fetch of too large counts,
+    // rather than due to a timeout failure waiting to fetch counts.
+    WaitHelper.getTestWaiter().performWait(
+        SHORT_TIMEOUT,
+        new Runnable() {
+          @Override
+          public void run() {
+            remote.createSession(new RepositorySessionCreationDelegate() {
+              @Override
+              public void onSessionCreated(RepositorySession session) {
+                out[0] = session.shouldSkip();
+                WaitHelper.getTestWaiter().performNotify();
+              }
+
+              @Override
+              public void onSessionCreateFailed(Exception ex) {
+                WaitHelper.getTestWaiter().performNotify(ex);
+              }
+
+              @Override
+              public RepositorySessionCreationDelegate deferredCreationDelegate() {
+                return this;
+              }
+            }, null);
+          }
+        });
+    data.stopHTTPServer();
+    assertTrue(out[0]);
   }
 }

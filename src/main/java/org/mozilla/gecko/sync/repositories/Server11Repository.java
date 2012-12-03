@@ -24,7 +24,7 @@ public class Server11Repository extends Repository {
 
   private String serverURI;
   private String username;
-  private String collection;
+  protected String collection;
   private String collectionPath;
   private URI collectionPathURI;
   public CredentialsSource credentialsSource;
