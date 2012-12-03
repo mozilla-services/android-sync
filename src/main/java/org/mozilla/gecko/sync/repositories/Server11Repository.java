@@ -100,9 +100,12 @@ public class Server11Repository extends Repository {
   }
 
   // Override these.
+  @SuppressWarnings("static-method")
   protected long getDefaultFetchLimit() {
     return -1;
   }
+
+  @SuppressWarnings("static-method")
   protected String getDefaultSort() {
     return null;
   }

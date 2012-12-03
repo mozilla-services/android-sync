@@ -122,6 +122,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
     r.post(session.getEntity());
   }
 
+  @SuppressWarnings("static-method")
   protected TrackingWBORepository getLocal(int numRecords) {
     final TrackingWBORepository local = new TrackingWBORepository();
     for (int i = 0; i < numRecords; i++) {

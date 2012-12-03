@@ -980,6 +980,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * @return crypto/keys collection.
    * @throws CryptoException
    */
+  @SuppressWarnings("static-method")
   public CollectionKeys generateNewCryptoKeys() throws CryptoException {
     return CollectionKeys.generateCollectionKeys();
   }

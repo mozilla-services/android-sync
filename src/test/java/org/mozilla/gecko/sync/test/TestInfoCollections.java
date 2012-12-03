@@ -8,16 +8,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.InfoCollections;
-import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.crypto.CryptoException;
 
 public class TestInfoCollections {
   public static final String TEST_JSON =
@@ -25,8 +19,9 @@ public class TestInfoCollections {
       "\"prefs\":1.33115408641E9,\"crypto\":1.32046063664E9,\"meta\":1.321E9," +
       "\"forms\":1.33136685374E9,\"clients\":1.3313667619E9,\"tabs\":1.35E9}";
 
+  @SuppressWarnings("static-method")
   @Test
-  public void testSetFromRecord() throws NonObjectJSONException, IOException, ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException {
+  public void testSetFromRecord() throws Exception {
     InfoCollections infoCollections = new InfoCollections(null, null);
     ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_JSON);
     infoCollections.setFromRecord(record);
@@ -37,8 +32,9 @@ public class TestInfoCollections {
     assertNull(infoCollections.getTimestamp("missing"));
   }
 
+  @SuppressWarnings("static-method")
   @Test
-  public void testUpdateNeeded() throws NonObjectJSONException, IOException, ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException {
+  public void testUpdateNeeded() throws Exception {
     InfoCollections infoCollections = new InfoCollections(null, null);
     ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_JSON);
     infoCollections.setFromRecord(record);
