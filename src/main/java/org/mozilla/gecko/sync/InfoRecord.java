@@ -92,4 +92,58 @@ public abstract class InfoRecord {
       delegate.handleError(e);
     }
   }
+
+  private class BlockingInfoCollectionsDelegate implements InfoCollectionsDelegate {
+    public InfoRecord record = null;
+    public Exception exception = null;
+
+    @Override
+    public void handleSuccess(InfoRecord record) {
+      this.record = record;
+      synchronized (this) {
+        this.notify();
+      }
+    }
+
+    @Override
+    public void handleFailure(SyncStorageResponse response) {
+      this.exception = new HTTPFailureException(response);
+      synchronized (this) {
+        this.notify();
+      }
+    }
+
+    @Override
+    public void handleError(Exception e) {
+      this.exception = e;
+      synchronized (this) {
+        this.notify();
+      }
+    }
+  }
+
+  /**
+   * Fetch the info record, blocking until it returns.
+   * @return the info record.
+   */
+  public InfoRecord fetchBlocking() throws HTTPFailureException, Exception {
+    BlockingInfoCollectionsDelegate delegate = new BlockingInfoCollectionsDelegate();
+    this.delegate = delegate;
+    synchronized (delegate) {
+      this.fetch(delegate);
+      try {
+        delegate.wait(DEFAULT_FETCH_TIMEOUT_MSEC);
+      } catch (InterruptedException inter) {
+        Logger.warn(LOG_TAG, "Interrupted fetching info record.");
+        throw inter;
+      }
+    }
+    if (delegate.record != null) {
+      return delegate.record;
+    }
+    if (delegate.exception != null) {
+      throw delegate.exception;
+    }
+    throw new Exception("Unknown error.");
+  }
 }
