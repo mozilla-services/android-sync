@@ -63,7 +63,7 @@ public class TestEnsureCrypto5KeysStage {
 
     // Set info collections to not have crypto.
     infoCollections = new InfoCollections(null, null);
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NO_CRYPTO));
+    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NO_CRYPTO));
 
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
     callback = new MockGlobalSessionCallback();
@@ -115,7 +115,7 @@ public class TestEnsureCrypto5KeysStage {
 
   @Test
   public void testDownloadUsesPersisted() throws Exception {
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_OLD_CRYPTO));
+    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_OLD_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);
@@ -138,7 +138,7 @@ public class TestEnsureCrypto5KeysStage {
 
   @Test
   public void testDownloadFetchesNew() throws Exception {
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);
@@ -174,7 +174,7 @@ public class TestEnsureCrypto5KeysStage {
   public void testDownloadResetsOnDifferentDefaultKey() throws Exception {
     String TEST_COLLECTION = "bookmarks";
 
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     KeyBundle keyBundle = KeyBundle.withRandomKeys();
@@ -214,7 +214,7 @@ public class TestEnsureCrypto5KeysStage {
   public void testDownloadResetsEngineOnDifferentKey() throws Exception {
     final String TEST_COLLECTION = "history";
 
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);

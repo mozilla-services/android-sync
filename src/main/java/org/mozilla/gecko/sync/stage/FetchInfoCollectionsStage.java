@@ -7,7 +7,7 @@ package org.mozilla.gecko.sync.stage;
 import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.InfoCollections;
+import org.mozilla.gecko.sync.InfoRecord;
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
@@ -19,7 +19,7 @@ public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
   public class StageInfoCollectionsDelegate implements InfoCollectionsDelegate {
 
     @Override
-    public void handleSuccess(InfoCollections global) {
+    public void handleSuccess(InfoRecord global) {
       session.advance();
     }
 
