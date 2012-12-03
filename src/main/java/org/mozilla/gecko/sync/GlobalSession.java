@@ -569,7 +569,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   public void fetchInfoCollections(InfoCollectionsDelegate callback) throws URISyntaxException {
     if (this.config.infoCollections == null) {
-      this.config.infoCollections = new InfoCollections(config.infoURL(), credentials());
+      this.config.infoCollections = new InfoCollections(config.infoBaseURL(), credentials());
     }
     this.config.infoCollections.fetch(callback);
   }

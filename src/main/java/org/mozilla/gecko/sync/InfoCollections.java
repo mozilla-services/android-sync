@@ -4,22 +4,19 @@
 
 package org.mozilla.gecko.sync;
 
-import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.json.simple.parser.ParseException;
-import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
-import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
-
-public class InfoCollections implements SyncStorageRequestDelegate {
+/**
+ * Fetches the timestamp information in <code>info/collections</code> on the
+ * Sync server. Provides access to those timestamps, along with logic to check
+ * for whether a collection requires an update.
+ */
+public class InfoCollections extends InfoRecord {
   private static final String LOG_TAG = "InfoCollections";
-  protected String infoURL;
-  protected String credentials;
 
   /**
    * Fields fetched from the server, or <code>null</code> if not yet fetched.
@@ -27,7 +24,11 @@ public class InfoCollections implements SyncStorageRequestDelegate {
    * Rather than storing decimal/double timestamps, as provided by the server,
    * we convert immediately to milliseconds since epoch.
    */
-  private Map<String, Long> timestamps = null;
+  Map<String, Long> timestamps = null;
+
+  public InfoCollections(String infoURL, String credentials) {
+    super(infoURL + "collections", credentials);
+  }
 
   /**
    * Return the timestamp for the given collection, or null if the timestamps
@@ -71,50 +72,22 @@ public class InfoCollections implements SyncStorageRequestDelegate {
     return (serverLastModified.longValue() > lastModified);
   }
 
-  // Temporary location to store our callback.
-  private InfoCollectionsDelegate callback;
-
-  public InfoCollections(String metaURL, String credentials) {
-    this.infoURL     = metaURL;
-    this.credentials = credentials;
-  }
-
-  public void fetch(InfoCollectionsDelegate callback) {
-    this.callback = callback;
-    this.doFetch();
-  }
-
-  private void doFetch() {
-    try {
-      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.infoURL);
-      r.delegate = this;
-      // TODO: it might be nice to make Resource include its
-      // own thread pool, and automatically run asynchronously.
-      ThreadPool.run(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            r.get();
-          } catch (Exception e) {
-            callback.handleError(e);
-          }
-        }});
-    } catch (Exception e) {
-      callback.handleError(e);
-    }
-  }
-
+  @Override
   @SuppressWarnings("unchecked")
-  public void setFromRecord(ExtendedJSONObject record) throws IllegalStateException, IOException, ParseException, NonObjectJSONException {
+  public InfoRecord processResponse(ExtendedJSONObject record) throws Exception {
     Logger.debug(LOG_TAG, "info/collections is " + record.toJSONString());
     HashMap<String, Long> map = new HashMap<String, Long>();
 
     Set<Entry<String, Object>> entrySet = record.object.entrySet();
+
+    String key;
+    Object value;
     for (Entry<String, Object> entry : entrySet) {
+      key = entry.getKey();
+      value = entry.getValue();
+
       // These objects are most likely going to be Doubles. Regardless, we
       // want to get them in a more sane time format.
-      String key = entry.getKey();
-      Object value = entry.getValue();
       if (value instanceof Double) {
         map.put(key, Utils.decimalSecondsToMilliseconds((Double) value));
         continue;
@@ -129,41 +102,8 @@ public class InfoCollections implements SyncStorageRequestDelegate {
       }
       Logger.warn(LOG_TAG, "Skipping info/collections entry for " + key);
     }
-    this.timestamps = map;
-  }
 
-  // SyncStorageRequestDelegate methods for fetching.
-  public String credentials() {
-    return this.credentials;
-  }
-
-  public String ifUnmodifiedSince() {
-    return null;
-  }
-
-  public void handleRequestSuccess(SyncStorageResponse response) {
-    if (response.wasSuccessful()) {
-      try {
-        this.setFromRecord(response.jsonObjectBody());
-        this.callback.handleSuccess(this);
-        this.callback = null;
-      } catch (Exception e) {
-        this.callback.handleError(e);
-        this.callback = null;
-      }
-      return;
-    }
-    this.callback.handleFailure(response);
-    this.callback = null;
-  }
-
-  public void handleRequestFailure(SyncStorageResponse response) {
-    this.callback.handleFailure(response);
-    this.callback = null;
-  }
-
-  public void handleRequestError(Exception e) {
-    this.callback.handleError(e);
-    this.callback = null;
+    this.timestamps = Collections.unmodifiableMap(map);
+    return this;
   }
 }
