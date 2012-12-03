@@ -11,19 +11,46 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.InfoCollections;
+import org.mozilla.gecko.sync.InfoCounts;
 import org.mozilla.gecko.sync.Utils;
 
+/**
+ * Test both info/collections and info/collection_counts.
+ */
 public class TestInfoCollections {
-  public static final String TEST_JSON =
+  public static final String TEST_COLLECTIONS_JSON =
       "{\"history\":1.3319567131E9,\"bookmarks\":1.33195669592E9," +
       "\"prefs\":1.33115408641E9,\"crypto\":1.32046063664E9,\"meta\":1.321E9," +
       "\"forms\":1.33136685374E9,\"clients\":1.3313667619E9,\"tabs\":1.35E9}";
 
+  public static final String TEST_COUNTS_JSON =
+      "{\"passwords\": 390, " +
+      " \"clients\": 2, "     +
+      " \"crypto\": 1, "      +
+      " \"forms\": 1019, "    +
+      " \"bookmarks\": 766, " +
+      " \"prefs\": 1, "       +
+      " \"history\": 9278"    +
+      "}";
+
   @SuppressWarnings("static-method")
   @Test
-  public void testSetFromRecord() throws Exception {
+  public void testSetCountsFromRecord() throws Exception {
+    InfoCounts infoCounts = new InfoCounts(null, null);
+    assertEquals(null, infoCounts.getCount("bookmarks"));
+
+    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COUNTS_JSON);
+    infoCounts.processResponse(record);
+    assertEquals(Integer.valueOf(766), infoCounts.getCount("bookmarks"));
+    assertEquals(null, infoCounts.getCount("notpresent"));
+  }
+
+
+  @SuppressWarnings("static-method")
+  @Test
+  public void testSetCollectionsFromRecord() throws Exception {
     InfoCollections infoCollections = new InfoCollections(null, null);
-    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_JSON);
+    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COLLECTIONS_JSON);
     infoCollections.processResponse(record);
 
     assertEquals(Utils.decimalSecondsToMilliseconds(1.3319567131E9), infoCollections.getTimestamp("history").longValue());
@@ -36,7 +63,7 @@ public class TestInfoCollections {
   @Test
   public void testUpdateNeeded() throws Exception {
     InfoCollections infoCollections = new InfoCollections(null, null);
-    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_JSON);
+    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COLLECTIONS_JSON);
     infoCollections.processResponse(record);
 
     long none = -1;
