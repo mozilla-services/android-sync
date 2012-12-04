@@ -58,11 +58,10 @@ public class AnnouncementsFetchResourceDelegate extends BaseResourceDelegate {
     request.addHeader("Connection", "close");
 
     // Set If-Modified-Since to avoid re-fetching content.
-    final long ifModifiedSince = delegate.getLastFetch();
-    if (ifModifiedSince > 0) {
-      final String imsHeader = DateUtils.formatDate(new Date(ifModifiedSince));
-      Logger.info(LOG_TAG, "If-Modified-Since: " + imsHeader);
-      request.addHeader("If-Modified-Since", imsHeader);
+    final String ifModifiedSince = delegate.getLastDate();
+    if (ifModifiedSince != null) {
+      Logger.info(LOG_TAG, "If-Modified-Since: " + ifModifiedSince);
+      request.addHeader("If-Modified-Since", ifModifiedSince);
     }
 
     // Just in case.
