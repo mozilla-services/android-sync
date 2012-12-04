@@ -27,6 +27,9 @@ import org.simpleframework.http.Path;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
+import ch.boye.httpclientandroidlib.impl.cookie.DateParseException;
+import ch.boye.httpclientandroidlib.impl.cookie.DateUtils;
+
 public class TestAnnouncementFetch {
   private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://127.0.0.1:" + TEST_PORT;
@@ -43,6 +46,7 @@ public class TestAnnouncementFetch {
   public static final class MockFetchDelegate implements AnnouncementsFetchDelegate {
     private final long now;
     public List<Announcement> fetchedAnnouncements;
+    private String lastDate = null;
 
     public MockFetchDelegate(long now) {
       this.now = now;
@@ -59,14 +63,21 @@ public class TestAnnouncementFetch {
     }
 
     @Override
-    public void onNewAnnouncements(List<Announcement> announcements, long fetched) {
+    public void onNewAnnouncements(List<Announcement> announcements, long fetched, String date) {
       this.fetchedAnnouncements = announcements;
+      this.lastDate = date;
       Assert.assertTrue(fetched >= now);
+      try {
+        // Date is seconds-granularity, so bump it by 1000ms for comparison.
+        Assert.assertTrue(DateUtils.parseDate(date).getTime() + 1000 >= fetched);
+      } catch (DateParseException e) {
+        WaitHelper.getTestWaiter().performNotify(e);
+      }
       done();
     }
 
     @Override
-    public void onNoNewAnnouncements(long fetched) {
+    public void onNoNewAnnouncements(long fetched, String date) {
       Assert.fail("No new announcements. Fetched = " + fetched);
       done();
     }
@@ -95,6 +106,11 @@ public class TestAnnouncementFetch {
     @Override
     public long getLastFetch() {
       return 0L;
+    }
+
+    @Override
+    public String getLastDate() {
+      return this.lastDate;
     }
 
     @Override
@@ -222,12 +238,16 @@ public class TestAnnouncementFetch {
   public class AnnouncementFetchMockServer extends MockServer {
     // announce/1/android/channel/version/platform
     private static final int    EXPECTED_PATH_LENGTH = 6;
+    public String lastReceivedIfModifiedSince;
 
     private final ArrayList<TestAnnouncement> announcements = new ArrayList<TestAnnouncement>();
 
     @SuppressWarnings("unchecked")
     public void handle(Request request, Response response) {
       try {
+        final String ims = request.getValue("if-modified-since");
+        lastReceivedIfModifiedSince = ims;
+
         final String ua = request.getValue("user-agent");
         debug("User-Agent: " + ua);
         Assert.assertEquals(TEST_USER_AGENT, ua);
@@ -314,6 +334,21 @@ public class TestAnnouncementFetch {
     return announcement;
   }
 
+  private MockFetchDelegate makeDelegate() {
+    final long now = System.currentTimeMillis();
+    return new MockFetchDelegate(now);
+  }
+
+  protected static MockFetchDelegate fetchBlocking(final URI uri, final MockFetchDelegate delegate) {
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        AnnouncementsFetcher.fetchAnnouncements(uri, delegate);
+      }
+    });
+    return delegate;
+  }
+
   @Test
   public void testAnnouncementFetch() throws URISyntaxException {
     BaseResource.rewriteLocalhost = false;
@@ -323,24 +358,40 @@ public class TestAnnouncementFetch {
     // Add a mock announcement.
     mockServer.addAnnouncement(prepareTestAnnouncementOne());
 
-    data.startHTTPServer(mockServer);
-    debug("Server started.");
+    try {
+      data.startHTTPServer(mockServer);
+      debug("Server started.");
 
-    // Make a request that matches.
-    final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "17.0a1", "armeabi-v7a", 4);
-    final long now = System.currentTimeMillis();
+      // Make a request that matches.
+      final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "17.0a1", "armeabi-v7a", 4);
+      final MockFetchDelegate delegate = fetchBlocking(uri, makeDelegate());
+      Assert.assertEquals(1, delegate.fetchedAnnouncements.size());
+      Assert.assertEquals(TEST_ANNOUNCEMENT_ONE_TITLE, delegate.fetchedAnnouncements.get(0).getTitle());
+    } finally {
+      data.stopHTTPServer();
+    }
+  }
 
-    final MockFetchDelegate delegate = new MockFetchDelegate(now);
+  @Test
+  public void testAnnouncementFetchResendsDate() throws URISyntaxException, DateParseException {
+    AnnouncementFetchMockServer mockServer = new AnnouncementFetchMockServer();
 
-    WaitHelper.getTestWaiter().performWait(new Runnable() {
-      @Override
-      public void run() {
-        AnnouncementsFetcher.fetchAnnouncements(uri, delegate);
-      }
-    });
+    try {
+      data.startHTTPServer(mockServer);
+      debug("Server started.");
 
-    Assert.assertEquals(1, delegate.fetchedAnnouncements.size());
-    Assert.assertEquals(TEST_ANNOUNCEMENT_ONE_TITLE, delegate.fetchedAnnouncements.get(0).getTitle());
-    data.stopHTTPServer();
+      final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "19", "armeabi", 0);
+
+      final MockFetchDelegate delegate = makeDelegate();
+      fetchBlocking(uri, delegate);
+      String firstFetch = delegate.getLastDate();
+      debug("First fetch got Date: " + firstFetch);
+      Assert.assertTrue(DateUtils.parseDate(firstFetch).getTime() + 1000 >= delegate.now);
+      fetchBlocking(uri, delegate);
+      debug("Second fetch sent If-Modified-Since: " + mockServer.lastReceivedIfModifiedSince);
+      Assert.assertEquals(firstFetch, mockServer.lastReceivedIfModifiedSince);
+    } finally {
+      data.stopHTTPServer();
+    }
   }
 }
