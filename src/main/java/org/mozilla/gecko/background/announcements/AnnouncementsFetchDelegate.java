@@ -14,6 +14,11 @@ public interface AnnouncementsFetchDelegate {
   public long getLastFetch();
 
   /**
+   * @return the Date header of the last response, or null if not present.
+   */
+  public String getLastDate();
+
+  /**
    * @return the current system locale (e.g., en_us).
    */
   public Locale getLocale();
@@ -31,8 +36,8 @@ public interface AnnouncementsFetchDelegate {
   /*
    * Callback methods.
    */
-  public void onNoNewAnnouncements(long fetched);
-  public void onNewAnnouncements(List<Announcement> snippets, long fetched);
+  public void onNoNewAnnouncements(long fetched, String date);
+  public void onNewAnnouncements(List<Announcement> snippets, long fetched, String date);
   public void onLocalError(Exception e);
   public void onRemoteError(Exception e);
   public void onRemoteFailure(int status);
