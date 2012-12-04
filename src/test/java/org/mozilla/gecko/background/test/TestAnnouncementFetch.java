@@ -70,7 +70,6 @@ public class TestAnnouncementFetch {
       try {
         // Date is seconds-granularity, so bump it by 1000ms for comparison.
         Assert.assertTrue(DateUtils.parseDate(date).getTime() + 1000 >= fetched);
-
       } catch (DateParseException e) {
         WaitHelper.getTestWaiter().performNotify(e);
       }
@@ -359,31 +358,40 @@ public class TestAnnouncementFetch {
     // Add a mock announcement.
     mockServer.addAnnouncement(prepareTestAnnouncementOne());
 
-    data.startHTTPServer(mockServer);
-    debug("Server started.");
+    try {
+      data.startHTTPServer(mockServer);
+      debug("Server started.");
 
-    // Make a request that matches.
-    final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "17.0a1", "armeabi-v7a", 4);
-    final MockFetchDelegate delegate = fetchBlocking(uri, makeDelegate());
-    Assert.assertEquals(1, delegate.fetchedAnnouncements.size());
-    Assert.assertEquals(TEST_ANNOUNCEMENT_ONE_TITLE, delegate.fetchedAnnouncements.get(0).getTitle());
-    data.stopHTTPServer();
+      // Make a request that matches.
+      final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "17.0a1", "armeabi-v7a", 4);
+      final MockFetchDelegate delegate = fetchBlocking(uri, makeDelegate());
+      Assert.assertEquals(1, delegate.fetchedAnnouncements.size());
+      Assert.assertEquals(TEST_ANNOUNCEMENT_ONE_TITLE, delegate.fetchedAnnouncements.get(0).getTitle());
+    } finally {
+      data.stopHTTPServer();
+    }
   }
 
   @Test
   public void testAnnouncementFetchResendsDate() throws URISyntaxException, DateParseException {
     AnnouncementFetchMockServer mockServer = new AnnouncementFetchMockServer();
-    data.startHTTPServer(mockServer);
-    final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "19", "armeabi", 0);
 
-    final MockFetchDelegate delegate = makeDelegate();
-    fetchBlocking(uri, delegate);
-    String firstFetch = delegate.getLastDate();
-    System.out.println("First fetch got Date: " + firstFetch);
-    Assert.assertTrue(DateUtils.parseDate(firstFetch).getTime() + 1000 >= delegate.now);
-    fetchBlocking(uri, delegate);
-    System.out.println("Second fetch sent If-Modified-Since: " + mockServer.lastReceivedIfModifiedSince);
-    Assert.assertEquals(firstFetch, mockServer.lastReceivedIfModifiedSince);
-    data.stopHTTPServer();
+    try {
+      data.startHTTPServer(mockServer);
+      debug("Server started.");
+
+      final URI uri = AnnouncementsFetcher.getSnippetURI(BASE_URI, "beta", "19", "armeabi", 0);
+
+      final MockFetchDelegate delegate = makeDelegate();
+      fetchBlocking(uri, delegate);
+      String firstFetch = delegate.getLastDate();
+      debug("First fetch got Date: " + firstFetch);
+      Assert.assertTrue(DateUtils.parseDate(firstFetch).getTime() + 1000 >= delegate.now);
+      fetchBlocking(uri, delegate);
+      debug("Second fetch sent If-Modified-Since: " + mockServer.lastReceivedIfModifiedSince);
+      Assert.assertEquals(firstFetch, mockServer.lastReceivedIfModifiedSince);
+    } finally {
+      data.stopHTTPServer();
+    }
   }
 }

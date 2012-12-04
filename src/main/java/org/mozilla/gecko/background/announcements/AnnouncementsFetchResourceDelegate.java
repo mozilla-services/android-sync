@@ -26,6 +26,7 @@ import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.impl.cookie.DateUtils;
+import ch.boye.httpclientandroidlib.protocol.HTTP;
 
 /**
  * Converts HTTP resource callbacks into AnnouncementsFetchDelegate callbacks.
@@ -87,15 +88,19 @@ public class AnnouncementsFetchResourceDelegate extends SyncResourceDelegate {
 
   @Override
   public void handleHttpResponse(HttpResponse response) {
-    final Header dateHeader = response.getFirstHeader("Date");
+    final Header dateHeader = response.getFirstHeader(HTTP.DATE_HEADER);
     String date = null;
     if (dateHeader != null) {
+      // Note that we are deliberately not validating the server time here.
+      // We pass it directly back to the server; we don't care about the
+      // contents, and if we reject a value we essentially re-initialize
+      // the client, which will cause stale announcements to be re-fetched.
       date = dateHeader.getValue();
     }
     if (date == null) {
       // Use local clock, because skipping is better than re-fetching.
       date = DateUtils.formatDate(new Date());
-      Logger.warn(LOG_TAG, "No fetch date; using " + date);
+      Logger.warn(LOG_TAG, "No fetch date; using local time " + date);
     }
 
     final SyncResponse r = new SyncResponse(response);    // For convenience.
