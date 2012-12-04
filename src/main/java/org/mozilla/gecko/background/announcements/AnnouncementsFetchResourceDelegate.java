@@ -21,6 +21,7 @@ import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.Resource;
 import org.mozilla.gecko.sync.net.SyncResponse;
 
+import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -88,15 +89,25 @@ public class AnnouncementsFetchResourceDelegate extends BaseResourceDelegate {
 
   @Override
   public void handleHttpResponse(HttpResponse response) {
-    SyncResponse r = new SyncResponse(response);    // For convenience.
+    final Header dateHeader = response.getFirstHeader("Date");
+    String date = null;
+    if (dateHeader != null) {
+      date = dateHeader.getValue();
+    }
+    if (date == null) {
+      // Use local clock, because skipping is better than re-fetching.
+      date = DateUtils.formatDate(new Date());
+      Logger.warn(LOG_TAG, "No fetch date; using " + date);
+    }
 
+    final SyncResponse r = new SyncResponse(response);    // For convenience.
     try {
       final int statusCode = r.getStatusCode();
       Logger.debug(LOG_TAG, "Got announcements response: " + statusCode);
 
       if (statusCode == 204 || statusCode == 304) {
         BaseResource.consumeEntity(response);
-        delegate.onNoNewAnnouncements(startTime);
+        delegate.onNoNewAnnouncements(startTime, date);
         return;
       }
 
@@ -108,7 +119,7 @@ public class AnnouncementsFetchResourceDelegate extends BaseResourceDelegate {
           delegate.onRemoteError(e);
           return;
         }
-        delegate.onNewAnnouncements(snippets, startTime);
+        delegate.onNewAnnouncements(snippets, startTime, date);
         return;
       }
 
