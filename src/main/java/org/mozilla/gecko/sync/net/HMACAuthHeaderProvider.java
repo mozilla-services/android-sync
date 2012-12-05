@@ -93,7 +93,7 @@ public class HMACAuthHeaderProvider implements AuthHeaderProvider {
    * @throws UnsupportedEncodingException
    */
   protected static boolean isPlainString(String input) {
-    if (input == null || input.length() == 0) {
+    if (input == null) {
       return false;
     }
 
@@ -141,6 +141,9 @@ public class HMACAuthHeaderProvider implements AuthHeaderProvider {
     // We add quotes around the nonce string, so input nonce must be a plain-string.
     if (nonce == null) {
       throw new IllegalArgumentException("nonce must not be null.");
+    }
+    if (nonce.length() == 0) {
+      throw new IllegalArgumentException("nonce must not be empty.");
     }
     if (!isPlainString(nonce)) {
       throw new IllegalArgumentException("nonce must be a plain-string.");
