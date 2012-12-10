@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
@@ -215,35 +216,38 @@ public class TestServer11RepositorySession implements CredentialsSource {
     final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", infoCounts);
 
     data.startHTTPServer(server);
-    final boolean[] out = {false};
+    final AtomicBoolean out = new AtomicBoolean(false);
 
     // Verify that shouldSkip returns true due to a fetch of too large counts,
     // rather than due to a timeout failure waiting to fetch counts.
-    WaitHelper.getTestWaiter().performWait(
-        SHORT_TIMEOUT,
-        new Runnable() {
-          @Override
-          public void run() {
-            remote.createSession(new RepositorySessionCreationDelegate() {
-              @Override
-              public void onSessionCreated(RepositorySession session) {
-                out[0] = session.shouldSkip();
-                WaitHelper.getTestWaiter().performNotify();
-              }
+    try {
+      WaitHelper.getTestWaiter().performWait(
+          SHORT_TIMEOUT,
+          new Runnable() {
+            @Override
+            public void run() {
+              remote.createSession(new RepositorySessionCreationDelegate() {
+                @Override
+                public void onSessionCreated(RepositorySession session) {
+                  out.set(session.shouldSkip());
+                  WaitHelper.getTestWaiter().performNotify();
+                }
 
-              @Override
-              public void onSessionCreateFailed(Exception ex) {
-                WaitHelper.getTestWaiter().performNotify(ex);
-              }
+                @Override
+                public void onSessionCreateFailed(Exception ex) {
+                  WaitHelper.getTestWaiter().performNotify(ex);
+                }
 
-              @Override
-              public RepositorySessionCreationDelegate deferredCreationDelegate() {
-                return this;
-              }
-            }, null);
-          }
-        });
-    data.stopHTTPServer();
-    assertTrue(out[0]);
+                @Override
+                public RepositorySessionCreationDelegate deferredCreationDelegate() {
+                  return this;
+                }
+              }, null);
+            }
+          });
+      assertTrue(out.get());
+    } finally {
+      data.stopHTTPServer();
+    }
   }
 }

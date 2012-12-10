@@ -56,10 +56,12 @@ public class InfoCounts extends InfoRecord {
         map.put(key, (Integer) value);
         continue;
       }
+
       if (value instanceof Long) {
         map.put(key, ((Long) value).intValue());
         continue;
       }
+
       Logger.warn(LOG_TAG, "Skipping info/collection_counts entry for " + key);
     }
 
