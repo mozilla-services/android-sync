@@ -1,27 +1,26 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 package org.mozilla.gecko.sync;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
+import org.mozilla.gecko.sync.delegates.InfoFetchDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
-public abstract class InfoRecord {
-
+/**
+ * An object which fetches a chunk of JSON from a URI, using certain credentials,
+ * and informs its delegate of the result.
+ */
+public class InfoFetcher {
   private static final long DEFAULT_FETCH_TIMEOUT_MSEC = 2 * 60 * 1000;   // Two minutes.
-  private static final String LOG_TAG = "InfoRecord";
-  private InfoCollectionsDelegate delegate;
-  protected String credentials;
-  protected String uri;
+  private static final String LOG_TAG = "InfoFetcher";
 
-  public InfoRecord(String uri, String credentials) {
-    super();
+  protected final String credentials;
+  protected final String uri;
+  protected InfoFetchDelegate delegate;
+
+  public InfoFetcher(final String uri, final String credentials) {
     this.uri = uri;
     this.credentials = credentials;
   }
@@ -29,8 +28,6 @@ public abstract class InfoRecord {
   protected String getURI() {
     return this.uri;
   }
-
-  protected abstract InfoRecord processResponse(ExtendedJSONObject jsonObjectBody) throws Exception;
 
   private class InfoFetchHandler implements SyncStorageRequestDelegate {
 
@@ -46,7 +43,7 @@ public abstract class InfoRecord {
     public void handleRequestSuccess(SyncStorageResponse response) {
       if (response.wasSuccessful()) {
         try {
-          delegate.handleSuccess(processResponse(response.jsonObjectBody()));
+          delegate.handleSuccess(response.jsonObjectBody());
         } catch (Exception e) {
           handleRequestError(e);
         }
@@ -66,7 +63,7 @@ public abstract class InfoRecord {
     }
   }
 
-  public void fetch(final InfoCollectionsDelegate delegate) {
+  public void fetch(final InfoFetchDelegate delegate) {
     this.delegate = delegate;
     try {
       final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.getURI());
@@ -77,19 +74,13 @@ public abstract class InfoRecord {
     }
   }
 
-  private class LatchedInfoCollectionsDelegate implements InfoCollectionsDelegate {
-    public InfoRecord record = null;
+  private class LatchedInfoCollectionsDelegate implements InfoFetchDelegate {
+    public ExtendedJSONObject body = null;
     public Exception exception = null;
     private CountDownLatch latch;
 
     public LatchedInfoCollectionsDelegate(CountDownLatch latch) {
       this.latch = latch;
-    }
-
-    @Override
-    public void handleSuccess(InfoRecord record) {
-      this.record = record;
-      latch.countDown();
     }
 
     @Override
@@ -103,13 +94,19 @@ public abstract class InfoRecord {
       this.exception = e;
       latch.countDown();
     }
+
+    @Override
+    public void handleSuccess(ExtendedJSONObject body) {
+      this.body = body;
+      latch.countDown();
+    }
   }
 
   /**
    * Fetch the info record, blocking until it returns.
    * @return the info record.
    */
-  public InfoRecord fetchBlocking() throws HTTPFailureException, Exception {
+  public ExtendedJSONObject fetchBlocking() throws HTTPFailureException, Exception {
     CountDownLatch latch = new CountDownLatch(1);
     LatchedInfoCollectionsDelegate delegate = new LatchedInfoCollectionsDelegate(latch);
     this.delegate = delegate;
@@ -120,8 +117,8 @@ public abstract class InfoRecord {
       throw new InterruptedException("info fetch timed out.");
     }
 
-    if (delegate.record != null) {
-      return delegate.record;
+    if (delegate.body != null) {
+      return delegate.body;
     }
 
     if (delegate.exception != null) {

@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.InfoCounts;
+import org.mozilla.gecko.sync.InfoFetcher;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.ConstrainedServer11Repository;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -29,7 +30,7 @@ import android.content.Context;
 public class SafeConstrainedServer11Repository extends ConstrainedServer11Repository {
 
   // This can be lazily evaluated if we need it.
-  private InfoCounts counts;
+  private InfoFetcher countFetcher;
 
   public SafeConstrainedServer11Repository(String serverURI,
                                            String username,
@@ -37,10 +38,10 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
                                            CredentialsSource credentialsSource,
                                            long limit,
                                            String sort,
-                                           InfoCounts counts)
+                                           InfoFetcher countFetcher)
     throws URISyntaxException {
     super(serverURI, username, collection, credentialsSource, limit, sort);
-    this.counts = counts;
+    this.countFetcher = countFetcher;
   }
 
   @Override
@@ -66,16 +67,16 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
       // If this is a first sync, verify that we aren't going to blow through our limit.
       if (this.lastSyncTimestamp <= 0) {
 
-        final InfoCounts fetched;
+        final InfoCounts counts;
         try {
           // This'll probably be the same object, but best to obey the API.
-          fetched = (InfoCounts) (counts.fetchBlocking());
+          counts = new InfoCounts(countFetcher.fetchBlocking());
         } catch (Exception e) {
           Logger.warn(LOG_TAG, "Skipping " + collection + " until we can fetch counts.", e);
           return true;
         }
 
-        Integer c = fetched.getCount(collection);
+        Integer c = counts.getCount(collection);
         if (c == null) {
           return false;
         }
