@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class InfoCounts extends InfoRecord {
+public class InfoCounts {
   static final String LOG_TAG = "InfoCounts";
 
   /**
@@ -18,28 +18,9 @@ public class InfoCounts extends InfoRecord {
    */
   private Map<String, Integer> counts = null;
 
-  public InfoCounts(String infoURL, String credentials) {
-    super(infoURL + "collection_counts", credentials);
-  }
-
-  /**
-   * Return the server count for the given collection, or null if the counts
-   * have not been fetched or the given collection does not have a count.
-   *
-   * @param collection
-   *          The collection to inspect.
-   * @return the number of elements in the named collection.
-   */
-  public Integer getCount(String collection) {
-    if (counts == null) {
-      return null;
-    }
-    return counts.get(collection);
-  }
-
-  @Override
   @SuppressWarnings("unchecked")
-  public InfoRecord processResponse(ExtendedJSONObject record) {
+  public InfoCounts(final ExtendedJSONObject record) {
+    // super(infoURL + "collection_counts", credentials);
     Logger.debug(LOG_TAG, "info/collection_counts is " + record.toJSONString());
     HashMap<String, Integer> map = new HashMap<String, Integer>();
 
@@ -66,6 +47,20 @@ public class InfoCounts extends InfoRecord {
     }
 
     this.counts = Collections.unmodifiableMap(map);
-    return this;
+  }
+
+  /**
+   * Return the server count for the given collection, or null if the counts
+   * have not been fetched or the given collection does not have a count.
+   *
+   * @param collection
+   *          The collection to inspect.
+   * @return the number of elements in the named collection.
+   */
+  public Integer getCount(String collection) {
+    if (counts == null) {
+      return null;
+    }
+    return counts.get(collection);
   }
 }

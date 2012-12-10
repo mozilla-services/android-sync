@@ -84,8 +84,7 @@ public class TestFetchMetaGlobalStage {
     calledResetAllStages = false;
 
     // Set info collections to not have crypto.
-    infoCollections = new InfoCollections(null, null);
-    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_INFO_COLLECTIONS_JSON));
+    infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_INFO_COLLECTIONS_JSON));
 
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
     callback = new MockGlobalSessionCallback();

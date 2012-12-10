@@ -20,7 +20,7 @@ import org.mozilla.android.sync.test.helpers.MockRecord;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CredentialsSource;
-import org.mozilla.gecko.sync.InfoCounts;
+import org.mozilla.gecko.sync.InfoFetcher;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
@@ -68,6 +68,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
   static final String LOCAL_BASE_URL      = TEST_SERVER + "1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/";
   static final String LOCAL_REQUEST_URL   = LOCAL_BASE_URL + "storage/bookmarks";
   static final String LOCAL_INFO_BASE_URL = LOCAL_BASE_URL + "info/";
+  static final String LOCAL_COUNTS_URL    = LOCAL_INFO_BASE_URL + "collection_counts";
 
   // Corresponds to rnewman+atest1@mozilla.com, local.
   static final String USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
@@ -212,8 +213,8 @@ public class TestServer11RepositorySession implements CredentialsSource {
         this.handle(request, response, 400, "NOOOO");
       }
     };
-    final InfoCounts infoCounts = new InfoCounts(LOCAL_INFO_BASE_URL, this.credentials());
-    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", infoCounts);
+    final InfoFetcher countsFetcher = new InfoFetcher(LOCAL_COUNTS_URL, this.credentials());
+    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);
     final AtomicBoolean out = new AtomicBoolean(false);

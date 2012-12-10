@@ -15,7 +15,7 @@ import java.util.Set;
  * Sync server. Provides access to those timestamps, along with logic to check
  * for whether a collection requires an update.
  */
-public class InfoCollections extends InfoRecord {
+public class InfoCollections {
   private static final String LOG_TAG = "InfoCollections";
 
   /**
@@ -24,10 +24,40 @@ public class InfoCollections extends InfoRecord {
    * Rather than storing decimal/double timestamps, as provided by the server,
    * we convert immediately to milliseconds since epoch.
    */
-  Map<String, Long> timestamps = null;
+  final Map<String, Long> timestamps;
 
-  public InfoCollections(String infoURL, String credentials) {
-    super(infoURL + "collections", credentials);
+  @SuppressWarnings("unchecked")
+  public InfoCollections(final ExtendedJSONObject record) {
+    //super(infoURL + "collections", credentials);
+    Logger.debug(LOG_TAG, "info/collections is " + record.toJSONString());
+    HashMap<String, Long> map = new HashMap<String, Long>();
+
+    Set<Entry<String, Object>> entrySet = record.object.entrySet();
+
+    String key;
+    Object value;
+    for (Entry<String, Object> entry : entrySet) {
+      key = entry.getKey();
+      value = entry.getValue();
+
+      // These objects are most likely going to be Doubles. Regardless, we
+      // want to get them in a more sane time format.
+      if (value instanceof Double) {
+        map.put(key, Utils.decimalSecondsToMilliseconds((Double) value));
+        continue;
+      }
+      if (value instanceof Long) {
+        map.put(key, Utils.decimalSecondsToMilliseconds((Long) value));
+        continue;
+      }
+      if (value instanceof Integer) {
+        map.put(key, Utils.decimalSecondsToMilliseconds((Integer) value));
+        continue;
+      }
+      Logger.warn(LOG_TAG, "Skipping info/collections entry for " + key);
+    }
+
+    this.timestamps = Collections.unmodifiableMap(map);
   }
 
   /**
@@ -70,40 +100,5 @@ public class InfoCollections extends InfoRecord {
 
     // Otherwise, we need an update if our modification time is stale.
     return (serverLastModified.longValue() > lastModified);
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public InfoRecord processResponse(ExtendedJSONObject record) throws Exception {
-    Logger.debug(LOG_TAG, "info/collections is " + record.toJSONString());
-    HashMap<String, Long> map = new HashMap<String, Long>();
-
-    Set<Entry<String, Object>> entrySet = record.object.entrySet();
-
-    String key;
-    Object value;
-    for (Entry<String, Object> entry : entrySet) {
-      key = entry.getKey();
-      value = entry.getValue();
-
-      // These objects are most likely going to be Doubles. Regardless, we
-      // want to get them in a more sane time format.
-      if (value instanceof Double) {
-        map.put(key, Utils.decimalSecondsToMilliseconds((Double) value));
-        continue;
-      }
-      if (value instanceof Long) {
-        map.put(key, Utils.decimalSecondsToMilliseconds((Long) value));
-        continue;
-      }
-      if (value instanceof Integer) {
-        map.put(key, Utils.decimalSecondsToMilliseconds((Integer) value));
-        continue;
-      }
-      Logger.warn(LOG_TAG, "Skipping info/collections entry for " + key);
-    }
-
-    this.timestamps = Collections.unmodifiableMap(map);
-    return this;
   }
 }
