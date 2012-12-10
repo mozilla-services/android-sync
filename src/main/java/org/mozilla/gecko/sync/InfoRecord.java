@@ -4,6 +4,9 @@
 
 package org.mozilla.gecko.sync;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.mozilla.gecko.sync.delegates.InfoCollectionsDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
@@ -21,14 +24,6 @@ public abstract class InfoRecord {
     super();
     this.uri = uri;
     this.credentials = credentials;
-  }
-
-  public void requestFailed(SyncStorageResponse response) {
-    delegate.handleFailure(response);
-  }
-
-  public void requestErrored(Exception e) {
-    delegate.handleError(e);
   }
 
   protected String getURI() {
@@ -62,12 +57,12 @@ public abstract class InfoRecord {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
-      requestFailed(response);
+      delegate.handleFailure(response);
     }
 
     @Override
     public void handleRequestError(Exception ex) {
-      requestErrored(ex);
+      delegate.handleError(ex);
     }
   }
 
@@ -76,49 +71,37 @@ public abstract class InfoRecord {
     try {
       final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.getURI());
       r.delegate = new InfoFetchHandler();
-      // TODO: it might be nice to make Resource include its
-      // own thread pool, and automatically run asynchronously.
-      ThreadPool.run(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            r.get();
-          } catch (Exception e) {
-            delegate.handleError(e);
-          }
-        }
-      });
+      r.get();
     } catch (Exception e) {
       delegate.handleError(e);
     }
   }
 
-  private class BlockingInfoCollectionsDelegate implements InfoCollectionsDelegate {
+  private class LatchedInfoCollectionsDelegate implements InfoCollectionsDelegate {
     public InfoRecord record = null;
     public Exception exception = null;
+    private CountDownLatch latch;
+
+    public LatchedInfoCollectionsDelegate(CountDownLatch latch) {
+      this.latch = latch;
+    }
 
     @Override
     public void handleSuccess(InfoRecord record) {
       this.record = record;
-      synchronized (this) {
-        this.notify();
-      }
+      latch.countDown();
     }
 
     @Override
     public void handleFailure(SyncStorageResponse response) {
       this.exception = new HTTPFailureException(response);
-      synchronized (this) {
-        this.notify();
-      }
+      latch.countDown();
     }
 
     @Override
     public void handleError(Exception e) {
       this.exception = e;
-      synchronized (this) {
-        this.notify();
-      }
+      latch.countDown();
     }
   }
 
@@ -127,23 +110,24 @@ public abstract class InfoRecord {
    * @return the info record.
    */
   public InfoRecord fetchBlocking() throws HTTPFailureException, Exception {
-    BlockingInfoCollectionsDelegate delegate = new BlockingInfoCollectionsDelegate();
+    CountDownLatch latch = new CountDownLatch(1);
+    LatchedInfoCollectionsDelegate delegate = new LatchedInfoCollectionsDelegate(latch);
     this.delegate = delegate;
-    synchronized (delegate) {
-      this.fetch(delegate);
-      try {
-        delegate.wait(DEFAULT_FETCH_TIMEOUT_MSEC);
-      } catch (InterruptedException inter) {
-        Logger.warn(LOG_TAG, "Interrupted fetching info record.");
-        throw inter;
-      }
+    this.fetch(delegate);
+
+    if (!latch.await(DEFAULT_FETCH_TIMEOUT_MSEC, TimeUnit.MILLISECONDS)) {
+      Logger.warn(LOG_TAG, "Interrupted fetching info record.");
+      throw new InterruptedException("info fetch timed out.");
     }
+
     if (delegate.record != null) {
       return delegate.record;
     }
+
     if (delegate.exception != null) {
       throw delegate.exception;
     }
+
     throw new Exception("Unknown error.");
   }
 }
