@@ -19,9 +19,16 @@ import org.mozilla.gecko.sync.Utils;
  */
 public class TestInfoCollections {
   public static final String TEST_COLLECTIONS_JSON =
-      "{\"history\":1.3319567131E9,\"bookmarks\":1.33195669592E9," +
-      "\"prefs\":1.33115408641E9,\"crypto\":1.32046063664E9,\"meta\":1.321E9," +
-      "\"forms\":1.33136685374E9,\"clients\":1.3313667619E9,\"tabs\":1.35E9}";
+      "{\"history\":1.3319567131E9, "    +
+      " \"bookmarks\":1.33195669592E9, " +
+      " \"prefs\":1.33115408641E9, "     +
+      " \"crypto\":1.32046063664E9, "    +
+      " \"meta\":1.321E9, "              +
+      " \"forms\":1.33136685374E9, "     +
+      " \"clients\":1.3313667619E9, "    +
+      " \"tabs\":1.35E9"                 +
+      "}";
+
 
   public static final String TEST_COUNTS_JSON =
       "{\"passwords\": 390, " +
