@@ -468,6 +468,14 @@ public class SyncConfiguration implements CredentialsSource {
     return clusterURL + GlobalSession.API_VERSION + "/" + username + "/info/";
   }
 
+  public String infoCollectionsURL() {
+    return infoBaseURL() + "collections";
+  }
+
+  public String infoCollectionCountsURL() {
+    return infoBaseURL() + "collection_counts";
+  }
+
   public String metaURL() {
     return clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage/meta/global";
   }

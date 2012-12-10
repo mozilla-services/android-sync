@@ -107,8 +107,7 @@ public class TestFreshStart {
 
     // Verify that meta and crypto are the only entries in info/collections.
     ExtendedJSONObject o = TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, session.config.infoBaseURL()).jsonObject();
-    InfoCollections infoCollections = new InfoCollections(null, null);
-    infoCollections.processResponse(o);
+    InfoCollections infoCollections = new InfoCollections(o);
     assertNotNull(infoCollections.getTimestamp("meta"));
     assertNotNull(infoCollections.getTimestamp("crypto"));
     assertEquals(2, o.object.entrySet().size());

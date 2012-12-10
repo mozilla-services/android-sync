@@ -50,7 +50,6 @@ public class TestEnsureCrypto5KeysStage {
 
   private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
-  private InfoCollections infoCollections;
   private KeyBundle syncKeyBundle;
   private MockGlobalSessionCallback callback;
   private GlobalSession session;
@@ -60,11 +59,6 @@ public class TestEnsureCrypto5KeysStage {
 
   @Before
   public void setUp() throws Exception {
-
-    // Set info collections to not have crypto.
-    infoCollections = new InfoCollections(null, null);
-    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NO_CRYPTO));
-
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
     callback = new MockGlobalSessionCallback();
     session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
@@ -93,29 +87,35 @@ public class TestEnsureCrypto5KeysStage {
       }
     };
     session.config.setClusterURL(new URI(TEST_CLUSTER_URL));
-    session.config.infoCollections = infoCollections;
+
+    // Set info collections to not have crypto.
+    final ExtendedJSONObject noCrypto = ExtendedJSONObject.parseJSONObject(TEST_JSON_NO_CRYPTO);
+    session.config.infoCollections = new InfoCollections(noCrypto);
     calledResetStages = false;
     stagesReset = null;
   }
 
   public void doSession(MockServer server) {
     data.startHTTPServer(server);
-    WaitHelper.getTestWaiter().performWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          session.start();
-        } catch (AlreadySyncingException e) {
-          WaitHelper.getTestWaiter().performNotify(e);
+    try {
+      WaitHelper.getTestWaiter().performWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            session.start();
+          } catch (AlreadySyncingException e) {
+            WaitHelper.getTestWaiter().performNotify(e);
+          }
         }
-      }
-    });
+      });
+    } finally {
     data.stopHTTPServer();
+    }
   }
 
   @Test
   public void testDownloadUsesPersisted() throws Exception {
-    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_OLD_CRYPTO));
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_OLD_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);
@@ -138,7 +138,7 @@ public class TestEnsureCrypto5KeysStage {
 
   @Test
   public void testDownloadFetchesNew() throws Exception {
-    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);
@@ -174,7 +174,7 @@ public class TestEnsureCrypto5KeysStage {
   public void testDownloadResetsOnDifferentDefaultKey() throws Exception {
     String TEST_COLLECTION = "bookmarks";
 
-    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     KeyBundle keyBundle = KeyBundle.withRandomKeys();
@@ -214,7 +214,7 @@ public class TestEnsureCrypto5KeysStage {
   public void testDownloadResetsEngineOnDifferentKey() throws Exception {
     final String TEST_COLLECTION = "history";
 
-    infoCollections.processResponse(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);

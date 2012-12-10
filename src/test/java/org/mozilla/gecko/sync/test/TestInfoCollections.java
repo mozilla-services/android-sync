@@ -43,22 +43,21 @@ public class TestInfoCollections {
   @SuppressWarnings("static-method")
   @Test
   public void testSetCountsFromRecord() throws Exception {
-    InfoCounts infoCounts = new InfoCounts(null, null);
-    assertEquals(null, infoCounts.getCount("bookmarks"));
+    InfoCounts infoCountsEmpty = new InfoCounts(new ExtendedJSONObject("{}"));
+    assertEquals(null, infoCountsEmpty.getCount("bookmarks"));
 
     ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COUNTS_JSON);
-    infoCounts.processResponse(record);
-    assertEquals(Integer.valueOf(766), infoCounts.getCount("bookmarks"));
-    assertEquals(null, infoCounts.getCount("notpresent"));
+    InfoCounts infoCountsFull = new InfoCounts(record);
+    assertEquals(Integer.valueOf(766), infoCountsFull.getCount("bookmarks"));
+    assertEquals(null, infoCountsFull.getCount("notpresent"));
   }
 
 
   @SuppressWarnings("static-method")
   @Test
   public void testSetCollectionsFromRecord() throws Exception {
-    InfoCollections infoCollections = new InfoCollections(null, null);
     ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COLLECTIONS_JSON);
-    infoCollections.processResponse(record);
+    InfoCollections infoCollections = new InfoCollections(record);
 
     assertEquals(Utils.decimalSecondsToMilliseconds(1.3319567131E9), infoCollections.getTimestamp("history").longValue());
     assertEquals(Utils.decimalSecondsToMilliseconds(1.321E9), infoCollections.getTimestamp("meta").longValue());
@@ -69,9 +68,8 @@ public class TestInfoCollections {
   @SuppressWarnings("static-method")
   @Test
   public void testUpdateNeeded() throws Exception {
-    InfoCollections infoCollections = new InfoCollections(null, null);
     ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COLLECTIONS_JSON);
-    infoCollections.processResponse(record);
+    InfoCollections infoCollections = new InfoCollections(record);
 
     long none = -1;
     long past = Utils.decimalSecondsToMilliseconds(1.3E9);
