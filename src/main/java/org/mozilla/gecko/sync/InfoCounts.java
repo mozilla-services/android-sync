@@ -20,7 +20,6 @@ public class InfoCounts {
 
   @SuppressWarnings("unchecked")
   public InfoCounts(final ExtendedJSONObject record) {
-    // super(infoURL + "collection_counts", credentials);
     Logger.debug(LOG_TAG, "info/collection_counts is " + record.toJSONString());
     HashMap<String, Integer> map = new HashMap<String, Integer>();
 

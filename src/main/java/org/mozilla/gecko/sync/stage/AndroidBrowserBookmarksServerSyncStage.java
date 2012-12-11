@@ -7,7 +7,7 @@ package org.mozilla.gecko.sync.stage;
 import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.InfoFetcher;
+import org.mozilla.gecko.sync.JSONRecordFetcher;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
@@ -48,7 +48,7 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
   protected Repository getRemoteRepository() throws URISyntaxException {
     // If this is a first sync, we need to check server counts to make sure that we aren't
     // going to screw up. SafeConstrainedServer11Repository does this. See Bug 814331.
-    final InfoFetcher countsFetcher = new InfoFetcher(session.config.infoCollectionCountsURL(), session.credentials());
+    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(session.config.infoCollectionCountsURL(), session.credentials());
     return new SafeConstrainedServer11Repository(session.config.getClusterURLString(),
                                                  session.config.username,
                                                  getCollection(),

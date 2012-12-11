@@ -11,7 +11,7 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
  * A fairly generic delegate to handle fetches of single JSON object blobs, as
  * provided by <code>info/collections</code> and <code>info/collection_counts</code>.
  */
-public interface InfoFetchDelegate {
+public interface JSONRecordFetchDelegate {
   public void handleSuccess(ExtendedJSONObject body);
   public void handleFailure(SyncStorageResponse response);
   public void handleError(Exception e);

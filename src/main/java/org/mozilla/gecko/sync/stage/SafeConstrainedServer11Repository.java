@@ -8,7 +8,7 @@ import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.InfoCounts;
-import org.mozilla.gecko.sync.InfoFetcher;
+import org.mozilla.gecko.sync.JSONRecordFetcher;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.repositories.ConstrainedServer11Repository;
 import org.mozilla.gecko.sync.repositories.Repository;
@@ -30,7 +30,7 @@ import android.content.Context;
 public class SafeConstrainedServer11Repository extends ConstrainedServer11Repository {
 
   // This can be lazily evaluated if we need it.
-  private InfoFetcher countFetcher;
+  private JSONRecordFetcher countFetcher;
 
   public SafeConstrainedServer11Repository(String serverURI,
                                            String username,
@@ -38,7 +38,7 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
                                            CredentialsSource credentialsSource,
                                            long limit,
                                            String sort,
-                                           InfoFetcher countFetcher)
+                                           JSONRecordFetcher countFetcher)
     throws URISyntaxException {
     super(serverURI, username, collection, credentialsSource, limit, sort);
     this.countFetcher = countFetcher;
