@@ -4,6 +4,12 @@
 USERNAME=$(whoami)
 PREPROCESSOR="python tools/Preprocessor.py"
 
+# Use default package-name.txt if none exists.
+if [ ! -f "package-name.txt" ]
+then
+  cp package-name.txt.default package-name.txt
+fi
+
 ANDROID_PACKAGE_NAME=$($PREPROCESSOR -Fsubstitution -DUSERNAME=$USERNAME package-name.txt)
 
 # For standalone use.
