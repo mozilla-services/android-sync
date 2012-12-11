@@ -9,7 +9,7 @@ import java.net.URISyntaxException;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
-import org.mozilla.gecko.sync.delegates.InfoFetchDelegate;
+import org.mozilla.gecko.sync.delegates.JSONRecordFetchDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
@@ -17,7 +17,7 @@ public class FetchInfoCollectionsStage extends AbstractNonRepositorySyncStage {
     super(session);
   }
 
-  public class StageInfoCollectionsDelegate implements InfoFetchDelegate {
+  public class StageInfoCollectionsDelegate implements JSONRecordFetchDelegate {
 
     @Override
     public void handleSuccess(ExtendedJSONObject global) {

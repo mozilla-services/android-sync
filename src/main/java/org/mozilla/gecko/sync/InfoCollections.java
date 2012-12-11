@@ -28,7 +28,6 @@ public class InfoCollections {
 
   @SuppressWarnings("unchecked")
   public InfoCollections(final ExtendedJSONObject record) {
-    //super(infoURL + "collections", credentials);
     Logger.debug(LOG_TAG, "info/collections is " + record.toJSONString());
     HashMap<String, Long> map = new HashMap<String, Long>();
 

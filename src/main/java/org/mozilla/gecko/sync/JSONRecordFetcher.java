@@ -3,7 +3,7 @@ package org.mozilla.gecko.sync;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.mozilla.gecko.sync.delegates.InfoFetchDelegate;
+import org.mozilla.gecko.sync.delegates.JSONRecordFetchDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -12,15 +12,15 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
  * An object which fetches a chunk of JSON from a URI, using certain credentials,
  * and informs its delegate of the result.
  */
-public class InfoFetcher {
-  private static final long DEFAULT_FETCH_TIMEOUT_MSEC = 2 * 60 * 1000;   // Two minutes.
-  private static final String LOG_TAG = "InfoFetcher";
+public class JSONRecordFetcher {
+  private static final long DEFAULT_AWAIT_TIMEOUT_MSEC = 2 * 60 * 1000;   // Two minutes.
+  private static final String LOG_TAG = "JSONRecordFetcher";
 
   protected final String credentials;
   protected final String uri;
-  protected InfoFetchDelegate delegate;
+  protected JSONRecordFetchDelegate delegate;
 
-  public InfoFetcher(final String uri, final String credentials) {
+  public JSONRecordFetcher(final String uri, final String credentials) {
     this.uri = uri;
     this.credentials = credentials;
   }
@@ -29,7 +29,7 @@ public class InfoFetcher {
     return this.uri;
   }
 
-  private class InfoFetchHandler implements SyncStorageRequestDelegate {
+  private class JSONFetchHandler implements SyncStorageRequestDelegate {
 
     // SyncStorageRequestDelegate methods for fetching.
     public String credentials() {
@@ -63,23 +63,23 @@ public class InfoFetcher {
     }
   }
 
-  public void fetch(final InfoFetchDelegate delegate) {
+  public void fetch(final JSONRecordFetchDelegate delegate) {
     this.delegate = delegate;
     try {
       final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.getURI());
-      r.delegate = new InfoFetchHandler();
+      r.delegate = new JSONFetchHandler();
       r.get();
     } catch (Exception e) {
       delegate.handleError(e);
     }
   }
 
-  private class LatchedInfoCollectionsDelegate implements InfoFetchDelegate {
+  private class LatchedJSONRecordFetchDelegate implements JSONRecordFetchDelegate {
     public ExtendedJSONObject body = null;
     public Exception exception = null;
     private CountDownLatch latch;
 
-    public LatchedInfoCollectionsDelegate(CountDownLatch latch) {
+    public LatchedJSONRecordFetchDelegate(CountDownLatch latch) {
       this.latch = latch;
     }
 
@@ -108,11 +108,14 @@ public class InfoFetcher {
    */
   public ExtendedJSONObject fetchBlocking() throws HTTPFailureException, Exception {
     CountDownLatch latch = new CountDownLatch(1);
-    LatchedInfoCollectionsDelegate delegate = new LatchedInfoCollectionsDelegate(latch);
+    LatchedJSONRecordFetchDelegate delegate = new LatchedJSONRecordFetchDelegate(latch);
     this.delegate = delegate;
     this.fetch(delegate);
 
-    if (!latch.await(DEFAULT_FETCH_TIMEOUT_MSEC, TimeUnit.MILLISECONDS)) {
+    // Sanity wait: the resource itself will time out and throw after two
+    // minutes, so we just want to avoid coding errors causing us to block
+    // endlessly.
+    if (!latch.await(DEFAULT_AWAIT_TIMEOUT_MSEC, TimeUnit.MILLISECONDS)) {
       Logger.warn(LOG_TAG, "Interrupted fetching info record.");
       throw new InterruptedException("info fetch timed out.");
     }

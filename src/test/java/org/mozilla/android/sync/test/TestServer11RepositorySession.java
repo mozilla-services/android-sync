@@ -20,7 +20,7 @@ import org.mozilla.android.sync.test.helpers.MockRecord;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CredentialsSource;
-import org.mozilla.gecko.sync.InfoFetcher;
+import org.mozilla.gecko.sync.JSONRecordFetcher;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
@@ -213,7 +213,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
         this.handle(request, response, 400, "NOOOO");
       }
     };
-    final InfoFetcher countsFetcher = new InfoFetcher(LOCAL_COUNTS_URL, this.credentials());
+    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(LOCAL_COUNTS_URL, this.credentials());
     final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);

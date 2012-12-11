@@ -24,7 +24,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
-import org.mozilla.gecko.sync.delegates.InfoFetchDelegate;
+import org.mozilla.gecko.sync.delegates.JSONRecordFetchDelegate;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
@@ -567,8 +567,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     }
   }
 
-  public void fetchInfoCollections(InfoFetchDelegate callback) throws URISyntaxException {
-    final InfoFetcher fetcher = new InfoFetcher(config.infoCollectionsURL(), credentials());
+  public void fetchInfoCollections(JSONRecordFetchDelegate callback) throws URISyntaxException {
+    final JSONRecordFetcher fetcher = new JSONRecordFetcher(config.infoCollectionsURL(), credentials());
     fetcher.fetch(callback);
   }
 
