@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -76,9 +75,7 @@ public class TestFetchMetaGlobalStage {
   private boolean calledResetAllStages = false;
 
   @Before
-  public void setUp()
-      throws IllegalStateException, NonObjectJSONException, IOException,
-      ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException, URISyntaxException {
+  public void setUp() throws Exception {
     calledRequiresUpgrade = false;
     calledProcessMissingMetaGlobal = false;
     calledFreshStart = false;
@@ -87,8 +84,7 @@ public class TestFetchMetaGlobalStage {
     calledResetAllStages = false;
 
     // Set info collections to not have crypto.
-    infoCollections = new InfoCollections(null, null);
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_INFO_COLLECTIONS_JSON));
+    infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_INFO_COLLECTIONS_JSON));
 
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
     callback = new MockGlobalSessionCallback();
@@ -173,7 +169,7 @@ public class TestFetchMetaGlobalStage {
   public void testFetchRequiresUpgrade() throws Exception {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setSyncID(TEST_SYNC_ID);
-    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION + 1));
+    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION + 1));
 
     MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
     doSession(server);
@@ -194,7 +190,7 @@ public class TestFetchMetaGlobalStage {
 
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setSyncID(TEST_SYNC_ID);
-    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
+    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
     MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
     doSession(server);
@@ -219,7 +215,7 @@ public class TestFetchMetaGlobalStage {
 
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setSyncID(TEST_SYNC_ID);
-    mg.setStorageVersion(new Long(TEST_STORAGE_VERSION));
+    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
     MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
     doSession(server);

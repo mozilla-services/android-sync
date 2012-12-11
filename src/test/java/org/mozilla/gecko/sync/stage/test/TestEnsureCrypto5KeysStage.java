@@ -8,15 +8,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
@@ -30,10 +27,6 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
-import org.mozilla.gecko.sync.NoCollectionKeysSetException;
-import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfigurationException;
-import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.stage.EnsureCrypto5KeysStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
@@ -57,7 +50,6 @@ public class TestEnsureCrypto5KeysStage {
 
   private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
-  private InfoCollections infoCollections;
   private KeyBundle syncKeyBundle;
   private MockGlobalSessionCallback callback;
   private GlobalSession session;
@@ -66,14 +58,7 @@ public class TestEnsureCrypto5KeysStage {
   private Collection<String> stagesReset;
 
   @Before
-  public void setUp()
-      throws IllegalStateException, NonObjectJSONException, IOException,
-      ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException, URISyntaxException {
-
-    // Set info collections to not have crypto.
-    infoCollections = new InfoCollections(null, null);
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NO_CRYPTO));
-
+  public void setUp() throws Exception {
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
     callback = new MockGlobalSessionCallback();
     session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
@@ -102,29 +87,35 @@ public class TestEnsureCrypto5KeysStage {
       }
     };
     session.config.setClusterURL(new URI(TEST_CLUSTER_URL));
-    session.config.infoCollections = infoCollections;
+
+    // Set info collections to not have crypto.
+    final ExtendedJSONObject noCrypto = ExtendedJSONObject.parseJSONObject(TEST_JSON_NO_CRYPTO);
+    session.config.infoCollections = new InfoCollections(noCrypto);
     calledResetStages = false;
     stagesReset = null;
   }
 
   public void doSession(MockServer server) {
     data.startHTTPServer(server);
-    WaitHelper.getTestWaiter().performWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          session.start();
-        } catch (AlreadySyncingException e) {
-          WaitHelper.getTestWaiter().performNotify(e);
+    try {
+      WaitHelper.getTestWaiter().performWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            session.start();
+          } catch (AlreadySyncingException e) {
+            WaitHelper.getTestWaiter().performNotify(e);
+          }
         }
-      }
-    });
+      });
+    } finally {
     data.stopHTTPServer();
+    }
   }
 
   @Test
-  public void testDownloadUsesPersisted() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_OLD_CRYPTO));
+  public void testDownloadUsesPersisted() throws Exception {
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_OLD_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);
@@ -146,10 +137,8 @@ public class TestEnsureCrypto5KeysStage {
   }
 
   @Test
-  public void testDownloadFetchesNew()
-      throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException,
-      IOException, ParseException, CryptoException, URISyntaxException, NoCollectionKeysSetException {
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+  public void testDownloadFetchesNew() throws Exception {
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);
@@ -182,12 +171,10 @@ public class TestEnsureCrypto5KeysStage {
    * all but that one collection.
    */
   @Test
-  public void testDownloadResetsOnDifferentDefaultKey()
-      throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException,
-      IOException, ParseException, CryptoException, URISyntaxException, NoCollectionKeysSetException {
+  public void testDownloadResetsOnDifferentDefaultKey() throws Exception {
     String TEST_COLLECTION = "bookmarks";
 
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     KeyBundle keyBundle = KeyBundle.withRandomKeys();
@@ -224,12 +211,10 @@ public class TestEnsureCrypto5KeysStage {
   }
 
   @Test
-  public void testDownloadResetsEngineOnDifferentKey()
-      throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException,
-      IOException, ParseException, CryptoException, URISyntaxException, NoCollectionKeysSetException {
+  public void testDownloadResetsEngineOnDifferentKey() throws Exception {
     final String TEST_COLLECTION = "history";
 
-    infoCollections.setFromRecord(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
+    session.config.infoCollections = new InfoCollections(ExtendedJSONObject.parseJSONObject(TEST_JSON_NEW_CRYPTO));
     session.config.persistedCryptoKeys().persistLastModified(System.currentTimeMillis());
 
     assertNull(session.config.collectionKeys);

@@ -8,28 +8,56 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.InfoCollections;
-import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfigurationException;
+import org.mozilla.gecko.sync.InfoCounts;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.crypto.CryptoException;
 
+/**
+ * Test both info/collections and info/collection_counts.
+ */
 public class TestInfoCollections {
-  public static final String TEST_JSON =
-      "{\"history\":1.3319567131E9,\"bookmarks\":1.33195669592E9," +
-      "\"prefs\":1.33115408641E9,\"crypto\":1.32046063664E9,\"meta\":1.321E9," +
-      "\"forms\":1.33136685374E9,\"clients\":1.3313667619E9,\"tabs\":1.35E9}";
+  public static final String TEST_COLLECTIONS_JSON =
+      "{\"history\":1.3319567131E9, "    +
+      " \"bookmarks\":1.33195669592E9, " +
+      " \"prefs\":1.33115408641E9, "     +
+      " \"crypto\":1.32046063664E9, "    +
+      " \"meta\":1.321E9, "              +
+      " \"forms\":1.33136685374E9, "     +
+      " \"clients\":1.3313667619E9, "    +
+      " \"tabs\":1.35E9"                 +
+      "}";
 
+
+  public static final String TEST_COUNTS_JSON =
+      "{\"passwords\": 390, " +
+      " \"clients\": 2, "     +
+      " \"crypto\": 1, "      +
+      " \"forms\": 1019, "    +
+      " \"bookmarks\": 766, " +
+      " \"prefs\": 1, "       +
+      " \"history\": 9278"    +
+      "}";
+
+  @SuppressWarnings("static-method")
   @Test
-  public void testSetFromRecord() throws NonObjectJSONException, IOException, ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException {
-    InfoCollections infoCollections = new InfoCollections(null, null);
-    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_JSON);
-    infoCollections.setFromRecord(record);
+  public void testSetCountsFromRecord() throws Exception {
+    InfoCounts infoCountsEmpty = new InfoCounts(new ExtendedJSONObject("{}"));
+    assertEquals(null, infoCountsEmpty.getCount("bookmarks"));
+
+    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COUNTS_JSON);
+    InfoCounts infoCountsFull = new InfoCounts(record);
+    assertEquals(Integer.valueOf(766), infoCountsFull.getCount("bookmarks"));
+    assertEquals(null, infoCountsFull.getCount("notpresent"));
+  }
+
+
+  @SuppressWarnings("static-method")
+  @Test
+  public void testSetCollectionsFromRecord() throws Exception {
+    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COLLECTIONS_JSON);
+    InfoCollections infoCollections = new InfoCollections(record);
 
     assertEquals(Utils.decimalSecondsToMilliseconds(1.3319567131E9), infoCollections.getTimestamp("history").longValue());
     assertEquals(Utils.decimalSecondsToMilliseconds(1.321E9), infoCollections.getTimestamp("meta").longValue());
@@ -37,11 +65,11 @@ public class TestInfoCollections {
     assertNull(infoCollections.getTimestamp("missing"));
   }
 
+  @SuppressWarnings("static-method")
   @Test
-  public void testUpdateNeeded() throws NonObjectJSONException, IOException, ParseException, CryptoException, SyncConfigurationException, IllegalArgumentException {
-    InfoCollections infoCollections = new InfoCollections(null, null);
-    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_JSON);
-    infoCollections.setFromRecord(record);
+  public void testUpdateNeeded() throws Exception {
+    ExtendedJSONObject record = ExtendedJSONObject.parseJSONObject(TEST_COLLECTIONS_JSON);
+    InfoCollections infoCollections = new InfoCollections(record);
 
     long none = -1;
     long past = Utils.decimalSecondsToMilliseconds(1.3E9);
