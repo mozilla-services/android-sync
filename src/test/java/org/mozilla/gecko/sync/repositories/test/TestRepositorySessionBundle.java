@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.gecko.sync.repositories.test;
 
 import static org.junit.Assert.*;
@@ -8,7 +11,7 @@ import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 public class TestRepositorySessionBundle {
   @Test
   public void testSetGetTimestamp() {
-    RepositorySessionBundle bundle = new RepositorySessionBundle();
+    RepositorySessionBundle bundle = new RepositorySessionBundle(-1);
     assertEquals(-1, bundle.getTimestamp());
 
     bundle.setTimestamp(10);
