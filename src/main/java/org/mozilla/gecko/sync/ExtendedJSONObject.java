@@ -5,8 +5,6 @@
 package org.mozilla.gecko.sync;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Map;
@@ -28,35 +26,38 @@ public class ExtendedJSONObject {
 
   public JSONObject object;
 
-  private static Object processParseOutput(Object parseOutput) {
-    if (parseOutput instanceof JSONObject) {
-      return new ExtendedJSONObject((JSONObject) parseOutput);
-    } else {
-      return parseOutput;
-    }
-  }
-
-  public static Object parse(String string) throws IOException, ParseException {
-    return processParseOutput(new JSONParser().parse(string));
-  }
-
-  public static Object parse(InputStreamReader reader) throws IOException, ParseException {
-    return processParseOutput(new JSONParser().parse(reader));
-
-  }
-
-  public static Object parse(InputStream stream) throws IOException, ParseException {
-    InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
-    return ExtendedJSONObject.parse(reader);
-  }
-
   /**
-   * Helper method to get a JSON array from a string.
+   * Helper method to get a JSON array from a stream.
    *
    * @param jsonString input.
    * @throws ParseException
    * @throws IOException
-   * @throws NonObjectJSONException if the object is valid JSON, but not an array.
+   * @throws NonArrayJSONException if the object is valid JSON, but not an array.
+   */
+  public static JSONArray parseJSONArray(Reader in)
+      throws IOException, ParseException, NonArrayJSONException {
+    Object o = new JSONParser().parse(in);
+
+    if (o == null) {
+      return null;
+    }
+
+    if (o instanceof JSONArray) {
+      return (JSONArray) o;
+    }
+
+    throw new NonArrayJSONException(o);
+  }
+
+  /**
+   * Helper method to get a JSON array from a string.
+   * <p>
+   * You should prefer the stream interface {@link #parseJSONArray(Reader)}.
+   *
+   * @param jsonString input.
+   * @throws ParseException
+   * @throws IOException
+   * @throws NonArrayJSONException if the object is valid JSON, but not an array.
    */
   public static JSONArray parseJSONArray(String jsonString)
       throws IOException, ParseException, NonArrayJSONException {
@@ -74,7 +75,22 @@ public class ExtendedJSONObject {
   }
 
   /**
+   * Helper method to get a JSON object from a stream.
+   *
+   * @param jsonString input.
+   * @throws ParseException
+   * @throws IOException
+   * @throws NonArrayJSONException if the object is valid JSON, but not an object.
+   */
+  public static ExtendedJSONObject parseJSONObject(Reader in)
+      throws IOException, ParseException, NonObjectJSONException {
+    return new ExtendedJSONObject(in);
+  }
+
+  /**
    * Helper method to get a JSON object from a string.
+   * <p>
+   * You should prefer the stream interface {@link #parseJSONObject(Reader)}.
    *
    * @param jsonString input.
    * @throws ParseException
@@ -107,19 +123,22 @@ public class ExtendedJSONObject {
     this.object = o;
   }
 
-  public ExtendedJSONObject(String jsonString) throws IOException, ParseException, NonObjectJSONException {
-    if (jsonString == null) {
+  public ExtendedJSONObject(Reader in) throws IOException, ParseException, NonObjectJSONException {
+    if (in == null) {
       this.object = new JSONObject();
       return;
     }
 
-    Reader in = new StringReader(jsonString);
     Object obj = new JSONParser().parse(in);
     if (obj instanceof JSONObject) {
       this.object = ((JSONObject) obj);
     } else {
       throw new NonObjectJSONException(obj);
     }
+  }
+
+  public ExtendedJSONObject(String jsonString) throws IOException, ParseException, NonObjectJSONException {
+    this(jsonString == null ? null : new StringReader(jsonString));
   }
 
   // Passthrough methods.
