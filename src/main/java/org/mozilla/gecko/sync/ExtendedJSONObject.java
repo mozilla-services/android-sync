@@ -231,24 +231,6 @@ public class ExtendedJSONObject {
     return new ExtendedJSONObject((JSONObject) this.object.clone());
   }
 
-  /**
-   * Helper method for extracting a JSONObject from its string encoding within
-   * another JSONObject.
-   *
-   * Input: JSONObject and key. Output: JSONObject extracted. Throws: Exception
-   * if JSON is invalid.
-   *
-   * @throws NonObjectJSONException
-   * @throws ParseException
-   * @throws IOException
-   */
-  public ExtendedJSONObject getJSONObject(String key) throws IOException,
-                                                     ParseException,
-                                                     NonObjectJSONException {
-    String val = (String) this.object.get(key);
-    return ExtendedJSONObject.parseJSONObject(val);
-  }
-
   @SuppressWarnings("unchecked")
   public Iterable<Entry<String, Object>> entryIterable() {
     return this.object.entrySet();

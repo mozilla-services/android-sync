@@ -140,7 +140,10 @@ public class CryptoRecord extends Record {
       throws IOException, ParseException, NonObjectJSONException {
     String id                  = (String) jsonRecord.get(KEY_ID);
     String collection          = (String) jsonRecord.get(KEY_COLLECTION);
-    ExtendedJSONObject payload = jsonRecord.getJSONObject(KEY_PAYLOAD);
+    String jsonEncodedPayload  = (String) jsonRecord.get(KEY_PAYLOAD);
+
+    ExtendedJSONObject payload = ExtendedJSONObject.parseJSONObject(jsonEncodedPayload);
+
     CryptoRecord record = new CryptoRecord(payload);
     record.guid         = id;
     record.collection   = collection;
