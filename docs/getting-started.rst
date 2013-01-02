@@ -19,9 +19,11 @@ Fennec.  The Authenticator (and, indeed, the sync) run in the
 *org.mozilla.gecko* Android package.  The trade off is that you cannot
 easily test deep integration with Fennec itself.
 
-**This configuration is best for new developers and for Android
-Services specific work, but can require a deep understanding of how
-Android Services, Fennec, and the Android system interact.**
+.. hint ::
+
+  This configuration is best for new developers and for Android
+  Services specific work, but can require a deep understanding of how
+  Android Services, Fennec, and the Android system interact.
 
 Own-package configuration
 =========================
@@ -34,10 +36,12 @@ Each development iteration, the developer updates the code integrated
 into Fennec and then redeploys Fennec as a whole.  This alternative
 configuration is the traditional configuration.
 
-**This configuration is best for existing Fennec developers and for
-Android Services work that needs to integrate closely with Fennec, and
-can also require a deep understanding of how Android Services, Fennec,
-and the Android system interact.**
+.. hint ::
+
+  This configuration is best for existing Fennec developers and for
+  Android Services work that needs to integrate closely with Fennec,
+  and can also require a deep understanding of how Android Services,
+  Fennec, and the Android system interact.
 
 Getting started with a re-packaged configuration
 ================================================
@@ -57,7 +61,7 @@ You'll need your Android device connected and enabled for development,
 or an ARMv6 emulator running ::
 
   archo:temp ncalexan$ cd android-sync/
-  archo:android-sync ncalexan$ ./tools/fennec_installer.py -v
+  archo:android-sync ncalexan$ ./tools/fennec_installer.py -v dil
   Downloading https://ftp.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-android/gecko-unsigned-unaligned.apk...
   Downloading https://ftp.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-android/gecko-unsigned-unaligned.apk... done.
   Downloaded /var/folders/70/w4jt0cv5141cw8c6nxmzydkc0000gn/T/tmpJxhrZh.
@@ -87,3 +91,29 @@ Finally, build and run the Android Services test suite: ::
   Using MOZ_ANDROID_SHARED_ACCOUNT_TYPE org.mozilla.fennec_sync_test.
   [INFO] Scanning for projects...
   ...
+
+Configuring your development environment
+========================================
+
+Android Services code that is shipped as part of Firefox for Mobile
+must be Mozilla Public License 2.0 licensed.  Code that is not shipped
+(for example, test code, command line scripts, and utilities) is
+usually explicitly stated as being in the public domain.
+
+The top-level scripts *./check_headers.sh* and
+*./check_head_headers.sh* check, respectively, that all source and
+test files, and uncommitted source and test files, correct headers.
+(Internally they both use *./tools/check_headers.py*.)
+
+The top-level script *./pre-commit.sh* is a git pre-commit hook that
+will stop you committing files with incorrect headers.  To install it,
+run ::
+
+  archo:android-sync ncalexan$ ln ./pre-commit.sh .git/hooks/pre-commit
+
+.. note:
+
+  If the pre-commit hook is failing, check that .git/hooks/pre-commit
+  exists and is executable.
+
+To ignore this pre-commit hook, use *git commit --no-verify*.
