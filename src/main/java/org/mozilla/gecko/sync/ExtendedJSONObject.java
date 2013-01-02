@@ -27,6 +27,43 @@ public class ExtendedJSONObject {
   public JSONObject object;
 
   /**
+   * Return a <code>JSONParser</code> instance for immediate use.
+   * <p>
+   * <code>JSONParser</code> is not thread-safe, so we return a new instance
+   * each call. This is extremely inefficient in execution time and especially
+   * memory use -- each instance allocates a 16kb temporary buffer -- and we
+   * hope to improve matters eventually.
+   */
+  protected static JSONParser getJSONParser() {
+    return new JSONParser();
+  }
+
+  /**
+   * Parse a JSON encoded string.
+   *
+   * @param input JSON encoded input string to parse; not necessarily a JSON object.
+   * @return a regular Java <code>Object</code>.
+   * @throws ParseException
+   * @throws IOException
+   */
+  protected static Object parseRaw(Reader in) throws ParseException, IOException {
+    return getJSONParser().parse(in);
+  }
+
+  /**
+   * Parse a JSON encoded string.
+   * <p>
+   * You should prefer the streaming interface {@link #parseRaw(Reader)}.
+   *
+   * @param input JSON encoded input string to parse; not necessarily a JSON object.
+   * @return a regular Java <code>Object</code>.
+   * @throws ParseException
+   */
+  protected static Object parseRaw(String input) throws ParseException {
+    return getJSONParser().parse(input);
+  }
+
+  /**
    * Helper method to get a JSON array from a stream.
    *
    * @param jsonString input.
@@ -36,7 +73,7 @@ public class ExtendedJSONObject {
    */
   public static JSONArray parseJSONArray(Reader in)
       throws IOException, ParseException, NonArrayJSONException {
-    Object o = new JSONParser().parse(in);
+    Object o = parseRaw(in);
 
     if (o == null) {
       return null;
@@ -61,7 +98,7 @@ public class ExtendedJSONObject {
    */
   public static JSONArray parseJSONArray(String jsonString)
       throws IOException, ParseException, NonArrayJSONException {
-    Object o = new JSONParser().parse(jsonString);
+    Object o = parseRaw(jsonString);
 
     if (o == null) {
       return null;
@@ -129,7 +166,7 @@ public class ExtendedJSONObject {
       return;
     }
 
-    Object obj = new JSONParser().parse(in);
+    Object obj = parseRaw(in);
     if (obj instanceof JSONObject) {
       this.object = ((JSONObject) obj);
     } else {
