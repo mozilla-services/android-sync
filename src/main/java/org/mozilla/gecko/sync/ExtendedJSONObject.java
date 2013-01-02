@@ -246,10 +246,6 @@ public class ExtendedJSONObject {
     throw new NonObjectJSONException(o);
   }
 
-  public ExtendedJSONObject clone() {
-    return new ExtendedJSONObject((JSONObject) this.object.clone());
-  }
-
   @SuppressWarnings("unchecked")
   public Iterable<Entry<String, Object>> entryIterable() {
     return this.object.entrySet();
