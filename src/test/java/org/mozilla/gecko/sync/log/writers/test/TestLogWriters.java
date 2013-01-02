@@ -7,12 +7,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.log.writers.LevelFilteringLogWriter;
 import org.mozilla.gecko.sync.log.writers.LogWriter;
 import org.mozilla.gecko.sync.log.writers.PrintLogWriter;
@@ -145,6 +147,16 @@ public class TestLogWriters {
 
       String s = stringLogWriter.toString();
       String[] lines = s.split("\n");
+
+      // We are getting intermittent failures due to additional logging, so I'm
+      // going to dump logs to help trace this down.
+      if (lines.length != 5) {
+        String logLines = Utils.toDelimitedString("\n", Arrays.asList(lines));
+
+        // This will fail.
+        assertEquals("\0", logLines);
+      }
+
       assertEquals(5, lines.length);
       assertEquals("PARENT :: I :: parent tag before :: parent message before", lines[0]);
       assertEquals("PARENT :: I :: parent tag after :: parent message after", lines[4]);
