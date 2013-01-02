@@ -27,7 +27,10 @@ import urllib2
 
 from fennec_repackager import FennecRepackager
 
-DEFAULT_URL = "https://ftp.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-android/gecko-unsigned-unaligned.apk"
+ARM_URL = "https://ftp.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-android/gecko-unsigned-unaligned.apk"
+X86_URL = "https://ftp.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-android-x86/gecko-unsigned-unaligned.apk"
+DEFAULT_URL = ARM_URL
+
 ADB = "adb"
 
 ACTIVITY_PACKAGE = "org.mozilla.fennec"
@@ -78,12 +81,25 @@ class FennecInstaller:
 
 if __name__ == '__main__':
     # parse command line arguments
-    parser = argparse.ArgumentParser(description="Download and install Nightly Fennec Native builds for Android Services developers.")
-    parser.add_argument("-v", dest="verbose", action="store_true", default=False, help="verbose output")
-    parser.add_argument("-u", "--url", default=DEFAULT_URL, help="URL of unsigned and unaligned APK to download and install.")
+    parser = argparse.ArgumentParser(description="Download, install, and launch Nightly Fennec Native builds.")
+    parser.add_argument("-v", dest="verbose", action="store_true", default=True, help="verbose output")
+    parser.add_argument("-q", dest="verbose", action="store_false", help="quiet output")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-u", "--url", dest="url", default=DEFAULT_URL, help="URL of unsigned and unaligned APK to download.")
+    group.add_argument("--arm", dest="url", action="store_const", const=ARM_URL, help="Download ARM APK.")
+    group.add_argument("--x86", dest="url", action="store_const", const=X86_URL, help="Download x86 APK.")
+
     parser.add_argument("-o", "--output", default="gecko.apk", help="Signed and aligned APK filename.")
     parser.add_argument("--package", dest="activity_package", default=ACTIVITY_PACKAGE, help="Android package containing Activity to launch.")
     parser.add_argument("--class", dest="activity_class", default=ACTIVITY_CLASS, help="Java class name of Activity to launch.")
+
+    subparsers = parser.add_subparsers(dest="action")
+    parser_all      = subparsers.add_parser("dil", help="download, install, and launch.")
+    parser_download = subparsers.add_parser("d", help="download.")
+    parser_install  = subparsers.add_parser("i", help="install.")
+    parser_launch   = subparsers.add_parser("l", help="launch.")
+
     cmdargs = parser.parse_args(sys.argv[1:])
 
     logger = logging.getLogger('fennec_repackager')
@@ -98,9 +114,14 @@ if __name__ == '__main__':
         installer = FennecInstaller(cmdargs.url, logger=logger)
         frp = FennecRepackager(temp_file.name, logger=logger)
 
-        installer.download(temp_file.name)
+        if 'd' in cmdargs.action:
+            installer.download(temp_file.name)
+            frp.repackage(cmdargs.output)
 
-        frp.repackage(cmdargs.output)
+        if 'i' in cmdargs.action:
+            installer.install(cmdargs.output)
 
-        installer.install(cmdargs.output)
-        installer.launch(cmdargs.activity_package, cmdargs.activity_class)
+        if 'l' in cmdargs.action:
+            # Future: `aapt dump badging gecko.apk` will tell us the
+            # "package" and "launchable-activity".
+            installer.launch(cmdargs.activity_package, cmdargs.activity_class)
