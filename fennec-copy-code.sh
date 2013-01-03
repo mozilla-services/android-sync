@@ -81,10 +81,10 @@ echo "# $WARNING" >> $MKFILE
 echo "SYNC_JAVA_FILES := $(echo $SOURCEFILES | xargs)" >> $MKFILE
 echo "SYNC_PP_JAVA_FILES := $(echo $PREPROCESS_FILES | xargs)" >> $MKFILE
 echo "SYNC_THIRDPARTY_JAVA_FILES := $(echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE := $(find res/drawable       -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_LDPI := $(find res/drawable-ldpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE      := $(find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_LDPI := $(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
 echo "SYNC_RES_LAYOUT := $(find res/layout -name '*.xml' | xargs)"  >> $MKFILE
 echo "SYNC_RES_VALUES := res/values/sync_styles.xml" >> $MKFILE
 echo "SYNC_RES_VALUES_LARGE_V11 := res/values-large-v11/sync_styles.xml" >> $MKFILE
@@ -129,10 +129,10 @@ rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dt
 echo "res/values/sync_styles.xml " > $SERVICES/android-values-resources.mn
 echo "res/values-large-v11/sync_styles.xml " > $SERVICES/android-values-resources.mn
 find res/layout         -name '*.xml' > $SERVICES/android-layout-resources.mn
-find res/drawable       -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-resources.mn
-find res/drawable-ldpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-ldpi-resources.mn
-find res/drawable-mdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-mdpi-resources.mn
-find res/drawable-hdpi  -not -name 'icon.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-hdpi-resources.mn
+find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-resources.mn
+find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-ldpi-resources.mn
+find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-mdpi-resources.mn
+find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-hdpi-resources.mn
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.
