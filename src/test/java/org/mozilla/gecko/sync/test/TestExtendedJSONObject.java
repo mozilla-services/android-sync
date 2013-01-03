@@ -1,23 +1,32 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.android.sync.net.test;
+package org.mozilla.gecko.sync.test;
 
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 
-public class TestJSONParsing {
-
+public class TestExtendedJSONObject {
   public static String exampleJSON = "{\"modified\":1233702554.25,\"success\":[\"{GXS58IDC}12\",\"{GXS58IDC}13\",\"{GXS58IDC}15\",\"{GXS58IDC}16\",\"{GXS58IDC}18\",\"{GXS58IDC}19\"],\"failed\":{\"{GXS58IDC}11\":[\"invalid parentid\"],\"{GXS58IDC}14\":[\"invalid parentid\"],\"{GXS58IDC}17\":[\"invalid parentid\"],\"{GXS58IDC}20\":[\"invalid parentid\"]}}";
   public static String exampleIntegral = "{\"modified\":1233702554,}";
 
-  @SuppressWarnings("static-method")
   @Test
   public void testFractional() throws IOException, ParseException, NonObjectJSONException {
     ExtendedJSONObject o = new ExtendedJSONObject(exampleJSON);
@@ -33,7 +42,6 @@ public class TestJSONParsing {
     assertEquals(null, o.getTimestamp("foo"));
   }
 
-  @SuppressWarnings("static-method")
   @Test
   public void testIntegral() throws IOException, ParseException, NonObjectJSONException {
     ExtendedJSONObject o = new ExtendedJSONObject(exampleIntegral);
@@ -45,17 +53,6 @@ public class TestJSONParsing {
     assertEquals(null, o.getTimestamp("foo"));
   }
 
-  @SuppressWarnings("unused")
-  private static void ensureNumberFormatException(ExtendedJSONObject o, String key) {
-    try {
-      o.getIntegerSafely(key);
-      fail("Should not succeed.");
-    } catch (Exception e) {
-      assertTrue(e instanceof NumberFormatException);
-    }
-  }
-
-  @SuppressWarnings("static-method")
   @Test
   public void testSafeInteger() {
     ExtendedJSONObject o = new ExtendedJSONObject();
@@ -68,5 +65,58 @@ public class TestJSONParsing {
     assertEquals(Integer.valueOf(5),  o.getIntegerSafely("integer"));
     assertEquals(Integer.valueOf(66), o.getIntegerSafely("string"));
     assertNull(o.getIntegerSafely(null));
+  }
+
+  @Test
+  public void testParseJSONArray() throws Exception {
+    JSONArray result = ExtendedJSONObject.parseJSONArray("[0, 1, {\"test\": 2}]");
+    assertNotNull(result);
+
+    assertThat((Long) result.get(0), is(equalTo(0L)));
+    assertThat((Long) result.get(1), is(equalTo(1L)));
+    assertThat((Long) ((JSONObject) result.get(2)).get("test"), is(equalTo(2L)));
+  }
+
+  @Test
+  public void testBadParseJSONArray() throws Exception {
+    try {
+      ExtendedJSONObject.parseJSONArray("[0, ");
+      fail();
+    } catch (ParseException e) {
+      // Do nothing.
+    }
+
+    try {
+      ExtendedJSONObject.parseJSONArray("{}");
+      fail();
+    } catch (NonArrayJSONException e) {
+      // Do nothing.
+    }
+  }
+
+  @Test
+  public void testParseUTF8AsJSONObject() throws Exception {
+    String TEST = "{\"key\":\"value\"}";
+
+    ExtendedJSONObject o = ExtendedJSONObject.parseUTF8AsJSONObject(TEST.getBytes("UTF-8"));
+    assertNotNull(o);
+    assertEquals("value", o.getString("key"));
+  }
+
+  @Test
+  public void testBadParseUTF8AsJSONObject() throws Exception {
+    try {
+      ExtendedJSONObject.parseUTF8AsJSONObject("{}".getBytes("UTF-16"));
+      fail();
+    } catch (ParseException e) {
+      // Do nothing.
+    }
+
+    try {
+      ExtendedJSONObject.parseUTF8AsJSONObject("{".getBytes("UTF-8"));
+      fail();
+    } catch (ParseException e) {
+      // Do nothing.
+    }
   }
 }
