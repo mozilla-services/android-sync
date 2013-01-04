@@ -192,10 +192,15 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   /**
    * Return true if the provided record GUID should be skipped
    * in child lists or fetch results.
+   *
+   * @param recordGUID the GUID of the record to check.
+   * @return true if the record should be skipped.
    */
-  public static boolean forbiddenGUID(String recordGUID) {
+  public static boolean forbiddenGUID(final String recordGUID) {
     return recordGUID == null ||
-           BrowserContract.Bookmarks.READING_LIST_FOLDER_GUID.equals(recordGUID) ||   // Temporary: Bug 762118
+           // Temporarily exclude reading list items (Bug 762118; re-enable in Bug 762109.)
+           BrowserContract.Bookmarks.READING_LIST_FOLDER_GUID.equals(recordGUID) ||
+           BrowserContract.Bookmarks.PINNED_FOLDER_GUID.equals(recordGUID) ||
            BrowserContract.Bookmarks.PLACES_FOLDER_GUID.equals(recordGUID) ||
            BrowserContract.Bookmarks.TAGS_FOLDER_GUID.equals(recordGUID);
   }
