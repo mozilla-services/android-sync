@@ -18,6 +18,7 @@ import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessFinishDelegate;
 import org.mozilla.android.sync.test.helpers.simple.SimpleSuccessStoreDelegate;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -48,31 +49,63 @@ public class BookmarksTest extends AndroidSyncTestCase {
   protected static final String LOG_TAG = "BookmarksTest";
 
   /**
-   * Trivial test that reading list records will be ignored if processed.
+   * Trivial test that forbidden records (reading list prior to Bug 762109, pinned items…)
+   * will be ignored if processed.
    */
-  public void testReadingListIsIgnored() {
+  public void testForbiddenItemsAreIgnored() {
     final AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
     final long now = System.currentTimeMillis();
-    final BookmarkRecord yes = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now - 1, false);
-    final BookmarkRecord no  = new BookmarkRecord("baaaaaaaaaaa", "bookmarks", now - 2, false);
-    final BookmarkRecord rl  = new BookmarkRecord("readinglist",  "bookmarks", now - 3, false);
+    final String bookmarksCollection = "bookmarks";
 
-    yes.type = no.type = "bookmark";
-    rl.type = "folder";
+    final BookmarkRecord toRead = new BookmarkRecord("daaaaaaaaaaa", "bookmarks", now - 1, false);
+    final BookmarkRecord pinned = new BookmarkRecord("pinpinpinpin", "bookmarks", now - 1, false);
+    final BookmarkRecord normal = new BookmarkRecord("baaaaaaaaaaa", "bookmarks", now - 2, false);
 
-    yes.parentID = "readinglist";
-    no.parentID  = "toolbar";
-    rl.parentID  = "places";
+    final BookmarkRecord readingList  = new BookmarkRecord(Bookmarks.READING_LIST_FOLDER_GUID,
+                                                           bookmarksCollection, now - 3, false);
+    final BookmarkRecord pinnedItems  = new BookmarkRecord(Bookmarks.PINNED_FOLDER_GUID,
+                                                           bookmarksCollection, now - 4, false);
+
+    toRead.type = normal.type = pinned.type = "bookmark";
+    readingList.type = "folder";
+    pinnedItems.type = "folder";
+
+    toRead.parentID = Bookmarks.READING_LIST_FOLDER_GUID;
+    pinned.parentID = Bookmarks.PINNED_FOLDER_GUID;
+    normal.parentID = Bookmarks.TOOLBAR_FOLDER_GUID;
+
+    readingList.parentID = Bookmarks.PLACES_FOLDER_GUID;
+    pinnedItems.parentID = Bookmarks.PLACES_FOLDER_GUID;
 
     inBegunSession(repo, new SimpleSuccessBeginDelegate() {
       @Override
       public void onBeginSucceeded(RepositorySession session) {
-        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(yes));
-        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(rl));
-        assertFalse(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(no));
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(toRead));
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(pinned));
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(readingList));
+        assertTrue(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(pinnedItems));
+        assertFalse(((AndroidBrowserBookmarksRepositorySession) session).shouldIgnore(normal));
         finishAndNotify(session);
       }
     });
+  }
+
+  /**
+   * Trivial test that pinned items will be skipped if present in the DB.
+   */
+  public void testPinnedItemsAreNotRetrieved() {
+    final AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
+
+    // Ensure that it exists.
+    setUpFennecPinnedItemsRecord();
+
+    // It's there in the DB…
+    final ArrayList<String> roots = fetchChildrenDirect(Bookmarks.FIXED_ROOT_ID);
+    Logger.info(LOG_TAG, "Roots: " + roots);
+    assertTrue(roots.contains(Bookmarks.PINNED_FOLDER_GUID));
+
+    // … but not when we fetch.
+    assertFalse(fetchGUIDs(repo).contains(Bookmarks.PINNED_FOLDER_GUID));
   }
 
   /**
@@ -87,10 +120,10 @@ public class BookmarksTest extends AndroidSyncTestCase {
     // It's there in the DB…
     final ArrayList<String> roots = fetchChildrenDirect(BrowserContract.Bookmarks.FIXED_ROOT_ID);
     Logger.info(LOG_TAG, "Roots: " + roots);
-    assertTrue(roots.contains("readinglist"));
+    assertTrue(roots.contains(Bookmarks.READING_LIST_FOLDER_GUID));
 
     // … but not when we fetch.
-    assertFalse(fetchGUIDs(repo).contains("readinglist"));
+    assertFalse(fetchGUIDs(repo).contains(Bookmarks.READING_LIST_FOLDER_GUID));
   }
 
   public void testRetrieveFolderHasAccurateChildren() {
@@ -798,12 +831,25 @@ public class BookmarksTest extends AndroidSyncTestCase {
     return values;
   }
 
+  protected ContentValues fennecPinnedItemsRecord() {
+    final ContentValues values = specialFolder();
+    final String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_pinned);
+
+    values.put(BrowserContract.SyncColumns.GUID, Bookmarks.PINNED_FOLDER_GUID);
+    values.put(Bookmarks._ID, Bookmarks.FIXED_PINNED_LIST_ID);
+    values.put(Bookmarks.PARENT, Bookmarks.FIXED_ROOT_ID);
+    values.put(Bookmarks.TITLE, title);
+    return values;
+  }
+
   protected ContentValues fennecReadingListRecord() {
-    ContentValues values = specialFolder();
+    final ContentValues values = specialFolder();
+    final String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_reading_list);
+
     values.put(BrowserContract.SyncColumns.GUID, "readinglist");
-    String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_reading_list);
-    values.put(BrowserContract.Bookmarks.TITLE, title);
-    values.put(BrowserContract.Bookmarks.PARENT, BrowserContract.Bookmarks.FIXED_ROOT_ID);
+    values.put(Bookmarks._ID, Bookmarks.FIXED_READING_LIST_ID);
+    values.put(Bookmarks.PARENT, Bookmarks.FIXED_ROOT_ID);
+    values.put(Bookmarks.TITLE, title);
     return values;
   }
 
@@ -822,6 +868,10 @@ public class BookmarksTest extends AndroidSyncTestCase {
     values.put(BrowserContract.Bookmarks.TITLE, title);
     updateRow(values);
     return fennecGetMobileBookmarksFolderId(cr);
+  }
+
+  protected void setUpFennecPinnedItemsRecord() {
+    insertRow(fennecPinnedItemsRecord());
   }
 
   protected void setUpFennecReadingListRecord() {
