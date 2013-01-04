@@ -205,6 +205,22 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
            BrowserContract.Bookmarks.TAGS_FOLDER_GUID.equals(recordGUID);
   }
 
+  /**
+   * Return true if the provided parent GUID's children should
+   * be skipped in child lists or fetch results.
+   * This differs from {@link #forbiddenGUID(String)} in that we're skipping
+   * part of the hierarchy.
+   *
+   * @param parentGUID the GUID of parent of the record to check.
+   * @return true if the record should be skipped.
+   */
+  public static boolean forbiddenParent(final String parentGUID) {
+    return parentGUID == null ||
+           // Temporarily exclude reading list items (Bug 762118; re-enable in Bug 762109.)
+           BrowserContract.Bookmarks.READING_LIST_FOLDER_GUID.equals(parentGUID) ||
+           BrowserContract.Bookmarks.PINNED_FOLDER_GUID.equals(parentGUID);
+  }
+
   public AndroidBrowserBookmarksRepositorySession(Repository repository, Context context) {
     super(repository);
 
@@ -513,6 +529,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     if (record.deleted) {
       return false;
     }
+
     BookmarkRecord bmk = (BookmarkRecord) record;
 
     if (forbiddenGUID(bmk.guid)) {
@@ -520,8 +537,8 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
       return true;
     }
 
-    if ("readinglist".equals(bmk.parentID)) {      // Temporary: Bug 762118
-      Logger.debug(LOG_TAG,  "Ignoring reading list item with guid: " + bmk.guid);
+    if (forbiddenParent(bmk.parentID)) {
+      Logger.debug(LOG_TAG,  "Ignoring child " + bmk.guid + " of forbidden parent folder " + bmk.parentID);
       return true;
     }
 
