@@ -12,12 +12,10 @@ import java.util.ArrayList;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
@@ -185,13 +183,13 @@ public class TestRecord {
 
   @SuppressWarnings("static-method")
   @Test
-  public void testTabParsing() throws ParseException, NonArrayJSONException {
+  public void testTabParsing() throws Exception {
     String json = "{\"title\":\"mozilla-central mozilla/browser/base/content/syncSetup.js\"," +
                   " \"urlHistory\":[\"http://mxr.mozilla.org/mozilla-central/source/browser/base/content/syncSetup.js#72\"]," +
                   " \"icon\":\"http://mxr.mozilla.org/mxr.png\"," +
                   " \"lastUsed\":\"1306374531\"}";
-    JSONParser p = new JSONParser();
-    Tab tab = Tab.fromJSONObject((JSONObject) p.parse(json));
+    Tab tab = Tab.fromJSONObject(ExtendedJSONObject.parseJSONObject(json).object);
+
     assertEquals("mozilla-central mozilla/browser/base/content/syncSetup.js", tab.title);
     assertEquals("http://mxr.mozilla.org/mxr.png", tab.icon);
     assertEquals("http://mxr.mozilla.org/mozilla-central/source/browser/base/content/syncSetup.js#72", tab.history.get(0));
@@ -201,7 +199,8 @@ public class TestRecord {
         " \"urlHistory\":[\"http://example.com\"]," +
         " \"icon\":\"\"," +
         " \"lastUsed\":0}";
-    Tab zero = Tab.fromJSONObject((JSONObject) p.parse(zeroJSON));
+    Tab zero = Tab.fromJSONObject(ExtendedJSONObject.parseJSONObject(zeroJSON).object);
+
     assertEquals("a", zero.title);
     assertEquals("", zero.icon);
     assertEquals("http://example.com", zero.history.get(0));
