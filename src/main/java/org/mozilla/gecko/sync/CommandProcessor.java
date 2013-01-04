@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,11 +40,12 @@ import android.net.Uri;
  * long-lived singleton.
  */
 public class CommandProcessor {
-  private static final String LOG_TAG = "Command";
+  private static final String LOG_TAG = CommandProcessor.class.getSimpleName();
+
   private static AtomicInteger currentId = new AtomicInteger();
   protected ConcurrentHashMap<String, CommandRunner> commands = new ConcurrentHashMap<String, CommandRunner>();
 
-  private final static CommandProcessor processor = new CommandProcessor();
+  private static CommandProcessor processor = null;
 
   /**
    * Get the global singleton command processor.
@@ -51,7 +53,62 @@ public class CommandProcessor {
    * @return the singleton processor.
    */
   public static CommandProcessor getProcessor() {
+    if (processor != null) {
+      return processor;
+    }
+
+    processor = new CommandProcessor();
+    registerCommands(processor);
+
     return processor;
+  }
+
+  /**
+   * Register commands a Sync global session knows how to process.
+   * <p>
+   * Re-registering a command overwrites any existing registration.
+   */
+  protected static void registerCommands(CommandProcessor processor) {
+    Logger.info(LOG_TAG, "Registering commands.");
+
+    processor.registerCommand("resetEngine", new CommandRunner(1) {
+      @Override
+      public void executeCommand(final GlobalSession session, List<String> args) {
+        HashSet<String> names = new HashSet<String>();
+        names.add(args.get(0));
+        session.resetStagesByName(names);
+      }
+    });
+
+    processor.registerCommand("resetAll", new CommandRunner(0) {
+      @Override
+      public void executeCommand(final GlobalSession session, List<String> args) {
+        session.resetAllStages();
+      }
+    });
+
+    processor.registerCommand("wipeEngine", new CommandRunner(1) {
+      @Override
+      public void executeCommand(final GlobalSession session, List<String> args) {
+        HashSet<String> names = new HashSet<String>();
+        names.add(args.get(0));
+        session.wipeStagesByName(names);
+      }
+    });
+
+    processor.registerCommand("wipeAll", new CommandRunner(0) {
+      @Override
+      public void executeCommand(final GlobalSession session, List<String> args) {
+        session.wipeAllStages();
+      }
+    });
+
+    processor.registerCommand("displayURI", new CommandRunner(3) {
+      @Override
+      public void executeCommand(final GlobalSession session, List<String> args) {
+        CommandProcessor.displayURI(args, session.getContext());
+      }
+    });
   }
 
   public static class Command {
@@ -203,7 +260,7 @@ public class CommandProcessor {
     // Don't send a command with the wrong number of arguments.
     if (!commandData.argumentsAreValid(command.getArgsList())) {
       Logger.error(LOG_TAG, "Expected " + commandData.argCount + " args for '" +
-                   command + "', but got " + command.args);
+          command + "', but got " + command.args);
       return;
     }
 

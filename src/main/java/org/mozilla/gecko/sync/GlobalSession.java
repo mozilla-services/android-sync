@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -161,61 +159,12 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     config.password      = password;
     config.syncKeyBundle = syncKeyBundle;
 
-    registerCommands();
     prepareStages();
 
     Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
     config.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
 
     // TODO: data-driven plan for the sync, referring to prepareStages.
-  }
-
-  /**
-   * Register commands this global session knows how to process.
-   * <p>
-   * Re-registering a command overwrites any existing registration.
-   */
-  protected static void registerCommands() {
-    final CommandProcessor processor = CommandProcessor.getProcessor();
-
-    processor.registerCommand("resetEngine", new CommandRunner(1) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        HashSet<String> names = new HashSet<String>();
-        names.add(args.get(0));
-        session.resetStagesByName(names);
-      }
-    });
-
-    processor.registerCommand("resetAll", new CommandRunner(0) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        session.resetAllStages();
-      }
-    });
-
-    processor.registerCommand("wipeEngine", new CommandRunner(1) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        HashSet<String> names = new HashSet<String>();
-        names.add(args.get(0));
-        session.wipeStagesByName(names);
-      }
-    });
-
-    processor.registerCommand("wipeAll", new CommandRunner(0) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        session.wipeAllStages();
-      }
-    });
-
-    processor.registerCommand("displayURI", new CommandRunner(3) {
-      @Override
-      public void executeCommand(final GlobalSession session, List<String> args) {
-        CommandProcessor.displayURI(args, session.getContext());
-      }
-    });
   }
 
   protected void prepareStages() {
