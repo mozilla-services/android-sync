@@ -64,7 +64,11 @@ public class TestBasicFetch {
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
       BaseResource.consumeEntity(response);
-      WaitHelper.getTestWaiter().performNotify(new RuntimeException());
+      try {
+        WaitHelper.getTestWaiter().performNotify(new RuntimeException(response.body()));
+      } catch (Exception e) {
+        WaitHelper.getTestWaiter().performNotify(e);
+      }
     }
 
     @Override

@@ -52,13 +52,9 @@ import android.content.Context;
  * @author rnewman
  *
  */
-public abstract class ServerSyncStage implements
-    GlobalSyncStage,
-    SynchronizerDelegate {
+public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage implements SynchronizerDelegate {
 
   protected static final String LOG_TAG = "ServerSyncStage";
-
-  protected final GlobalSession session;
 
   protected long stageStartTimestamp = -1;
   protected long stageCompleteTimestamp = -1;
@@ -204,14 +200,14 @@ public abstract class ServerSyncStage implements
    */
   @Override
   public void resetLocal() {
-    resetLocal(null);
+    resetLocalWithSyncID(null);
   }
 
   /**
    * Reset timestamps and possibly set syncID.
    * @param syncID if non-null, new syncID to persist.
    */
-  protected void resetLocal(String syncID) {
+  protected void resetLocalWithSyncID(String syncID) {
     // Clear both timestamps.
     SynchronizerConfiguration config;
     try {
@@ -439,7 +435,9 @@ public abstract class ServerSyncStage implements
    * <p>
    * Logs and re-throws an exception on failure.
    */
-  public void wipeServer() throws Exception {
+  public void wipeServer(final GlobalSession session) throws Exception {
+    this.session = session;
+
     final WipeWaiter monitor = new WipeWaiter();
 
     final Runnable doWipe = new Runnable() {
@@ -499,7 +497,7 @@ public abstract class ServerSyncStage implements
       try {
         session.recordForMetaGlobalUpdate(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
         Logger.info(LOG_TAG, "Wiping server because malformed engine sync ID was found in meta/global.");
-        wipeServer();
+        wipeServer(session);
         Logger.info(LOG_TAG, "Wiped server after malformed engine sync ID found in meta/global.");
       } catch (Exception ex) {
         session.abort(ex, "Failed to wipe server after malformed engine sync ID found in meta/global.");
@@ -509,7 +507,7 @@ public abstract class ServerSyncStage implements
       try {
         session.recordForMetaGlobalUpdate(name, new EngineSettings(Utils.generateGuid(), this.getStorageVersion()));
         Logger.info(LOG_TAG, "Wiping server because malformed engine version was found in meta/global.");
-        wipeServer();
+        wipeServer(session);
         Logger.info(LOG_TAG, "Wiped server after malformed engine version found in meta/global.");
       } catch (Exception ex) {
         session.abort(ex, "Failed to wipe server after malformed engine version found in meta/global.");
@@ -518,7 +516,7 @@ public abstract class ServerSyncStage implements
       // Our syncID is wrong. Reset client and take the server syncID.
       Logger.warn(LOG_TAG, "Remote engine syncID different from local engine syncID:" +
                            " resetting local engine and assuming remote engine syncID.");
-      this.resetLocal(e.serverSyncID);
+      this.resetLocalWithSyncID(e.serverSyncID);
     } catch (MetaGlobalException.MetaGlobalEngineStateChangedException e) {
       boolean isEnabled = e.isEnabled;
       if (!isEnabled) {
@@ -529,12 +527,12 @@ public abstract class ServerSyncStage implements
         String newSyncID = Utils.generateGuid();
         session.recordForMetaGlobalUpdate(name, new EngineSettings(newSyncID, this.getStorageVersion()));
         // Update SynchronizerConfiguration w/ new engine syncID.
-        this.resetLocal(newSyncID);
+        this.resetLocalWithSyncID(newSyncID);
       }
       try {
         // Engine sync status has changed. Wipe server.
         Logger.warn(LOG_TAG, "Wiping server because engine sync state changed.");
-        wipeServer();
+        wipeServer(session);
         Logger.warn(LOG_TAG, "Wiped server because engine sync state changed.");
       } catch (Exception ex) {
         session.abort(ex, "Failed to wipe server after engine sync state changed");

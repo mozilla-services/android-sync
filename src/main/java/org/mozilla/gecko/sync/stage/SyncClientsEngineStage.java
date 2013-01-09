@@ -40,7 +40,7 @@ import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 
 import ch.boye.httpclientandroidlib.HttpStatus;
 
-public class SyncClientsEngineStage implements GlobalSyncStage {
+public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
   private static final String LOG_TAG = "SyncClientsEngineStage";
 
   public static final String COLLECTION_NAME       = "clients";
@@ -48,7 +48,6 @@ public class SyncClientsEngineStage implements GlobalSyncStage {
   public static final int CLIENTS_TTL_REFRESH      = 604800000;   // 7 days in milliseconds.
   public static final int MAX_UPLOAD_FAILURE_COUNT = 5;
 
-  protected final GlobalSession session;
   protected final ClientRecordFactory factory = new ClientRecordFactory();
   protected ClientUploadDelegate clientUploadDelegate;
   protected ClientDownloadDelegate clientDownloadDelegate;

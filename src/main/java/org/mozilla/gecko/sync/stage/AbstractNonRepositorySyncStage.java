@@ -9,9 +9,7 @@ import org.mozilla.gecko.sync.GlobalSession;
 /**
  * This is simply a stage that is not responsible for synchronizing repositories.
  */
-public abstract class AbstractNonRepositorySyncStage implements GlobalSyncStage {
-  protected final GlobalSession session;
-
+public abstract class AbstractNonRepositorySyncStage extends AbstractSessionManagingSyncStage {
   public AbstractNonRepositorySyncStage(GlobalSession session) {
     this.session = session;
   }

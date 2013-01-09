@@ -17,6 +17,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
+import org.mozilla.gecko.sync.stage.AbstractNonRepositorySyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.ServerSyncStage;
@@ -67,25 +68,9 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     }
   }
 
-  public class MockStage implements GlobalSyncStage {
-    protected final GlobalSession session;
-
+  public class MockStage extends AbstractNonRepositorySyncStage {
     public MockStage(GlobalSession session) {
-      this.session = session;
-    }
-
-    @Override
-    public void resetLocal() {
-      // Do nothing.
-    }
-
-    @Override
-    public void wipeLocal() {
-      this.resetLocal();
-    }
-
-    public Integer getStorageVersion() {
-      return null;
+      super(session);
     }
 
     @Override

@@ -313,7 +313,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.currentState = next;
     Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
     try {
-      nextStage.execute();
+      nextStage.execute(this);
     } catch (Exception ex) {
       Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
       this.abort(ex, "Uncaught exception in stage.");
@@ -905,7 +905,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     for (GlobalSyncStage stage : stages) {
       try {
         Logger.info(LOG_TAG, "Wiping " + stage);
-        stage.wipeLocal();
+        stage.wipeLocal(this);
       } catch (Exception e) {
         Logger.error(LOG_TAG, "Ignoring wipe failure for stage " + stage, e);
       }
@@ -930,7 +930,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     for (GlobalSyncStage stage : stages) {
       try {
         Logger.info(LOG_TAG, "Resetting " + stage);
-        stage.resetLocal();
+        stage.resetLocal(this);
       } catch (Exception e) {
         Logger.error(LOG_TAG, "Ignoring reset failure for stage " + stage, e);
       }
