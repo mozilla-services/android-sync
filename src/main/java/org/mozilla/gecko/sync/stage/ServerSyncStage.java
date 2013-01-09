@@ -59,13 +59,6 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
   protected long stageStartTimestamp = -1;
   protected long stageCompleteTimestamp = -1;
 
-  public ServerSyncStage(GlobalSession session) {
-    if (session == null) {
-      throw new IllegalArgumentException("session must not be null.");
-    }
-    this.session = session;
-  }
-
   /**
    * Override these in your subclasses.
    *
@@ -199,7 +192,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
    * Reset timestamps.
    */
   @Override
-  public void resetLocal() {
+  protected void resetLocal() {
     resetLocalWithSyncID(null);
   }
 
@@ -248,7 +241,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
    * Logs and re-throws an exception on failure.
    */
   @Override
-  public void wipeLocal() throws Exception {
+  protected void wipeLocal() throws Exception {
     // Reset, then clear data.
     this.resetLocal();
 

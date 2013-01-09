@@ -100,14 +100,14 @@ public class TestResetCommands {
       }
     };
 
-    final MockServerSyncStage stageGetsReset = new MockServerSyncStage(session) {
+    final MockServerSyncStage stageGetsReset = new MockServerSyncStage() {
       @Override
       public void resetLocal() {
         yes.called = true;
       }
     };
 
-    final MockServerSyncStage stageNotReset = new MockServerSyncStage(session) {
+    final MockServerSyncStage stageNotReset = new MockServerSyncStage() {
       @Override
       public void resetLocal() {
         no.called = true;

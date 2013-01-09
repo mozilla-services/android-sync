@@ -17,7 +17,6 @@ import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandProcessor.Command;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
@@ -59,13 +58,6 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
   protected volatile boolean commandsProcessedShouldUpload;
   protected final AtomicInteger uploadAttemptsCount = new AtomicInteger();
   protected final List<ClientRecord> toUpload = new ArrayList<ClientRecord>();
-
-  public SyncClientsEngineStage(GlobalSession session) {
-    if (session == null) {
-      throw new IllegalArgumentException("session must not be null.");
-    }
-    this.session = session;
-  }
 
   protected int getClientsCount() {
     return getClientsDatabaseAccessor().clientsCount();
@@ -341,7 +333,7 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
   }
 
   @Override
-  public void resetLocal() {
+  protected void resetLocal() {
     // Clear timestamps and local data.
     session.config.persistServerClientRecordTimestamp(0L);   // TODO: roll these into one.
     session.config.persistServerClientsTimestamp(0L);
@@ -355,7 +347,7 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
   }
 
   @Override
-  public void wipeLocal() throws Exception {
+  protected void wipeLocal() throws Exception {
     // Nothing more to do.
     this.resetLocal();
   }

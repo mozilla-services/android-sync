@@ -94,7 +94,7 @@ public class TestFetchMetaGlobalStage {
       protected void prepareStages() {
         super.prepareStages();
         Map<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.fetchMetaGlobal, new FetchMetaGlobalStage(this));
+        stages.put(Stage.fetchMetaGlobal, new FetchMetaGlobalStage());
         this.stages = stages;
       }
 

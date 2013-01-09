@@ -67,7 +67,7 @@ public class TestEnsureCrypto5KeysStage {
       protected void prepareStages() {
         super.prepareStages();
         Map<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureKeysStage, new EnsureCrypto5KeysStage(this));
+        stages.put(Stage.ensureKeysStage, new EnsureCrypto5KeysStage());
         this.stages = stages;
       }
 

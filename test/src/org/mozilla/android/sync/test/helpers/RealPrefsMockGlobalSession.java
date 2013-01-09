@@ -33,10 +33,6 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
   }
 
   public class MockServerSyncStage extends ServerSyncStage {
-    public MockServerSyncStage(GlobalSession session) {
-      super(session);
-    }
-
     @Override
     public boolean isEnabled() {
       return false;
@@ -69,10 +65,6 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
   }
 
   public class MockStage extends AbstractNonRepositorySyncStage {
-    public MockStage(GlobalSession session) {
-      super(session);
-    }
-
     @Override
     public void execute() {
       session.advance();
@@ -85,13 +77,13 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
 
     // Fake whatever stages we don't want to run.
-    stages.put(Stage.syncBookmarks,           new MockServerSyncStage(this));
-    stages.put(Stage.syncHistory,             new MockServerSyncStage(this));
-    stages.put(Stage.fetchInfoCollections,    new MockStage(this));
-    stages.put(Stage.fetchMetaGlobal,         new MockStage(this));
-    stages.put(Stage.ensureKeysStage,         new MockStage(this));
-    stages.put(Stage.ensureClusterURL,        new MockStage(this));
-    stages.put(Stage.syncClientsEngine,       new MockStage(this));
+    stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
+    stages.put(Stage.syncHistory,             new MockServerSyncStage());
+    stages.put(Stage.fetchInfoCollections,    new MockStage());
+    stages.put(Stage.fetchMetaGlobal,         new MockStage());
+    stages.put(Stage.ensureKeysStage,         new MockStage());
+    stages.put(Stage.ensureClusterURL,        new MockStage());
+    stages.put(Stage.syncClientsEngine,       new MockStage());
 
     this.stages = Collections.unmodifiableMap(stages);
   }

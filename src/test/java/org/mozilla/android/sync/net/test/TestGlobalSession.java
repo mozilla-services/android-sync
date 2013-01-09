@@ -121,10 +121,6 @@ public class TestGlobalSession {
     }
 
     public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
-      public MockBackoffFetchInfoCollectionsStage(GlobalSession session) {
-        super(session);
-      }
-
       @Override
       public void execute() {
         final HttpResponse response = new BasicHttpResponse(
@@ -139,7 +135,7 @@ public class TestGlobalSession {
     protected void prepareStages() {
       super.prepareStages();
       HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage(this));
+      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage());
       this.stages = Collections.unmodifiableMap(stages);
     }
   }
@@ -293,7 +289,7 @@ public class TestGlobalSession {
       }
     };
 
-    final MockServerSyncStage stage = new MockServerSyncStage(session) {
+    final MockServerSyncStage stage = new MockServerSyncStage() {
       @Override
       public void execute() {
         doRequest();

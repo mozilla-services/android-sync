@@ -47,7 +47,7 @@ public class TestClientsStage extends AndroidSyncTestCase {
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
         callback, context, null, delegate);
 
-    SyncClientsEngineStage stage = new SyncClientsEngineStage(session) {
+    SyncClientsEngineStage stage = new SyncClientsEngineStage() {
 
       @Override
       public synchronized ClientsDatabaseAccessor getClientsDatabaseAccessor() {
@@ -68,7 +68,7 @@ public class TestClientsStage extends AndroidSyncTestCase {
     dataAccessor.store(record);
     assertEquals(1, dataAccessor.clientsCount());
 
-    stage.wipeLocal();
+    stage.wipeLocal(session);
 
     try {
       assertEquals(0, dataAccessor.clientsCount());

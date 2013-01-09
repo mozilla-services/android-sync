@@ -3,13 +3,8 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.gecko.sync.GlobalSession;
 
 public class MockServerSyncStage extends BaseMockServerSyncStage {
-  public MockServerSyncStage(GlobalSession session) {
-    super(session);
-  }
-
   @Override
   public void execute() {
     session.advance();

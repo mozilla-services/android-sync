@@ -84,7 +84,7 @@ public class TestWipeServer {
     assertEquals(record.fieldValue, o.getString("value"));
 
     // Wipe server engine only.
-    ServerSyncStage stage = new FormHistoryServerSyncStage(session);
+    ServerSyncStage stage = new FormHistoryServerSyncStage();
     stage.wipeServer(session); // Synchronous!
 
     // Make sure record does not appear in collection guids.

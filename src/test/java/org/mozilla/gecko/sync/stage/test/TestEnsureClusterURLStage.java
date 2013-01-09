@@ -150,7 +150,7 @@ public class TestEnsureClusterURLStage {
       public void prepareStages() {
         super.prepareStages();
         HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
+        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
         this.stages = Collections.unmodifiableMap(stages);
       }
     };
@@ -194,7 +194,7 @@ public class TestEnsureClusterURLStage {
       public void prepareStages() {
         super.prepareStages();
         HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
+        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
         this.stages = Collections.unmodifiableMap(stages);
       }
     };
@@ -242,7 +242,7 @@ public class TestEnsureClusterURLStage {
       public void prepareStages() {
         super.prepareStages();
         HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
+        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
         this.stages = Collections.unmodifiableMap(stages);
       }
     };
@@ -293,7 +293,7 @@ public class TestEnsureClusterURLStage {
       public void prepareStages() {
         super.prepareStages();
         HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
+        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage());
         this.stages = Collections.unmodifiableMap(stages);
       }
     };
