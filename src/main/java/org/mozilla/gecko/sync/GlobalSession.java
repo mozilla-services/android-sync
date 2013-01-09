@@ -901,7 +901,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.wipeStagesByEnum(Stage.getNamedStages());
   }
 
-  public static void wipeStages(Collection<GlobalSyncStage> stages) {
+  public void wipeStages(Collection<GlobalSyncStage> stages) {
     for (GlobalSyncStage stage : stages) {
       try {
         Logger.info(LOG_TAG, "Wiping " + stage);
@@ -913,11 +913,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   public void wipeStagesByEnum(Collection<Stage> stages) {
-    GlobalSession.wipeStages(this.getSyncStagesByEnum(stages));
+    wipeStages(this.getSyncStagesByEnum(stages));
   }
 
   public void wipeStagesByName(Collection<String> names) {
-    GlobalSession.wipeStages(this.getSyncStagesByName(names));
+    wipeStages(this.getSyncStagesByName(names));
   }
 
   public void resetAllStages() {
@@ -926,7 +926,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     this.resetStagesByEnum(Stage.getNamedStages());
   }
 
-  public static void resetStages(Collection<GlobalSyncStage> stages) {
+  public void resetStages(Collection<GlobalSyncStage> stages) {
     for (GlobalSyncStage stage : stages) {
       try {
         Logger.info(LOG_TAG, "Resetting " + stage);
@@ -938,7 +938,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   public void resetStagesByEnum(Collection<Stage> stages) {
-    GlobalSession.resetStages(this.getSyncStagesByEnum(stages));
+    resetStages(this.getSyncStagesByEnum(stages));
   }
 
   public void resetStagesByName(Collection<String> names) {
