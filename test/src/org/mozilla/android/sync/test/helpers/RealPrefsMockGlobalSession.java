@@ -17,7 +17,6 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.repositories.RecordFactory;
 import org.mozilla.gecko.sync.repositories.Repository;
-import org.mozilla.gecko.sync.stage.AbstractNonRepositorySyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.ServerSyncStage;
@@ -64,13 +63,6 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     }
   }
 
-  public class MockStage extends AbstractNonRepositorySyncStage {
-    @Override
-    public void execute() {
-      session.advance();
-    }
-  }
-
   @Override
   protected void prepareStages() {
     super.prepareStages();
@@ -79,11 +71,11 @@ public class RealPrefsMockGlobalSession extends GlobalSession {
     // Fake whatever stages we don't want to run.
     stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
     stages.put(Stage.syncHistory,             new MockServerSyncStage());
-    stages.put(Stage.fetchInfoCollections,    new MockStage());
-    stages.put(Stage.fetchMetaGlobal,         new MockStage());
-    stages.put(Stage.ensureKeysStage,         new MockStage());
-    stages.put(Stage.ensureClusterURL,        new MockStage());
-    stages.put(Stage.syncClientsEngine,       new MockStage());
+    stages.put(Stage.fetchInfoCollections,    new MockAbstractNonRepositorySyncStage());
+    stages.put(Stage.fetchMetaGlobal,         new MockAbstractNonRepositorySyncStage());
+    stages.put(Stage.ensureKeysStage,         new MockAbstractNonRepositorySyncStage());
+    stages.put(Stage.ensureClusterURL,        new MockAbstractNonRepositorySyncStage());
+    stages.put(Stage.syncClientsEngine,       new MockAbstractNonRepositorySyncStage());
 
     this.stages = Collections.unmodifiableMap(stages);
   }

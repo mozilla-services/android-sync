@@ -26,6 +26,7 @@ import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockAbstractNonRepositorySyncStage;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
@@ -46,7 +47,6 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
-import org.mozilla.gecko.sync.stage.AbstractNonRepositorySyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
@@ -101,23 +101,6 @@ public class TestGlobalSession {
     assertTrue(s.getSyncStagesByName(empty).isEmpty());
     assertEquals(bookmarksAndTabsSyncStages, new HashSet<GlobalSyncStage>(s.getSyncStagesByName(bookmarksAndTabsNames)));
     assertEquals(bookmarksAndTabsSyncStages, new HashSet<GlobalSyncStage>(s.getSyncStagesByEnum(bookmarksAndTabsEnums)));
-  }
-
-  public static class MockBackoffStage extends AbstractNonRepositorySyncStage {
-    public final long backoffInSeconds;
-
-    public MockBackoffStage(long backoffInSeconds) {
-      this.backoffInSeconds = backoffInSeconds;
-    }
-
-    @Override
-    public void execute() {
-      final HttpResponse response = new BasicHttpResponse(
-        new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
-
-      response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
-      session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
-    }
   }
 
   /**
@@ -192,9 +175,18 @@ public class TestGlobalSession {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
 
       // Stage fakes a 503 and sets X-Weave-Backoff header to the given seconds.
-      final MockBackoffStage stage = new MockBackoffStage(TEST_BACKOFF_IN_SECONDS);
+      final GlobalSyncStage stage = new MockAbstractNonRepositorySyncStage() {
+        @Override
+        public void execute() {
+          final HttpResponse response = new BasicHttpResponse(
+            new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
 
-      // Session fakes a 503 on info/collections and sets backoff header.
+          response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
+          session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
+        }
+      };
+
+      // Session installs fake stage to fetch info/collections.
       final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
         @Override
