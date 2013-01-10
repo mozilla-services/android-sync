@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -188,15 +187,8 @@ public class TestGlobalSession {
 
       // Session installs fake stage to fetch info/collections.
       final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-        @Override
-        protected void prepareStages() {
-          super.prepareStages();
-          HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-          stages.put(Stage.fetchInfoCollections, stage);
-          this.stages = Collections.unmodifiableMap(stages);
-        }
-      };
+          new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
+      .withStage(Stage.fetchInfoCollections, stage);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
@@ -259,20 +251,6 @@ public class TestGlobalSession {
       }
     };
 
-    // Hang on to this externally so we can poke at the stage.
-    final HashMap<Stage, GlobalSyncStage> stagesToRun = new HashMap<Stage, GlobalSyncStage>();
-
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      protected void prepareStages() {
-        super.prepareStages();
-        stagesToRun.putAll(this.stages);
-        this.stages = stagesToRun;
-      }
-    };
-
     final MockServerSyncStage stage = new MockServerSyncStage() {
       @Override
       public void execute() {
@@ -285,7 +263,9 @@ public class TestGlobalSession {
       }
     };
 
-    stagesToRun.put(Stage.syncBookmarks, stage);
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback).withStage(Stage.syncBookmarks, stage);
 
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {

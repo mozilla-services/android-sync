@@ -9,8 +9,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.json.simple.parser.ParseException;
@@ -38,7 +36,6 @@ import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
-import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -93,9 +90,7 @@ public class TestFetchMetaGlobalStage {
       @Override
       protected void prepareStages() {
         super.prepareStages();
-        Map<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.fetchMetaGlobal, new FetchMetaGlobalStage());
-        this.stages = stages;
+        withStage(Stage.fetchMetaGlobal, new FetchMetaGlobalStage());
       }
 
       @Override

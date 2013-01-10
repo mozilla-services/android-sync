@@ -4,7 +4,6 @@
 package org.mozilla.android.sync.test.helpers;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
@@ -14,6 +13,7 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.stage.CompletedStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
@@ -34,18 +34,21 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
   @Override
   protected void prepareStages() {
     super.prepareStages();
-    HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
+    HashMap<Stage, GlobalSyncStage> newStages = new HashMap<Stage, GlobalSyncStage>(this.stages);
 
-    // Fake whatever stages we don't want to run.
-    stages.put(Stage.syncBookmarks,           new MockServerSyncStage());
-    stages.put(Stage.syncHistory,             new MockServerSyncStage());
-    stages.put(Stage.syncTabs,                new MockServerSyncStage());
-    stages.put(Stage.fetchInfoCollections,    new MockServerSyncStage());
-    stages.put(Stage.fetchMetaGlobal,         new MockServerSyncStage());
-    stages.put(Stage.ensureKeysStage,         new MockServerSyncStage());
-    stages.put(Stage.ensureClusterURL,        new MockServerSyncStage());
-    stages.put(Stage.syncClientsEngine,       new MockServerSyncStage());
+    for (Stage stage : this.stages.keySet()) {
+      newStages.put(stage, new MockServerSyncStage());
+    }
 
-    this.stages = Collections.unmodifiableMap(stages);
+    // This signals that the global session is complete.
+    newStages.put(Stage.completed, new CompletedStage());
+
+    this.stages = newStages;
+  }
+
+  public MockGlobalSession withStage(Stage stage, GlobalSyncStage syncStage) {
+    stages.put(stage, syncStage);
+
+    return this;
   }
 }
