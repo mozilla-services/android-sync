@@ -43,12 +43,11 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
+import org.mozilla.gecko.sync.stage.AbstractNonRepositorySyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
-import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
@@ -104,39 +103,20 @@ public class TestGlobalSession {
     assertEquals(bookmarksAndTabsSyncStages, new HashSet<GlobalSyncStage>(s.getSyncStagesByEnum(bookmarksAndTabsEnums)));
   }
 
-  /**
-   * A mock GlobalSession that fakes a 503 on info/collections and
-   * sets X-Weave-Backoff header to the specified number of seconds.
-   */
-  public class MockBackoffGlobalSession extends MockGlobalSession {
+  public static class MockBackoffStage extends AbstractNonRepositorySyncStage {
+    public final long backoffInSeconds;
 
-    public long backoffInSeconds = -1;
-
-    public MockBackoffGlobalSession(long backoffInSeconds,
-        String clusterURL, String username, String password,
-        KeyBundle syncKeyBundle, GlobalSessionCallback callback)
-            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
-      super(clusterURL, username, password, syncKeyBundle, callback);
+    public MockBackoffStage(long backoffInSeconds) {
       this.backoffInSeconds = backoffInSeconds;
     }
 
-    public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
-      @Override
-      public void execute() {
-        final HttpResponse response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
-
-        response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
-        session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
-      }
-    }
-
     @Override
-    protected void prepareStages() {
-      super.prepareStages();
-      HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage());
-      this.stages = Collections.unmodifiableMap(stages);
+    public void execute() {
+      final HttpResponse response = new BasicHttpResponse(
+        new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
+
+      response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
+      session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
     }
   }
 
@@ -170,7 +150,6 @@ public class TestGlobalSession {
       fail("Got exception.");
     }
   }
-
 
   /**
    * Test that a trivially successful GlobalSession does not fail or backoff.
@@ -211,8 +190,21 @@ public class TestGlobalSession {
   public void testBackoffCalledInStages() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockBackoffGlobalSession(TEST_BACKOFF_IN_SECONDS, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+
+      // Stage fakes a 503 and sets X-Weave-Backoff header to the given seconds.
+      final MockBackoffStage stage = new MockBackoffStage(TEST_BACKOFF_IN_SECONDS);
+
+      // Session fakes a 503 on info/collections and sets backoff header.
+      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
+        @Override
+        protected void prepareStages() {
+          super.prepareStages();
+          HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
+          stages.put(Stage.fetchInfoCollections, stage);
+          this.stages = Collections.unmodifiableMap(stages);
+        }
+      };
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
