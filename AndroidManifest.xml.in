@@ -28,6 +28,20 @@
                  android:icon="@drawable/icon"
                  android:label="@string/sync_app_name">
 
+        <!-- These activities are intended only for developer testing,
+             so we don't add them to the exported manifest files. -->
+        <activity
+            android:theme="@style/SyncTheme"
+            android:label="Android Sync Dev Tools"
+            android:name="org.mozilla.gecko.sync.setup.activities.AndroidSyncDeveloperActivity">
+            <!-- Adding a launcher will make Firefox Sync appear on
+                 the Apps screen, which we only want when testing. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:theme="@android:style/Theme.NoDisplay"
             android:name="org.mozilla.gecko.sync.setup.activities.SyncNowActivity" />
