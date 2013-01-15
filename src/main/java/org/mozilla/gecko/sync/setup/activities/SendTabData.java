@@ -4,9 +4,18 @@
 
 package org.mozilla.gecko.sync.setup.activities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.content.Intent;
 import android.os.Bundle;
 
+/**
+ * A static factory that extracts (title, uri) pairs suitable for send tab from
+ * Android intent instances.
+ * <p>
+ * Takes some care to extract likely "Web URLs" in preference to general URIs.
+ */
 public class SendTabData {
   public final String title;
   public final String uri;
@@ -16,7 +25,15 @@ public class SendTabData {
     this.uri = uri;
   }
 
-  public static SendTabData fromBundle(Bundle bundle) {
+  public static SendTabData fromIntent(Intent intent) {
+    if (intent == null) {
+      throw new IllegalArgumentException("intent must not be null");
+    }
+
+    return fromBundle(intent.getExtras());
+  }
+
+  protected static SendTabData fromBundle(Bundle bundle) {
     if (bundle == null) {
       throw new IllegalArgumentException("bundle must not be null");
     }
@@ -25,38 +42,20 @@ public class SendTabData {
     String subject = bundle.getString(Intent.EXTRA_SUBJECT);
     String title = bundle.getString(Intent.EXTRA_TITLE);
 
-    // Prefer EXTRA_SUBJECT but accept EXTRA_TITLE.
+    // For title, prefer EXTRA_SUBJECT but accept EXTRA_TITLE.
     String theTitle = subject;
     if (theTitle == null) {
       theTitle = title;
     }
 
-    String theUri = null;
-    if (text != null && WebURLFinder.isWebURL(text)) {
-      // Given a URL directly (Firefox for Android, Android Browser).
-      theUri = text;
-    } else {
-      // Take first URL in concatenation of EXTRA_TEXT, EXTRA_SUBJECT, and EXTRA_TITLE.
-      StringBuffer sb = new StringBuffer();
-      for (String data : new String[] { text, subject, title }) {
-        if (data != null) {
-          sb.append(data);
-          sb.append("\n\n");
-        }
-      }
-
-      // Find first URL.
-      theUri = new WebURLFinder(sb.toString()).bestWebURL();
-    }
+    // For URL, take first URL from EXTRA_TEXT, EXTRA_SUBJECT, and EXTRA_TITLE
+    // (in that order).
+    List<String> strings = new ArrayList<String>();
+    strings.add(text);
+    strings.add(subject);
+    strings.add(title);
+    String theUri = new WebURLFinder(strings).bestWebURL();
 
     return new SendTabData(theTitle, theUri);
-  }
-
-  public static SendTabData fromIntent(Intent intent) {
-    if (intent == null) {
-      throw new IllegalArgumentException("intent must not be null");
-    }
-
-    return fromBundle(intent.getExtras());
   }
 }
