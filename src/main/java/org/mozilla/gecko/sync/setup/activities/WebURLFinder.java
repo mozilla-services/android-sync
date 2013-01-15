@@ -6,6 +6,8 @@ package org.mozilla.gecko.sync.setup.activities;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -13,16 +15,22 @@ import java.util.regex.Matcher;
 import android.util.Patterns;
 
 public class WebURLFinder {
-  protected final String text;
   public final List<String> candidates;
 
-  public WebURLFinder(String text) {
-    if (text == null) {
-      throw new IllegalArgumentException("text must not be null");
+  public WebURLFinder(String string) {
+    if (string == null) {
+      throw new IllegalArgumentException("string must not be null");
     }
 
-    this.text = text;
-    this.candidates = candidateWebURLs(text);
+    this.candidates = candidateWebURLs(string);
+  }
+
+  public WebURLFinder(List<String> strings) {
+    if (strings == null) {
+      throw new IllegalArgumentException("strings must not be null");
+    }
+
+    this.candidates = candidateWebURLs(strings);
   }
 
   /**
@@ -65,6 +73,20 @@ public class WebURLFinder {
     }
 
     return firstWebURLWithoutScheme();
+  }
+
+  protected static List<String> candidateWebURLs(Collection<String> strings) {
+    List<String> candidates = new ArrayList<String>();
+
+    for (String string : strings) {
+      if (string == null) {
+        continue;
+      }
+
+      candidates.addAll(candidateWebURLs(string));
+    }
+
+    return candidates;
   }
 
   protected static List<String> candidateWebURLs(String string) {
