@@ -58,6 +58,10 @@
             android:theme="@android:style/Theme.NoDisplay"
             android:name="org.mozilla.gecko.sync.setup.activities.CreateTestAccountsActivity" />
 
+        <activity
+            android:theme="@style/SyncTheme"
+            android:name="org.mozilla.gecko.sync.setup.activities.DumpDatabaseActivity" />
+
 #include manifests/SyncAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
 

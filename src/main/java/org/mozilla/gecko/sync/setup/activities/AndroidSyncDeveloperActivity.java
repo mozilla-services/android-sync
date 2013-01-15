@@ -45,6 +45,9 @@ public class AndroidSyncDeveloperActivity extends ListActivity {
     intent.putExtra(Intent.EXTRA_TEXT, "http://mozilla.com");
     intent.putExtra(Intent.EXTRA_SUBJECT, "mozilla.com");
     intents.add(intent);
+
+    options.add("Dump tabs database");
+    intents.add(new Intent(this, DumpDatabaseActivity.class));
   }
 
   @Override
