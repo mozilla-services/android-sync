@@ -42,6 +42,17 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<ClientRecord> {
     this.notifyDataSetChanged();
   }
 
+  /**
+   * If we have only a single client record in the list, mark it as checked.
+   */
+  public synchronized void checkIfSolitaryClient() {
+    // If there's only one other client, check it by default.
+    if (this.getCount() == 1) {
+      setRowChecked(0, true);
+      this.notifyDataSetChanged();
+    }
+  }
+
   protected synchronized void setRowChecked(int position, boolean checked) {
     checkedItems[position] = checked;
     numCheckedGUIDs += checked ? 1 : -1;

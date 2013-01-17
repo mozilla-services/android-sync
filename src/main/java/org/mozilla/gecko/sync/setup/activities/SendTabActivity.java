@@ -75,6 +75,7 @@ public class SendTabActivity extends Activity {
 
         Logger.debug(LOG_TAG, "Got " + clientArray.length + " clients.");
         arrayAdapter.setClientRecordList(clientArray);
+        arrayAdapter.checkIfSolitaryClient();
       }
     }.execute();
   }
