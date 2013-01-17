@@ -44,6 +44,42 @@ public class SendTabActivity extends Activity {
     super.onCreate(savedInstanceState);
   }
 
+  /**
+   * Ensure that the view's list of clients is backed by a recently populated
+   * array adapter. But only once, so we don't end up blowing away your selections
+   * just because you got a text message.
+   */
+  protected synchronized void ensureClientList(final Context context,
+                                               final ListView listview) {
+    if (arrayAdapter != null) {
+      Logger.debug(LOG_TAG, "Already have an array adapter for client lists.");
+      listview.setAdapter(arrayAdapter);
+      return;
+    }
+
+    arrayAdapter = new ClientRecordArrayAdapter(context, R.layout.sync_list_item);
+    listview.setAdapter(arrayAdapter);
+
+    // Fetching the client list hits the clients database, so we spin this onto
+    // a background task.
+    new AsyncTask<Void, Void, ClientRecord[]>() {
+
+      @Override
+      protected ClientRecord[] doInBackground(Void... params) {
+        return getClientArray();
+      }
+
+      @Override
+      protected void onPostExecute(final ClientRecord[] clientArray) {
+        // We're allowed to update the UI from here.
+
+        Logger.debug(LOG_TAG, "Got " + clientArray.length + " clients.");
+        arrayAdapter.setClientRecordList(clientArray);
+        arrayAdapter.checkIfSolitaryClient();
+      }
+    }.execute();
+  }
+
   @Override
   public void onResume() {
     ActivityUtils.prepareLogging();
@@ -60,23 +96,7 @@ public class SendTabActivity extends Activity {
     listview.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     enableSend(false);
 
-    // Fetching the client list hits the clients database, so we spin this onto
-    // a background task.
-    final Context context = this;
-    new AsyncTask<Void, Void, ClientRecord[]>() {
-
-      @Override
-      protected ClientRecord[] doInBackground(Void... params) {
-        return getClientArray();
-      }
-
-      @Override
-      protected void onPostExecute(final ClientRecord[] clientArray) {
-        // We're allowed to update the UI from here.
-        arrayAdapter = new ClientRecordArrayAdapter(context, R.layout.sync_list_item, clientArray);
-        listview.setAdapter(arrayAdapter);
-      }
-    }.execute();
+    ensureClientList(this, listview);
   }
 
   private static void registerDisplayURICommand() {
