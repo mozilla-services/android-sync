@@ -34,8 +34,9 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<ClientRecord> {
   }
 
   public synchronized void setClientRecordList(final ClientRecord[] clientRecordList) {
-    this.checkedItems = new boolean[clientRecordList.length];
     this.clear();
+    this.checkedItems = new boolean[clientRecordList.length];
+    this.numCheckedGUIDs = 0;
     for (ClientRecord clientRecord : clientRecordList) {
       this.add(clientRecord);
     }
@@ -102,7 +103,7 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<ClientRecord> {
     return row;
   }
 
-  public List<String> getCheckedGUIDs() {
+  public synchronized List<String> getCheckedGUIDs() {
     final List<String> guids = new ArrayList<String>();
     for (int i = 0; i < checkedItems.length; i++) {
       if (checkedItems[i]) {
@@ -112,7 +113,7 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<ClientRecord> {
     return guids;
   }
 
-  public int getNumCheckedGUIDs() {
+  public synchronized int getNumCheckedGUIDs() {
     return numCheckedGUIDs;
   }
 
