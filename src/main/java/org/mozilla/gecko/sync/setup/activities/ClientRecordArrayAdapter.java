@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync.setup.activities;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.mozilla.gecko.R;
@@ -33,9 +34,9 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<ClientRecord> {
     this.sendTabActivity = (SendTabActivity) context;
   }
 
-  public synchronized void setClientRecordList(final ClientRecord[] clientRecordList) {
+  public synchronized void setClientRecordList(final Collection<ClientRecord> clientRecordList) {
     this.clear();
-    this.checkedItems = new boolean[clientRecordList.length];
+    this.checkedItems = new boolean[clientRecordList.size()];
     this.numCheckedGUIDs = 0;
     for (ClientRecord clientRecord : clientRecordList) {
       this.add(clientRecord);
