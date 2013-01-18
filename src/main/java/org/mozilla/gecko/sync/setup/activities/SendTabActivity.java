@@ -4,15 +4,19 @@
 
 package org.mozilla.gecko.sync.setup.activities;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandRunner;
-import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
@@ -95,20 +99,22 @@ public class SendTabActivity extends Activity {
 
     // Fetching the client list hits the clients database, so we spin this onto
     // a background task.
-    new AsyncTask<Void, Void, ClientRecord[]>() {
+    new AsyncTask<Void, Void, Collection<ClientRecord>>() {
 
       @Override
-      protected ClientRecord[] doInBackground(Void... params) {
-        return getClientArray();
+      protected Collection<ClientRecord> doInBackground(Void... params) {
+        return getOtherClients();
       }
 
       @Override
-      protected void onPostExecute(final ClientRecord[] clientArray) {
+      protected void onPostExecute(final Collection<ClientRecord> clientArray) {
         // We're allowed to update the UI from here.
 
-        Logger.debug(LOG_TAG, "Got " + clientArray.length + " clients.");
+        Logger.debug(LOG_TAG, "Got " + clientArray.size() + " clients.");
         arrayAdapter.setClientRecordList(clientArray);
-        arrayAdapter.checkIfSolitaryClient();
+        if (clientArray.size() == 1) {
+          arrayAdapter.checkItem(0, true);
+        }
       }
     }.execute();
   }
@@ -254,16 +260,31 @@ public class SendTabActivity extends Activity {
     sendButton.setClickable(shouldEnable);
   }
 
-  protected ClientRecord[] getClientArray() {
+  protected Map<String, ClientRecord> getClients() {
     ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(this.getApplicationContext());
-
     try {
-      return db.fetchAllClients().values().toArray(new ClientRecord[0]);
+      return db.fetchAllClients();
     } catch (NullCursorException e) {
       Logger.warn(LOG_TAG, "NullCursorException while populating device list.", e);
       return null;
     } finally {
       db.close();
     }
+  }
+
+  /**
+   * @return a collection of client records, excluding our own.
+   */
+  protected Collection<ClientRecord> getOtherClients() {
+    final Map<String, ClientRecord> all = getClients();
+    final ArrayList<ClientRecord> out = new ArrayList<ClientRecord>(all.size());
+    final String ourGUID = getAccountGUID();
+    for (Entry<String, ClientRecord> entry : all.entrySet()) {
+      if (ourGUID.equals(entry.getKey())) {
+        continue;
+      }
+      out.add(entry.getValue());
+    }
+    return out;
   }
 }
