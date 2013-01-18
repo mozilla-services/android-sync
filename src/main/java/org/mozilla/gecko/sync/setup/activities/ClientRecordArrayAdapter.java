@@ -47,22 +47,36 @@ public class ClientRecordArrayAdapter extends ArrayAdapter<ClientRecord> {
   /**
    * If we have only a single client record in the list, mark it as checked.
    */
-  public synchronized void checkIfSolitaryClient() {
-    // If there's only one other client, check it by default.
-    if (this.getCount() == 1) {
-      setRowChecked(0, true);
+  public synchronized void checkItem(final int position, boolean checked) throws ArrayIndexOutOfBoundsException {
+    if (position < 0 ||
+        position >= checkedItems.length) {
+      throw new ArrayIndexOutOfBoundsException(position);
+    }
+
+    if (setRowChecked(position, true)) {
       this.notifyDataSetChanged();
     }
   }
 
-  protected synchronized void setRowChecked(int position, boolean checked) {
+  /**
+   * Set the specified row to the specified checked state.
+   * @param position an index.
+   * @param checked whether the checkbox should be checked.
+   * @return <code>true</code> if the state changed, <code>false</code> if the
+   *         box was already in the requested state.
+   */
+  protected synchronized boolean setRowChecked(int position, boolean checked) {
+    boolean current = checkedItems[position];
+    if (current == checked) {
+      return false;
+    }
+
     checkedItems[position] = checked;
     numCheckedGUIDs += checked ? 1 : -1;
     if (numCheckedGUIDs <= 0) {
-      sendTabActivity.enableSend(false);
-      return;
+      sendTabActivity.enableSend(numCheckedGUIDs > 0);
     }
-    sendTabActivity.enableSend(true);
+    return true;
   }
 
   @Override
