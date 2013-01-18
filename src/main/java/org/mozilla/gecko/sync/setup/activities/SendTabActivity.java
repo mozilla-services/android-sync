@@ -31,6 +31,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class SendTabActivity extends Activity {
@@ -38,10 +39,42 @@ public class SendTabActivity extends Activity {
   private ClientRecordArrayAdapter arrayAdapter;
   private AccountManager accountManager;
   private Account localAccount;
+  private SendTabData sendTabData;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    Intent intent = getIntent();
+    if (intent == null) {
+      Logger.warn(LOG_TAG, "intent was null; aborting without sending tab.");
+      notifyAndFinish(false);
+      return;
+    }
+
+    Bundle extras = intent.getExtras();
+    if (extras == null) {
+      Logger.warn(LOG_TAG, "extras was null; aborting without sending tab.");
+      notifyAndFinish(false);
+      return;
+    }
+
+    sendTabData = SendTabData.fromBundle(extras);
+    if (sendTabData == null) {
+      Logger.warn(LOG_TAG, "send tab data was null; aborting without sending tab.");
+      notifyAndFinish(false);
+      return;
+    }
+
+    if (sendTabData.uri == null) {
+      Logger.warn(LOG_TAG, "uri was null; aborting without sending tab.");
+      notifyAndFinish(false);
+      return;
+    }
+
+    if (sendTabData.title == null) {
+      Logger.warn(LOG_TAG, "title was null; ignoring and sending tab anyway.");
+    }
   }
 
   /**
@@ -97,6 +130,12 @@ public class SendTabActivity extends Activity {
     enableSend(false);
 
     ensureClientList(this, listview);
+
+    TextView textView = (TextView) findViewById(R.id.title);
+    textView.setText(sendTabData.title);
+
+    textView = (TextView) findViewById(R.id.uri);
+    textView.setText(sendTabData.uri);
   }
 
   private static void registerDisplayURICommand() {
@@ -146,25 +185,6 @@ public class SendTabActivity extends Activity {
 
   public void sendClickHandler(View view) {
     Logger.info(LOG_TAG, "Send was clicked.");
-    Bundle extras = this.getIntent().getExtras();
-    if (extras == null) {
-      Logger.warn(LOG_TAG, "extras was null; aborting without sending tab.");
-      notifyAndFinish(false);
-      return;
-    }
-
-    final SendTabData sendTabData = SendTabData.fromBundle(extras);
-
-    if (sendTabData.title == null) {
-      Logger.warn(LOG_TAG, "title was null; ignoring and sending tab anyway.");
-    }
-
-    if (sendTabData.uri == null) {
-      Logger.warn(LOG_TAG, "uri was null; aborting without sending tab.");
-      notifyAndFinish(false);
-      return;
-    }
-
     final List<String> remoteClientGuids = arrayAdapter.getCheckedGUIDs();
 
     if (remoteClientGuids == null) {
