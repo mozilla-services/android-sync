@@ -464,4 +464,9 @@ public class TestGlobalSession {
     }
     assertEquals(expected, session.config.metaGlobal.getEnabledEngineNames());
   }
+
+  public void testStageAdvance() {
+    assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
+    assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
+  }
 }
