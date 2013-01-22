@@ -259,6 +259,23 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
    *          stage names to sync, or <code>null</code> to sync all known stages.
    */
   public static void requestImmediateSync(final Account account, final String[] stageNames) {
+    requestImmediateSync(account, stageNames, null);
+  }
+
+  /**
+   * Asynchronously request an immediate sync, optionally syncing only the given
+   * named stages.
+   * <p>
+   * Returns immediately.
+   *
+   * @param account
+   *          the Android <code>Account</code> instance to sync.
+   * @param stageNames
+   *          stage names to sync, or <code>null</code> to sync all known stages.
+   * @param moreExtras
+   *          bundle of extras to give to the sync, or <code>null</code>
+   */
+  public static void requestImmediateSync(final Account account, final String[] stageNames, Bundle moreExtras) {
     if (account == null) {
       Logger.warn(LOG_TAG, "Not requesting immediate sync because Android Account is null.");
       return;
@@ -267,6 +284,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     final Bundle extras = new Bundle();
     Utils.putStageNamesToSync(extras, stageNames, null);
     extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+
+    if (moreExtras != null) {
+      extras.putAll(moreExtras);
+    }
+
     ContentResolver.requestSync(account, BrowserContract.AUTHORITY, extras);
   }
 
