@@ -399,8 +399,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
         if (setNextSync.get()) {
           long interval = getSyncInterval();
           long next = System.currentTimeMillis() + interval;
-          Logger.info(LOG_TAG, "Setting minimum next sync time to " + next + " (" + interval + "ms from now).");
-          extendEarliestNextSync(next);
+
+          if (thisSyncIsForced) {
+            Logger.info(LOG_TAG, "Setting minimum next sync time to " + next + " (" + interval + "ms from now).");
+            setEarliestNextSync(next);
+          } else {
+            Logger.info(LOG_TAG, "Extending minimum next sync time to " + next + " (" + interval + "ms from now).");
+            extendEarliestNextSync(next);
+          }
         }
         Logger.info(LOG_TAG, "Sync took " + Utils.formatDuration(syncStartTimestamp, System.currentTimeMillis()) + ".");
       } catch (InterruptedException e) {
