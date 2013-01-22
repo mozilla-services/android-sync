@@ -276,6 +276,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                             final String authority,
                             final ContentProviderClient provider,
                             final SyncResult syncResult) {
+    syncStartTimestamp = System.currentTimeMillis();
+
     Logger.setThreadLogTag(SyncConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
     Utils.reseedSharedRandom(); // Make sure we don't work with the same random seed for too long.
@@ -430,7 +432,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
                                         IOException, ParseException,
                                         NonObjectJSONException, CryptoException {
     Logger.trace(LOG_TAG, "Performing sync.");
-    syncStartTimestamp = System.currentTimeMillis();
 
     /**
      * Bug 769745: pickle Sync account parameters to JSON file. Un-pickle in
