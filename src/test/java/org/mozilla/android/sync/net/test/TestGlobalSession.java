@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +25,7 @@ import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
+import org.mozilla.android.sync.test.helpers.MockAbstractNonRepositorySyncStage;
 import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
@@ -43,12 +43,10 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
-import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
-import org.mozilla.gecko.sync.stage.FetchInfoCollectionsStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
@@ -105,46 +103,6 @@ public class TestGlobalSession {
   }
 
   /**
-   * A mock GlobalSession that fakes a 503 on info/collections and
-   * sets X-Weave-Backoff header to the specified number of seconds.
-   */
-  public class MockBackoffGlobalSession extends MockGlobalSession {
-
-    public long backoffInSeconds = -1;
-
-    public MockBackoffGlobalSession(long backoffInSeconds,
-        String clusterURL, String username, String password,
-        KeyBundle syncKeyBundle, GlobalSessionCallback callback)
-            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
-      super(clusterURL, username, password, syncKeyBundle, callback);
-      this.backoffInSeconds = backoffInSeconds;
-    }
-
-    public class MockBackoffFetchInfoCollectionsStage extends FetchInfoCollectionsStage {
-      public MockBackoffFetchInfoCollectionsStage(GlobalSession session) {
-        super(session);
-      }
-
-      @Override
-      public void execute() {
-        final HttpResponse response = new BasicHttpResponse(
-          new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
-
-        response.addHeader("X-Weave-Backoff", Long.toString(backoffInSeconds)); // Backoff given in seconds.
-        session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
-      }
-    }
-
-    @Override
-    protected void prepareStages() {
-      super.prepareStages();
-      HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-      stages.put(Stage.fetchInfoCollections, new MockBackoffFetchInfoCollectionsStage(this));
-      this.stages = Collections.unmodifiableMap(stages);
-    }
-  }
-
-  /**
    * Test that handleHTTPError does in fact backoff.
    */
   @Test
@@ -174,7 +132,6 @@ public class TestGlobalSession {
       fail("Got exception.");
     }
   }
-
 
   /**
    * Test that a trivially successful GlobalSession does not fail or backoff.
@@ -215,8 +172,23 @@ public class TestGlobalSession {
   public void testBackoffCalledInStages() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockBackoffGlobalSession(TEST_BACKOFF_IN_SECONDS, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+
+      // Stage fakes a 503 and sets X-Weave-Backoff header to the given seconds.
+      final GlobalSyncStage stage = new MockAbstractNonRepositorySyncStage() {
+        @Override
+        public void execute() {
+          final HttpResponse response = new BasicHttpResponse(
+            new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
+
+          response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
+          session.handleHTTPError(new SyncStorageResponse(response), "Failure fetching info/collections.");
+        }
+      };
+
+      // Session installs fake stage to fetch info/collections.
+      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+          new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
+      .withStage(Stage.fetchInfoCollections, stage);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
@@ -279,21 +251,7 @@ public class TestGlobalSession {
       }
     };
 
-    // Hang on to this externally so we can poke at the stage.
-    final HashMap<Stage, GlobalSyncStage> stagesToRun = new HashMap<Stage, GlobalSyncStage>();
-
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      protected void prepareStages() {
-        super.prepareStages();
-        stagesToRun.putAll(this.stages);
-        this.stages = stagesToRun;
-      }
-    };
-
-    final MockServerSyncStage stage = new MockServerSyncStage(session) {
+    final MockServerSyncStage stage = new MockServerSyncStage() {
       @Override
       public void execute() {
         doRequest();
@@ -305,7 +263,9 @@ public class TestGlobalSession {
       }
     };
 
-    stagesToRun.put(Stage.syncBookmarks, stage);
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback).withStage(Stage.syncBookmarks, stage);
 
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
@@ -463,5 +423,10 @@ public class TestGlobalSession {
       expected.add(name);
     }
     assertEquals(expected, session.config.metaGlobal.getEnabledEngineNames());
+  }
+
+  public void testStageAdvance() {
+    assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
+    assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
   }
 }

@@ -5,7 +5,6 @@ package org.mozilla.android.sync.test.helpers;
 
 import static org.junit.Assert.assertTrue;
 
-import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
@@ -68,9 +67,5 @@ public class MockSyncClientsEngineStage extends SyncClientsEngineStage {
       super.handleRequestError(ex);
       data.stopHTTPServer();
     }
-  }
-
-  public MockSyncClientsEngineStage(GlobalSession session) {
-    super(session);
   }
 }

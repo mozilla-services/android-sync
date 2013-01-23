@@ -101,6 +101,13 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     assertTrue(isSyncable(account));
   }
 
+  private static class LeakySyncAdapter extends SyncAdapter {
+    public LeakySyncAdapter(Context context, boolean autoInitialize, Account account) {
+      super(context, autoInitialize);
+      this.localAccount = account;
+    }
+  }
+
   /**
    * Verify that when SyncAdapter is informed of an Upgrade Required
    * response, that it disables the account it's syncing.
@@ -114,8 +121,7 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     assertTrue(isSyncable(account));
     assertFalse(willEnableOnUpgrade(account, accountManager));
 
-    SyncAdapter adapter = new SyncAdapter(context, true);
-    adapter.localAccount = account;
+    LeakySyncAdapter adapter = new LeakySyncAdapter(context, true, account);
     adapter.informUpgradeRequiredResponse(null);
 
     // Oh god.

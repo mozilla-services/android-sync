@@ -57,7 +57,8 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public final static String LOG_TAG = "TestClientsEngSta";
 
   public TestClientsEngineStage() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
-    super(initializeSession());
+    super();
+    session = initializeSession();
   }
 
   // Static so we can set it during the constructor. This is so evil.
