@@ -84,8 +84,8 @@ public class TestWipeServer {
     assertEquals(record.fieldValue, o.getString("value"));
 
     // Wipe server engine only.
-    ServerSyncStage stage = new FormHistoryServerSyncStage(session);
-    stage.wipeServer(); // Synchronous!
+    ServerSyncStage stage = new FormHistoryServerSyncStage();
+    stage.wipeServer(session); // Synchronous!
 
     // Make sure record does not appear in collection guids.
     a = ExtendedJSONObject.parseJSONArray(TestBasicFetch.realLiveFetch(TEST_USERNAME, TEST_PASSWORD, COLLECTION_URL).body());

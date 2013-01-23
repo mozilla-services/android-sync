@@ -11,8 +11,6 @@ import static org.junit.Assert.assertTrue;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +27,6 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.stage.EnsureCrypto5KeysStage;
-import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -66,9 +63,7 @@ public class TestEnsureCrypto5KeysStage {
       @Override
       protected void prepareStages() {
         super.prepareStages();
-        Map<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureKeysStage, new EnsureCrypto5KeysStage(this));
-        this.stages = stages;
+        withStage(Stage.ensureKeysStage, new EnsureCrypto5KeysStage());
       }
 
       @Override

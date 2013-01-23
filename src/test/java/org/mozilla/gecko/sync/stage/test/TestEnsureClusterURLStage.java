@@ -10,8 +10,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
@@ -30,7 +28,6 @@ import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
-import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -145,15 +142,8 @@ public class TestEnsureClusterURLStage {
   public void testNodeAssignedIfNotSet() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
-      new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      public void prepareStages() {
-        super.prepareStages();
-        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
-        this.stages = Collections.unmodifiableMap(stages);
-      }
-    };
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
 
     assertEquals(null, session.config.getClusterURL());
 
@@ -189,15 +179,8 @@ public class TestEnsureClusterURLStage {
   public void testNodeNotAssignedIfSet() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
-      new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      public void prepareStages() {
-        super.prepareStages();
-        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
-        this.stages = Collections.unmodifiableMap(stages);
-      }
-    };
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
     assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
@@ -237,15 +220,8 @@ public class TestEnsureClusterURLStage {
     };
 
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
-      new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      public void prepareStages() {
-        super.prepareStages();
-        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
-        this.stages = Collections.unmodifiableMap(stages);
-      }
-    };
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
     assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
@@ -288,15 +264,8 @@ public class TestEnsureClusterURLStage {
     };
 
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
-      new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback) {
-      @Override
-      public void prepareStages() {
-        super.prepareStages();
-        HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>(this.stages);
-        stages.put(Stage.ensureClusterURL, new EnsureClusterURLStage(this));
-        this.stages = Collections.unmodifiableMap(stages);
-      }
-    };
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
     assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
@@ -329,7 +298,7 @@ public class TestEnsureClusterURLStage {
   public void testInterpretHTTPFailureCallsMaybeNodeReassigned() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
-      new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
     final HttpResponse response = new BasicHttpResponse(
       new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 401, "User authentication failed"));

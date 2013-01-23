@@ -50,7 +50,7 @@ public class TestResetting extends AndroidSyncTestCase {
     final GlobalSessionCallback callback = createGlobalSessionCallback();
     final GlobalSession session = createDefaultGlobalSession(callback);
 
-    final ExecutableMockServerSyncStage stage = new ExecutableMockServerSyncStage(session) {
+    final ExecutableMockServerSyncStage stage = new ExecutableMockServerSyncStage() {
       @Override
       public void onSynchronized(Synchronizer synchronizer) {
         try {
@@ -82,7 +82,7 @@ public class TestResetting extends AndroidSyncTestCase {
     assertConfigTimestampsGreaterThan(stage.leakConfig(), startTime, startTime);
 
     // Reset.
-    stage.resetLocal();
+    stage.resetLocal(session);
 
     // Verify that they're gone.
     assertConfigTimestampsEqual(stage.leakConfig(), 0, 0);
@@ -106,7 +106,7 @@ public class TestResetting extends AndroidSyncTestCase {
     assertTrue(afterReset <= remoteRecord.lastModified);
 
     // Reset doesn't clear data.
-    stage.resetLocal();
+    stage.resetLocal(session);
     assertConfigTimestampsEqual(stage.leakConfig(), 0, 0);
     assertEquals(1, remote.wbos.size());
     assertEquals(1, local.wbos.size());
@@ -122,7 +122,7 @@ public class TestResetting extends AndroidSyncTestCase {
     assertConfigTimestampsGreaterThan(stage.leakConfig(), beforeWipe, beforeWipe);
 
     // ... then wipe.
-    stage.wipeLocal();
+    stage.wipeLocal(session);
     assertConfigTimestampsEqual(stage.leakConfig(), 0, 0);
     assertEquals(1, remote.wbos.size());     // We don't wipe the server.
     assertEquals(0, local.wbos.size());      // We do wipe local.
@@ -132,11 +132,6 @@ public class TestResetting extends AndroidSyncTestCase {
    * A stage that joins two Repositories with no wrapping.
    */
   public class ExecutableMockServerSyncStage extends BaseMockServerSyncStage {
-
-    public ExecutableMockServerSyncStage(GlobalSession session) {
-      super(session);
-    }
-
     /**
      * Run this stage synchronously.
      */
@@ -146,7 +141,7 @@ public class TestResetting extends AndroidSyncTestCase {
         @Override
         public void run() {
           try {
-            self.execute();
+            self.execute(session);
           } catch (NoSuchStageException e) {
             performNotify(e);
           }
