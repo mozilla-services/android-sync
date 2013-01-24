@@ -81,7 +81,8 @@ echo "# $WARNING" >> $MKFILE
 echo "SYNC_JAVA_FILES := $(echo $SOURCEFILES | xargs)" >> $MKFILE
 echo "SYNC_PP_JAVA_FILES := $(echo $PREPROCESS_FILES | xargs)" >> $MKFILE
 echo "SYNC_THIRDPARTY_JAVA_FILES := $(echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE      := $(find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
+# Prefer PNGs in drawable-*: Android lint complains about PNG files in drawable.
+echo "SYNC_RES_DRAWABLE      := $(find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
 echo "SYNC_RES_DRAWABLE_LDPI := $(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
 echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
 echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
@@ -115,10 +116,10 @@ done
 
 echo "Copying resources..."
 # I'm guessing these go here.
-rsync -a --exclude "icon.png" res/drawable $ANDROID/base/resources/
-rsync -a --exclude "icon.png" res/drawable-hdpi $ANDROID/base/resources/
-rsync -a --exclude "icon.png" res/drawable-mdpi $ANDROID/base/resources/
-rsync -a --exclude "icon.png" res/drawable-ldpi $ANDROID/base/resources/
+rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable $ANDROID/base/resources/
+rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-hdpi $ANDROID/base/resources/
+rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-mdpi $ANDROID/base/resources/
+rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-ldpi $ANDROID/base/resources/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/values/sync_styles.xml $ANDROID/base/resources/values/
 rsync -a res/values-large-v11/sync_styles.xml $ANDROID/base/resources/values-large-v11/
