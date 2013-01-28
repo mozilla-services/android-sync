@@ -291,6 +291,26 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   /**
+   * Execute given sync stage.
+   *
+   * @param next stage to execute.
+   * @throws NoSuchStageException
+   */
+  protected void executeStage(final Stage next) throws NoSuchStageException {
+    final GlobalSyncStage nextStage = this.getSyncStageByEnum(next);
+
+    this.currentState = next;
+    Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
+    try {
+      nextStage.execute(this);
+    } catch (Exception ex) {
+      Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
+      this.abort(ex, "Uncaught exception in stage.");
+      return;
+    }
+  }
+
+  /**
    * Move to the next stage in the syncing process.
    */
   public void advance() {
@@ -303,20 +323,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
     this.callback.handleStageCompleted(this.currentState, this);
     Stage next = nextStage(this.currentState);
-    GlobalSyncStage nextStage;
+
     try {
-      nextStage = this.getSyncStageByEnum(next);
+      executeStage(next);
     } catch (NoSuchStageException e) {
       this.abort(e, "No such stage " + next);
-      return;
-    }
-    this.currentState = next;
-    Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
-    try {
-      nextStage.execute(this);
-    } catch (Exception ex) {
-      Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
-      this.abort(ex, "Uncaught exception in stage.");
       return;
     }
   }
