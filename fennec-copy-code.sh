@@ -1,14 +1,7 @@
-if [ -z "$ANDROID" ]
-then
-  echo "No ANDROID dir set. Aborting."
-  exit 1;
-fi
-
-if [ -z "$SERVICES" ]
-then
-  echo "No SERVICES dir set. Aborting."
-  exit 1;
-fi
+# from http://stackoverflow.com/a/12694189
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/fennec-paths.sh"
   
 echo "Copying to $ANDROID ($SERVICES)..."
 
