@@ -1,5 +1,4 @@
-# from http://stackoverflow.com/a/12694189
-DIR="${BASH_SOURCE%/*}"
+DIR=$(dirname "$0")
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "$DIR/fennec-paths.sh"
 
