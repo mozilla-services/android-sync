@@ -14,6 +14,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -288,8 +289,7 @@ public class TestGlobalSession {
   }
 
   @Test
-  public void testOnSuccessBackoffAdvanced() throws SyncConfigurationException,
-      IllegalArgumentException, NonObjectJSONException, IOException,
+  public void testOnSuccessBackoffAdvanced() throws Exception,
       ParseException, CryptoException {
     MockGlobalSessionCallback callback = doTestSuccess(true, true);
 
@@ -299,8 +299,7 @@ public class TestGlobalSession {
   }
 
   @Test
-  public void testOnSuccessBackoffAborted() throws SyncConfigurationException,
-      IllegalArgumentException, NonObjectJSONException, IOException,
+  public void testOnSuccessBackoffAborted() throws Exception,
       ParseException, CryptoException {
     MockGlobalSessionCallback callback = doTestSuccess(true, false);
 
@@ -310,18 +309,19 @@ public class TestGlobalSession {
   }
 
   @Test
-  public void testOnSuccessNoBackoffAdvanced() throws SyncConfigurationException,
-      IllegalArgumentException, NonObjectJSONException, IOException,
+  public void testOnSuccessNoBackoffAdvanced() throws Exception,
       ParseException, CryptoException {
     MockGlobalSessionCallback callback = doTestSuccess(false, true);
 
     assertTrue(callback.calledSuccess);
     assertFalse(callback.calledRequestBackoff);
+
+    callback.stagesCompleted.add(Stage.completed);
+    assertEquals(Arrays.asList(Stage.values()), callback.stagesCompleted);
   }
 
   @Test
-  public void testOnSuccessNoBackoffAborted() throws SyncConfigurationException,
-      IllegalArgumentException, NonObjectJSONException, IOException,
+  public void testOnSuccessNoBackoffAborted() throws Exception,
       ParseException, CryptoException {
     MockGlobalSessionCallback callback = doTestSuccess(false, false);
 
@@ -425,7 +425,8 @@ public class TestGlobalSession {
     assertEquals(expected, session.config.metaGlobal.getEnabledEngineNames());
   }
 
-  public void testStageAdvance() {
+  @Test
+  public void testNextStage() {
     assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
     assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
   }
