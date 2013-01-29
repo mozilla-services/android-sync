@@ -10,4 +10,9 @@ public class NoSuchStageException extends Exception {
   public NoSuchStageException(GlobalSyncStage.Stage stage) {
     this.stage = stage;
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + " (stage=" + this.stage + ")";
+  }
 }
