@@ -71,21 +71,60 @@ MKFILE=$ANDROID/base/android-services-files.mk
 echo "Creating makefile for including in the Mozilla build system at $MKFILE"
 cat tools/makefile_mpl.txt > $MKFILE
 echo "# $WARNING" >> $MKFILE
-echo "SYNC_JAVA_FILES := $(echo $SOURCEFILES | xargs)" >> $MKFILE
-echo "SYNC_PP_JAVA_FILES := $(echo $PREPROCESS_FILES | xargs)" >> $MKFILE
-echo "SYNC_THIRDPARTY_JAVA_FILES := $(echo $HTTPLIBFILES $JSONLIBFILES $APACHEFILES | xargs)" >> $MKFILE
+
+# Write a list of files to a Makefile variable.
+# turn
+# VAR:=1.java 2.java
+# into
+# VAR:=\
+#   1.java \
+#   2.java \
+#   $(NULL)
+function dump_mkfile_variable {
+    output_file=$MKFILE
+    variable_name=$1
+    shift
+
+    echo "$variable_name := \\" >> $output_file
+    for var in "$@" ; do
+        for f in $var ; do
+            echo "  $f \\" >> $output_file
+        done
+    done
+    echo "  \$(NULL)" >> $output_file
+    echo "" >> $output_file
+}
+
 # Prefer PNGs in drawable-*: Android lint complains about PNG files in drawable.
-echo "SYNC_RES_DRAWABLE      := $(find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_LDPI := $(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_MDPI := $(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_DRAWABLE_HDPI := $(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,' | xargs)" >> $MKFILE
-echo "SYNC_RES_LAYOUT := $(find res/layout -name '*.xml' | xargs)"  >> $MKFILE
-echo "SYNC_RES_VALUES := res/values/sync_styles.xml" >> $MKFILE
-echo "SYNC_RES_VALUES_LARGE_V11 := res/values-large-v11/sync_styles.xml" >> $MKFILE
+SYNC_RES_DRAWABLE=$(find res/drawable -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) | sed 's,res/,mobile/android/base/resources/,')
+
+SYNC_RES_DRAWABLE_LDPI=$(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,')
+SYNC_RES_DRAWABLE_MDPI=$(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,')
+SYNC_RES_DRAWABLE_HDPI=$(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,')
+
+SYNC_RES_LAYOUT=$(find res/layout -name '*.xml')
+SYNC_RES_VALUES="res/values/sync_styles.xml"
+SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
 # XML resources that do not need to be preprocessed.
-echo "SYNC_RES_XML :=" >> $MKFILE
+SYNC_RES_XML=""
 # XML resources that need to be preprocessed.
-echo "SYNC_PP_RES_XML := res/xml/sync_syncadapter.xml res/xml/sync_options.xml res/xml/sync_authenticator.xml" >> $MKFILE
+SYNC_PP_RES_XML="res/xml/sync_syncadapter.xml res/xml/sync_options.xml res/xml/sync_authenticator.xml"
+
+dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
+dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
+
+dump_mkfile_variable "SYNC_RES_DRAWABLE" "$SYNC_RES_DRAWABLE"
+dump_mkfile_variable "SYNC_RES_DRAWABLE_LDPI" "$SYNC_RES_DRAWABLE_LDPI"
+dump_mkfile_variable "SYNC_RES_DRAWABLE_MDPI" "$SYNC_RES_DRAWABLE_MDPI"
+dump_mkfile_variable "SYNC_RES_DRAWABLE_HDPI" "$SYNC_RES_DRAWABLE_HDPI"
+
+dump_mkfile_variable "SYNC_RES_LAYOUT" "$SYNC_RES_LAYOUT"
+dump_mkfile_variable "SYNC_RES_VALUES" "$SYNC_RES_VALUES"
+dump_mkfile_variable "SYNC_RES_VALUES_LARGE_V11" "$SYNC_RES_VALUES_LARGE_V11"
+dump_mkfile_variable "SYNC_RES_XML" "$SYNC_RES_XML"
+dump_mkfile_variable "SYNC_PP_RES_XML" "$SYNC_PP_RES_XML"
+
+dump_mkfile_variable "SYNC_THIRDPARTY_JAVA_FILES" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
 
 # Finished creating Makefile for Mozilla.
 
