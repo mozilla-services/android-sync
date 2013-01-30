@@ -36,7 +36,7 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
   }
 
   @Override
-  protected void prepareStages() {
+  protected void prepareStageFactory() {
     this.stageOverrides = new HashMap<Stage, GlobalSyncStage>();
     this.stageFactory = new GlobalSyncStageFactory() {
       @Override

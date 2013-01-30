@@ -103,8 +103,8 @@ public class TestResetCommands {
       }
 
       @Override
-      public void prepareStages() {
-        super.prepareStages();
+      public void prepareStageFactory() {
+        super.prepareStageFactory();
         this.withStage(Stage.syncBookmarks, stageGetsReset);
         this.withStage(Stage.syncHistory,   stageNotReset);
       }

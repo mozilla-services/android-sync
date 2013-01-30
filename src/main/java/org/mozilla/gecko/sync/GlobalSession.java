@@ -171,7 +171,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     config.syncKeyBundle = syncKeyBundle;
 
     registerCommands();
-    prepareStages();
+    prepareStageFactory();
 
     Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
     config.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
@@ -227,7 +227,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     });
   }
 
-  protected void prepareStages() {
+  protected void prepareStageFactory() {
     HashMap<Stage, Class<? extends GlobalSyncStage>> klasses = new HashMap<Stage, Class<? extends GlobalSyncStage>>();
 
     klasses.put(Stage.checkPreconditions,      CheckPreconditionsStage.class);
