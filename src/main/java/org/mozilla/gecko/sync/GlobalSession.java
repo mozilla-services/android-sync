@@ -241,10 +241,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   public GlobalSyncStage getSyncStageByName(String name) throws NoSuchStageException {
-    return getSyncStageByName(Stage.byName(name));
+    return getSyncStageByEnum(Stage.byName(name));
   }
 
-  public GlobalSyncStage getSyncStageByName(Stage next) throws NoSuchStageException {
+  public GlobalSyncStage getSyncStageByEnum(Stage next) throws NoSuchStageException {
     GlobalSyncStage stage = stages.get(next);
     if (stage == null) {
       throw new NoSuchStageException(next);
@@ -256,7 +256,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     ArrayList<GlobalSyncStage> out = new ArrayList<GlobalSyncStage>();
     for (Stage name : enums) {
       try {
-        GlobalSyncStage stage = this.getSyncStageByName(name);
+        GlobalSyncStage stage = this.getSyncStageByEnum(name);
         out.add(stage);
       } catch (NoSuchStageException e) {
         Logger.warn(LOG_TAG, "Unable to find stage with name " + name);
@@ -305,7 +305,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     Stage next = nextStage(this.currentState);
     GlobalSyncStage nextStage;
     try {
-      nextStage = this.getSyncStageByName(next);
+      nextStage = this.getSyncStageByEnum(next);
     } catch (NoSuchStageException e) {
       this.abort(e, "No such stage " + next);
       return;

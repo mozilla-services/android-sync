@@ -80,7 +80,7 @@ public class TestGlobalSession {
                                                  new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
                                                  callback, /* context */ null, null, null);
 
-    assertTrue(s.getSyncStageByName(Stage.syncBookmarks) instanceof AndroidBrowserBookmarksServerSyncStage);
+    assertTrue(s.getSyncStageByEnum(Stage.syncBookmarks) instanceof AndroidBrowserBookmarksServerSyncStage);
 
     final Set<String> empty = new HashSet<String>();
 
@@ -90,7 +90,7 @@ public class TestGlobalSession {
 
     final Set<GlobalSyncStage> bookmarksAndTabsSyncStages = new HashSet<GlobalSyncStage>();
     GlobalSyncStage bookmarksStage = s.getSyncStageByName("bookmarks");
-    GlobalSyncStage tabsStage = s.getSyncStageByName(Stage.syncTabs);
+    GlobalSyncStage tabsStage = s.getSyncStageByEnum(Stage.syncTabs);
     bookmarksAndTabsSyncStages.add(bookmarksStage);
     bookmarksAndTabsSyncStages.add(tabsStage);
 
