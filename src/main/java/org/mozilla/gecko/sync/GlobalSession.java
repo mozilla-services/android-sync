@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
@@ -77,6 +79,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Engines to remove will have <code>null</code> EngineSettings.
    */
   public final Map<String, EngineSettings> enginesToUpdate = new HashMap<String, EngineSettings>();
+
+  /**
+   * Executor that runs sync stages serially in a single thread.
+   */
+  protected final ExecutorService stageExecutor = Executors.newSingleThreadExecutor();
 
    /*
    * Key accessors.
@@ -299,15 +306,20 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   protected void executeStage(final Stage next) throws NoSuchStageException {
     final GlobalSyncStage nextStage = this.getSyncStageByEnum(next);
 
-    this.currentState = next;
-    Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
-    try {
-      nextStage.execute(this);
-    } catch (Exception ex) {
-      Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
-      this.abort(ex, "Uncaught exception in stage.");
-      return;
-    }
+    stageExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        currentState = next;
+        Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
+        try {
+          nextStage.execute(GlobalSession.this);
+        } catch (Exception ex) {
+          Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
+          abort(ex, "Uncaught exception in stage.");
+          return;
+        }
+      }
+    });
   }
 
   /**
@@ -383,6 +395,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   protected void cleanUp() {
     uninstallAsHttpResponseObserver();
     this.stages = null;
+    this.stageExecutor.shutdownNow();
   }
 
   public void completeSync() {
