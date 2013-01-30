@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.AssertionFailedError;
 
@@ -34,9 +35,11 @@ import org.mozilla.android.sync.test.helpers.MockResourceDelegate;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
@@ -60,6 +63,8 @@ import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
 public class TestGlobalSession {
+  public static final String LOG_TAG = TestGlobalSession.class.getSimpleName();
+
   private int          TEST_PORT                = HTTPServerTestHelper.getTestPort();
   private final String TEST_CLUSTER_URL         = "http://localhost:" + TEST_PORT;
   private final String TEST_USERNAME            = "johndoe";
@@ -241,7 +246,38 @@ public class TestGlobalSession {
     });
   }
 
-  public MockGlobalSessionCallback doTestSuccess(final boolean stageShouldBackoff, final boolean stageShouldAdvance) throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
+  public MockGlobalSessionCallback doTestSuccess(MockServer server, final GlobalSyncStage[] outerStages) throws Exception {
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+    final MockGlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+
+    Stage index = Stage.values()[1];
+    for (GlobalSyncStage stage : outerStages) {
+      session.withStage(index, stage);
+      index = GlobalSession.nextStage(index);
+    }
+
+    data.startHTTPServer(server);
+    WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      public void run() {
+        try {
+          session.start();
+        } catch (Exception e) {
+          final AssertionFailedError error = new AssertionFailedError();
+          error.initCause(e);
+          WaitHelper.getTestWaiter().performNotify(error);
+        }
+      }
+    }));
+    data.stopHTTPServer();
+
+    // We should have uninstalled our HTTP response observer when the session is terminated.
+    assertNull(BaseResource.getHttpResponseObserver());
+
+    return callback;
+  }
+
+  public MockGlobalSessionCallback doTestSuccess(final boolean stageShouldBackoff, final boolean stageShouldAdvance) throws Exception {
     MockServer server = new MockServer() {
       @Override
       public void handle(Request request, Response response) {
@@ -264,28 +300,7 @@ public class TestGlobalSession {
       }
     };
 
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback).withStage(Stage.syncBookmarks, stage);
-
-    data.startHTTPServer(server);
-    WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
-      public void run() {
-        try {
-          session.start();
-        } catch (Exception e) {
-          final AssertionFailedError error = new AssertionFailedError();
-          error.initCause(e);
-          WaitHelper.getTestWaiter().performNotify(error);
-        }
-      }
-    }));
-    data.stopHTTPServer();
-
-    // We should have uninstalled our HTTP response observer when the session is terminated.
-    assertNull(BaseResource.getHttpResponseObserver());
-
-    return callback;
+    return doTestSuccess(server, new MockServerSyncStage[] { stage });
   }
 
   @Test
@@ -429,5 +444,68 @@ public class TestGlobalSession {
   public void testNextStage() {
     assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
     assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
+  }
+
+  /**
+   * Verify that we can restart a sync part way through.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testRestart() throws Exception {
+    final AtomicLong ran1 = new AtomicLong(0);
+    final AtomicLong ran2 = new AtomicLong(0);
+    final AtomicLong ran3 = new AtomicLong(0);
+
+    GlobalSyncStage stage1 = new MockServerSyncStage() {
+      @Override
+      public void execute(GlobalSession session) {
+        long value = ran1.incrementAndGet();
+        Logger.info(LOG_TAG, "Running stage 1 for the nth (n = " + value + ") time");
+
+        session.advance();
+      }
+    };
+
+    GlobalSyncStage stage2 = new MockServerSyncStage() {
+      @Override
+      public void execute(GlobalSession session) {
+        long value = ran2.incrementAndGet();
+        Logger.info(LOG_TAG, "Running stage 2 for the nth (n = " + value + ") time");
+
+        if (value == 1) {
+          try {
+            session.restart();
+          } catch (AlreadySyncingException e) {
+            session.abort(e, "Session failed.");
+          }
+          return;
+        }
+        session.advance();
+      }
+    };
+
+    GlobalSyncStage stage3 = new MockServerSyncStage() {
+      @Override
+      public void execute(GlobalSession session) {
+        long value = ran3.incrementAndGet();
+        Logger.info(LOG_TAG, "Running stage 3 for the nth (n = " + value + ") time");
+
+        session.advance();
+      }
+    };
+
+    GlobalSyncStage[] stages = new GlobalSyncStage[] { stage1, stage2, stage3 };
+
+    MockGlobalSessionCallback callback = doTestSuccess(new MockServer(), stages);
+
+    if (callback.calledErrorException != null) {
+      throw callback.calledErrorException;
+    }
+    assertTrue(callback.calledSuccess);
+
+    assertEquals(2, ran1.get());
+    assertEquals(2, ran2.get());
+    assertEquals(1, ran3.get());
   }
 }

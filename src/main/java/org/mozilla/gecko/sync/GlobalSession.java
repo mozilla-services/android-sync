@@ -357,7 +357,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Stop this sync and start again.
    * @throws AlreadySyncingException
    */
-  protected void restart() throws AlreadySyncingException {
+  public void restart() throws AlreadySyncingException {
     this.currentState = GlobalSyncStage.Stage.idle;
     if (callback.shouldBackOff()) {
       this.callback.handleAborted(this, "Told to back off.");
