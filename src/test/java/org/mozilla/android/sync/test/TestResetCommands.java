@@ -7,13 +7,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.DefaultGlobalSessionCallback;
-import org.mozilla.android.sync.test.helpers.MockPrefsGlobalSession;
+import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockServerSyncStage;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CommandProcessor;
@@ -27,7 +26,6 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
-import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 /**
@@ -71,16 +69,26 @@ public class TestResetCommands {
     final Result no  = new Result();
     final GlobalSessionCallback callback = createGlobalSessionCallback();
 
-    // So we can poke at stages separately.
-    final HashMap<Stage, GlobalSyncStage> stagesToRun = new HashMap<Stage, GlobalSyncStage>();
+    final MockServerSyncStage stageGetsReset = new MockServerSyncStage() {
+      @Override
+      public void resetLocal() {
+        yes.called = true;
+      }
+    };
+
+    final MockServerSyncStage stageNotReset = new MockServerSyncStage() {
+      @Override
+      public void resetLocal() {
+        no.called = true;
+      }
+    };
 
     // Side-effect: modifies global command processor.
-    final GlobalSession session = new MockPrefsGlobalSession(
+    final GlobalSession session = new MockGlobalSession(
         SyncConfiguration.DEFAULT_USER_API,
-        null,
-        TEST_USERNAME, TEST_PASSWORD, null,
+        TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
-        callback, null, null, null) {
+        callback) {
 
       @Override
       public boolean engineIsEnabled(String engineName,
@@ -96,26 +104,11 @@ public class TestResetCommands {
 
       @Override
       public void prepareStages() {
-        this.stages = stagesToRun;
+        super.prepareStages();
+        this.withStage(Stage.syncBookmarks, stageGetsReset);
+        this.withStage(Stage.syncHistory,   stageNotReset);
       }
     };
-
-    final MockServerSyncStage stageGetsReset = new MockServerSyncStage() {
-      @Override
-      public void resetLocal() {
-        yes.called = true;
-      }
-    };
-
-    final MockServerSyncStage stageNotReset = new MockServerSyncStage() {
-      @Override
-      public void resetLocal() {
-        no.called = true;
-      }
-    };
-
-    stagesToRun.put(Stage.syncBookmarks, stageGetsReset);
-    stagesToRun.put(Stage.syncHistory,   stageNotReset);
 
     final String resetBookmarks = "{\"args\":[\"bookmarks\"],\"command\":\"resetEngine\"}";
     ExtendedJSONObject unparsedCommand = new ExtendedJSONObject(resetBookmarks);

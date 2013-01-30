@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -76,6 +77,14 @@ public class TestGlobalSession {
     return WaitHelper.getTestWaiter();
   }
 
+  protected Set<Class<? extends Object>> getClasses(Collection<? extends Object> set) {
+    Set<Class<? extends Object>> newSet = new HashSet<Class<? extends Object>>();
+    for (Object o : set) {
+      newSet.add(o.getClass());
+    }
+    return newSet;
+  }
+
   @Test
   public void testGetSyncStagesBy() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, NoSuchStageException {
 
@@ -96,6 +105,8 @@ public class TestGlobalSession {
     final Set<GlobalSyncStage> bookmarksAndTabsSyncStages = new HashSet<GlobalSyncStage>();
     GlobalSyncStage bookmarksStage = s.getSyncStageByName("bookmarks");
     GlobalSyncStage tabsStage = s.getSyncStageByEnum(Stage.syncTabs);
+    assertNotNull(bookmarksStage);
+    assertNotNull(tabsStage);
     bookmarksAndTabsSyncStages.add(bookmarksStage);
     bookmarksAndTabsSyncStages.add(tabsStage);
 
@@ -104,8 +115,11 @@ public class TestGlobalSession {
     bookmarksAndTabsEnums.add(Stage.syncTabs);
 
     assertTrue(s.getSyncStagesByName(empty).isEmpty());
-    assertEquals(bookmarksAndTabsSyncStages, new HashSet<GlobalSyncStage>(s.getSyncStagesByName(bookmarksAndTabsNames)));
-    assertEquals(bookmarksAndTabsSyncStages, new HashSet<GlobalSyncStage>(s.getSyncStagesByEnum(bookmarksAndTabsEnums)));
+
+    // This is a little odd: global sessions create stage instances on demand,
+    // so we won't get identical instances.
+    assertEquals(getClasses(bookmarksAndTabsSyncStages), getClasses(s.getSyncStagesByName(bookmarksAndTabsNames)));
+    assertEquals(getClasses(bookmarksAndTabsSyncStages), getClasses(s.getSyncStagesByEnum(bookmarksAndTabsEnums)));
   }
 
   /**

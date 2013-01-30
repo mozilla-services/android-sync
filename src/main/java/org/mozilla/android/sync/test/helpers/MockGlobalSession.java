@@ -5,9 +5,11 @@ package org.mozilla.android.sync.test.helpers;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.sync.EngineSettings;
+import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
@@ -16,9 +18,11 @@ import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.CompletedStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+import org.mozilla.gecko.sync.stage.GlobalSyncStageFactory;
 
 
 public class MockGlobalSession extends MockPrefsGlobalSession {
+  public Map<Stage, GlobalSyncStage> stageOverrides;
 
   public MockGlobalSession(String clusterURL, String username, String password,
       KeyBundle syncKeyBundle, GlobalSessionCallback callback)
@@ -27,27 +31,31 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
   }
 
   @Override
-  public boolean engineIsEnabled(String engine, EngineSettings engineSettings) {
+  public boolean engineIsEnabled(String engine, EngineSettings engineSettings) throws MetaGlobalException {
     return false;
   }
 
   @Override
   protected void prepareStages() {
-    super.prepareStages();
-    HashMap<Stage, GlobalSyncStage> newStages = new HashMap<Stage, GlobalSyncStage>(this.stages);
+    this.stageOverrides = new HashMap<Stage, GlobalSyncStage>();
+    this.stageFactory = new GlobalSyncStageFactory() {
+      @Override
+      public GlobalSyncStage createGlobalSyncStage(Stage stage) {
+        if (stageOverrides.containsKey(stage)) {
+          return stageOverrides.get(stage);
+        }
 
-    for (Stage stage : this.stages.keySet()) {
-      newStages.put(stage, new MockServerSyncStage());
-    }
+        if (stage.equals(Stage.completed)) {
+          return new CompletedStage();
+        }
 
-    // This signals that the global session is complete.
-    newStages.put(Stage.completed, new CompletedStage());
-
-    this.stages = newStages;
-  }
+        return new MockServerSyncStage();
+      }
+    };
+  };
 
   public MockGlobalSession withStage(Stage stage, GlobalSyncStage syncStage) {
-    stages.put(stage, syncStage);
+    stageOverrides.put(stage, syncStage);
 
     return this;
   }
