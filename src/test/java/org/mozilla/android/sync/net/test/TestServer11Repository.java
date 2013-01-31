@@ -22,7 +22,7 @@ public class TestServer11Repository {
   @SuppressWarnings("static-method")
   @Test
   public void testCollectionURIFull() throws URISyntaxException {
-    Server11Repository r = new Server11Repository(COLLECTION, COLLECTION_URL, null);
+    Server11Repository r = new Server11Repository(COLLECTION, COLLECTION_URL, null, null);
     assertQueryEquals("full=1&newer=5000.000",              r.collectionURI(true,  5000000L, -1,    null, null));
     assertQueryEquals("newer=1230.000",                     r.collectionURI(false, 1230000L, -1,    null, null));
     assertQueryEquals("newer=5000.000&limit=10",            r.collectionURI(false, 5000000L, 10,    null, null));
@@ -32,8 +32,8 @@ public class TestServer11Repository {
 
   @Test
   public void testCollectionURI() throws URISyntaxException {
-    Server11Repository noTrailingSlash = new Server11Repository(COLLECTION, COLLECTION_URL, null);
-    Server11Repository trailingSlash = new Server11Repository(COLLECTION, COLLECTION_URL + "/", null);
+    Server11Repository noTrailingSlash = new Server11Repository(COLLECTION, COLLECTION_URL, null, null);
+    Server11Repository trailingSlash = new Server11Repository(COLLECTION, COLLECTION_URL + "/", null, null);
     Assert.assertEquals("http://foo.com/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks", noTrailingSlash.collectionURI().toASCIIString());
     Assert.assertEquals("http://foo.com/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/bookmarks", trailingSlash.collectionURI().toASCIIString());
   }
