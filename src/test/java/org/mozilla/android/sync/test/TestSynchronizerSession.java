@@ -5,7 +5,10 @@ package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +17,8 @@ import java.util.Map.Entry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.SynchronizerHelpers.DataAvailableWBORepository;
+import org.mozilla.android.sync.test.SynchronizerHelpers.ShouldSkipWBORepository;
+import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
@@ -43,8 +48,8 @@ public class TestSynchronizerSession {
     }
   }
 
-  protected DataAvailableWBORepository repoA = null;
-  protected DataAvailableWBORepository repoB = null;
+  protected WBORepository repoA = null;
+  protected WBORepository repoB = null;
   protected SynchronizerSession syncSession = null;
   protected Map<String, Record> originalWbosA = null;
   protected Map<String, Record> originalWbosB = null;
@@ -114,8 +119,8 @@ public class TestSynchronizerSession {
   }
 
   protected void doTest(boolean remoteDataAvailable, boolean localDataAvailable) {
-    repoA.dataAvailable = remoteDataAvailable;
-    repoB.dataAvailable = localDataAvailable;
+    ((DataAvailableWBORepository) repoA).dataAvailable = remoteDataAvailable;
+    ((DataAvailableWBORepository) repoB).dataAvailable = localDataAvailable;
 
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
@@ -229,5 +234,71 @@ public class TestSynchronizerSession {
     SynchronizerConfiguration sc = syncSession.getSynchronizer().save();
     TestSynchronizer.assertInRangeInclusive(before, sc.localBundle.getTimestamp(), after);
     TestSynchronizer.assertInRangeInclusive(before, sc.remoteBundle.getTimestamp(), after);
+  }
+
+  protected void doSkipTest(boolean remoteShouldSkip, boolean localShouldSkip) {
+    repoA = new ShouldSkipWBORepository(remoteShouldSkip);
+    repoB = new ShouldSkipWBORepository(localShouldSkip);
+
+    Synchronizer synchronizer = new Synchronizer();
+    synchronizer.repositoryA = repoA;
+    synchronizer.repositoryB = repoB;
+
+    syncSession = new SynchronizerSession(synchronizer, new SynchronizerSessionDelegate() {
+      @Override
+      public void onInitialized(SynchronizerSession session) {
+        session.synchronize();
+      }
+
+      @Override
+      public void onSynchronized(SynchronizerSession session) {
+        WaitHelper.getTestWaiter().performNotify(new RuntimeException("Not expecting onSynchronized"));
+      }
+
+      @Override
+      public void onSynchronizeFailed(SynchronizerSession session, Exception lastException, String reason) {
+        WaitHelper.getTestWaiter().performNotify(lastException);
+      }
+
+      @Override
+      public void onSynchronizeSkipped(SynchronizerSession synchronizerSession) {
+        WaitHelper.getTestWaiter().performNotify();
+      }
+    });
+
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        final Context context = null;
+        syncSession.init(context,
+            new RepositorySessionBundle(100),
+            new RepositorySessionBundle(200));
+      }
+    });
+
+    // If we skip, we don't update timestamps or even un-bundle.
+    SynchronizerConfiguration sc = syncSession.getSynchronizer().save();
+    assertNotNull(sc);
+    assertNull(sc.localBundle);
+    assertNull(sc.remoteBundle);
+    assertEquals(-1, syncSession.getInboundCount());
+    assertEquals(-1, syncSession.getOutboundCount());
+  }
+
+  @Test
+  public void testSynchronizerSessionShouldSkip() {
+    // These combinations should all skip.
+    doSkipTest(true, false);
+
+    doSkipTest(false, true);
+    doSkipTest(true, true);
+
+    try {
+      doSkipTest(false, false);
+      fail("Expected exception.");
+    } catch (WaitHelper.InnerError e) {
+      assertTrue(e.innerError instanceof RuntimeException);
+      assertEquals("Not expecting onSynchronized", e.innerError.getMessage());
+    }
   }
 }
