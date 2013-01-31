@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.mozilla.gecko.sync.CredentialsSource;
+import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
@@ -22,12 +23,14 @@ import android.content.Context;
  */
 public class Server11Repository extends Repository {
 
-  private String serverURI;
-  private String username;
-  protected String collection;
-  private String collectionPath;
-  private URI collectionPathURI;
-  public CredentialsSource credentialsSource;
+  protected final String serverURI;
+  protected final String username;
+  protected final String collection;
+  protected final InfoCollections infoCollections;
+
+  protected final String collectionPath;
+  protected final URI collectionPathURI;
+  protected final CredentialsSource credentialsSource;
   public static final String VERSION_PATH_FRAGMENT = "1.1/";
 
   /**
@@ -38,16 +41,19 @@ public class Server11Repository extends Repository {
    *        Username on the server (string)
    * @param collection
    *        Name of the collection (string)
+   * @param infoCollections
+   *        <code>InfoCollections</code> instance, or null.
    * @throws URISyntaxException
    */
-  public Server11Repository(String serverURI, String username, String collection, CredentialsSource credentialsSource) throws URISyntaxException {
+  public Server11Repository(String serverURI, String username, String collection, InfoCollections infoCollections, CredentialsSource credentialsSource) throws URISyntaxException {
     this.serverURI  = serverURI;
     this.username   = username;
     this.collection = collection;
+    this.infoCollections = infoCollections;
+    this.credentialsSource = credentialsSource;
 
     this.collectionPath = this.serverURI + VERSION_PATH_FRAGMENT + this.username + "/storage/" + this.collection;
     this.collectionPathURI = new URI(this.collectionPath);
-    this.credentialsSource = credentialsSource;
   }
 
   @Override
@@ -108,5 +114,13 @@ public class Server11Repository extends Repository {
   @SuppressWarnings("static-method")
   protected String getDefaultSort() {
     return null;
+  }
+
+  public boolean updateNeeded(long lastSyncTimestamp) {
+    if (infoCollections == null) {
+      return true;
+    }
+
+    return infoCollections.updateNeeded(collection, lastSyncTimestamp);
   }
 }

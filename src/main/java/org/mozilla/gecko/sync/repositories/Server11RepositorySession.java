@@ -607,4 +607,9 @@ public class Server11RepositorySession extends RepositorySession {
       request.post(body);
     }
   }
+
+  @Override
+  public boolean dataAvailable() {
+    return serverRepository.updateNeeded(lastSyncTimestamp);
+  }
 }

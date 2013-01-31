@@ -148,6 +148,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     return new Server11Repository(session.config.getClusterURLString(),
                                   session.config.username,
                                   getCollection(),
+                                  session.config.infoCollections,
                                   session);
   }
 
