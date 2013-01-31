@@ -255,4 +255,29 @@ public class SynchronizerHelpers {
       }
     }
   }
+
+  public static class ShouldSkipWBORepository extends TrackingWBORepository {
+    public boolean shouldSkip = true;
+
+    public ShouldSkipWBORepository(boolean shouldSkip) {
+      this.shouldSkip = shouldSkip;
+    }
+
+    @Override
+    public void createSession(RepositorySessionCreationDelegate delegate,
+                              Context context) {
+      delegate.deferredCreationDelegate().onSessionCreated(new ShouldSkipWBORepositorySession(this));
+    }
+
+    public class ShouldSkipWBORepositorySession extends WBORepositorySession {
+      public ShouldSkipWBORepositorySession(WBORepository repository) {
+        super(repository);
+      }
+
+      @Override
+      public boolean shouldSkip() {
+        return shouldSkip;
+      }
+    }
+  }
 }
