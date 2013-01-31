@@ -230,4 +230,29 @@ public class SynchronizerHelpers {
       }
     }
   }
+
+  public static class DataAvailableWBORepository extends TrackingWBORepository {
+    public boolean dataAvailable = true;
+
+    public DataAvailableWBORepository(boolean dataAvailable) {
+      this.dataAvailable = dataAvailable;
+    }
+
+    @Override
+    public void createSession(RepositorySessionCreationDelegate delegate,
+                              Context context) {
+      delegate.deferredCreationDelegate().onSessionCreated(new DataAvailableWBORepositorySession(this));
+    }
+
+    public class DataAvailableWBORepositorySession extends WBORepositorySession {
+      public DataAvailableWBORepositorySession(WBORepository repository) {
+        super(repository);
+      }
+
+      @Override
+      public boolean dataAvailable() {
+        return dataAvailable;
+      }
+    }
+  }
 }
