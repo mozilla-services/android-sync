@@ -153,7 +153,7 @@ public class TestServer11RepositorySession {
     final String COLLECTION = "test";
 
     final TrackingWBORepository local = getLocal(100);
-    final Server11Repository remote = new Server11Repository(COLLECTION, getCollectionURL(COLLECTION), authHeaderProvider);
+    final Server11Repository remote = new Server11Repository(COLLECTION, getCollectionURL(COLLECTION), authHeaderProvider, null);
     KeyBundle collectionKey = new KeyBundle(TEST_USERNAME, SYNC_KEY);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey);
     cryptoRepo.recordFactory = new BookmarkRecordFactory();
@@ -196,6 +196,7 @@ public class TestServer11RepositorySession {
   @Test
   public void testStorePostFailure() throws Exception {
     MockServer server = new MockServer() {
+      @Override
       public void handle(Request request, Response response) {
         if (request.getMethod().equals("POST")) {
           this.handle(request, response, 404, "missing");
@@ -213,6 +214,7 @@ public class TestServer11RepositorySession {
   @Test
   public void testConstraints() throws Exception {
     MockServer server = new MockServer() {
+      @Override
       public void handle(Request request, Response response) {
         if (request.getMethod().equals("GET")) {
           if (request.getPath().getPath().endsWith("/info/collection_counts")) {
@@ -226,7 +228,9 @@ public class TestServer11RepositorySession {
     String collection = "bookmarks";
     final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(collection,
         getCollectionURL(collection),
-        getAuthHeaderProvider(), 5000, "sortindex", countsFetcher);
+        getAuthHeaderProvider(),
+        null,
+        5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);
     final AtomicBoolean out = new AtomicBoolean(false);

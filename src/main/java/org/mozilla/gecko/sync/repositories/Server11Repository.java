@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
+import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
@@ -24,6 +25,7 @@ public class Server11Repository extends Repository {
   protected String collection;
   protected URI collectionURI;
   protected final AuthHeaderProvider authHeaderProvider;
+  protected final InfoCollections infoCollections;
 
   /**
    * Construct a new repository that fetches and stores against the Sync 1.1. API.
@@ -32,11 +34,14 @@ public class Server11Repository extends Repository {
    * @param storageURL full URL to storage endpoint.
    * @param authHeaderProvider to use in requests.
    * @throws URISyntaxException
+   * @param infoCollections
+   *        <code>InfoCollections</code> instance, or null.
    */
-  public Server11Repository(String collection, String storageURL, AuthHeaderProvider authHeaderProvider) throws URISyntaxException {
+  public Server11Repository(String collection, String storageURL, AuthHeaderProvider authHeaderProvider, InfoCollections infoCollections) throws URISyntaxException {
     this.collection = collection;
     this.collectionURI = new URI(storageURL + (storageURL.endsWith("/") ? collection : "/" + collection));
     this.authHeaderProvider = authHeaderProvider;
+    this.infoCollections = infoCollections;
   }
 
   @Override
@@ -101,5 +106,13 @@ public class Server11Repository extends Repository {
 
   public AuthHeaderProvider getAuthHeaderProvider() {
     return authHeaderProvider;
+  }
+
+  public boolean updateNeeded(long lastSyncTimestamp) {
+    if (infoCollections == null) {
+      return true;
+    }
+
+    return infoCollections.updateNeeded(collection, lastSyncTimestamp);
   }
 }
