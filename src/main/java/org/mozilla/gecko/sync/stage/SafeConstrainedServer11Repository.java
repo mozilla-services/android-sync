@@ -64,29 +64,26 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
 
     @Override
     public boolean shouldSkip() {
-      // If this is a first sync, verify that we aren't going to blow through our limit.
-      if (this.lastSyncTimestamp <= 0) {
-
-        final InfoCounts counts;
-        try {
-          // This'll probably be the same object, but best to obey the API.
-          counts = new InfoCounts(countFetcher.fetchBlocking());
-        } catch (Exception e) {
-          Logger.warn(LOG_TAG, "Skipping " + collection + " until we can fetch counts.", e);
-          return true;
-        }
-
-        Integer c = counts.getCount(collection);
-        if (c == null) {
-          return false;
-        }
-
-        Logger.info(LOG_TAG, "First sync for " + collection + ": " + c.intValue() + " items.");
-        if (c.intValue() > fetchLimit) {
-          Logger.warn(LOG_TAG, "Too many items to sync safely. Skipping.");
-          return true;
-        }
+      final InfoCounts counts;
+      try {
+        // This'll probably be the same object, but best to obey the API.
+        counts = new InfoCounts(countFetcher.fetchBlocking());
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Skipping " + collection + " until we can fetch counts.", e);
+        return true;
       }
+
+      Integer c = counts.getCount(collection);
+      if (c == null) {
+        return false;
+      }
+
+      Logger.info(LOG_TAG, "Syncing collection " + collection + " with " + c.intValue() + " items.");
+      if (c.intValue() > fetchLimit) {
+        Logger.warn(LOG_TAG, "Too many items to sync safely. Skipping.");
+        return true;
+      }
+
       return super.shouldSkip();
     }
   }
