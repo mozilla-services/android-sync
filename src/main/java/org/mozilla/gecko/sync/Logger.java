@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.sync;
 
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -11,6 +12,7 @@ import java.util.Set;
 import org.mozilla.gecko.sync.log.writers.AndroidLevelCachingLogWriter;
 import org.mozilla.gecko.sync.log.writers.AndroidLogWriter;
 import org.mozilla.gecko.sync.log.writers.LogWriter;
+import org.mozilla.gecko.sync.log.writers.PrintLogWriter;
 import org.mozilla.gecko.sync.log.writers.SimpleTagLogWriter;
 import org.mozilla.gecko.sync.log.writers.ThreadLocalTagLogWriter;
 
@@ -114,6 +116,10 @@ public class Logger {
   public static synchronized void resetLogging() {
     stopLoggingToAll();
     logWriters.addAll(Logger.defaultLogWriters());
+  }
+
+  public static synchronized void startLoggingToConsole() {
+    logWriters.add(new PrintLogWriter(new PrintWriter(System.out, true)));
   }
 
   // Synchronized version for other classes to use.
