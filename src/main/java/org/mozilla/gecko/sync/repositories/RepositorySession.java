@@ -174,10 +174,6 @@ public abstract class RepositorySession {
     delegate.deferredBeginDelegate(delegateQueue).onBeginSucceeded(this);
   }
 
-  protected RepositorySessionBundle getBundle() {
-    return this.getBundle(null);
-  }
-
   /**
    * Override this in your subclasses to return values to save between sessions.
    * Note that RepositorySession automatically bumps the timestamp to the time
@@ -187,9 +183,9 @@ public abstract class RepositorySession {
    * The Synchronizer most likely wants to bump the bundle timestamp to be a value
    * return from a fetch call.
    */
-  protected RepositorySessionBundle getBundle(RepositorySessionBundle optional) {
+  protected RepositorySessionBundle getBundle() {
     // Why don't we just persist the old bundle?
-    RepositorySessionBundle bundle = (optional == null) ? new RepositorySessionBundle(this.lastSyncTimestamp) : optional;
+    RepositorySessionBundle bundle = new RepositorySessionBundle(this.lastSyncTimestamp);
     Logger.debug(LOG_TAG, "Setting bundle timestamp to " + this.lastSyncTimestamp + ".");
 
     return bundle;
@@ -201,7 +197,7 @@ public abstract class RepositorySession {
    */
   public void abort(RepositorySessionFinishDelegate delegate) {
     this.abort();
-    delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
+    delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle());
   }
 
   /**
@@ -233,7 +229,7 @@ public abstract class RepositorySession {
   public void finish(final RepositorySessionFinishDelegate delegate) throws InactiveSessionException {
     try {
       this.transitionFrom(SessionStatus.ACTIVE, SessionStatus.DONE);
-      delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle(null));
+      delegate.deferredFinishDelegate(delegateQueue).onFinishSucceeded(this, this.getBundle());
     } catch (InvalidSessionTransitionException e) {
       Logger.error(LOG_TAG, "Tried to finish() an unstarted or already finished session");
       throw new InactiveSessionException(e);
