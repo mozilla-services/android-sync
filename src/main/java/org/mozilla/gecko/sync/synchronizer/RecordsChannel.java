@@ -82,7 +82,7 @@ public class RecordsChannel implements
     this.source    = source;
     this.sink      = sink;
     this.delegate  = delegate;
-    this.timestamp = source.lastSyncTimestamp;
+    this.timestamp = source.getLastSyncTimestamp();
   }
 
   /*

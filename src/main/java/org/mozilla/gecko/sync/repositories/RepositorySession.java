@@ -70,7 +70,11 @@ public abstract class RepositorySession {
   protected ExecutorService storeWorkQueue = Executors.newSingleThreadExecutor();
 
   // The time that the last sync on this collection completed, in milliseconds since epoch.
-  public long lastSyncTimestamp;
+  private long lastSyncTimestamp = 0;
+
+  public long getLastSyncTimestamp() {
+    return lastSyncTimestamp;
+  }
 
   public static long now() {
     return System.currentTimeMillis();
@@ -142,10 +146,6 @@ public abstract class RepositorySession {
 
   public abstract void wipe(RepositorySessionWipeDelegate delegate);
 
-  public void unbundle(RepositorySessionBundle bundle) {
-    this.lastSyncTimestamp = bundle == null ? 0 : bundle.getTimestamp();
-  }
-
   /**
    * Synchronously perform the shared work of beginning. Throws on failure.
    * @throws InvalidSessionTransitionException
@@ -174,6 +174,10 @@ public abstract class RepositorySession {
     delegate.deferredBeginDelegate(delegateQueue).onBeginSucceeded(this);
   }
 
+  public void unbundle(RepositorySessionBundle bundle) {
+    this.lastSyncTimestamp = bundle == null ? 0 : bundle.getTimestamp();
+  }
+
   /**
    * Override this in your subclasses to return values to save between sessions.
    * Note that RepositorySession automatically bumps the timestamp to the time
@@ -185,8 +189,9 @@ public abstract class RepositorySession {
    */
   protected RepositorySessionBundle getBundle() {
     // Why don't we just persist the old bundle?
-    RepositorySessionBundle bundle = new RepositorySessionBundle(this.lastSyncTimestamp);
-    Logger.debug(LOG_TAG, "Setting bundle timestamp to " + this.lastSyncTimestamp + ".");
+    long timestamp = getLastSyncTimestamp();
+    RepositorySessionBundle bundle = new RepositorySessionBundle(timestamp);
+    Logger.debug(LOG_TAG, "Setting bundle timestamp to " + timestamp + ".");
 
     return bundle;
   }

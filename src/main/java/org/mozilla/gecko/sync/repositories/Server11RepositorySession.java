@@ -610,6 +610,6 @@ public class Server11RepositorySession extends RepositorySession {
 
   @Override
   public boolean dataAvailable() {
-    return serverRepository.updateNeeded(lastSyncTimestamp);
+    return serverRepository.updateNeeded(getLastSyncTimestamp());
   }
 }
