@@ -66,6 +66,7 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
     @Override
     public boolean shouldSkip() {
       // If this is a first sync, verify that we aren't going to blow through our limit.
+      final long lastSyncTimestamp = getLastSyncTimestamp();
       if (lastSyncTimestamp > 0) {
         Logger.info(LOG_TAG, "Collection " + collection + " has already had a first sync: " +
             "timestamp is " + lastSyncTimestamp  + "; " +
