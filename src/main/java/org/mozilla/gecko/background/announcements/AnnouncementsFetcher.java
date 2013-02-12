@@ -61,9 +61,9 @@ public class AnnouncementsFetcher {
    * time can be returned, we return -1.
    *
    * @param lastLaunch
-   *          Unix timestamp at which the browser was last launched.
+   *          Time at which the browser was last launched, in milliseconds since epoch.
    * @param now
-   *          Unix timestamp for which idle time should be calculated.
+   *          Milliseconds since epoch for which idle time should be calculated.
    * @return number of idle days, or -1 if out of range.
    */
   protected static int getIdleDays(final long lastLaunch, final long now) {

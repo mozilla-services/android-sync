@@ -89,15 +89,16 @@ public class AnnouncementsBroadcastService extends IntentService {
       return;
     }
 
-    if (now > AnnouncementsConstants.MAX_LAUNCH_TIMESTAMP) {
+    if (now > AnnouncementsConstants.LATEST_ACCEPTED_LAUNCH_TIMESTAMP) {
       Logger.warn(LOG_TAG, "Launch time " + now + " is later than max sane launch timestamp " +
-                           AnnouncementsConstants.MAX_LAUNCH_TIMESTAMP);
+                           AnnouncementsConstants.LATEST_ACCEPTED_LAUNCH_TIMESTAMP +
+                           ". Ignoring until clock is corrected.");
       return;
     }
 
     if (previous > now) {
       Logger.debug(LOG_TAG, "Previous launch " + previous + " later than current time " +
-                            now + ", but new time is sane.");
+                            now + ", but new time is sane. Accepting new time.");
     }
 
     preferences.edit().putLong(AnnouncementsConstants.PREF_LAST_LAUNCH, now).commit();
