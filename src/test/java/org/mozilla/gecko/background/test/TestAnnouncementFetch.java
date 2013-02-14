@@ -22,6 +22,7 @@ import org.mozilla.gecko.background.announcements.Announcement;
 import org.mozilla.gecko.background.announcements.AnnouncementsConstants;
 import org.mozilla.gecko.background.announcements.AnnouncementsFetchDelegate;
 import org.mozilla.gecko.background.announcements.AnnouncementsFetcher;
+import org.mozilla.gecko.sync.GlobalConstants;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.simpleframework.http.Path;
 import org.simpleframework.http.Request;
@@ -37,6 +38,7 @@ public class TestAnnouncementFetch {
   private static final String BASE_PATH   = "/announce/";
   private static final String BASE_URI    = TEST_SERVER + BASE_PATH + AnnouncementsConstants.ANNOUNCE_PATH_SUFFIX;
 
+  private static long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
   private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
   private static void debug(String s) {
@@ -393,5 +395,42 @@ public class TestAnnouncementFetch {
     } finally {
       data.stopHTTPServer();
     }
+  }
+
+  private static class IdleChecker extends AnnouncementsFetcher {
+    public static void check(long launch, long now, int expected) {
+      Assert.assertEquals(expected, AnnouncementsFetcher.getIdleDays(launch, now));
+    }
+  }
+
+  @SuppressWarnings("static-method")
+  @Test
+  public void testIdleTimes() {
+    final long now = System.currentTimeMillis();
+    final long twoDaysAgo = now - (2 * MILLISECONDS_PER_DAY);
+
+    // Last launch out of bounds.
+    IdleChecker.check(-10, now, -1);
+
+    // Valid.
+    IdleChecker.check(twoDaysAgo, now, 2);
+
+    // Now too early.
+    IdleChecker.check(twoDaysAgo, GlobalConstants.BUILD_TIMESTAMP - 1, -1);
+
+    // Nearly max.
+    IdleChecker.check(twoDaysAgo,
+                      (twoDaysAgo + AnnouncementsConstants.MAX_SANE_IDLE_DAYS * MILLISECONDS_PER_DAY) - 1,
+                      (int) (AnnouncementsConstants.MAX_SANE_IDLE_DAYS - 1));
+
+    // Max (limit).
+    IdleChecker.check(twoDaysAgo,
+                      (twoDaysAgo + AnnouncementsConstants.MAX_SANE_IDLE_DAYS * MILLISECONDS_PER_DAY),
+                      (int) (AnnouncementsConstants.MAX_SANE_IDLE_DAYS));
+
+    // Over maximum idle.
+    IdleChecker.check(twoDaysAgo,
+                      (twoDaysAgo + (AnnouncementsConstants.MAX_SANE_IDLE_DAYS + 1) * MILLISECONDS_PER_DAY),
+                      -1);
   }
 }
