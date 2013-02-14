@@ -103,6 +103,7 @@ SYNC_RES_DRAWABLE_HDPI=$(find res/drawable-hdpi  -not -name 'icon.png' -not -nam
 
 SYNC_RES_LAYOUT=$(find res/layout -name '*.xml')
 SYNC_RES_VALUES="res/values/sync_styles.xml"
+SYNC_RES_VALUES_V11="res/values-v11/sync_styles.xml"
 SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
 # XML resources that do not need to be preprocessed.
 SYNC_RES_XML=""
@@ -119,6 +120,7 @@ dump_mkfile_variable "SYNC_RES_DRAWABLE_HDPI" "$SYNC_RES_DRAWABLE_HDPI"
 
 dump_mkfile_variable "SYNC_RES_LAYOUT" "$SYNC_RES_LAYOUT"
 dump_mkfile_variable "SYNC_RES_VALUES" "$SYNC_RES_VALUES"
+dump_mkfile_variable "SYNC_RES_VALUES_V11" "$SYNC_RES_VALUES_V11"
 dump_mkfile_variable "SYNC_RES_VALUES_LARGE_V11" "$SYNC_RES_VALUES_LARGE_V11"
 dump_mkfile_variable "SYNC_RES_XML" "$SYNC_RES_XML"
 dump_mkfile_variable "SYNC_PP_RES_XML" "$SYNC_PP_RES_XML"
@@ -153,6 +155,7 @@ rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-mdpi $
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-ldpi $ANDROID/base/resources/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 rsync -a res/values/sync_styles.xml $ANDROID/base/resources/values/
+rsync -a res/values-v11/sync_styles.xml $ANDROID/base/resources/values-v11/
 rsync -a res/values-large-v11/sync_styles.xml $ANDROID/base/resources/values-large-v11/
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -a strings/strings.xml.in $SERVICES/
