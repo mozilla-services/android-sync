@@ -21,8 +21,8 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDele
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.Tab;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
-import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 import android.content.ContentProviderClient;
 import android.content.ContentValues;
@@ -330,7 +330,7 @@ public class FennecTabsRepository extends Repository {
   public static TabsRecord tabsRecordFromCursor(final Cursor cursor, final String clientGuid, final String clientName) {
     final String collection = "tabs";
     final TabsRecord record = new TabsRecord(clientGuid, collection, 0, false);
-    record.tabs = new ArrayList<TabsRecord.Tab>();
+    record.tabs = new ArrayList<Tab>();
     record.clientName = clientName;
 
     record.androidID = -1;
