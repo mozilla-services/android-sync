@@ -18,6 +18,7 @@
       -->
 
 #include manifests/SyncAndroidManifest_permissions.xml.in
+#include manifests/PICLAccountAndroidManifest_permissions.xml.in
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
@@ -31,6 +32,7 @@
 #include manifests/SyncAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
 
+#include manifests/PICLAccountAndroidManifest_services.xml.in
     </application>
 
     <instrumentation
