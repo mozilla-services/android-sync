@@ -124,6 +124,7 @@ def main():
         "src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java.in",
         "src/main/java/org/mozilla/gecko/sync/SyncConstants.java.in",
         "src/main/java/org/mozilla/gecko/db/BrowserContract.java.in",
+        "src/main/java/org/mozilla/gecko/picl/PICLAccountConstants.java.in",
         "AndroidManifest.xml.in",
         "test/AndroidManifest.xml.in",
         ]
@@ -133,6 +134,7 @@ def main():
         "sync_authenticator.xml.template": "res/xml/sync_authenticator.xml",
         "sync_syncadapter.xml.template":   "res/xml/sync_syncadapter.xml",
         "sync_options.xml.template":       "res/xml/sync_options.xml",
+        "picl_authenticator.xml.template": "res/xml/picl_authenticator.xml",
         }
 
     for input_filename in dot_ins:
