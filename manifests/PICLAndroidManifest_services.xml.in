@@ -9,3 +9,14 @@
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/picl_authenticator" />
         </service>
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.picl.PICLSyncService" >
+            <intent-filter >
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/picl_syncadapter" />
+        </service>

@@ -6,6 +6,7 @@ src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
 src/main/java/org/mozilla/gecko/sync/SyncConstants.java
 src/main/java/org/mozilla/gecko/db/BrowserContract.java
 res/xml/picl_authenticator.xml
+res/xml/picl_syncadapter.xml
 res/xml/sync_authenticator.xml
 res/xml/sync_syncadapter.xml
 res/xml/sync_options.xml

@@ -110,6 +110,7 @@ def main():
         "sync_syncadapter.xml.template":   "res/xml/sync_syncadapter.xml",
         "sync_options.xml.template":       "res/xml/sync_options.xml",
         "picl_authenticator.xml.template": "res/xml/picl_authenticator.xml",
+        "picl_syncadapter.xml.template":   "res/xml/picl_syncadapter.xml",
         }
 
     for input_filename in dot_ins:
