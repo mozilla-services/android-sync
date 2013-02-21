@@ -33,7 +33,29 @@ public class PICLAccountAuthenticator extends AbstractAccountAuthenticator {
           throws NetworkErrorException {
     Logger.debug(LOG_TAG, "addAccount");
 
-    throw new NetworkErrorException("Not yet implemented.");
+    final Bundle res = new Bundle();
+
+    if (!PICLAccountConstants.ACCOUNT_TYPE.equals(accountType)) {
+      res.putInt(AccountManager.KEY_ERROR_CODE, -1);
+      res.putString(AccountManager.KEY_ERROR_MESSAGE, "Not adding unknown account type.");
+      return res;
+    }
+
+    final Account account = new Account("test@test.com", PICLAccountConstants.ACCOUNT_TYPE);
+    final String password = "password";
+    final Bundle userData = Bundle.EMPTY;
+
+    if (!accountManager.addAccountExplicitly(account, password, userData)) {
+      res.putInt(AccountManager.KEY_ERROR_CODE, -1);
+      res.putString(AccountManager.KEY_ERROR_MESSAGE, "Failed to add account explicitly.");
+      return res;
+    }
+
+    Logger.info(LOG_TAG, "Added account named " + account.name + " of type " + account.type);
+
+    res.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
+    res.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
+    return res;
   }
 
   @Override
