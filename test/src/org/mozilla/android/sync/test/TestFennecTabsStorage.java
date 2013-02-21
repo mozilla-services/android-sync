@@ -4,9 +4,9 @@
 package org.mozilla.android.sync.test;
 
 import org.json.simple.JSONArray;
+import org.mozilla.gecko.background.db.CursorDumper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
@@ -260,7 +260,7 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
     try {
       // Keep this in sync with the Fennec schema.
       cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, BrowserContract.Tabs.CLIENT_GUID + " IS NULL", null, positionAscending);
-      RepoUtils.dumpCursor(cursor);
+      CursorDumper.dumpCursor(cursor);
 
       final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
 
