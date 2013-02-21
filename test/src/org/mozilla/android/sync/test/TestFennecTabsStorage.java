@@ -5,9 +5,9 @@ package org.mozilla.android.sync.test;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.background.db.CursorDumper;
+import org.mozilla.gecko.background.db.Tab;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
-import org.mozilla.gecko.sync.repositories.domain.Tab;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
 
 import android.content.ContentProviderClient;

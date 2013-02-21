@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.db.Tab;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserContract.Tabs;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
@@ -21,7 +22,6 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDele
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionGuidsSinceDelegate;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
-import org.mozilla.gecko.sync.repositories.domain.Tab;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
 
 import android.content.ContentProviderClient;
