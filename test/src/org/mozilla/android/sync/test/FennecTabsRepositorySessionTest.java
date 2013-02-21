@@ -6,12 +6,12 @@ package org.mozilla.android.sync.test;
 import org.json.simple.JSONArray;
 import org.mozilla.android.sync.test.helpers.ExpectFetchDelegate;
 import org.mozilla.android.sync.test.helpers.SessionTestHelper;
+import org.mozilla.gecko.background.db.CursorDumper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.NoContentProviderException;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository.FennecTabsRepositorySession;
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
@@ -162,7 +162,7 @@ public class FennecTabsRepositorySessionTest extends AndroidSyncTestCase {
     try {
       cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null,
           TEST_TABS_CLIENT_GUID_IS_LOCAL_SELECTION, TEST_TABS_CLIENT_GUID_IS_LOCAL_SELECTION_ARGS, positionAscending);
-      RepoUtils.dumpCursor(cursor);
+      CursorDumper.dumpCursor(cursor);
 
       final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
 
