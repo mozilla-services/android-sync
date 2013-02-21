@@ -14,8 +14,8 @@ import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository.FennecTabsRepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.Tab;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
-import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;

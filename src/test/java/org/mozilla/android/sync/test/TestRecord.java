@@ -21,8 +21,8 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
+import org.mozilla.gecko.sync.repositories.domain.Tab;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
-import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 public class TestRecord {
 
