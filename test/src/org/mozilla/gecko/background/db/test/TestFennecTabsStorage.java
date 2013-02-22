@@ -1,18 +1,20 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.android.sync.test;
+package org.mozilla.gecko.background.db.test;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.background.db.Tab;
 import org.mozilla.gecko.db.BrowserContract;
 
+import android.app.Activity;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.test.ActivityInstrumentationTestCase2;
 
 /**
  * Exercise Fennec's tabs provider.
@@ -20,7 +22,7 @@ import android.os.RemoteException;
  * @author rnewman
  *
  */
-public class TestFennecTabsStorage extends AndroidSyncTestCase {
+public class TestFennecTabsStorage extends ActivityInstrumentationTestCase2<Activity> {
   public static final String TEST_CLIENT_GUID = "test guid"; // Real GUIDs never contain spaces.
   public static final String TEST_CLIENT_NAME = "test client name";
 
@@ -30,13 +32,17 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
   protected Tab testTab2;
   protected Tab testTab3;
 
+  public TestFennecTabsStorage() {
+    super(Activity.class);
+  }
+
   protected ContentProviderClient getClientsClient() {
-    final ContentResolver cr = getApplicationContext().getContentResolver();
+    final ContentResolver cr = getInstrumentation().getTargetContext().getApplicationContext().getContentResolver();
     return cr.acquireContentProviderClient(BrowserContract.Clients.CONTENT_URI);
   }
 
   protected ContentProviderClient getTabsClient() {
-    final ContentResolver cr = getApplicationContext().getContentResolver();
+    final ContentResolver cr = getInstrumentation().getTargetContext().getApplicationContext().getContentResolver();
     return cr.acquireContentProviderClient(BrowserContract.Tabs.CONTENT_URI);
   }
 
