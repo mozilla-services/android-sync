@@ -6,19 +6,19 @@ package org.mozilla.android.sync.test;
 import junit.framework.AssertionFailedError;
 
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.gecko.sync.StubActivity;
 
+import android.app.Activity;
 import android.content.Context;
 import android.test.ActivityInstrumentationTestCase2;
 
 /**
  * AndroidSyncTestCase provides helper methods for testing.
  */
-public class AndroidSyncTestCase extends ActivityInstrumentationTestCase2<StubActivity> {
+public class AndroidSyncTestCase extends ActivityInstrumentationTestCase2<Activity> {
   protected static String LOG_TAG = "AndroidSyncTestCase";
 
   public AndroidSyncTestCase() {
-    super(StubActivity.class);
+    super(Activity.class);
     WaitHelper.resetTestWaiter();
   }
 

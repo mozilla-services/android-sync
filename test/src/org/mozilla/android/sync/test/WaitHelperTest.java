@@ -8,14 +8,9 @@ import junit.framework.AssertionFailedError;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper.InnerError;
 import org.mozilla.android.sync.test.helpers.WaitHelper.TimeoutError;
-import org.mozilla.gecko.sync.StubActivity;
 import org.mozilla.gecko.sync.ThreadPool;
 
-import android.test.ActivityInstrumentationTestCase2;
-
-// Extend ActivityInstrumentationTestCase2 rather than AndroidSyncTestCase
-// since we want a fresh WaitHelper each test.
-public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivity> {
+public class WaitHelperTest extends AndroidSyncTestCase {
   private static final String ERROR_UNIQUE_IDENTIFIER = "error unique identifier";
 
   public static int NO_WAIT    = 1;               // Milliseconds.
@@ -64,7 +59,7 @@ public class WaitHelperTest extends ActivityInstrumentationTestCase2<StubActivit
   public WaitHelper waitHelper;
 
   public WaitHelperTest() {
-    super(StubActivity.class);
+    super();
   }
 
   public void setUp() {
