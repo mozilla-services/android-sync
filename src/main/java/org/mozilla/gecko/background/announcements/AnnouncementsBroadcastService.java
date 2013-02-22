@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 
 import org.mozilla.gecko.background.BackgroundService;
 import org.mozilla.gecko.background.common.GlobalConstants;
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;

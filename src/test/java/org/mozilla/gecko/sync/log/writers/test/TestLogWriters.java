@@ -14,13 +14,13 @@ import java.util.concurrent.CountDownLatch;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.log.writers.LevelFilteringLogWriter;
-import org.mozilla.gecko.sync.log.writers.LogWriter;
-import org.mozilla.gecko.sync.log.writers.PrintLogWriter;
-import org.mozilla.gecko.sync.log.writers.SimpleTagLogWriter;
-import org.mozilla.gecko.sync.log.writers.StringLogWriter;
-import org.mozilla.gecko.sync.log.writers.ThreadLocalTagLogWriter;
+import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.common.log.writers.LevelFilteringLogWriter;
+import org.mozilla.gecko.background.common.log.writers.LogWriter;
+import org.mozilla.gecko.background.common.log.writers.PrintLogWriter;
+import org.mozilla.gecko.background.common.log.writers.SimpleTagLogWriter;
+import org.mozilla.gecko.background.common.log.writers.StringLogWriter;
+import org.mozilla.gecko.background.common.log.writers.ThreadLocalTagLogWriter;
 
 import android.util.Log;
 

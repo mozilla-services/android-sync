@@ -4,10 +4,10 @@
 package org.mozilla.android.sync.log.test;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
-import org.mozilla.gecko.sync.Logger;
-import org.mozilla.gecko.sync.log.writers.AndroidLevelCachingLogWriter;
-import org.mozilla.gecko.sync.log.writers.AndroidLogWriter;
-import org.mozilla.gecko.sync.log.writers.LogWriter;
+import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.common.log.writers.AndroidLevelCachingLogWriter;
+import org.mozilla.gecko.background.common.log.writers.AndroidLogWriter;
+import org.mozilla.gecko.background.common.log.writers.LogWriter;
 
 public class TestAndroidLogWriters extends AndroidSyncTestCase {
   public static final String TEST_LOG_TAG = "TestAndroidLogWriters";

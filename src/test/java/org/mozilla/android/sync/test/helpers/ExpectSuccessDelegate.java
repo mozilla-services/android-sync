@@ -3,7 +3,7 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 
 public class ExpectSuccessDelegate {
   public WaitHelper waitHelper;

@@ -7,7 +7,7 @@ package org.mozilla.gecko.sync.setup;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
