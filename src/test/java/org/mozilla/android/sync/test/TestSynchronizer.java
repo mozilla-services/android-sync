@@ -18,7 +18,7 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;

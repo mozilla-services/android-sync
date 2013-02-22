@@ -11,7 +11,7 @@ import java.net.SocketAddress;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.simpleframework.transport.connect.Connection;

@@ -6,7 +6,7 @@ package org.mozilla.gecko.sync.receivers;
 
 import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.background.common.GlobalConstants;
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.config.ConfigurationMigrator;

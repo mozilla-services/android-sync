@@ -20,7 +20,7 @@ import org.mozilla.android.sync.test.SynchronizerHelpers.SerialFailStoreWBORepos
 import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
 import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.StoreFailedException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
