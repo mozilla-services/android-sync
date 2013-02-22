@@ -4,6 +4,7 @@
 package org.mozilla.android.sync.test;
 
 import org.mozilla.gecko.background.db.CursorDumper;
+import org.mozilla.gecko.background.db.test.TestFennecTabsStorage;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
