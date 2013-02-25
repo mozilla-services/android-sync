@@ -42,4 +42,32 @@ public abstract class BackgroundService extends IntentService {
     }
     return networkInfo.isAvailable();
   }
+
+  protected static PendingIntent createPendingIntent(Context context, Class<? extends BroadcastReceiver> broadcastReceiverClass) {
+    final Intent service = new Intent(context, broadcastReceiverClass);
+    return PendingIntent.getBroadcast(context, 0, service, PendingIntent.FLAG_CANCEL_CURRENT);
+  }
+
+  protected AlarmManager getAlarmManager() {
+    return getAlarmManager(this.getApplicationContext());
+  }
+
+  protected static AlarmManager getAlarmManager(Context context) {
+    return (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+  }
+
+  protected void scheduleAlarm(long pollInterval, PendingIntent pendingIntent) {
+    Logger.info(LOG_TAG, "Setting inexact repeating alarm for interval " + pollInterval);
+    if (pollInterval <= 0) {
+        throw new IllegalArgumentException("pollInterval " + pollInterval + " must be positive");
+    }
+    final AlarmManager alarm = getAlarmManager();
+    final long firstEvent = System.currentTimeMillis();
+    alarm.setInexactRepeating(AlarmManager.RTC, firstEvent, pollInterval, pendingIntent);
+  }
+
+  protected void cancelAlarm(PendingIntent pendingIntent) {
+    final AlarmManager alarm = getAlarmManager();
+    alarm.cancel(pendingIntent);
+  }
 }
