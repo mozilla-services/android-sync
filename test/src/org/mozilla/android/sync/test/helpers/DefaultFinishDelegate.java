@@ -5,7 +5,7 @@ package org.mozilla.android.sync.test.helpers;
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;

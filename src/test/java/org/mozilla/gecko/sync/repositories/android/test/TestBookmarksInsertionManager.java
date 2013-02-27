@@ -14,7 +14,7 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.BookmarksInsertionManager;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;

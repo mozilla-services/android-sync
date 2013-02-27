@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.Utils;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;

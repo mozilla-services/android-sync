@@ -22,7 +22,7 @@ import org.mozilla.gecko.background.announcements.Announcement;
 import org.mozilla.gecko.background.announcements.AnnouncementsConstants;
 import org.mozilla.gecko.background.announcements.AnnouncementsFetchDelegate;
 import org.mozilla.gecko.background.announcements.AnnouncementsFetcher;
-import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.simpleframework.http.Path;
 import org.simpleframework.http.Request;

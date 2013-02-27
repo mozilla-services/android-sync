@@ -43,7 +43,7 @@ echo "Using MOZ_ANDROID_SHARED_ACCOUNT_TYPE $MOZ_ANDROID_SHARED_ACCOUNT_TYPE."
 echo "Using MOZ_BUILD_TIMESTAMP $MOZ_BUILD_TIMESTAMP."
 
 ANNOUNCEMENTSCONSTANTS=src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java
-GLOBALCONSTANTS=src/main/java/org/mozilla/gecko/sync/GlobalConstants.java
+GLOBALCONSTANTS=src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
 SYNCCONSTANTS=src/main/java/org/mozilla/gecko/sync/SyncConstants.java
 BROWSERCONTRACT=src/main/java/org/mozilla/gecko/db/BrowserContract.java
 MANIFEST=AndroidManifest.xml
