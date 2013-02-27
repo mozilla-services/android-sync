@@ -82,7 +82,7 @@ public class RecordsChannel implements
     this.source    = source;
     this.sink      = sink;
     this.delegate  = delegate;
-    this.timestamp = source.lastSyncTimestamp;
+    this.timestamp = source.getLastSyncTimestamp();
   }
 
   /*
@@ -155,6 +155,14 @@ public class RecordsChannel implements
       this.delegate.onFlowBeginFailed(this, new SessionNotBegunException(failed));
       return;
     }
+
+    if (!source.dataAvailable()) {
+      Logger.info(LOG_TAG, "Source does not have data available: short-circuiting flow.");
+      long now = System.currentTimeMillis();
+      this.delegate.onFlowCompleted(this, now, now);
+      return;
+    }
+
     sink.setStoreDelegate(this);
     numFetched.set(0);
     numFetchFailed.set(0);

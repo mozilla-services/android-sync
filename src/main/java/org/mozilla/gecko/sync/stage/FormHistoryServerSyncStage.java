@@ -42,6 +42,7 @@ public class FormHistoryServerSyncStage extends ServerSyncStage {
     return new ConstrainedServer11Repository(session.config.getClusterURLString(),
                                              session.config.username,
                                              getCollection(),
+                                             session.config.infoCollections,
                                              session,
                                              FORM_HISTORY_REQUEST_LIMIT,
                                              FORM_HISTORY_SORT);

@@ -148,7 +148,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
     final String COLLECTION = "test";
 
     final TrackingWBORepository local = getLocal(100);
-    final Server11Repository remote = new Server11Repository(TEST_SERVER, USERNAME, COLLECTION, this);
+    final Server11Repository remote = new Server11Repository(TEST_SERVER, USERNAME, COLLECTION, null, this);
     KeyBundle collectionKey = new KeyBundle(USERNAME, SYNC_KEY);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey);
     cryptoRepo.recordFactory = new BookmarkRecordFactory();
@@ -214,7 +214,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
       }
     };
     final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(LOCAL_COUNTS_URL, this.credentials());
-    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", countsFetcher);
+    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", null, this, 5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);
     final AtomicBoolean out = new AtomicBoolean(false);

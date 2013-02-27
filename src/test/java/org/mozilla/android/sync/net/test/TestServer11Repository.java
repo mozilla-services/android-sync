@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
@@ -21,7 +24,7 @@ public class TestServer11Repository {
   @SuppressWarnings("static-method")
   @Test
   public void testCollectionURI() throws URISyntaxException {
-    Server11Repository r = new Server11Repository(SERVER_URI, USERNAME, COLLECTION, null);
+    Server11Repository r = new Server11Repository(SERVER_URI, USERNAME, COLLECTION, null, null);
     assertQueryEquals("full=1&newer=5000.000",              r.collectionURI(true,  5000000L, -1,    null, null));
     assertQueryEquals("newer=1230.000",                     r.collectionURI(false, 1230000L, -1,    null, null));
     assertQueryEquals("newer=5000.000&limit=10",            r.collectionURI(false, 5000000L, 10,    null, null));

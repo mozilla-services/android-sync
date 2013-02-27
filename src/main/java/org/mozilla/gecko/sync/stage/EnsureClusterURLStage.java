@@ -198,12 +198,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
         session.callback.informNodeAssigned(session, oldClusterURL, url); // No matter what, we're getting a new node/weave clusterURL.
         session.config.setClusterURL(url);
 
-        ThreadPool.run(new Runnable() {
-          @Override
-          public void run() {
-            session.advance();
-          }
-        });
+        session.advance();
       }
 
       @Override
