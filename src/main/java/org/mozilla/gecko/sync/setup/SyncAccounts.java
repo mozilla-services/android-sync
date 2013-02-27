@@ -11,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;

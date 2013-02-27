@@ -5,6 +5,8 @@
 
 package org.mozilla.gecko.sync;
 
+import org.mozilla.gecko.background.common.GlobalConstants;
+
 /**
  * Preprocessed class for storing preprocessed values specific to Android Sync.
  */

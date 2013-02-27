@@ -24,20 +24,20 @@ SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
   | sed "s,$SOURCEROOT/,,")
 
 rsync -C \
-  --exclude 'GlobalConstants.java' \
   --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
   -a $SYNCSOURCEDIR $ANDROID/base/
 
 rsync -C \
+  --exclude 'GlobalConstants.java' \
   --exclude 'AnnouncementsConstants.java' \
   --exclude '*.in' \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
-PREPROCESS_FILES="sync/GlobalConstants.java sync/SyncConstants.java background/announcements/AnnouncementsConstants.java"
-cp $SYNCSOURCEDIR/GlobalConstants.java.in $ANDROID/base/sync/
+PREPROCESS_FILES="background/common/GlobalConstants.java sync/SyncConstants.java background/announcements/AnnouncementsConstants.java"
+cp $BACKGROUNDSOURCEDIR/common/GlobalConstants.java.in $ANDROID/base/background/common/
 cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
 cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
 
