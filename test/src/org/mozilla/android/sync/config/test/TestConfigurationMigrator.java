@@ -8,7 +8,7 @@ import java.util.Map;
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.ConfigurationMigrator;

@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import org.mozilla.gecko.background.BackgroundService;
-import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.sync.Logger;
 
 import android.app.AlarmManager;

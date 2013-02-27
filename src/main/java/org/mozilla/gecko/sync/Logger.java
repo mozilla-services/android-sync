@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.sync.log.writers.AndroidLevelCachingLogWriter;
 import org.mozilla.gecko.sync.log.writers.AndroidLogWriter;
 import org.mozilla.gecko.sync.log.writers.LogWriter;

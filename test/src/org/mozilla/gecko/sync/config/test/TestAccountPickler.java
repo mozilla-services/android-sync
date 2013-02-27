@@ -13,7 +13,7 @@ import java.util.List;
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.GlobalConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
