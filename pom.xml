@@ -94,6 +94,7 @@
       </activation>
       <modules>
         <module>android-sync-app</module>
+        <module>bagheera-client-test</module>
         <module>android-sync-instrumentation</module>
       </modules>
     </profile>

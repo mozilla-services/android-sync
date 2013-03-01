@@ -20,13 +20,6 @@
     <mozilla.externalPackages>ch.boye.*:org.json.*:org.mozilla.apache.*</mozilla.externalPackages>
   </properties>
 
-  <repositories>
-    <repository>
-      <id>mozilla-metrics-releases</id>
-      <url>http://mozilla-metrics.github.com/maven2/releases</url>
-    </repository>
-  </repositories>
-
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -35,14 +28,6 @@
       <type>jar</type>
       <scope>test</scope>
       <optional>true</optional>
-    </dependency>
-
-    <!-- For testing Bagheera client. -->
-    <dependency>
-      <groupId>com.mozilla</groupId>
-      <artifactId>bagheera</artifactId>
-      <version>0.8-SNAPSHOT</version>
-      <scope>test</scope>
     </dependency>
 
     <!-- Make httpclientandroidlib work. -->
@@ -312,6 +297,20 @@
             </plugin>
           </reportPlugins>
         </configuration>
+      </plugin>
+
+      <!-- Build a test-jar so we can reuse test code. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
