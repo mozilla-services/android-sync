@@ -29,4 +29,4 @@ puppet/modules/data/files/*.zip
 puppet/modules/data/files/*.tar.gz
 *.apk
 docs/*.html
-package-name.txt
+preprocess.ini
