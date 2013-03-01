@@ -12,7 +12,6 @@ from __future__ import print_function
 
 from tools.Preprocessor import Preprocessor
 
-import argparse
 import ConfigParser
 import io
 import os
@@ -20,6 +19,15 @@ import shutil
 import sys
 import time
 import getpass
+
+# argparse is distributed only with Python 2.7 and above.
+# ci.mozilla.org is running an ancient Python, so fall back to a
+# version of argparse that we distribute.
+try:
+    import argparse as argparse
+except ImportError:
+    sys.path.append("tools/argparse-1.2.1")
+    import argparse as argparse
 
 def get_defines(config_files):
     '''
