@@ -1,0 +1,126 @@
+<project
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.mozilla.gecko</groupId>
+    <artifactId>android-sync</artifactId>
+    <version>1</version>
+  </parent>
+
+  <groupId>org.mozilla.gecko</groupId>
+  <artifactId>bagheera-client-test</artifactId>
+  <version>1</version>
+  <name>Android Services - Bagheera Client Test</name>
+
+  <properties>
+    <project.basedir>../bagheera-client-test</project.basedir>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <failIfNoTests>false</failIfNoTests>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>mozilla-metrics-releases</id>
+      <url>http://mozilla-metrics.github.com/maven2/releases</url>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <type>jar</type>
+      <scope>test</scope>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- For testing Bagheera client. -->
+    <dependency>
+      <groupId>com.mozilla</groupId>
+      <artifactId>bagheera</artifactId>
+      <version>0.8-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Make httpclientandroidlib work. -->
+    <dependency>
+      <groupId>android.util</groupId>
+      <artifactId>log-unstub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>android.util</groupId>
+      <artifactId>base64-unstub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.1.2</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <!-- This *must* come after the android.util stubs above;
+           otherwise, you will get Stub! exceptions because the Google
+           provided stubs will be found first by the class loader. -->
+      <groupId>com.google.android</groupId>
+      <artifactId>android</artifactId>
+      <version>4.1.1.4</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javassist</groupId>
+      <artifactId>javassist</artifactId>
+      <version>3.12.1.GA</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.simpleframework</groupId>
+      <artifactId>simple</artifactId>
+      <version>4.1.21</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- POM: so we have access to the source. -->
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- JAR: so we have access to dependencies and other sources. -->
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+      <type>jar</type>
+    </dependency>
+
+    <!-- Test JAR: so we can reuse test code. -->
+    <dependency>
+      <groupId>org.mozilla.gecko</groupId>
+      <artifactId>android-sync-app</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+      <type>test-jar</type>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>${project.artifactId}</finalName>
+    <testSourceDirectory>src/test/java</testSourceDirectory>
+    <plugins>
+    </plugins>
+  </build>
+</project>
