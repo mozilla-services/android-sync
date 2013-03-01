@@ -18,4 +18,4 @@ cp $ANDROID/base/locales/en-US/android_strings.dtd strings/
 # cp $ANDROID/services/strings.xml.in strings/strings.xml.in 
 # cp $ANDROID/base/locales/en-US/sync_strings.dtd strings/sync_strings.dtd.in
 
-./preprocess.sh
+./preprocess.py

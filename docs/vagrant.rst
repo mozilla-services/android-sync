@@ -154,7 +154,7 @@ And, hopefully, you can run the Android Services test suite! It will
 download the internet, but that should only happen once: ::
 
   vagrant@precise32:~$ cd /vagrant
-  vagrant@precise32:/vagrant$ ./preprocess.sh && mvn clean test
+  vagrant@precise32:/vagrant$ ./preprocess.py && mvn clean test
   Using ANDROID_PACKAGE_NAME org.mozilla.fennec.
   Using ANDROID_CPU_ARCH armeabi-v7a.
   Using MOZ_UPDATE_CHANNEL default.

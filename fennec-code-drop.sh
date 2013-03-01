@@ -3,7 +3,7 @@ if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "$DIR/fennec-paths.sh"
 
 echo "Preprocessing."
-./preprocess.sh
+./preprocess.py
 
 mvn clean compile || { echo 'mvn clean compile failed'; exit 1; }
 

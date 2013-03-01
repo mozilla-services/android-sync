@@ -81,7 +81,7 @@ or an ARMv6 emulator running ::
 
 Finally, build and run the Android Services test suite: ::
 
-  archo:android-sync ncalexan$ ./preprocess.sh && mvn clean integration-test
+  archo:android-sync ncalexan$ ./preprocess.py && mvn clean integration-test
   Using ANDROID_PACKAGE_NAME org.mozilla.fennec.
   Using ANDROID_CPU_ARCH armeabi-v7a.
   Using MOZ_UPDATE_CHANNEL default.

@@ -4,7 +4,7 @@
   brew install maven
 
 * You need to prepare the repo before you can use it.
-  * Use `preprocess.sh` to build manifests etc. to keep Eclipse happy. The output
+  * Use `preprocess.py` to build manifests etc. to keep Eclipse happy. The output
     is ignored by Git, and the Fennec merge script skips them, too.
   * The `fennec-code-drop.sh` script does this for you, as well as running tests.
   * To run Android tests, you'll need to create .project and .classpath in `test`,
@@ -13,7 +13,7 @@
 * To make changes to generated files.
   * strings.xml doesn't exist. Modify strings.xml.in.
   * AndroidManifest.xml doesn't exist. Modify the file fragments in manifests/.
-  * The same goes for other files that are produced by preprocess.sh.
+  * The same goes for other files that are produced by preprocess.py.
   * If you want to alter a value _to affect our build only_, put it in
     AndroidManifest.xml.in.
 
