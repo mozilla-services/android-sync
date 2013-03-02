@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="src/test/java"/>
+	<classpathentry kind="var" path="M2_REPO/android/util/base64-unstub/1/base64-unstub-1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/android/util/log-unstub/1/log-unstub-1.jar"/>
+	<classpathentry kind="lib" path="/Users/rnewman/moz/git/android-sync/external/sharedpreferences-stub-1/lib/sharedpreferences-stub.jar"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry kind="var" path="M2_REPO/com/fasterxml/jackson/core/jackson-core/2.0.6/jackson-core-2.0.6.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/github/sgroschupf/zkclient/0.1/zkclient-0.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/google/protobuf/protobuf-java/2.4.1/protobuf-java-2.4.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/mozilla/bagheera/0.8-SNAPSHOT/bagheera-0.8-SNAPSHOT.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/yammer/metrics/metrics-core/2.1.2/metrics-core-2.1.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/yammer/metrics/metrics-ganglia/2.1.2/metrics-ganglia-2.1.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/yammer/metrics/metrics-graphite/2.1.2/metrics-graphite-2.1.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.3/commons-lang-2.3.jar"/>
+	<classpathentry kind="var" path="M2_REPO/io/netty/netty/3.5.7.Final/netty-3.5.7.Final.jar"/>
+	<classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.16/log4j-1.2.16.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/hadoop/thirdparty/guava/guava/r09-jarjar/guava-r09-jarjar.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/hadoop/hadoop-core/0.20.2-cdh3u4/hadoop-core-0.20.2-cdh3u4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/hbase/hbase/0.90.6-cdh3u4/hbase-0.90.6-cdh3u4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/kafka/kafka-core/0.7.2-incubating/kafka-core-0.7.2-incubating.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/zookeeper/zookeeper/3.3.5-cdh3u4/zookeeper-3.3.5-cdh3u4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/scala-lang/scala-library/2.9.2/scala-library-2.9.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.7.1/slf4j-api-1.7.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-log4j12/1.7.1/slf4j-log4j12-1.7.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/xerial/snappy/snappy-java/1.0.4.1/snappy-java-1.0.4.1.jar"/>
+	<classpathentry kind="src" path="/android-sync"/>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="output" path="bin/classes"/>
+</classpath>
