@@ -7,8 +7,6 @@ package org.mozilla.gecko.background.bagheera;
 import java.io.UnsupportedEncodingException;
 import java.util.zip.Deflater;
 
-import org.mozilla.gecko.background.test.TestDeflation;
-
 import ch.boye.httpclientandroidlib.HttpEntity;
 
 public class DeflateHelper {
@@ -56,6 +54,7 @@ public class DeflateHelper {
    * @param bytes the input to deflate.
    * @return the deflated input as an entity.
    */
+  @SuppressWarnings("javadoc")
   public static HttpEntity deflateBytes(final byte[] bytes) {
     // We would like to use DeflaterInputStream here, but it's minSDK=9, and we
     // still target 8. It would also force us to use chunked Transfer-Encoding,
