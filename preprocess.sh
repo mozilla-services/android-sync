@@ -74,8 +74,6 @@ $PREPROCESSOR $DEFINITIONS sync_authenticator.xml.template > res/xml/sync_authen
 $PREPROCESSOR $DEFINITIONS sync_syncadapter.xml.template > res/xml/sync_syncadapter.xml
 $PREPROCESSOR $DEFINITIONS sync_options.xml.template > res/xml/sync_options.xml
 
-# Now do the test projects.
+# Now do the test project.
 TEST_MANIFEST=test/AndroidManifest.xml
-BAGHEERA_TEST_MANIFEST=bagheera-client-test/AndroidManifest.xml
 $PREPROCESSOR $DEFINITIONS $TEST_MANIFEST.in > $TEST_MANIFEST
-$PREPROCESSOR $DEFINITIONS $BAGHEERA_TEST_MANIFEST.in > $BAGHEERA_TEST_MANIFEST
