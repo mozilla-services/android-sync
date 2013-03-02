@@ -13,17 +13,28 @@ import ch.boye.httpclientandroidlib.entity.AbstractHttpEntity;
 import ch.boye.httpclientandroidlib.entity.ByteArrayEntity;
 
 /**
- * Just like {@link ByteArrayEntity}, but allows us to use a byte array
- * that is larger than its contents.
+ * An entity that acts like {@link ByteArrayEntity}, but exposes a window onto
+ * the byte array that is a subsection of the array. The purpose of this is to
+ * allow a smaller entity to be created without having to resize the source
+ * array.
  */
-public class BoundedByteArrayEntity extends AbstractHttpEntity
-    implements Cloneable {
+public class BoundedByteArrayEntity extends AbstractHttpEntity implements
+    Cloneable {
   protected final byte[] content;
   protected final int    start;
   protected final int    end;
   protected final int    length;
 
-  public BoundedByteArrayEntity(byte[] b, int start, int end) {
+  /**
+   * Create a new entity that behaves exactly like a {@link ByteArrayEntity}
+   * created with a copy of <code>b</code> truncated to (
+   * <code>end - start</code>) bytes, starting at <code>start</code>.
+   * 
+   * @param b the byte array to use.
+   * @param start the start index.
+   * @param end the end index.
+   */
+  public BoundedByteArrayEntity(final byte[] b, final int start, final int end) {
     if (b == null) {
       throw new IllegalArgumentException("Source byte array may not be null.");
     }
