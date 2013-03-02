@@ -186,22 +186,18 @@ public class TestBagheeraClient {
       statuses.clear();
     }
 
-    private void done() {
-      WaitHelper.getTestWaiter().performNotify();
-    }
-
     @Override
     public void handleSuccess(int status, HttpResponse response) {
       System.out.println("Got success: " + status);
       statuses.add(status);
-      done();
+      WaitHelper.getTestWaiter().performNotify();
     }
 
     @Override
     public void handleFailure(int status, HttpResponse response) {
       System.out.println("Got failure: " + status);
       statuses.add(status);
-      done();
+      WaitHelper.getTestWaiter().performNotify();
     }
 
     @Override

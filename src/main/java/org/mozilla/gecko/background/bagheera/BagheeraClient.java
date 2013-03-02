@@ -37,6 +37,18 @@ public class BagheeraClient {
   protected static String PROTOCOL_VERSION = "1.0";
   protected static String SUBMIT_PATH = "/submit/";
 
+  /**
+   * Instantiate a new client pointing at the provided server.
+   * {@link #deleteDocument(String, String, BagheeraRequestDelegate)} and
+   * {@link #uploadJSONDocument(String, String, String, String, BagheeraRequestDelegate)}
+   * both accept delegate arguments; the {@link Executor} provided to this
+   * constructor will be used to invoke callbacks on those delegates.
+   * 
+   * @param serverURI
+   *          the destination server URI.
+   * @param executor
+   *          the executor which will be used to invoke delegate callbacks.
+   */
   public BagheeraClient(final String serverURI, final Executor executor) {
     if (serverURI == null) {
       throw new IllegalArgumentException("Must provide a server URI.");
@@ -48,6 +60,15 @@ public class BagheeraClient {
     this.executor = executor;
   }
 
+  /**
+   * Instantiate a new client pointing at the provided server.
+   * Delegate callbacks will be invoked on a new background thread.
+   *
+   * See {@link #BagheeraClient(String, Executor)} for more details.
+   *
+   * @param serverURI
+   *          the destination server URI.
+   */
   public BagheeraClient(final String serverURI) {
     this(serverURI, Executors.newSingleThreadExecutor());
   }
@@ -69,11 +90,23 @@ public class BagheeraClient {
     final BaseResource resource = makeResource(namespace, id);
     resource.delegate = new BagheeraResourceDelegate(resource, delegate);
     resource.delete();
-   }
+  }
 
   /**
-   * Upload a JSON document to a Bagheera server.
-   * The delegate's callbacks will be invoked by the BagheeraClient's executor.
+   * Upload a JSON document to a Bagheera server. The delegate's callbacks will
+   * be invoked in tasks run by the client's executor.
+   * 
+   * @param namespace
+   *          the namespace, such as "test"
+   * @param id
+   *          the document ID, which is typically a UUID.
+   * @param payload
+   *          a document, typically JSON-encoded.
+   * @param oldID
+   *          an optional ID which denotes a document to supersede. Can be null.
+   * @param delegate
+   *          the delegate whose methods should be invoked on success or
+   *          failure.
    */
   public void uploadJSONDocument(final String namespace,
                                  final String id,
