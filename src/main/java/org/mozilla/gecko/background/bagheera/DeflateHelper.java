@@ -7,6 +7,8 @@ package org.mozilla.gecko.background.bagheera;
 import java.io.UnsupportedEncodingException;
 import java.util.zip.Deflater;
 
+import org.mozilla.gecko.background.test.TestDeflation;
+
 import ch.boye.httpclientandroidlib.HttpEntity;
 
 public class DeflateHelper {
@@ -41,16 +43,24 @@ public class DeflateHelper {
   /**
    * Deflate the input, returning an HttpEntity that offers an accurate window
    * on the output.
+   *
+   * Note that this method does not trim the output array. (Test code can use
+   * {@link TestDeflation#deflateTrimmed(byte[])}.)
+   * 
+   * Trimming would be more efficient for long-term space use, but we expect this
+   * entity to be transient.
+   * 
+   * Note also that deflate can require <b>more</b> space than the input.
+   * {@link #deflateBound(int)} tells us the most it will use.
+   *
+   * @param bytes the input to deflate.
+   * @return the deflated input as an entity.
    */
   public static HttpEntity deflateBytes(final byte[] bytes) {
     // We would like to use DeflaterInputStream here, but it's minSDK=9, and we
     // still target 8. It would also force us to use chunked Transfer-Encoding,
     // so perhaps it's for the best!
 
-    // Deflate can require *more* space.
-    // Note that we do not trim the output array (see deflateTrimmed); this
-    // would be more efficient for long-term space use, but we expect this
-    // entity to be transient.
     final byte[] out = new byte[deflateBound(bytes.length)];
     final int outLength = deflate(bytes, out);
     return new BoundedByteArrayEntity(out, 0, outLength);

@@ -3,6 +3,7 @@
 
 package org.mozilla.gecko.background.test;
 
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
@@ -11,6 +12,8 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 import org.mozilla.gecko.background.bagheera.DeflateHelper;
+import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.common.log.writers.PrintLogWriter;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 
@@ -23,13 +26,9 @@ public class TestDeflation {
       "BCDEFGHaaQRSTUVWXYZá{Zá{éíôü}ABCDEFGHaaQRSTUVWXYZá{Zá{éíôü}ABCDEFGH" +
       "aQRSTUVWXYZá{Zá{éíôü}ABCDEFGHaaQRSTUVWXYZá{Zá{}\n";
 
-  public static int reinflateBytes(byte[] input, byte[] output, int inLength) throws DataFormatException {
-    final Inflater inflater = new Inflater();
-    inflater.setInput(input, 0, inLength);
-    int resultLength = inflater.inflate(output);
-    inflater.end();
-    System.out.println("Reinflating: " + inLength + " => " + resultLength);
-    return resultLength;
+  static {
+    Logger.setThreadLogTag("TestDeflation");
+    Logger.startLoggingTo(new PrintLogWriter(new PrintWriter(System.out, true)));
   }
 
   @SuppressWarnings("static-method")
@@ -62,10 +61,19 @@ public class TestDeflation {
     assertEqualArrays(direct, entity);
   }
 
+  public static int reinflateBytes(byte[] input, byte[] output, int inLength) throws DataFormatException {
+    final Inflater inflater = new Inflater();
+    inflater.setInput(input, 0, inLength);
+    int resultLength = inflater.inflate(output);
+    inflater.end();
+    Logger.debug("reinflateBytes", "Reinflating: " + inLength + " => " + resultLength);
+    return resultLength;
+  }
+
   /**
    * Deflate the input, returning a new array of the appropriate size.
    */
-  private static byte[] deflateTrimmed(byte[] input) {
+  public static byte[] deflateTrimmed(byte[] input) {
     final int byteCount = input.length;
     final byte[] deflated = new byte[DeflateHelper.deflateBound(byteCount)];
     final int deflatedLength = DeflateHelper.deflate(input, deflated);
@@ -87,15 +95,16 @@ public class TestDeflation {
     final byte[] deflated = new byte[DeflateHelper.deflateBound(byteCount)];
     final int deflatedLength = DeflateHelper.deflate(input, deflated);
 
-    System.out.println("Deflated " + byteCount + " bytes (" + charCount +
-                       " chars) to " + deflatedLength);
+    Logger.debug("doDeflateRoundtrip",
+                 "Deflated " + byteCount + " bytes (" + charCount +
+                  " chars) to " + deflatedLength);
     final byte[] result = new byte[byteCount];
     final int resultLength = reinflateBytes(deflated, result, deflatedLength);
-    System.out.println("Got:      " + resultLength);
+    Logger.debug("doDeflateRoundtrip", "Got:      " + resultLength);
 
     final String outputString = new String(result, 0, resultLength, "UTF-8");
-    System.out.println("Comparing: " + in);
-    System.out.println("Comparing: " + outputString);
+    Logger.debug("doDeflateRoundtrip", "Comparing: " + in);
+    Logger.debug("doDeflateRoundtrip", "Comparing: " + outputString);
     Assert.assertEquals(in, outputString);
   }
 
@@ -107,18 +116,18 @@ public class TestDeflation {
     final byte[] bytes = EntityTestHelper.bytesFromEntity(entity);
 
     final int resultLength = reinflateBytes(bytes, result, contentLength);
-    System.out.println("Entity: " + Arrays.toString(bytes));
-    System.out.println("Got:    " + resultLength);
+    Logger.debug("doEntityRoundtrip", "Entity: " + Arrays.toString(bytes));
+    Logger.debug("doEntityRoundtrip", "Got:    " + resultLength);
 
     final String outputString = new String(result, 0, resultLength, "UTF-8");
-    System.out.println("Comparing: " + in);
-    System.out.println("Comparing: " + outputString);
+    Logger.debug("doEntityRoundtrip", "Comparing: " + in);
+    Logger.debug("doEntityRoundtrip", "Comparing: " + outputString);
     Assert.assertEquals(in, outputString);
   }
 
   private static void assertEqualArrays(byte[] a, byte[] b) {
-    System.out.println("A: " + Arrays.toString(a));
-    System.out.println("B: " + Arrays.toString(b));
+    Logger.trace("assertEqualArrays", "A: " + Arrays.toString(a));
+    Logger.trace("assertEqualArrays", "B: " + Arrays.toString(b));
     Assert.assertTrue(Arrays.equals(a, b));
   }
 }
