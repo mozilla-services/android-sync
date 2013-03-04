@@ -6,10 +6,12 @@ package org.mozilla.gecko.background.db;
 
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.db.BrowserContract.Tabs;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 
 // Immutable.
 public class Tab {
@@ -57,5 +59,23 @@ public class Tab {
     }
 
     return Utils.sameArrays(this.history, other.history);
+  }
+
+  /**
+   * Extract a <code>Tab</code> from a cursor row.
+   * <p>
+   * Caller is responsible for creating, positioning, and closing the cursor.
+   *
+   * @param cursor
+   *          to inspect.
+   * @return <code>Tab</code> instance.
+   */
+  public static Tab fromCursor(final Cursor cursor) {
+    final String title = RepoUtils.getStringFromCursor(cursor, Tabs.TITLE);
+    final String icon = RepoUtils.getStringFromCursor(cursor, Tabs.FAVICON);
+    final JSONArray history = RepoUtils.getJSONArrayFromCursor(cursor, Tabs.HISTORY);
+    final long lastUsed = RepoUtils.getLongFromCursor(cursor, Tabs.LAST_USED);
+
+    return new Tab(title, icon, history, lastUsed);
   }
 }

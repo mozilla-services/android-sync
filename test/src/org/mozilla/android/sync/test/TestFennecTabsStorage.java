@@ -176,15 +176,15 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
       assertEquals(3, cursor.getCount());
 
       cursor.moveToFirst();
-      final Tab parsed1 = FennecTabsRepository.tabFromCursor(cursor);
+      final Tab parsed1 = Tab.fromCursor(cursor);
       assertEquals(testTab1, parsed1);
 
       cursor.moveToNext();
-      final Tab parsed2 = FennecTabsRepository.tabFromCursor(cursor);
+      final Tab parsed2 = Tab.fromCursor(cursor);
       assertEquals(testTab2, parsed2);
 
       cursor.moveToPosition(2);
-      final Tab parsed3 = FennecTabsRepository.tabFromCursor(cursor);
+      final Tab parsed3 = Tab.fromCursor(cursor);
       assertEquals(testTab3, parsed3);
     } finally {
       cursor.close();
