@@ -41,7 +41,7 @@
     <dependency>
       <groupId>com.mozilla</groupId>
       <artifactId>bagheera</artifactId>
-      <version>0.8-SNAPSHOT</version>
+      <version>0.8</version>
       <scope>test</scope>
     </dependency>
 
