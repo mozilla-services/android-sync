@@ -6,11 +6,9 @@ package org.mozilla.gecko.sync.repositories.android;
 
 import java.util.ArrayList;
 
-import org.json.simple.JSONArray;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.db.Tab;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.db.BrowserContract.Tabs;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoContentProviderException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
@@ -294,24 +292,6 @@ public class FennecTabsRepository extends Repository {
   }
 
   /**
-   * Extract a <code>Tab</code> from a cursor row.
-   * <p>
-   * Caller is responsible for creating, positioning, and closing the cursor.
-   *
-   * @param cursor
-   *          to inspect.
-   * @return <code>Tab</code> instance.
-   */
-  public static Tab tabFromCursor(final Cursor cursor) {
-    final String title = RepoUtils.getStringFromCursor(cursor, Tabs.TITLE);
-    final String icon = RepoUtils.getStringFromCursor(cursor, Tabs.FAVICON);
-    final JSONArray history = RepoUtils.getJSONArrayFromCursor(cursor, Tabs.HISTORY);
-    final long lastUsed = RepoUtils.getLongFromCursor(cursor, Tabs.LAST_USED);
-
-    return new Tab(title, icon, history, lastUsed);
-  }
-
-  /**
    * Extract a <code>TabsRecord</code> from a cursor.
    * <p>
    * Caller is responsible for creating and closing cursor. Each row of the
@@ -342,7 +322,7 @@ public class FennecTabsRepository extends Repository {
     try {
       cursor.moveToFirst();
       while (!cursor.isAfterLast()) {
-        final Tab tab = FennecTabsRepository.tabFromCursor(cursor);
+        final Tab tab = Tab.fromCursor(cursor);
         record.tabs.add(tab);
 
         if (tab.lastUsed > record.lastModified) {
