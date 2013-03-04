@@ -188,7 +188,7 @@ public class TestRecord {
                   " \"urlHistory\":[\"http://mxr.mozilla.org/mozilla-central/source/browser/base/content/syncSetup.js#72\"]," +
                   " \"icon\":\"http://mxr.mozilla.org/mxr.png\"," +
                   " \"lastUsed\":\"1306374531\"}";
-    Tab tab = Tab.fromJSONObject(ExtendedJSONObject.parseJSONObject(json).object);
+    Tab tab = TabsRecord.tabFromJSONObject(ExtendedJSONObject.parseJSONObject(json).object);
 
     assertEquals("mozilla-central mozilla/browser/base/content/syncSetup.js", tab.title);
     assertEquals("http://mxr.mozilla.org/mxr.png", tab.icon);
@@ -199,7 +199,7 @@ public class TestRecord {
         " \"urlHistory\":[\"http://example.com\"]," +
         " \"icon\":\"\"," +
         " \"lastUsed\":0}";
-    Tab zero = Tab.fromJSONObject(ExtendedJSONObject.parseJSONObject(zeroJSON).object);
+    Tab zero = TabsRecord.tabFromJSONObject(ExtendedJSONObject.parseJSONObject(zeroJSON).object);
 
     assertEquals("a", zero.title);
     assertEquals("", zero.icon);
