@@ -63,7 +63,7 @@ public class TabsRecord extends Record {
   protected static JSONArray tabsToJSON(ArrayList<Tab> tabs) {
     JSONArray out = new JSONArray();
     for (Tab tab : tabs) {
-      out.add(tab.toJSONObject());
+      out.add(tabToJSONObject(tab));
     }
     return out;
   }
@@ -73,7 +73,7 @@ public class TabsRecord extends Record {
     for (Object o : in) {
       if (o instanceof JSONObject) {
         try {
-          tabs.add(Tab.fromJSONObject((JSONObject) o));
+          tabs.add(TabsRecord.tabFromJSONObject((JSONObject) o));
         } catch (NonArrayJSONException e) {
           Logger.warn(LOG_TAG, "urlHistory is not an array for this tab.", e);
         }
@@ -117,5 +117,36 @@ public class TabsRecord extends Record {
       out[i] = tabs.get(i).toContentValues(this.guid, i);
     }
     return out;
+  }
+
+  public static Tab tabFromJSONObject(JSONObject o) throws NonArrayJSONException {
+    ExtendedJSONObject obj = new ExtendedJSONObject(o);
+    String title      = obj.getString("title");
+    String icon       = obj.getString("icon");
+    JSONArray history = obj.getArray("urlHistory");
+
+    // Last used is inexplicably a string in seconds. Most of the time.
+    long lastUsed = 0;
+    Object lU = obj.get("lastUsed");
+    if (lU instanceof Number) {
+      lastUsed = ((Long) lU) * 1000L;
+    } else if (lU instanceof String) {
+      try {
+        lastUsed = Long.parseLong((String) lU, 10) * 1000L;
+      } catch (NumberFormatException e) {
+        Logger.debug(TabsRecord.LOG_TAG, "Invalid number format in lastUsed: " + lU);
+      }
+    }
+    return new Tab(title, icon, history, lastUsed);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static JSONObject tabToJSONObject(Tab tab) {
+    JSONObject o = new JSONObject();
+    o.put("title", tab.title);
+    o.put("icon", tab.icon);
+    o.put("urlHistory", tab.history);
+    o.put("lastUsed", tab.lastUsed / 1000);
+    return o;
   }
 }
