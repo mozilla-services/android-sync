@@ -17,11 +17,11 @@ import android.net.ConnectivityManager;
 public abstract class NetworkDependentService extends BackgroundService {
   private static final String LOG_TAG = "FxNetworkService";
 
-  public NetworkDependentService() {
+  protected NetworkDependentService() {
     super();
   }
 
-  public NetworkDependentService(String threadName) {
+  protected NetworkDependentService(String threadName) {
     super(threadName);
   }
 
@@ -35,8 +35,11 @@ public abstract class NetworkDependentService extends BackgroundService {
       if (intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {
         this.onNoConnectivity();
       } else {
+        // TODO: verify whether connectivity is actually available, if Android doesn't
+        // correctly include EXTRA_NO_CONNECTIVITY.
         this.onConnectivity(intent);
       }
+      return;
     }
 
     // Failure case. It's OK to log here, because we'll be at the root of the chain.
