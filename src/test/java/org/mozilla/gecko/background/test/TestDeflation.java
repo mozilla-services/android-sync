@@ -3,7 +3,6 @@
 
 package org.mozilla.gecko.background.test;
 
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
@@ -13,7 +12,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.mozilla.gecko.background.bagheera.DeflateHelper;
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.background.common.log.writers.PrintLogWriter;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 
@@ -25,11 +23,6 @@ public class TestDeflation {
       "{éíôü}ABCDEFGHaaQRSTUVWXYZá{Zá{éíôü}ABCDEFGHaaQRSTUVWXYZá{Zá{éíôü}A" +
       "BCDEFGHaaQRSTUVWXYZá{Zá{éíôü}ABCDEFGHaaQRSTUVWXYZá{Zá{éíôü}ABCDEFGH" +
       "aQRSTUVWXYZá{Zá{éíôü}ABCDEFGHaaQRSTUVWXYZá{Zá{}\n";
-
-  static {
-    Logger.setThreadLogTag("TestDeflation");
-    Logger.startLoggingTo(new PrintLogWriter(new PrintWriter(System.out, true)));
-  }
 
   @SuppressWarnings("static-method")
   @Test

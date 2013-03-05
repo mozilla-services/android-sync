@@ -16,6 +16,7 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.bagheera.BagheeraClient;
 import org.mozilla.gecko.background.bagheera.BagheeraRequestDelegate;
+import org.mozilla.gecko.background.common.log.Logger;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 
@@ -28,6 +29,7 @@ import com.mozilla.bagheera.producer.Producer;
 import com.mozilla.bagheera.util.WildcardProperties;
 
 public class TestBagheeraClient {
+  public static final String LOG_TAG = TestBagheeraClient.class.getSimpleName();
 
   private static final int TEST_PORT = HTTPServerTestHelper.getTestPort();
 
@@ -119,7 +121,7 @@ public class TestBagheeraClient {
       Assert.assertEquals(producer.messages.size(), 1);
       final BagheeraMessage message = producer.messages.get(0);
       final String body = message.getPayload().toStringUtf8();
-      System.out.println("Body was " + body);
+      Logger.info(LOG_TAG, "Body was " + body);
       Assert.assertEquals(message.getId(), goodID);
       Assert.assertEquals(body, document);
       delegate.clear();
@@ -188,22 +190,21 @@ public class TestBagheeraClient {
 
     @Override
     public void handleSuccess(int status, HttpResponse response) {
-      System.out.println("Got success: " + status);
+      Logger.info(LOG_TAG, "Got success: " + status);
       statuses.add(status);
       WaitHelper.getTestWaiter().performNotify();
     }
 
     @Override
     public void handleFailure(int status, HttpResponse response) {
-      System.out.println("Got failure: " + status);
+      Logger.info(LOG_TAG, "Got failure: " + status);
       statuses.add(status);
       WaitHelper.getTestWaiter().performNotify();
     }
 
     @Override
     public void handleError(Exception e) {
-      System.out.println("Got error.");
-      e.printStackTrace();
+      Logger.info(LOG_TAG, "Got error.", e);
       WaitHelper.getTestWaiter().performNotify(e);
     }
   }
