@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.android.sync.log.test;
+package org.mozilla.gecko.background.common.log.test;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
 import org.mozilla.gecko.background.common.log.Logger;

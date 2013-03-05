@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.gecko.sync.log.writers.test;
+package org.mozilla.gecko.background.common.log.writers.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
