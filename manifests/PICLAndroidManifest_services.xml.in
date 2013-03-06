@@ -1,6 +1,6 @@
         <service
-            android:exported="true"
-            android:name="org.mozilla.gecko.picl.PICLAccountAuthenticatorService" >
+            android:exported="false"
+            android:name="org.mozilla.gecko.picl.account.PICLAccountAuthenticatorService" >
             <intent-filter >
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
@@ -11,7 +11,7 @@
         </service>
         <service
             android:exported="false"
-            android:name="org.mozilla.gecko.picl.PICLSyncService" >
+            android:name="org.mozilla.gecko.picl.sync.PICLSyncService" >
             <intent-filter >
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>

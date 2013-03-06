@@ -9,3 +9,4 @@
 
 <!-- Account strings -->
 <!ENTITY picl.account.label '&piclBrand.fullName.label;'>
+<!ENTITY picl.account.type "org.mozilla.gecko.picl.account">
