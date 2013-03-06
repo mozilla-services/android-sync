@@ -1,28 +1,43 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
-    android:orientation="vertical" >
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+   This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-    <Button
-        android:id="@+id/submit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_centerVertical="true"
-        android:text="Login" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	style="@style/SyncContainer" >
 
-    <EditText
-        android:id="@+id/email"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/submit"
-        android:layout_alignParentLeft="true"
-        android:inputType="textEmailAddress"
-        android:imeOptions="actionGo"
-        android:ems="10"
-        android:hint="Email address..." />
+	<TextView
+		style="@style/SyncTop"
+		android:text="@string/sync_title_connect" />
 
-</RelativeLayout>
+	<ScrollView
+		style="@style/SyncMiddle"
+		android:padding="@dimen/SyncSpace" >
+
+		<EditText
+			android:id="@+id/email"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:ems="10"
+			android:hint="Email address..."
+			android:imeOptions="actionGo"
+			android:inputType="textEmailAddress" />
+	</ScrollView>
+
+	<LinearLayout style="@style/SyncBottomContainer" >
+
+		<LinearLayout
+			style="@style/SyncBottom"
+			android:orientation="horizontal" >
+
+			<Button
+				android:id="@+id/submit"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Login" />
+		</LinearLayout>
+	</LinearLayout>
+
+</LinearLayout>
