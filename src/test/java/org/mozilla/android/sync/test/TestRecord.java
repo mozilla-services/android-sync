@@ -14,6 +14,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
+import org.mozilla.gecko.background.db.Tab;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -22,7 +23,6 @@ import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
-import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
 public class TestRecord {
 
@@ -188,7 +188,7 @@ public class TestRecord {
                   " \"urlHistory\":[\"http://mxr.mozilla.org/mozilla-central/source/browser/base/content/syncSetup.js#72\"]," +
                   " \"icon\":\"http://mxr.mozilla.org/mxr.png\"," +
                   " \"lastUsed\":\"1306374531\"}";
-    Tab tab = Tab.fromJSONObject(ExtendedJSONObject.parseJSONObject(json).object);
+    Tab tab = TabsRecord.tabFromJSONObject(ExtendedJSONObject.parseJSONObject(json).object);
 
     assertEquals("mozilla-central mozilla/browser/base/content/syncSetup.js", tab.title);
     assertEquals("http://mxr.mozilla.org/mxr.png", tab.icon);
@@ -199,7 +199,7 @@ public class TestRecord {
         " \"urlHistory\":[\"http://example.com\"]," +
         " \"icon\":\"\"," +
         " \"lastUsed\":0}";
-    Tab zero = Tab.fromJSONObject(ExtendedJSONObject.parseJSONObject(zeroJSON).object);
+    Tab zero = TabsRecord.tabFromJSONObject(ExtendedJSONObject.parseJSONObject(zeroJSON).object);
 
     assertEquals("a", zero.title);
     assertEquals("", zero.icon);

@@ -1,21 +1,20 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.android.sync.test;
+package org.mozilla.gecko.background.db.test;
 
 import org.json.simple.JSONArray;
+import org.mozilla.gecko.background.db.Tab;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
-import org.mozilla.gecko.sync.repositories.android.RepoUtils;
-import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
-import org.mozilla.gecko.sync.repositories.domain.TabsRecord.Tab;
 
+import android.app.Activity;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.test.ActivityInstrumentationTestCase2;
 
 /**
  * Exercise Fennec's tabs provider.
@@ -23,7 +22,7 @@ import android.os.RemoteException;
  * @author rnewman
  *
  */
-public class TestFennecTabsStorage extends AndroidSyncTestCase {
+public class TestFennecTabsStorage extends ActivityInstrumentationTestCase2<Activity> {
   public static final String TEST_CLIENT_GUID = "test guid"; // Real GUIDs never contain spaces.
   public static final String TEST_CLIENT_NAME = "test client name";
 
@@ -33,13 +32,17 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
   protected Tab testTab2;
   protected Tab testTab3;
 
-  private ContentProviderClient getClientsClient() {
-    final ContentResolver cr = getApplicationContext().getContentResolver();
+  public TestFennecTabsStorage() {
+    super(Activity.class);
+  }
+
+  protected ContentProviderClient getClientsClient() {
+    final ContentResolver cr = getInstrumentation().getTargetContext().getApplicationContext().getContentResolver();
     return cr.acquireContentProviderClient(BrowserContract.Clients.CONTENT_URI);
   }
 
-  private ContentProviderClient getTabsClient() {
-    final ContentResolver cr = getApplicationContext().getContentResolver();
+  protected ContentProviderClient getTabsClient() {
+    final ContentResolver cr = getInstrumentation().getTargetContext().getApplicationContext().getContentResolver();
     return cr.acquireContentProviderClient(BrowserContract.Tabs.CONTENT_URI);
   }
 
@@ -55,7 +58,7 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
   }
 
   @SuppressWarnings("unchecked")
-  private void insertSomeTestTabs(ContentProviderClient tabsClient) throws RemoteException {
+  protected void insertSomeTestTabs(ContentProviderClient tabsClient) throws RemoteException {
     final JSONArray history1 = new JSONArray();
     history1.add("http://test.com/test1.html");
     testTab1 = new Tab("test title 1", "http://test.com/test1.png", history1, 1000);
@@ -176,99 +179,16 @@ public class TestFennecTabsStorage extends AndroidSyncTestCase {
       assertEquals(3, cursor.getCount());
 
       cursor.moveToFirst();
-      final Tab parsed1 = FennecTabsRepository.tabFromCursor(cursor);
+      final Tab parsed1 = Tab.fromCursor(cursor);
       assertEquals(testTab1, parsed1);
 
       cursor.moveToNext();
-      final Tab parsed2 = FennecTabsRepository.tabFromCursor(cursor);
+      final Tab parsed2 = Tab.fromCursor(cursor);
       assertEquals(testTab2, parsed2);
 
       cursor.moveToPosition(2);
-      final Tab parsed3 = FennecTabsRepository.tabFromCursor(cursor);
+      final Tab parsed3 = Tab.fromCursor(cursor);
       assertEquals(testTab3, parsed3);
-    } finally {
-      cursor.close();
-    }
-  }
-
-  public void testTabsRecordFromCursor() throws Exception {
-    final ContentProviderClient tabsClient = getTabsClient();
-
-    deleteAllTestTabs(tabsClient);
-    insertSomeTestTabs(tabsClient);
-
-    final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
-    Cursor cursor = null;
-    try {
-      cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, TABS_CLIENT_GUID_IS, new String[] { TEST_CLIENT_GUID }, positionAscending);
-      assertEquals(3, cursor.getCount());
-
-      cursor.moveToPosition(1);
-
-      final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
-
-      // Make sure we clean up after ourselves.
-      assertEquals(1, cursor.getPosition());
-
-      assertEquals(TEST_CLIENT_GUID, tabsRecord.guid);
-      assertEquals(TEST_CLIENT_NAME, tabsRecord.clientName);
-
-      assertEquals(3, tabsRecord.tabs.size());
-      assertEquals(testTab1, tabsRecord.tabs.get(0));
-      assertEquals(testTab2, tabsRecord.tabs.get(1));
-      assertEquals(testTab3, tabsRecord.tabs.get(2));
-
-      assertEquals(Math.max(Math.max(testTab1.lastUsed, testTab2.lastUsed), testTab3.lastUsed), tabsRecord.lastModified);
-    } finally {
-      cursor.close();
-    }
-  }
-
-  // Verify that we can fetch a record when there are no local tabs at all.
-  public void testEmptyTabsRecordFromCursor() throws Exception {
-    final ContentProviderClient tabsClient = getTabsClient();
-
-    deleteAllTestTabs(tabsClient);
-
-    final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
-    Cursor cursor = null;
-    try {
-      cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, TABS_CLIENT_GUID_IS, new String[] { TEST_CLIENT_GUID }, positionAscending);
-      assertEquals(0, cursor.getCount());
-
-      final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
-
-      assertEquals(TEST_CLIENT_GUID, tabsRecord.guid);
-      assertEquals(TEST_CLIENT_NAME, tabsRecord.clientName);
-
-      assertNotNull(tabsRecord.tabs);
-      assertEquals(0, tabsRecord.tabs.size());
-
-      assertEquals(0, tabsRecord.lastModified);
-    } finally {
-      cursor.close();
-    }
-  }
-
-  // Not much of a test, but verifies the tabs record at least agrees with the
-  // disk data and doubles as a database inspector.
-  public void testLocalTabs() throws Exception {
-    final ContentProviderClient tabsClient = getTabsClient();
-
-    final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
-    Cursor cursor = null;
-    try {
-      // Keep this in sync with the Fennec schema.
-      cursor = tabsClient.query(BrowserContract.Tabs.CONTENT_URI, null, BrowserContract.Tabs.CLIENT_GUID + " IS NULL", null, positionAscending);
-      RepoUtils.dumpCursor(cursor);
-
-      final TabsRecord tabsRecord = FennecTabsRepository.tabsRecordFromCursor(cursor, TEST_CLIENT_GUID, TEST_CLIENT_NAME);
-
-      assertEquals(TEST_CLIENT_GUID, tabsRecord.guid);
-      assertEquals(TEST_CLIENT_NAME, tabsRecord.clientName);
-
-      assertNotNull(tabsRecord.tabs);
-      assertEquals(cursor.getCount(), tabsRecord.tabs.size());
     } finally {
       cursor.close();
     }
