@@ -1,0 +1,8 @@
+        <activity
+            android:theme="@style/SyncTheme"
+            android:icon="@drawable/icon"
+            android:label="@string/picl_account_label"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:windowSoftInputMode="adjustResize|stateAlwaysHidden"
+            android:name="org.mozilla.gecko.picl.account.PICLAccountActivity" >
+        </activity>

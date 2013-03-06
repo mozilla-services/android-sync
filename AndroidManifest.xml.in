@@ -30,8 +30,9 @@
                  android:label="@string/sync_app_name">
 
 #include manifests/SyncAndroidManifest_activities.xml.in
-#include manifests/SyncAndroidManifest_services.xml.in
+#include manifests/PICLAndroidManifest_activities.xml.in
 
+#include manifests/SyncAndroidManifest_services.xml.in
 #include manifests/PICLAndroidManifest_services.xml.in
     </application>
 

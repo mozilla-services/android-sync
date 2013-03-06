@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.picl;
+package org.mozilla.gecko.picl.account;
 
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 
 import android.app.Service;
 import android.content.Intent;
@@ -15,10 +15,13 @@ public class PICLAccountAuthenticatorService extends Service {
 
   // Lazily initialized by <code>getAuthenticator</code>.
   protected PICLAccountAuthenticator accountAuthenticator = null;
+  private static final Object LOCK = new Object();
 
   protected PICLAccountAuthenticator getAuthenticator() {
-    if (accountAuthenticator == null) {
-      accountAuthenticator = new PICLAccountAuthenticator(this);
+    synchronized (LOCK) {
+      if (accountAuthenticator == null) {
+        accountAuthenticator = new PICLAccountAuthenticator(this);
+      }
     }
 
     return accountAuthenticator;

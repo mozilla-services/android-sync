@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.picl;
+package org.mozilla.gecko.picl.account;
 
-import org.mozilla.gecko.sync.Logger;
+import org.mozilla.gecko.background.common.log.Logger;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -12,6 +12,7 @@ import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.accounts.NetworkErrorException;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 public class PICLAccountAuthenticator extends AbstractAccountAuthenticator {
@@ -33,29 +34,13 @@ public class PICLAccountAuthenticator extends AbstractAccountAuthenticator {
           throws NetworkErrorException {
     Logger.debug(LOG_TAG, "addAccount");
 
-    final Bundle res = new Bundle();
+    Bundle reply = new Bundle();
 
-    if (!PICLAccountConstants.ACCOUNT_TYPE.equals(accountType)) {
-      res.putInt(AccountManager.KEY_ERROR_CODE, -1);
-      res.putString(AccountManager.KEY_ERROR_MESSAGE, "Not adding unknown account type.");
-      return res;
-    }
+    Intent i = new Intent(this.context, PICLAccountActivity.class);
+    i.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
+    reply.putParcelable(AccountManager.KEY_INTENT, i);
 
-    final Account account = new Account("test@test.com", PICLAccountConstants.ACCOUNT_TYPE);
-    final String password = "password";
-    final Bundle userData = Bundle.EMPTY;
-
-    if (!accountManager.addAccountExplicitly(account, password, userData)) {
-      res.putInt(AccountManager.KEY_ERROR_CODE, -1);
-      res.putString(AccountManager.KEY_ERROR_MESSAGE, "Failed to add account explicitly.");
-      return res;
-    }
-
-    Logger.info(LOG_TAG, "Added account named " + account.name + " of type " + account.type);
-
-    res.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-    res.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
-    return res;
+    return reply;
   }
 
   @Override
