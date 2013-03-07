@@ -9,10 +9,13 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.picl.PICLAccountConstants;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
+import android.content.ContentResolver;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -27,7 +30,7 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity {
 
   private static final String TAG = "PICLAccountAuthenticatorActivity";
 
-  static final String KEY_SERVER = "http://192.168.1.108:8090";
+  static final String KEY_SERVER =  PICLAccountConstants.KEY_SERVER;
   static final String KEY_SERVER_USER = "user";
 
   static final Uri KEY_SERVER_USER_URI = Uri.parse(KEY_SERVER).buildUpon()
@@ -70,22 +73,15 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity {
 
   protected void onKey(KeyResponse res) {
     Logger.debug(TAG, "onKey(res)");
-    final String ACCOUNT_TYPE = getString(R.string.picl_account_type);
-    Account account = new Account(res.email, ACCOUNT_TYPE);
-    Bundle options = new Bundle();
 
-    options.putString("kA", res.kA);
-    options.putString("deviceId", res.deviceId);
-    options.putString("version", res.version);
+    Account account = PICLAccountAuthenticator.createAccount(this, res.email, res.kA, res.deviceId, res.version);
 
-    AccountManager am = AccountManager.get(this);
+    if (account != null) {
+      ContentResolver.setSyncAutomatically(account, BrowserContract.TABS_AUTHORITY, true);
 
-    boolean created = am.addAccountExplicitly(account, "nothere", options);
-
-    if (created) {
       Bundle result = new Bundle();
       result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-      result.putString(AccountManager.KEY_ACCOUNT_TYPE, ACCOUNT_TYPE);
+      result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
       setAccountAuthenticatorResult(result);
     }
 
@@ -155,7 +151,6 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity {
         }
       }
     }
-
   }
 
   private static class KeyResponse {
