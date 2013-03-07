@@ -79,6 +79,20 @@ class FennecRepackager:
         gecko_u = os.path.join(temp_dir, "gecko.u.apk")
         shutil.copy(self.input_filename, gecko_u)
 
+        # Remove any existing signature.
+        # zip updates APK in place.
+        args = [ "zip",
+                 "-d",
+                 gecko_u,
+                 "META-INF/*"
+                 ]
+        try:
+            subprocess.check_call(args)
+        except subprocess.CalledProcessError as e:
+            if e.returncode != 12:
+                # 12 == nothing to do, i.e. this archive isn't signed.
+                raise e
+
         keystore = self._ensure_debugkeystore()
 
         # jarsigner updates APK in place.
