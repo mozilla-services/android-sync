@@ -1,0 +1,9 @@
+[submodule "external/base64-unstub"]
+	path = external/base64-unstub
+	url = https://github.com/rnewman/base64-unstub
+[submodule "external/log-unstub"]
+	path = external/log-unstub
+	url = https://github.com/rnewman/log-unstub
+[submodule "external/sharedpreferences-stub"]
+	path = external/sharedpreferences-stub
+	url = https://github.com/rnewman/sharedpreferences-stub
