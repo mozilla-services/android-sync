@@ -70,22 +70,13 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity {
 
   protected void onKey(KeyResponse res) {
     Logger.debug(TAG, "onKey(res)");
-    final String ACCOUNT_TYPE = getString(R.string.picl_account_type);
-    Account account = new Account(res.email, ACCOUNT_TYPE);
-    Bundle options = new Bundle();
 
-    options.putString("kA", res.kA);
-    options.putString("deviceId", res.deviceId);
-    options.putString("version", res.version);
+    Account account = PICLAccountAuthenticator.createAccount(this, res.email, res.kA, res.deviceId, res.version);
 
-    AccountManager am = AccountManager.get(this);
-
-    boolean created = am.addAccountExplicitly(account, "nothere", options);
-
-    if (created) {
+    if (account != null) {
       Bundle result = new Bundle();
       result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-      result.putString(AccountManager.KEY_ACCOUNT_TYPE, ACCOUNT_TYPE);
+      result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
       setAccountAuthenticatorResult(result);
     }
 
@@ -155,7 +146,6 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity {
         }
       }
     }
-
   }
 
   private static class KeyResponse {
