@@ -18,10 +18,11 @@ import errno
 import sys
 import logging
 
-import argparse
 import shutil
 import tempfile
 import subprocess
+
+from argparse_importer import argparse
 
 class FennecRepackager:
     def __init__(self, input_filename, logger=None):

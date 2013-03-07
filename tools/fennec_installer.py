@@ -19,11 +19,12 @@ import errno
 import sys
 
 import logging
-import argparse
 import shutil
 import tempfile
 import subprocess
 import urllib2
+
+from argparse_importer import argparse
 
 from fennec_repackager import FennecRepackager
 

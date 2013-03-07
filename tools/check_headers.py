@@ -4,10 +4,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import argparse
 import sys
 import os
 import re
+
+from argparse_importer import argparse
 
 # parse command line arguments
 parser = argparse.ArgumentParser(description='Update headers in source files.')
