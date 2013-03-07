@@ -93,6 +93,9 @@
         <activeByDefault>true</activeByDefault>
       </activation>
       <modules>
+        <module>external/log-unstub</module>
+        <module>external/sharedpreferences-stub</module>
+        <module>external/base64-unstub</module>
         <module>android-sync-app</module>
         <module>bagheera-client-test</module>
         <module>android-sync-instrumentation</module>
