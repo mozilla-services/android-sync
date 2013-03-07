@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.picl;
+package org.mozilla.gecko.picl.sync;
 
-public class PICLAccountConstants {
-  public static final String KEY_SERVER = "http://107.21.150.42";
-  public static final String STORAGE_SERVER = "http://23.20.0.206";
+public interface PICLServerSyncStageDelegate {
+  public void handleSuccess();
+  public void handleError(Exception e);
 }

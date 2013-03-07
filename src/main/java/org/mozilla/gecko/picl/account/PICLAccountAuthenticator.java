@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.picl.account;
 
+import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 
 import android.accounts.AbstractAccountAuthenticator;
@@ -90,5 +91,20 @@ public class PICLAccountAuthenticator extends AbstractAccountAuthenticator {
     Logger.debug(LOG_TAG, "updateCredentials");
 
     return null;
+  }
+
+  public static Account createAccount(Context context, String email, String kA, String deviceId, String version) {
+    String accountType = context.getString(R.string.picl_account_type);
+    Account account = new Account(email, accountType);
+    Bundle options = new Bundle();
+
+    options.putString("kA", kA);
+    options.putString("deviceId", deviceId);
+    options.putString("version", version);
+
+    AccountManager am = AccountManager.get(context);
+    am.addAccountExplicitly(account, "nothere", options);
+
+    return account;
   }
 }

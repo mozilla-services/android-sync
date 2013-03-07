@@ -61,7 +61,7 @@ public class TestServerLocalSynchronizer {
     return synchronizer;
   }
 
-  protected static Exception doSynchronize(final Synchronizer synchronizer) {
+  public static Exception doSynchronize(final Synchronizer synchronizer) {
     final ArrayList<Exception> a = new ArrayList<Exception>();
 
     WaitHelper.getTestWaiter().performWait(new Runnable() {
