@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="src/test/java"/>
+	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="external/base64-unstub/src/main/java"/>
+	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="external/log-unstub/src/main/java"/>
+	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="external/sharedpreferences-stub/src/main/java"/>
 	<classpathentry including="**/*.java" kind="src" path="src/main/java"/>
   <classpathentry including="**/*.java" kind="src" path="external/httpclientandroidlib/httpclientandroidlib/src"/>
   <classpathentry including="**/*.java" kind="src" path="external/json-simple-1.1/src"/>
@@ -11,12 +14,9 @@
 	</classpathentry>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javassist/javassist/3.12.1.GA/javassist-3.12.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/simpleframework/simple/4.1.21/simple-4.1.21.jar"/>
-	<classpathentry kind="var" path="M2_REPO/android/util/base64-unstub/1/base64-unstub-1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/android/util/log-unstub/1/log-unstub-1.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-  <classpathentry kind="lib" path="external/sharedpreferences-stub-1/lib/sharedpreferences-stub.jar"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
