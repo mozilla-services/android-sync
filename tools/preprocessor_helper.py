@@ -9,6 +9,8 @@ High level interface to Preprocessor.
 '''
 
 from Preprocessor import Preprocessor
+from util import FileAvoidWrite
+
 import os
 
 def preprocess(input_filename, output_filename, defines, makedirs=True):
@@ -31,7 +33,10 @@ def preprocess(input_filename, output_filename, defines, makedirs=True):
         if dirname and not os.path.exists(dirname):
             os.makedirs(dirname)
 
-    with open(output_filename, "wt") as fo:
+    # Avoid writing unchanged files.  This trades memory (since output
+    # is buffered) to save disk access (refreshes in Eclipse and
+    # recompiles in Maven).
+    with FileAvoidWrite(output_filename) as fo:
         pp.out = fo
         with open(input_filename, "rt") as fi:
             pp.do_include(fi)
