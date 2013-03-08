@@ -5,7 +5,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
-    android:contentAuthority="@ANDROID_PACKAGE_NAME@.db.browser"
+    android:contentAuthority="@ANDROID_PACKAGE_NAME@.db.tabs"
     android:accountType="@string/picl_account_type"
     android:supportsUploading="true"
     android:userVisible="true"
