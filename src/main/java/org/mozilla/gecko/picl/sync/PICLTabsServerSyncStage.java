@@ -4,14 +4,9 @@
 
 package org.mozilla.gecko.picl.sync;
 
-import java.util.Map.Entry;
-
-import org.mozilla.android.sync.test.helpers.WBORepository;
-import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.picl.sync.repositories.PICLServer0Repository;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
-import org.mozilla.gecko.sync.repositories.domain.Record;
-import org.mozilla.gecko.sync.synchronizer.Synchronizer;
 
 /**
  * A <code>PICLServerSyncStage</code> that syncs local tabs to a remote PICL
@@ -35,19 +30,6 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
 
   @Override
   protected Repository makeRemoteRepository() {
-    // This should be a PICL server repository that can store tab records.
-    return new WBORepository();
-  }
-
-  @Override
-  public void onSynchronized(Synchronizer synchronizer) {
-    // Just for debugging, print a little information about what records were
-    // sent to the remote repository. Remember to remove this when the remote is
-    // an actual PICL server repository.
-    WBORepository remote = (WBORepository) synchronizer.repositoryA;
-    for (Entry<String, Record> entry : remote.wbos.entrySet()) {
-      Logger.debug(LOG_TAG, entry.getKey() + " -> " + entry.getValue());
-    }
-    super.onSynchronized(synchronizer);
+    return new PICLServer0Repository(null, config.kA, null);
   }
 }

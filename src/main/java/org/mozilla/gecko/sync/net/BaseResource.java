@@ -73,7 +73,7 @@ public class BaseResource implements Resource {
   protected BasicHttpContext context;
   protected DefaultHttpClient client;
   public    ResourceDelegate delegate;
-  protected HttpRequestBase request;
+  public HttpRequestBase request;
   public String charset = "utf-8";
 
   protected static WeakReference<HttpResponseObserver> httpResponseObserver = null;
