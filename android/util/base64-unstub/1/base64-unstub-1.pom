@@ -41,6 +41,7 @@
           <noJekyll>true</noJekyll> <!-- disable webpage processing -->
           <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory> <!-- matches distribution management repository url above -->
           <branch>refs/heads/mvn-repo</branch> <!-- remote branch name -->
+          <merge>true</merge> <!-- this is shared space, so don't overwrite data from other packages -->
           <includes><include>**/*</include></includes>
           <repositoryName>android-sync</repositoryName> <!-- github repo name -->
           <repositoryOwner>mozilla-services</repositoryOwner> <!-- github username  -->
