@@ -10,8 +10,6 @@ Substitute preprocessor definitions into Android services files.
 
 from __future__ import print_function
 
-from tools.Preprocessor import Preprocessor
-
 import ConfigParser
 import io
 import os
@@ -21,6 +19,7 @@ import time
 import getpass
 
 from tools.argparse_importer import argparse
+from tools.preprocessor_helper import preprocess
 
 def get_defines(config_files):
     '''
@@ -51,31 +50,6 @@ def get_defines(config_files):
         del defines[k]
 
     return defines
-
-def preprocess(input_filename, output_filename, defines, makedirs=True):
-    '''
-    Preprocess `input_filename` into `output_filename`, substituting
-    definitions from `defines`.
-
-    Directories needed to write output file will be created if
-    `makedirs` is truthy.
-    '''
-    pp = Preprocessor()
-    pp.context.update(defines)
-    pp.setLineEndings("lf")
-    pp.setMarker("#")
-    pp.do_filter("substitution")
-
-    # make sure we can actually write to output directory
-    if makedirs:
-        dirname = os.path.dirname(output_filename)
-        if dirname and not os.path.exists(dirname):
-            os.makedirs(dirname)
-
-    with open(output_filename, "wt") as fo:
-        pp.out = fo
-        with open(input_filename, "rt") as fi:
-            pp.do_include(fi)
 
 def _parse_args(args):
     parser = argparse.ArgumentParser(description="Preprocess Android services files.")
