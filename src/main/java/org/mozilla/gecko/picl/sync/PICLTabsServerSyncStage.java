@@ -47,9 +47,6 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
 
         json.put("payload", payload.toJSONString());
 
-        JSONArray jsonArr = new JSONArray();
-        jsonArr.add(json.object);
-
         return json;
       }
 
