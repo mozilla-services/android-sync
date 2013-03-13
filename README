@@ -50,9 +50,18 @@
 
   http://rustyklophaus.com/articles/20100124-SubmodulesAndSubreposDoneRight.html
 
-* If for some reason you need to work with the external test-android-sync repo:
+## GitHub-hosted Maven repository ##
 
-  git remote add -f android-sync-test ~/path/to/test-android-sync
-  git pull -s subtree android-sync-test develop
+Android Sync stubs and unstubs several Android modules.  The source of
+these modules are delivered as git submodules; use
 
-  (It's a subtree.)
+```
+git submodule init
+git submodule update
+```
+
+to populate the `external` directory with this source code.  The Maven
+artifacts (JAR files) are uploaded to the `mvn-repo` branch of
+`github.com/mozilla-services/android-sync`.  The `android-sync` Maven
+project automatically downloads these JAR files and mirrors them
+locally.
