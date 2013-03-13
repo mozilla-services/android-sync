@@ -10,6 +10,7 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.android.PasswordsRepositorySession.PasswordsRepository;
+import org.mozilla.gecko.sync.repositories.domain.PasswordRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 /**
@@ -29,15 +30,28 @@ public class PICLPasswordsServerSyncStage extends PICLServerSyncStage {
 
       @Override
       public ExtendedJSONObject fromRecord(Record record) {
-        // TODO Auto-generated method stub
-        return null;
+        PasswordRecord pRecord = (PasswordRecord) record;
+        
+        ExtendedJSONObject json = new ExtendedJSONObject();
+        json.put("id", pRecord.guid);
+
+        ExtendedJSONObject payload = new ExtendedJSONObject();
+        pRecord.populatePayload(payload);
+
+        json.put("payload", payload.toJSONString());
+        
+        return json;
       }
 
       @Override
-      public Record toRecord(ExtendedJSONObject str)
-          throws NonObjectJSONException, IOException, ParseException {
-        // TODO Auto-generated method stub
-        return null;
+      public Record toRecord(ExtendedJSONObject json) throws NonObjectJSONException, IOException, ParseException {
+        PasswordRecord record = new PasswordRecord();
+        
+        record.guid = (String) json.get("id");
+        ExtendedJSONObject payload = ExtendedJSONObject.parseJSONObject((String) json.get("payload"));
+        record.initFromPayload(payload);
+        
+        return record;
       }
       
     });
