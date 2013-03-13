@@ -6,8 +6,7 @@ package org.mozilla.gecko.picl.sync.repositories;
 
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.picl.sync.net.PICLTabsClient;
-import org.mozilla.gecko.picl.sync.net.PICLTabsClient.PICLTabsDelegate;
+import org.mozilla.gecko.picl.sync.net.PICLServer0Client.PICLServer0ClientDelegate;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.NoStoreDelegateException;
@@ -26,18 +25,14 @@ public class PICLServer0RepositorySession extends RepositorySession {
   private static final String LOG_TAG = "PICL0RepoSession";
 
   public static final String TABS = "tabs";
+  
+  protected PICLRecordTranslator translator;
 
   protected PICLServer0Repository serverRepository;
-  protected PICLTabsClient tabsClient;
 
   public PICLServer0RepositorySession(Repository repository) {
     super(repository);
-     serverRepository = (PICLServer0Repository) repository;
-     if (serverRepository.collection.equals(TABS)) {
-       tabsClient = new PICLTabsClient(serverRepository.serverURI, serverRepository.userid);
-     } else {
-       throw new IllegalArgumentException("Unrecognized collection: " + serverRepository.collection);
-     }
+    serverRepository = (PICLServer0Repository) repository;
   }
 
   @Override
@@ -52,21 +47,14 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
       @Override
       public void run() {
-        tabsClient.getAllTabs(new PICLTabsDelegate() {
+        serverRepository.client.get(new PICLServer0ClientDelegate() {
 
           @Override
           public void handleSuccess(ExtendedJSONObject json) {
             Logger.warn(LOG_TAG, "Fetched: " + json.toJSONString());
             try {
               for (Object itemJson : json.getArray("items")) {
-                JSONObject record = (JSONObject) itemJson;
-                TabsRecord tabsRecord = new TabsRecord();
-
-                tabsRecord.guid = (String) record.get("id");
-                ExtendedJSONObject payload = ExtendedJSONObject.parseJSONObject((String) record.get("payload"));
-                tabsRecord.initFromPayload(payload);
-
-                delegate.onFetchedRecord(tabsRecord);
+                delegate.onFetchedRecord(serverRepository.translator.toRecord((ExtendedJSONObject) itemJson));
               }
 
             } catch (Exception e) {
@@ -117,8 +105,7 @@ public class PICLServer0RepositorySession extends RepositorySession {
       public void run() {
         Logger.warn(LOG_TAG, "Calling store with record " + record);
 
-        TabsRecord tabsRecord = (TabsRecord) record;
-        tabsClient.setTabs(tabsRecord, new PICLTabsDelegate() {
+        serverRepository.client.post(serverRepository.translator.fromRecord(record), new PICLServer0ClientDelegate() {
 
           @Override
           public void handleSuccess(ExtendedJSONObject json) {

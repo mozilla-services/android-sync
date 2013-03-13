@@ -7,8 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.picl.PICLAccountConstants;
-import org.mozilla.gecko.picl.sync.net.PICLTabsClient;
-import org.mozilla.gecko.picl.sync.net.PICLTabsClient.PICLTabsDelegate;
+import org.mozilla.gecko.picl.sync.net.PICLServer0Client;
+import org.mozilla.gecko.picl.sync.net.PICLServer0Client.PICLServer0ClientDelegate;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -17,11 +17,11 @@ public class TestPICLTabsClient {
   public static final String TEST_SERVER_URI = PICLAccountConstants.STORAGE_SERVER;
   public static final String TEST_USERID = "testUserID";
 
-  protected PICLTabsClient tabsClient;
+  protected PICLServer0Client client;
 
   @Before
   public void setUp() {
-    this.tabsClient = new PICLTabsClient(TEST_SERVER_URI, TEST_USERID);
+    this.client = new PICLServer0Client(TEST_SERVER_URI, TEST_USERID, "tabs");
   }
 
   @Test
@@ -29,7 +29,7 @@ public class TestPICLTabsClient {
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
-        tabsClient.getAllTabs(new PICLTabsDelegate() {
+        client.get(new PICLServer0ClientDelegate() {
           @Override
           public void handleSuccess(ExtendedJSONObject extendedJSONObject) {
             WaitHelper.getTestWaiter().performNotify();

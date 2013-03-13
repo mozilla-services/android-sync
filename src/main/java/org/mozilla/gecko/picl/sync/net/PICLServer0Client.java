@@ -1,14 +1,10 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 package org.mozilla.gecko.picl.sync.net;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
-import org.json.simple.JSONArray;
+
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -16,34 +12,79 @@ import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.Resource;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
 import org.mozilla.gecko.sync.net.SyncResponse;
-import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 
-public class PICLTabsClient {
-  private static final String LOG_TAG = PICLTabsClient.class.getSimpleName();
-
+public class PICLServer0Client {
+  private static final String LOG_TAG = PICLServer0Client.class.getSimpleName();
+  
   public final String serverURI;
   public final String userid;
-
-  public PICLTabsClient(String serverURI, String userid) {
+  public final String collection;
+  
+  public PICLServer0Client(String serverURI, String userid, String collection) {
     this.serverURI = serverURI;
     this.userid = userid;
+    this.collection = collection;
   }
+  
+  //GET <server-url>/<userid>/storage/<collection>
+  public void get(PICLServer0ClientDelegate delegate) {
+    get(uri(), delegate);    
+  }
+  
+  public void get(String id, PICLServer0ClientDelegate delegate) {
+    get(uri(id), delegate);
+  }
+  
+  protected void get(URI uri, PICLServer0ClientDelegate delegate) {
+    BaseResource r = new BaseResource(uri);
+    r.delegate = makeDelegate(r, delegate);
 
-  public interface PICLTabsDelegate {
+    r.get();
+  }
+  
+  public void post(ExtendedJSONObject json, PICLServer0ClientDelegate delegate) {
+    post(uri(), json, delegate);
+  }
+  
+  public void post(String id, ExtendedJSONObject json, PICLServer0ClientDelegate delegate) {
+    post(uri(id), json, delegate);
+  }
+  
+  protected void post(URI uri, ExtendedJSONObject json, PICLServer0ClientDelegate delegate) {
+    BaseResource r = new BaseResource(uri);
+    r.delegate = makeDelegate(r, delegate);
+
+    try {
+      r.post(json);
+    } catch (UnsupportedEncodingException e) {
+      delegate.handleError(e);
+    }
+  }
+  
+  protected URI uri() {
+    return uri("");
+  }
+  
+  protected URI uri(String id) {
+    return URI.create(serverURI + "/" + userid + "/storage/" + collection + id);
+  }
+  
+  
+  public interface PICLServer0ClientDelegate {
     public void handleSuccess(ExtendedJSONObject json);
     public void handleFailure(HttpResponse response, Exception e);
     public void handleError(Exception e);
   }
+  
+  protected class PICLServer0ResourceDelegate extends BaseResourceDelegate {
+    public final PICLServer0ClientDelegate delegate;
 
-  protected class PICLTabsResourceDelegate extends BaseResourceDelegate {
-    public final PICLTabsDelegate delegate;
-
-    public PICLTabsResourceDelegate(Resource resource, PICLTabsDelegate delegate) {
+    public PICLServer0ResourceDelegate(Resource resource, PICLServer0ClientDelegate delegate) {
       super(resource);
       this.delegate = delegate;
     }
@@ -95,44 +136,7 @@ public class PICLTabsClient {
     }
   }
 
-  protected ResourceDelegate makeDelegate(BaseResource resource, PICLTabsDelegate delegate) {
-    return new PICLTabsResourceDelegate(resource, delegate);
-  }
-
-
-  // GET <server-url>/<userid>/storage/<collection>
-  public void getAllTabs(final PICLTabsDelegate delegate) {
-    URI uri = URI.create(serverURI + "/" + userid + "/storage/tabs");
-
-    BaseResource r = new BaseResource(uri);
-    r.delegate = makeDelegate(r, delegate);
-
-    r.get();
-  }
-
-  @SuppressWarnings("unchecked")
-  public void setTabs(TabsRecord tabsRecord, PICLTabsDelegate delegate) {
-    URI uri = URI.create(serverURI + "/" + userid + "/storage/tabs");
-
-    ExtendedJSONObject json = new ExtendedJSONObject();
-    json.put("id", tabsRecord.guid);
-
-    ExtendedJSONObject payload = new ExtendedJSONObject();
-    tabsRecord.populatePayload(payload);
-
-    json.put("payload", payload.toJSONString());
-
-    JSONArray jsonArr = new JSONArray();
-    jsonArr.add(json.object);
-
-    BaseResource r = new BaseResource(uri);
-    r.delegate = makeDelegate(r, delegate);
-
-    try {
-      Logger.warn(LOG_TAG, "POST: " + jsonArr.toString());
-      r.post(jsonArr);
-    } catch (UnsupportedEncodingException e) {
-      delegate.handleError(e);
-    }
+  protected ResourceDelegate makeDelegate(BaseResource resource, PICLServer0ClientDelegate delegate) {
+    return new PICLServer0ResourceDelegate(resource, delegate);
   }
 }
