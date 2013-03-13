@@ -5,6 +5,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -36,9 +38,9 @@ public class PICLServer0Client {
     get(uri(), delegate);    
   }
   
-  public void get(String id, PICLServer0ClientDelegate delegate) {
+  /*public void get(String id, PICLServer0ClientDelegate delegate) {
     get(uri(id), delegate);
-  }
+  }*/
   
   protected void get(URI uri, PICLServer0ClientDelegate delegate) {
     BaseResource r = new BaseResource(uri);
@@ -47,15 +49,15 @@ public class PICLServer0Client {
     r.get();
   }
   
-  public void post(ExtendedJSONObject json, PICLServer0ClientDelegate delegate) {
+  public void post(JSONArray json, PICLServer0ClientDelegate delegate) {
     post(uri(), json, delegate);
   }
   
-  public void post(String id, ExtendedJSONObject json, PICLServer0ClientDelegate delegate) {
+  /*public void post(String id, ExtendedJSONObject json, PICLServer0ClientDelegate delegate) {
     post(uri(id), json, delegate);
-  }
+  }*/
   
-  protected void post(URI uri, ExtendedJSONObject json, PICLServer0ClientDelegate delegate) {
+  protected void post(URI uri, JSONArray json, PICLServer0ClientDelegate delegate) {
     BaseResource r = new BaseResource(uri);
     r.delegate = makeDelegate(r, delegate);
 

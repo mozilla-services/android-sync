@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.picl.sync.repositories;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.picl.sync.net.PICLServer0Client.PICLServer0ClientDelegate;
@@ -105,7 +106,10 @@ public class PICLServer0RepositorySession extends RepositorySession {
       public void run() {
         Logger.warn(LOG_TAG, "Calling store with record " + record);
 
-        serverRepository.client.post(serverRepository.translator.fromRecord(record), new PICLServer0ClientDelegate() {
+        JSONArray arr = new JSONArray();
+        arr.add(serverRepository.translator.fromRecord(record));
+        
+        serverRepository.client.post(arr, new PICLServer0ClientDelegate() {
 
           @Override
           public void handleSuccess(ExtendedJSONObject json) {
