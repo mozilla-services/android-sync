@@ -102,36 +102,7 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
   @Override
   public void store(final Record record) throws NoStoreDelegateException {
-    storeWorkQueue.execute(new Runnable() {
-
-      @Override
-      public void run() {
-        Logger.warn(LOG_TAG, "Calling store with record " + record);
-
-        JSONArray arr = new JSONArray();
-        arr.add(serverRepository.translator.fromRecord(record));
-
-        serverRepository.client.post(arr, new PICLServer0ClientDelegate() {
-
-          @Override
-          public void handleSuccess(ExtendedJSONObject json) {
-            delegate.onRecordStoreSucceeded(record.guid);
-          }
-
-          @Override
-          public void handleFailure(HttpResponse response, Exception e) {
-            delegate.onRecordStoreFailed(e, record.guid);
-          }
-
-          @Override
-          public void handleError(Exception e) {
-            delegate.onRecordStoreFailed(e, record.guid);
-          }
-
-        });
-      }
-
-    });
+    enqueue(record);
   }
 
   protected ArrayList<Record> queuedRecords = new ArrayList<Record>();
