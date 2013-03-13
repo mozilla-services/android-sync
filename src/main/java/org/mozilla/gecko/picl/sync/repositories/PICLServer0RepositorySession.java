@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.picl.sync.repositories;
 
+import java.util.ArrayList;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -113,7 +115,6 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
           @Override
           public void handleSuccess(ExtendedJSONObject json) {
-
             delegate.onRecordStoreSucceeded(record.guid);
           }
 
@@ -132,16 +133,73 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
     });
   }
+  
+  protected ArrayList<Record> queuedRecords = new ArrayList<Record>();
+  protected void enqueue(Record record) {
+    synchronized (queuedRecords) {
+      queuedRecords.add(record);
+    }
+  }
+  
+  protected void flush() {
+    storeWorkQueue.execute(new Runnable() {
+
+      @Override
+      public void run() {
+        Logger.warn(LOG_TAG, "flush()");
+        
+        final Record[] records;
+        synchronized (queuedRecords) {
+          records = (Record[]) queuedRecords.toArray();
+          queuedRecords.clear();
+        }
+        
+        JSONArray arr = new JSONArray();
+        for (Record record : records) {
+          arr.add(serverRepository.translator.fromRecord(record));
+        }
+        
+        serverRepository.client.post(arr, new PICLServer0ClientDelegate() {
+
+          @Override
+          public void handleSuccess(ExtendedJSONObject json) {
+            // the server only gives us a collections version back
+            // so... all records succeeded?
+            for (Record record : records) {
+              delegate.onRecordStoreSucceeded(record.guid);
+            }
+          }
+
+          @Override
+          public void handleFailure(HttpResponse response, Exception e) {
+            for (Record record : records) {
+              delegate.onRecordStoreFailed(e, record.guid);
+            }
+          }
+
+          @Override
+          public void handleError(Exception e) {
+            for (Record record : records) {
+              delegate.onRecordStoreFailed(e, record.guid);
+            }
+          }
+
+        });
+      }
+
+    });
+  }
 
   @Override
   public void storeDone() {
-    Logger.debug(LOG_TAG, "storeDone()");
+    flush();
+    Logger.debug(LOG_TAG, "storeDone() queuing");
     storeWorkQueue.execute(new Runnable() {
 
       @Override
       public void run() {
         final long end = System.currentTimeMillis();
-        Logger.warn(LOG_TAG, "Calling store with " + end);
+        Logger.warn(LOG_TAG, "Calling storeEnd with " + end);
         storeDone(end);
       }
 
