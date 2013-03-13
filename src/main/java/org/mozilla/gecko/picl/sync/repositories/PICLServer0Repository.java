@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.picl.sync.repositories;
 
+import org.mozilla.gecko.picl.sync.net.PICLServer0Client;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
@@ -15,16 +16,19 @@ import android.content.Context;
  */
 public class PICLServer0Repository extends Repository {
 
-  public final String serverURI;
-  public final String userid;
-  public final String collection;
 
-  public PICLServer0Repository(String serverURI, String userid, String collection) {
-    this.serverURI  = serverURI;
-    this.userid = userid;
-    this.collection = collection;
-    //    this.collectionPath = this.serverURI + "/" + this.userid + "/storage/" + this.collection;
-    //    this.collectionPathURI = new URI(this.collectionPath);
+  /*public static enum Collection {
+    tabs,
+    passwords;
+  }*/
+
+  public final PICLServer0Client client;
+  public final PICLRecordTranslator translator;
+
+
+  public PICLServer0Repository(PICLServer0Client client, PICLRecordTranslator translator) {
+    this.client = client;
+    this.translator = translator;
   }
 
   @Override

@@ -40,8 +40,8 @@ public class PICLSyncAdapter extends AbstractThreadedSyncAdapter {
     // content authority and update this code to correctly sync tabs and another
     // data type (I suggest form history -- it's flat and lightweight)
     // independently.
-    final PICLTabsGlobalSession tabsGlobalSession = new PICLTabsGlobalSession(config);
-    tabsGlobalSession.syncTabs();
+    final PICLGlobalSession globalSession = new PICLGlobalSession(config);
+    globalSession.sync();
   }
 
   /**
