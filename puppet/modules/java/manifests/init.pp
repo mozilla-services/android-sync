@@ -3,8 +3,8 @@
 # file, you can obtain one at http://mozilla.org/MPL/2.0/.
 
 class java {
-    $java_filename = "jdk-7u9-linux-i586.tar.gz"
-    $java_dirname  = "jdk1.7.0_09"
+    $java_filename = "jdk-7u17-linux-i586.tar.gz"
+    $java_dirname  = "jdk1.7.0_17"
     $jce_filename  = "UnlimitedJCEPolicyJDK7.zip"
     $jce_dirname   = "UnlimitedJCEPolicy"
 

@@ -76,6 +76,9 @@
         <groupId>com.jayway.maven.plugins.android.generation2</groupId>
         <artifactId>android-maven-plugin</artifactId>
         <configuration>
+          <sdk>
+            <platform>17</platform>
+          </sdk>
           <androidManifestFile>${project.basedir}/../test/AndroidManifest.xml</androidManifestFile>
           <resourceDirectory>${project.basedir}/../test/res</resourceDirectory>
 
