@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.picl.sync;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -12,6 +13,8 @@ import org.mozilla.gecko.picl.PICLAccountConstants;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AuthenticatorException;
+import android.accounts.OperationCanceledException;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
@@ -55,7 +58,13 @@ public class PICLSyncAdapter extends AbstractThreadedSyncAdapter {
    * @return a <code>PICLConfig</code> instance.
    */
   protected PICLConfig configFromAccount(Account account) {
-    String kA = AccountManager.get(getContext()).getUserData(account, "kA");
+    String kA;
+    try {
+      kA = AccountManager.get(getContext()).blockingGetAuthToken(account, PICLAccountConstants.AUTH_TOKEN_TYPE, true);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    //String kA = AccountManager.get(getContext()).getUserData(account, "kA");
 
     return new PICLConfig(getContext(), executor, PICLAccountConstants.STORAGE_SERVER, account.name, kA);
   }
