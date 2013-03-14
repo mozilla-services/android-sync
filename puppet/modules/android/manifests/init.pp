@@ -4,8 +4,14 @@
 
 class android {
     $android_sh = "/etc/profile.d/android.sh"
-    $android_platform     = "android-16"
-    $android_sdk_version  = "r20.0.3"
+    $android_platform     = "android-17"
+    $android_sdk_version  = "r21.1"
+
+    # http://dl-ssl.google.com/android/repository/android-VERSION.zip
+    $android_zip          = "android-17_r02.zip"
+
+    # http://dl-ssl.google.com/android/repository/platform-tools_VERSION-linux.zip
+    $platform_tools_zip   = "platform-tools_r16.0.2-linux.zip"
 
     $android_sdk_archive  = "/tmp/android-sdk_${android_sdk_version}-linux.tgz"
     $android_sdk_tmp_dir  = "/tmp/android-sdk-linux"
@@ -56,10 +62,9 @@ export ANDROID_HOME=${android_sdk_dir}
       require => [Exec["android"]],
     }
 
-    # http://dl-ssl.google.com/android/repository/android-16_r03.zip
-    file { "${android_sdk_dir}/temp/android-16_r03.zip":
+    file { "${android_sdk_dir}/temp/${android_zip}":
       ensure  => present,
-      source  => "puppet:///modules/data/android-16_r03.zip",
+      source  => "puppet:///modules/data/${android_zip}",
       owner   => "root",
       group   => "root",
       mode    => 644,
@@ -70,15 +75,14 @@ export ANDROID_HOME=${android_sdk_dir}
       cwd     => "${android_sdk_dir}",
       user    => "root",
       creates => "${android_sdk_dir}/platform-tools/aapt",
-      require => [Exec["android"], Exec["java"], File["${android_sdk_dir}/temp/android-16_r03.zip"]],
+      require => [Exec["android"], Exec["java"], File["${android_sdk_dir}/temp/${android_zip}"]],
       timeout => 0,
       logoutput => true,
     }
 
-    # http://dl-ssl.google.com/android/repository/platform-tools_r14-linux.zip
-    file { "${android_sdk_dir}/temp/platform-tools_r14-linux.zip":
+    file { "${android_sdk_dir}/temp/${platform_tools_zip}":
       ensure  => present,
-      source  => "puppet:///modules/data/platform-tools_r14-linux.zip",
+      source  => "puppet:///modules/data/${platform_tools_zip}",
       owner   => "root",
       group   => "root",
       mode    => 644,
@@ -89,7 +93,7 @@ export ANDROID_HOME=${android_sdk_dir}
       cwd     => "${android_sdk_dir}",
       user    => "root",
       creates => "${android_sdk_dir}/platforms/${android_platform}/android.jar",
-      require => [Exec["android"], Exec["java"], File["${android_sdk_dir}/temp/platform-tools_r14-linux.zip"]],
+      require => [Exec["android"], Exec["java"], File["${android_sdk_dir}/temp/${platform_tools_zip}"]],
       timeout => 0,
       logoutput => true,
     }
