@@ -1,4 +1,3 @@
-================================================================================
 Landing code: getting your changes committed to android-sync and mozilla-inbound
 ================================================================================
 
@@ -9,7 +8,7 @@ first land on the branch ``develop`` of git repository
 other Mozilla repository).
 
 Merging to develop
-==================
+------------------
 
 We use a gitflow_-like development process.  All new work is developed
 on a branch that is continually rebased to ``develop``.  We prefer to
@@ -61,7 +60,7 @@ Finally, you need to push your changes back upstream: ::
 .. _gitflow: http://nvie.com/posts/a-successful-git-branching-model/
 
 Merging to mozilla-inbound
-==========================
+--------------------------
 
 Let's assume your working directories look like ::
 
@@ -120,7 +119,7 @@ push it upstream: ::
    moving Java code often changes at least the package name).
 
 Updating Bugzilla
-=================
+-----------------
 
 This is not Android services specific, but we'll call it out anyway.
 You need to:
