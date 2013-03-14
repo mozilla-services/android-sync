@@ -99,7 +99,7 @@ Own-package configuration
 
 The *own-package configuration* is so-called because each developer is
 responsible for building her own Fennec Nightly (Android package
-*org.mozilla.fennec_@USERNAME@*).
+*org.mozilla.fennec_\@USERNAME\@*).
 
 Each development iteration, the developer updates the code integrated
 into Fennec and then redeploys Fennec as a whole.  This alternative
