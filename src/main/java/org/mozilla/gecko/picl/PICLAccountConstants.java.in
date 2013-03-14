@@ -5,6 +5,7 @@
 package org.mozilla.gecko.picl;
 
 public class PICLAccountConstants {
+  public static final String AUTH_TOKEN_TYPE = "org.persona.login";
   public static final String KEY_SERVER = "http://107.21.150.42";
   public static final String STORAGE_SERVER = "http://23.20.0.206";
 }

@@ -6,6 +6,7 @@ package org.mozilla.gecko.picl.account;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.picl.PICLAccountConstants;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -64,9 +65,25 @@ public class PICLAccountAuthenticator extends AbstractAccountAuthenticator {
           throws NetworkErrorException {
     Logger.debug(LOG_TAG, "getAuthToken");
 
-    Logger.warn(LOG_TAG, "Returning null bundle for getAuthToken.");
 
-    return null;
+    Bundle result = new Bundle();
+
+    if (PICLAccountConstants.AUTH_TOKEN_TYPE.equals(authTokenType)) {
+      String kA = accountManager.getUserData(account, "kA");
+
+      result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
+      result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
+      result.putString(AccountManager.KEY_AUTHTOKEN, kA);
+
+      Logger.warn(LOG_TAG, "Return authToken for type: " + authTokenType);
+    } else {
+      Logger.warn(LOG_TAG, "Unrecognized authTokenType: " + authTokenType);
+      result.putInt(AccountManager.KEY_ERROR_CODE, 400);
+      result.putString(AccountManager.KEY_ERROR_MESSAGE, "Unrecognized authTokenType: " + authTokenType);
+    }
+
+
+    return result;
   }
 
   @Override
