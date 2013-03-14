@@ -16,6 +16,22 @@
     <mozilla.externalPackages>ch.boye.*:org.json.*:org.mozilla.apache.*</mozilla.externalPackages>
   </properties>
 
+  <!-- We host stub/unstub JARs on github. -->
+  <repositories>
+    <repository>
+      <id>android-sync-mvn-repo</id>
+        <url>https://raw.github.com/mozilla-services/android-sync/mvn-repo/</url>
+        <snapshots>
+          <enabled>true</enabled>
+          <updatePolicy>always</updatePolicy>
+        </snapshots>
+        <releases>
+          <enabled>true</enabled>
+          <updatePolicy>always</updatePolicy>
+        </releases>
+    </repository>
+  </repositories>
+
   <dependencyManagement>
     <dependencies>
       <!-- The unit tests use JUnit 4 but the integration tests use

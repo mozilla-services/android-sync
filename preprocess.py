@@ -100,6 +100,7 @@ def main():
         "src/main/java/org/mozilla/gecko/db/BrowserContract.java.in",
         "AndroidManifest.xml.in",
         "test/AndroidManifest.xml.in",
+        "README.rst.in",
         ]
 
     dot_templates = {
