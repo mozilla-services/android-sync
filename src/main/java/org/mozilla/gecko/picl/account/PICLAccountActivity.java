@@ -4,45 +4,39 @@
 
 package org.mozilla.gecko.picl.account;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.picl.PICLAccountConstants;
+import org.mozilla.gecko.picl.account.net.PICLKeyServer0Client;
+import org.mozilla.gecko.picl.account.net.PICLKeyServer0Client.KeyResponse;
+import org.mozilla.gecko.picl.account.net.PICLKeyServer0Client.PICLKeyServer0ClientDelegate;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorActivity;
 import android.accounts.AccountManager;
 import android.content.ContentResolver;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
-import com.github.kevinsawicki.http.HttpRequest;
 
-public class PICLAccountActivity extends AccountAuthenticatorActivity {
+public class PICLAccountActivity extends AccountAuthenticatorActivity implements PICLKeyServer0ClientDelegate {
 
   private static final String TAG = "PICLAccountAuthenticatorActivity";
 
-  static final String KEY_SERVER =  PICLAccountConstants.KEY_SERVER;
-  static final String KEY_SERVER_USER = "user";
-
-  static final Uri KEY_SERVER_USER_URI = Uri.parse(KEY_SERVER).buildUpon()
-      .appendPath(KEY_SERVER_USER).build();
-
-  static final String KEY_SERVER_POST = KEY_SERVER + "/" + KEY_SERVER_USER;
-  static final String KEY_SERVER_GET = KEY_SERVER_POST + "/";
-
   private EditText emailText;
   private Button submitButton;
-
+  
+  private PICLKeyServer0Client keyClient = new PICLKeyServer0Client(PICLAccountConstants.KEY_SERVER);
   private boolean isGetting = false;
+  private Executor executor = Executors.newSingleThreadExecutor();
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -59,104 +53,63 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity {
       public void onClick(View v) {
         Logger.warn(TAG, "submitButton.onClick()");
 
-        String email = emailText.getText().toString();
+        final String email = emailText.getText().toString();
         if (TextUtils.isEmpty(email)) return;
 
         if (isGetting) return;
         isGetting = true;
 
-        new GetUserKeyTask().execute(email);
+        executor.execute(new Runnable() {
+
+          @Override
+          public void run() {
+            keyClient.get(email, PICLAccountActivity.this);
+          }
+          
+        });
       }
 
     });
   }
 
-  protected void onKey(KeyResponse res) {
-    Logger.debug(TAG, "onKey(res)");
-
-    Account account = PICLAccountAuthenticator.createAccount(this, res.email, res.kA, res.deviceId, res.version);
-
-    if (account != null) {
-      ContentResolver.setSyncAutomatically(account, BrowserContract.TABS_AUTHORITY, true);
-
-      Bundle result = new Bundle();
-      result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-      result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
-      setAccountAuthenticatorResult(result);
-    }
-
-    finish();
-  }
-
-  private class GetUserKeyTask extends AsyncTask<String, Void, String> {
-
-    @Override
-    protected String doInBackground(String... params) {
-      String email = params[0];
-      String uri = KEY_SERVER_USER_URI.buildUpon()
-          .appendQueryParameter("email", email)
-          .build().toString();
-
-      // if email has been used before, we can get GET the key
-      HttpRequest request = null;
-      String response = null;
-
-      Logger.debug(TAG, "get(" + uri + ")");
-
-      request = HttpRequest.get(uri);
-      if (request.ok()) {
-        response = request.body();
-      } else {
-        Logger.info(TAG, request.code() + " " + request.message() + "\n" + request.body());
-      }
-
-      // if that GET is 4xx, then we should POST to create a key
-      if (response == null) {
-        String send = "email=" + email;
-        request = HttpRequest.post(KEY_SERVER_USER_URI.toString()).send(send);
-        if (request.created()) {
-          response = request.body();
-        } else {
-          Logger.info(TAG, request.code() + " " + request.message() + "\n" + request.body());
+  @Override
+  public void handleKey(final KeyResponse res) {
+    runOnUiThread(new Runnable() {
+      
+      @Override
+      public void run() {
+        Logger.debug(TAG, "onKey(res)");
+        isGetting = false;
+    
+        Account account = PICLAccountAuthenticator.createAccount(PICLAccountActivity.this, res.email, res.kA, res.deviceId, res.version);
+    
+        if (account != null) {
+          ContentResolver.setSyncAutomatically(account, BrowserContract.TABS_AUTHORITY, true);
+    
+          Bundle result = new Bundle();
+          result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
+          result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
+          setAccountAuthenticatorResult(result);
         }
-
+    
+        finish();
       }
-
-
-
-      return response;
-    }
-
-    @Override
-    protected void onPostExecute(String json) {
-      isGetting = false;
-
-
-      if (json != null) {
-        //lets find the key in the JSON
-        try {
-          JSONObject obj = (JSONObject) new JSONTokener(json).nextValue();
-
-          KeyResponse res = new KeyResponse();
-
-          res.email = emailText.getText().toString();
-          res.kA = obj.optString("kA");
-          res.deviceId = obj.optString("deviceId");
-          res.version = obj.optString("version");
-
-          onKey(res);
-        } catch (JSONException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
+      
+    });
+  }
+  
+  @Override
+  public void handleError(final Exception e) {
+    runOnUiThread(new Runnable() {
+      
+      @Override
+      public void run() {
+        isGetting = false;
+        Toast.makeText(PICLAccountActivity.this, e.toString(), Toast.LENGTH_LONG).show();
       }
-    }
+      
+    });
   }
 
-  private static class KeyResponse {
-    public String email;
-    public String kA;
-    public String version;
-    public String deviceId;
-  }
+
 }
