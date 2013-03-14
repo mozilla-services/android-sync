@@ -54,12 +54,11 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
           @Override
           public void handleSuccess(ExtendedJSONObject json) {
-            Logger.warn(LOG_TAG, "Fetched: " + json.toJSONString());
+            Logger.info(LOG_TAG, "Fetched: " + json.toJSONString());
             try {
               for (Object itemJson : json.getArray("items")) {
-                delegate.onFetchedRecord(serverRepository.translator.toRecord((ExtendedJSONObject) itemJson));
+                delegate.onFetchedRecord(serverRepository.translator.toRecord(new ExtendedJSONObject((JSONObject) itemJson)));
               }
-
             } catch (Exception e) {
               handleError(e);
             }
@@ -121,7 +120,7 @@ public class PICLServer0RepositorySession extends RepositorySession {
         
         final Record[] records;
         synchronized (queuedRecords) {
-          records = (Record[]) queuedRecords.toArray();
+          records = (Record[]) queuedRecords.toArray(new Record[queuedRecords.size()]);
           queuedRecords.clear();
         }
         
