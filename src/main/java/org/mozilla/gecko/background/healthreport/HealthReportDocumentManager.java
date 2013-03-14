@@ -6,10 +6,13 @@ package org.mozilla.gecko.background.healthreport;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map.Entry;
 import java.util.UUID;
 
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 
 import android.content.Context;
@@ -27,9 +30,11 @@ import android.content.Context;
 public class HealthReportDocumentManager {
   public static final String LOG_TAG = "HealthReportDocManager";
   private Context context;
+  private String prefsFile;
 
   public HealthReportDocumentManager(Context context, String prefsFile) {
     this.context = context;
+    this.prefsFile = prefsFile;
   }
 
   /**
@@ -63,7 +68,11 @@ public class HealthReportDocumentManager {
       return null;
     }
 
-    mergeAndroidToGeckoReport(androidJSONObject, geckoJSONObject);
+    try {
+      mergeAndroidToGeckoReport(androidJSONObject, geckoJSONObject);
+    } catch (NonObjectJSONException e) {
+      Logger.error(LOG_TAG, "Error parsing JSON document.", e);
+    }
 
     // Generate GUID.
     UUID uuid = UUID.randomUUID();
@@ -79,7 +88,43 @@ public class HealthReportDocumentManager {
     return uuid;
   }
 
-  private void mergeAndroidToGeckoReport(ExtendedJSONObject androidObj, ExtendedJSONObject geckoObj) {
+  public ExtendedJSONObject mergeAndroidToGeckoReport(ExtendedJSONObject androidObj, ExtendedJSONObject geckoObj) throws NonObjectJSONException {
+    mergeAndroidToGeckoLast(androidObj, geckoObj);
+    mergeAndroidToGeckoDays(androidObj, geckoObj);
+    return geckoObj;
+  }
+
+  private void mergeAndroidToGeckoDays(ExtendedJSONObject androidObj, ExtendedJSONObject geckoObj) throws NonObjectJSONException {
+    // We assume Gecko and Android providers do not collide on the "days" level.
+    ExtendedJSONObject geckoDaysJSON = geckoObj.getObject("data").getObject("days");
+    ExtendedJSONObject androidDaysJSON = androidObj.getObject("data").getObject("days");
+
+    Iterable<Entry<String, Object>> androidDaysIterator = androidDaysJSON.entryIterable();
+    for (Entry<String, Object> day : androidDaysIterator) {
+      String dayKey = day.getKey();
+      if (!geckoDaysJSON.containsKey(dayKey)) {
+        geckoDaysJSON.put(dayKey, day.getValue());
+      } else {
+        // Entry already exists, so append Android entries to the day.
+        ExtendedJSONObject geckoSingleDay = geckoDaysJSON.getObject(dayKey);
+        ExtendedJSONObject androidSingleDayEntries = new ExtendedJSONObject((JSONObject) day.getValue());
+        Iterable<Entry<String, Object>> dayEntriesIterator = androidSingleDayEntries.entryIterable();
+        for (Entry<String, Object> dayEntry : dayEntriesIterator) {
+          geckoSingleDay.put(dayEntry.getKey(), dayEntry.getValue());
+        }
+      }
+    }
+  }
+
+  private void mergeAndroidToGeckoLast(ExtendedJSONObject androidObj, ExtendedJSONObject geckoObj) throws NonObjectJSONException {
+    // We assume Gecko and Android providers do not collide on the "last" level.
+    ExtendedJSONObject geckoLastJSON = geckoObj.getObject("data").getObject("last");
+    ExtendedJSONObject androidLastJSON = androidObj.getObject("data").getObject("last");
+
+    Iterable<Entry<String, Object>> androidLastIterator = androidLastJSON.entryIterable();
+    for (Entry<String, Object> e : androidLastIterator) {
+      geckoLastJSON.put((String) e.getKey(), e.getValue());
+    }
   }
 
   private boolean writeFile(String filename, String contents) {
