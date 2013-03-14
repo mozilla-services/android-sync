@@ -6,7 +6,6 @@ import java.net.URI;
 import java.security.GeneralSecurityException;
 
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.BaseResource;
