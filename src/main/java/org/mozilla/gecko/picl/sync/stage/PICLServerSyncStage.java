@@ -2,8 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.picl.sync;
+package org.mozilla.gecko.picl.sync.stage;
 
+import org.mozilla.gecko.picl.sync.PICLConfig;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.synchronizer.ServerLocalSynchronizer;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
