@@ -167,7 +167,7 @@ public class BookmarkRecord extends Record {
   }
 
   @Override
-  protected void initFromPayload(ExtendedJSONObject payload) {
+  public void initFromPayload(ExtendedJSONObject payload) {
     this.type        = payload.getString("type");
     this.title       = payload.getString("title");
     this.description = payload.getString("description");
@@ -248,7 +248,7 @@ public class BookmarkRecord extends Record {
   }
 
   @Override
-  protected void populatePayload(ExtendedJSONObject payload) {
+  public void populatePayload(ExtendedJSONObject payload) {
     putPayload(payload, "type", this.type);
     putPayload(payload, "title", this.title);
     putPayload(payload, "description", this.description);

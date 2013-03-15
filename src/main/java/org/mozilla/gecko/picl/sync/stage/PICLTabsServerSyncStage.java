@@ -2,13 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.picl.sync;
+package org.mozilla.gecko.picl.sync.stage;
 
 import java.io.IOException;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.picl.sync.PICLConfig;
 import org.mozilla.gecko.picl.sync.net.PICLServer0Client;
 import org.mozilla.gecko.picl.sync.repositories.PICLRecordTranslator;
 import org.mozilla.gecko.picl.sync.repositories.PICLServer0Repository;
@@ -32,7 +33,7 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
 
 
   @Override
-  protected Repository makeLocalRepository() {
+  protected Repository makeRemoteRepository() {
     return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, "tabs"), new PICLRecordTranslator() {
 
       @Override
@@ -66,7 +67,7 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
   }
 
   @Override
-  protected Repository makeRemoteRepository() {
+  protected Repository makeLocalRepository() {
     return new FennecTabsRepository(config.getClientName(), config.getClientGUID());
   }
 }

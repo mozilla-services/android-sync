@@ -42,6 +42,7 @@ public class PICLServer0Client {
   }*/
 
   protected void get(URI uri, PICLServer0ClientDelegate delegate) {
+    Logger.info(LOG_TAG, "GETting from picl server: " + uri.toString());
     BaseResource r = new BaseResource(uri);
     r.delegate = makeDelegate(r, delegate);
 
@@ -57,6 +58,8 @@ public class PICLServer0Client {
   }*/
 
   protected void post(URI uri, JSONArray json, PICLServer0ClientDelegate delegate) {
+    Logger.info(LOG_TAG, "POSTing to picl server: " + uri.toString());
+
     BaseResource r = new BaseResource(uri);
     r.delegate = makeDelegate(r, delegate);
 

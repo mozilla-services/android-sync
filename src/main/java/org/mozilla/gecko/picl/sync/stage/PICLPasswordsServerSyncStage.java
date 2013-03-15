@@ -1,8 +1,9 @@
-package org.mozilla.gecko.picl.sync;
+package org.mozilla.gecko.picl.sync.stage;
 
 import java.io.IOException;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.picl.sync.PICLConfig;
 import org.mozilla.gecko.picl.sync.net.PICLServer0Client;
 import org.mozilla.gecko.picl.sync.repositories.PICLRecordTranslator;
 import org.mozilla.gecko.picl.sync.repositories.PICLServer0Repository;
@@ -25,7 +26,7 @@ public class PICLPasswordsServerSyncStage extends PICLServerSyncStage {
   }
 
   @Override
-  protected Repository makeLocalRepository() {
+  protected Repository makeRemoteRepository() {
     return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, "passwords"), new PICLRecordTranslator() {
 
       @Override
@@ -58,7 +59,7 @@ public class PICLPasswordsServerSyncStage extends PICLServerSyncStage {
   }
 
   @Override
-  protected Repository makeRemoteRepository() {
+  protected Repository makeLocalRepository() {
     return new PasswordsRepository();
   }
 
