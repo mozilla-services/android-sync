@@ -27,6 +27,8 @@ import org.mozilla.gecko.sync.repositories.domain.TabsRecord;
 public class PICLTabsServerSyncStage extends PICLServerSyncStage {
   public final static String LOG_TAG = PICLTabsServerSyncStage.class.getSimpleName();
 
+  private static final String COLLECTION = "tabs";
+
   public PICLTabsServerSyncStage(PICLConfig config, PICLServerSyncStageDelegate delegate) {
     super(config, delegate);
   }
@@ -34,7 +36,7 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
 
   @Override
   protected Repository makeRemoteRepository() {
-    return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, "tabs"), new PICLRecordTranslator() {
+    return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, COLLECTION), new PICLRecordTranslator() {
 
       @Override
       public ExtendedJSONObject fromRecord(Record record) {
@@ -69,5 +71,11 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
   @Override
   protected Repository makeLocalRepository() {
     return new FennecTabsRepository(config.getClientName(), config.getClientGUID());
+  }
+
+
+  @Override
+  public String name() {
+    return COLLECTION;
   }
 }
