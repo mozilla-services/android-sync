@@ -21,13 +21,15 @@ import org.mozilla.gecko.sync.repositories.domain.Record;
 public class PICLPasswordsServerSyncStage extends PICLServerSyncStage {
   public final static String LOG_TAG = PICLPasswordsServerSyncStage.class.getSimpleName();
   
+  private static final String COLLECTION = "passwords";
+  
   public PICLPasswordsServerSyncStage(PICLConfig config, PICLServerSyncStageDelegate delegate) {
     super(config, delegate);
   }
 
   @Override
   protected Repository makeRemoteRepository() {
-    return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, "passwords"), new PICLRecordTranslator() {
+    return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, COLLECTION), new PICLRecordTranslator() {
 
       @Override
       public ExtendedJSONObject fromRecord(Record record) {
@@ -61,6 +63,11 @@ public class PICLPasswordsServerSyncStage extends PICLServerSyncStage {
   @Override
   protected Repository makeLocalRepository() {
     return new PasswordsRepository();
+  }
+
+  @Override
+  public String name() {
+    return COLLECTION;
   }
   
 }

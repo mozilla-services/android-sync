@@ -21,31 +21,25 @@ import org.mozilla.gecko.picl.sync.stage.PICLTabsServerSyncStage;
  */
 public class PICLGlobalSession {
   public final static String LOG_TAG = PICLGlobalSession.class.getSimpleName();
-
-  protected enum Stage {
-    tabs,
-    passwords,
-    bookmarks;
-  }
   
   protected final PICLConfig config;
-  protected Stage currentStage;
   
-  protected HashMap<Stage, PICLServerSyncStage> stages;
+  protected LinkedList<PICLServerSyncStage> stages;
+  protected PICLServerSyncStage currentStage;
   
   //protected LinkedList<PICLServerSyncStage> stages;
   protected CountDownLatch latch;
   protected final PICLServerSyncStageDelegate stageDelegate = new PICLServerSyncStageDelegate() {
     @Override
     public void handleSuccess() {
-      Logger.info(LOG_TAG, "Successfully pickled stage:" + currentStage);
+      Logger.info(LOG_TAG, "Successfully pickled stage:" + currentStage.name());
       latch.countDown();
       advance();
     }
 
     @Override
     public void handleError(Exception e) {
-      Logger.warn(LOG_TAG, "Got exception pickling stage: " + currentStage, e);
+      Logger.warn(LOG_TAG, "Got exception pickling stage: " + currentStage.name(), e);
       latch.countDown();
       advance();
     }
@@ -63,44 +57,35 @@ public class PICLGlobalSession {
    * Public API to start syncing this PICL session.
    */
   public void sync() {
-	  setupStages();
-	  latch = new CountDownLatch(stages.size());
-	  advance();
-	  
-	  // we block until all stages are done, so that onPerformSync doesn't finish early.
-	  // each stage will countdown our latch
-	  try {
+    setupStages();
+    latch = new CountDownLatch(stages.size());
+    advance();
+
+    // we block until all stages are done, so that onPerformSync doesn't finish
+    // early.
+    // each stage will countdown our latch
+    try {
       latch.await((4 * 60 + 30) * 1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
-      Logger.warn(LOG_TAG, "Got interrupted while pickling.", e);
+      Logger.warn(LOG_TAG, "Got interrupted while pickling stage:"
+          + currentStage, e);
     }
+    currentStage = null;
   }
   
   protected void setupStages() {
-	  stages = new HashMap<Stage, PICLServerSyncStage>();
-	  stages.put(Stage.tabs, new PICLTabsServerSyncStage(config, stageDelegate));
-	  stages.put(Stage.passwords, new PICLPasswordsServerSyncStage(config, stageDelegate));
-	  stages.put(Stage.bookmarks, new PICLBookmarksServerSyncStage(config, stageDelegate));
-	  currentStage = Stage.tabs;
+    stages = new LinkedList<PICLServerSyncStage>();
+    stages.add(new PICLTabsServerSyncStage(config, stageDelegate));
+    stages.add(new PICLPasswordsServerSyncStage(config, stageDelegate));
+    stages.add(new PICLBookmarksServerSyncStage(config, stageDelegate));
   }
-  
-  protected static Stage nextStage(Stage s) {
-    int next = s.ordinal() + 1;
-    Stage[] values = Stage.values();
-    if (next < values.length) {
-      return values[next];
-    } else {
-      return null;
-    }
-  }
-  
   
   
   protected void advance() {
-	  currentStage = nextStage(currentStage);
-	  if (currentStage != null) {
-	    final Stage stage = currentStage;
-	    final PICLServerSyncStage syncStage = stages.get(currentStage);
+    final PICLServerSyncStage syncStage = stages.poll();
+	  if (syncStage != null) {
+	    currentStage = syncStage;
+	    
 	    config.executor.execute(new Runnable() {
 	      @Override
 	      public void run() {
@@ -108,7 +93,7 @@ public class PICLGlobalSession {
 	          syncStage.execute();
 	        } catch (Exception e) {
 	          // Don't let an uncaught exception on a background thread bring us down.
-	          Logger.warn(LOG_TAG, "Got exception pickling " + stage, e);
+	          Logger.warn(LOG_TAG, "Got exception pickling " + currentStage.name(), e);
 	          latch.countDown();
 	        }
 	      }

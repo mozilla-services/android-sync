@@ -37,6 +37,14 @@ public abstract class PICLServerSyncStage implements SynchronizerDelegate {
    * @return <code>Repository</code> instance.
    */
   protected abstract Repository makeRemoteRepository();
+  
+  
+  /**
+   * Return the name of this stage.
+   *
+   * @return <code>String</code> name.
+   */
+  public abstract String name();
 
   protected Synchronizer makeSynchronizer() {
     Synchronizer synchronizer = new ServerLocalSynchronizer();

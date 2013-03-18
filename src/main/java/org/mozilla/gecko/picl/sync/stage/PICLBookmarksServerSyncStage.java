@@ -15,6 +15,8 @@ import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class PICLBookmarksServerSyncStage extends PICLServerSyncStage {
+  
+  private static final String COLLECTION = "bookmarks";
 
   public PICLBookmarksServerSyncStage(PICLConfig config, PICLServerSyncStageDelegate delegate) {
     super(config, delegate);
@@ -22,7 +24,7 @@ public class PICLBookmarksServerSyncStage extends PICLServerSyncStage {
 
   @Override
   protected Repository makeRemoteRepository() {
-    return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, "bookmarks"), new PICLRecordTranslator() {
+    return new PICLServer0Repository(new PICLServer0Client(config.serverURL, config.kA, COLLECTION), new PICLRecordTranslator() {
 
       @Override
       public ExtendedJSONObject fromRecord(Record record) {
@@ -56,6 +58,11 @@ public class PICLBookmarksServerSyncStage extends PICLServerSyncStage {
   @Override
   protected Repository makeLocalRepository() {
     return new AndroidBrowserBookmarksRepository();
+  }
+
+  @Override
+  public String name() {
+    return COLLECTION;
   }
 
 }
