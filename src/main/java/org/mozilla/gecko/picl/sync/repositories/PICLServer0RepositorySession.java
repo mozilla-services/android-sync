@@ -45,7 +45,7 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
   @Override
   public void fetchSince(long timestamp, final RepositorySessionFetchRecordsDelegate delegate) {
-    final long now = System.currentTimeMillis();
+    final long now = now();
     delegateQueue.execute(new Runnable() {
 
       @Override
@@ -57,10 +57,15 @@ public class PICLServer0RepositorySession extends RepositorySession {
             Logger.info(LOG_TAG, "Fetched: " + json.toJSONString());
             try {
               for (Object itemJson : json.getArray("items")) {
-                delegate.onFetchedRecord(serverRepository.translator.toRecord(new ExtendedJSONObject((JSONObject) itemJson)));
+                Record record = serverRepository.translator.toRecord(new ExtendedJSONObject((JSONObject) itemJson));
+                // optionally, a Translator could notice an invalid format or something and return null
+                if (record != null) {
+                  delegate.onFetchedRecord(record);
+                }
               }
             } catch (Exception e) {
               handleError(e);
+              return;
             }
 
 
@@ -69,6 +74,11 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
           @Override
           public void handleFailure(HttpResponse response, Exception e) {
+            if (response.getStatusLine().getStatusCode() == 404) {
+              Logger.debug(LOG_TAG, "Received 404. Assuming empty collection and doing nothing.");
+              delegate.onFetchCompleted(now);
+              return;
+            }
             delegate.onFetchFailed(e, null);
           }
 
@@ -168,7 +178,7 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
       @Override
       public void run() {
-        final long end = System.currentTimeMillis();
+        final long end = now();
         Logger.warn(LOG_TAG, "Calling storeEnd with " + end);
         storeDone(end);
       }

@@ -28,9 +28,12 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
   public final static String LOG_TAG = PICLTabsServerSyncStage.class.getSimpleName();
   
   private static final String COLLECTION = "tabs";
+  
+  protected String clientGuid;
 
   public PICLTabsServerSyncStage(PICLConfig config, PICLServerSyncStageDelegate delegate) {
     super(config, delegate);
+    clientGuid = config.getClientGUID();
   }
 
 
@@ -55,6 +58,11 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
 
       @Override
       public Record toRecord(ExtendedJSONObject json) throws NonObjectJSONException, IOException, ParseException {
+        if (clientGuid.equals(json.getString("guid"))) {
+          // we got a record with our local guid, don't store it again!
+          return null;
+        }
+        
         TabsRecord tabsRecord = new TabsRecord();
 
         tabsRecord.guid = (String) json.get("id");
@@ -70,7 +78,7 @@ public class PICLTabsServerSyncStage extends PICLServerSyncStage {
 
   @Override
   protected Repository makeLocalRepository() {
-    return new FennecTabsRepository(config.getClientName(), config.getClientGUID());
+    return new FennecTabsRepository(config.getClientName(), clientGuid);
   }
 
 
