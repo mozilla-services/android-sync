@@ -709,6 +709,10 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
     BookmarkRecord reconciled = (BookmarkRecord) super.reconcileRecords(remoteRecord, localRecord,
                                                                         lastRemoteRetrieval,
                                                                         lastLocalRetrieval);
+    
+    if (reconciled == null) {
+      return null;
+    }
 
     // For now we *always* use the remote record's children array as a starting point.
     // We won't write it into the database yet; we'll record it and process as we go.
