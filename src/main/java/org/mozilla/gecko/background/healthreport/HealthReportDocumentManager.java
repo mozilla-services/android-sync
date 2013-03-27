@@ -6,6 +6,10 @@ package org.mozilla.gecko.background.healthreport;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map.Entry;
 import java.util.UUID;
 
@@ -15,7 +19,9 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 
 /**
  * Handles Health Report documents by providing document management after
@@ -29,12 +35,111 @@ import android.content.Context;
  */
 public class HealthReportDocumentManager {
   public static final String LOG_TAG = "HealthReportDocManager";
+
+  private final String FHR_GECKO_DOCUMENT_PATH = "datareporting.healthreport.geckoDocument"; // TODO: placeholder - must be writeable from Gecko
+  private final String FHR_ANDROID_DOCUMENT_PATH = "datareporting.healthreport.androidDocument";
+  private final String FHR_MERGED_DOCUMENT_KEY = "datareporting.healthreport.mergedDocumenKey";
+
   private Context context;
-  private String prefsFile;
+  private SharedPreferences sharedPreferences;
+  private AndroidHealthReporter androidHealthReporter;
 
   public HealthReportDocumentManager(Context context, String prefsFile) {
     this.context = context;
-    this.prefsFile = prefsFile;
+    this.androidHealthReporter = null;
+  }
+
+  /**
+   * Checks that a merged document exists for upload, and if not, kicks off
+   * the steps necessary to create one. Starts an upload if toUpload is
+   * <code>true</code>
+   *
+   * @param toUpload boolean for whether to upload the document
+   */
+  public void ensureDocumentAndUpload(boolean toUpload) {
+    String mergedDocumentPath = sharedPreferences.getString(FHR_MERGED_DOCUMENT_KEY, null);
+    if (!documentIsRecent(mergedDocumentPath)) {
+      // TODO: run on separate threads.
+      ensureAndroidDocument();
+      ensureGeckoDocument();
+      // TODO: wait on both to return.
+      mergeDocumentsAndWrite(FHR_GECKO_DOCUMENT_PATH, FHR_ANDROID_DOCUMENT_PATH);
+    }
+    if (toUpload) {
+      startManagedDocumentUpload(null);
+    }
+  }
+
+  private void ensureGeckoDocument() {
+    if (!documentIsRecent(FHR_GECKO_DOCUMENT_PATH)) {
+      // Start headless Gecko, start an FHR data collection + write.
+    }
+  }
+
+  private void ensureAndroidDocument() {
+    // TODO: shouldn't be limited to document written out - also payload in memory
+    if (!documentIsRecent(FHR_ANDROID_DOCUMENT_PATH)) {
+      // Launch Android data collection. Write out document.
+      if (this.androidHealthReporter == null) {
+        this.androidHealthReporter = new AndroidHealthReporter();
+      }
+      androidHealthReporter.collectAndObtainJSONPayload();
+    }
+  }
+
+  /**
+   * Returns whether the document at the path exists and is up to date.
+   *
+   * @param documentPath path to document to check for existence and recentness.
+   * @return <code>true</code> if document exists and its generation date is within a
+   * day, <code>false</code> otherwise.
+   */
+  private boolean documentIsRecent(String documentPath) {
+    String document = Utils.readFile(context, documentPath);
+    if (document == null) {
+      return false;
+    }
+
+    String documentDate = null;
+    try {
+      ExtendedJSONObject documentJSON = new ExtendedJSONObject(document);
+      documentDate = (String) documentJSON.get("thisPingDate");
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Error parsing JSON document", e);
+    }
+    return isDateRecent(documentDate);
+  }
+
+  /**
+   * Return true if documentDate qualifies as recent.
+   *
+   * @param documentDate date of document generation, in yyyy-MM-dd format
+   * @return true if date represented by documentDate is within a day of current date.
+   */
+  @SuppressLint("SimpleDateFormat")
+  private boolean isDateRecent(String documentDate) {
+    if (documentDate == null) {
+      return false;
+    }
+
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    // Get date from yesterday.
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.DAY_OF_MONTH, -1);
+
+    Date testDate;
+    Date minDate;
+    try {
+      testDate = dateFormat.parse(documentDate);
+      // Truncate to date granularity.
+      minDate = dateFormat.parse(dateFormat.format(calendar.getTime()));
+    } catch (ParseException e) {
+      Logger.error(LOG_TAG, "Cannot parse document date", e);
+      return false;
+    }
+    // Document date must not be before minimum date.
+    return !testDate.before(minDate);
   }
 
   /**
@@ -118,6 +223,7 @@ public class HealthReportDocumentManager {
 
   private void mergeAndroidToGeckoLast(ExtendedJSONObject androidObj, ExtendedJSONObject geckoObj) throws NonObjectJSONException {
     // We assume Gecko and Android providers do not collide on the "last" level.
+    // TODO: do we care about the small chance of merging docs of two differing versions?
     ExtendedJSONObject geckoLastJSON = geckoObj.getObject("data").getObject("last");
     ExtendedJSONObject androidLastJSON = androidObj.getObject("data").getObject("last");
 
@@ -125,6 +231,13 @@ public class HealthReportDocumentManager {
     for (Entry<String, Object> e : androidLastIterator) {
       geckoLastJSON.put((String) e.getKey(), e.getValue());
     }
+  }
+
+  public boolean startManagedDocumentUpload(String payload) {
+    // Check that policy has been accepted.
+    // TODO: policy prefs must be mirrored to SharedPreferences.
+    // TODO Auto-generated method stub
+    return false;
   }
 
   private boolean writeFile(String filename, String contents) {
@@ -143,10 +256,4 @@ public class HealthReportDocumentManager {
     }
     return true;
   }
-
-  public boolean startManagedDocumentUpload(String payload) {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
 }
