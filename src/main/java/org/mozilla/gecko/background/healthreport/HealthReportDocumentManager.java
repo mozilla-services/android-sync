@@ -43,6 +43,8 @@ public class HealthReportDocumentManager {
   private Context context;
   private SharedPreferences sharedPreferences;
   private AndroidHealthReporter androidHealthReporter;
+  private ExtendedJSONObject geckoJSONReport;
+  private ExtendedJSONObject androidJSONReport;
 
   public HealthReportDocumentManager(Context context, String prefsFile) {
     this.context = context;
@@ -58,12 +60,13 @@ public class HealthReportDocumentManager {
    */
   public void ensureDocumentAndUpload(boolean toUpload) {
     String mergedDocumentPath = sharedPreferences.getString(FHR_MERGED_DOCUMENT_KEY, null);
-    if (!documentIsRecent(mergedDocumentPath)) {
+    ExtendedJSONObject recentMergedJSONDocument = getRecentDocumentAtPath(mergedDocumentPath);
+    if (recentMergedJSONDocument == null) {
       // TODO: run on separate threads.
       ensureAndroidDocument();
       ensureGeckoDocument();
       // TODO: wait on both to return.
-      mergeDocumentsAndWrite(FHR_GECKO_DOCUMENT_PATH, FHR_ANDROID_DOCUMENT_PATH);
+      mergeDocumentsAndWrite(geckoJSONReport, androidJSONReport);
     }
     if (toUpload) {
       startManagedDocumentUpload(null);
@@ -71,43 +74,49 @@ public class HealthReportDocumentManager {
   }
 
   private void ensureGeckoDocument() {
-    if (!documentIsRecent(FHR_GECKO_DOCUMENT_PATH)) {
+    this.geckoJSONReport = getRecentDocumentAtPath(FHR_GECKO_DOCUMENT_PATH);
+    if (this.geckoJSONReport == null) {
       // Start headless Gecko, start an FHR data collection + write.
     }
   }
 
   private void ensureAndroidDocument() {
-    // TODO: shouldn't be limited to document written out - also payload in memory
-    if (!documentIsRecent(FHR_ANDROID_DOCUMENT_PATH)) {
+    this.androidJSONReport = getRecentDocumentAtPath(FHR_ANDROID_DOCUMENT_PATH);
+    if (this.androidJSONReport == null) {
       // Launch Android data collection. Write out document.
       if (this.androidHealthReporter == null) {
         this.androidHealthReporter = new AndroidHealthReporter();
       }
-      androidHealthReporter.collectAndObtainJSONPayload();
+      androidJSONReport = androidHealthReporter.collectAndObtainJSONPayload();
     }
   }
 
   /**
-   * Returns whether the document at the path exists and is up to date.
+   * Returns the document at the path as an <code>ExtendedJSONObject</code> if it exists and is up to date.
    *
    * @param documentPath path to document to check for existence and recentness.
-   * @return <code>true</code> if document exists and its generation date is within a
-   * day, <code>false</code> otherwise.
+   * @return document as an <code>ExtendedJSONObject</code> if the document exists and its generation date is within a
+   * day, and <code>null</code> otherwise.
    */
-  private boolean documentIsRecent(String documentPath) {
+  private ExtendedJSONObject getRecentDocumentAtPath(String documentPath) {
     String document = Utils.readFile(context, documentPath);
     if (document == null) {
-      return false;
+      return null;
     }
 
     String documentDate = null;
+    ExtendedJSONObject documentJSON = null;
     try {
-      ExtendedJSONObject documentJSON = new ExtendedJSONObject(document);
+      documentJSON = new ExtendedJSONObject(document);
       documentDate = (String) documentJSON.get("thisPingDate");
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Error parsing JSON document", e);
     }
-    return isDateRecent(documentDate);
+    if (isDateRecent(documentDate)) {
+      return documentJSON;
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -153,26 +162,7 @@ public class HealthReportDocumentManager {
    *
    * @return GUID for new document
    */
-  public UUID mergeDocumentsAndWrite(String geckoDocumentPath, String androidDocumentPath) {
-    // TODO: Assuming path passed in for now.
-    if (geckoDocumentPath == null || androidDocumentPath == null) {
-      Logger.error(LOG_TAG, "Missing document path.");
-      return null;
-    }
-
-    String geckoDocument = Utils.readFile(context, geckoDocumentPath);
-    String androidDocument = Utils.readFile(context, androidDocumentPath);
-    ExtendedJSONObject geckoJSONObject;
-    ExtendedJSONObject androidJSONObject;
-
-    try {
-      geckoJSONObject = new ExtendedJSONObject(geckoDocument);
-      androidJSONObject = new ExtendedJSONObject(androidDocument);
-    } catch (Exception e) {
-      Logger.error(LOG_TAG, "Error in loading FHR document for merging.", e);
-      return null;
-    }
-
+  public UUID mergeDocumentsAndWrite(ExtendedJSONObject geckoJSONObject, ExtendedJSONObject androidJSONObject) {
     try {
       mergeAndroidToGeckoReport(androidJSONObject, geckoJSONObject);
     } catch (NonObjectJSONException e) {
@@ -186,8 +176,8 @@ public class HealthReportDocumentManager {
     writeFile(uuid.toString(), geckoJSONObject.toJSONString());
 
     // Clean up the merged documents.
-    context.deleteFile(geckoDocumentPath);
-    context.deleteFile(androidDocumentPath);
+    context.deleteFile(this.FHR_GECKO_DOCUMENT_PATH);
+    context.deleteFile(this.FHR_ANDROID_DOCUMENT_PATH);
 
     // Return GUID;
     return uuid;
