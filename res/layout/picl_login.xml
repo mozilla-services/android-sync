@@ -16,14 +16,46 @@
 		style="@style/SyncMiddle"
 		android:padding="@dimen/SyncSpace" >
 
-		<EditText
-			android:id="@+id/email"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:ems="10"
-			android:hint="Email address..."
-			android:imeOptions="actionGo"
-			android:inputType="textEmailAddress" />
+	    <LinearLayout
+	        android:orientation="vertical"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content">
+			<EditText
+				android:id="@+id/email"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:ems="10"
+				android:hint="Email address..."
+				android:imeOptions="actionGo"
+				android:inputType="textEmailAddress"
+				android:visibility="gone" />
+			
+			<EditText
+				android:id="@+id/password"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:ems="10"
+				android:hint="Password"
+				android:imeOptions="actionGo"
+				android:inputType="textPassword"
+				android:visibility="gone" />
+			
+			<TextView
+			    android:id="@+id/hint"
+			    android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="Persona is loading..."
+			    />
+			
+			<WebView
+			    android:id="@+id/webview"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:visibility="gone"
+			    />
+		
+		</LinearLayout>
+		
 	</ScrollView>
 
 	<LinearLayout style="@style/SyncBottomContainer" >
@@ -36,6 +68,7 @@
 				android:id="@+id/submit"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
+				android:onClick="onSubmit"
 				android:text="Login" />
 		</LinearLayout>
 	</LinearLayout>

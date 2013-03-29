@@ -110,7 +110,7 @@ public class PICLAccountAuthenticator extends AbstractAccountAuthenticator {
     return null;
   }
 
-  public static Account createAccount(Context context, String email, String kA, String deviceId, String version) {
+  public static Account createAccount(Context context, String email, String password, String kA, String deviceId, String version) {
     String accountType = context.getString(R.string.picl_account_type);
     Account account = new Account(email, accountType);
     Bundle options = new Bundle();
@@ -120,7 +120,7 @@ public class PICLAccountAuthenticator extends AbstractAccountAuthenticator {
     options.putString("version", version);
 
     AccountManager am = AccountManager.get(context);
-    am.addAccountExplicitly(account, "nothere", options);
+    am.addAccountExplicitly(account, password, options); //TODO: oh gawd! the password is stored in plain text!
 
     return account;
   }
