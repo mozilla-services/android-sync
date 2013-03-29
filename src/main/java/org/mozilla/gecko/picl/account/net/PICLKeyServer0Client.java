@@ -30,23 +30,22 @@ public class PICLKeyServer0Client {
     serverURL = url;
   }
 
-  public void get(String email, PICLKeyServer0ClientDelegate delegate) {
-    key.email = email;
+  public void get(String assertion, PICLKeyServer0ClientDelegate delegate) {
 
-    BaseResource r = new BaseResource(uri(email));
-    r.delegate = makeGetDelegate(r, email, delegate);
+    BaseResource r = new BaseResource(uri(assertion));
+    r.delegate = makeGetDelegate(r, assertion, delegate);
 
     r.get();
   }
 
 
-  protected void post(String email, PICLKeyServer0ClientDelegate delegate) {
+  protected void post(String assertion, PICLKeyServer0ClientDelegate delegate) {
     BaseResource r = new BaseResource(uri(null));
     r.delegate = makeDelegate(r, delegate);
 
     StringEntity entity;
     try {
-      entity = new StringEntity("email=" + email);
+      entity = new StringEntity("assertion=" + assertion);
       entity.setContentType("application/x-www-form-urlencoded");
     } catch (UnsupportedEncodingException e) {
       delegate.handleError(e);
@@ -55,8 +54,8 @@ public class PICLKeyServer0Client {
     r.post(entity);
   }
 
-  protected URI uri(String email) {
-    return URI.create(serverURL + "/" + USER_ROUTE + (email != null ? "?email=" + email : ""));
+  protected URI uri(String assertion) {
+    return URI.create(serverURL + "/" + USER_ROUTE + (assertion != null ? "?assertion=" + assertion : ""));
   }
 
   protected ResourceDelegate makeDelegate(BaseResource resource, PICLKeyServer0ClientDelegate delegate) {
@@ -144,7 +143,6 @@ public class PICLKeyServer0Client {
   }
 
   public static class KeyResponse {
-    public String email;
     public String kA;
     public String version;
     public String deviceId;
