@@ -5,3 +5,4 @@
   <!-- Account strings -->
   <string name="picl_account_label">&picl.account.label;</string>
   <string name="picl_account_type">&picl.account.type;</string>
+  <string name="picl_account_activity_title">Add a &picl.account.label; Account.</string>

@@ -4,8 +4,8 @@
 
 <!-- Don't localize these. They're here until they have
      a better place to live. -->
-<!ENTITY piclBrand.fullName.label "Firefox Profile-in-the-Cloud">
-<!ENTITY piclBrand.shortName.label "PICLAccount">
+<!ENTITY piclBrand.fullName.label "Firefox PiCL">
+<!ENTITY piclBrand.shortName.label "PiCL">
 
 <!-- Account strings -->
 <!ENTITY picl.account.label '&piclBrand.fullName.label;'>
