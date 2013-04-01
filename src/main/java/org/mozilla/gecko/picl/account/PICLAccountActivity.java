@@ -74,6 +74,7 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity implements
   public void onCreate(Bundle savedInstanceState) {
     Logger.warn(TAG, "onCreate()");
     super.onCreate(savedInstanceState);
+
     setContentView(R.layout.picl_login);
 
     emailText = (EditText) findViewById(R.id.email);
@@ -92,7 +93,7 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity implements
       public void onPageFinished(WebView view, String url) {
         if (url.equals(PERSONA_URL)) {
           isPersonaLoaded = true;
-          hintView.setText("Enter an e-mail address.");
+          hintView.setText("To sign in with Persona, enter an e-mail address.");
           emailText.setVisibility(View.VISIBLE);
         }
       }
@@ -119,7 +120,7 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity implements
       hintView.setText("Checking Persona for account...");
       webView.loadUrl("javascript:" + jsAccountExists(email));
     } else if (!isLoggedIn) {
-      hintView.setText(hasPersonaAccount ? "Logging in..." : "Creating account...");
+      hintView.setText(hasPersonaAccount ? "Logging in with Persona..." : "Creating account at Persona...");
       String js = (hasPersonaAccount ? jsSignIn(email, password) : jsCreateAccount(email, password));
       Logger.info(TAG, "JS: " + js);
       webView.loadUrl("javascript:" + js);
@@ -214,9 +215,9 @@ public class PICLAccountActivity extends AccountAuthenticatorActivity implements
           hasCheckedPersona = true;
 
           if (hasAccount) {
-            hintView.setText("Enter account password.");
+            hintView.setText("There is an existing account. Enter the account password.");
           } else {
-            hintView.setText("Create a password for this account.");
+            hintView.setText("Looks like a new account, so create a password.");
           }
           hasPersonaAccount = hasAccount;
           passwordText.setVisibility(View.VISIBLE);
