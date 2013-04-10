@@ -3,9 +3,9 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import static org.junit.Assert.assertEquals;
-
 import java.net.URI;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -23,7 +23,7 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
     return WaitHelper.getTestWaiter();
   }
 
-  public int stageCounter = Stage.values().length - 1; // Exclude starting state.
+  public List<Stage> stagesCompleted = new LinkedList<Stage>();
   public boolean calledSuccess = false;
   public boolean calledError = false;
   public Exception calledErrorException = null;
@@ -42,7 +42,6 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   @Override
   public void handleSuccess(GlobalSession globalSession) {
     this.calledSuccess = true;
-    assertEquals(0, this.stageCounter);
     this.testWaiter().performNotify();
   }
 
@@ -60,9 +59,8 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public void handleStageCompleted(Stage currentState,
-           GlobalSession globalSession) {
-    stageCounter--;
+  public void handleStageCompleted(Stage currentState, GlobalSession globalSession) {
+    stagesCompleted.add(currentState);
   }
 
   @Override

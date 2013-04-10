@@ -88,8 +88,8 @@ public class TestFetchMetaGlobalStage {
     session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
       syncKeyBundle, callback) {
       @Override
-      protected void prepareStages() {
-        super.prepareStages();
+      protected void prepareStageFactory() {
+        super.prepareStageFactory();
         withStage(Stage.fetchMetaGlobal, new FetchMetaGlobalStage());
       }
 

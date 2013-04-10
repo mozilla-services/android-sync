@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
@@ -40,6 +42,7 @@ import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.AndroidBrowserHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
 import org.mozilla.gecko.sync.stage.CompletedStage;
+import org.mozilla.gecko.sync.stage.DynamicGlobalSyncStageFactory;
 import org.mozilla.gecko.sync.stage.EnsureClusterURLStage;
 import org.mozilla.gecko.sync.stage.EnsureCrypto5KeysStage;
 import org.mozilla.gecko.sync.stage.FennecTabsServerSyncStage;
@@ -48,6 +51,7 @@ import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.gecko.sync.stage.FormHistoryServerSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+import org.mozilla.gecko.sync.stage.GlobalSyncStageFactory;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.mozilla.gecko.sync.stage.PasswordsServerSyncStage;
 import org.mozilla.gecko.sync.stage.SyncClientsEngineStage;
@@ -66,7 +70,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
   public SyncConfiguration config = null;
 
-  protected Map<Stage, GlobalSyncStage> stages;
+  protected GlobalSyncStageFactory stageFactory;
   public Stage currentState = Stage.idle;
 
   public final GlobalSessionCallback callback;
@@ -78,6 +82,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Engines to remove will have <code>null</code> EngineSettings.
    */
   public final Map<String, EngineSettings> enginesToUpdate = new HashMap<String, EngineSettings>();
+
+  /**
+   * Executor that runs sync stages serially in a single thread.
+   */
+  protected final ExecutorService stageExecutor = Executors.newSingleThreadExecutor();
 
    /*
    * Key accessors.
@@ -163,7 +172,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     config.syncKeyBundle = syncKeyBundle;
 
     registerCommands();
-    prepareStages();
+    prepareStageFactory();
 
     Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
     config.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
@@ -219,34 +228,34 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     });
   }
 
-  protected void prepareStages() {
-    HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>();
+  protected void prepareStageFactory() {
+    HashMap<Stage, Class<? extends GlobalSyncStage>> klasses = new HashMap<Stage, Class<? extends GlobalSyncStage>>();
 
-    stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
-    stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
-    stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
-    stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
-    stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage());
-    stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
+    klasses.put(Stage.checkPreconditions,      CheckPreconditionsStage.class);
+    klasses.put(Stage.ensureClusterURL,        EnsureClusterURLStage.class);
+    klasses.put(Stage.fetchInfoCollections,    FetchInfoCollectionsStage.class);
+    klasses.put(Stage.fetchMetaGlobal,         FetchMetaGlobalStage.class);
+    klasses.put(Stage.ensureKeysStage,         EnsureCrypto5KeysStage.class);
+    klasses.put(Stage.syncClientsEngine,       SyncClientsEngineStage.class);
 
-    stages.put(Stage.syncTabs,                new FennecTabsServerSyncStage());
-    stages.put(Stage.syncPasswords,           new PasswordsServerSyncStage());
-    stages.put(Stage.syncBookmarks,           new AndroidBrowserBookmarksServerSyncStage());
-    stages.put(Stage.syncHistory,             new AndroidBrowserHistoryServerSyncStage());
-    stages.put(Stage.syncFormHistory,         new FormHistoryServerSyncStage());
+    klasses.put(Stage.syncTabs,                FennecTabsServerSyncStage.class);
+    klasses.put(Stage.syncPasswords,           PasswordsServerSyncStage.class);
+    klasses.put(Stage.syncBookmarks,           AndroidBrowserBookmarksServerSyncStage.class);
+    klasses.put(Stage.syncHistory,             AndroidBrowserHistoryServerSyncStage.class);
+    klasses.put(Stage.syncFormHistory,         FormHistoryServerSyncStage.class);
 
-    stages.put(Stage.uploadMetaGlobal,        new UploadMetaGlobalStage());
-    stages.put(Stage.completed,               new CompletedStage());
+    klasses.put(Stage.uploadMetaGlobal,        UploadMetaGlobalStage.class);
+    klasses.put(Stage.completed,               CompletedStage.class);
 
-    this.stages = Collections.unmodifiableMap(stages);
+    this.stageFactory = new DynamicGlobalSyncStageFactory(Collections.unmodifiableMap(klasses));
   }
 
   public GlobalSyncStage getSyncStageByName(String name) throws NoSuchStageException {
-    return getSyncStageByName(Stage.byName(name));
+    return getSyncStageByEnum(Stage.byName(name));
   }
 
-  public GlobalSyncStage getSyncStageByName(Stage next) throws NoSuchStageException {
-    GlobalSyncStage stage = stages.get(next);
+  public GlobalSyncStage getSyncStageByEnum(Stage next) throws NoSuchStageException {
+    GlobalSyncStage stage = stageFactory.createGlobalSyncStage(next);
     if (stage == null) {
       throw new NoSuchStageException(next);
     }
@@ -257,7 +266,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     ArrayList<GlobalSyncStage> out = new ArrayList<GlobalSyncStage>();
     for (Stage name : enums) {
       try {
-        GlobalSyncStage stage = this.getSyncStageByName(name);
+        GlobalSyncStage stage = this.getSyncStageByEnum(name);
         out.add(stage);
       } catch (NoSuchStageException e) {
         Logger.warn(LOG_TAG, "Unable to find stage with name " + name);
@@ -292,6 +301,31 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   /**
+   * Execute given sync stage.
+   *
+   * @param next stage to execute.
+   * @throws NoSuchStageException
+   */
+  protected void executeStage(final Stage next) throws NoSuchStageException {
+    final GlobalSyncStage nextStage = this.getSyncStageByEnum(next);
+
+    stageExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        currentState = next;
+        Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
+        try {
+          nextStage.execute(GlobalSession.this);
+        } catch (Exception ex) {
+          Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
+          abort(ex, "Uncaught exception in stage.");
+          return;
+        }
+      }
+    });
+  }
+
+  /**
    * Move to the next stage in the syncing process.
    */
   public void advance() {
@@ -304,20 +338,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
     this.callback.handleStageCompleted(this.currentState, this);
     Stage next = nextStage(this.currentState);
-    GlobalSyncStage nextStage;
+
     try {
-      nextStage = this.getSyncStageByName(next);
+      executeStage(next);
     } catch (NoSuchStageException e) {
       this.abort(e, "No such stage " + next);
-      return;
-    }
-    this.currentState = next;
-    Logger.info(LOG_TAG, "Running next stage " + next + " (" + nextStage + ")...");
-    try {
-      nextStage.execute(this);
-    } catch (Exception ex) {
-      Logger.warn(LOG_TAG, "Caught exception " + ex + " running stage " + next);
-      this.abort(ex, "Uncaught exception in stage.");
       return;
     }
   }
@@ -358,7 +383,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    * Stop this sync and start again.
    * @throws AlreadySyncingException
    */
-  protected void restart() throws AlreadySyncingException {
+  public void restart() throws AlreadySyncingException {
     this.currentState = GlobalSyncStage.Stage.idle;
     if (callback.shouldBackOff()) {
       this.callback.handleAborted(this, "Told to back off.");
@@ -372,7 +397,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
    */
   protected void cleanUp() {
     uninstallAsHttpResponseObserver();
-    this.stages = null;
+    this.stageExecutor.shutdownNow();
+    this.stageFactory = null;
   }
 
   public void completeSync() {
