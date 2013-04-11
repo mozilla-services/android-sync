@@ -77,7 +77,7 @@ public class HistoryRecord extends Record {
   }
 
   @Override
-  protected void populatePayload(ExtendedJSONObject payload) {
+  public void populatePayload(ExtendedJSONObject payload) {
     putPayload(payload, "id",      this.guid);
     putPayload(payload, "title",   this.title);
     putPayload(payload, "histUri", this.histURI);             // TODO: encoding?
@@ -85,7 +85,7 @@ public class HistoryRecord extends Record {
   }
 
   @Override
-  protected void initFromPayload(ExtendedJSONObject payload) {
+  public void initFromPayload(ExtendedJSONObject payload) {
     this.histURI = (String) payload.get("histUri");
     this.title   = (String) payload.get("title");
     try {

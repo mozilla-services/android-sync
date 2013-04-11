@@ -126,7 +126,7 @@ public class PICLServer0RepositorySession extends RepositorySession {
 
       @Override
       public void run() {
-        Logger.warn(LOG_TAG, "flush()");
+        Logger.debug(LOG_TAG, "flush()");
 
         final Record[] records;
         synchronized (queuedRecords) {
