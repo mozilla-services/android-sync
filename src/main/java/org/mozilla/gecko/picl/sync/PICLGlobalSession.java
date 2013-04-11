@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.picl.sync.stage.PICLBookmarksServerSyncStage;
+import org.mozilla.gecko.picl.sync.stage.PICLHistoryServerSyncStage;
 import org.mozilla.gecko.picl.sync.stage.PICLPasswordsServerSyncStage;
 import org.mozilla.gecko.picl.sync.stage.PICLServerSyncStage;
 import org.mozilla.gecko.picl.sync.stage.PICLServerSyncStageDelegate;
@@ -68,7 +69,7 @@ public class PICLGlobalSession {
       latch.await((4 * 60 + 30) * 1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Logger.warn(LOG_TAG, "Got interrupted while pickling stage:"
-          + currentStage, e);
+          + currentStage.name(), e);
     }
     currentStage = null;
   }
@@ -78,6 +79,7 @@ public class PICLGlobalSession {
     stages.add(new PICLTabsServerSyncStage(config, stageDelegate));
     stages.add(new PICLPasswordsServerSyncStage(config, stageDelegate));
     stages.add(new PICLBookmarksServerSyncStage(config, stageDelegate));
+    stages.add(new PICLHistoryServerSyncStage(config, stageDelegate));
   }
   
   
