@@ -31,6 +31,19 @@
 #include manifests/SyncAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
 
+        <activity
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:name="org.mozilla.android.sync.test.helpers.BackgroundDeveloperActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!-- Adding a launcher will make Firefox Sync appear
+                     on the Apps screen, which we want when testing. -->
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 
     <instrumentation
