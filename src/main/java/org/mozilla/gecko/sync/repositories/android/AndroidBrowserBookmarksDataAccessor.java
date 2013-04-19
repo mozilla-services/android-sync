@@ -71,7 +71,7 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
     return BrowserContractHelpers.BOOKMARKS_CONTENT_URI;
   }
 
-  protected Uri getPositionsUri() {
+  protected static Uri getPositionsUri() {
     return BrowserContractHelpers.BOOKMARKS_POSITIONS_CONTENT_URI;
   }
 

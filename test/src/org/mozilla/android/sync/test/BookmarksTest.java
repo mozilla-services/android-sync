@@ -816,9 +816,9 @@ public class BookmarksTest extends AndroidSyncTestCase {
     ContentValues values = new ContentValues();
 
     final long now = System.currentTimeMillis();
-    values.put(BrowserContract.Bookmarks.DATE_CREATED, now);
-    values.put(BrowserContract.Bookmarks.DATE_MODIFIED, now);
-    values.put(BrowserContract.Bookmarks.TYPE, BrowserContract.Bookmarks.TYPE_FOLDER);
+    values.put(Bookmarks.DATE_CREATED, now);
+    values.put(Bookmarks.DATE_MODIFIED, now);
+    values.put(Bookmarks.TYPE, BrowserContract.Bookmarks.TYPE_FOLDER);
 
     return values;
   }
@@ -846,7 +846,7 @@ public class BookmarksTest extends AndroidSyncTestCase {
     final ContentValues values = specialFolder();
     final String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_reading_list);
 
-    values.put(BrowserContract.SyncColumns.GUID, "readinglist");
+    values.put(BrowserContract.SyncColumns.GUID, Bookmarks.READING_LIST_FOLDER_GUID);
     values.put(Bookmarks._ID, Bookmarks.FIXED_READING_LIST_ID);
     values.put(Bookmarks.PARENT, Bookmarks.FIXED_ROOT_ID);
     values.put(Bookmarks.TITLE, title);
