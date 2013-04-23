@@ -96,16 +96,22 @@ public class BookmarksTest extends AndroidSyncTestCase {
   public void testPinnedItemsAreNotRetrieved() {
     final AndroidBrowserBookmarksRepository repo = new AndroidBrowserBookmarksRepository();
 
-    // Ensure that it exists.
+    // Ensure that they exist.
     setUpFennecPinnedItemsRecord();
 
-    // It's there in the DB…
+    // They're there in the DB…
     final ArrayList<String> roots = fetchChildrenDirect(Bookmarks.FIXED_ROOT_ID);
     Logger.info(LOG_TAG, "Roots: " + roots);
     assertTrue(roots.contains(Bookmarks.PINNED_FOLDER_GUID));
 
+    final ArrayList<String> pinned = fetchChildrenDirect(Bookmarks.FIXED_PINNED_LIST_ID);
+    Logger.info(LOG_TAG, "Pinned: " + pinned);
+    assertTrue(pinned.contains("dapinneditem"));
+
     // … but not when we fetch.
-    assertFalse(fetchGUIDs(repo).contains(Bookmarks.PINNED_FOLDER_GUID));
+    final ArrayList<String> guids = fetchGUIDs(repo);
+    assertFalse(guids.contains(Bookmarks.PINNED_FOLDER_GUID));
+    assertFalse(guids.contains("dapinneditem"));
   }
 
   /**
@@ -842,6 +848,21 @@ public class BookmarksTest extends AndroidSyncTestCase {
     return values;
   }
 
+  protected static ContentValues fennecPinnedChildItemRecord() {
+    ContentValues values = new ContentValues();
+
+    final long now = System.currentTimeMillis();
+
+    values.put(BrowserContract.SyncColumns.GUID, "dapinneditem");
+    values.put(Bookmarks.DATE_CREATED, now);
+    values.put(Bookmarks.DATE_MODIFIED, now);
+    values.put(Bookmarks.TYPE, BrowserContract.Bookmarks.TYPE_BOOKMARK);
+    values.put(Bookmarks.URL, "user-entered:foobar");
+    values.put(Bookmarks.PARENT, Bookmarks.FIXED_PINNED_LIST_ID);
+    values.put(Bookmarks.TITLE, "Foobar");
+    return values;
+  }
+
   protected ContentValues fennecReadingListRecord() {
     final ContentValues values = specialFolder();
     final String title = getApplicationContext().getResources().getString(R.string.bookmarks_folder_reading_list);
@@ -872,6 +893,7 @@ public class BookmarksTest extends AndroidSyncTestCase {
 
   protected void setUpFennecPinnedItemsRecord() {
     insertRow(fennecPinnedItemsRecord());
+    insertRow(fennecPinnedChildItemRecord());
   }
 
   protected void setUpFennecReadingListRecord() {
