@@ -31,11 +31,14 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
    */
   private static final String BOOKMARK_IS_FOLDER = BrowserContract.Bookmarks.TYPE + " = " +
                                                    BrowserContract.Bookmarks.TYPE_FOLDER;
-  private static final String GUID_NOT_UNWANTED = BrowserContract.SyncColumns.GUID + " NOT IN ('" +
-                                                        BrowserContract.Bookmarks.TAGS_FOLDER_GUID + "', '" +
-                                                        BrowserContract.Bookmarks.PLACES_FOLDER_GUID + "', '" +
-                                                        BrowserContract.Bookmarks.READING_LIST_FOLDER_GUID + "', '" +
-                                                        BrowserContract.Bookmarks.PINNED_FOLDER_GUID + "')";
+
+  // SQL fragment to retrieve GUIDs whose ID mappings should be tracked by this session.
+  // Exclude folders we don't want to sync.
+  private static final String GUID_SHOULD_TRACK = BrowserContract.SyncColumns.GUID + " NOT IN ('" +
+                                                  BrowserContract.Bookmarks.TAGS_FOLDER_GUID + "', '" +
+                                                  BrowserContract.Bookmarks.PLACES_FOLDER_GUID + "', '" +
+                                                  BrowserContract.Bookmarks.READING_LIST_FOLDER_GUID + "', '" +
+                                                  BrowserContract.Bookmarks.PINNED_FOLDER_GUID + "')";
 
   private static final String EXCLUDE_SPECIAL_GUIDS_WHERE_CLAUSE;
   static {
@@ -88,8 +91,9 @@ public class AndroidBrowserBookmarksDataAccessor extends AndroidBrowserRepositor
                                                 BrowserContract.Bookmarks._ID };
 
   protected Cursor getGuidsIDsForFolders() throws NullCursorException {
-    // Exclude "places" and "tags", in case they've ended up in the DB.
-    String where = BOOKMARK_IS_FOLDER + " AND " + GUID_NOT_UNWANTED;
+    // Exclude items that we don't want to sync (pinned items, reading list, 
+    // tags, the places root), in case they've ended up in the DB.
+    String where = BOOKMARK_IS_FOLDER + " AND " + GUID_SHOULD_TRACK;
     return queryHelper.safeQuery(".getGuidsIDsForFolders", GUID_AND_ID, where, null, null);
   }
 
