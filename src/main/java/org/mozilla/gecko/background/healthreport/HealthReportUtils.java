@@ -17,6 +17,7 @@ public class HealthReportUtils {
   public static final String GLOBAL_LOG_TAG = "GeckoHealth";
 
   public static final int MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+  public static final long EARLIEST_LAST_PING = 1367500000000L;
 
   public static int getDay(final long time) {
     return (int) Math.floor(time / MILLISECONDS_PER_DAY);
