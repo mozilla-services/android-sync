@@ -8,6 +8,8 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields.FieldSpec;
@@ -104,6 +106,12 @@ import android.util.SparseArray;
  * or equivalently for numeric values, discrete or counters, etc.
  *
  * To retrieve values, use {@link #getRawEventsSince(long)}.
+ *
+ * For safety, perform operations on the storage executor thread:
+ *
+ * <pre>
+ *   storage.enqueueOperation(runnable);
+ * </pre>
  */
 public class HealthReportDatabaseStorage implements HealthReportStorage {
 
@@ -149,6 +157,13 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
                                      final File profileDirectory) {
     this.helper = new HealthReportSQLiteOpenHelper(context, profileDirectory,
                                                    DB_NAME);
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        Logger.setThreadLogTag(HealthReportUtils.GLOBAL_LOG_TAG);
+        Logger.debug(LOG_TAG, "Creating HealthReportDatabaseStorage.");
+      }
+    });
   }
 
   @Override
@@ -1036,5 +1051,11 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     } finally {
       db.endTransaction();
     }
+  }
+
+  private final Executor executor = Executors.newSingleThreadExecutor();
+  @Override
+  public void enqueueOperation(Runnable runnable) {
+    executor.execute(runnable);
   }
 }
