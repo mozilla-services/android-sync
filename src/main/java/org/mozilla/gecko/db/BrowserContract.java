@@ -3,22 +3,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#filter substitution
 package org.mozilla.gecko.db;
+
+import org.mozilla.gecko.AppConstants;
 
 import android.net.Uri;
 
 public class BrowserContract {
-    public static final String AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.browser";
+    public static final String AUTHORITY = AppConstants.ANDROID_PACKAGE_NAME + ".db.browser";
     public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
 
-    public static final String PASSWORDS_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.passwords";
+    public static final String PASSWORDS_AUTHORITY = AppConstants.ANDROID_PACKAGE_NAME + ".db.passwords";
     public static final Uri PASSWORDS_AUTHORITY_URI = Uri.parse("content://" + PASSWORDS_AUTHORITY);
 
-    public static final String FORM_HISTORY_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.formhistory";
+    public static final String FORM_HISTORY_AUTHORITY = AppConstants.ANDROID_PACKAGE_NAME + ".db.formhistory";
     public static final Uri FORM_HISTORY_AUTHORITY_URI = Uri.parse("content://" + FORM_HISTORY_AUTHORITY);
-    
-    public static final String TABS_AUTHORITY = "@ANDROID_PACKAGE_NAME@.db.tabs";
+
+    public static final String TABS_AUTHORITY = AppConstants.ANDROID_PACKAGE_NAME + ".db.tabs";
     public static final Uri TABS_AUTHORITY_URI = Uri.parse("content://" + TABS_AUTHORITY);
 
     public static final String PARAM_PROFILE = "profile";
@@ -242,7 +243,7 @@ public class BrowserContract {
 
         // Title of the tab.
         public static final String TITLE = "title";
-        
+
         // Topmost URL from the history array. Allows processing of this tab without
         // parsing that array.
         public static final String URL = "url";
@@ -278,7 +279,7 @@ public class BrowserContract {
         // Sync-assigned GUID for client device. NULL for local tabs.
         public static final String GUID = "guid";
 
-        // Last modified time for the client's tab record. For remote records, a server 
+        // Last modified time for the client's tab record. For remote records, a server
         // timestamp provided by Sync during insertion.
         public static final String LAST_MODIFIED = "last_modified";
     }

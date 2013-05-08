@@ -10,7 +10,8 @@ if [ ! -d $ANDROID ]; then
   exit 1
 fi
 
-cp $ANDROID/base/db/BrowserContract.java.in src/main/java/org/mozilla/gecko/db/
+cp $ANDROID/base/AppConstants.java.in src/main/java/org/mozilla/gecko/
+cp $ANDROID/base/db/BrowserContract.java src/main/java/org/mozilla/gecko/db/
 cp $ANDROID/base/locales/en-US/android_strings.dtd strings/
 
 # Infrequently Fennec touches Android services strings.  Uncomment

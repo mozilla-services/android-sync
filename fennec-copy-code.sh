@@ -20,16 +20,19 @@ SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
   -and -not -name 'AnnouncementsConstants.java' \
   -and -not -name 'GlobalConstants.java' \
   -and -not -name 'BrowserContract.java' \
+  -and -not -name 'AppConstants.java' \
   -and -not -name 'SyncConstants.java' \
   | sed "s,$SOURCEROOT/,,")
 
 rsync -C \
+  --exclude 'AppConstants.java' \
   --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
   -a $SYNCSOURCEDIR $ANDROID/base/
 
 rsync -C \
+  --exclude 'AppConstants.java' \
   --exclude 'GlobalConstants.java' \
   --exclude 'AnnouncementsConstants.java' \
   --exclude '*.in' \
