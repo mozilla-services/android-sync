@@ -14,15 +14,18 @@
 <!ENTITY  awesomebar_history_title "History">
 
 <!ENTITY  crash_reporter_title "&brandShortName; Crash Reporter">
-<!ENTITY  crash_message "&brandShortName; has crashed. Your tabs should be listed on the &brandShortName; Start page when you restart.">
-<!ENTITY  crash_help_message "Please help us fix this problem!">
-<!ENTITY  crash_send_report_message "Send Mozilla a crash report">
-<!ENTITY  crash_include_url "Include page address">
+<!ENTITY  crash_message2 "&brandShortName; had a problem and crashed. Your tabs should be listed on the &brandShortName; Start page when you restart.">
+<!ENTITY  crash_send_report_message2 "Tell Mozilla about this crash so they can fix it">
+<!ENTITY  crash_include_url2 "Include the address of the page I was on">
+<!ENTITY  crash_sorry "We\'re sorry">
+<!ENTITY  crash_comment "Add a comment (comments are publicly visible)">
+<!ENTITY  crash_allow_contact "Allow Mozilla to contact me about this report">
+<!ENTITY  crash_email "Your email">
+<!ENTITY  crash_closing_alert "Exit without sending a crash report?">
+<!ENTITY  sending_crash_report "Sending crash report\u2026">
 <!ENTITY  crash_close_label "Close">
 <!ENTITY  crash_restart_label "Restart &brandShortName;">
-<!ENTITY  sending_crash_report "Sending crash report\u2026">
 <!ENTITY  exit_label "Exit">
-<!ENTITY  continue_label "Continue">
 
 <!ENTITY  launcher_shortcuts_title "&brandShortName; Web Apps">
 <!ENTITY  launcher_shortcuts_empty "No web apps were found">
@@ -65,16 +68,24 @@
 <!ENTITY pref_category_general "General">
 <!ENTITY pref_category_privacy "Privacy &amp; Security">
 <!ENTITY pref_category_content "Content">
-<!ENTITY pref_category_importexport "Import &amp; Export">
 <!ENTITY pref_about_firefox "About &brandShortName;">
-<!ENTITY pref_do_not_track "Tell sites not to track me">
 <!ENTITY pref_telemetry "Send performance data">
 <!ENTITY pref_remember_signons "Remember passwords">
+
+<!-- Localization note: These are shown in the left sidebar on tablets -->
+<!ENTITY pref_header_general "General">
+<!ENTITY pref_header_privacy "Privacy &amp; Security">
+<!ENTITY pref_header_content "Content">
 
 <!ENTITY pref_cookies_menu "Cookies">
 <!ENTITY pref_cookies_accept_all "Enabled">
 <!ENTITY pref_cookies_not_accept_foreign "Enabled, excluding 3rd party">
 <!ENTITY pref_cookies_disabled "Disabled">
+
+<!ENTITY pref_donottrack_menu "Tracking">
+<!ENTITY pref_donottrack_disallow_tracking "Tell sites that I do not want to be tracked">
+<!ENTITY pref_donottrack_allow_tracking "Tell sites that I want to be tracked">
+<!ENTITY pref_donottrack_no_pref "Do not tell sites anything about my tracking preferences">
 
 <!ENTITY pref_char_encoding "Character encoding">
 <!ENTITY pref_char_encoding_on "Show menu">
@@ -114,7 +125,8 @@ size. -->
 <!ENTITY pref_private_data_passwords "Saved passwords">
 <!ENTITY pref_private_data_cache "Cache">
 <!ENTITY pref_private_data_offlineApps "Offline website data">
-<!ENTITY pref_private_data_siteSettings "Site preferences">
+<!ENTITY pref_private_data_siteSettings2 "Site settings">
+<!ENTITY pref_private_data_downloadFiles "Downloaded files">
 
 <!ENTITY pref_update_autodownload "Automatic updates">
 <!ENTITY pref_update_autodownload_wifi "Only over Wi-Fi">
@@ -137,7 +149,6 @@ size. -->
 <!ENTITY tools "Tools">
 <!ENTITY new_tab "New Tab">
 <!ENTITY new_private_tab "New Private Tab">
-<!ENTITY synced_tabs "Synced Tabs">
 <!ENTITY close_all_tabs "Close All Tabs">
 <!ENTITY tabs_normal "Tabs">
 <!ENTITY tabs_private "Private">
@@ -154,7 +165,7 @@ size. -->
 <!ENTITY find_close "Close">
 
 <!ENTITY contextmenu_open_new_tab "Open in New Tab">
-<!ENTITY contextmenu_open_new_private_tab "Open in New Private Tab">
+<!ENTITY contextmenu_open_private_tab "Open in Private Tab">
 <!ENTITY contextmenu_open_in_reader "Open in Reader">
 <!ENTITY contextmenu_remove_history "Remove">
 <!ENTITY contextmenu_remove_bookmark "Remove">
@@ -164,6 +175,12 @@ size. -->
 <!ENTITY contextmenu_paste "Paste">
 <!ENTITY contextmenu_copyurl "Copy Address">
 <!ENTITY contextmenu_edit_bookmark "Edit">
+<!ENTITY contextmenu_subscribe "Subscribe to Page">
+<!ENTITY contextmenu_site_settings "Edit Site Settings">
+
+<!ENTITY pref_titlebar_mode "Title bar">
+<!ENTITY pref_titlebar_mode_title "Show page title">
+<!ENTITY pref_titlebar_mode_url "Show page address">
 
 <!ENTITY history_removed "Page removed">
 
@@ -172,7 +189,9 @@ size. -->
 <!ENTITY bookmark_edit_location "Location">
 <!ENTITY bookmark_edit_keyword "Keyword">
 
-<!ENTITY site_settings_title2       "Site Settings…">
+<!-- Localization note (site_settings_*) : These strings are used in the "Site Settings"
+     dialog that appears after selecting the "Edit Site Settings" context menu item. -->
+<!ENTITY site_settings_title3       "Site Settings">
 <!ENTITY site_settings_cancel       "Cancel">
 <!ENTITY site_settings_clear        "Clear">
 <!ENTITY site_settings_no_settings  "There are no settings to clear.">
@@ -181,6 +200,7 @@ size. -->
 <!ENTITY reading_list_added "Page added to your Reading List">
 <!ENTITY reading_list_removed "Page removed from your Reading List">
 <!ENTITY reading_list_failed "Failed to add page to your Reading List">
+<!ENTITY reading_list_duplicate "Page already in your Reading List">
 <!ENTITY reader "Reader">
 
 <!ENTITY masterpassword_create_title "Create Master Password">
@@ -202,8 +222,9 @@ size. -->
 <!ENTITY abouthome_last_tabs_open "Open all tabs from last time">
 <!ENTITY abouthome_top_sites_title "Top sites">
 <!ENTITY abouthome_topsites_edit "Edit">
-<!ENTITY abouthome_topsites_clear "Clear">
-<!ENTITY abouthome_topsites_clearall "Clear All">
+<!ENTITY abouthome_topsites_pin "Pin Site">
+<!ENTITY abouthome_topsites_unpin "Unpin Site">
+
 <!-- Localization note (abouthome_about_sync3, abouthome_about_apps2): The
      chevron (ex: "»"; unicode= U+00BB) is used as an arrow to show that
      clicking this text in the promotions box will perform some action. Note
