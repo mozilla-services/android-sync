@@ -18,6 +18,7 @@ BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
 SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
   -name '*.java' \
   -and -not -name 'AnnouncementsConstants.java' \
+  -and -not -name 'HealthReportConstants.java' \
   -and -not -name 'GlobalConstants.java' \
   -and -not -name 'BrowserContract.java' \
   -and -not -name 'AppConstants.java' \
@@ -38,14 +39,16 @@ rsync -C \
   --exclude 'SysInfo.java' \
   --exclude 'GlobalConstants.java' \
   --exclude 'AnnouncementsConstants.java' \
+  --exclude 'HealthReportConstants.java' \
   --exclude '*.in' \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
-PREPROCESS_FILES="background/common/GlobalConstants.java sync/SyncConstants.java background/announcements/AnnouncementsConstants.java"
+PREPROCESS_FILES="background/common/GlobalConstants.java sync/SyncConstants.java background/announcements/AnnouncementsConstants.java background/healthreport/HealthReportConstants.java"
 cp $BACKGROUNDSOURCEDIR/common/GlobalConstants.java.in $ANDROID/base/background/common/
 cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
 cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
+cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
 
 echo "Copying preprocessed sync_authenticator.xml."
 cp sync_authenticator.xml.template $ANDROID/base/resources/xml/sync_authenticator.xml.in
