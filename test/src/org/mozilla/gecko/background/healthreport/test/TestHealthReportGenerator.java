@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportGenerator;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
@@ -36,7 +37,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     String today = HealthReportUtils.getDateString(now);
 
     assertEquals(null, document.get("lastPingDate"));
-    document = gen.generateDocument(0, HealthReportUtils.EARLIEST_LAST_PING, env1);
+    document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, env1);
     assertEquals("2013-05-02", document.get("lastPingDate"));
 
     // True unless test spans midnight...
@@ -68,7 +69,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     // True unless test spans midnight...
     assertEquals(today, document.get("thisPingDate"));
     assertEquals(expectedVersion, document.get("version"));
-    document = gen.generateDocument(0, HealthReportUtils.EARLIEST_LAST_PING, env2);
+    document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, env2);
     environments = new ExtendedJSONObject((JSONObject) document.get("environments"));
 
     // Now we have two: env1, and env2 (as 'current').
@@ -146,7 +147,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     storage.recordDailyDiscrete(env, day, discrete_int, 1);
     storage.recordDailyDiscrete(env, day, discrete_int, 3);
 
-    ExtendedJSONObject document = new ExtendedJSONObject(gen.generateDocument(0, HealthReportUtils.EARLIEST_LAST_PING, environment));
+    ExtendedJSONObject document = new ExtendedJSONObject(gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, environment));
     ExtendedJSONObject today = document.getObject("data").getObject("days").getObject(todayString);
     assertEquals(1, today.size());
     ExtendedJSONObject measurement = today.getObject(envHash).getObject("org.mozilla.testm5");

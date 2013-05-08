@@ -44,7 +44,7 @@ public class HealthReportProvider extends ContentProvider {
   private HealthReportDatabases databases;
   private static final UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
-  public static final String HEALTH_AUTHORITY = "org.mozilla.gecko.health";   // TODO: preprocess.
+  public static final String HEALTH_AUTHORITY = HealthReportConstants.HEALTH_AUTHORITY;
 
   // URI matches.
   private static final int ENVIRONMENTS_ROOT    = 10;

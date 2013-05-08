@@ -40,7 +40,7 @@ public class HealthReportGenerator {
     SparseArray<Environment> envs = storage.getEnvironmentRecordsByID();
 
     JSONObject document = new JSONObject();
-    if (lastPingTime >= HealthReportUtils.EARLIEST_LAST_PING) {
+    if (lastPingTime >= HealthReportConstants.EARLIEST_LAST_PING) {
       document.put("lastPingDate", HealthReportUtils.getDateString(lastPingTime));
     }
 

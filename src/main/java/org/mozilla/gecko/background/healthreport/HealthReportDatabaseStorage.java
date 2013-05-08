@@ -160,7 +160,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     executor.execute(new Runnable() {
       @Override
       public void run() {
-        Logger.setThreadLogTag(HealthReportUtils.GLOBAL_LOG_TAG);
+        Logger.setThreadLogTag(HealthReportConstants.GLOBAL_LOG_TAG);
         Logger.debug(LOG_TAG, "Creating HealthReportDatabaseStorage.");
       }
     });
