@@ -185,4 +185,6 @@ public interface HealthReportStorage {
   public void deleteEverything();
   public void deleteEnvironments();
   public void deleteMeasurements();
+
+  public void enqueueOperation(Runnable runnable);
 }

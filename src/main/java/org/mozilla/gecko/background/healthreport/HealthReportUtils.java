@@ -14,6 +14,8 @@ import android.content.ContentUris;
 import android.net.Uri;
 
 public class HealthReportUtils {
+  public static final String GLOBAL_LOG_TAG = "GeckoHealth";
+
   public static final int MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
   public static int getDay(final long time) {
