@@ -6,8 +6,8 @@ package org.mozilla.gecko.background.healthreport.test;
 
 import java.io.File;
 
+import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
-import org.mozilla.gecko.background.healthreport.HealthReportUtils;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -16,7 +16,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   public long now = System.currentTimeMillis();
 
   public long getOneDayAgo() {
-    return now - HealthReportUtils.MILLISECONDS_PER_DAY;
+    return now - HealthReportConstants.MILLISECONDS_PER_DAY;
   }
 
   public int getYesterday() {

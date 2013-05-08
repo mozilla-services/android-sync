@@ -14,13 +14,8 @@ import android.content.ContentUris;
 import android.net.Uri;
 
 public class HealthReportUtils {
-  public static final String GLOBAL_LOG_TAG = "GeckoHealth";
-
-  public static final int MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-  public static final long EARLIEST_LAST_PING = 1367500000000L;
-
   public static int getDay(final long time) {
-    return (int) Math.floor(time / MILLISECONDS_PER_DAY);
+    return (int) Math.floor(time / HealthReportConstants.MILLISECONDS_PER_DAY);
   }
 
   public static String getEnvironmentHash(final String input) {
@@ -28,7 +23,7 @@ public class HealthReportUtils {
   }
 
   public static String getDateStringForDay(long day) {
-    return getDateString(MILLISECONDS_PER_DAY * day);
+    return getDateString(HealthReportConstants.MILLISECONDS_PER_DAY * day);
   }
 
   public static String getDateString(long time) {
