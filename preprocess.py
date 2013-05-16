@@ -98,6 +98,7 @@ def main():
         "src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java.in",
         "src/main/java/org/mozilla/gecko/sync/SyncConstants.java.in",
         "src/main/java/org/mozilla/gecko/AppConstants.java.in",
+        "src/main/java/org/mozilla/gecko/SysInfo.java.in",
         "AndroidManifest.xml.in",
         "test/AndroidManifest.xml.in",
         "README.rst.in",

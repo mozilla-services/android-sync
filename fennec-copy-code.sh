@@ -21,11 +21,13 @@ SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
   -and -not -name 'GlobalConstants.java' \
   -and -not -name 'BrowserContract.java' \
   -and -not -name 'AppConstants.java' \
+  -and -not -name 'SysInfo.java' \
   -and -not -name 'SyncConstants.java' \
   | sed "s,$SOURCEROOT/,,")
 
 rsync -C \
   --exclude 'AppConstants.java' \
+  --exclude 'SysInfo.java' \
   --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
@@ -33,6 +35,7 @@ rsync -C \
 
 rsync -C \
   --exclude 'AppConstants.java' \
+  --exclude 'SysInfo.java' \
   --exclude 'GlobalConstants.java' \
   --exclude 'AnnouncementsConstants.java' \
   --exclude '*.in' \

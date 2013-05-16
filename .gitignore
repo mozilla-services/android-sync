@@ -31,3 +31,4 @@ puppet/modules/data/files/*.tar.gz
 /*.htm*
 docs/*.htm*
 preprocess.ini
+src/main/java/org/mozilla/gecko/SysInfo.java

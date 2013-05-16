@@ -11,6 +11,7 @@ if [ ! -d $ANDROID ]; then
 fi
 
 cp $ANDROID/base/AppConstants.java.in src/main/java/org/mozilla/gecko/
+cp $ANDROID/base/SysInfo.java.in src/main/java/org/mozilla/gecko/
 cp $ANDROID/base/db/BrowserContract.java src/main/java/org/mozilla/gecko/db/
 cp $ANDROID/base/locales/en-US/android_strings.dtd strings/
 
