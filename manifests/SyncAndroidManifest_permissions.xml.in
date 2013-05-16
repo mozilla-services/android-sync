@@ -10,7 +10,7 @@
 
     <!-- A signature level permission granted only to the Firefox
          versions sharing an Android Account type.  This needs to
-         agree with GlobalConstants.PER_ACCOUNT_TYPE_PERMISSION. -->
+         agree with SyncConstants.PER_ACCOUNT_TYPE_PERMISSION. -->
     <permission
         android:name="@MOZ_ANDROID_SHARED_ACCOUNT_TYPE@.permission.PER_ACCOUNT_TYPE"
         android:protectionLevel="signature">
