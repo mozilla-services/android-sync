@@ -1,0 +1,16 @@
+    <!-- A signature level permission specific to each Firefox version
+         (Android package name, e.g., org.mozilla.firefox).  Use this
+         permission to broadcast securely within a single Firefox
+         version.  This needs to agree with
+         GlobalConstants.PER_ANDROID_PACKAGE_PERMISSION. -->
+    <permission
+        android:name="@ANDROID_PACKAGE_NAME@.permission.PER_ANDROID_PACKAGE"
+        android:protectionLevel="signature"/>
+
+    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permission.PER_ANDROID_PACKAGE" />
+
+    <permission
+        android:name="@ANDROID_PACKAGE_NAME@.permissions.HEALTH_PROVIDER"
+        android:protectionLevel="signature"/>
+
+    <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permission.HEALTH_PROVIDER" />

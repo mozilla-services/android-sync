@@ -37,4 +37,10 @@ public class GlobalConstants {
   // do this automatically, but this will do for now. See Bug 800244.
   public static String GECKO_PREFERENCES_CLASS = "org.mozilla.gecko.GeckoPreferences";
   public static String GECKO_BROADCAST_METHOD  = "broadcastAnnouncementsPref";
+
+  /**
+   * This signing-level permission protects broadcast intents that should be
+   * received only by the Firefox versions with the given Android package name.
+   */
+  public static final String PER_ANDROID_PACKAGE_PERMISSION = "@ANDROID_PACKAGE_NAME@.permission.PERANDROID_PACKAGE";
 }

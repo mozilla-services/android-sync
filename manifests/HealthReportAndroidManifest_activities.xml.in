@@ -1,4 +1,14 @@
         <provider android:name="org.mozilla.gecko.background.healthreport.HealthReportProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.health"
                   android:permission="@ANDROID_PACKAGE_NAME@.permissions.HEALTH_PROVIDER">
+                  android:exported="true">
         </provider>
+
+        <receiver android:name="org.mozilla.gecko.background.healthreport.HealthReportBroadcastReceiver"
+                  android:exported="true"
+                  android:priority="@integer/healthreport_receiver_priority"
+                  android:permission="@ANDROID_PACKAGE_NAME@.permission.PER_ANDROID_PACKAGE">
+            <intent-filter>
+                <action android:name="@ANDROID_PACKAGE_NAME@.healthreport.request" />
+            </intent-filter>
+        </receiver>
