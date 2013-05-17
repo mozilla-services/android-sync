@@ -1020,6 +1020,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
       HashMap<String, Integer> results = new HashMap<String, Integer>();
       while (!c.isAfterLast()) {
         results.put(c.getString(0), c.getInt(1));
+        c.moveToNext();
       }
       return results;
     } finally {
