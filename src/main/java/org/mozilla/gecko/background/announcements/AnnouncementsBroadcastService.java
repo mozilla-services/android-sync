@@ -4,10 +4,10 @@
 
 package org.mozilla.gecko.background.announcements;
 
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.mozilla.gecko.background.BackgroundService;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 
@@ -23,10 +23,16 @@ import android.content.SharedPreferences.Editor;
  * browser, registering or unregistering the main
  * {@link AnnouncementsStartReceiver} with the {@link AlarmManager}.
  */
-public class AnnouncementsBroadcastService extends BackgroundService {
+public class AnnouncementsBroadcastService extends NetworkDependentService {
   private static final String WORKER_THREAD_NAME = "AnnouncementsBroadcastServiceWorker";
   private static final String LOG_TAG = "AnnounceBrSvc";
 
+  /**
+   * Cache the value of the pref to avoid expense in connection flip-flop events.
+   * We need to track a ternary value here to survive across service death. 
+   */
+  private volatile Boolean announcementsEnabled = null;
+  
   public AnnouncementsBroadcastService() {
     super(WORKER_THREAD_NAME);
   }
@@ -105,31 +111,7 @@ public class AnnouncementsBroadcastService extends BackgroundService {
     preferences.edit().putLong(AnnouncementsConstants.PREF_ANNOUNCE_FETCH_INTERVAL_MSEC, interval).commit();
   }
 
-  @Override
-  protected void onHandleIntent(Intent intent) {
-    Logger.setThreadLogTag(AnnouncementsConstants.GLOBAL_LOG_TAG);
-    final String action = intent.getAction();
-    Logger.debug(LOG_TAG, "Broadcast onReceive. Intent is " + action);
-
-    if (AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF.equals(action)) {
-      handlePrefIntent(intent);
-      return;
-    }
-
-    if (Intent.ACTION_BOOT_COMPLETED.equals(action) ||
-        Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(action)) {
-      handleSystemLifetimeIntent();
-      return;
-    }
-
-    // Failure case.
-    Logger.warn(LOG_TAG, "Unknown intent " + action);
-  }
-
   /**
-   * Handle one of the system intents to which we listen to launch our service
-   * without the browser being opened.
-   *
    * To avoid tight coupling to Fennec, we use reflection to find
    * <code>GeckoPreferences</code>, invoking the same code path that
    * <code>GeckoApp</code> uses on startup to send the <i>other</i>
@@ -138,7 +120,7 @@ public class AnnouncementsBroadcastService extends BackgroundService {
    * All of this is neatly wrapped in <code>try…catch</code>, so this code
    * will run safely without a Firefox build installed.
    */
-  protected void handleSystemLifetimeIntent() {
+  protected void requestPreferenceBroadcast() {
     // Ask the browser to tell us the current state of the preference.
     try {
       Class<?> geckoPreferences = Class.forName(GlobalConstants.GECKO_PREFERENCES_CLASS);
@@ -160,6 +142,20 @@ public class AnnouncementsBroadcastService extends BackgroundService {
     }
   }
 
+  @Override
+  protected void onHandleIntent(Intent intent) {
+    Logger.setThreadLogTag(AnnouncementsConstants.GLOBAL_LOG_TAG);
+    final String action = intent.getAction();
+    Logger.debug(LOG_TAG, "Broadcast onReceive. Intent is " + action);
+
+    if (AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF.equals(action)) {
+      handlePrefIntent(intent);
+      return;
+    }
+
+    super.onHandleIntent(intent);
+  }
+
   /**
    * Handle the intent sent by the browser when it wishes to notify us
    * of the value of the user preference. Look at the value and toggle the
@@ -176,6 +172,7 @@ public class AnnouncementsBroadcastService extends BackgroundService {
                           intent.getStringExtra("pref")   + " = " +
                           (intent.hasExtra("enabled") ? enabled : ""));
 
+    this.announcementsEnabled = Boolean.valueOf(enabled);
     toggleAlarm(this, enabled);
 
     // Primarily intended for debugging and testing, but this doesn't do any harm.
@@ -188,5 +185,18 @@ public class AnnouncementsBroadcastService extends BackgroundService {
       editor.remove(AnnouncementsConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH);
       editor.commit();
     }
+  }
+
+  @Override
+  protected void onNoConnectivity() {
+    toggleAlarm(this, false);
+  }
+
+  @Override
+  protected void onConnectivity(Intent intent) {
+    if (this.announcementsEnabled != null) {
+      toggleAlarm(this, this.announcementsEnabled.booleanValue());
+    }
+    requestPreferenceBroadcast();
   }
 }
