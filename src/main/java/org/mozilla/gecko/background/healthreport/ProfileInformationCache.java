@@ -29,10 +29,10 @@ public class ProfileInformationCache implements ProfileInformationProvider {
   private static final String LOG_TAG = "GeckoProfileInfo";
   private static final String CACHE_FILE = "profile_info_cache.json";
 
-  private boolean initialized = false;
-  private boolean needsWrite = false;
+  protected boolean initialized = false;
+  protected boolean needsWrite = false;
 
-  private final File file;
+  protected final File file;
 
   private volatile boolean blocklistEnabled = true;
   private volatile boolean telemetryEnabled = false;
