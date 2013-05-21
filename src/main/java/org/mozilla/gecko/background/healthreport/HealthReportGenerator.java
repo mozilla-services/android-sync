@@ -28,11 +28,14 @@ public class HealthReportGenerator {
   /**
    * The document consists of:
    *
-   * * Basic metadata: last ping time, current ping time, version.
-   * * A map of environments: 'current' and others named by hash. 'current' is fully specified,
-   *   and others are deltas from current.
-   * * A 'data' object. This includes 'last' and 'days'.
-   *   'days' is a map from date strings to {hash: {measurement: {_v: version, fields...}}}.
+   *<ul>
+   *<li>Basic metadata: last ping time, current ping time, version.</li>
+   *<li>A map of environments: <code>current</code> and others named by hash. <code>current</code> is fully specified,
+   * and others are deltas from current.</li>
+   *<li>A <code>data</code> object. This includes <code>last</code> and <code>days</code>.</li>
+   *</ul>
+   *
+   * <code>days</code> is a map from date strings to <tt>{hash: {measurement: {_v: version, fields...}}}</tt>.
    */
   @SuppressWarnings("unchecked")
   public JSONObject generateDocument(long since, long lastPingTime, Environment currentEnvironment) {
