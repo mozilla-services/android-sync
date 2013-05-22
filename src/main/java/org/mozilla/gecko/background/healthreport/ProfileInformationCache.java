@@ -22,8 +22,6 @@ import org.mozilla.gecko.background.healthreport.EnvironmentBuilder.ProfileInfor
  * without a running Gecko -- add-ons, for example. In order to make this
  * information available without launching Gecko, we persist it on Fennec
  * startup. This class is the notepad in which we write.
- *
- * TODO: add-ons.
  */
 public class ProfileInformationCache implements ProfileInformationProvider {
   private static final String LOG_TAG = "GeckoProfileInfo";
@@ -37,6 +35,8 @@ public class ProfileInformationCache implements ProfileInformationProvider {
   private volatile boolean blocklistEnabled = true;
   private volatile boolean telemetryEnabled = false;
   private volatile long profileCreationTime = 0;
+
+  private volatile JSONObject addons = null;
 
   public ProfileInformationCache(String profilePath) {
     file = new File(profilePath + File.separator + CACHE_FILE);
@@ -55,6 +55,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
       object.put("blocklist", blocklistEnabled);
       object.put("telemetry", telemetryEnabled);
       object.put("profileCreated", profileCreationTime);
+      object.put("addons", addons);
     } catch (JSONException e) {
       // There isn't much we can do about this.
       // Let's just quietly muffle.
@@ -172,5 +173,42 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     Logger.debug(LOG_TAG, "Setting profile creation time: " + value);
     profileCreationTime = value;
     needsWrite = true;
+  }
+
+  @Override
+  public JSONObject getAddonsJSON() {
+    return addons;
+  }
+
+  public void updateJSONForAddon(String id, String json) throws Exception {
+    addons.put(id, new JSONObject(json));
+  }
+
+  /**
+   * Will throw if you haven't done a full update at least once.
+   */
+  public void updateJSONForAddon(String id, JSONObject json) {
+    if (addons == null) {
+      throw new IllegalStateException("Cannot incrementally update add-ons without first initializing.");
+    }
+    try {
+      addons.put(id, json);
+    } catch (Exception e) {
+      // Why would this happen?
+      Logger.warn(LOG_TAG, "Unexpected failure updating JSON for add-on.", e);
+    }
+  }
+
+  /**
+   * Update the cached set of add-ons. Throws on invalid input.
+   *
+   * @param json a valid add-ons JSON string.
+   */
+  public void setJSONForAddons(String json) throws Exception {
+    addons = new JSONObject(json);
+  }
+
+  public void setJSONForAddons(JSONObject json) {
+    addons = json;
   }
 }

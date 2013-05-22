@@ -7,6 +7,8 @@ package org.mozilla.gecko.background.healthreport.test;
 import java.io.File;
 import java.util.ArrayList;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.test.helpers.DBHelpers;
@@ -55,7 +57,41 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     c.close();
   }
 
-  public void testEnvironmentsAndFields() {
+  private static final JSONObject EXAMPLE_ADDONS = safeJSONObject(
+            "{ " +
+            "\"amznUWL2@amazon.com\": { " +
+            "  \"userDisabled\": false, " +
+            "  \"appDisabled\": false, " +
+            "  \"version\": \"1.10\", " +
+            "  \"type\": \"extension\", " +
+            "  \"scope\": 1, " +
+            "  \"foreignInstall\": false, " +
+            "  \"hasBinaryComponents\": false, " +
+            "  \"installDay\": 15269, " +
+            "  \"updateDay\": 15602 " +
+            "}, " +
+            "\"jid0-qBnIpLfDFa4LpdrjhAC6vBqN20Q@jetpack\": { " +
+            "  \"userDisabled\": false, " +
+            "  \"appDisabled\": false, " +
+            "  \"version\": \"1.12.1\", " +
+            "  \"type\": \"extension\", " +
+            "  \"scope\": 1, " +
+            "  \"foreignInstall\": false, " +
+            "  \"hasBinaryComponents\": false, " +
+            "  \"installDay\": 15062, " +
+            "  \"updateDay\": 15580 " +
+            "} " +
+            "} ");
+
+  private static JSONObject safeJSONObject(String s) {
+    try {
+      return new JSONObject(s);
+    } catch (JSONException e) {
+      return null;
+    }
+  }
+
+  public void testEnvironmentsAndFields() throws Exception {
     MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context, fakeProfileDirectory);
     storage.beginInitialization();
     storage.ensureMeasurementInitialized("testpA.testm", 1, new MockMeasurementFields());
@@ -64,6 +100,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     MockDatabaseEnvironment environmentA = storage.getEnvironment();
     environmentA.mockInit("v123");
+    environmentA.setJSONForAddons(EXAMPLE_ADDONS);
     final int envA = environmentA.register();
     assertEquals(envA, environmentA.register());
 
@@ -94,6 +131,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     MockDatabaseEnvironment environmentB = storage.getEnvironment();
     environmentB.mockInit("v234");
+    environmentB.setJSONForAddons(EXAMPLE_ADDONS);
     final int envB = environmentB.register();
     assertFalse(envA == envB);
 
@@ -110,6 +148,22 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     } finally {
       c.close();
     }
+
+    // The stored environment has the provided JSON add-ons bundle.
+    Cursor e = storage.getEnvironmentRecordForID(envA);
+    e.moveToFirst();
+    assertEquals(EXAMPLE_ADDONS.toString(), e.getString(e.getColumnIndex("addonsBody")));
+    e.close();
+
+    e = storage.getEnvironmentRecordForID(envB);
+    e.moveToFirst();
+    assertEquals(EXAMPLE_ADDONS.toString(), e.getString(e.getColumnIndex("addonsBody")));
+    e.close();
+
+    // There's only one add-ons bundle in the DB, despite having two environments.
+    Cursor addons = storage.getDB().query("addons", null, null, null, null, null, null);
+    assertEquals(1, addons.getCount());
+    addons.close();
   }
 
   /**
