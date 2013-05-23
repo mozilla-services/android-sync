@@ -5,9 +5,16 @@
 package org.mozilla.gecko.background.healthreport;
 
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mozilla.apache.commons.codec.digest.DigestUtils;
 
 import android.content.ContentUris;
@@ -44,5 +51,66 @@ public class HealthReportUtils {
    */
   public static Uri getEventURI(Uri environmentURI) {
     return environmentURI.buildUpon().path("/events/" + ContentUris.parseId(environmentURI) + "/").build();
+  }
+
+  /**
+   * Copy the keys from the provided {@link JSONObject} into the provided {@link Set}.
+   */
+  private static <T extends Set<String>> T intoKeySet(T keys, JSONObject o) {
+    if (o == null || o == JSONObject.NULL) {
+      return keys;
+    }
+
+    @SuppressWarnings("unchecked")
+    Iterator<String> it = o.keys();
+    while (it.hasNext()) {
+      keys.add(it.next());
+    }
+    return keys;
+  }
+
+  /**
+   * Produce a {@link SortedSet} containing the string keys of the provided
+   * object.
+   *
+   * @param o a {@link JSONObject} with string keys.
+   * @return a sorted set.
+   */
+  public static SortedSet<String> sortedKeySet(JSONObject o) {
+    return intoKeySet(new TreeSet<String>(), o);
+  }
+
+  /**
+   * Produce a {@link Set} containing the string keys of the provided object.
+   * @param o a {@link JSONObject} with string keys.
+   * @return an unsorted set.
+   */
+  public static Set<String> keySet(JSONObject o) {
+    return intoKeySet(new HashSet<String>(), o);
+  }
+
+  /**
+   * {@link JSONObject} doesn't provide a <code>clone</code> method, nor any
+   * useful constructors, so we do this the hard way.
+   *
+   * @return a new object containing the same keys and values as the old.
+   * @throws JSONException
+   *           if JSONObject is even more stupid than expected and cannot store
+   *           a value from the provided object in the new object. This should
+   *           never happen.
+   */
+  public static JSONObject shallowCopyObject(JSONObject o) throws JSONException {
+    if (o == null) {
+      return null;
+    }
+
+    JSONObject out = new JSONObject();
+    @SuppressWarnings("unchecked")
+    Iterator<String> keys = out.keys();
+    while (keys.hasNext()) {
+      final String key = keys.next();
+      out.put(key, o.get(key));
+    }
+    return out;
   }
 }
