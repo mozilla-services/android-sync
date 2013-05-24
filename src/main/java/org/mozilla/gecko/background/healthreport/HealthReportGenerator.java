@@ -145,15 +145,10 @@ public class HealthReportGenerator {
           envObject.put(field.measurementName, measurement);
         }
         if (field.isDiscreteField()) {
-          JSONArray discrete = (JSONArray) measurement.optJSONArray(field.fieldName);
-          if (discrete == null) {
-            discrete = new JSONArray();
-            measurement.put(field.fieldName, discrete);
-          }
           if (field.isStringField()) {
-            discrete.put(cursor.getString(3));
+            HealthReportUtils.append(measurement, field.fieldName, cursor.getString(3));
           } else if (field.isIntegerField()) {
-            discrete.put(cursor.getLong(3));
+            HealthReportUtils.append(measurement, field.fieldName, cursor.getLong(3));
           } else {
             // Uh oh!
             throw new IllegalStateException("Unknown field type: " + field.flags);

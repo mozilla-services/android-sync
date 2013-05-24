@@ -18,6 +18,26 @@ import org.mozilla.gecko.background.healthreport.HealthReportUtils;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
 public class TestHealthReportGenerator extends FakeProfileTestCase {
+  public static void testOptObject() throws JSONException {
+    JSONObject o = new JSONObject();
+    o.put("foo", JSONObject.NULL);
+    assertEquals(null, o.optJSONObject("foo"));
+  }
+
+  @SuppressWarnings("static-method")
+  public void testAppend() throws JSONException {
+    JSONObject o = new JSONObject();
+    HealthReportUtils.append(o, "yyy", 5);
+    assertNotNull(o.getJSONArray("yyy"));
+    assertEquals(5, o.getJSONArray("yyy").getInt(0));
+
+    o.put("foo", "noo");
+    HealthReportUtils.append(o, "foo", "bar");
+    assertNotNull(o.getJSONArray("foo"));
+    assertEquals("noo", o.getJSONArray("foo").getString(0));
+    assertEquals("bar", o.getJSONArray("foo").getString(1));
+  }
+
   public void testEnvironments() throws JSONException {
     // Hard-coded so you need to update tests!
     // If this is the only thing you need to change when revving a version, you

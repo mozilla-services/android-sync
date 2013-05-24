@@ -15,6 +15,7 @@ import java.util.TreeSet;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.mozilla.apache.commons.codec.digest.DigestUtils;
 
 import android.content.ContentUris;
@@ -112,5 +113,28 @@ public class HealthReportUtils {
       out.put(key, o.get(key));
     }
     return out;
+  }
+
+  /**
+   * Just like {@link JSONObject#accumulate(String, Object)}, but doesn't do the wrong thing for single values.
+   * @throws JSONException 
+   */
+  public static void append(JSONObject o, String key, Object value) throws JSONException {
+    if (!o.has(key)) {
+      JSONArray arr = new JSONArray();
+      arr.put(value);
+      o.put(key, arr);
+      return;
+    }
+    Object dest = o.get(key);
+    if (dest instanceof JSONArray) {
+      ((JSONArray) dest).put(value);
+      return;
+    }
+    JSONArray arr = new JSONArray();
+    arr.put(dest);
+    arr.put(value);
+    o.put(key, arr);
+    return;
   }
 }
