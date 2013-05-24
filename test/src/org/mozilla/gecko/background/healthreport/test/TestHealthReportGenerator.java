@@ -7,20 +7,38 @@ package org.mozilla.gecko.background.healthreport.test;
 import java.io.File;
 import java.util.ArrayList;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportGenerator;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.healthreport.HealthReportUtils;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.NonArrayJSONException;
-import org.mozilla.gecko.sync.NonObjectJSONException;
 
 public class TestHealthReportGenerator extends FakeProfileTestCase {
-  public void testEnvironments() throws NonObjectJSONException {
+  public static void testOptObject() throws JSONException {
+    JSONObject o = new JSONObject();
+    o.put("foo", JSONObject.NULL);
+    assertEquals(null, o.optJSONObject("foo"));
+  }
+
+  @SuppressWarnings("static-method")
+  public void testAppend() throws JSONException {
+    JSONObject o = new JSONObject();
+    HealthReportUtils.append(o, "yyy", 5);
+    assertNotNull(o.getJSONArray("yyy"));
+    assertEquals(5, o.getJSONArray("yyy").getInt(0));
+
+    o.put("foo", "noo");
+    HealthReportUtils.append(o, "foo", "bar");
+    assertNotNull(o.getJSONArray("foo"));
+    assertEquals("noo", o.getJSONArray("foo").getString(0));
+    assertEquals("bar", o.getJSONArray("foo").getString(1));
+  }
+
+  public void testEnvironments() throws JSONException {
     // Hard-coded so you need to update tests!
     // If this is the only thing you need to change when revving a version, you
     // need more test coverage.
@@ -37,7 +55,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     JSONObject document = gen.generateDocument(0, 0, env1);
     String today = HealthReportUtils.getDateString(now);
 
-    assertEquals(null, document.get("lastPingDate"));
+    assertFalse(document.has("lastPingDate"));
     document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, env1);
     assertEquals("2013-05-02", document.get("lastPingDate"));
 
@@ -45,15 +63,14 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertEquals(today, document.get("thisPingDate"));
     assertEquals(expectedVersion, document.get("version"));
 
-    // Use EJO to avoid hundreds of casts.
-    ExtendedJSONObject environments = new ExtendedJSONObject((JSONObject) document.get("environments"));
-    ExtendedJSONObject current = environments.getObject("current");
-    assertTrue(current.containsKey("org.mozilla.profile.age"));
-    assertTrue(current.containsKey("org.mozilla.sysinfo.sysinfo"));
-    assertTrue(current.containsKey("org.mozilla.appInfo.appinfo"));
-    assertTrue(current.containsKey("geckoAppInfo"));
-    assertTrue(current.containsKey("org.mozilla.addons.active"));
-    assertTrue(current.containsKey("org.mozilla.addons.counts"));
+    JSONObject environments = document.getJSONObject("environments");
+    JSONObject current = environments.getJSONObject("current");
+    assertTrue(current.has("org.mozilla.profile.age"));
+    assertTrue(current.has("org.mozilla.sysinfo.sysinfo"));
+    assertTrue(current.has("org.mozilla.appInfo.appinfo"));
+    assertTrue(current.has("geckoAppInfo"));
+    assertTrue(current.has("org.mozilla.addons.active"));
+    assertTrue(current.has("org.mozilla.addons.counts"));
 
     // Make sure we don't get duplicate environments when an environment has
     // been used, and that we get deltas between them.
@@ -71,37 +88,37 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertEquals(today, document.get("thisPingDate"));
     assertEquals(expectedVersion, document.get("version"));
     document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, env2);
-    environments = new ExtendedJSONObject((JSONObject) document.get("environments"));
+    environments = document.getJSONObject("environments");
 
     // Now we have two: env1, and env2 (as 'current').
-    assertTrue(environments.containsKey(env1.getHash()));
-    assertTrue(environments.containsKey("current"));
-    assertEquals(2, environments.size());
+    assertTrue(environments.has(env1.getHash()));
+    assertTrue(environments.has("current"));
+    assertEquals(2, environments.length());
 
-    current = environments.getObject("current");
-    assertTrue(current.containsKey("org.mozilla.profile.age"));
-    assertTrue(current.containsKey("org.mozilla.sysinfo.sysinfo"));
-    assertTrue(current.containsKey("org.mozilla.appInfo.appinfo"));
-    assertTrue(current.containsKey("geckoAppInfo"));
-    assertTrue(current.containsKey("org.mozilla.addons.active"));
-    assertTrue(current.containsKey("org.mozilla.addons.counts"));
+    current = environments.getJSONObject("current");
+    assertTrue(current.has("org.mozilla.profile.age"));
+    assertTrue(current.has("org.mozilla.sysinfo.sysinfo"));
+    assertTrue(current.has("org.mozilla.appInfo.appinfo"));
+    assertTrue(current.has("geckoAppInfo"));
+    assertTrue(current.has("org.mozilla.addons.active"));
+    assertTrue(current.has("org.mozilla.addons.counts"));
 
     // The diff only contains the changed measurement and fields.
-    ExtendedJSONObject previous = environments.getObject(env1.getHash());
-    assertTrue(previous.containsKey("geckoAppInfo"));
-    final ExtendedJSONObject previousAppInfo = previous.getObject("geckoAppInfo");
-    assertEquals(2, previousAppInfo.size());
+    JSONObject previous = environments.getJSONObject(env1.getHash());
+    assertTrue(previous.has("geckoAppInfo"));
+    final JSONObject previousAppInfo = previous.getJSONObject("geckoAppInfo");
+    assertEquals(2, previousAppInfo.length());
     assertEquals("23", previousAppInfo.getString("version"));
     assertEquals(Integer.valueOf(1), (Integer) previousAppInfo.get("_v"));
 
-    assertFalse(previous.containsKey("org.mozilla.profile.age"));
-    assertFalse(previous.containsKey("org.mozilla.sysinfo.sysinfo"));
-    assertFalse(previous.containsKey("org.mozilla.appInfo.appinfo"));
-    assertFalse(previous.containsKey("org.mozilla.addons.active"));
-    assertFalse(previous.containsKey("org.mozilla.addons.counts"));
+    assertFalse(previous.has("org.mozilla.profile.age"));
+    assertFalse(previous.has("org.mozilla.sysinfo.sysinfo"));
+    assertFalse(previous.has("org.mozilla.appInfo.appinfo"));
+    assertFalse(previous.has("org.mozilla.addons.active"));
+    assertFalse(previous.has("org.mozilla.addons.counts"));
   }
 
-  public void testInsertedData() throws NonObjectJSONException, NonArrayJSONException {
+  public void testInsertedData() throws JSONException {
     MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context, fakeProfileDirectory);
     HealthReportGenerator gen = new HealthReportGenerator(storage);
 
@@ -148,18 +165,18 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     storage.recordDailyDiscrete(env, day, discrete_int, 1);
     storage.recordDailyDiscrete(env, day, discrete_int, 3);
 
-    ExtendedJSONObject document = new ExtendedJSONObject(gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, environment));
-    ExtendedJSONObject today = document.getObject("data").getObject("days").getObject(todayString);
-    assertEquals(1, today.size());
-    ExtendedJSONObject measurement = today.getObject(envHash).getObject("org.mozilla.testm5");
-    assertEquals(Integer.valueOf(1), measurement.getIntegerSafely("_v"));
-    assertEquals(Integer.valueOf(5), measurement.getIntegerSafely("counter"));
-    assertEquals(Integer.valueOf(3), measurement.getIntegerSafely("last_int"));
+    JSONObject document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, environment);
+    JSONObject today = document.getJSONObject("data").getJSONObject("days").getJSONObject(todayString);
+    assertEquals(1, today.length());
+    JSONObject measurement = today.getJSONObject(envHash).getJSONObject("org.mozilla.testm5");
+    assertEquals(1, measurement.getInt("_v"));
+    assertEquals(5, measurement.getInt("counter"));
+    assertEquals(3, measurement.getInt("last_int"));
     assertEquals("b", measurement.getString("last_str"));
-    JSONArray discreteInts = measurement.getArray("discrete_int");
-    JSONArray discreteStrs = measurement.getArray("discrete_str");
-    assertEquals(3, discreteInts.size());
-    assertEquals(2, discreteStrs.size());
+    JSONArray discreteInts = measurement.getJSONArray("discrete_int");
+    JSONArray discreteStrs = measurement.getJSONArray("discrete_str");
+    assertEquals(3, discreteInts.length());
+    assertEquals(2, discreteStrs.length());
     assertEquals("a", discreteStrs.get(0));
     assertEquals("b", discreteStrs.get(1));
     assertEquals(Long.valueOf(2), discreteInts.get(0));
