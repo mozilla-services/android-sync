@@ -85,8 +85,11 @@ public class EnvironmentBuilder {
     @SuppressWarnings("unchecked")
     Iterator<String> it = addons.keys();
     while (it.hasNext()) {
+      String key = it.next();
       try {
-        String type = addons.getJSONObject(it.next()).optString("type");
+        JSONObject addon = addons.getJSONObject(key);
+        String type = addon.optString("type");
+        Logger.debug(LOG_TAG, "Add-on " + key + " is a " + type);
         if ("extension".equals(type)) {
           ++e.extensionCount;
         } else if ("plugin".equals(type)) {
@@ -99,7 +102,7 @@ public class EnvironmentBuilder {
           Logger.debug(LOG_TAG, "Unknown add-on type: " + type);
         }
       } catch (Exception ex) {
-        Logger.warn(LOG_TAG, "Failed to process add-on record.", ex);
+        Logger.warn(LOG_TAG, "Failed to process add-on " + key, ex);
       }
     }
 
@@ -131,6 +134,8 @@ public class EnvironmentBuilder {
                                                ProfileInformationProvider info) {
     Environment e = storage.getEnvironment();
     populateEnvironment(e, info);
-    return e.register();
+    e.register();
+    Logger.debug(LOG_TAG, "Registering current environment: " + e.getHash() + " = " + e.id);
+    return e.id;
   }
 }

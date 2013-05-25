@@ -46,7 +46,6 @@ public class ProfileInformationCache implements ProfileInformationProvider {
   public synchronized void beginInitialization() {
     initialized = false;
     needsWrite = true;
-    profileCreationTime = 0;
   }
 
   public JSONObject toJSON() {
@@ -68,6 +67,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     blocklistEnabled = object.getBoolean("blocklist");
     telemetryEnabled = object.getBoolean("telemetry");
     profileCreationTime = object.getLong("profileCreated");
+    addons = object.optJSONObject("addons");
   }
 
   /**
@@ -121,6 +121,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
       final String contents = scanner.useDelimiter("\\A").next();
       fromJSON(new JSONObject(contents));
       initialized = true;
+      needsWrite = false;
       return true;
     } catch (FileNotFoundException e) {
       return false;

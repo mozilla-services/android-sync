@@ -62,6 +62,7 @@ public class HealthReportGenerator {
    */
   public JSONObject generateDocument(long since, long lastPingTime, Environment currentEnvironment) throws JSONException {
     final String currentHash = currentEnvironment.getHash();
+
     Logger.debug(LOG_TAG, "Current environment hash: " + currentHash);
     if (currentHash == null) {
       Logger.warn(LOG_TAG, "Current hash is null; aborting.");
@@ -101,6 +102,14 @@ public class HealthReportGenerator {
   }
 
   protected JSONObject getDaysJSON(Environment currentEnvironment, SparseArray<Environment> envs, SparseArray<Field> fields, long since) throws JSONException {
+    Logger.debug(LOG_TAG, "Current env: " + currentEnvironment.getHash());
+    Logger.debug(LOG_TAG, "Environments: " + envs.size());
+    if (Logger.shouldLogVerbose(LOG_TAG)) {
+      for (int i = 0; i < envs.size(); ++i) {
+        Logger.trace(LOG_TAG, "Env " + envs.keyAt(i) + ": " + envs.get(envs.keyAt(i)).getHash());
+      }
+    }
+
     JSONObject days = new JSONObject();
     Cursor cursor = storage.getRawEventsSince(since);
     try {
@@ -121,10 +130,19 @@ public class HealthReportGenerator {
       JSONObject envObject = null;
 
       while (!cursor.isAfterLast()) {
+        int cEnv = cursor.getInt(1);
+        if (cEnv == -1 ||
+            (cEnv != lastEnv &&
+             envs.indexOfKey(cEnv) < 0)) {
+          Logger.warn(LOG_TAG, "Invalid environment " + cEnv + " in cursor. Skipping.");
+          cursor.moveToNext();
+          continue;
+        }
+
         int cDate  = cursor.getInt(0);
-        int cEnv   = cursor.getInt(1);
         int cField = cursor.getInt(2);
 
+        Logger.trace(LOG_TAG, "Event row: " + cDate + ", " + cEnv + ", " + cField);
         boolean dateChanged = cDate != lastDate;
         boolean envChanged = cEnv != lastEnv;
 
@@ -138,7 +156,8 @@ public class HealthReportGenerator {
 
         if (dateChanged || envChanged) {
           envObject = new JSONObject();
-          dateObject.put(envs.get(cEnv).hash, envObject);
+          // This is safe because of our validity check above.
+          dateObject.put(envs.get(cEnv).getHash(), envObject);
           lastEnv = cEnv;
         }
 
@@ -452,6 +471,7 @@ public class HealthReportGenerator {
     if (current == null) {
       JSONObject out = HealthReportUtils.shallowCopyObject(e.addons);
       if (out == null) {
+        Logger.warn(LOG_TAG, "No add-ons to return in FHR document.");
         out = new JSONObject();        // So that we always return something.
       }
       out.put("_v", 1);

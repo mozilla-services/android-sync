@@ -401,6 +401,9 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
           upgradeDatabaseFrom2To3(db);
         }
         db.setTransactionSuccessful();
+      } catch (Exception e) {
+        Logger.error(LOG_TAG, "Failure in onUpgrade.", e);
+        throw new RuntimeException(e);
       } finally {
         db.endTransaction();
       }
@@ -497,7 +500,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     public int register() {
       final String h = getHash();
       if (storage.envs.containsKey(h)) {
-        return storage.envs.get(h);
+        return this.id = storage.envs.get(h);
       }
 
       // Otherwise, add data and hash to the DB.
@@ -555,16 +558,16 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
         v.put("addonsID", addonsID);
 
         try {
-          this.id = (int) db.insertOrThrow("environments", null, v);
-          Logger.debug(LOG_TAG, "Inserted ID: " + id + " for hash " + h);
-          if (id == -1) {
+          int inserted = (int) db.insertOrThrow("environments", null, v);
+          Logger.debug(LOG_TAG, "Inserted ID: " + inserted + " for hash " + h);
+          if (inserted == -1) {
             throw new SQLException("Insert returned -1!");
           }
-          storage.envs.put(h, this.id);
+          storage.envs.put(h, this.id = inserted);
           if (newTransaction) {
             db.setTransactionSuccessful();
           }
-          return this.id;
+          return inserted;
         } catch (SQLException e) {
           // The inserter should take care of updating `envs`. But if it
           // doesn't...
@@ -754,6 +757,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
 
       while (!c.isAfterLast()) {
         results.put(c.getInt(0), c.getString(1));
+        c.moveToNext();
       }
       return results;
     } finally {
@@ -992,6 +996,11 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   private void recordDailyLast(int env, int day, int field, Object value, String table) {
+    if (env == -1) {
+      Logger.warn(LOG_TAG, "Refusing to record with environment = -1.");
+      return;
+    }
+
     final SQLiteDatabase db = this.helper.getWritableDatabase();
 
     final String envString = Integer.toString(env);
@@ -1026,6 +1035,11 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   private void recordDailyDiscrete(int env, int day, int field, Object value, String table) {
+    if (env == -1) {
+      Logger.warn(LOG_TAG, "Refusing to record with environment = -1.");
+      return;
+    }
+
     final ContentValues v = new ContentValues();
     v.put("env", env);
     v.put("field", field);
@@ -1061,6 +1075,11 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
    */
   @Override
   public void incrementDailyCount(int env, int day, int field, int by) {
+    if (env == -1) {
+      Logger.warn(LOG_TAG, "Refusing to record with environment = -1.");
+      return;
+    }
+
     final SQLiteDatabase db = this.helper.getWritableDatabase();
     final String envString = Integer.toString(env);
     final String fieldIDString = Integer.toString(field, 10);
