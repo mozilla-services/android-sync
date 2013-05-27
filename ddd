@@ -1,0 +1,89 @@
+{
+    "root": null,
+    "xchildren": [
+        {
+            "dateAdded": 1372369641883000,
+            "id": 1,
+            "index": 0,
+            "lastModified": 1372369642282000,
+            "parent": 0,
+            "title": "Mobile Bookmarks",
+            "type": "text/x-moz-place-container",
+            "uri": null
+        },
+        {
+            "dateAdded": 1372356707249000,
+            "id": 2,
+            "index": 1,
+            "lastModified": 1372369638133000,
+            "parent": 0,
+            "title": "Bookmarks Toolbar",
+            "type": "text/x-moz-place-container",
+            "uri": null,
+            "xchildren": [
+                {
+                    "dateAdded": 1372369646091000,
+                    "id": 127,
+                    "index": 0,
+                    "lastModified": 1372369646250000,
+                    "parent": 2,
+                    "title": "Test items",
+                    "type": "text/x-moz-place-container",
+                    "uri": null,
+                    "xchildren": [
+                        {
+                            "dateAdded": 1372369646120000,
+                            "id": 128,
+                            "index": 0,
+                            "lastModified": 1372369646120000,
+                            "parent": 127,
+                            "title": "Title B",
+                            "type": "text/x-moz-place",
+                            "uri": "http://example.com/B"
+                        },
+                        {
+                            "dateAdded": 1372369646121000,
+                            "id": 129,
+                            "index": 1,
+                            "lastModified": 1372369646121000,
+                            "parent": 127,
+                            "title": "Title A",
+                            "type": "text/x-moz-place",
+                            "uri": "http://example.com/A"
+                        },
+                        {
+                            "dateAdded": 1372369646121000,
+                            "id": 130,
+                            "index": 2,
+                            "lastModified": 1372369646121000,
+                            "parent": 127,
+                            "title": "Title C",
+                            "type": "text/x-moz-place",
+                            "uri": "http://example.com/C"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "dateAdded": 1372356707249000,
+            "id": 3,
+            "index": 2,
+            "lastModified": 1372356707249000,
+            "parent": 0,
+            "title": "Bookmarks Menu",
+            "type": "text/x-moz-place-container",
+            "uri": null
+        },
+        {
+            "dateAdded": 1372356707251000,
+            "id": 5,
+            "index": 3,
+            "lastModified": 1372369638570000,
+            "parent": 0,
+            "title": "Unsorted Bookmarks",
+            "type": "text/x-moz-place-container",
+            "uri": null
+        }
+    ]
+}

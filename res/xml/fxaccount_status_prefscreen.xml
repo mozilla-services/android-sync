@@ -107,11 +107,7 @@
         android:key="legal_category"
         android:title="@string/fxaccount_status_legal" >
         <Preference android:title="@string/fxaccount_status_linktos" >
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="@string/fxaccount_link_tos"
-                android:targetClass="@string/browser_intent_class"
-                android:targetPackage="@string/browser_intent_package" />
+          <intent android:action="org.mozilla.gecko.db.BookmarkExportActivity" />
         </Preference>
         <Preference android:title="@string/fxaccount_status_linkprivacy" >
             <intent

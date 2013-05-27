@@ -90,6 +90,20 @@
             android:windowSoftInputMode="adjustResize">
         </activity>
 
+        <activity
+            android:theme="@style/Gecko.Dialog"
+            android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
+            android:icon="@drawable/icon"
+            android:label="label Export bookmarks"
+            android:windowSoftInputMode="adjustResize"
+            android:name="org.mozilla.gecko.db.BookmarkExportActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name="org.mozilla.gecko.fxa.receivers.FxAccountDeletedReceiver"
             android:permission="@MOZ_ANDROID_SHARED_FXACCOUNT_TYPE@.permission.PER_ACCOUNT_TYPE">
