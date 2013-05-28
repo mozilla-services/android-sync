@@ -1,0 +1,12 @@
+        <!-- We have two services.  BroadcastService responds to
+             external events and starts the regular Service, which
+             does the actual background work, in a uniform manner.
+          -->
+        <service
+		        android:exported="false"
+		        android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportUploadBroadcastService" >
+        </service>
+        <service
+		        android:exported="false"
+		        android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportUploadService" >
+        </service>

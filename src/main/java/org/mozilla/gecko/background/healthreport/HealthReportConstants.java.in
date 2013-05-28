@@ -5,6 +5,10 @@
 
 package org.mozilla.gecko.background.healthreport;
 
+import org.mozilla.gecko.background.common.GlobalConstants;
+
+import android.app.AlarmManager;
+
 public class HealthReportConstants {
   public static final String HEALTH_AUTHORITY = "@ANDROID_PACKAGE_NAME@.health";
   public static final String GLOBAL_LOG_TAG = "GeckoHealth";
@@ -15,4 +19,20 @@ public class HealthReportConstants {
    * Used for sanity checks.
    */
   public static final long EARLIEST_LAST_PING = 1367500000000L;
+
+  // Not `final` so we have the option to turn this on at runtime with a magic addon.
+  public static boolean UPLOAD_DISABLED = false;
+
+  public static final String ACTION_HEALTHREPORT_UPLOAD_PREF = "@ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF";
+
+  // Android SharedPreferences branch where global (not per-profile) uploader
+  // settings are stored.
+  public static final String PREFS_BRANCH = "healthreport";
+
+  public static final String PREF_HEALTHREPORT_UPLOAD_INTERVAL_MSEC = "upload_interval_msec";
+  // XXX Try to avoid piling "up on the noons".
+  public static long DEFAULT_HEALTHREPORT_UPLOAD_INTERVAL_MSEC = AlarmManager.INTERVAL_HALF_DAY / 2;
+
+  public static String UPLOAD_USER_AGENT = "Firefox Health Reporting " + GlobalConstants.MOZ_APP_VERSION;
+  public static String UPLOAD_CHANNEL = GlobalConstants.MOZ_UPDATE_CHANNEL.replace("default", GlobalConstants.MOZ_OFFICIAL_BRANDING ? "release" : "dev");
 }
