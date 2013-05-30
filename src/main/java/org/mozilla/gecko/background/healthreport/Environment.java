@@ -7,6 +7,7 @@ package org.mozilla.gecko.background.healthreport;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Iterator;
 import java.util.SortedSet;
 
 import org.json.JSONException;
@@ -79,6 +80,28 @@ public abstract class Environment {
 
   public Environment(Class<? extends EnvironmentAppender> appenderClass) {
     this.appenderClass = appenderClass;
+  }
+
+  public JSONObject getNonIgnoredAddons() {
+    if (addons == null) {
+      return null;
+    }
+    JSONObject out = new JSONObject();
+    @SuppressWarnings("unchecked")
+    Iterator<String> keys = addons.keys();
+    while (keys.hasNext()) {
+      try {
+        final String key = keys.next();
+        final Object obj = addons.get(key);
+        if (obj != null && obj instanceof JSONObject && ((JSONObject) obj).optBoolean("ignore", false)) {
+          continue;
+        }
+        out.put(key, obj);
+      } catch (JSONException ex) {
+        // Do nothing.
+      }
+    }
+    return out;
   }
 
   /**
@@ -172,7 +195,7 @@ public abstract class Environment {
 
     // We need sorted values.
     if (addons != null) {
-      appendSortedAddons(addons, appender);
+      appendSortedAddons(getNonIgnoredAddons(), appender);
     }
 
     return hash = appender.toString();
@@ -225,6 +248,9 @@ public abstract class Environment {
     addons = json;
   }
 
+  /**
+   * Includes ignored add-ons.
+   */
   public String getNormalizedAddonsJSON() {
     // We trust that our input will already be normalized. If that assumption
     // is invalidated, then we'll be sorry.

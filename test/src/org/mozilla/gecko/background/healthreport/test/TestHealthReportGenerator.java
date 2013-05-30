@@ -39,18 +39,6 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertEquals("bar", o.getJSONArray("foo").getString(1));
   }
 
-  public static void testCopying() throws JSONException {
-    JSONObject o = new JSONObject();
-    JSONObject foo = new JSONObject();
-    foo.put("a", 1);
-    foo.put("b", "c");
-    o.put("foo", foo);
-    JSONObject copy = HealthReportUtils.shallowCopyObject(o);
-    assertTrue(copy.has("foo"));
-    JSONObject fooCopy = copy.getJSONObject("foo");
-    assertSame(foo, fooCopy);
-  }
-
   private static final String EXPECTED_MOCK_BASE_HASH = "000nullnullnullnullnullnullnull"
                                                         + "nullnullnullnullnullnull00000";
 

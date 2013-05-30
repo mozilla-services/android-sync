@@ -470,7 +470,7 @@ public class HealthReportGenerator {
     // Just return the current add-on set, with a version annotation.
     // To do so requires copying.
     if (current == null) {
-      JSONObject out = HealthReportUtils.shallowCopyObject(e.addons);
+      JSONObject out = e.getNonIgnoredAddons();
       if (out == null) {
         Logger.warn(LOG_TAG, "No add-ons to return in FHR document.");
         out = new JSONObject();        // So that we always return something.
@@ -480,7 +480,7 @@ public class HealthReportGenerator {
     }
 
     // Otherwise, return the diff.
-    JSONObject diff = diff(current.addons, e.addons, true);
+    JSONObject diff = diff(current.getNonIgnoredAddons(), e.getNonIgnoredAddons(), true);
     if (diff == null) {
       return null;
     }
