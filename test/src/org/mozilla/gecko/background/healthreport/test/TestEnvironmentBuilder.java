@@ -7,6 +7,8 @@ package org.mozilla.gecko.background.healthreport.test;
 import java.io.File;
 import java.io.IOException;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.background.healthreport.Environment;
 import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
@@ -14,6 +16,32 @@ import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
 public class TestEnvironmentBuilder extends FakeProfileTestCase {
+  public static void testIgnoringAddons() throws JSONException {
+    Environment env = new Environment() {
+      @Override
+      public int register() {
+        return 0;
+      }
+    };
+
+    JSONObject addons = new JSONObject();
+    JSONObject foo = new JSONObject();
+    foo.put("a", 1);
+    foo.put("b", "c");
+    addons.put("foo", foo);
+    JSONObject ignore = new JSONObject();
+    ignore.put("ignore", true);
+    addons.put("ig", ignore);
+
+    env.setJSONForAddons(addons);
+
+    JSONObject kept = env.getNonIgnoredAddons();
+    assertTrue(kept.has("foo"));
+    assertFalse(kept.has("ig"));
+    JSONObject fooCopy = kept.getJSONObject("foo");
+    assertSame(foo, fooCopy);
+  }
+
   public void testSanity() throws IOException {
     File subdir = new File(this.fakeProfileDirectory.getAbsolutePath() +
                            File.separator + "testPersisting");
