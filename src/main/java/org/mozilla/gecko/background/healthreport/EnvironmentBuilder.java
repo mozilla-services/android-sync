@@ -89,7 +89,7 @@ public class EnvironmentBuilder {
       try {
         JSONObject addon = addons.getJSONObject(key);
         String type = addon.optString("type");
-        Logger.debug(LOG_TAG, "Add-on " + key + " is a " + type);
+        Logger.pii(LOG_TAG, "Add-on " + key + " is a " + type);
         if ("extension".equals(type)) {
           ++e.extensionCount;
         } else if ("plugin".equals(type)) {

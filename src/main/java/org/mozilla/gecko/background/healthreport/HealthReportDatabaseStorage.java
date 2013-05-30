@@ -500,7 +500,8 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     public int register() {
       final String h = getHash();
       if (storage.envs.containsKey(h)) {
-        return this.id = storage.envs.get(h);
+        this.id = storage.envs.get(h);
+        return this.id;
       }
 
       // Otherwise, add data and hash to the DB.
@@ -563,7 +564,8 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
           if (inserted == -1) {
             throw new SQLException("Insert returned -1!");
           }
-          storage.envs.put(h, this.id = inserted);
+          this.id = inserted;
+          storage.envs.put(h, this.id);
           if (newTransaction) {
             db.setTransactionSuccessful();
           }

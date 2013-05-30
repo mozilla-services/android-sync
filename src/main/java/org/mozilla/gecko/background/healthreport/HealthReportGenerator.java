@@ -103,11 +103,9 @@ public class HealthReportGenerator {
   }
 
   protected JSONObject getDaysJSON(Environment currentEnvironment, SparseArray<Environment> envs, SparseArray<Field> fields, long since) throws JSONException {
-    Logger.debug(LOG_TAG, "Current env: " + currentEnvironment.getHash());
-    Logger.debug(LOG_TAG, "Environments: " + envs.size());
     if (Logger.shouldLogVerbose(LOG_TAG)) {
       for (int i = 0; i < envs.size(); ++i) {
-        Logger.trace(LOG_TAG, "Env " + envs.keyAt(i) + ": " + envs.get(envs.keyAt(i)).getHash());
+        Logger.trace(LOG_TAG, "Days environment " + envs.keyAt(i) + ": " + envs.get(envs.keyAt(i)).getHash());
       }
     }
 
@@ -157,7 +155,7 @@ public class HealthReportGenerator {
 
         if (dateChanged || envChanged) {
           envObject = new JSONObject();
-          // This is safe because of our validity check above.
+          // This is safe because we checked above that cEnv is valid.
           dateObject.put(envs.get(cEnv).getHash(), envObject);
           lastEnv = cEnv;
         }
@@ -472,7 +470,7 @@ public class HealthReportGenerator {
     if (current == null) {
       JSONObject out = e.getNonIgnoredAddons();
       if (out == null) {
-        Logger.warn(LOG_TAG, "No add-ons to return in FHR document.");
+        Logger.warn(LOG_TAG, "Null add-ons to return in FHR document. Returning {}.");
         out = new JSONObject();        // So that we always return something.
       }
       out.put("_v", 1);
