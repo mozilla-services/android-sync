@@ -107,7 +107,7 @@ public class HealthReportUtils {
 
     JSONObject out = new JSONObject();
     @SuppressWarnings("unchecked")
-    Iterator<String> keys = out.keys();
+    Iterator<String> keys = o.keys();
     while (keys.hasNext()) {
       final String key = keys.next();
       out.put(key, o.get(key));

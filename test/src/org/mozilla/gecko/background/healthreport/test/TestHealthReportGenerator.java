@@ -18,7 +18,8 @@ import org.mozilla.gecko.background.healthreport.HealthReportUtils;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
 public class TestHealthReportGenerator extends FakeProfileTestCase {
-  public static void testOptObject() throws JSONException {
+  @SuppressWarnings("static-method")
+  public void testOptObject() throws JSONException {
     JSONObject o = new JSONObject();
     o.put("foo", JSONObject.NULL);
     assertEquals(null, o.optJSONObject("foo"));
@@ -36,6 +37,156 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertNotNull(o.getJSONArray("foo"));
     assertEquals("noo", o.getJSONArray("foo").getString(0));
     assertEquals("bar", o.getJSONArray("foo").getString(1));
+  }
+
+  public static void testCopying() throws JSONException {
+    JSONObject o = new JSONObject();
+    JSONObject foo = new JSONObject();
+    foo.put("a", 1);
+    foo.put("b", "c");
+    o.put("foo", foo);
+    JSONObject copy = HealthReportUtils.shallowCopyObject(o);
+    assertTrue(copy.has("foo"));
+    JSONObject fooCopy = copy.getJSONObject("foo");
+    assertSame(foo, fooCopy);
+  }
+
+  private static final String EXPECTED_MOCK_BASE_HASH = "000nullnullnullnullnullnullnull"
+                                                        + "nullnullnullnullnullnull00000";
+
+  public void testHashing() throws JSONException {
+    MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    MockDatabaseEnvironment env = new MockDatabaseEnvironment(storage, MockDatabaseEnvironment.MockEnvironmentAppender.class);
+    env.addons = new JSONObject();
+
+    String addonAHash = "{addonA}={appDisabled==falseforeignInstall==false"
+        + "hasBinaryComponents==falseinstallDay==15269scope==1"
+        + "type==extensionupdateDay==15602userDisabled==false"
+        + "version==1.10}";
+
+    JSONObject addonA1 = new JSONObject("{" +
+        "\"userDisabled\": false, " +
+        "\"appDisabled\": false, " +
+        "\"version\": \"1.10\", " +
+        "\"type\": \"extension\", " +
+        "\"scope\": 1, " +
+        "\"foreignInstall\": false, " +
+        "\"hasBinaryComponents\": false, " +
+        "\"installDay\": 15269, " +
+        "\"updateDay\": 15602 " +
+    "}");
+
+    // A reordered but otherwise equivalent object.
+    JSONObject addonA1rev = new JSONObject("{" +
+        "\"userDisabled\": false, " +
+        "\"foreignInstall\": false, " +
+        "\"hasBinaryComponents\": false, " +
+        "\"installDay\": 15269, " +
+        "\"type\": \"extension\", " +
+        "\"scope\": 1, " +
+        "\"appDisabled\": false, " +
+        "\"version\": \"1.10\", " +
+        "\"updateDay\": 15602 " +
+    "}");
+    env.addons.put("{addonA}", addonA1);
+
+    assertEquals(EXPECTED_MOCK_BASE_HASH + addonAHash, env.getHash());
+
+    env.addons.put("{addonA}", addonA1rev);
+    assertEquals(EXPECTED_MOCK_BASE_HASH + addonAHash, env.getHash());
+  }
+
+  private void assertJSONDiff(JSONObject jTwo, JSONObject diff) throws JSONException {
+    assertEquals(jTwo.get("a"), diff.get("a"));
+    assertFalse(diff.has("b"));
+    assertEquals(jTwo.get("c"), diff.get("c"));
+    JSONObject diffD = diff.getJSONObject("d");
+    assertFalse(diffD.has("aa"));
+    assertEquals(1, diffD.getJSONArray("bb").getInt(0));
+    JSONObject diffCC = diffD.getJSONObject("cc");
+    assertEquals(1, diffCC.length());
+    assertEquals(1, diffCC.getInt("---"));
+  }
+
+  public void testJSONDiffing() throws JSONException {
+    String one = "{\"a\": 1, \"b\": 2, \"c\": [1, 2, 3], \"d\": {\"aa\": 5, \"bb\": [], \"cc\": {\"aaa\": null}}, \"e\": {}}";
+    String two = "{\"a\": 2, \"b\": 2, \"c\": [1, null, 3], \"d\": {\"aa\": 5, \"bb\": [1], \"cc\": {\"---\": 1, \"aaa\": null}}}";
+    JSONObject jOne = new JSONObject(one);
+    JSONObject jTwo = new JSONObject(two);
+    JSONObject diffNull = HealthReportGenerator.diff(jOne, jTwo, true);
+    JSONObject diffNoNull = HealthReportGenerator.diff(jOne, jTwo, false);
+    assertJSONDiff(jTwo, diffNull);
+    assertJSONDiff(jTwo, diffNoNull);
+    assertTrue(diffNull.isNull("e"));
+    assertFalse(diffNoNull.has("e"));
+  }
+
+  public void testAddonDiffing() throws JSONException {
+    MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(
+                                                                                  context,
+                                                                                  fakeProfileDirectory);
+
+    final MockDatabaseEnvironment env1 = storage.getEnvironment();
+    env1.mockInit("23");
+    final MockDatabaseEnvironment env2 = storage.getEnvironment();
+    env2.mockInit("23");
+
+    env1.addons = new JSONObject();
+    env2.addons = new JSONObject();
+
+    JSONObject addonA1 = new JSONObject("{" + "\"userDisabled\": false, "
+                                        + "\"appDisabled\": false, "
+                                        + "\"version\": \"1.10\", "
+                                        + "\"type\": \"extension\", "
+                                        + "\"scope\": 1, "
+                                        + "\"foreignInstall\": false, "
+                                        + "\"hasBinaryComponents\": false, "
+                                        + "\"installDay\": 15269, "
+                                        + "\"updateDay\": 15602 " + "}");
+    JSONObject addonA2 = new JSONObject("{" + "\"userDisabled\": false, "
+                                        + "\"appDisabled\": false, "
+                                        + "\"version\": \"1.20\", "
+                                        + "\"type\": \"extension\", "
+                                        + "\"scope\": 1, "
+                                        + "\"foreignInstall\": false, "
+                                        + "\"hasBinaryComponents\": false, "
+                                        + "\"installDay\": 15269, "
+                                        + "\"updateDay\": 17602 " + "}");
+    JSONObject addonB1 = new JSONObject("{" + "\"userDisabled\": false, "
+                                        + "\"appDisabled\": false, "
+                                        + "\"version\": \"1.0\", "
+                                        + "\"type\": \"theme\", "
+                                        + "\"scope\": 1, "
+                                        + "\"foreignInstall\": false, "
+                                        + "\"hasBinaryComponents\": false, "
+                                        + "\"installDay\": 10269, "
+                                        + "\"updateDay\": 10002 " + "}");
+    JSONObject addonC1 = new JSONObject("{" + "\"userDisabled\": true, "
+                                        + "\"appDisabled\": false, "
+                                        + "\"version\": \"1.50\", "
+                                        + "\"type\": \"plugin\", "
+                                        + "\"scope\": 1, "
+                                        + "\"foreignInstall\": false, "
+                                        + "\"hasBinaryComponents\": true, "
+                                        + "\"installDay\": 12269, "
+                                        + "\"updateDay\": 12602 " + "}");
+    env1.addons.put("{addonA}", addonA1);
+    env1.addons.put("{addonB}", addonB1);
+    env2.addons.put("{addonA}", addonA2);
+    env2.addons.put("{addonB}", addonB1);
+    env2.addons.put("{addonC}", addonC1);
+
+    JSONObject env2JSON = HealthReportGenerator.jsonify(env2, env1);
+    JSONObject addons = env2JSON.getJSONObject("org.mozilla.addons.active");
+    assertTrue(addons.has("{addonA}"));
+    assertFalse(addons.has("{addonB}")); // Because it's unchanged.
+    assertTrue(addons.has("{addonC}"));
+    JSONObject aJSON = addons.getJSONObject("{addonA}");
+    assertEquals(2, aJSON.length());
+    assertEquals("1.20", aJSON.getString("version"));
+    assertEquals(17602, aJSON.getInt("updateDay"));
+    JSONObject cJSON = addons.getJSONObject("{addonC}");
+    assertEquals(9, cJSON.length());
   }
 
   public void testEnvironments() throws JSONException {
