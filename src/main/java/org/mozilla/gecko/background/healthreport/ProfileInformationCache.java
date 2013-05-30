@@ -40,7 +40,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
 
   public ProfileInformationCache(String profilePath) {
     file = new File(profilePath + File.separator + CACHE_FILE);
-    Logger.info(LOG_TAG, "Using " + file.getAbsolutePath() + " for profile information cache.");
+    Logger.pii(LOG_TAG, "Using " + file.getAbsolutePath() + " for profile information cache.");
   }
 
   public synchronized void beginInitialization() {
@@ -86,7 +86,8 @@ public class ProfileInformationCache implements ProfileInformationProvider {
       throw new IOException("Couldn't serialize JSON.");
     }
 
-    Logger.info(LOG_TAG, "Writing profile information to " + file.getAbsolutePath());
+    Logger.debug(LOG_TAG, "Writing profile information.");
+    Logger.pii(LOG_TAG, "Writing to file: " + file.getAbsolutePath());
     FileOutputStream stream = new FileOutputStream(file);
     OutputStreamWriter writer = new OutputStreamWriter(stream, Charset.forName("UTF-8"));
     try {
@@ -114,7 +115,9 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     }
 
     // One-liner for file reading in Java. So sorry.
-    Logger.info(LOG_TAG, "Restoring ProfileInformationCache from " + file.getAbsolutePath());
+    Logger.info(LOG_TAG, "Restoring ProfileInformationCache from file.");
+    Logger.pii(LOG_TAG, "Restoring from file: " + file.getAbsolutePath());
+
     Scanner scanner = null;
     try {
       scanner = new Scanner(file, "UTF-8");
