@@ -172,13 +172,20 @@ public class HealthReportGenerator {
           envObject.put(field.measurementName, measurement);
         }
         if (field.isDiscreteField()) {
-          if (field.isStringField()) {
-            HealthReportUtils.append(measurement, field.fieldName, cursor.getString(3));
-          } else if (field.isIntegerField()) {
-            HealthReportUtils.append(measurement, field.fieldName, cursor.getLong(3));
+          if (field.isCountedField()) {
+            if (!field.isStringField()) {
+              throw new IllegalStateException("Unable to handle non-string counted types.");
+            }
+            HealthReportUtils.count(measurement, field.fieldName, cursor.getString(3));
           } else {
-            // Uh oh!
-            throw new IllegalStateException("Unknown field type: " + field.flags);
+            if (field.isStringField()) {
+              HealthReportUtils.append(measurement, field.fieldName, cursor.getString(3));
+            } else if (field.isIntegerField()) {
+              HealthReportUtils.append(measurement, field.fieldName, cursor.getLong(3));
+            } else {
+              // Uh oh!
+              throw new IllegalStateException("Unknown field type: " + field.flags);
+            }
           }
         } else {
           if (field.isStringField()) {
