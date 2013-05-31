@@ -110,6 +110,20 @@ public class HealthReportUtils {
     arr.put(dest);
     arr.put(value);
     o.put(key, arr);
-    return;
+  }
+
+  /**
+   * Accrue counts for how often each provided value occurs.
+   */
+  public static void count(JSONObject o, String key,
+                           String value) throws JSONException {
+    if (!o.has(key)) {
+      JSONObject counts = new JSONObject();
+      counts.put(value, 1);
+      o.put(key, counts);
+      return;
+    }
+    JSONObject dest = o.getJSONObject(key);
+    dest.put(value, dest.optInt(value, 0) + 1);
   }
 }
