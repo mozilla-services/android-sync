@@ -6,5 +6,3 @@
 		        android:exported="false"
 		        android:name="org.mozilla.gecko.background.announcements.AnnouncementsBroadcastService" >
         </service>
-
-        <uses-permission android:name="@ANDROID_PACKAGE_NAME@.permission.PER_ANDROID_PACKAGE" />
