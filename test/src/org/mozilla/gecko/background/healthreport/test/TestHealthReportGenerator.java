@@ -39,6 +39,26 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertEquals("bar", o.getJSONArray("foo").getString(1));
   }
 
+  @SuppressWarnings("static-method")
+  public void testCount() throws JSONException {
+    JSONObject o = new JSONObject();
+    HealthReportUtils.count(o, "foo", "a");
+    HealthReportUtils.count(o, "foo", "b");
+    HealthReportUtils.count(o, "foo", "a");
+    HealthReportUtils.count(o, "foo", "c");
+    HealthReportUtils.count(o, "bar", "a");
+    HealthReportUtils.count(o, "bar", "d");
+    JSONObject foo = o.getJSONObject("foo");
+    JSONObject bar = o.getJSONObject("bar");
+    assertEquals(2, foo.getInt("a"));
+    assertEquals(1, foo.getInt("b"));
+    assertEquals(1, foo.getInt("c"));
+    assertFalse(foo.has("d"));
+    assertEquals(1, bar.getInt("a"));
+    assertEquals(1, bar.getInt("d"));
+    assertFalse(bar.has("b"));
+  }
+
   private static final String EXPECTED_MOCK_BASE_HASH = "000nullnullnullnullnullnullnull"
                                                         + "nullnullnullnullnullnull00000";
 
@@ -276,6 +296,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
         out.add(new FieldSpec("discrete_str", Field.TYPE_STRING_DISCRETE));
         out.add(new FieldSpec("last_int", Field.TYPE_INTEGER_LAST));
         out.add(new FieldSpec("last_str", Field.TYPE_STRING_LAST));
+        out.add(new FieldSpec("counted_str", Field.TYPE_COUNTED_STRING_DISCRETE));
         return out;
       }
     });
@@ -291,6 +312,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     int discrete_str = storage.getField("org.mozilla.testm5", 1, "discrete_str").getID();
     int last_int = storage.getField("org.mozilla.testm5", 1, "last_int").getID();
     int last_str = storage.getField("org.mozilla.testm5", 1, "last_str").getID();
+    int counted_str = storage.getField("org.mozilla.testm5", 1, "counted_str").getID();
 
     storage.incrementDailyCount(env, day, counter, 2);
     storage.incrementDailyCount(env, day, counter, 3);
@@ -303,6 +325,10 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     storage.recordDailyDiscrete(env, day, discrete_int, 2);
     storage.recordDailyDiscrete(env, day, discrete_int, 1);
     storage.recordDailyDiscrete(env, day, discrete_int, 3);
+    storage.recordDailyDiscrete(env, day, counted_str, "aaa");
+    storage.recordDailyDiscrete(env, day, counted_str, "ccc");
+    storage.recordDailyDiscrete(env, day, counted_str, "bbb");
+    storage.recordDailyDiscrete(env, day, counted_str, "aaa");
 
     JSONObject document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, environment);
     JSONObject today = document.getJSONObject("data").getJSONObject("days").getJSONObject(todayString);
@@ -321,6 +347,11 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertEquals(Long.valueOf(2), discreteInts.get(0));
     assertEquals(Long.valueOf(1), discreteInts.get(1));
     assertEquals(Long.valueOf(3), discreteInts.get(2));
+    JSONObject counted = measurement.getJSONObject("counted_str");
+    assertEquals(2, counted.getInt("aaa"));
+    assertEquals(1, counted.getInt("bbb"));
+    assertEquals(1, counted.getInt("ccc"));
+    assertFalse(counted.has("ddd"));
   }
 
   @Override
