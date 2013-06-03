@@ -5,7 +5,9 @@
 package org.mozilla.gecko.background.healthreport.test;
 
 import java.io.File;
+import java.io.IOException;
 
+import org.json.JSONObject;
 import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 
 public class MockProfileInformationCache extends ProfileInformationCache {
@@ -21,5 +23,9 @@ public class MockProfileInformationCache extends ProfileInformationCache {
   }
   public File getFile() {
     return this.file;
+  }
+
+  public void writeJSON(JSONObject toWrite) throws IOException {
+    writeToFile(toWrite);
   }
 }
