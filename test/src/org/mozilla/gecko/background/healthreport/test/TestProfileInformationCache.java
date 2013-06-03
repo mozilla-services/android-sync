@@ -95,6 +95,26 @@ public class TestProfileInformationCache extends FakeProfileTestCase {
     assertFalse(cache.restoreUnlessInitialized());
   }
 
+  public final void testImplicitV1() throws JSONException, IOException {
+    MockProfileInformationCache cache = makeCache("testImplicitV1");
+
+    // This is a v1 payload without a version number.
+    final JSONObject json = new JSONObject();
+    json.put("blocklist", true);
+    json.put("telemetry", false);
+    json.put("profileCreated", 1234567L);
+    json.put("addons", new JSONObject());
+
+    cache.writeJSON(json);
+    cache = makeCache("testImplicitV1");
+    assertTrue(cache.restoreUnlessInitialized());
+    cache.beginInitialization();
+    cache.setTelemetryEnabled(true);
+    cache.completeInitialization();
+
+    assertEquals(1, cache.readJSON().getInt("version"));
+  }
+
   @Override
   protected String getCacheSuffix() {
     return System.currentTimeMillis() + Math.random() + ".foo";

@@ -85,6 +85,19 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     }
   }
 
+  protected JSONObject readFromFile() throws FileNotFoundException, JSONException {
+    Scanner scanner = null;
+    try {
+      scanner = new Scanner(file, "UTF-8");
+      final String contents = scanner.useDelimiter("\\A").next();
+      return new JSONObject(contents);
+    } finally {
+      if (scanner != null) {
+        scanner.close();
+      }
+    }
+  }
+
   protected void writeToFile(JSONObject object) throws IOException {
     Logger.debug(LOG_TAG, "Writing profile information.");
     Logger.pii(LOG_TAG, "Writing to file: " + file.getAbsolutePath());
@@ -137,11 +150,8 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     Logger.info(LOG_TAG, "Restoring ProfileInformationCache from file.");
     Logger.pii(LOG_TAG, "Restoring from file: " + file.getAbsolutePath());
 
-    Scanner scanner = null;
     try {
-      scanner = new Scanner(file, "UTF-8");
-      final String contents = scanner.useDelimiter("\\A").next();
-      if (!fromJSON(new JSONObject(contents))) {
+      if (!fromJSON(readFromFile())) {
         // No need to blow away the file; the caller can eventually overwrite it.
         return false;
       }
@@ -152,10 +162,6 @@ public class ProfileInformationCache implements ProfileInformationProvider {
       return false;
     } catch (JSONException e) {
       return false;
-    } finally {
-      if (scanner != null) {
-        scanner.close();
-      }
     }
   }
 
