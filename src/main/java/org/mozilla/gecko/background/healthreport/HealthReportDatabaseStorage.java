@@ -216,7 +216,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
                                                  int mode,
                                                  SQLiteDatabase.CursorFactory factory) {
         final File path = getDatabasePath(name);
-        Logger.info(LOG_TAG, "Opening database through absolute path " + path.getAbsolutePath());
+        Logger.pii(LOG_TAG, "Opening database through absolute path " + path.getAbsolutePath());
         return SQLiteDatabase.openOrCreateDatabase(path, null);
       }
     }
@@ -234,7 +234,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
           CURRENT_VERSION);
 
       if (CAN_USE_ABSOLUTE_DB_PATH) {
-        Logger.info(LOG_TAG, "Opening: " + getAbsolutePath(profileDirectory, name));
+        Logger.pii(LOG_TAG, "Opening: " + getAbsolutePath(profileDirectory, name));
       }
     }
 
