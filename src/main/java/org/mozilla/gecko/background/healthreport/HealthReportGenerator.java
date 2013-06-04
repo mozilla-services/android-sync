@@ -112,7 +112,7 @@ public class HealthReportGenerator {
     JSONObject days = new JSONObject();
     Cursor cursor = storage.getRawEventsSince(since);
     try {
-      if (!cursor.moveToNext()) {
+      if (!cursor.moveToFirst()) {
         return days;
       }
 
