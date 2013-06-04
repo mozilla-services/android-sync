@@ -205,6 +205,10 @@ public class HealthReportGenerator {
         HealthReportUtils.append(measurement, field.fieldName, cursor.getString(3));
         return;
       }
+      if (field.isJSONField()) {
+        HealthReportUtils.append(measurement, field.fieldName, new JSONObject(cursor.getString(3)));
+        return;
+      }
       if (field.isIntegerField()) {
         HealthReportUtils.append(measurement, field.fieldName, cursor.getLong(3));
         return;
@@ -215,6 +219,10 @@ public class HealthReportGenerator {
     // Non-discrete -- must be LAST or COUNTER, so just accumulate the value.
     if (field.isStringField()) {
       measurement.put(field.fieldName, cursor.getString(3));
+      return;
+    }
+    if (field.isJSONField()) {
+      measurement.put(field.fieldName, new JSONObject(cursor.getString(3)));
       return;
     }
     measurement.put(field.fieldName, cursor.getLong(3));
