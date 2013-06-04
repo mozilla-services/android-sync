@@ -186,6 +186,22 @@ public class HealthReportGenerator {
     return days;
   }
 
+  /**
+   * Return the {@link JSONObject} parsed from the provided index of the given
+   * cursor, or {@link JSONObject#NULL} if either SQL <code>NULL</code> or
+   * string <code>"null"</code> is present at that index.
+   */
+  private static Object getJSONAtIndex(Cursor cursor, int index) throws JSONException {
+    if (cursor.isNull(index)) {
+      return JSONObject.NULL;
+    }
+    final String value = cursor.getString(index);
+    if ("null".equals(value)) {
+      return JSONObject.NULL;
+    }
+    return new JSONObject(value);
+  }
+
   protected static void recordMeasurementFromCursor(final Field field,
                                              JSONObject measurement,
                                              Cursor cursor)
@@ -206,7 +222,7 @@ public class HealthReportGenerator {
         return;
       }
       if (field.isJSONField()) {
-        HealthReportUtils.append(measurement, field.fieldName, new JSONObject(cursor.getString(3)));
+        HealthReportUtils.append(measurement, field.fieldName, getJSONAtIndex(cursor, 3));
         return;
       }
       if (field.isIntegerField()) {
@@ -222,7 +238,7 @@ public class HealthReportGenerator {
       return;
     }
     if (field.isJSONField()) {
-      measurement.put(field.fieldName, new JSONObject(cursor.getString(3)));
+      measurement.put(field.fieldName, getJSONAtIndex(cursor, 3));
       return;
     }
     measurement.put(field.fieldName, cursor.getLong(3));
