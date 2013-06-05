@@ -15,4 +15,6 @@ public class HealthReportConstants {
    * Used for sanity checks.
    */
   public static final long EARLIEST_LAST_PING = 1367500000000L;
+
+  public static final String ACTION_HEALTHREPORT_UPLOAD_PREF = "@ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF";
 }

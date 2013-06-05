@@ -1,0 +1,4 @@
+        <!-- We have two services.  BroadcastService responds to
+             external events and starts the regular Service, which
+             does the actual background work, in a uniform manner.
+          -->
