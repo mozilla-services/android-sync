@@ -297,6 +297,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
         out.add(new FieldSpec("last_int", Field.TYPE_INTEGER_LAST));
         out.add(new FieldSpec("last_str", Field.TYPE_STRING_LAST));
         out.add(new FieldSpec("counted_str", Field.TYPE_COUNTED_STRING_DISCRETE));
+        out.add(new FieldSpec("discrete_json", Field.TYPE_JSON_DISCRETE));
         return out;
       }
     });
@@ -313,6 +314,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     int last_int = storage.getField("org.mozilla.testm5", 1, "last_int").getID();
     int last_str = storage.getField("org.mozilla.testm5", 1, "last_str").getID();
     int counted_str = storage.getField("org.mozilla.testm5", 1, "counted_str").getID();
+    int discrete_json = storage.getField("org.mozilla.testm5", 1, "discrete_json").getID();
 
     storage.incrementDailyCount(env, day, counter, 2);
     storage.incrementDailyCount(env, day, counter, 3);
@@ -329,6 +331,12 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     storage.recordDailyDiscrete(env, day, counted_str, "ccc");
     storage.recordDailyDiscrete(env, day, counted_str, "bbb");
     storage.recordDailyDiscrete(env, day, counted_str, "aaa");
+
+    JSONObject objA = new JSONObject();
+    objA.put("foo", "bar");
+    storage.recordDailyDiscrete(env, day, discrete_json, (JSONObject) null);
+    storage.recordDailyDiscrete(env, day, discrete_json, "null");              // Still works because JSON is a string internally.
+    storage.recordDailyDiscrete(env, day, discrete_json, objA);
 
     JSONObject document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, environment);
     JSONObject today = document.getJSONObject("data").getJSONObject("days").getJSONObject(todayString);
@@ -352,6 +360,11 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertEquals(1, counted.getInt("bbb"));
     assertEquals(1, counted.getInt("ccc"));
     assertFalse(counted.has("ddd"));
+    JSONArray discreteJSON = measurement.getJSONArray("discrete_json");
+    assertEquals(3, discreteJSON.length());
+    assertEquals(JSONObject.NULL, discreteJSON.get(0));
+    assertEquals(JSONObject.NULL, discreteJSON.get(1));
+    assertEquals("bar", discreteJSON.getJSONObject(2).getString("foo"));
   }
 
   @Override
