@@ -57,4 +57,10 @@ public class TestUtils extends Utils {
     assertEquals("sync.prefs.org!mozilla!firefox_beta.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.default.2", Utils.getPrefsPath("org.mozilla.firefox_beta", "FooBar@Baz.com", "test.url.com", "default", 2));
     assertEquals("sync.prefs.org!mozilla!firefox.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.profile.3", Utils.getPrefsPath("org.mozilla.firefox", "xee7ffonluzpdp66l6xgpyh2v2w6ojkc", "test.url.com", "profile", 3));
   }
+
+  @Test
+  public void testObfuscateEmail() {
+    assertEquals("XXX@XXX.XXX", Utils.obfuscateEmail("foo@bar.com"));
+    assertEquals("XXXX@XXX.XXXX.XX", Utils.obfuscateEmail("foot@bar.test.ca"));
+  }
 }
