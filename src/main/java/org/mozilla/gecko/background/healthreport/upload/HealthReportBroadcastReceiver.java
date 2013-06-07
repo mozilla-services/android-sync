@@ -16,9 +16,14 @@ import android.content.Intent;
  *
  * Some observations:
  *
- * "Also note that as of Android 3.0 the user needs to have started the
- * application at least once before your application can receive
- * android.intent.action.BOOT_COMPLETED events."
+ * From the Android documentation: "Also note that as of Android 3.0 the user
+ * needs to have started the application at least once before your application
+ * can receive android.intent.action.BOOT_COMPLETED events."
+ *
+ * We really do want to launch on BOOT_COMPLETED, since it's possible for a user
+ * to run Firefox, shut down the phone, then power it on again on the same day.
+ * We want to submit a health report in this case, even though they haven't
+ * launched Firefox since boot.
  */
 public class HealthReportBroadcastReceiver extends BroadcastReceiver {
   public static final String LOG_TAG = HealthReportBroadcastReceiver.class.getSimpleName();

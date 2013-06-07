@@ -58,6 +58,25 @@ public class HealthReportUploadService extends BackgroundService {
       return;
     }
 
-    Logger.pii(LOG_TAG, "Generating and uploading for profile " + profileName + " at " + profilePath + ".");
+    if (!intent.hasExtra("uploadEnabled")) {
+      Logger.warn(LOG_TAG, "Got intent without uploadEnabled. Ignoring.");
+      return;
+    }
+    boolean uploadEnabled = intent.getBooleanExtra("uploadEnabled", false);
+
+    // Don't do anything if the device can't talk to the server.
+    if (!backgroundDataIsEnabled()) {
+      Logger.debug(LOG_TAG, "Background data is not enabled; skipping.");
+      return;
+    }
+
+    Logger.pii(LOG_TAG, "Ticking policy for profile " + profileName + " at " + profilePath + ".");
+
+    final SharedPreferences sharedPrefs = getSharedPreferences();
+    SubmissionClient client = new AndroidSubmissionClient(this, sharedPrefs, profilePath);
+    SubmissionPolicy policy = new SubmissionPolicy(sharedPrefs, client, uploadEnabled);
+
+    final long now = System.currentTimeMillis();
+    policy.tick(now);
   }
 }

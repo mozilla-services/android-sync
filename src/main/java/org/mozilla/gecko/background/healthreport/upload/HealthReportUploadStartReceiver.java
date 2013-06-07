@@ -28,7 +28,7 @@ public class HealthReportUploadStartReceiver extends BroadcastReceiver {
     Logger.debug(LOG_TAG, "Health report upload feature is compile-time enabled; starting background upload service.");
     Intent service = new Intent(context, HealthReportUploadService.class);
     service.setAction(intent.getAction());
-    service.putExtras(intent); // profileName and profilePath are in the extras.
+    service.putExtras(intent); // profileName, profilePath, uploadEnabled are in the extras.
     context.startService(service);
   }
 }

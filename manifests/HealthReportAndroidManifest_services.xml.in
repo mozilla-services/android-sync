@@ -5,10 +5,10 @@
              only started by receivers internal to the Fennec package.
           -->
         <service
-		        android:exported="false"
-		        android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportBroadcastService" >
+            android:exported="false"
+            android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportBroadcastService" >
         </service>
         <service
-		        android:exported="false"
-		        android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportUploadService" >
+            android:exported="false"
+            android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportUploadService" >
         </service>

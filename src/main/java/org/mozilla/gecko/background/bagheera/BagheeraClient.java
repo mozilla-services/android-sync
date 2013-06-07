@@ -233,8 +233,8 @@ public class BagheeraClient {
     public BagheeraUploadResourceDelegate(Resource resource,
         String namespace,
         String id,
-                                          String obsoleteDocumentID,
-                                          BagheeraRequestDelegate delegate) {
+        String obsoleteDocumentID,
+        BagheeraRequestDelegate delegate) {
       super(resource, namespace, id, delegate);
       this.obsoleteDocumentID = obsoleteDocumentID;
     }

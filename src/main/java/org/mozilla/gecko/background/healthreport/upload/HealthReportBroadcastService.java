@@ -8,6 +8,8 @@ import org.mozilla.gecko.background.BackgroundService;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
+import org.mozilla.gecko.background.healthreport.HealthReportUtils;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -34,27 +36,49 @@ public class HealthReportBroadcastService extends BackgroundService {
   }
 
   public long getPollInterval() {
-    return getSharedPreferences().getLong(HealthReportConstants.PREF_UPLOAD_INTERVAL_MSEC, HealthReportConstants.DEFAULT_UPLOAD_INTERVAL_MSEC);
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_SUBMISSION_INTENT_INTERVAL_MSEC, HealthReportConstants.DEFAULT_SUBMISSION_INTENT_INTERVAL_MSEC);
   }
 
   public void setPollInterval(long interval) {
-    getSharedPreferences().edit().putLong(HealthReportConstants.PREF_UPLOAD_INTERVAL_MSEC, interval).commit();
+    getSharedPreferences().edit().putLong(HealthReportConstants.PREF_SUBMISSION_INTENT_INTERVAL_MSEC, interval).commit();
   }
 
-  protected void toggleAlarm(final Context context, String profileName, String profilePath, boolean enabled) {
-    Logger.info(LOG_TAG, (enabled ? "R" : "Unr") + "egistering health report start broadcast receiver...");
+  public long getDeletionAttemptsPerObsoleteDocumentId() {
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID, HealthReportConstants.DEFAULT_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+  }
+
+  /**
+   * Set or cancel an alarm to submit data for a profile.
+   *
+   * @param context
+   *          Android context.
+   * @param profileName
+   *          to submit data for.
+   * @param profilePath
+   *          to submit data for.
+   * @param enabled
+   *          whether the user has enabled submitting health report data for
+   *          this profile.
+   * @param serviceEnabled
+   *          whether submitting should be scheduled. If the user turns off
+   *          submitting, <code>enabled</code> could be false but we could need
+   *          to delete so <code>serviceEnabled</code> could be true.
+   */
+  protected void toggleAlarm(final Context context, String profileName, String profilePath, boolean enabled, boolean serviceEnabled) {
+    Logger.info(LOG_TAG, (serviceEnabled ? "R" : "Unr") + "egistering health report start broadcast receiver.");
 
     // PendingIntents are compared without reference to their extras. Therefore
-    // even though we pass the profile details to in the action, different
+    // even though we pass the profile details to the action, different
     // profiles will share the *same* pending intent. In a multi-profile future,
-    // this will need to be addressed.
+    // this will need to be addressed.  See Bug 882182.
     final Intent service = new Intent(context, HealthReportUploadStartReceiver.class);
     service.setAction("upload"); // PendingIntents "lose" their extras if no action is set.
+    service.putExtra("uploadEnabled", enabled);
     service.putExtra("profileName", profileName);
     service.putExtra("profilePath", profilePath);
     final PendingIntent pending = PendingIntent.getBroadcast(context, 0, service, PendingIntent.FLAG_CANCEL_CURRENT);
 
-    if (!enabled) {
+    if (!serviceEnabled) {
       cancelAlarm(pending);
       return;
     }
@@ -116,17 +140,38 @@ public class HealthReportBroadcastService extends BackgroundService {
       return;
     }
 
-    Logger.pii(LOG_TAG, "Toggling alarm for profile " + profileName + " at " + profilePath + ".");
+    Logger.pii(LOG_TAG, "Updating health report alarm for profile " + profileName + " at " + profilePath + ".");
 
-    toggleAlarm(this, profileName, profilePath, enabled);
+    final SharedPreferences sharedPrefs = getSharedPreferences();
 
-    // Primarily intended for debugging and testing.
+    ExtendedJSONObject obsoleteIds = HealthReportUtils.getObsoleteIds(getSharedPreferences());
+
     if (!enabled) {
-      Logger.debug(LOG_TAG, "Health report uploading disabled: clearing prefs.");
+      String lastId = sharedPrefs.getString(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID, null);
+      final Editor editor = sharedPrefs.edit();
+      editor.remove(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID);
 
-      final Editor editor = getSharedPreferences().edit();
-      editor.remove(HealthReportConstants.PREF_UPLOAD_INTERVAL_MSEC);
+      if (lastId != null) {
+        try {
+          obsoleteIds.put(lastId, getDeletionAttemptsPerObsoleteDocumentId());
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Got exception updating obsolete ids JSON.", e);
+        }
+        HealthReportUtils.setObsoleteIds(getSharedPreferences(), obsoleteIds);
+        Logger.debug(LOG_TAG, "New health report to obsolete; scheduling deletion of " + obsoleteIds.size() + " documents.");
+      } else {
+        // Primarily intended for debugging and testing.
+        Logger.debug(LOG_TAG, "Health report upload disabled and no deletes to schedule: clearing prefs.");
+        editor.remove(HealthReportConstants.PREF_FIRST_RUN);
+        editor.remove(HealthReportConstants.PREF_NEXT_SUBMISSION);
+      }
+
       editor.commit();
     }
+
+    // The user can toggle us off or on, or we can have obsolete documents to
+    // remove.
+    final boolean serviceEnabled = (obsoleteIds.size() > 0) || enabled;
+    toggleAlarm(this, profileName, profilePath, enabled, serviceEnabled);
   }
 }
