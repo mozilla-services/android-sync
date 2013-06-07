@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.test.helpers.DBHelpers;
@@ -124,10 +125,20 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(field.getID(), field.getID());
     int fieldID = field.getID();
 
+    // Before inserting, no events.
+    assertFalse(storage.hasEventSince(0));
+    assertFalse(storage.hasEventSince(storage.now));
+
     // Store some data for two environments across two days.
     storage.incrementDailyCount(envA, storage.getYesterday(), fieldID, 4);
     storage.incrementDailyCount(envA, storage.getYesterday(), fieldID, 1);
     storage.incrementDailyCount(envA, storage.getToday(), fieldID, 2);
+
+    // After inserting, we have events.
+    assertTrue(storage.hasEventSince(storage.now - HealthReportConstants.MILLISECONDS_PER_DAY));
+    assertTrue(storage.hasEventSince(storage.now));
+    // But not in the future.
+    assertFalse(storage.hasEventSince(storage.now + HealthReportConstants.MILLISECONDS_PER_DAY));
 
     MockDatabaseEnvironment environmentB = storage.getEnvironment();
     environmentB.mockInit("v234");
