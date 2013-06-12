@@ -8,6 +8,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -118,5 +119,30 @@ public class TestExtendedJSONObject {
     } catch (ParseException e) {
       // Do nothing.
     }
+  }
+
+  @Test
+  public void testHashCode() throws Exception {
+    ExtendedJSONObject o = new ExtendedJSONObject(exampleJSON);
+    assertEquals(o.hashCode(), o.hashCode());
+    ExtendedJSONObject p = new ExtendedJSONObject(exampleJSON);
+    assertEquals(o.hashCode(), p.hashCode());
+
+    ExtendedJSONObject q = new ExtendedJSONObject(exampleJSON);
+    q.put("modified", 0);
+    assertNotSame(o.hashCode(), q.hashCode());
+  }
+
+  @Test
+  public void testEquals() throws Exception {
+    ExtendedJSONObject o = new ExtendedJSONObject(exampleJSON);
+    ExtendedJSONObject p = new ExtendedJSONObject(exampleJSON);
+    assertEquals(o, p);
+
+    ExtendedJSONObject q = new ExtendedJSONObject(exampleJSON);
+    q.put("modified", 0);
+    assertNotSame(o, q);
+    q.put("modified", o.get("modified"));
+    assertEquals(o, q);
   }
 }
