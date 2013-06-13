@@ -148,15 +148,29 @@ public class CryptoRecord extends Record {
     record.guid         = id;
     record.collection   = collection;
     if (jsonRecord.containsKey(KEY_MODIFIED)) {
-      record.lastModified = jsonRecord.getTimestamp(KEY_MODIFIED);
+      Long timestamp = jsonRecord.getTimestamp(KEY_MODIFIED);
+      if (timestamp == null) {
+        throw new IOException("timestamp could not be parsed");
+      }
+      record.lastModified = timestamp.longValue();
     }
     if (jsonRecord.containsKey(KEY_SORTINDEX)) {
-      record.sortIndex = jsonRecord.getLong(KEY_SORTINDEX);
+      // getLong tries to cast to Long, and might return null. We catch all
+      // exceptions, just to be safe.
+      try {
+        record.sortIndex = jsonRecord.getLong(KEY_SORTINDEX);
+      } catch (Exception e) {
+        throw new IOException("timestamp could not be parsed");
+      }
     }
     if (jsonRecord.containsKey(KEY_TTL)) {
       // TTLs are never returned by the sync server, so should never be true if
       // the record was fetched.
-      record.ttl = jsonRecord.getLong(KEY_TTL);
+      try {
+        record.ttl = jsonRecord.getLong(KEY_TTL);
+      } catch (Exception e) {
+        throw new IOException("TTL could not be parsed");
+      }
     }
     // TODO: deleted?
     return record;
