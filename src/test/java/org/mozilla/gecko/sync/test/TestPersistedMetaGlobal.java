@@ -8,9 +8,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
@@ -18,7 +15,6 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
-import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.PersistedMetaGlobal;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 
@@ -50,7 +46,7 @@ public class TestPersistedMetaGlobal {
   }
 
   @Test
-  public void testPersistMetaGlobal() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testPersistMetaGlobal() throws Exception {
     PersistedMetaGlobal persisted = new PersistedMetaGlobal(prefs);
 
     // Test fresh start.

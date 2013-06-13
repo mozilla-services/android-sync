@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -51,7 +50,7 @@ public class TestCryptoRecord {
   }
 
   @Test
-  public void testEntireRecord() throws NonObjectJSONException, ParseException, IOException, CryptoException {
+  public void testEntireRecord() throws Exception {
     // Check a raw JSON blob from a real Sync account.
     String inputString = "{\"sortindex\": 131, \"payload\": \"{\\\"ciphertext\\\":\\\"YJB4dr0vZEIWPirfU2FCJvfzeSLiOP5QWasol2R6ILUxdHsJWuUuvTZVhxYQfTVNou6hVV67jfAvi5Cs+bqhhQsv7icZTiZhPTiTdVGt+uuMotxauVA5OryNGVEZgCCTvT3upzhDFdDbJzVd9O3/gU/b7r/CmAHykX8bTlthlbWeZ8oz6gwHJB5tPRU15nM/m/qW1vyKIw5pw/ZwtAy630AieRehGIGDk+33PWqsfyuT4EUFY9/Ly+8JlnqzxfiBCunIfuXGdLuqTjJOxgrK8mI4wccRFEdFEnmHvh5x7fjl1ID52qumFNQl8zkB75C8XK25alXqwvRR6/AQSP+BgQ==\\\",\\\"IV\\\":\\\"v/0BFgicqYQsd70T39rraA==\\\",\\\"hmac\\\":\\\"59605ed696f6e0e6e062a03510cff742bf6b50d695c042e8372a93f4c2d37dac\\\"}\", \"id\": \"0-P9fabp9vJD\", \"modified\": 1326254123.65}";
     CryptoRecord record = CryptoRecord.fromJSONRecord(inputString);
@@ -74,9 +73,7 @@ public class TestCryptoRecord {
   }
 
   @Test
-  public void testBaseCryptoRecordDecrypt() throws CryptoException,
-                                           IOException, ParseException,
-                                           NonObjectJSONException {
+  public void testBaseCryptoRecordDecrypt() throws Exception {
     String base64CipherText =
           "NMsdnRulLwQsVcwxKW9XwaUe7ouJk5Wn"
         + "80QhbD80l0HEcZGCynh45qIbeYBik0lg"
@@ -131,7 +128,7 @@ public class TestCryptoRecord {
   }
 
   @Test
-  public void testDecrypt() throws CryptoException, NonObjectJSONException, IOException, ParseException {
+  public void testDecrypt() throws Exception {
     String jsonInput =              "{\"sortindex\": 90, \"payload\":" +
                                     "\"{\\\"ciphertext\\\":\\\"F4ukf0" +
                                     "LM+vhffiKyjaANXeUhfmOPPmQYX1XBoG" +
@@ -177,7 +174,7 @@ public class TestCryptoRecord {
   }
 
   @Test
-  public void testEncryptDecrypt() throws CryptoException, NonObjectJSONException, IOException, ParseException {
+  public void testEncryptDecrypt() throws Exception {
       String originalText =           "{\"id\":\"hkZYpC-BH4Xi\",\"histU" +
                                       "ri\":\"http://hathology.com/2008" +
                                       "/06/how-to-edit-your-path-enviro" +
@@ -211,7 +208,7 @@ public class TestCryptoRecord {
   }
 
   @Test
-  public void testDecryptKeysBundle() throws CryptoException, NonObjectJSONException, ParseException, IOException, NonArrayJSONException {
+  public void testDecryptKeysBundle() throws Exception {
     String jsonInput =                      "{\"payload\": \"{\\\"ciphertext\\" +
                                             "\":\\\"L1yRyZBkVYKXC1cTpeUqqfmKg" +
                                             "CinYV9YntGiG0PfYZSTLQ2s86WPI0VBb" +

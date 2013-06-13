@@ -9,7 +9,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +22,6 @@ import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.MetaGlobal;
-import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -198,7 +196,7 @@ public class TestMetaGlobal {
 
   @SuppressWarnings("static-method")
   @Test
-  public void testSetFromRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testSetFromRecord() throws Exception {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
@@ -208,7 +206,7 @@ public class TestMetaGlobal {
 
   @SuppressWarnings("static-method")
   @Test
-  public void testAsCryptoRecord() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testAsCryptoRecord() throws Exception {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     CryptoRecord rec = mg.asCryptoRecord();
@@ -221,7 +219,7 @@ public class TestMetaGlobal {
 
   @SuppressWarnings("static-method")
   @Test
-  public void testGetEnabledEngineNames() throws IllegalStateException, NonObjectJSONException, IOException, ParseException {
+  public void testGetEnabledEngineNames() throws Exception {
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
     assertEquals("zPSQTm7WBVWB", mg.getSyncID());
