@@ -189,14 +189,14 @@ public class TestBagheeraClient {
     }
 
     @Override
-    public void handleSuccess(int status, HttpResponse response) {
-      Logger.info(LOG_TAG, "Got success: " + status);
+    public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
+      Logger.info(LOG_TAG, "Got success: " + status + " for id: " + id);
       statuses.add(status);
       WaitHelper.getTestWaiter().performNotify();
     }
 
     @Override
-    public void handleFailure(int status, HttpResponse response) {
+    public void handleFailure(int status, String namespace, HttpResponse response) {
       Logger.info(LOG_TAG, "Got failure: " + status);
       statuses.add(status);
       WaitHelper.getTestWaiter().performNotify();
