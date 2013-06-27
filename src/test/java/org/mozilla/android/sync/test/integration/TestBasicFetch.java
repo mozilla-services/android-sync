@@ -17,7 +17,6 @@ import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
@@ -84,7 +83,7 @@ public class TestBasicFetch {
       return ExtendedJSONObject.parseJSONObject(body);
     }
 
-    public ExtendedJSONObject decrypt(String syncKey) throws NonObjectJSONException, ParseException, IOException, CryptoException {
+    public ExtendedJSONObject decrypt(String syncKey) throws Exception {
       CryptoRecord rec;
       rec = CryptoRecord.fromJSONRecord(body);
       rec.keyBundle = new KeyBundle(username, syncKey);
