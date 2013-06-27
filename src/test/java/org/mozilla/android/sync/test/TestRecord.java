@@ -6,6 +6,7 @@ package org.mozilla.android.sync.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -309,5 +310,18 @@ public class TestRecord {
 
     CryptoRecord cryptoRecord = record.getEnvelope();
     assertEquals(record.ttl, cryptoRecord.ttl);
+  }
+
+  @Test
+  public void testStringModified() throws Exception {
+    // modified member is a string, expected a floating point number with 2
+    // decimal digits.
+    String badJson = "{\"sortindex\":\"0\",\"payload\":\"{\\\"syncID\\\":\\\"ZJOqMBjhBthH\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"4oTBXG20rJH5\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"JiMJXy8xI3fr\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"J17vSloroXBU\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"y1HgpbSc3LJT\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"v3y-RidcCuT5\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"LvfqmT7cUUm4\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"MKMRlBah2d9D\\\"},\\\"addons\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"Ih2hhRrcGjh4\\\"}}}\",\"id\":\"global\",\"modified\":\"1370689360.28\"}";
+    try {
+      CryptoRecord.fromJSONRecord(badJson);
+      fail("Expected exception.");
+    } catch (Exception e) {
+      assertTrue(e instanceof IOException);
+    }
   }
 }
