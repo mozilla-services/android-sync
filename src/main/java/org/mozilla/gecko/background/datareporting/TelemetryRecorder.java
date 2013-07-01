@@ -6,7 +6,6 @@ package org.mozilla.gecko.background.datareporting;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,14 +14,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.json.JSONObject;
+import org.mozilla.gecko.background.common.log.Logger;
 
 import android.util.Base64;
-import android.util.Log;
 
 /**
  * Writes telemetry ping to file.
  *
- * Also creates and updates a checksum for the payload to include in the ping
+ * Also creates and updates a SHA-256 checksum for the payload to include in the ping
  * file.
  *
  * A saved telemetry ping file consists of JSON in the following format,
@@ -32,75 +31,119 @@ import android.util.Log;
  *     "checksum": "<base64-sha-256-string>"
  *   }
  *
+ * This class writes first to a temporary file and then, after finishing the contents of the ping,
+ * copies that to the file specified by the caller. This is to avoid uploads of partially written
+ * ping files.
+ *
  * The API provided by this class:
- * startPingFile() - opens stream to the File and writes the (filename) slug
- * appendPayload(String payloadContent) - append to the payload of the telemetry ping
- *                                        and update the checksum
- * finishPingFile() - writes the checksum and closes the stream
+ * startPingFile() - opens stream to a tmp File and writes the slug
+ * appendPayload(String payloadContent) - appends to the payload of the ping and updates the
+ *                                        checksum
+ * finishPingFile() - writes the checksum to the tmp file and copies it to the File specified by the caller.
+ *
+ * In the case of errors, we try to close the stream and File.
  */
 public class TelemetryRecorder {
-  protected String      LOGTAG;
+  private final String      LOG_TAG = "TelemetryRecorder";
 
-  protected File        destFile;
+  private final File parentDir;
+  private final String filename;
+
+  private File tmpFile;
+  private File destFile;
 
   private OutputStream  outputStream;
   private MessageDigest checksum;
   private String        base64Checksum;
 
-  // charset to use for writing pings; default is us-ascii.
+  /**
+   * Charset to use for writing pings; default is us-ascii.
+   *
+   * When telemetry calculates the checksum for the ping file, it lossily
+   * converts utf-16 to ascii. Therefore we have to treat characters in the
+   * traces as ascii rather than say utf-8. Otherwise we will get a "wrong"
+   * checksum.
+   */
   private String charset = "us-ascii";
+
+  /**
+   * Override blockSize in constructor if desired.
+   * Default block size is that of BufferedOutputStream.
+   */
   private int blockSize = 0;
 
   /**
-   * Constructs a TelemetryRecorder for writing a ping file and opens the file
-   * for writing.
+   * Constructs a TelemetryRecorder for writing a ping file. A temporary file will be written first,
+   * and then copied to the destination file location specified by the caller.
    *
-   * @param File
-   *        destination file for writing telemetry ping
+   * If the destination file already exists, it will be overwritten.
+   *
+   * Default charset: "us-ascii"
+   * Default block size: uses constructor default of 8192 bytes (see javadocs for
+   *                     <code>BufferedOutputStream</code>
+   * @param parentPath
+   *        path of parent of ping file to be written
+   * @param filename
+   *        name of ping file to be written
    */
-  public TelemetryRecorder(File destFile) {
-    this.destFile = destFile;
+  public TelemetryRecorder(File parentDir, String filename) {
+    if (!parentDir.isDirectory()) {
+      throw new IllegalArgumentException("Expecting directory, got non-directory File instead.");
+    }
+    this.parentDir = parentDir;
+    this.filename = filename;
   }
 
-  public TelemetryRecorder(File destFile, String charset) {
-    this(destFile);
+  public TelemetryRecorder(File parentDir, String filename, String charset) {
+    this(parentDir, filename);
     this.charset = charset;
   }
 
-  public TelemetryRecorder(File destFile, String charset, int blockSize) {
-    this(destFile, charset);
+  public TelemetryRecorder(File parentDir, String filename, String charset, int blockSize) {
+    this(parentDir, filename, charset);
     this.blockSize = blockSize;
   }
 
   /**
-   * Start the ping file and write the "slug" header and payload key, of the
-   * format: { "slug": "<uuid-string>", "payload":
+   * Start the temporary ping file and write the "slug" header and payload key, of the
+   * format:
+   *
+   *     { "slug": "< filename >", "payload":
    *
    * @throws Exception
-   *           rethrown exception to caller
+   *           Checked exceptions <code>NoSuchAlgorithmException</code>,
+   *           <code>UnsupportedEncodingException</code>, or
+   *           <code>IOException</code> and unchecked exception that
+   *           are rethrown to caller
    */
   public void startPingFile() throws Exception {
 
-    // Open stream for writing.
+    // Open stream to temporary file for writing.
+    String tmpFilename = filename + ".tmp";
+    tmpFile = new File(parentDir, tmpFilename);
+    if (tmpFile.exists()) {
+        tmpFile.delete();
+    }
     try {
-      if (blockSize > 0) {
-        outputStream = new BufferedOutputStream(new FileOutputStream(destFile),
-            blockSize);
-      } else {
-        outputStream = new BufferedOutputStream(new FileOutputStream(destFile));
-      }
-    } catch (FileNotFoundException e) {
-      Log.e(LOGTAG, "File could not be found.", e);
+      tmpFile.createNewFile();
+    } catch (IOException e) {
+      cleanUpAndRethrow("Error creating tmp file.", e);
     }
 
     try {
+      if (blockSize > 0) {
+        outputStream = new BufferedOutputStream(new FileOutputStream(tmpFile), blockSize);
+      } else {
+        outputStream = new BufferedOutputStream(new FileOutputStream(tmpFile));
+      }
+
       // Create checksum for ping.
       checksum = MessageDigest.getInstance("SHA-256");
 
       // Write ping header.
-      byte[] header = makePingHeader(destFile.getName());
+      byte[] header = makePingHeader(filename);
       outputStream.write(header);
-      Log.d(LOGTAG, "Wrote " + header.length + " header bytes.");
+      Logger.debug(LOG_TAG, "Wrote " + header.length + " header bytes.");
 
     } catch (NoSuchAlgorithmException e) {
       cleanUpAndRethrow("Error creating checksum digest", e);
@@ -124,19 +167,27 @@ public class TelemetryRecorder {
    *          String content to be written
    * @return number of bytes written, or -1 if writing failed
    * @throws Exception
-   *           rethrown Exception to caller
+   *           Checked exceptions <code>UnsupportedEncodingException</code> or
+   *           <code>IOException</code> and unchecked exception that
+   *           are rethrown to caller
    */
   public int appendPayload(String payloadContent) throws Exception {
+    if (payloadContent == null) {
+      cleanUpAndRethrow("Payload is null", new Exception());
+      return -1;
+    }
+
     try {
       byte[] payloadBytes = payloadContent.getBytes(charset);
+      // If we run into an error, we'll throw and abort, so checksum won't be stale.
       checksum.update(payloadBytes);
 
       byte[] quotedPayloadBytes = JSONObject.quote(payloadContent).getBytes(charset);
+
       // First and last bytes are quotes inserted by JSONObject.quote; discard
       // them.
       int numBytes = quotedPayloadBytes.length - 2;
       outputStream.write(quotedPayloadBytes, 1, numBytes);
-
       return numBytes;
 
     } catch (UnsupportedEncodingException e) {
@@ -149,49 +200,43 @@ public class TelemetryRecorder {
   }
 
   /**
-   * Log message and error and clean up, then rethrow exception to caller.
-   *
-   * @param message
-   *          Error message
-   * @param e
-   *          Exception
-   *
-   * @throws Exception
-   *           rethrown exception to caller
-   */
-  private void cleanUpAndRethrow(String message, Exception e) throws Exception {
-    Log.e(LOGTAG, message, e);
-    if (destFile.exists()) {
-      destFile.delete();
-    }
-    if (outputStream != null) {
-      try {
-        outputStream.close();
-      } catch (IOException exception) {
-        // Failed to close stream; nothing we can do.
-      }
-    }
-    // Rethrow the exception.
-    throw e;
-  }
-
-  /**
    * Add the checksum of the payload to the ping file and close the stream.
    *
    * @throws Exception
-   *           rethrown exception to caller
+   *          Checked exceptions <code>UnsupportedEncodingException</code> or
+   *          <code>IOException</code> and unchecked exception that
+   *          are rethrown to caller
    */
   public void finishPingFile() throws Exception {
     try {
       byte[] footer = makePingFooter(checksum);
       outputStream.write(footer);
-      Log.d(LOGTAG, "Wrote " + footer.length + " footer bytes.");
-      outputStream.close();
+      // We're done writing, so force the stream to flush the buffer.
+      outputStream.flush();
+      Logger.debug(LOG_TAG, "Wrote " + footer.length + " footer bytes.");
     } catch (UnsupportedEncodingException e) {
       cleanUpAndRethrow("Checksum encoding exception", e);
     } catch (IOException e) {
       cleanUpAndRethrow("Error writing footer to stream", e);
+    } finally {
+      try {
+        outputStream.close();
+      } catch (IOException e) {
+        // Failed to close, nothing we can do.
+      }
     }
+
+    // Move temp file to destination specified by caller.
+    File destFile = new File(parentDir, filename);
+    // Delete file if it exists - docs state that rename may fail if the File already exists.
+    if (destFile.exists()) {
+      destFile.delete();
+    }
+    boolean result = tmpFile.renameTo(destFile);
+    if (!result) {
+      throw new IOException("Could not move tmp file to destination.");
+    }
+    cleanUp();
   }
 
   private byte[] makePingFooter(MessageDigest checksum)
@@ -201,10 +246,6 @@ public class TelemetryRecorder {
         .getBytes(charset);
   }
 
-  protected int getBlockSize() {
-    return 0;
-  }
-
   /**
    * Get final digested Base64 checksum.
    *
@@ -212,5 +253,51 @@ public class TelemetryRecorder {
    */
   protected String getFinalChecksum() {
     return base64Checksum;
+  }
+
+  public String getCharset() {
+    return this.charset;
+  }
+
+  /**
+   * Clean up checksum and delete the temporary file.
+   */
+  private void cleanUp() {
+    // Discard checksum.
+    checksum.reset();
+
+    // Clean up files.
+    if (tmpFile != null && tmpFile.exists()) {
+      tmpFile.delete();
+    }
+  }
+  /**
+   * Log message and error and clean up, then rethrow exception to caller.
+   *
+   * @param message
+   *          Error message
+   * @param e
+   *          Exception
+   *
+   * @throws Exception
+   *           Exception to be rethrown to caller
+   */
+  private void cleanUpAndRethrow(String message, Exception e) throws Exception {
+    Logger.error(LOG_TAG, message, e);
+    cleanUp();
+
+    if (outputStream != null) {
+      try {
+        outputStream.close();
+      } catch (IOException exception) {
+        // Failed to close stream; nothing we can do, and we're aborting anyways.
+      }
+    }
+
+    if (destFile != null && destFile.exists()) {
+      destFile.delete();
+    }
+    // Rethrow the exception.
+    throw e;
   }
 }
