@@ -6,6 +6,7 @@ package org.mozilla.gecko.background.healthreport.test;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -104,16 +105,44 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertEquals(EXPECTED_MOCK_BASE_HASH + addonAHash, env.getHash());
   }
 
-  private void assertJSONDiff(JSONObject jTwo, JSONObject diff) throws JSONException {
-    assertEquals(jTwo.get("a"), diff.get("a"));
+  private void assertJSONDiff(JSONObject source, JSONObject diff) throws JSONException {
+    assertEquals(source.get("a"), diff.get("a"));
     assertFalse(diff.has("b"));
-    assertEquals(jTwo.get("c"), diff.get("c"));
+    assertEquals(source.get("c"), diff.get("c"));
     JSONObject diffD = diff.getJSONObject("d");
     assertFalse(diffD.has("aa"));
     assertEquals(1, diffD.getJSONArray("bb").getInt(0));
     JSONObject diffCC = diffD.getJSONObject("cc");
     assertEquals(1, diffCC.length());
     assertEquals(1, diffCC.getInt("---"));
+  }
+
+  private static void assertJSONEquals(JSONObject one, JSONObject two) throws JSONException {
+    if (one == null || two == null) {
+      assertEquals(two, one);
+    }
+    assertEquals(one.length(), two.length());
+    @SuppressWarnings("unchecked")
+    Iterator<String> it = one.keys();
+    while (it.hasNext()) {
+      String key = it.next();
+      Object v1 = one.get(key);
+      Object v2 = two.get(key);
+      if (v1 instanceof JSONObject) {
+        assertTrue(v2 instanceof JSONObject);
+        assertJSONEquals((JSONObject) v1, (JSONObject) v2);
+      } else {
+        assertEquals(v1, v2);
+      }
+    }
+  }
+
+  @SuppressWarnings("static-method")
+  public void testNulls() {
+    assertTrue(JSONObject.NULL.equals(null));
+    assertTrue(JSONObject.NULL.equals(JSONObject.NULL));
+    assertFalse(JSONObject.NULL.equals(new JSONObject()));
+    assertFalse(null == JSONObject.NULL);
   }
 
   public void testJSONDiffing() throws JSONException {
@@ -127,6 +156,15 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertJSONDiff(jTwo, diffNoNull);
     assertTrue(diffNull.isNull("e"));
     assertFalse(diffNoNull.has("e"));
+
+    // Diffing to null returns the negation object: all the same keys but all null values.
+    JSONObject negated = new JSONObject("{\"a\": null, \"b\": null, \"c\": null, \"d\": null, \"e\": null}");
+    JSONObject toNull = HealthReportGenerator.diff(jOne, null, true);
+    assertJSONEquals(toNull, negated);
+
+    // Diffing from null returns the destination object.
+    JSONObject fromNull = HealthReportGenerator.diff(null, jOne, true);
+    assertJSONEquals(fromNull, jOne);
   }
 
   public void testAddonDiffing() throws JSONException {
