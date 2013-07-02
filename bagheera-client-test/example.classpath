@@ -17,7 +17,7 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 
   <!-- Gosh, it'd be nice if we just relied on M2Eclipse and had it resolve these deps. -->
-	<classpathentry kind="var" path="M2_REPO/com/mozilla/bagheera/0.8/bagheera-0.8.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/mozilla/bagheera/0.11/bagheera-0.11.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/fasterxml/jackson/core/jackson-core/2.0.6/jackson-core-2.0.6.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/github/sgroschupf/zkclient/0.1/zkclient-0.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/google/protobuf/protobuf-java/2.4.1/protobuf-java-2.4.1.jar"/>
