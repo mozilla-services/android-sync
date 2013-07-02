@@ -192,6 +192,7 @@ public class TestBagheeraClient {
     public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
       Logger.info(LOG_TAG, "Got success: " + status + " for id: " + id);
       statuses.add(status);
+      BaseResource.consumeEntity(response);
       WaitHelper.getTestWaiter().performNotify();
     }
 
@@ -199,6 +200,7 @@ public class TestBagheeraClient {
     public void handleFailure(int status, String namespace, HttpResponse response) {
       Logger.info(LOG_TAG, "Got failure: " + status);
       statuses.add(status);
+      BaseResource.consumeEntity(response);
       WaitHelper.getTestWaiter().performNotify();
     }
 

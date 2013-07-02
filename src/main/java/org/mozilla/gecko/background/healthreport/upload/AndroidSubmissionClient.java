@@ -158,6 +158,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
 
     @Override
     public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
+      BaseResource.consumeEntity(response);
       if (isUpload) {
         setLastUploadLocalTimeAndDocumentId(localTime, id);
       }
@@ -176,6 +177,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
      */
     @Override
     public void handleFailure(int status, String namespace, HttpResponse response) {
+      BaseResource.consumeEntity(response);
       Logger.debug(LOG_TAG, "Failed " + methodString + " at " + localTime + ".");
       if (status >= 500) {
         delegate.onSoftFailure(localTime, id, "Got status " + status + " from server.", null);
