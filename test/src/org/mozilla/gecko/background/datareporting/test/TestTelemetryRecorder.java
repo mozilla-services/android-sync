@@ -1,0 +1,166 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.gecko.background.datareporting.test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import junit.framework.Assert;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.mozilla.gecko.background.datareporting.TelemetryRecorder;
+import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
+
+import android.util.Base64;
+
+public class TestTelemetryRecorder extends FakeProfileTestCase {
+  private File telemetryPingDir;
+  private TelemetryRecorder telemetryRecorder;
+
+  private static final String DEST_FILENAME = "dest-filename";
+  private final String TEST_PAYLOAD1 = "{\"ver\": 1, \"measurements\":" +
+		                                 "{ \"uptime\": 24982 }, \"data\": {";
+  private final String TEST_PAYLOAD2 = "\"key1\": \"value1\", \"key2\": \"value2\" } }";
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    telemetryPingDir = new File(fakeProfileDirectory, "telemetry-ping");
+    if (!telemetryPingDir.mkdir()) {
+      fail("Could not create directory for telemetry pings.");
+    }
+  }
+
+  public void testConstructorWithoutDir() {
+    File fileNotDirectory = new File(telemetryPingDir, "testFile");
+    try {
+      fileNotDirectory.createNewFile();
+    } catch (IOException e) {
+      fail("Failed to create new file.");
+    }
+    try {
+      telemetryRecorder = new TelemetryRecorder(fileNotDirectory, "filename");
+      fail("Should have thrown");
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof IllegalArgumentException);
+    }
+    fileNotDirectory.delete();
+  }
+
+  /**
+   * Check that the real file is not created.
+   */
+  public void testStartPingFile() {
+    File destFile = new File(DEST_FILENAME);
+    if (destFile.exists()) {
+      destFile.delete();
+    }
+    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, DEST_FILENAME);
+    try {
+      telemetryRecorder.startPingFile();
+    } catch (Exception e) {
+      fail("Error starting ping file: " + e.getMessage());
+    }
+    Assert.assertFalse(destFile.exists());
+  }
+
+  /**
+   * Check that caller-specified file contains the expected contents and
+   * verify the checksum.
+   */
+  public void testFinishedPingFile() {
+    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, DEST_FILENAME);
+    String charset = telemetryRecorder.getCharset();
+    try {
+      telemetryRecorder.startPingFile();
+      telemetryRecorder.appendPayload(TEST_PAYLOAD1);
+      telemetryRecorder.appendPayload(TEST_PAYLOAD2);
+      telemetryRecorder.finishPingFile();
+    } catch (Exception e) {
+      fail("Error writing payload: " + e);
+    }
+    File destFile = new File(telemetryPingDir, DEST_FILENAME);
+    Assert.assertTrue(destFile.exists());
+
+    StringBuilder sb = new StringBuilder();
+    FileInputStream fis = null;
+    InputStreamReader isr = null;
+    try {
+      fis = new FileInputStream(destFile);
+      isr = new InputStreamReader(fis, charset);;
+      // Test data is short, and we don't want extra characters in the string.
+      char[] charBuf = new char[1];
+
+      // Read contents into StringBuilder.
+      while (isr.read(charBuf) != -1) {
+        sb.append(charBuf);
+      }
+    } catch (FileNotFoundException e) {
+      fail("Unable to find file: " + e);
+    } catch (UnsupportedEncodingException e) {
+      fail("Failing with UnsupportedEncodingException: " + e);
+    } catch (IOException e) {
+      fail("Failing with IOException: " + e);
+    } finally {
+      try {
+        fis.close();
+        isr.close();
+      } catch (IOException e) {
+        // Do nothing.
+      }
+    }
+    String fileContents = sb.toString();
+
+    JSONObject fileJSON = null;
+    try {
+      fileJSON = new JSONObject(fileContents);
+    } catch (JSONException e) {
+      fail("Failing with bad JSON: " + e);
+    }
+
+    // Check format.
+    Assert.assertTrue(fileJSON.has("slug"));
+    Assert.assertTrue(fileJSON.has("payload"));
+    Assert.assertTrue(fileJSON.has("checksum"));
+
+    // Check header.
+    String pingSlug;
+    try {
+      pingSlug = fileJSON.getString("slug");
+      Assert.assertEquals(DEST_FILENAME, pingSlug);
+    } catch (JSONException e) {
+      fail("JSONException attempting to fetch slug: " + e);
+    }
+
+    // Calculate and check the checksum.
+    try {
+      MessageDigest checksumDigest = MessageDigest.getInstance("SHA-256");
+      String payload = fileJSON.getString("payload");
+      checksumDigest.update(payload.getBytes(charset));
+      String calculatedChecksum = Base64.encodeToString(checksumDigest.digest(), Base64.NO_WRAP);
+
+      String payloadChecksum = fileJSON.getString("checksum");
+      Assert.assertEquals(payloadChecksum, calculatedChecksum);
+    } catch (JSONException e) {
+      fail("Failed to fetch JSON value: " + e);
+    } catch (NoSuchAlgorithmException e) {
+      fail("No such MessageDigest algorithm: " + e);
+    } catch (UnsupportedEncodingException e) {
+      fail("Unsupported encoding: " + e);
+    }
+  }
+
+  @Override
+  protected String getCacheSuffix() {
+    return File.separator + "telemetry-recorder-" + System.currentTimeMillis() + ".profile";
+  }
+}
