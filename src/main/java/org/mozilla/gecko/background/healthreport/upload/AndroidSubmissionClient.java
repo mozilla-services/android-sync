@@ -5,6 +5,8 @@
 package org.mozilla.gecko.background.healthreport.upload;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.UUID;
 
 import org.json.JSONObject;
@@ -15,6 +17,7 @@ import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportGenerator;
+import org.mozilla.gecko.sync.net.BaseResource;
 
 import android.content.ContentProviderClient;
 import android.content.Context;
@@ -71,7 +74,16 @@ public class AndroidSubmissionClient implements SubmissionClient {
         (lastId == null ? "." : " and obsoletes id " + lastId + "."));
 
     try {
-      client.uploadJSONDocument(getDocumentServerNamespace(), id, payload, lastId, uploadDelegate);
+      Collection<String> oldIds = null;
+      if (lastId != null) {
+        oldIds = new HashSet<String>();
+        oldIds.add(lastId);
+      }
+      client.uploadJSONDocument(getDocumentServerNamespace(),
+          id,
+          payload,
+          oldIds,
+          uploadDelegate);
     } catch (Exception e) {
       uploadDelegate.handleError(e);
     }
