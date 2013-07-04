@@ -5,27 +5,35 @@ package org.mozilla.gecko.background.healthreport.upload.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
+import java.util.HashSet;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
+import org.mozilla.gecko.background.healthreport.upload.ObsoleteDocumentTracker;
 import org.mozilla.gecko.background.healthreport.upload.SubmissionClient;
 import org.mozilla.gecko.background.healthreport.upload.SubmissionPolicy;
 import org.mozilla.gecko.background.healthreport.upload.test.TestSubmissionPolicy.MockSubmissionClient.Response;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.Utils;
 
 import android.content.SharedPreferences;
 
 public class TestSubmissionPolicy {
   public static class MockSubmissionClient implements SubmissionClient {
+    public String lastId = null;
+    public Collection<String> lastOldIds = null;
+
     public enum Response { SUCCESS, SOFT_FAILURE, HARD_FAILURE };
     public Response upload = Response.SUCCESS;
     public Response delete = Response.SUCCESS;
 
     protected void response(long localTime, String id, Delegate delegate, Response response) {
+      lastId = id;
       switch (response) {
       case SOFT_FAILURE:
         delegate.onSoftFailure(localTime, id, "Soft failure.", null);
@@ -39,8 +47,9 @@ public class TestSubmissionPolicy {
     }
 
     @Override
-    public void upload(long localTime, Delegate delegate) {
-      response(localTime, Utils.generateGuid(), delegate, upload);
+    public void upload(long localTime, String id, Collection<String> oldIds, Delegate delegate) {
+      lastOldIds = oldIds;
+      response(localTime, id, delegate, upload);
     }
 
     @Override
@@ -52,6 +61,7 @@ public class TestSubmissionPolicy {
   public MockSubmissionClient client;
   public SubmissionPolicy policy;
   public SharedPreferences sharedPrefs;
+  public ObsoleteDocumentTracker tracker;
 
 
   public void setMinimumTimeBetweenUploads(long time) {
@@ -71,6 +81,7 @@ public class TestSubmissionPolicy {
     sharedPrefs = new MockSharedPreferences();
     client = new MockSubmissionClient();
     policy = new SubmissionPolicy(sharedPrefs, client, true);
+    tracker = policy.getObsoleteDocumentTracker();
     setMinimumTimeBeforeFirstSubmission(0);
   }
 
@@ -116,6 +127,8 @@ public class TestSubmissionPolicy {
     assertEquals(2*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadSucceeded());
     assertTrue(policy.getNextSubmission() > policy.getLastUploadSucceeded());
     assertEquals(0, policy.getCurrentDayFailureCount());
+    assertNotNull(client.lastId);
+    assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
   }
 
   @Test
@@ -128,18 +141,27 @@ public class TestSubmissionPolicy {
     assertEquals(2*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
     assertEquals(1, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeAfterFailure(), policy.getNextSubmission());
+    assertNotNull(client.lastId);
+    assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
+    client.lastId = null;
 
     assertTrue(policy.tick(3*policy.getMinimumTimeBetweenUploads()));
     assertEquals(3*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
     assertEquals(3*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
     assertEquals(2, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeAfterFailure(), policy.getNextSubmission());
+    assertNotNull(client.lastId);
+    assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
+    client.lastId = null;
 
     assertTrue(policy.tick(4*policy.getMinimumTimeBetweenUploads()));
     assertEquals(4*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
     assertEquals(4*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
     assertEquals(0, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeBetweenUploads(), policy.getNextSubmission());
+    assertNotNull(client.lastId);
+    assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
+    client.lastId = null;
   }
 
   @Test
@@ -152,51 +174,28 @@ public class TestSubmissionPolicy {
     assertEquals(2*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
     assertEquals(0, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeBetweenUploads(), policy.getNextSubmission());
+    assertNotNull(client.lastId);
+    assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
+    client.lastId = null;
   }
 
   @Test
   public void testDisabledNoObsoleteDocuments() throws Exception {
-    policy = new SubmissionPolicy(new MockSharedPreferences(), client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, false);
     assertFalse(policy.tick(0));
   }
 
   @Test
-  public void testDecrement() {
-    MockSharedPreferences tempPrefs = new MockSharedPreferences();
-    policy = new SubmissionPolicy(tempPrefs, client, false);
-    ExtendedJSONObject ids = new ExtendedJSONObject();
-    ids.put("id1", 5L);
-    ids.put("id2", 5L);
-    policy.setObsoleteIds(ids);
-    assertEquals(ids, policy.getObsoleteIds());
-
-    policy.decrementObsoleteIdAttempts("id1");
-    ids.put("id1", 4L);
-    assertEquals(ids, policy.getObsoleteIds());
-
-    policy.decrementObsoleteIdAttempts("id1"); // 3
-    policy.decrementObsoleteIdAttempts("id1"); // 2
-    policy.decrementObsoleteIdAttempts("id1"); // 1
-    policy.decrementObsoleteIdAttempts("id1"); // 0 (should be gone).
-    ids.remove("id1");
-    assertEquals(ids, policy.getObsoleteIds());
-
-    policy.removeObsoleteId("id2");
-    ids.remove("id2");
-    assertEquals(ids, policy.getObsoleteIds());
-  }
-
-  @Test
   public void testDisabledObsoleteDocumentsSuccess() throws Exception {
-    policy = new SubmissionPolicy(new MockSharedPreferences(), client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, false);
     setMinimumTimeBetweenUploads(policy.getMinimumTimeBetweenUploads() - 1);
     ExtendedJSONObject ids = new ExtendedJSONObject();
     ids.put("id1", 5L);
     ids.put("id2", 5L);
-    policy.setObsoleteIds(ids);
+    tracker.setObsoleteIds(ids);
 
     assertTrue(policy.tick(3));
-    assertEquals(1, policy.getObsoleteIds().size());
+    assertEquals(1, tracker.getObsoleteIds().size());
 
     // Forensic timestamps.
     assertEquals(3 + policy.getMinimumTimeBetweenDeletes(), policy.getNextSubmission());
@@ -205,7 +204,7 @@ public class TestSubmissionPolicy {
     assertEquals(3, policy.getLastDeleteSucceeded());
 
     assertTrue(policy.tick(2*policy.getMinimumTimeBetweenDeletes()));
-    assertEquals(0, policy.getObsoleteIds().size());
+    assertEquals(0, tracker.getObsoleteIds().size());
 
     assertFalse(policy.tick(4*policy.getMinimumTimeBetweenDeletes()));
   }
@@ -213,16 +212,16 @@ public class TestSubmissionPolicy {
   @Test
   public void testDisabledObsoleteDocumentsSoftFailure() throws Exception {
     client.delete = Response.SOFT_FAILURE;
-    policy = new SubmissionPolicy(new MockSharedPreferences(), client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, false);
     setMinimumTimeBetweenUploads(policy.getMinimumTimeBetweenUploads() - 2);
     ExtendedJSONObject ids = new ExtendedJSONObject();
     ids.put("id1", 5L);
     ids.put("id2", 5L);
-    policy.setObsoleteIds(ids);
+    tracker.setObsoleteIds(ids);
 
     assertTrue(policy.tick(3));
     ids.put("id1", 4L); // policy's choice is deterministic.
-    assertEquals(ids, policy.getObsoleteIds());
+    assertEquals(ids, tracker.getObsoleteIds());
 
     // Forensic timestamps.
     assertEquals(3 + policy.getMinimumTimeBetweenDeletes(), policy.getNextSubmission());
@@ -235,26 +234,26 @@ public class TestSubmissionPolicy {
     assertTrue(policy.tick(6*policy.getMinimumTimeBetweenDeletes())); // 1.
     assertTrue(policy.tick(8*policy.getMinimumTimeBetweenDeletes())); // 0 (should be gone).
     ids.remove("id1");
-    assertEquals(ids, policy.getObsoleteIds());
+    assertEquals(ids, tracker.getObsoleteIds());
 
     assertTrue(policy.tick(10*policy.getMinimumTimeBetweenDeletes()));
     ids.put("id2", 4L);
-    assertEquals(ids, policy.getObsoleteIds());
+    assertEquals(ids, tracker.getObsoleteIds());
   }
 
   @Test
   public void testDisabledObsoleteDocumentsHardFailure() throws Exception {
     client.delete = Response.HARD_FAILURE;
-    policy = new SubmissionPolicy(new MockSharedPreferences(), client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, false);
     setMinimumTimeBetweenUploads(policy.getMinimumTimeBetweenUploads() - 3);
     ExtendedJSONObject ids = new ExtendedJSONObject();
     ids.put("id1", 5L);
     ids.put("id2", 5L);
-    policy.setObsoleteIds(ids);
+    tracker.setObsoleteIds(ids);
 
     assertTrue(policy.tick(3));
     ids.remove("id1"); // policy's choice is deterministic.
-    assertEquals(ids, policy.getObsoleteIds());
+    assertEquals(ids, tracker.getObsoleteIds());
 
     // Forensic timestamps.
     assertEquals(3 + policy.getMinimumTimeBetweenDeletes(), policy.getNextSubmission());
@@ -264,6 +263,80 @@ public class TestSubmissionPolicy {
 
     assertTrue(policy.tick(2*policy.getMinimumTimeBetweenDeletes())); // 3.
     ids.remove("id2");
-    assertEquals(ids, policy.getObsoleteIds());
+    assertEquals(ids, tracker.getObsoleteIds());
+  }
+
+  @Test
+  public void testUploadSuccessMultipleObsoletes() throws Exception {
+    ExtendedJSONObject ids = new ExtendedJSONObject();
+    ids.put("id1", 5L);
+    ids.put("id2", 5L);
+    tracker.setObsoleteIds(ids);
+
+    assertTrue(policy.tick(3));
+    assertEquals(ids.keySet(), new HashSet<String>(client.lastOldIds));
+    assertNotNull(client.lastId);
+    ids.remove("id1");
+    ids.remove("id2");
+    ids.put(client.lastId, 5L);
+    assertEquals(ids, tracker.getObsoleteIds());
+
+    ExtendedJSONObject ids1 = new ExtendedJSONObject(); // First half.
+    ExtendedJSONObject ids2 = new ExtendedJSONObject(); // Second half.
+    ExtendedJSONObject ids3 = new ExtendedJSONObject(); // Both halves.
+    for (int i = 0; i < HealthReportConstants.MAXIMUM_DELETIONS_PER_POST; i++) {
+      String id1 = "x" + i;
+      String id2 = "y" + i;
+      ids1.put(id1, 5L);
+      ids2.put(id2, 5L);
+      ids3.put(id1, 5L);
+      ids3.put(id2, 5L);
+    }
+    tracker.setObsoleteIds(ids3);
+
+    assertTrue(policy.tick(3 + policy.getMinimumTimeBetweenUploads()));
+    assertNotNull(client.lastId);
+    assertEquals(ids1.keySet(), new HashSet<String>(client.lastOldIds));
+    ids2.put(client.lastId, 5L);
+    assertEquals(ids2, tracker.getObsoleteIds());
+  }
+
+  @Test
+  public void testUploadFailureMultipleObsoletes() throws Exception {
+    client.upload = Response.HARD_FAILURE;
+    ExtendedJSONObject ids = new ExtendedJSONObject();
+    ids.put("id1", 5L);
+    ids.put("id2", 5L);
+    tracker.setObsoleteIds(ids);
+
+    assertTrue(policy.tick(3));
+    assertEquals(ids.keySet(), new HashSet<String>(client.lastOldIds));
+    assertNotNull(client.lastId);
+    ids.put(client.lastId, 5L);
+    ids.put("id1", 4L);
+    ids.put("id2", 4L);
+    assertEquals(ids, tracker.getObsoleteIds());
+
+    ExtendedJSONObject ids1 = new ExtendedJSONObject(); // First half.
+    ExtendedJSONObject ids2 = new ExtendedJSONObject(); // Second half.
+    ExtendedJSONObject ids3 = new ExtendedJSONObject(); // Both halves.
+    for (int i = 0; i < HealthReportConstants.MAXIMUM_DELETIONS_PER_POST; i++) {
+      String id1 = "x" + i;
+      String id2 = "y" + i;
+      ids1.put(id1, 5L);
+      ids2.put(id2, 5L);
+      ids3.put(id1, 5L);
+      ids3.put(id2, 5L);
+    }
+    tracker.setObsoleteIds(ids3);
+
+    assertTrue(policy.tick(3 + policy.getMinimumTimeBetweenUploads()));
+    assertEquals(ids1.keySet(), new HashSet<String>(client.lastOldIds));
+    assertNotNull(client.lastId);
+    ids3.put(client.lastId, 5L);
+    for (String id : ids1.keySet()) {
+      ids3.put(id, 4L);
+    }
+    assertEquals(ids3, tracker.getObsoleteIds());
   }
 }
