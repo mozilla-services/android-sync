@@ -6,8 +6,6 @@ package org.mozilla.gecko.background.healthreport.upload;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.UUID;
 
 import org.json.JSONObject;
 import org.mozilla.gecko.background.bagheera.BagheeraClient;
@@ -64,21 +62,13 @@ public class AndroidSubmissionClient implements SubmissionClient {
       .commit();
   }
 
-  protected void uploadPayload(String payload, BagheeraRequestDelegate uploadDelegate) {
+  protected void uploadPayload(String id, String payload, Collection<String> oldIds, BagheeraRequestDelegate uploadDelegate) {
     final BagheeraClient client = new BagheeraClient(getDocumentServerURI());
 
-    final String id = UUID.randomUUID().toString();
-    final String lastId = getLastUploadDocumentId();
-
     Logger.pii(LOG_TAG, "New health report has id " + id +
-        (lastId == null ? "." : " and obsoletes id " + lastId + "."));
+        "and obsoletes " + (oldIds != null ? Integer.toString(oldIds.size()) : "no") + " old ids.");
 
     try {
-      Collection<String> oldIds = null;
-      if (lastId != null) {
-        oldIds = new HashSet<String>();
-        oldIds.add(lastId);
-      }
       client.uploadJSONDocument(getDocumentServerNamespace(),
           id,
           payload,
@@ -90,7 +80,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
   }
 
   @Override
-  public void upload(long localTime, Delegate delegate) {
+  public void upload(long localTime, String id, Collection<String> oldIds, Delegate delegate) {
     // We abuse the life-cycle of an Android ContentProvider slightly by holding
     // onto a ContentProviderClient while we generate a payload. This keeps our
     // database storage alive, and may also allow us to share a database
@@ -129,7 +119,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
       }
 
       BagheeraRequestDelegate uploadDelegate = new RequestDelegate(delegate, localTime, true, null);
-      this.uploadPayload(document.toString(), uploadDelegate);
+      this.uploadPayload(id, document.toString(), oldIds, uploadDelegate);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception generating document.", e);
       delegate.onHardFailure(localTime, null, "Got exception uploading.", e);

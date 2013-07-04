@@ -78,4 +78,8 @@ public class HealthReportConstants {
 
   public static final String PREF_DOCUMENT_SERVER_NAMESPACE = "healthreport_document_server_namespace";
   public static final String DEFAULT_DOCUMENT_SERVER_NAMESPACE = "metrics";
+
+  // One UUID is 36 characters (like e56542e0-e4d2-11e2-a28f-0800200c9a66), so
+  // this is comfortably under one kilobyte.
+  public static final int MAXIMUM_DELETIONS_PER_POST = 24;
 }
