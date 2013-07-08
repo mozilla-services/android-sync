@@ -5,13 +5,11 @@
 package org.mozilla.gecko.background.healthreport.upload;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportUtils;
 import org.mozilla.gecko.background.healthreport.upload.SubmissionClient.Delegate;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import android.content.SharedPreferences;
 
@@ -50,19 +48,17 @@ public class SubmissionPolicy {
   protected final boolean uploadEnabled;
   protected final ObsoleteDocumentTracker tracker;
 
-  public SubmissionPolicy(final SharedPreferences sharedPreferences, final SubmissionClient client, boolean uploadEnabled) {
+  public SubmissionPolicy(final SharedPreferences sharedPreferences,
+      final SubmissionClient client,
+      final ObsoleteDocumentTracker tracker,
+      boolean uploadEnabled) {
     if (sharedPreferences == null) {
       throw new IllegalArgumentException("sharedPreferences must not be null");
     }
     this.sharedPreferences = sharedPreferences;
     this.client = client;
+    this.tracker = tracker;
     this.uploadEnabled = uploadEnabled;
-    this.tracker = new ObsoleteDocumentTracker(sharedPreferences);
-  }
-
-  // For testing only.
-  public ObsoleteDocumentTracker getObsoleteDocumentTracker() {
-    return tracker;
   }
 
   /**
@@ -96,31 +92,14 @@ public class SubmissionPolicy {
     }
 
     if (!uploadEnabled) {
-      // We never return from this block since we don't want to upload.
-      ExtendedJSONObject ids = tracker.getObsoleteIds();
-      if (ids.size() < 1) {
-        return false;
-      }
-
       // We only delete (rather than mark as obsolete during upload) when
       // uploading is disabled. We try to delete aggressively, since the volume
       // of deletes should be very low. But we don't want to send too many
       // delete requests at the same time, so we process these one at a time. In
       // the future (Bug 872756), we will be able to delete multiple documents
       // with one request.
-      String obsoleteId;
-      try {
-        // We don't care what the order is, but let's make testing easier by
-        // being deterministic. Deleting in random order might avoid failing too
-        // many times in succession, but we expect only a single pending delete
-        // in practice.
-        obsoleteId = Collections.min(ids.keySet());
-      } catch (Exception e) {
-        Logger.warn(LOG_TAG, "Got exception picking obsolete id to delete.", e);
-        return false;
-      }
+      final String obsoleteId = tracker.getNextObsoleteId();
       if (obsoleteId == null) {
-        Logger.error(LOG_TAG, "Next obsolete id to delete is null?");
         return false;
       }
 

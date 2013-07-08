@@ -24,7 +24,7 @@ public class ObsoleteDocumentTracker {
     this.sharedPrefs = sharedPrefs;
   }
 
-  public ExtendedJSONObject getObsoleteIds() {
+  protected ExtendedJSONObject getObsoleteIds() {
     String s = sharedPrefs.getString(HealthReportConstants.PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING, null);
     if (s == null) {
       return new ExtendedJSONObject();
@@ -42,7 +42,7 @@ public class ObsoleteDocumentTracker {
    *
    * @param ids to write.
    */
-  public void setObsoleteIds(ExtendedJSONObject ids) {
+  protected void setObsoleteIds(ExtendedJSONObject ids) {
     sharedPrefs
       .edit()
       .putString(HealthReportConstants.PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING, ids.toString())
@@ -138,5 +138,30 @@ public class ObsoleteDocumentTracker {
     ExtendedJSONObject ids = getObsoleteIds();
     ids.put(id, HealthReportConstants.DEFAULT_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     setObsoleteIds(ids);
+  }
+
+  public boolean hasObsoleteIds() {
+    return getObsoleteIds().size() > 0;
+  }
+
+  public int numberOfObsoleteIds() {
+    return getObsoleteIds().size();
+  }
+
+  public String getNextObsoleteId() {
+    ExtendedJSONObject ids = getObsoleteIds();
+    if (ids.size() < 1) {
+      return null;
+    }
+    try {
+      // We don't care what the order is, but let's make testing easier by
+      // being deterministic. Deleting in random order might avoid failing too
+      // many times in succession, but we expect only a single pending delete
+      // in practice.
+      return Collections.min(ids.keySet());
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception picking obsolete id to delete.", e);
+      return null;
+    }
   }
 }
