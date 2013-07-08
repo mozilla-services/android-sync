@@ -15,9 +15,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
-import org.mozilla.gecko.background.healthreport.upload.ObsoleteDocumentTracker;
 import org.mozilla.gecko.background.healthreport.upload.SubmissionClient;
 import org.mozilla.gecko.background.healthreport.upload.SubmissionPolicy;
+import org.mozilla.gecko.background.healthreport.upload.test.TestObsoleteDocumentTracker.MockObsoleteDocumentTracker;
 import org.mozilla.gecko.background.healthreport.upload.test.TestSubmissionPolicy.MockSubmissionClient.Response;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
@@ -61,7 +61,7 @@ public class TestSubmissionPolicy {
   public MockSubmissionClient client;
   public SubmissionPolicy policy;
   public SharedPreferences sharedPrefs;
-  public ObsoleteDocumentTracker tracker;
+  public MockObsoleteDocumentTracker tracker;
 
 
   public void setMinimumTimeBetweenUploads(long time) {
@@ -80,8 +80,8 @@ public class TestSubmissionPolicy {
   public void setUp() throws Exception {
     sharedPrefs = new MockSharedPreferences();
     client = new MockSubmissionClient();
-    policy = new SubmissionPolicy(sharedPrefs, client, true);
-    tracker = policy.getObsoleteDocumentTracker();
+    tracker = new MockObsoleteDocumentTracker(sharedPrefs);
+    policy = new SubmissionPolicy(sharedPrefs, client, tracker, true);
     setMinimumTimeBeforeFirstSubmission(0);
   }
 
@@ -181,13 +181,13 @@ public class TestSubmissionPolicy {
 
   @Test
   public void testDisabledNoObsoleteDocuments() throws Exception {
-    policy = new SubmissionPolicy(sharedPrefs, client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, tracker, false);
     assertFalse(policy.tick(0));
   }
 
   @Test
   public void testDisabledObsoleteDocumentsSuccess() throws Exception {
-    policy = new SubmissionPolicy(sharedPrefs, client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, tracker, false);
     setMinimumTimeBetweenUploads(policy.getMinimumTimeBetweenUploads() - 1);
     ExtendedJSONObject ids = new ExtendedJSONObject();
     ids.put("id1", 5L);
@@ -212,7 +212,7 @@ public class TestSubmissionPolicy {
   @Test
   public void testDisabledObsoleteDocumentsSoftFailure() throws Exception {
     client.delete = Response.SOFT_FAILURE;
-    policy = new SubmissionPolicy(sharedPrefs, client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, tracker, false);
     setMinimumTimeBetweenUploads(policy.getMinimumTimeBetweenUploads() - 2);
     ExtendedJSONObject ids = new ExtendedJSONObject();
     ids.put("id1", 5L);
@@ -244,7 +244,7 @@ public class TestSubmissionPolicy {
   @Test
   public void testDisabledObsoleteDocumentsHardFailure() throws Exception {
     client.delete = Response.HARD_FAILURE;
-    policy = new SubmissionPolicy(sharedPrefs, client, false);
+    policy = new SubmissionPolicy(sharedPrefs, client, tracker, false);
     setMinimumTimeBetweenUploads(policy.getMinimumTimeBetweenUploads() - 3);
     ExtendedJSONObject ids = new ExtendedJSONObject();
     ids.put("id1", 5L);

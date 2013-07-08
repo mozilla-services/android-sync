@@ -8,7 +8,6 @@ import org.mozilla.gecko.background.BackgroundService;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -139,15 +138,14 @@ public class HealthReportBroadcastService extends BackgroundService {
 
     final SharedPreferences sharedPrefs = getSharedPreferences();
     final ObsoleteDocumentTracker tracker = new ObsoleteDocumentTracker(sharedPrefs);
-
-    ExtendedJSONObject obsoleteIds = tracker.getObsoleteIds();
+    final boolean hasObsoleteIds = tracker.hasObsoleteIds();
 
     if (!enabled) {
       final Editor editor = sharedPrefs.edit();
       editor.remove(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID);
 
-      if (obsoleteIds.size() > 0) {
-        Logger.debug(LOG_TAG, "Health report upload disabled; scheduling deletion of " + obsoleteIds.size() + " documents.");
+      if (hasObsoleteIds) {
+        Logger.debug(LOG_TAG, "Health report upload disabled; scheduling deletion of " + tracker.numberOfObsoleteIds() + " documents.");
       } else {
         // Primarily intended for debugging and testing.
         Logger.debug(LOG_TAG, "Health report upload disabled and no deletes to schedule: clearing prefs.");
@@ -160,7 +158,7 @@ public class HealthReportBroadcastService extends BackgroundService {
 
     // The user can toggle us off or on, or we can have obsolete documents to
     // remove.
-    final boolean serviceEnabled = (obsoleteIds.size() > 0) || enabled;
+    final boolean serviceEnabled = hasObsoleteIds || enabled;
     toggleAlarm(this, profileName, profilePath, enabled, serviceEnabled);
   }
 }

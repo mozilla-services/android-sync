@@ -13,14 +13,31 @@ import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.background.healthreport.upload.ObsoleteDocumentTracker;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
+import android.content.SharedPreferences;
+
 public class TestObsoleteDocumentTracker {
+  public static class MockObsoleteDocumentTracker extends ObsoleteDocumentTracker {
+    public MockObsoleteDocumentTracker(SharedPreferences sharedPrefs) {
+      super(sharedPrefs);
+    }
+
+    @Override
+    public ExtendedJSONObject getObsoleteIds() {
+      return super.getObsoleteIds();
+    }
+
+    @Override
+    public void setObsoleteIds(ExtendedJSONObject ids) {
+      super.setObsoleteIds(ids);
+    }
+};
+  public MockObsoleteDocumentTracker tracker;
   public MockSharedPreferences sharedPrefs;
-  public ObsoleteDocumentTracker tracker;
 
   @Before
   public void setUp() {
     sharedPrefs = new MockSharedPreferences();
-    tracker = new ObsoleteDocumentTracker(sharedPrefs);
+    tracker = new MockObsoleteDocumentTracker(sharedPrefs);
   }
 
   @Test
