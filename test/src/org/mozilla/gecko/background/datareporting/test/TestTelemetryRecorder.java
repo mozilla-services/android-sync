@@ -20,15 +20,17 @@ import org.json.JSONObject;
 import org.mozilla.gecko.background.datareporting.TelemetryRecorder;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
+import android.test.mock.MockContext;
 import android.util.Base64;
 
 public class TestTelemetryRecorder extends FakeProfileTestCase {
   private File telemetryPingDir;
   private TelemetryRecorder telemetryRecorder;
+  private MockContext mockContext;
 
   private static final String DEST_FILENAME = "dest-filename";
   private final String TEST_PAYLOAD1 = "{\"ver\": 1, \"measurements\":" +
-		                                 "{ \"uptime\": 24982 }, \"data\": {";
+		                                   "{ \"uptime\": 24982 }, \"data\": {";
   private final String TEST_PAYLOAD2 = "\"key1\": \"value1\", \"key2\": \"value2\" } }";
 
   @Override
@@ -38,6 +40,16 @@ public class TestTelemetryRecorder extends FakeProfileTestCase {
     if (!telemetryPingDir.mkdir()) {
       fail("Could not create directory for telemetry pings.");
     }
+    final File cacheDir = new File(fakeProfileDirectory, "fakeCacheDir");
+    if (!cacheDir.mkdir()) {
+      fail("Coule not create directory for fake cacheDir");
+    }
+    mockContext = new MockContext() {
+      @Override
+      public File getCacheDir() {
+        return cacheDir;
+      }
+    };
   }
 
   public void testConstructorWithoutDir() {
@@ -48,7 +60,7 @@ public class TestTelemetryRecorder extends FakeProfileTestCase {
       fail("Failed to create new file.");
     }
     try {
-      telemetryRecorder = new TelemetryRecorder(fileNotDirectory, "filename");
+      telemetryRecorder = new TelemetryRecorder(fileNotDirectory, "filename", mockContext);
       fail("Should have thrown");
     } catch (Exception e) {
       Assert.assertTrue(e instanceof IllegalArgumentException);
@@ -64,7 +76,7 @@ public class TestTelemetryRecorder extends FakeProfileTestCase {
     if (destFile.exists()) {
       destFile.delete();
     }
-    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, DEST_FILENAME);
+    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, DEST_FILENAME, mockContext);
     try {
       telemetryRecorder.startPingFile();
     } catch (Exception e) {
@@ -78,7 +90,7 @@ public class TestTelemetryRecorder extends FakeProfileTestCase {
    * verify the checksum.
    */
   public void testFinishedPingFile() {
-    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, DEST_FILENAME);
+    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, DEST_FILENAME, mockContext);
     String charset = telemetryRecorder.getCharset();
     try {
       telemetryRecorder.startPingFile();
@@ -88,6 +100,7 @@ public class TestTelemetryRecorder extends FakeProfileTestCase {
     } catch (Exception e) {
       fail("Error writing payload: " + e);
     }
+
     File destFile = new File(telemetryPingDir, DEST_FILENAME);
     Assert.assertTrue(destFile.exists());
 

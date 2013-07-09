@@ -16,12 +16,13 @@ import java.security.NoSuchAlgorithmException;
 import org.json.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
 
+import android.content.Context;
 import android.util.Base64;
 
 /**
  * Writes telemetry ping to file.
  *
- * Also creates and updates a SHA-256 checksum for the payload to include in the ping
+ * Also creates and updates a SHA-256 checksum for the payload to be included in the ping
  * file.
  *
  * A saved telemetry ping file consists of JSON in the following format,
@@ -32,25 +33,25 @@ import android.util.Base64;
  *   }
  *
  * This class writes first to a temporary file and then, after finishing the contents of the ping,
- * copies that to the file specified by the caller. This is to avoid uploads of partially written
+ * moves that to the file specified by the caller. This is to avoid uploads of partially written
  * ping files.
  *
  * The API provided by this class:
- * startPingFile() - opens stream to a tmp File and writes the slug
- * appendPayload(String payloadContent) - appends to the payload of the ping and updates the
- *                                        checksum
- * finishPingFile() - writes the checksum to the tmp file and copies it to the File specified by the caller.
+ * startPingFile() - opens stream to a tmp File in the Android cache directory and writes the slug header
+ * appendPayload(String payloadContent) - appends to the payload of the ping and updates the checksum
+ * finishPingFile() - writes the checksum to the tmp file and moves it to the File specified by the caller.
  *
  * In the case of errors, we try to close the stream and File.
  */
 public class TelemetryRecorder {
-  private final String      LOG_TAG = "TelemetryRecorder";
+  private final String LOG_TAG = "TelemetryRecorder";
 
   private final File parentDir;
   private final String filename;
 
   private File tmpFile;
   private File destFile;
+  private File tmpCacheDir;
 
   private OutputStream  outputStream;
   private MessageDigest checksum;
@@ -74,9 +75,9 @@ public class TelemetryRecorder {
 
   /**
    * Constructs a TelemetryRecorder for writing a ping file. A temporary file will be written first,
-   * and then copied to the destination file location specified by the caller.
+   * and then moved to the destination file location specified by the caller.
    *
-   * If the destination file already exists, it will be overwritten.
+   * If the destination file already exists, it will be deleted and overwritten.
    *
    * Default charset: "us-ascii"
    * Default block size: uses constructor default of 8192 bytes (see javadocs for
@@ -86,21 +87,22 @@ public class TelemetryRecorder {
    * @param filename
    *        name of ping file to be written
    */
-  public TelemetryRecorder(File parentDir, String filename) {
+  public TelemetryRecorder(File parentDir, String filename, Context context) {
     if (!parentDir.isDirectory()) {
       throw new IllegalArgumentException("Expecting directory, got non-directory File instead.");
     }
     this.parentDir = parentDir;
     this.filename = filename;
+    this.tmpCacheDir = context.getCacheDir();
   }
 
-  public TelemetryRecorder(File parentDir, String filename, String charset) {
-    this(parentDir, filename);
+  public TelemetryRecorder(File parentDir, String filename, Context context, String charset) {
+    this(parentDir, filename, context);
     this.charset = charset;
   }
 
-  public TelemetryRecorder(File parentDir, String filename, String charset, int blockSize) {
-    this(parentDir, filename, charset);
+  public TelemetryRecorder(File parentDir, String filename, Context context, String charset, int blockSize) {
+    this(parentDir, filename, context, charset);
     this.blockSize = blockSize;
   }
 
@@ -119,15 +121,16 @@ public class TelemetryRecorder {
   public void startPingFile() throws Exception {
 
     // Open stream to temporary file for writing.
-    String tmpFilename = filename + ".tmp";
-    tmpFile = new File(parentDir, tmpFilename);
-    if (tmpFile.exists()) {
-        tmpFile.delete();
-    }
     try {
-      tmpFile.createNewFile();
+      tmpFile = File.createTempFile(filename, "tmp", tmpCacheDir);
     } catch (IOException e) {
-      cleanUpAndRethrow("Error creating tmp file.", e);
+      // Try to create the temporary file in the profile directory.
+      tmpFile = new File(parentDir, filename + ".tmp");
+      try {
+        tmpFile.createNewFile();
+      } catch (IOException e1) {
+        cleanUpAndRethrow("Error creating tmp file.", e1);
+      }
     }
 
     try {
@@ -222,21 +225,25 @@ public class TelemetryRecorder {
       try {
         outputStream.close();
       } catch (IOException e) {
-        // Failed to close, nothing we can do.
+        // Failed to close, nothing we can do except discard the reference to the stream.
+        outputStream = null;
       }
     }
 
     // Move temp file to destination specified by caller.
-    File destFile = new File(parentDir, filename);
-    // Delete file if it exists - docs state that rename may fail if the File already exists.
-    if (destFile.exists()) {
-      destFile.delete();
+    try {
+      File destFile = new File(parentDir, filename);
+      // Delete file if it exists - docs state that rename may fail if the File already exists.
+      if (destFile.exists()) {
+        destFile.delete();
+      }
+      boolean result = tmpFile.renameTo(destFile);
+      if (!result) {
+        throw new IOException("Could not move tmp file to destination.");
+      }
+    } finally {
+      cleanUp();
     }
-    boolean result = tmpFile.renameTo(destFile);
-    if (!result) {
-      throw new IOException("Could not move tmp file to destination.");
-    }
-    cleanUp();
   }
 
   private byte[] makePingFooter(MessageDigest checksum)
@@ -270,7 +277,9 @@ public class TelemetryRecorder {
     if (tmpFile != null && tmpFile.exists()) {
       tmpFile.delete();
     }
+    tmpFile = null;
   }
+
   /**
    * Log message and error and clean up, then rethrow exception to caller.
    *
