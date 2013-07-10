@@ -269,8 +269,8 @@ public class TestSubmissionPolicy {
   @Test
   public void testUploadSuccessMultipleObsoletes() throws Exception {
     ExtendedJSONObject ids = new ExtendedJSONObject();
-    ids.put("id1", 5L);
-    ids.put("id2", 5L);
+    ids.put("id1", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    ids.put("id2", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     tracker.setObsoleteIds(ids);
 
     assertTrue(policy.tick(3));
@@ -278,7 +278,7 @@ public class TestSubmissionPolicy {
     assertNotNull(client.lastId);
     ids.remove("id1");
     ids.remove("id2");
-    ids.put(client.lastId, 5L);
+    ids.put(client.lastId, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     assertEquals(ids, tracker.getObsoleteIds());
 
     ExtendedJSONObject ids1 = new ExtendedJSONObject(); // First half.
@@ -287,17 +287,17 @@ public class TestSubmissionPolicy {
     for (int i = 0; i < HealthReportConstants.MAXIMUM_DELETIONS_PER_POST; i++) {
       String id1 = "x" + i;
       String id2 = "y" + i;
-      ids1.put(id1, 5L);
-      ids2.put(id2, 5L);
-      ids3.put(id1, 5L);
-      ids3.put(id2, 5L);
+      ids1.put(id1, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      ids2.put(id2, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      ids3.put(id1, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      ids3.put(id2, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     }
     tracker.setObsoleteIds(ids3);
 
     assertTrue(policy.tick(3 + policy.getMinimumTimeBetweenUploads()));
     assertNotNull(client.lastId);
     assertEquals(ids1.keySet(), new HashSet<String>(client.lastOldIds));
-    ids2.put(client.lastId, 5L);
+    ids2.put(client.lastId, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     assertEquals(ids2, tracker.getObsoleteIds());
   }
 
@@ -305,16 +305,16 @@ public class TestSubmissionPolicy {
   public void testUploadFailureMultipleObsoletes() throws Exception {
     client.upload = Response.HARD_FAILURE;
     ExtendedJSONObject ids = new ExtendedJSONObject();
-    ids.put("id1", 5L);
-    ids.put("id2", 5L);
+    ids.put("id1", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    ids.put("id2", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     tracker.setObsoleteIds(ids);
 
     assertTrue(policy.tick(3));
     assertEquals(ids.keySet(), new HashSet<String>(client.lastOldIds));
     assertNotNull(client.lastId);
-    ids.put(client.lastId, 5L);
-    ids.put("id1", 4L);
-    ids.put("id2", 4L);
+    ids.put(client.lastId, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    ids.put("id1", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID - 1);
+    ids.put("id2", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID - 1);
     assertEquals(ids, tracker.getObsoleteIds());
 
     ExtendedJSONObject ids1 = new ExtendedJSONObject(); // First half.
@@ -323,19 +323,19 @@ public class TestSubmissionPolicy {
     for (int i = 0; i < HealthReportConstants.MAXIMUM_DELETIONS_PER_POST; i++) {
       String id1 = "x" + i;
       String id2 = "y" + i;
-      ids1.put(id1, 5L);
-      ids2.put(id2, 5L);
-      ids3.put(id1, 5L);
-      ids3.put(id2, 5L);
+      ids1.put(id1, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      ids2.put(id2, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      ids3.put(id1, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      ids3.put(id2, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     }
     tracker.setObsoleteIds(ids3);
 
     assertTrue(policy.tick(3 + policy.getMinimumTimeBetweenUploads()));
     assertEquals(ids1.keySet(), new HashSet<String>(client.lastOldIds));
     assertNotNull(client.lastId);
-    ids3.put(client.lastId, 5L);
+    ids3.put(client.lastId, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     for (String id : ids1.keySet()) {
-      ids3.put(id, 4L);
+      ids3.put(id, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID - 1);
     }
     assertEquals(ids3, tracker.getObsoleteIds());
   }

@@ -45,19 +45,18 @@ public class TestObsoleteDocumentTracker {
   @Test
   public void testDecrementObsoleteIdAttempts() {
     ExtendedJSONObject ids = new ExtendedJSONObject();
-    ids.put("id1", 5L);
-    ids.put("id2", 5L);
+    ids.put("id1", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    ids.put("id2", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     tracker.setObsoleteIds(ids);
     assertEquals(ids, tracker.getObsoleteIds());
 
     tracker.decrementObsoleteIdAttempts("id1");
-    ids.put("id1", 4L);
+    ids.put("id1", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID - 1);
     assertEquals(ids, tracker.getObsoleteIds());
 
-    tracker.decrementObsoleteIdAttempts("id1"); // 3
-    tracker.decrementObsoleteIdAttempts("id1"); // 2
-    tracker.decrementObsoleteIdAttempts("id1"); // 1
-    tracker.decrementObsoleteIdAttempts("id1"); // 0 (should be gone).
+    for (int i = 0; i < HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID; i++) {
+      tracker.decrementObsoleteIdAttempts("id1");
+    }
     ids.remove("id1");
     assertEquals(ids, tracker.getObsoleteIds());
 
@@ -69,7 +68,7 @@ public class TestObsoleteDocumentTracker {
   @Test
   public void testAddObsoleteId() {
     ExtendedJSONObject ids = new ExtendedJSONObject();
-    ids.put("id1", 5L);
+    ids.put("id1", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     tracker.addObsoleteId("id1");
     assertEquals(ids, tracker.getObsoleteIds());
   }
