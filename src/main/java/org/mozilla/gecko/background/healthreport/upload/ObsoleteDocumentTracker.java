@@ -129,14 +129,12 @@ public class ObsoleteDocumentTracker {
     return new ArrayList<String>(batch.subList(0, HealthReportConstants.MAXIMUM_DELETIONS_PER_POST));
   }
 
-
-  public long getDeletionAttemptsPerObsoleteDocumentId() {
-    return sharedPrefs.getLong(HealthReportConstants.PREF_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID, HealthReportConstants.DEFAULT_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
-  }
-
   public void addObsoleteId(String id) {
     ExtendedJSONObject ids = getObsoleteIds();
-    ids.put(id, HealthReportConstants.DEFAULT_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    if (ids.size() >= HealthReportConstants.MAXIMUM_STORED_OBSOLETE_DOCUMENT_IDS) {
+      ids.remove(Collections.min(ids.keySet()));
+    }
+    ids.put(id, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
     setObsoleteIds(ids);
   }
 
@@ -155,9 +153,8 @@ public class ObsoleteDocumentTracker {
     }
     try {
       // We don't care what the order is, but let's make testing easier by
-      // being deterministic. Deleting in random order might avoid failing too
-      // many times in succession, but we expect only a single pending delete
-      // in practice.
+      // being deterministic. Deleting in random or round-robin order might
+      // avoid failing too many times in succession.
       return Collections.min(ids.keySet());
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception picking obsolete id to delete.", e);

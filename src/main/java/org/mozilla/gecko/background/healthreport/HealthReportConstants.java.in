@@ -61,8 +61,12 @@ public class HealthReportConstants {
 
   public static final String PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING = "healthreport_obsolete_document_ids_to_deletions_remaining";
 
-  public static final String PREF_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID = "healthreport_deletion_attempts_per_obsolete_document_id";
-  public static final long DEFAULT_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID = 5;
+  public static final long DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID = 5;
+
+  // We don't want to allocate unbounded storage for obsolete IDs, but we also
+  // don't want to orphan obsolete document IDs for devices offline for a few
+  // days.  This stores as many IDs as are expected to be generated in a month.
+  public static final long MAXIMUM_STORED_OBSOLETE_DOCUMENT_IDS = DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID * (DEFAULT_MAXIMUM_FAILURES_PER_DAY + 1) * 30;
 
   // Forensic.
   public static final String PREF_LAST_DELETE_REQUESTED = "healthreport_last_delete_requested";

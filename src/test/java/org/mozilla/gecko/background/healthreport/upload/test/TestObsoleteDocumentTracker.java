@@ -4,12 +4,14 @@
 package org.mozilla.gecko.background.healthreport.upload.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
+import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.upload.ObsoleteDocumentTracker;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
@@ -88,5 +90,13 @@ public class TestObsoleteDocumentTracker {
     ids.put("id1", 4L);
     ids.remove("id2");
     assertEquals(ids, tracker.getObsoleteIds());
+  }
+
+  @Test
+  public void testMaximumObsoleteIds() {
+    for (int i = 1; i < HealthReportConstants.MAXIMUM_STORED_OBSOLETE_DOCUMENT_IDS + 10; i++) {
+      tracker.addObsoleteId("id" + i);
+      assertTrue(tracker.getObsoleteIds().size() <= HealthReportConstants.MAXIMUM_STORED_OBSOLETE_DOCUMENT_IDS);
+    }
   }
 }
