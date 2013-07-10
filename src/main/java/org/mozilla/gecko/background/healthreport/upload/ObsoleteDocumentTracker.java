@@ -7,7 +7,11 @@ package org.mozilla.gecko.background.healthreport.upload;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
@@ -27,7 +31,15 @@ public class ObsoleteDocumentTracker {
   protected ExtendedJSONObject getObsoleteIds() {
     String s = sharedPrefs.getString(HealthReportConstants.PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING, null);
     if (s == null) {
-      return new ExtendedJSONObject();
+      // It's possible we're migrating an old profile forward.
+      String lastId = sharedPrefs.getString(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID, null);
+      if (lastId == null) {
+        return new ExtendedJSONObject();
+      }
+      ExtendedJSONObject ids = new ExtendedJSONObject();
+      ids.put(lastId, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      setObsoleteIds(ids);
+      return ids;
     }
     try {
       return ExtendedJSONObject.parseJSONObject(s);
@@ -110,6 +122,29 @@ public class ObsoleteDocumentTracker {
   }
 
   /**
+   * Sort Longs in decreasing order, moving null and non-Longs to the front.
+   *
+   * Public for testing only.
+   */
+  public static class PairComparator implements Comparator<Entry<String, Object>> {
+    @Override
+    public int compare(Entry<String, Object> lhs, Entry<String, Object> rhs) {
+      Object l = lhs.getValue();
+      Object r = rhs.getValue();
+      if (l == null || !(l instanceof Long)) {
+        if (r == null || !(r instanceof Long)) {
+          return 0;
+        }
+        return -1;
+      }
+      if (r == null || !(r instanceof Long)) {
+        return 1;
+      }
+      return ((Long) r).compareTo((Long) l);
+    }
+  }
+
+  /**
    * Return a batch of obsolete document IDs that should be deleted next.
    *
    * Document IDs are long and sending too many in a single request might
@@ -120,23 +155,46 @@ public class ObsoleteDocumentTracker {
    */
   public Collection<String> getBatchOfObsoleteIds() {
     ExtendedJSONObject ids = getObsoleteIds();
-    List<String> batch = new ArrayList<String>(ids.keySet());
-    Collections.sort(batch);
-    if (batch.size() < HealthReportConstants.MAXIMUM_DELETIONS_PER_POST) {
-      return batch;
+    // Sort by increasing order of key values.
+    List<Entry<String, Object>> pairs = new ArrayList<Entry<String,Object>>(ids.entrySet());
+    Collections.sort(pairs, new PairComparator());
+    List<String> batch = new ArrayList<String>(HealthReportConstants.MAXIMUM_DELETIONS_PER_POST);
+    int i = 0;
+    while (batch.size() < HealthReportConstants.MAXIMUM_DELETIONS_PER_POST && i < pairs.size()) {
+      batch.add(pairs.get(i++).getKey());
     }
-    // subList returns a view to the backing collection, which could be large.
-    return new ArrayList<String>(batch.subList(0, HealthReportConstants.MAXIMUM_DELETIONS_PER_POST));
+    return batch;
   }
 
-
-  public long getDeletionAttemptsPerObsoleteDocumentId() {
-    return sharedPrefs.getLong(HealthReportConstants.PREF_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID, HealthReportConstants.DEFAULT_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
-  }
-
+  /**
+   * Track the given document ID for eventual obsolescence and deletion.
+   * Obsolete IDs are not known to have been uploaded to the server, so we just
+   * give a best effort attempt at deleting them
+   *
+   * @param id to eventually delete.
+   */
   public void addObsoleteId(String id) {
     ExtendedJSONObject ids = getObsoleteIds();
-    ids.put(id, HealthReportConstants.DEFAULT_DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    if (ids.size() >= HealthReportConstants.MAXIMUM_STORED_OBSOLETE_DOCUMENT_IDS) {
+      // Remove the one that's been tried the most and is least likely to be
+      // known to be on the server. Since the comparator orders in decreasing
+      // order, we take the max.
+      ids.remove(Collections.max(ids.entrySet(), new PairComparator()).getKey());
+    }
+    ids.put(id, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    setObsoleteIds(ids);
+  }
+
+  /**
+   * Track the given document ID for eventual obsolescence and deletion, and
+   * give it priority since we know this ID has made it to the server, and we
+   * definitely don't want to orphan it.
+   *
+   * @param id to eventually delete.
+   */
+  public void markIdAsUploaded(String id) {
+    ExtendedJSONObject ids = getObsoleteIds();
+    ids.put(id, HealthReportConstants.DELETION_ATTEMPTS_PER_KNOWN_TO_BE_ON_SERVER_DOCUMENT_ID);
     setObsoleteIds(ids);
   }
 
@@ -154,14 +212,34 @@ public class ObsoleteDocumentTracker {
       return null;
     }
     try {
-      // We don't care what the order is, but let's make testing easier by
-      // being deterministic. Deleting in random order might avoid failing too
-      // many times in succession, but we expect only a single pending delete
-      // in practice.
-      return Collections.min(ids.keySet());
+      // Delete the one that's most likely to be known to be on the server, and
+      // that's not been tried as much. Since the comparator orders in
+      // decreasing order, we take the min.
+      return Collections.min(ids.entrySet(), new PairComparator()).getKey();
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception picking obsolete id to delete.", e);
       return null;
     }
+  }
+
+  /**
+   * We want cleaning up documents on the server to be best effort. Purge badly
+   * formed IDs and cap the number of times we try to delete so that the queue
+   * doesn't take too long.
+   */
+  public void limitObsoleteIds() {
+    ExtendedJSONObject ids = getObsoleteIds();
+
+    Set<String> keys = new HashSet<String>(ids.keySet()); // Avoid invalidating an iterator.
+    for (String key : keys) {
+      Object o = ids.get(key);
+      if (!(o instanceof Long)) {
+        continue;
+      }
+      if (((Long) o).longValue() > HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID) {
+        ids.put(key, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      }
+    }
+    setObsoleteIds(ids);
   }
 }

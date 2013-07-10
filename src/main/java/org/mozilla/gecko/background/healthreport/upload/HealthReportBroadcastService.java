@@ -146,6 +146,7 @@ public class HealthReportBroadcastService extends BackgroundService {
 
       if (hasObsoleteIds) {
         Logger.debug(LOG_TAG, "Health report upload disabled; scheduling deletion of " + tracker.numberOfObsoleteIds() + " documents.");
+        tracker.limitObsoleteIds();
       } else {
         // Primarily intended for debugging and testing.
         Logger.debug(LOG_TAG, "Health report upload disabled and no deletes to schedule: clearing prefs.");

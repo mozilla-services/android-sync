@@ -118,7 +118,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
         return;
       }
 
-      BagheeraRequestDelegate uploadDelegate = new RequestDelegate(delegate, localTime, true, null);
+      BagheeraRequestDelegate uploadDelegate = new RequestDelegate(delegate, localTime, true, id);
       this.uploadPayload(id, document.toString(), oldIds, uploadDelegate);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception generating document.", e);
@@ -155,7 +155,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
       this.localTime = localTime;
       this.isUpload = isUpload;
       this.methodString = this.isUpload ? "upload" : "delete";
-      this.id = this.isUpload ? null : id; // id is known for deletions only.
+      this.id = id;
     }
 
     @Override

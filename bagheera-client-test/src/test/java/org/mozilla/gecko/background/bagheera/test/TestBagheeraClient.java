@@ -35,6 +35,7 @@ public class TestBagheeraClient {
   public static final String LOG_TAG = TestBagheeraClient.class.getSimpleName();
 
   private static final int TEST_PORT = HTTPServerTestHelper.getTestPort();
+  private static final String TEST_URL = "http://127.0.0.1:" + TEST_PORT;
 
   private static BagheeraServerState initBagheeraServer() throws Exception {
     final String namespace = "test";
@@ -108,7 +109,7 @@ public class TestBagheeraClient {
     try {
       server = initBagheeraServer();
       TestProducer producer = (TestProducer) server.producer;
-      final BagheeraClient client = new BagheeraClient("http://127.0.0.1:" + TEST_PORT);
+      final BagheeraClient client = new BagheeraClient(TEST_URL);
       final TestBagheeraRequestDelegate delegate = new TestBagheeraRequestDelegate();
 
       final String document = "{\"abc\": 1}";
@@ -139,14 +140,15 @@ public class TestBagheeraClient {
     try {
       server = initBagheeraServer();
       TestProducer producer = (TestProducer) server.producer;
-      final BagheeraClient client = new BagheeraClient("http://127.0.0.1:" + TEST_PORT);
+      final BagheeraClient client = new BagheeraClient(TEST_URL);
       final TestBagheeraRequestDelegate delegate = new TestBagheeraRequestDelegate();
 
       final String document = "{\"abc\": 1}";
       final String[] ids = new String[] {
           "032cc07e-2b0e-d14b-a23d-55901ad3529a",
           "9f04308d-bcd2-4ff7-9315-b7564665587b",
-          "e8168d10-e35a-11e2-a28f-0800200c9a66" };
+          "e8168d10-e35a-11e2-a28f-0800200c9a66",
+          };
 
       int messageCount = 0;
       for (String id : ids) {
@@ -196,7 +198,7 @@ public class TestBagheeraClient {
       TestProducer producer = (TestProducer) server.producer;
       Assert.assertEquals(0, producer.messages.size());
 
-      final BagheeraClient client = new BagheeraClient("http://127.0.0.1:" + TEST_PORT);
+      final BagheeraClient client = new BagheeraClient(TEST_URL);
       final TestBagheeraRequestDelegate delegate = new TestBagheeraRequestDelegate();
 
       final String document = "{\"abc\": 1}";

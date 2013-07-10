@@ -4,6 +4,9 @@
 
 package org.mozilla.gecko.background.healthreport.upload;
 
+import java.net.MalformedURLException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Collection;
 
 import org.mozilla.gecko.background.common.log.Logger;
@@ -135,6 +138,20 @@ public class SubmissionPolicy {
     return true;
   }
 
+  /**
+   * Return true if the upload that produced <code>e</code> definitely did not
+   * produce a new record on the remote server.
+   *
+   * @param e
+   *          <code>Exception</code> that upload produced.
+   * @return true if the server could not have a new record.
+   */
+  protected boolean isLocalException(Exception e) {
+    return (e instanceof MalformedURLException) ||
+           (e instanceof SocketException) ||
+           (e instanceof UnknownHostException);
+  }
+
   protected class UploadDelegate implements Delegate {
     protected final Editor editor;
     protected final Collection<String> oldIds;
@@ -147,6 +164,7 @@ public class SubmissionPolicy {
     @Override
     public void onSuccess(long localTime, String id) {
       long next = localTime + getMinimumTimeBetweenUploads();
+      tracker.markIdAsUploaded(id);
       tracker.purgeObsoleteIds(oldIds);
       editor
         .setNextSubmission(next)
@@ -154,16 +172,23 @@ public class SubmissionPolicy {
         .setCurrentDayFailureCount(0)
         .commit();
       if (Logger.LOG_PERSONAL_INFORMATION) {
-        Logger.pii(LOG_TAG, "Successful upload with id " + id + " reported at " + localTime + "; next upload at " + next + ".");
+        Logger.pii(LOG_TAG, "Successful upload with id " + id + " obsoleting "
+            + oldIds.size() + " old records reported at " + localTime + "; next upload at " + next + ".");
       } else {
-        Logger.info(LOG_TAG, "Successful upload reported at " + localTime + "; next upload at " + next + ".");
+        Logger.info(LOG_TAG, "Successful upload obsoleting " + oldIds.size()
+            + " old records reported at " + localTime + "; next upload at " + next + ".");
       }
     }
 
     @Override
     public void onHardFailure(long localTime, String id, String reason, Exception e) {
       long next = localTime + getMinimumTimeBetweenUploads();
-      tracker.decrementObsoleteIdAttempts(oldIds);
+      if (isLocalException(e)) {
+        Logger.info(LOG_TAG, "Hard failure caused by local exception; not tracking id and not decrementing attempts.");
+        tracker.removeObsoleteId(id);
+      } else {
+        tracker.decrementObsoleteIdAttempts(oldIds);
+      }
       editor
         .setNextSubmission(next)
         .setLastUploadFailed(localTime)
@@ -175,15 +200,20 @@ public class SubmissionPolicy {
     @Override
     public void onSoftFailure(long localTime, String id, String reason, Exception e) {
       int failuresToday = getCurrentDayFailureCount();
-      Logger.warn(LOG_TAG, "Soft failure reported at " + localTime + ": " + reason + " Previously failed " + failuresToday + " today.");
+      Logger.warn(LOG_TAG, "Soft failure reported at " + localTime + ": " + reason + " Previously failed " + failuresToday + " time(s) today.");
 
       if (failuresToday >= getMaximumFailuresPerDay()) {
-        onHardFailure(localTime, id, "Reached the limit of daily upload attempts.", null);
+        onHardFailure(localTime, id, "Reached the limit of daily upload attempts: " + failuresToday, e);
         return;
       }
 
       long next = localTime + getMinimumTimeAfterFailure();
-      tracker.decrementObsoleteIdAttempts(oldIds);
+      if (isLocalException(e)) {
+        Logger.info(LOG_TAG, "Soft failure caused by local exception; not tracking id and not decrementing attempts.");
+        tracker.removeObsoleteId(id);
+      } else {
+        tracker.decrementObsoleteIdAttempts(oldIds);
+      }
       editor
         .setNextSubmission(next)
         .setLastUploadFailed(localTime)
@@ -203,7 +233,11 @@ public class SubmissionPolicy {
     @Override
     public void onSoftFailure(final long localTime, String id, String reason, Exception e) {
       long next = localTime + getMinimumTimeBetweenDeletes();
-      tracker.decrementObsoleteIdAttempts(id);
+      if (isLocalException(e)) {
+        Logger.info(LOG_TAG, "Soft failure caused by local exception; not decrementing attempts.");
+      } else {
+        tracker.decrementObsoleteIdAttempts(id);
+      }
       editor
         .setNextSubmission(next)
         .setLastDeleteFailed(localTime)
