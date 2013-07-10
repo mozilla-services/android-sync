@@ -154,9 +154,11 @@ public class SubmissionPolicy {
         .setCurrentDayFailureCount(0)
         .commit();
       if (Logger.LOG_PERSONAL_INFORMATION) {
-        Logger.pii(LOG_TAG, "Successful upload with id " + id + " reported at " + localTime + "; next upload at " + next + ".");
+        Logger.pii(LOG_TAG, "Successful upload with id " + id + " obsoleting "
+            + oldIds.size() + " old records reported at " + localTime + "; next upload at " + next + ".");
       } else {
-        Logger.info(LOG_TAG, "Successful upload reported at " + localTime + "; next upload at " + next + ".");
+        Logger.info(LOG_TAG, "Successful upload obsoleting " + oldIds.size()
+            + " old records reported at " + localTime + "; next upload at " + next + ".");
       }
     }
 
@@ -175,10 +177,10 @@ public class SubmissionPolicy {
     @Override
     public void onSoftFailure(long localTime, String id, String reason, Exception e) {
       int failuresToday = getCurrentDayFailureCount();
-      Logger.warn(LOG_TAG, "Soft failure reported at " + localTime + ": " + reason + " Previously failed " + failuresToday + " today.");
+      Logger.warn(LOG_TAG, "Soft failure reported at " + localTime + ": " + reason + " Previously failed " + failuresToday + " time(s) today.");
 
       if (failuresToday >= getMaximumFailuresPerDay()) {
-        onHardFailure(localTime, id, "Reached the limit of daily upload attempts.", null);
+        onHardFailure(localTime, id, "Reached the limit of daily upload attempts: " + failuresToday, null);
         return;
       }
 
