@@ -4,6 +4,9 @@
 
 package org.mozilla.gecko.background.healthreport.upload;
 
+import java.net.MalformedURLException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Collection;
 
 import org.mozilla.gecko.background.common.log.Logger;
@@ -135,6 +138,20 @@ public class SubmissionPolicy {
     return true;
   }
 
+  /**
+   * Return true if the upload that produced <code>e</code> definitely did not
+   * produce a new record on the remote server.
+   *
+   * @param e
+   *          <code>Exception</code> that upload produced.
+   * @return true if the server could not have a new record.
+   */
+  protected boolean isLocalException(Exception e) {
+    return (e instanceof MalformedURLException) ||
+           (e instanceof SocketException) ||
+           (e instanceof UnknownHostException);
+  }
+
   protected class UploadDelegate implements Delegate {
     protected final Editor editor;
     protected final Collection<String> oldIds;
@@ -165,7 +182,12 @@ public class SubmissionPolicy {
     @Override
     public void onHardFailure(long localTime, String id, String reason, Exception e) {
       long next = localTime + getMinimumTimeBetweenUploads();
-      tracker.decrementObsoleteIdAttempts(oldIds);
+      if (isLocalException(e)) {
+        Logger.debug(LOG_TAG, "Failure caused by local exception; not tracking id and not decrementing attempts.");
+        tracker.removeObsoleteId(id);
+      } else {
+        tracker.decrementObsoleteIdAttempts(oldIds);
+      }
       editor
         .setNextSubmission(next)
         .setLastUploadFailed(localTime)
@@ -185,7 +207,12 @@ public class SubmissionPolicy {
       }
 
       long next = localTime + getMinimumTimeAfterFailure();
-      tracker.decrementObsoleteIdAttempts(oldIds);
+      if (isLocalException(e)) {
+        Logger.debug(LOG_TAG, "Failure caused by local exception; not tracking id and not decrementing attempts.");
+        tracker.removeObsoleteId(id);
+      } else {
+        tracker.decrementObsoleteIdAttempts(oldIds);
+      }
       editor
         .setNextSubmission(next)
         .setLastUploadFailed(localTime)
@@ -205,7 +232,11 @@ public class SubmissionPolicy {
     @Override
     public void onSoftFailure(final long localTime, String id, String reason, Exception e) {
       long next = localTime + getMinimumTimeBetweenDeletes();
-      tracker.decrementObsoleteIdAttempts(id);
+      if (isLocalException(e)) {
+        Logger.debug(LOG_TAG, "Failure caused by local exception; not decrementing attempts.");
+      } else {
+        tracker.decrementObsoleteIdAttempts(id);
+      }
       editor
         .setNextSubmission(next)
         .setLastDeleteFailed(localTime)

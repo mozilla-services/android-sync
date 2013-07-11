@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -31,15 +32,16 @@ public class TestSubmissionPolicy {
     public enum Response { SUCCESS, SOFT_FAILURE, HARD_FAILURE };
     public Response upload = Response.SUCCESS;
     public Response delete = Response.SUCCESS;
+    public Exception exception = null;
 
     protected void response(long localTime, String id, Delegate delegate, Response response) {
       lastId = id;
       switch (response) {
       case SOFT_FAILURE:
-        delegate.onSoftFailure(localTime, id, "Soft failure.", null);
+        delegate.onSoftFailure(localTime, id, "Soft failure.", exception);
         break;
       case HARD_FAILURE:
-        delegate.onHardFailure(localTime, id, "Hard failure.", null);
+        delegate.onHardFailure(localTime, id, "Hard failure.", exception);
         break;
       default:
         delegate.onSuccess(localTime, id);
@@ -338,5 +340,42 @@ public class TestSubmissionPolicy {
       ids3.put(id, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID - 1);
     }
     assertEquals(ids3, tracker.getObsoleteIds());
+  }
+
+  @Test
+  public void testUploadLocalFailure() throws Exception {
+    client.upload = Response.HARD_FAILURE;
+    client.exception = new UnknownHostException();
+
+    // We shouldn't add an id for a local exception.
+    assertFalse(tracker.hasObsoleteIds());
+    assertTrue(policy.tick(3));
+    assertFalse(tracker.hasObsoleteIds());
+
+    // And we shouldn't decrement the obsolete-delete attempts map.
+    ExtendedJSONObject ids = new ExtendedJSONObject();
+    ids.put("id1", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    ids.put("id2", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    tracker.setObsoleteIds(ids);
+
+    assertTrue(policy.tick(3 + policy.getMinimumTimeBetweenUploads()));
+    assertEquals(ids, tracker.getObsoleteIds());
+  }
+
+  @Test
+  public void testDisabledLocalFailure() throws Exception {
+    client.delete = Response.SOFT_FAILURE;
+    client.exception = new UnknownHostException();
+
+    policy = new SubmissionPolicy(sharedPrefs, client, tracker, false);
+    setMinimumTimeBetweenUploads(policy.getMinimumTimeBetweenUploads() - 1);
+    ExtendedJSONObject ids = new ExtendedJSONObject();
+    ids.put("id1", 5L);
+    ids.put("id2", 3L);
+    tracker.setObsoleteIds(ids);
+
+    assertTrue(policy.tick(3));
+    // The upload fails locally, so we shouldn't decrement attempts remaining.
+    assertEquals(ids, tracker.getObsoleteIds());
   }
 }
