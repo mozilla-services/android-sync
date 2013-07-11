@@ -164,6 +164,7 @@ public class SubmissionPolicy {
     @Override
     public void onSuccess(long localTime, String id) {
       long next = localTime + getMinimumTimeBetweenUploads();
+      tracker.markIdAsUploaded(id);
       tracker.purgeObsoleteIds(oldIds);
       editor
         .setNextSubmission(next)

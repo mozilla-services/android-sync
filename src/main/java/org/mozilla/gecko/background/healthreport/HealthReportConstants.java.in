@@ -62,13 +62,24 @@ public class HealthReportConstants {
   public static final String PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING = "healthreport_obsolete_document_ids_to_deletions_remaining";
 
   // We don't want to try to delete forever, but we also don't want to orphan
-  // obsolete document IDs from devices offline for a few days.  This tries to
-  // delete document IDs for at least one week.
+  // obsolete document IDs from devices that fail to reach the server for a few
+  // days.  This tries to delete document IDs for at least one week (of upload
+  // failures).  Note that if the device is really offline, no upload is
+  // performed and our count of attempts is not altered.
   public static final long DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID = (DEFAULT_MAXIMUM_FAILURES_PER_DAY + 1) * 7;
 
+  // If we absolutely know that a document ID reached the server, we really
+  // don't want to orphan it.  This tries to delete document IDs that will
+  // definitely be orphaned for at least six weeks (of upload failures).  Note
+  // that if the device is really offline, no upload is performed and our count
+  // of attempts is not altered.
+  public static final long DELETION_ATTEMPTS_PER_KNOWN_TO_BE_ON_SERVER_DOCUMENT_ID = (DEFAULT_MAXIMUM_FAILURES_PER_DAY + 1) * 7 * 6;
+
   // We don't want to allocate unbounded storage for obsolete IDs, but we also
-  // don't want to orphan obsolete document IDs from devices offline for a few
-  // days.  This stores as many IDs as are expected to be generated in a month.
+  // don't want to orphan obsolete document IDs from devices that fail to delete
+  // for a few days.  This stores as many IDs as are expected to be generated in
+  // a month.  Note that if the device is really offline, no upload is performed
+  // and our count of attempts is not altered.
   public static final long MAXIMUM_STORED_OBSOLETE_DOCUMENT_IDS = (DEFAULT_MAXIMUM_FAILURES_PER_DAY + 1) * 30;
 
   // Forensic.

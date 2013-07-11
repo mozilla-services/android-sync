@@ -6,7 +6,14 @@ package org.mozilla.gecko.background.healthreport.upload.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -112,5 +119,39 @@ public class TestObsoleteDocumentTracker {
     assertEquals(ids, tracker.getObsoleteIds());
 
     assertTrue(sharedPrefs.contains(HealthReportConstants.PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING));
+  }
+
+  @Test
+  public void testGetBatchOfObsoleteIds() {
+    ExtendedJSONObject ids = new ExtendedJSONObject();
+    for (int i = 0; i < 2 * HealthReportConstants.MAXIMUM_DELETIONS_PER_POST + 10; i++) {
+      ids.put("id" + (100 - i), Long.valueOf(100 - i));
+    }
+    tracker.setObsoleteIds(ids);
+
+    Set<String> expected = new HashSet<String>();
+    for (int i = 0; i < HealthReportConstants.MAXIMUM_DELETIONS_PER_POST; i++) {
+      expected.add("id" + (100 - i));
+    }
+    assertEquals(expected, new HashSet<String>(tracker.getBatchOfObsoleteIds()));
+  }
+
+  @Test
+  public void testPairComparator() {
+    // Make sure that malformed entries get sorted first.
+    ArrayList<Entry<String, Object>> list = new ArrayList<Entry<String,Object>>();
+    list.add(new SimpleImmutableEntry<String, Object>("a", null));
+    list.add(new SimpleImmutableEntry<String, Object>("d", Long.valueOf(5)));
+    list.add(new SimpleImmutableEntry<String, Object>("e", Long.valueOf(1)));
+    list.add(new SimpleImmutableEntry<String, Object>("c", Long.valueOf(10)));
+    list.add(new SimpleImmutableEntry<String, Object>("b", "test"));
+    Collections.sort(list, new ObsoleteDocumentTracker.PairComparator());
+
+    ArrayList<String> got = new ArrayList<String>();
+    for (Entry<String, Object> pair : list) {
+      got.add(pair.getKey());
+    }
+    List<String> exp = Arrays.asList(new String[] { "a", "b", "c", "d", "e" });
+    assertEquals(exp, got);
   }
 }
