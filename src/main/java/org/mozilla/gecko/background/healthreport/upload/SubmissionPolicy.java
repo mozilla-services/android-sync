@@ -184,7 +184,7 @@ public class SubmissionPolicy {
     public void onHardFailure(long localTime, String id, String reason, Exception e) {
       long next = localTime + getMinimumTimeBetweenUploads();
       if (isLocalException(e)) {
-        Logger.debug(LOG_TAG, "Failure caused by local exception; not tracking id and not decrementing attempts.");
+        Logger.info(LOG_TAG, "Hard failure caused by local exception; not tracking id and not decrementing attempts.");
         tracker.removeObsoleteId(id);
       } else {
         tracker.decrementObsoleteIdAttempts(oldIds);
@@ -203,13 +203,13 @@ public class SubmissionPolicy {
       Logger.warn(LOG_TAG, "Soft failure reported at " + localTime + ": " + reason + " Previously failed " + failuresToday + " time(s) today.");
 
       if (failuresToday >= getMaximumFailuresPerDay()) {
-        onHardFailure(localTime, id, "Reached the limit of daily upload attempts: " + failuresToday, null);
+        onHardFailure(localTime, id, "Reached the limit of daily upload attempts: " + failuresToday, e);
         return;
       }
 
       long next = localTime + getMinimumTimeAfterFailure();
       if (isLocalException(e)) {
-        Logger.debug(LOG_TAG, "Failure caused by local exception; not tracking id and not decrementing attempts.");
+        Logger.info(LOG_TAG, "Soft failure caused by local exception; not tracking id and not decrementing attempts.");
         tracker.removeObsoleteId(id);
       } else {
         tracker.decrementObsoleteIdAttempts(oldIds);
@@ -234,7 +234,7 @@ public class SubmissionPolicy {
     public void onSoftFailure(final long localTime, String id, String reason, Exception e) {
       long next = localTime + getMinimumTimeBetweenDeletes();
       if (isLocalException(e)) {
-        Logger.debug(LOG_TAG, "Failure caused by local exception; not decrementing attempts.");
+        Logger.info(LOG_TAG, "Soft failure caused by local exception; not decrementing attempts.");
       } else {
         tracker.decrementObsoleteIdAttempts(id);
       }
