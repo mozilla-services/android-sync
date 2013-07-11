@@ -27,7 +27,15 @@ public class ObsoleteDocumentTracker {
   protected ExtendedJSONObject getObsoleteIds() {
     String s = sharedPrefs.getString(HealthReportConstants.PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING, null);
     if (s == null) {
-      return new ExtendedJSONObject();
+      // It's possible we're migrating an old profile forward.
+      String lastId = sharedPrefs.getString(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID, null);
+      if (lastId == null) {
+        return new ExtendedJSONObject();
+      }
+      ExtendedJSONObject ids = new ExtendedJSONObject();
+      ids.put(lastId, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      setObsoleteIds(ids);
+      return ids;
     }
     try {
       return ExtendedJSONObject.parseJSONObject(s);

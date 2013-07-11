@@ -98,4 +98,19 @@ public class TestObsoleteDocumentTracker {
       assertTrue(tracker.getObsoleteIds().size() <= HealthReportConstants.MAXIMUM_STORED_OBSOLETE_DOCUMENT_IDS);
     }
   }
+
+  @Test
+  public void testMigration() {
+    ExtendedJSONObject ids = new ExtendedJSONObject();
+    assertEquals(ids, tracker.getObsoleteIds());
+
+    sharedPrefs.edit()
+      .putString(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID, "id")
+      .commit();
+
+    ids.put("id", HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    assertEquals(ids, tracker.getObsoleteIds());
+
+    assertTrue(sharedPrefs.contains(HealthReportConstants.PREF_OBSOLETE_DOCUMENT_IDS_TO_DELETION_ATTEMPTS_REMAINING));
+  }
 }
