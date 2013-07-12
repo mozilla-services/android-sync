@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
@@ -218,5 +220,26 @@ public class ObsoleteDocumentTracker {
       Logger.warn(LOG_TAG, "Got exception picking obsolete id to delete.", e);
       return null;
     }
+  }
+
+  /**
+   * We want cleaning up documents on the server to be best effort. Purge badly
+   * formed IDs and cap the number of times we try to delete so that the queue
+   * doesn't take too long.
+   */
+  public void limitObsoleteIds() {
+    ExtendedJSONObject ids = getObsoleteIds();
+
+    Set<String> keys = new HashSet<String>(ids.keySet()); // Avoid invalidating an iterator.
+    for (String key : keys) {
+      Object o = ids.get(key);
+      if (!(o instanceof Long)) {
+        continue;
+      }
+      if (((Long) o).longValue() > HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID) {
+        ids.put(key, HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+      }
+    }
+    setObsoleteIds(ids);
   }
 }

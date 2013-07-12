@@ -154,4 +154,21 @@ public class TestObsoleteDocumentTracker {
     List<String> exp = Arrays.asList(new String[] { "a", "b", "c", "d", "e" });
     assertEquals(exp, got);
   }
+
+  @Test
+  public void testLimitObsoleteIds() {
+    ExtendedJSONObject ids = new ExtendedJSONObject();
+    for (long i = -HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID; i < HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID; i++) {
+      long j = 1 + HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID + i;
+      ids.put("id" + j, j);
+    }
+    tracker.setObsoleteIds(ids);
+    tracker.limitObsoleteIds();
+
+    assertEquals(ids.keySet(), tracker.getObsoleteIds().keySet());
+    ExtendedJSONObject got = tracker.getObsoleteIds();
+    for (String id : ids.keySet()) {
+      assertTrue(got.getLong(id).longValue() <= HealthReportConstants.DELETION_ATTEMPTS_PER_OBSOLETE_DOCUMENT_ID);
+    }
+  }
 }
