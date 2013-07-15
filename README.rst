@@ -219,7 +219,8 @@ The advantage of not downloading them automatically is that if you
 want to create more virtual machines, the files won't need to be
 downloaded again.
 
-   
+1. Sun Java JDK
+
    Go to
    http://www.oracle.com/technetwork/java/javase/downloads/index.html
    select the latest version, accept the license agreement, and
@@ -227,23 +228,25 @@ downloaded again.
    ``jdk-VERSION-linux-i586.tar.gz``.  That file needs to go in the
    directory ``puppet/modules/data/files/``.
 
-   
+2. Sun Java Cryptography Policy
+
    We need the Java Cryptography Extension (JCE) Unlimited Strength
    Jurisdiction Policy Files 7 to perform strong encryption.
-   
+
    Go to
    http://www.oracle.com/technetwork/java/javase/downloads/jce-7-download-432124.html
    accept the license agreement, and download the file named
    ``UnlimitedJCEPolicyJDK7.zip``.  That file also needs to go in the
    directory ``puppet/modules/data/files/``.
 
-   
+3. Google Android SDK, platform, and platform tools
+
    Download the following files:
-   
+
    * http://dl.google.com/android/android-sdk_r21.1-linux.tgz
    * http://dl-ssl.google.com/android/repository/android-17_r02.zip
    * http://dl-ssl.google.com/android/repository/platform-tools_r16.0.2-linux.zip
-   
+
    They all need to go in the same directory ``puppet/modules/data/files/``.
 
 At the end, you should have the following files: ::
@@ -361,6 +364,78 @@ and then it should run all the tests and report success: ::
   [INFO] Finished at: Thu Mar 14 00:25:49 UTC 2013
   [INFO] Final Memory: 30M/88M
   [INFO] ------------------------------------------------------------------------
+
+Testing
+=======
+
+There are two test suites: a unit test suite that runs locally on your
+development machine and an integration test suite that runs on your Android
+device.  You need to have Fennec installed on your device, and you need to
+configure ``./preprocess.ini`` correctly in order to run the integration test
+suite.
+
+Remember that any changes to preprocessed source files will need
+``./preprocess.py`` to be run before any of the commands below, and you may
+want to ``mvn clean`` to ensure all artifacts are up-to-date.
+
+Unit testing
+------------
+
+The source files for the JUnit 4 unit test suite may be found in
+``src/test/java/``.  The unit test suite can be run with the following
+command: ::
+
+  mvn test
+
+Running the unit test suite under Eclipse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run the unit test suite under Eclipse:
+
+1. first configure the test suite launcher: under ``Preferences > Run/Debug >
+   Launching > Default Launchers``, set the Debug and Run launchers to
+   ``Android JUnit Test Launcher``;
+2. select the ``android-sync`` project and execute ``Run > Run As ... > JUnit
+   Test``.
+
+You can debug under Eclipse using ``Debug > Debug As ... > JUnit Test.``.
+
+Debugging the unit test suite with jdb
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The test suite can open a port for a remote debugger and wait for a connection
+with the following command (tested with Maven 3.0.5, Arch Linux): ::
+
+  mvn -Dmaven.surefire.debug test
+
+Any remote debugger can be attached to this open port (by default port 5005).
+For example, you can attach jdb by specifying the port and the associated
+source directories: ::
+
+  jdb -attach 5005 -sourcepath "src/main/java/:src/test/java/"
+
+Integration testing
+-------------------
+
+The source files for the JUnit 3 integration test suite, also known as the
+"Android instrumentation" test suite, may be found in ``test``.  The
+integration test suite can be run with the following command: ::
+
+  mvn integration-test
+
+Running the integration test suite under Eclipse
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run the integration test suite under Eclipse:
+
+1. add the ``test`` subdirectory as a sub-project using ``File > Import >
+   Existing project``;
+2. refresh and clean everything;
+3. select the ``test`` project and execute ``Run > Run As ... > Android JUnit
+   Test``.
+
+You can debug under Eclipse using ``Debug > Debug As ... > Android JUnit
+Test.``.
 
 Landing code: getting your changes committed to android-sync and mozilla-inbound
 ================================================================================
@@ -488,7 +563,10 @@ Updating Bugzilla
 This is not Android services specific, but we'll call it out anyway.
 You need to:
 
+1. set the Bugzilla ticket status as ASSIGNED to the author of the commits;
+2. add the changeset URL that ``hg push`` reports to the Bugzilla
    ticket;
+3. and set the target milestone.
 
 Stub/unstub dependencies and the android-sync GitHub-hosted Maven repository
 ============================================================================
