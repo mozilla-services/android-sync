@@ -17,6 +17,8 @@ that ship with Firefox for Android.  These include, or will include:
 
 #include docs/vagrant.rst
 
+#include docs/testing.rst
+
 #include docs/landing-code.rst
 
 #include docs/dependencies.rst
