@@ -365,18 +365,18 @@ and then it should run all the tests and report success: ::
 Testing
 =======
 
-There are two test suites: an integration test suite using that runs locally on
-your machine and the android instrumentation unit test suite using that will
-run via your Android device.
+There are two test suites: a unit test suite that runs locally on your
+development machine and an integration test suite that runs via your Android
+device.
 
 Remember that any changes to preprocessed source files will need
 ``./preprocess.py`` to be run before any of the commands below.
 
-Integration testing
--------------------
+Unit testing
+------------
 
-The source files for this test suite may be found in ``./src/test``. The test
-suite can be run with the following command: ::
+The source files for the JUnit 4 unit test suite may be found in
+``./src/test/java/``.  The test suite can be run with the following command: ::
 
   mvn clean test
 
@@ -397,15 +397,16 @@ source directories: ::
 Eclipse
 ~~~~~~~
 
-For information on how to run the integration tests with Eclipse, please see
-the `integration testing section of the Mozilla Wiki`_.
+For information on how to run the unit tests with Eclipse, please see the
+`unit testing section of the Mozilla Wiki`_.
 
-.. _`integration testing section of the Mozilla Wiki`: https://wiki.mozilla.org/Services/NativeSync#To_run_the_integration_test_suite_under_Eclipse
+.. _`unit testing section of the Mozilla Wiki`: https://wiki.mozilla.org/Services/NativeSync#To_run_the_unit_test_suite_under_Eclipse
 
-Unit testing
-------------
+Integration testing
+-------------------
 
-The source files for this test suite may be found in ``./test``.
+The source files for the JUnit 3 integration test suite, also known as the
+"Android instrumentation" test suite, may be found in ``./test``.
 
 TODO: Add additional information to this section. Tests may still be run from
 Eclipse (see below).
@@ -413,10 +414,10 @@ Eclipse (see below).
 Eclipse
 ~~~~~~~
 
-For information on how to run the unit tests with Eclipse, please see the
-`unit testing section of the Mozilla Wiki`_.
+For information on how to run the integration tests with Eclipse, please see
+the `integration testing section of the Mozilla Wiki`_.
 
-.. _`unit testing section of the Mozilla Wiki`: https://wiki.mozilla.org/Services/NativeSync#To_run_the_unit_test_suite_under_Eclipse
+.. _`integration testing section of the Mozilla Wiki`: https://wiki.mozilla.org/Services/NativeSync#To_run_the_integration_test_suite_under_Eclipse
 
 Landing code: getting your changes committed to android-sync and mozilla-inbound
 ================================================================================
