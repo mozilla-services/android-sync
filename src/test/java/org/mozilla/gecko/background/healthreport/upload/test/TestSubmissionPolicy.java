@@ -143,30 +143,34 @@ public class TestSubmissionPolicy {
 
   @Test
   public void testUploadSoftFailure() throws Exception {
-    assertTrue(policy.tick(0));
+    final long initialUploadTime = 0;
+    assertTrue(policy.tick(initialUploadTime));
     client.upload = Response.SOFT_FAILURE;
 
-    assertTrue(policy.tick(2*policy.getMinimumTimeBetweenUploads()));
-    assertEquals(2*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
-    assertEquals(2*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
+    final long secondUploadTime = initialUploadTime + policy.getMinimumTimeBetweenUploads();
+    assertTrue(policy.tick(secondUploadTime));
+    assertEquals(secondUploadTime, policy.getLastUploadRequested());
+    assertEquals(secondUploadTime, policy.getLastUploadFailed());
     assertEquals(1, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeAfterFailure(), policy.getNextSubmission());
     assertNotNull(client.lastId);
     assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
     client.lastId = null;
 
-    assertTrue(policy.tick(3*policy.getMinimumTimeBetweenUploads()));
-    assertEquals(3*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
-    assertEquals(3*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
+    final long thirdUploadTime = secondUploadTime + policy.getMinimumTimeAfterFailure();
+    assertTrue(policy.tick(thirdUploadTime));
+    assertEquals(thirdUploadTime, policy.getLastUploadRequested());
+    assertEquals(thirdUploadTime, policy.getLastUploadFailed());
     assertEquals(2, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeAfterFailure(), policy.getNextSubmission());
     assertNotNull(client.lastId);
     assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
     client.lastId = null;
 
-    assertTrue(policy.tick(4*policy.getMinimumTimeBetweenUploads()));
-    assertEquals(4*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
-    assertEquals(4*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
+    final long fourthUploadTime = thirdUploadTime + policy.getMinimumTimeAfterFailure();
+    assertTrue(policy.tick(fourthUploadTime));
+    assertEquals(fourthUploadTime, policy.getLastUploadRequested());
+    assertEquals(fourthUploadTime, policy.getLastUploadFailed());
     assertEquals(0, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeBetweenUploads(), policy.getNextSubmission());
     assertNotNull(client.lastId);
