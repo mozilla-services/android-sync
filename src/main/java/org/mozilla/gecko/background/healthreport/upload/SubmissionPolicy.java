@@ -72,13 +72,6 @@ public class SubmissionPolicy {
    * @return true if a request was spawned; false otherwise.
    */
   public boolean tick(final long localTime) {
-    if (localTime >= getCurrentDayResetTime()) {
-      editor()
-        .setCurrentDayResetTime(localTime + getMinimumTimeBetweenUploads())
-        .setCurrentDayFailureCount(0)
-        .commit();
-    }
-
     final long nextUpload = getNextSubmission();
 
     // If the system clock were ever set to a time in the distant future,
@@ -130,9 +123,21 @@ public class SubmissionPolicy {
         .commit();
     }
 
+    // This case will occur if the nextSubmission time is not set (== -1) but firstRun is.
     if (localTime < firstRun + getMinimumTimeBeforeFirstSubmission()) {
       Logger.info(LOG_TAG, "Need to wait " + getMinimumTimeBeforeFirstSubmission() + " before first upload.");
       return false;
+    }
+
+    // The first upload attempt for a given document submission begins a 24-hour period in which
+    // the upload will retry upon a soft failure. At the end of this period, the submission
+    // failure count is reset, ensuring each day's first submission attempt has a zeroed failure
+    // count. A period may also end on upload success or hard failure.
+    if (localTime >= getCurrentDayResetTime()) {
+      editor()
+        .setCurrentDayResetTime(localTime + getMinimumTimeBetweenUploads())
+        .setCurrentDayFailureCount(0)
+        .commit();
     }
 
     String id = HealthReportUtils.generateDocumentId();
@@ -177,6 +182,7 @@ public class SubmissionPolicy {
         .setNextSubmission(next)
         .setLastUploadSucceeded(localTime)
         .setCurrentDayFailureCount(0)
+        .clearCurrentDayResetTime() // Set again on the next submission's first upload attempt.
         .commit();
       if (Logger.LOG_PERSONAL_INFORMATION) {
         Logger.pii(LOG_TAG, "Successful upload with id " + id + " obsoleting "
@@ -200,6 +206,7 @@ public class SubmissionPolicy {
         .setNextSubmission(next)
         .setLastUploadFailed(localTime)
         .setCurrentDayFailureCount(0)
+        .clearCurrentDayResetTime() // Set again on the next submission's first upload attempt.
         .commit();
       Logger.warn(LOG_TAG, "Hard failure reported at " + localTime + ": " + reason + " Next upload at " + next + ".", e);
     }
@@ -371,6 +378,12 @@ public class SubmissionPolicy {
     // Authoritative.
     public Editor setCurrentDayResetTime(long resetTime) {
       editor.putLong(HealthReportConstants.PREF_CURRENT_DAY_RESET_TIME, resetTime);
+      return this;
+    }
+
+    // Authoritative.
+    public Editor clearCurrentDayResetTime() {
+      editor.putLong(HealthReportConstants.PREF_CURRENT_DAY_RESET_TIME, -1);
       return this;
     }
 

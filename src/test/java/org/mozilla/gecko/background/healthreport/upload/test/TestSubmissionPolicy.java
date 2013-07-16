@@ -74,14 +74,6 @@ public class TestSubmissionPolicy {
     sharedPrefs.edit().putLong(HealthReportConstants.PREF_MINIMUM_TIME_BEFORE_FIRST_SUBMISSION, time).commit();
   }
 
-  public void setMaximumFailuresPerDay(long count) {
-    sharedPrefs.edit().putLong(HealthReportConstants.PREF_MAXIMUM_FAILURES_PER_DAY, count).commit();
-  }
-
-  public void setMinimumTimeAfterFailure(long count) {
-    sharedPrefs.edit().putLong(HealthReportConstants.PREF_MINIMUM_TIME_AFTER_FAILURE, count).commit();
-  }
-
   public void setCurrentDayFailureCount(long count) {
     sharedPrefs.edit().putLong(HealthReportConstants.PREF_CURRENT_DAY_FAILURE_COUNT, count).commit();
   }
@@ -395,8 +387,6 @@ public class TestSubmissionPolicy {
   @Test
   public void testUploadFailureCountResetAfterOneDay() throws Exception {
     client.upload = Response.SOFT_FAILURE;
-    setMaximumFailuresPerDay(5); // Ensure we don't hit a hard failure.
-    setMinimumTimeAfterFailure(1); // Ensure uploadTime + minimumTimeAfterFailure < resetTime.
     assertEquals(0, policy.getCurrentDayFailureCount());
     assertEquals(-1, policy.getCurrentDayResetTime());
 
@@ -415,5 +405,31 @@ public class TestSubmissionPolicy {
     final long secondResetTime = initialResetTime + policy.getMinimumTimeBetweenUploads();
     assertEquals(secondResetTime, policy.getCurrentDayResetTime());
     assertEquals(1, policy.getCurrentDayFailureCount());
+  }
+
+  @Test
+  public void testUploadFailureCountResetAfterUploadSuccess() throws Exception {
+    client.upload = Response.SOFT_FAILURE;
+    final long uploadTime = 0;
+    assertTrue(policy.tick(uploadTime));
+    assertEquals(1, policy.getCurrentDayFailureCount());
+
+    client.upload = Response.SUCCESS;
+    assertTrue(policy.tick(uploadTime + policy.getMinimumTimeAfterFailure()));
+    assertEquals(-1, policy.getCurrentDayResetTime());
+    assertEquals(0, policy.getCurrentDayFailureCount());
+  }
+
+  @Test
+  public void testUploadFailureCountResetAfterUploadHardFailure() throws Exception {
+    client.upload = Response.SOFT_FAILURE;
+    final long uploadTime = 0;
+    assertTrue(policy.tick(uploadTime));
+    assertEquals(1, policy.getCurrentDayFailureCount());
+
+    client.upload = Response.HARD_FAILURE;
+    assertTrue(policy.tick(uploadTime + policy.getMinimumTimeAfterFailure()));
+    assertEquals(-1, policy.getCurrentDayResetTime());
+    assertEquals(0, policy.getCurrentDayFailureCount());
   }
 }
