@@ -72,6 +72,13 @@ public class SubmissionPolicy {
    * @return true if a request was spawned; false otherwise.
    */
   public boolean tick(final long localTime) {
+    if (localTime >= getCurrentDayResetTime()) {
+      editor()
+        .setCurrentDayResetTime(localTime + getMinimumTimeBetweenUploads())
+        .setCurrentDayFailureCount(0)
+        .commit();
+    }
+
     final long nextUpload = getNextSubmission();
 
     // If the system clock were ever set to a time in the distant future,
@@ -319,6 +326,11 @@ public class SubmissionPolicy {
     return getSharedPreferences().getInt(HealthReportConstants.PREF_CURRENT_DAY_FAILURE_COUNT, 0);
   }
 
+  // Authoritative.
+  public long getCurrentDayResetTime() {
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_CURRENT_DAY_RESET_TIME, -1);
+  }
+
   /**
    * To avoid writing to disk multiple times, we encapsulate writes in a
    * helper class. Be sure to call <code>commit</code> to flush to disk!
@@ -353,6 +365,12 @@ public class SubmissionPolicy {
     // Authoritative.
     public Editor setCurrentDayFailureCount(int failureCount) {
       editor.putInt(HealthReportConstants.PREF_CURRENT_DAY_FAILURE_COUNT, failureCount);
+      return this;
+    }
+
+    // Authoritative.
+    public Editor setCurrentDayResetTime(long resetTime) {
+      editor.putLong(HealthReportConstants.PREF_CURRENT_DAY_RESET_TIME, resetTime);
       return this;
     }
 

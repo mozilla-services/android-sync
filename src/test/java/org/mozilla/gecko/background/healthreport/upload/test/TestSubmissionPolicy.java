@@ -74,6 +74,14 @@ public class TestSubmissionPolicy {
     sharedPrefs.edit().putLong(HealthReportConstants.PREF_MINIMUM_TIME_BEFORE_FIRST_SUBMISSION, time).commit();
   }
 
+  public void setMaximumFailuresPerDay(long count) {
+    sharedPrefs.edit().putLong(HealthReportConstants.PREF_MAXIMUM_FAILURES_PER_DAY, count).commit();
+  }
+
+  public void setMinimumTimeAfterFailure(long count) {
+    sharedPrefs.edit().putLong(HealthReportConstants.PREF_MINIMUM_TIME_AFTER_FAILURE, count).commit();
+  }
+
   public void setCurrentDayFailureCount(long count) {
     sharedPrefs.edit().putLong(HealthReportConstants.PREF_CURRENT_DAY_FAILURE_COUNT, count).commit();
   }
@@ -378,5 +386,30 @@ public class TestSubmissionPolicy {
     assertTrue(policy.tick(3));
     // The upload fails locally, so we shouldn't decrement attempts remaining.
     assertEquals(ids, tracker.getObsoleteIds());
+  }
+
+  @Test
+  public void testUploadFailureCountResetAfterOneDay() throws Exception {
+    client.upload = Response.SOFT_FAILURE;
+    setMaximumFailuresPerDay(5); // Ensure we don't hit a hard failure.
+    setMinimumTimeAfterFailure(1); // Ensure uploadTime + minimumTimeAfterFailure < resetTime.
+    assertEquals(0, policy.getCurrentDayFailureCount());
+    assertEquals(-1, policy.getCurrentDayResetTime());
+
+    final long initialUploadTime = 0;
+    assertTrue(policy.tick(initialUploadTime));
+    final long initialResetTime = initialUploadTime + policy.getMinimumTimeBetweenUploads();
+    assertEquals(initialResetTime, policy.getCurrentDayResetTime());
+    assertEquals(1, policy.getCurrentDayFailureCount());
+
+    final long secondUploadTime = initialUploadTime + policy.getMinimumTimeAfterFailure();
+    assertTrue(policy.tick(secondUploadTime));
+    assertEquals(initialResetTime, policy.getCurrentDayResetTime());
+    assertEquals(2, policy.getCurrentDayFailureCount());
+
+    assertTrue(policy.tick(initialResetTime));
+    final long secondResetTime = initialResetTime + policy.getMinimumTimeBetweenUploads();
+    assertEquals(secondResetTime, policy.getCurrentDayResetTime());
+    assertEquals(1, policy.getCurrentDayFailureCount());
   }
 }
