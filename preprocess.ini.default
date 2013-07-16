@@ -73,3 +73,5 @@ MOZ_MIN_CPU_VERSION = 7
 MOZ_PKG_SPECIAL = null
 OS_TARGET = Android
 TARGET_XPCOM_ABI = arm-eabi-gcc3
+
+OMNIJAR_NAME = omni.ja
