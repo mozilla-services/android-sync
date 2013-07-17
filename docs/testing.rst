@@ -25,10 +25,10 @@ Running the unit test suite under Eclipse
 
 To run the unit test suite under Eclipse:
 
-#. first configure the test suite launcher: under ``Preferences > Run/Debug >
+1. first configure the test suite launcher: under ``Preferences > Run/Debug >
    Launching > Default Launchers``, set the Debug and Run launchers to
    ``Android JUnit Test Launcher``;
-#. select the ``android-sync`` project and execute ``Run > Run As ... > JUnit
+1. select the ``android-sync`` project and execute ``Run > Run As ... > JUnit
    Test``.
 
 You can debug under Eclipse using ``Debug > Debug As ... > JUnit Test.``.
@@ -61,10 +61,10 @@ Running the integration test suite under Eclipse
 
 To run the integration test suite under Eclipse:
 
-#. add the ``test`` subdirectory as a sub-project using ``File > Import >
+1. add the ``test`` subdirectory as a sub-project using ``File > Import >
    Existing project``;
-#. refresh and clean everything;
-#. select the ``test`` project and execute ``Run > Run As ... > Android JUnit
+1. refresh and clean everything;
+1. select the ``test`` project and execute ``Run > Run As ... > Android JUnit
    Test``.
 
 You can debug under Eclipse using ``Debug > Debug As ... > Android JUnit

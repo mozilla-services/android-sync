@@ -124,7 +124,7 @@ Updating Bugzilla
 This is not Android services specific, but we'll call it out anyway.
 You need to:
 
-#. set the Bugzilla ticket status as ASSIGNED to the author of the commits;
-#. add the changeset URL that ``hg push`` reports to the Bugzilla
+1. set the Bugzilla ticket status as ASSIGNED to the author of the commits;
+1. add the changeset URL that ``hg push`` reports to the Bugzilla
    ticket;
-#. and set the target milestone.
+1. and set the target milestone.

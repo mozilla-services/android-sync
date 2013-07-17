@@ -51,7 +51,7 @@ The advantage of not downloading them automatically is that if you
 want to create more virtual machines, the files won't need to be
 downloaded again.
 
-#. Sun Java JDK
+1. Sun Java JDK
    
    Go to
    http://www.oracle.com/technetwork/java/javase/downloads/index.html
@@ -60,7 +60,7 @@ downloaded again.
    ``jdk-VERSION-linux-i586.tar.gz``.  That file needs to go in the
    directory ``puppet/modules/data/files/``.
 
-#. Sun Java Cryptography Policy
+1. Sun Java Cryptography Policy
    
    We need the Java Cryptography Extension (JCE) Unlimited Strength
    Jurisdiction Policy Files 7 to perform strong encryption.
@@ -71,7 +71,7 @@ downloaded again.
    ``UnlimitedJCEPolicyJDK7.zip``.  That file also needs to go in the
    directory ``puppet/modules/data/files/``.
 
-#. Google Android SDK, platform, and platform tools
+1. Google Android SDK, platform, and platform tools
    
    Download the following files:
    
