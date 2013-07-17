@@ -219,6 +219,7 @@ The advantage of not downloading them automatically is that if you
 want to create more virtual machines, the files won't need to be
 downloaded again.
 
+1. Sun Java JDK
    
    Go to
    http://www.oracle.com/technetwork/java/javase/downloads/index.html
@@ -227,6 +228,7 @@ downloaded again.
    ``jdk-VERSION-linux-i586.tar.gz``.  That file needs to go in the
    directory ``puppet/modules/data/files/``.
 
+1. Sun Java Cryptography Policy
    
    We need the Java Cryptography Extension (JCE) Unlimited Strength
    Jurisdiction Policy Files 7 to perform strong encryption.
@@ -237,6 +239,7 @@ downloaded again.
    ``UnlimitedJCEPolicyJDK7.zip``.  That file also needs to go in the
    directory ``puppet/modules/data/files/``.
 
+1. Google Android SDK, platform, and platform tools
    
    Download the following files:
    
@@ -389,8 +392,10 @@ Running the unit test suite under Eclipse
 
 To run the unit test suite under Eclipse:
 
+1. first configure the test suite launcher: under ``Preferences > Run/Debug >
    Launching > Default Launchers``, set the Debug and Run launchers to
    ``Android JUnit Test Launcher``;
+1. select the ``android-sync`` project and execute ``Run > Run As ... > JUnit
    Test``.
 
 You can debug under Eclipse using ``Debug > Debug As ... > JUnit Test.``.
@@ -423,7 +428,10 @@ Running the integration test suite under Eclipse
 
 To run the integration test suite under Eclipse:
 
+1. add the ``test`` subdirectory as a sub-project using ``File > Import >
    Existing project``;
+1. refresh and clean everything;
+1. select the ``test`` project and execute ``Run > Run As ... > Android JUnit
    Test``.
 
 You can debug under Eclipse using ``Debug > Debug As ... > Android JUnit
@@ -555,7 +563,10 @@ Updating Bugzilla
 This is not Android services specific, but we'll call it out anyway.
 You need to:
 
+1. set the Bugzilla ticket status as ASSIGNED to the author of the commits;
+1. add the changeset URL that ``hg push`` reports to the Bugzilla
    ticket;
+1. and set the target milestone.
 
 Stub/unstub dependencies and the android-sync GitHub-hosted Maven repository
 ============================================================================
