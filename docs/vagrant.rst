@@ -52,33 +52,25 @@ want to create more virtual machines, the files won't need to be
 downloaded again.
 
 1. Sun Java JDK
-   
    Go to
    http://www.oracle.com/technetwork/java/javase/downloads/index.html
    select the latest version, accept the license agreement, and
    download the **Linux x86** version named
    ``jdk-VERSION-linux-i586.tar.gz``.  That file needs to go in the
    directory ``puppet/modules/data/files/``.
-
 1. Sun Java Cryptography Policy
-   
    We need the Java Cryptography Extension (JCE) Unlimited Strength
    Jurisdiction Policy Files 7 to perform strong encryption.
-   
    Go to
    http://www.oracle.com/technetwork/java/javase/downloads/jce-7-download-432124.html
    accept the license agreement, and download the file named
    ``UnlimitedJCEPolicyJDK7.zip``.  That file also needs to go in the
    directory ``puppet/modules/data/files/``.
-
 1. Google Android SDK, platform, and platform tools
-   
    Download the following files:
-   
    * http://dl.google.com/android/android-sdk_r21.1-linux.tgz
    * http://dl-ssl.google.com/android/repository/android-17_r02.zip
    * http://dl-ssl.google.com/android/repository/platform-tools_r16.0.2-linux.zip
-   
    They all need to go in the same directory ``puppet/modules/data/files/``.
 
 At the end, you should have the following files: ::
