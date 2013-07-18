@@ -121,6 +121,15 @@ public class AndroidSubmissionClient implements SubmissionClient {
         return;
       }
 
+      initializeStorageForUploadProviders(storage);
+      final ProfileInformationCache profileCache = new ProfileInformationCache(profilePath);
+      if (!profileCache.restoreUnlessInitialized()) {
+        Logger.warn(LOG_TAG, "Not enough profile information to compute current environment.");
+        return;
+      }
+      final int env = EnvironmentBuilder.registerCurrentEnvironment(storage, profileCache);
+      final int day = storage.getDay(localTime);
+
       HealthReportGenerator generator = new HealthReportGenerator(storage);
       JSONObject document = generator.generateDocument(since, last, profilePath);
       if (document == null) {
@@ -128,7 +137,8 @@ public class AndroidSubmissionClient implements SubmissionClient {
         return;
       }
 
-      BagheeraRequestDelegate uploadDelegate = new RequestDelegate(delegate, localTime, true, id);
+      BagheeraRequestDelegate uploadDelegate = new UploadRequestDelegate(delegate, localTime,
+          true, id, storage, env, day);
       this.uploadPayload(id, document.toString(), oldIds, uploadDelegate);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception generating document.", e);
@@ -212,6 +222,66 @@ public class AndroidSubmissionClient implements SubmissionClient {
       delegate.onHardFailure(localTime, id, "Got exception during " + methodString + ".", e);
     }
   };
+
+  protected class UploadRequestDelegate extends RequestDelegate {
+    private final HealthReportDatabaseStorage storage;
+    private final int env;
+    private final int day;
+
+    public UploadRequestDelegate(Delegate delegate, long localTime, boolean isUpload, String id,
+        HealthReportDatabaseStorage storage, int env, int day) {
+      super(delegate, localTime, isUpload, id);
+      this.storage = storage;
+      this.env = env;
+      this.day = day;
+    }
+
+    @Override
+    public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
+      storage.incrementDailyCount(env, day, SubmissionsFieldName.SUCCESS.getID(storage));
+      super.handleSuccess(status, namespace, id, response);
+    }
+
+    @Override
+    public void handleFailure(int status, String namespace, HttpResponse response) {
+      // TODO: Check status code and increment.
+      super.handleFailure(status, namespace, response);
+    }
+
+    @Override
+    public void handleError(Exception e) {
+      // TODO: Can catch specific errors to specify type; then increment.
+      super.handleError(e);
+    }
+  }
+
+  private void initializeStorageForUploadProviders(HealthReportDatabaseStorage storage) {
+    storage.beginInitialization();
+    try {
+      initializeSubmissionsProvider(storage);
+      storage.finishInitialization();
+    } catch (Exception e) {
+      // TODO: Store error count in sharedPrefs to increment next time?
+      storage.abortInitialization();
+    }
+  }
+
+  private void initializeSubmissionsProvider(HealthReportDatabaseStorage storage) {
+    storage.ensureMeasurementInitialized(
+        MEASUREMENT_NAME_SUBMISSIONS,
+        MEASUREMENT_VERSION_SUBMISSIONS,
+        new MeasurementFields() {
+          @Override
+          public Iterable<FieldSpec> getFields() {
+            final ArrayList<FieldSpec> out = new ArrayList<FieldSpec>();
+            for (SubmissionsFieldName fieldName : SubmissionsFieldName.values()) {
+              FieldSpec lol = new FieldSpec(fieldName.getName(), Field.TYPE_INTEGER_COUNTER);
+              out.add(lol);
+            }
+            return out;
+          }
+        });
+  }
 
   private enum SubmissionsFieldName {
     FIRST_ATTEMPT("firstDocumentUploadAttempt"),
