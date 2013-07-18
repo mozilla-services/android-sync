@@ -8,12 +8,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
 import org.mozilla.android.sync.test.AndroidSyncTestCase;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.background.common.GlobalConstants;
-import org.mozilla.gecko.sync.SyncConstants;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
@@ -159,119 +158,6 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
 
     Account dupe = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNull(dupe);
-  }
-
-  public Boolean result;
-
-  protected boolean doAccountsExistTask() {
-    final TestSyncAccounts self = this;
-    performWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-              final SyncAccounts.AccountsExistTask task = new SyncAccounts.AccountsExistTask() {
-                @Override
-                public void onPostExecute(Boolean result) {
-                  self.result = result;
-                  performNotify();
-                }
-              };
-
-              task.execute(context);
-            }
-          });
-        } catch (Throwable e) {
-          performNotify(e);
-        }
-      }
-    });
-
-    assertNotNull(result);
-    return result.booleanValue();
-  }
-
-  public void testAccountsExistTask() {
-    int before = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
-    account = SyncAccounts.createSyncAccount(syncAccount, false);
-    int afterCreate = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
-    assertTrue(afterCreate > before);
-
-    assertTrue(doAccountsExistTask());
-
-    deleteAccount(this, accountManager, account);
-    account = null;
-    int afterDelete = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
-    assertEquals(before, afterDelete);
-  }
-
-  public void testAccountsExistTaskAndPickling() {
-    // Make sure there's nothing to un-pickle.
-    context.deleteFile(Constants.ACCOUNT_PICKLE_FILENAME);
-
-    // We would love to make this a proper test by starting with 0 accounts and
-    // then un-pickling 1 account, but then our test suite doesn't play nicely
-    // with existing accounts. Instead, we're going to assume that testers will
-    // have/not have an existing Account frequently enough to make this
-    // worthwhile.
-    // assertFalse(doAccountsExistTask());
-
-    // Write pickle file, and ensure it gets un-pickled.
-    final SyncAccountParameters params = new SyncAccountParameters(getApplicationContext(), null,
-        TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL, null, "testClientName", "testClientGuid");
-
-    try {
-      AccountPickler.pickle(context, Constants.ACCOUNT_PICKLE_FILENAME, params, false);
-      assertTrue(doAccountsExistTask());
-    } finally {
-      // Clean up!
-      for (Account account : accountManager.getAccountsByType(TEST_ACCOUNTTYPE)) {
-        if (TEST_USERNAME.equals(account.name)) {
-          TestSyncAccounts.deleteAccount(this, accountManager, account);
-        }
-      }
-    }
-  }
-
-  public void testCreateAccountTask() {
-    int before = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
-
-    final TestSyncAccounts self = this;
-    performWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runTestOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-              final SyncAccounts.CreateSyncAccountTask task = new SyncAccounts.CreateSyncAccountTask(false) {
-                @Override
-                public void onPostExecute(Account account) {
-                  self.account = account;
-                  performNotify();
-                }
-              };
-
-              task.execute(syncAccount);
-            }
-          });
-        } catch (Throwable e) {
-          performNotify(e);
-        }
-      }
-    });
-
-    assertNotNull(account);
-
-    int afterCreate = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
-    assertTrue(afterCreate > before);
-
-    deleteAccount(this, accountManager, account);
-    account = null;
-    int afterDelete = accountManager.getAccountsByType(TEST_ACCOUNTTYPE).length;
-    assertEquals(before, afterDelete);
   }
 
   public void testClientRecord() throws NoSuchAlgorithmException, UnsupportedEncodingException {
