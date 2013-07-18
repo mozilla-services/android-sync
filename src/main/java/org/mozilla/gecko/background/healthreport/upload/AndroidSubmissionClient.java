@@ -5,6 +5,7 @@
 package org.mozilla.gecko.background.healthreport.upload;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.json.JSONObject;
@@ -16,6 +17,11 @@ import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportGenerator;
+import org.mozilla.gecko.background.healthreport.HealthReportStorage;
+import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
+import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
+import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields.FieldSpec;
+import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 import org.mozilla.gecko.sync.net.BaseResource;
 
 import android.content.ContentProviderClient;
@@ -25,6 +31,9 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class AndroidSubmissionClient implements SubmissionClient {
   protected static final String LOG_TAG = AndroidSubmissionClient.class.getSimpleName();
+
+  private static final String MEASUREMENT_NAME_SUBMISSIONS = "org.mozilla.healthreport.submissions";
+  private static final int MEASUREMENT_VERSION_SUBMISSIONS = 1;
 
   protected final Context context;
   protected final SharedPreferences sharedPreferences;
@@ -203,4 +212,30 @@ public class AndroidSubmissionClient implements SubmissionClient {
       delegate.onHardFailure(localTime, id, "Got exception during " + methodString + ".", e);
     }
   };
+
+  private enum SubmissionsFieldName {
+    FIRST_ATTEMPT("firstDocumentUploadAttempt"),
+    CONTINUATION_ATTEMPT("continuationDocumentUploadAttempt"),
+    SUCCESS("uploadSuccess"),
+    TRANSPORT_FAILURE("uploadTransportFailure"),
+    SERVER_FAILURE("uploadServerFailure"),
+    CLIENT_FAILURE("uploadClientFailure");
+
+    private final String name;
+
+    SubmissionsFieldName(String name) {
+      this.name = name;
+    }
+
+    protected String getName() {
+      return name;
+    }
+
+    protected int getID(HealthReportStorage storage) {
+      final Field field = storage.getField(MEASUREMENT_NAME_SUBMISSIONS,
+                                           MEASUREMENT_VERSION_SUBMISSIONS,
+                                           name);
+      return field.getID();
+    }
+  }
 }
