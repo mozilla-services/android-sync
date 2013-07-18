@@ -5,6 +5,8 @@
 package org.mozilla.gecko.background.healthreport.upload;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -65,11 +67,24 @@ public class AndroidSubmissionClient implements SubmissionClient {
     return getSharedPreferences().getString(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID, null);
   }
 
+  public boolean hasUploadBeenRequested() {
+    return getSharedPreferences().contains(HealthReportConstants.PREF_LAST_UPLOAD_REQUESTED);
+  }
+
   public void setLastUploadLocalTimeAndDocumentId(long localTime, String id) {
     getSharedPreferences().edit()
       .putLong(HealthReportConstants.PREF_LAST_UPLOAD_LOCAL_TIME, localTime)
       .putString(HealthReportConstants.PREF_LAST_UPLOAD_DOCUMENT_ID, id)
       .commit();
+  }
+
+  protected void incrementSubmissionAttemptCount(final SubmissionsStatusCounter statusCounter) {
+    // TODO: Bug 910898 - Add errors from sharedPrefs to storage instance.
+    if (!hasUploadBeenRequested()) {
+      statusCounter.incrementFirstUploadAttemptCount();
+    } else {
+      statusCounter.incrementContinuationAttemptCount();
+    }
   }
 
   protected void uploadPayload(String id, String payload, Collection<String> oldIds, BagheeraRequestDelegate uploadDelegate) {
@@ -99,6 +114,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
     // close them.
     ContentProviderClient client = EnvironmentBuilder.getContentProviderClient(context);
     if (client == null) {
+      // TODO: Bug 910898 - Store client failure in SharedPrefs so we can increment next time with storage.
       delegate.onHardFailure(localTime, null, "Could not fetch content provider client.", null);
       return;
     }
@@ -109,6 +125,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
       // out-of-process.
       HealthReportDatabaseStorage storage = EnvironmentBuilder.getStorage(client, profilePath);
       if (storage == null) {
+        // TODO: Bug 910898 - Store error in SharedPrefs so we can increment next time with storage.
         delegate.onHardFailure(localTime, null, "No storage when generating report.", null);
         return;
       }
@@ -129,18 +146,29 @@ public class AndroidSubmissionClient implements SubmissionClient {
       }
       final int env = EnvironmentBuilder.registerCurrentEnvironment(storage, profileCache);
       final int day = storage.getDay(localTime);
+      final SubmissionsStatusCounter statusCounter = new SubmissionsStatusCounter(env, day, storage);
 
-      HealthReportGenerator generator = new HealthReportGenerator(storage);
-      JSONObject document = generator.generateDocument(since, last, profilePath);
-      if (document == null) {
-        delegate.onHardFailure(localTime, null, "Generator returned null document.", null);
-        return;
+      try {
+        incrementSubmissionAttemptCount(statusCounter);
+        final HealthReportGenerator generator = new HealthReportGenerator(storage);
+        final JSONObject document = generator.generateDocument(since, last, profilePath);
+        if (document == null) {
+          statusCounter.incrementUploadClientFailureCount();
+          delegate.onHardFailure(localTime, null, "Generator returned null document.", null);
+          return;
+        }
+
+        final BagheeraRequestDelegate uploadDelegate = new UploadRequestDelegate(delegate,
+            localTime, true, id, statusCounter);
+        this.uploadPayload(id, document.toString(), oldIds, uploadDelegate);
+      } catch (Exception e) {
+        // Incrementing the failure count here could potentially cause the failure count to be
+        // incremented twice, but this helper class checks and prevents this.
+        statusCounter.incrementUploadClientFailureCount();
+        throw e;
       }
-
-      BagheeraRequestDelegate uploadDelegate = new UploadRequestDelegate(delegate, localTime,
-          true, id, storage, env, day);
-      this.uploadPayload(id, document.toString(), oldIds, uploadDelegate);
     } catch (Exception e) {
+      // TODO: Bug 910898 - Store client failure in SharedPrefs so we can increment next time with storage.
       Logger.warn(LOG_TAG, "Got exception generating document.", e);
       delegate.onHardFailure(localTime, null, "Got exception uploading.", e);
       return;
@@ -224,33 +252,42 @@ public class AndroidSubmissionClient implements SubmissionClient {
   };
 
   protected class UploadRequestDelegate extends RequestDelegate {
-    private final HealthReportDatabaseStorage storage;
-    private final int env;
-    private final int day;
+    private final SubmissionsStatusCounter statusCounter;
 
     public UploadRequestDelegate(Delegate delegate, long localTime, boolean isUpload, String id,
-        HealthReportDatabaseStorage storage, int env, int day) {
+        final SubmissionsStatusCounter statusCounter) {
       super(delegate, localTime, isUpload, id);
-      this.storage = storage;
-      this.env = env;
-      this.day = day;
+      this.statusCounter = statusCounter;
     }
 
     @Override
     public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
-      storage.incrementDailyCount(env, day, SubmissionsFieldName.SUCCESS.getID(storage));
+      statusCounter.incrementUploadSuccessCount();
       super.handleSuccess(status, namespace, id, response);
     }
 
     @Override
     public void handleFailure(int status, String namespace, HttpResponse response) {
-      // TODO: Check status code and increment.
+      switch (status) {
+      case 200:
+      case 201:
+        throw new IllegalStateException("Did not expect HTTP success.");
+
+      default:
+        statusCounter.incrementUploadServerFailureCount();
+      }
       super.handleFailure(status, namespace, response);
     }
 
     @Override
     public void handleError(Exception e) {
-      // TODO: Can catch specific errors to specify type; then increment.
+      if (e instanceof IllegalArgumentException ||
+          e instanceof UnsupportedEncodingException ||
+          e instanceof URISyntaxException) {
+        statusCounter.incrementUploadClientFailureCount();
+      } else {
+        statusCounter.incrementUploadTransportFailureCount();
+      }
       super.handleError(e);
     }
   }
@@ -261,7 +298,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
       initializeSubmissionsProvider(storage);
       storage.finishInitialization();
     } catch (Exception e) {
-      // TODO: Store error count in sharedPrefs to increment next time?
+      // TODO: Bug 910898 - Store error in SharedPrefs so we can increment next time with storage.
       storage.abortInitialization();
     }
   }
