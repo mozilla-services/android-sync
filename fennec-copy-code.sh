@@ -104,11 +104,11 @@ function dump_mkfile_variable {
 }
 
 # Prefer PNGs in drawable-*: Android lint complains about PNG files in drawable.
-SYNC_RES_DRAWABLE=$(find res/drawable -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) | sed 's,res/,mobile/android/base/resources/,')
+SYNC_RES_DRAWABLE=$(find res/drawable -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) )
 
-SYNC_RES_DRAWABLE_LDPI=$(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,')
-SYNC_RES_DRAWABLE_MDPI=$(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,')
-SYNC_RES_DRAWABLE_HDPI=$(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,mobile/android/base/resources/,')
+SYNC_RES_DRAWABLE_LDPI=$(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) )
+SYNC_RES_DRAWABLE_MDPI=$(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) )
+SYNC_RES_DRAWABLE_HDPI=$(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) )
 
 SYNC_RES_LAYOUT=$(find res/layout -name '*.xml')
 SYNC_RES_VALUES="res/values/sync_styles.xml"
