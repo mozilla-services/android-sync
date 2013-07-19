@@ -416,7 +416,7 @@ public class TestAnnouncementFetch {
     IdleChecker.check(twoDaysAgo, now, 2);
 
     // Now too early.
-    IdleChecker.check(twoDaysAgo, GlobalConstants.BUILD_TIMESTAMP - 1, -1);
+    IdleChecker.check(twoDaysAgo, GlobalConstants.BUILD_TIMESTAMP_MSEC - 1, -1);
 
     // Nearly max.
     IdleChecker.check(twoDaysAgo,
