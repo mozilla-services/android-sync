@@ -322,13 +322,15 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   }
 
   public void testBlockingPrefsFromAndroidAccountV0() throws Exception {
-    // Create test account with prefs.
+    // Create test account with prefs. We use a different username to avoid a
+    // timing issue, where the delayed clean-up of the account created by the
+    // previous test deletes the preferences for this account.
     SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT,
-        TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
+        TEST_USERNAME + "2", TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
     syncAccount = new SyncAccountParameters(context, null,
-      TEST_USERNAME, TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
+      TEST_USERNAME + "2", TEST_SYNCKEY, TEST_PASSWORD, TEST_SERVERURL);
     account = SyncAccounts.createSyncAccountPreservingExistingPreferences(syncAccount, false);
     assertNotNull(account);
 
