@@ -26,6 +26,14 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
     return super.getDay(now);
   }
 
+  public int getGivenDaysAgo(int numDays) {
+    return super.getDay(this.getGivenDaysAgoMillis(numDays));
+  }
+
+  public long getGivenDaysAgoMillis(int numDays) {
+    return now - numDays * HealthReportConstants.MILLISECONDS_PER_DAY;
+  }
+
   public MockHealthReportDatabaseStorage(Context context, File fakeProfileDirectory) {
     super(context, fakeProfileDirectory);
   }

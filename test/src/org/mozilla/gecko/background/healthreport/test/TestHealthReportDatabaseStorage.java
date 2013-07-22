@@ -186,4 +186,83 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(value, c.getLong(3));
     return c.moveToNext();
   }
+
+  /**
+   * Returns a storage instance prepopulated with dummy data to be used for testing.
+   *
+   * Note: Editing this data directly will cause tests relying on it to fail. To add additional
+   * data, two possiblilites are 1) this method is wrapped and the data is added to the returned
+   * object, or 2) this method takes an "version" argument with new data additions running only if
+   * the version is greater than some value. Once this is implemented, this comment can be
+   * removed.
+   *
+   * XXX: This is used in lieu of subclassing TestHealthReportDatabaseStorage in an inner class
+   * and prepopulating the storage instance in setUp() because the test runner was unable to find
+   * the inner class in testing.
+   */
+  private MockHealthReportDatabaseStorage getPrepopulatedStorage() throws Exception {
+    final String[] measurementNames = {"stringMeasurement", "integerMeasurement"};
+    final int[] measurementVer = {1, 2};
+    final MeasurementFields[] measurementFields = {new MeasurementFields() {
+      @Override
+      public Iterable<FieldSpec> getFields() {
+        ArrayList<FieldSpec> fields = new ArrayList<FieldSpec>();
+        fields.add(new FieldSpec("counterField", Field.TYPE_INTEGER_COUNTER));
+        fields.add(new FieldSpec("discreteField", Field.TYPE_STRING_DISCRETE));
+        fields.add(new FieldSpec("lastField", Field.TYPE_STRING_LAST));
+        return fields;
+      }
+    }, new MeasurementFields() {
+      @Override
+      public Iterable<FieldSpec> getFields() {
+        ArrayList<FieldSpec> fields = new ArrayList<FieldSpec>();
+        fields.add(new FieldSpec("counterField", Field.TYPE_INTEGER_COUNTER));
+        fields.add(new FieldSpec("discreteField", Field.TYPE_INTEGER_DISCRETE));
+        fields.add(new FieldSpec("lastField", Field.TYPE_INTEGER_LAST));
+        return fields;
+      }
+    }};
+
+    final MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context,
+        fakeProfileDirectory);
+    storage.beginInitialization();
+    for (int i = 0; i < measurementNames.length; i++) {
+      storage.ensureMeasurementInitialized(measurementNames[i], measurementVer[i],
+          measurementFields[i]);
+    }
+    storage.finishInitialization();
+
+    final MockDatabaseEnvironment environment = storage.getEnvironment();
+    environment.mockInit("v123");
+    environment.setJSONForAddons(EXAMPLE_ADDONS);
+    final int env = environment.register();
+
+    String mName = measurementNames[0];
+    int mVer = measurementVer[0];
+    int fieldID = storage.getField(mName, mVer, "counterField").getID();
+    storage.incrementDailyCount(env, storage.getGivenDaysAgo(7), fieldID, 1);
+    storage.incrementDailyCount(env, storage.getGivenDaysAgo(4), fieldID, 2);
+    storage.incrementDailyCount(env, storage.getToday(), fieldID, 3);
+    fieldID = storage.getField(mName, mVer, "lastField").getID();
+    storage.recordDailyLast(env, storage.getGivenDaysAgo(6), fieldID, "six");
+    storage.recordDailyLast(env, storage.getGivenDaysAgo(3), fieldID, "three");
+    storage.recordDailyLast(env, storage.getToday(), fieldID, "zero");
+    fieldID = storage.getField(mName, mVer, "discreteField").getID();
+    storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(5), fieldID, "five");
+    storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(5), fieldID, "five-two");
+    storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(2), fieldID, "two");
+    storage.recordDailyDiscrete(env, storage.getToday(), fieldID, "zero");
+
+    mName = measurementNames[1];
+    mVer = measurementVer[1];
+    fieldID = storage.getField(mName, mVer, "counterField").getID();
+    storage.incrementDailyCount(env, storage.getGivenDaysAgo(2), fieldID, 2);
+    fieldID = storage.getField(mName, mVer, "lastField").getID();
+    storage.recordDailyLast(env, storage.getYesterday(), fieldID, 1);
+    fieldID = storage.getField(mName, mVer, "discreteField").getID();
+    storage.recordDailyDiscrete(env, storage.getToday(), fieldID, 0);
+    storage.recordDailyDiscrete(env, storage.getToday(), fieldID, 1);
+
+    return storage;
+  }
 }
