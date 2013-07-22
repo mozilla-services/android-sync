@@ -265,4 +265,26 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     return storage;
   }
+
+  public void testDeleteEventsBefore() throws Exception {
+    final MockHealthReportDatabaseStorage storage = getPrepopulatedStorage();
+    Cursor c = storage.getEventsSince(0);
+    assertEquals(14, c.getCount());
+    c.close();
+
+    assertEquals(2, storage.deleteEventsBefore(storage.getGivenDaysAgoMillis(5)));
+    c = storage.getEventsSince(0);
+    assertEquals(12, c.getCount());
+    c.close();
+
+    assertEquals(2, storage.deleteEventsBefore(storage.getGivenDaysAgoMillis(4)));
+    c = storage.getEventsSince(0);
+    assertEquals(10, c.getCount());
+    c.close();
+
+    assertEquals(5, storage.deleteEventsBefore(storage.now));
+    c = storage.getEventsSince(0);
+    assertEquals(5, c.getCount());
+    c.close();
+  }
 }
