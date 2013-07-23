@@ -111,6 +111,8 @@ public class AndroidSubmissionClient implements SubmissionClient {
         return;
       }
 
+      storage.deleteEventsBefore(localTime - HealthReportConstants.EVENT_EXISTENCE_DURATION);
+
       HealthReportGenerator generator = new HealthReportGenerator(storage);
       JSONObject document = generator.generateDocument(since, last, profilePath);
       if (document == null) {
