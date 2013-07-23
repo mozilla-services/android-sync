@@ -165,6 +165,37 @@ public class TestTelemetryRecorder extends FakeProfileTestCase {
     }
   }
 
+  /**
+   * Check that file creation follows correct ordering.
+   */
+  public void testOutOfOrder() {
+    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, cacheDir, DEST_FILENAME);
+    try {
+      telemetryRecorder.appendPayload("test");
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof IllegalStateException);
+    }
+
+    // Reset telemetry recorder.
+    telemetryRecorder.cleanUp();
+    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, cacheDir, DEST_FILENAME);
+    try {
+      telemetryRecorder.startPingFile();
+      telemetryRecorder.finishPingFile();
+    } catch (Exception e) {
+      fail("Error writing payload: " + e);
+    }
+
+    // Reset telemetry recorder.
+    telemetryRecorder.cleanUp();
+    telemetryRecorder = new TelemetryRecorder(telemetryPingDir, cacheDir, DEST_FILENAME);
+    try {
+      telemetryRecorder.appendPayload("test");
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof IllegalStateException);
+    }
+  }
+
   @Override
   protected String getCacheSuffix() {
     return File.separator + "telemetry-recorder-" + System.currentTimeMillis() + ".profile";

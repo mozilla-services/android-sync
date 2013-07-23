@@ -45,6 +45,7 @@ import android.util.Base64;
 public class TelemetryRecorder {
   private final String LOG_TAG = "TelemetryRecorder";
 
+  private volatile State mState;
   private final File parentDir;
   private final String filename;
 
@@ -98,6 +99,7 @@ public class TelemetryRecorder {
     this.parentDir = parentDir;
     this.filename = filename;
     this.cacheDir = cacheDir;
+    mState = State.OPEN;
   }
 
   public TelemetryRecorder(File parentDir, File cacheDir, String filename, String charset) {
@@ -108,6 +110,12 @@ public class TelemetryRecorder {
   public TelemetryRecorder(File parentDir, File cacheDir, String filename, String charset, int blockSize) {
     this(parentDir, cacheDir, filename, charset);
     this.blockSize = blockSize;
+  }
+
+  private enum State {
+    OPEN,
+    IN_PROGRESS,
+    CLOSED
   }
 
   /**
@@ -122,7 +130,13 @@ public class TelemetryRecorder {
    *           <code>IOException</code> and unchecked exception that
    *           are rethrown to caller
    */
-  public void startPingFile() throws Exception {
+  public synchronized void startPingFile() throws Exception {
+
+    if (mState != State.OPEN) {
+      throw new IllegalStateException("TelemetryRecorder not in OPEN state, aborting.");
+    }
+
+    mState = State.IN_PROGRESS;
 
     // Open stream to temporary file for writing.
     try {
@@ -151,7 +165,6 @@ public class TelemetryRecorder {
       byte[] header = makePingHeader(filename);
       outputStream.write(header);
       Logger.debug(LOG_TAG, "Wrote " + header.length + " header bytes.");
-
     } catch (NoSuchAlgorithmException e) {
       cleanUpAndRethrow("Error creating checksum digest", e);
     } catch (UnsupportedEncodingException e) {
@@ -178,10 +191,15 @@ public class TelemetryRecorder {
    *           <code>IOException</code> and unchecked exception that
    *           are rethrown to caller
    */
-  public int appendPayload(String payloadContent) throws Exception {
+  public synchronized void appendPayload(String payloadContent) throws Exception {
+    if (mState != State.IN_PROGRESS) {
+      cleanUp();
+      throw new IllegalStateException("TelemetryRecorder not in IN_PROGRESS state, aborting.");
+    }
+
     if (payloadContent == null) {
       cleanUpAndRethrow("Payload is null", new Exception());
-      return -1;
+      return;
     }
 
     try {
@@ -195,14 +213,11 @@ public class TelemetryRecorder {
       // them.
       int numBytes = quotedPayloadBytes.length - 2;
       outputStream.write(quotedPayloadBytes, 1, numBytes);
-      return numBytes;
 
     } catch (UnsupportedEncodingException e) {
       cleanUpAndRethrow("Error encoding payload", e);
-      return -1;
     } catch (IOException e) {
       cleanUpAndRethrow("Error writing to stream", e);
-      return -1;
     }
   }
 
@@ -215,6 +230,11 @@ public class TelemetryRecorder {
    *          are rethrown to caller
    */
   public void finishPingFile() throws Exception {
+    if (mState != State.IN_PROGRESS) {
+      cleanUp();
+      throw new IllegalStateException("TelemetryRecorder not in IN_PROGRESS state, aborting.");
+    }
+
     try {
       byte[] footer = makePingFooter(checksum);
       outputStream.write(footer);
@@ -273,15 +293,39 @@ public class TelemetryRecorder {
   /**
    * Clean up checksum and delete the temporary file.
    */
-  private void cleanUp() {
-    // Discard checksum.
-    checksum.reset();
-
-    // Clean up files.
-    if (tmpFile != null && tmpFile.exists()) {
-      tmpFile.delete();
+  public void cleanUp() {
+    if (mState == State.CLOSED) {
+      // Already cleaned up.
+      return;
     }
-    tmpFile = null;
+
+    try {
+      // Discard checksum.
+      if (checksum != null) {
+        checksum.reset();
+      }
+
+      // Clean up files.
+      if (tmpFile != null && tmpFile.exists()) {
+        tmpFile.delete();
+      }
+
+      tmpFile = null;
+
+      if (outputStream != null) {
+        try {
+          outputStream.close();
+        } catch (IOException exception) {
+          // Failed to close stream; nothing we can do, and we're aborting anyways.
+        }
+      }
+
+      if (destFile != null && destFile.exists()) {
+        destFile.delete();
+      }
+    } finally {
+      mState = State.CLOSED;
+    }
   }
 
   /**
@@ -298,18 +342,6 @@ public class TelemetryRecorder {
   private void cleanUpAndRethrow(String message, Exception e) throws Exception {
     Logger.error(LOG_TAG, message, e);
     cleanUp();
-
-    if (outputStream != null) {
-      try {
-        outputStream.close();
-      } catch (IOException exception) {
-        // Failed to close stream; nothing we can do, and we're aborting anyways.
-      }
-    }
-
-    if (destFile != null && destFile.exists()) {
-      destFile.delete();
-    }
     // Rethrow the exception.
     throw e;
   }
