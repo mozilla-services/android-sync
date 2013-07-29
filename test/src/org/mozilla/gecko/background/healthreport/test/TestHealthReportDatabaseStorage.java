@@ -191,7 +191,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
    * Returns a storage instance prepopulated with dummy data to be used for testing.
    *
    * Note: Editing this data directly will cause tests relying on it to fail. To add additional
-   * data, two possiblilites are 1) this method is wrapped and the data is added to the returned
+   * data, two possibilities are 1) this method is wrapped and the data is added to the returned
    * object, or 2) this method takes an "version" argument with new data additions running only if
    * the version is greater than some value. Once this is implemented, this comment can be
    * removed.
