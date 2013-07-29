@@ -201,24 +201,24 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
    * the inner class in testing.
    */
   private MockHealthReportDatabaseStorage getPrepopulatedStorage() throws Exception {
-    final String[] measurementNames = {"stringMeasurement", "integerMeasurement"};
+    final String[] measurementNames = {"a_string_measurement", "b_integer_measurement"};
     final int[] measurementVer = {1, 2};
     final MeasurementFields[] measurementFields = {new MeasurementFields() {
       @Override
       public Iterable<FieldSpec> getFields() {
         ArrayList<FieldSpec> fields = new ArrayList<FieldSpec>();
-        fields.add(new FieldSpec("counterField", Field.TYPE_INTEGER_COUNTER));
-        fields.add(new FieldSpec("discreteField", Field.TYPE_STRING_DISCRETE));
-        fields.add(new FieldSpec("lastField", Field.TYPE_STRING_LAST));
+        fields.add(new FieldSpec("a_counter_integer_field", Field.TYPE_INTEGER_COUNTER));
+        fields.add(new FieldSpec("a_discrete_string_field", Field.TYPE_STRING_DISCRETE));
+        fields.add(new FieldSpec("a_last_string_field", Field.TYPE_STRING_LAST));
         return fields;
       }
     }, new MeasurementFields() {
       @Override
       public Iterable<FieldSpec> getFields() {
         ArrayList<FieldSpec> fields = new ArrayList<FieldSpec>();
-        fields.add(new FieldSpec("counterField", Field.TYPE_INTEGER_COUNTER));
-        fields.add(new FieldSpec("discreteField", Field.TYPE_INTEGER_DISCRETE));
-        fields.add(new FieldSpec("lastField", Field.TYPE_INTEGER_LAST));
+        fields.add(new FieldSpec("b_counter_integer_field", Field.TYPE_INTEGER_COUNTER));
+        fields.add(new FieldSpec("b_discrete_integer_field", Field.TYPE_INTEGER_DISCRETE));
+        fields.add(new FieldSpec("b_last_integer_field", Field.TYPE_INTEGER_LAST));
         return fields;
       }
     }};
@@ -239,15 +239,15 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     String mName = measurementNames[0];
     int mVer = measurementVer[0];
-    int fieldID = storage.getField(mName, mVer, "counterField").getID();
+    int fieldID = storage.getField(mName, mVer, "a_counter_integer_field").getID();
     storage.incrementDailyCount(env, storage.getGivenDaysAgo(7), fieldID, 1);
     storage.incrementDailyCount(env, storage.getGivenDaysAgo(4), fieldID, 2);
     storage.incrementDailyCount(env, storage.getToday(), fieldID, 3);
-    fieldID = storage.getField(mName, mVer, "lastField").getID();
+    fieldID = storage.getField(mName, mVer, "a_last_string_field").getID();
     storage.recordDailyLast(env, storage.getGivenDaysAgo(6), fieldID, "six");
     storage.recordDailyLast(env, storage.getGivenDaysAgo(3), fieldID, "three");
     storage.recordDailyLast(env, storage.getToday(), fieldID, "zero");
-    fieldID = storage.getField(mName, mVer, "discreteField").getID();
+    fieldID = storage.getField(mName, mVer, "a_discrete_string_field").getID();
     storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(5), fieldID, "five");
     storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(5), fieldID, "five-two");
     storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(2), fieldID, "two");
@@ -255,11 +255,11 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     mName = measurementNames[1];
     mVer = measurementVer[1];
-    fieldID = storage.getField(mName, mVer, "counterField").getID();
+    fieldID = storage.getField(mName, mVer, "b_counter_integer_field").getID();
     storage.incrementDailyCount(env, storage.getGivenDaysAgo(2), fieldID, 2);
-    fieldID = storage.getField(mName, mVer, "lastField").getID();
+    fieldID = storage.getField(mName, mVer, "b_last_integer_field").getID();
     storage.recordDailyLast(env, storage.getYesterday(), fieldID, 1);
-    fieldID = storage.getField(mName, mVer, "discreteField").getID();
+    fieldID = storage.getField(mName, mVer, "b_discrete_integer_field").getID();
     storage.recordDailyDiscrete(env, storage.getToday(), fieldID, 0);
     storage.recordDailyDiscrete(env, storage.getToday(), fieldID, 1);
 
