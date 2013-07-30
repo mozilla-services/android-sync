@@ -135,30 +135,34 @@ public class TestSubmissionPolicy {
 
   @Test
   public void testUploadSoftFailure() throws Exception {
-    assertTrue(policy.tick(0));
+    final long initialUploadTime = 0;
+    assertTrue(policy.tick(initialUploadTime));
     client.upload = Response.SOFT_FAILURE;
 
-    assertTrue(policy.tick(2*policy.getMinimumTimeBetweenUploads()));
-    assertEquals(2*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
-    assertEquals(2*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
+    final long secondUploadTime = initialUploadTime + policy.getMinimumTimeBetweenUploads();
+    assertTrue(policy.tick(secondUploadTime));
+    assertEquals(secondUploadTime, policy.getLastUploadRequested());
+    assertEquals(secondUploadTime, policy.getLastUploadFailed());
     assertEquals(1, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeAfterFailure(), policy.getNextSubmission());
     assertNotNull(client.lastId);
     assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
     client.lastId = null;
 
-    assertTrue(policy.tick(3*policy.getMinimumTimeBetweenUploads()));
-    assertEquals(3*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
-    assertEquals(3*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
+    final long thirdUploadTime = secondUploadTime + policy.getMinimumTimeAfterFailure();
+    assertTrue(policy.tick(thirdUploadTime));
+    assertEquals(thirdUploadTime, policy.getLastUploadRequested());
+    assertEquals(thirdUploadTime, policy.getLastUploadFailed());
     assertEquals(2, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeAfterFailure(), policy.getNextSubmission());
     assertNotNull(client.lastId);
     assertTrue(tracker.getObsoleteIds().containsKey(client.lastId));
     client.lastId = null;
 
-    assertTrue(policy.tick(4*policy.getMinimumTimeBetweenUploads()));
-    assertEquals(4*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadRequested());
-    assertEquals(4*policy.getMinimumTimeBetweenUploads(), policy.getLastUploadFailed());
+    final long fourthUploadTime = thirdUploadTime + policy.getMinimumTimeAfterFailure();
+    assertTrue(policy.tick(fourthUploadTime));
+    assertEquals(fourthUploadTime, policy.getLastUploadRequested());
+    assertEquals(fourthUploadTime, policy.getLastUploadFailed());
     assertEquals(0, policy.getCurrentDayFailureCount());
     assertEquals(policy.getLastUploadFailed() + policy.getMinimumTimeBetweenUploads(), policy.getNextSubmission());
     assertNotNull(client.lastId);
@@ -378,5 +382,54 @@ public class TestSubmissionPolicy {
     assertTrue(policy.tick(3));
     // The upload fails locally, so we shouldn't decrement attempts remaining.
     assertEquals(ids, tracker.getObsoleteIds());
+  }
+
+  @Test
+  public void testUploadFailureCountResetAfterOneDay() throws Exception {
+    client.upload = Response.SOFT_FAILURE;
+    assertEquals(0, policy.getCurrentDayFailureCount());
+    assertEquals(-1, policy.getCurrentDayResetTime());
+
+    final long initialUploadTime = 0;
+    assertTrue(policy.tick(initialUploadTime));
+    final long initialResetTime = initialUploadTime + policy.getMinimumTimeBetweenUploads();
+    assertEquals(initialResetTime, policy.getCurrentDayResetTime());
+    assertEquals(1, policy.getCurrentDayFailureCount());
+
+    final long secondUploadTime = initialUploadTime + policy.getMinimumTimeAfterFailure();
+    assertTrue(policy.tick(secondUploadTime));
+    assertEquals(initialResetTime, policy.getCurrentDayResetTime());
+    assertEquals(2, policy.getCurrentDayFailureCount());
+
+    assertTrue(policy.tick(initialResetTime));
+    final long secondResetTime = initialResetTime + policy.getMinimumTimeBetweenUploads();
+    assertEquals(secondResetTime, policy.getCurrentDayResetTime());
+    assertEquals(1, policy.getCurrentDayFailureCount());
+  }
+
+  @Test
+  public void testUploadFailureCountResetAfterUploadSuccess() throws Exception {
+    client.upload = Response.SOFT_FAILURE;
+    final long uploadTime = 0;
+    assertTrue(policy.tick(uploadTime));
+    assertEquals(1, policy.getCurrentDayFailureCount());
+
+    client.upload = Response.SUCCESS;
+    assertTrue(policy.tick(uploadTime + policy.getMinimumTimeAfterFailure()));
+    assertEquals(-1, policy.getCurrentDayResetTime());
+    assertEquals(0, policy.getCurrentDayFailureCount());
+  }
+
+  @Test
+  public void testUploadFailureCountResetAfterUploadHardFailure() throws Exception {
+    client.upload = Response.SOFT_FAILURE;
+    final long uploadTime = 0;
+    assertTrue(policy.tick(uploadTime));
+    assertEquals(1, policy.getCurrentDayFailureCount());
+
+    client.upload = Response.HARD_FAILURE;
+    assertTrue(policy.tick(uploadTime + policy.getMinimumTimeAfterFailure()));
+    assertEquals(-1, policy.getCurrentDayResetTime());
+    assertEquals(0, policy.getCurrentDayFailureCount());
   }
 }
