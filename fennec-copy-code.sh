@@ -1,3 +1,6 @@
+export LC_ALL=C # Ensure consistent sort order.
+SORT_CMD="sort -f" # Closest order to OS X `find`, to avoid unnecessary churn (bug 899840).
+
 DIR=$(dirname "$0")
 if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
 . "$DIR/fennec-paths.sh"
@@ -24,7 +27,7 @@ SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
   -and -not -name 'AppConstants.java' \
   -and -not -name 'SysInfo.java' \
   -and -not -name 'SyncConstants.java' \
-  | sed "s,$SOURCEROOT/,,")
+  | sed "s,$SOURCEROOT/,," | $SORT_CMD)
 
 rsync -C \
   --exclude 'AppConstants.java' \
@@ -61,14 +64,14 @@ cp sync_options.xml.template $ANDROID/base/resources/xml/sync_options.xml.in
 
 echo "Copying internal dependency sources."
 APACHEDIR="src/main/java/org/mozilla/apache"
-APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,apache/,")
+APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,apache/," | $SORT_CMD)
 rsync -C -a $APACHEDIR $ANDROID/base/
 
 echo "Copying external dependency sources."
 JSONLIB=external/json-simple-1.1/src/org/json/simple
 HTTPLIB=external/httpclientandroidlib/httpclientandroidlib/src/ch/boye/httpclientandroidlib
-JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB/,json-simple/,")
-HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,httpclientandroidlib/,")
+JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB/,json-simple/," | $SORT_CMD)
+HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,httpclientandroidlib/," | $SORT_CMD)
 mkdir -p $ANDROID/base/json-simple/
 rsync -C -a $HTTPLIB $ANDROID/base/
 rsync -C -a $JSONLIB/ $ANDROID/base/json-simple/
@@ -104,13 +107,13 @@ function dump_mkfile_variable {
 }
 
 # Prefer PNGs in drawable-*: Android lint complains about PNG files in drawable.
-SYNC_RES_DRAWABLE=$(find res/drawable -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) )
+SYNC_RES_DRAWABLE=$(find res/drawable -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) | $SORT_CMD)
 
-SYNC_RES_DRAWABLE_LDPI=$(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) )
-SYNC_RES_DRAWABLE_MDPI=$(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) )
-SYNC_RES_DRAWABLE_HDPI=$(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) )
+SYNC_RES_DRAWABLE_LDPI=$(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | $SORT_CMD)
+SYNC_RES_DRAWABLE_MDPI=$(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | $SORT_CMD)
+SYNC_RES_DRAWABLE_HDPI=$(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | $SORT_CMD)
 
-SYNC_RES_LAYOUT=$(find res/layout -name '*.xml')
+SYNC_RES_LAYOUT=$(find res/layout -name '*.xml' | $SORT_CMD)
 SYNC_RES_VALUES="res/values/sync_styles.xml"
 SYNC_RES_VALUES_V11="res/values-v11/sync_styles.xml"
 SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
@@ -172,11 +175,11 @@ rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dt
 
 echo "res/values/sync_styles.xml " > $SERVICES/android-values-resources.mn
 echo "res/values-large-v11/sync_styles.xml " > $SERVICES/android-values-resources.mn
-find res/layout         -name '*.xml' > $SERVICES/android-layout-resources.mn
-find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-resources.mn
-find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-ldpi-resources.mn
-find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-mdpi-resources.mn
-find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," > $SERVICES/android-drawable-hdpi-resources.mn
+find res/layout         -name '*.xml' | $SORT_CMD > $SERVICES/android-layout-resources.mn
+find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-resources.mn
+find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-ldpi-resources.mn
+find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-mdpi-resources.mn
+find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-hdpi-resources.mn
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.
