@@ -23,7 +23,7 @@ is usually explicitly stated as being in the public domain.
 
 The top-level scripts ``./check_headers.sh`` and
 ``./check_head_headers.sh`` check, respectively, that all source and
-test files, and uncommitted source and test files, correct headers.
+test files, and uncommitted source and test files, have correct headers.
 (Internally they both use ``./tools/check_headers.py``.)
 
 git hooks
