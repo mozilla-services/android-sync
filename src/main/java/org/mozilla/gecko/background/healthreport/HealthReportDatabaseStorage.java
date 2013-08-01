@@ -347,6 +347,13 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
       }
     }
 
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+      if (!db.isReadOnly()) {
+        db.execSQL("PRAGMA foreign_keys=ON;");
+      }
+    }
+
     private void createAddonsEnvironmentsView(SQLiteDatabase db) {
       db.execSQL("CREATE VIEW environments_with_addons AS " +
           "SELECT e.id AS id, " +
