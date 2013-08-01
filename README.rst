@@ -370,9 +370,7 @@ Testing
 
 There are two test suites: a unit test suite that runs locally on your
 development machine and an integration test suite that runs on your Android
-device.  You need to have Fennec installed on your device, and you need to
-configure ``./preprocess.ini`` correctly in order to run the integration test
-suite.
+device.
 
 Remember that any changes to preprocessed source files will need
 ``./preprocess.py`` to be run before any of the commands below, and you may
@@ -418,10 +416,16 @@ Integration testing
 -------------------
 
 The source files for the JUnit 3 integration test suite, also known as the
-"Android instrumentation" test suite, may be found in ``test``.  The
-integration test suite can be run with the following command: ::
+"Android instrumentation" test suite, may be found in ``test``. Before running
+the test suite you must have installed Fennec, configured ``./preprocess.ini``
+to point to this particular installation, and **have launched this installation
+at least once** (see `Bug 777846`_).
+
+The integration test suite can be run with the following command: ::
 
   mvn integration-test
+
+.. _`Bug 777846`: https://bugzilla.mozilla.org/show_bug.cgi?id=777846
 
 Running the integration test suite under Eclipse
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
