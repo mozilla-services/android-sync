@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
+import org.mozilla.gecko.background.healthreport.test.MockHealthReportDatabaseStorage.PrepopulatedMockHealthReportDatabaseStorage;
 import org.mozilla.gecko.background.test.helpers.DBHelpers;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
@@ -185,5 +186,16 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(field, c.getInt(2));
     assertEquals(value, c.getLong(3));
     return c.moveToNext();
+  }
+
+  /**
+   * Test robust insertions. This also acts as a test for the getPrepopulatedStorage method,
+   * allowing faster debugging if this fails and other tests relying on getPrepopulatedStorage
+   * also fail.
+   */
+  public void testInsertions() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertNotNull(storage);
   }
 }
