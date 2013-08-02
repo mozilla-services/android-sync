@@ -1220,8 +1220,35 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     final String dayString = Integer.toString(endDay, 10);
     final String[] whereArgs = new String[] {dayString};
 
-    int numRowsDeleted = db.delete(EVENTS_TEXTUAL, whereClause, whereArgs);
-    numRowsDeleted += db.delete(EVENTS_INTEGER, whereClause, whereArgs);
+    int numRowsDeleted = 0;
+    db.beginTransaction();
+    try {
+      numRowsDeleted += db.delete(EVENTS_TEXTUAL, whereClause, whereArgs);
+      numRowsDeleted += db.delete(EVENTS_INTEGER, whereClause, whereArgs);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+    return numRowsDeleted;
+  }
+
+  // TODO: Name.
+  public int deleteStuffBefore(long time) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    final String whereClause = "date < ?";
+    final int endDay = this.getDay(time);
+    final String dayString = Integer.toString(endDay, 10);
+    final String[] whereArgs = new String[] {dayString};
+
+    int numRowsDeleted = 0;
+    db.beginTransaction();
+    try {
+      numRowsDeleted += db.delete(EVENTS_TEXTUAL, whereClause, whereArgs);
+      numRowsDeleted += db.delete(EVENTS_INTEGER, whereClause, whereArgs);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
     return numRowsDeleted;
   }
 
