@@ -78,6 +78,11 @@
       <version>4.1.21</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.lambdaworks</groupId>
+      <artifactId>scrypt</artifactId>
+      <version>1.4.0</version>
+    </dependency>
   </dependencies>
 
   <build>
