@@ -21,6 +21,15 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 
 public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
+  private String[] TABLE_NAMES = {
+    "addons",
+    "environments",
+    "measurements",
+    "fields",
+    "events_integer",
+    "events_textual"
+  };
+
   @Override
   protected String getCacheSuffix() {
     return File.separator + "health-" + System.currentTimeMillis() + ".profile";
@@ -268,5 +277,21 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
       db.insertOrThrow("fields", null, v);
       fail("Should throw - fields(measurement) is referencing non-existent measurements(id).");
     } catch (SQLiteConstraintException e) { }
+  }
+
+  public void testDeleteEverything() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    storage.deleteEverything();
+
+    final SQLiteDatabase db = storage.getDB();
+    for (String table : TABLE_NAMES) {
+      final Cursor c = db.query(table, null, null, null, null, null, null);
+      final int count = c.getCount();
+      c.close();
+      if (count != 0) {
+        fail("Not everything has been deleted for table " + table + ".");
+      }
+    }
   }
 }
