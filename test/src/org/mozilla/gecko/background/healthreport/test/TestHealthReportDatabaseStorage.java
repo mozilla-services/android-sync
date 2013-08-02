@@ -279,6 +279,39 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     } catch (SQLiteConstraintException e) { }
   }
 
+  private int getRowCount(SQLiteDatabase db, String table) {
+    final Cursor c = db.query(table, null, null, null, null, null, null);
+    final int count = c.getCount();
+    c.close();
+    return count;
+  }
+
+  public void testCascadingDeletions() throws Exception {
+    PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    SQLiteDatabase db = storage.getDB();
+    db.delete("environments", null, null);
+    assertEquals(0, getRowCount(db, "events_integer"));
+    assertEquals(0, getRowCount(db, "events_textual"));
+
+    storage = new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    db = storage.getDB();
+    db.delete("measurements", null, null);
+    assertEquals(0, getRowCount(db, "fields"));
+    assertEquals(0, getRowCount(db, "events_integer"));
+    assertEquals(0, getRowCount(db, "events_textual"));
+  }
+
+  public void testRestrictedDeletions() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    SQLiteDatabase db = storage.getDB();
+    try {
+      db.delete("addons", null, null);
+      fail("Should throw - environment references addons and thus addons cannot be deleted.");
+    } catch (SQLiteConstraintException e) { }
+  }
+
   public void testDeleteEverything() throws Exception {
     final PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
@@ -286,10 +319,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     final SQLiteDatabase db = storage.getDB();
     for (String table : TABLE_NAMES) {
-      final Cursor c = db.query(table, null, null, null, null, null, null);
-      final int count = c.getCount();
-      c.close();
-      if (count != 0) {
+      if (getRowCount(db, table) != 0) {
         fail("Not everything has been deleted for table " + table + ".");
       }
     }
