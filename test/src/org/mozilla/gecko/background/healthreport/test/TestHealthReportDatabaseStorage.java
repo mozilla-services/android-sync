@@ -324,4 +324,45 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
       }
     }
   }
+
+  public void testMeasurementRecordingConstraintViolation() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final int envID = storage.getEnvironment().register();
+    final int counterFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].counter.name).getID();
+    final int discreteFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].discrete.name).getID();
+
+    final int nonExistentEnvID = getNonExistentID(db, "environments");
+    final int nonExistentFieldID = getNonExistentID(db, "fields");
+
+    try {
+      storage.incrementDailyCount(nonExistentEnvID, storage.getToday(), counterFieldID);
+      fail("Should throw - event_integer(env) references environments(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyDiscrete(nonExistentEnvID, storage.getToday(), discreteFieldID, "iu");
+      fail("Should throw - event_textual(env) references environments(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyLast(nonExistentEnvID, storage.getToday(), discreteFieldID, "iu");
+      fail("Should throw - event_textual(env) references environments(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+
+    try {
+      storage.incrementDailyCount(envID, storage.getToday(), nonExistentFieldID);
+      fail("Should throw - event_integer(field) references fields(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyDiscrete(envID, storage.getToday(), nonExistentFieldID, "iu");
+      fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyLast(envID, storage.getToday(), nonExistentFieldID, "iu");
+      fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+  }
 }

@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
@@ -1038,7 +1039,13 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
       v.put("env", env);
       v.put("field", field);
       v.put("date", day);
-      db.insert(table, null, v);
+      try {
+        db.insertOrThrow(table, null, v);
+      } catch (SQLiteConstraintException e) {
+        throw new IllegalStateException("Event did not reference existing an environment or field.", e);
+      } catch (Exception e) {
+        Logger.error(LOG_TAG, "Unknown exception thrown while recording daily last value.", e);
+      }
     }
   }
 
@@ -1070,7 +1077,13 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
 
     final SQLiteDatabase db = this.helper.getWritableDatabase();
     putValue(v, value);
-    db.insert(table, null, v);
+    try {
+      db.insertOrThrow(table, null, v);
+    } catch (SQLiteConstraintException e) {
+      throw new IllegalStateException("Event did not reference existing an environment or field.", e);
+    } catch (Exception e) {
+      Logger.error(LOG_TAG, "Unknown exception thrown while recording daily discrete value.", e);
+    }
   }
 
   @Override
@@ -1140,7 +1153,13 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
       v.put("value", by);
       v.put("field", field);
       v.put("date", day);
-      db.insert(EVENTS_INTEGER, null, v);
+      try {
+        db.insertOrThrow(EVENTS_INTEGER, null, v);
+      } catch (SQLiteConstraintException e) {
+        throw new IllegalStateException("Event did not reference existing an environment or field.", e);
+      } catch (Exception e) {
+        Logger.error(LOG_TAG, "Unknown exception thrown while incrementing daily count.", e);
+      }
     }
   }
 
