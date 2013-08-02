@@ -63,6 +63,9 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
    * version.
    */
   public static class PrepopulatedMockHealthReportDatabaseStorage extends MockHealthReportDatabaseStorage {
+    public String[] measurementNames;
+    public int[] measurementVers;
+    public FieldSpecContainer[] fieldSpecContainers;
     private final JSONObject addonJSON = new JSONObject(
         "{ " +
         "\"amznUWL2@amazon.com\": { " +
@@ -89,7 +92,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
         "} " +
         "} ");
 
-    private static class FieldSpecContainer {
+    public static class FieldSpecContainer {
       public final FieldSpec counter;
       public final FieldSpec discrete;
       public final FieldSpec last;
@@ -112,15 +115,15 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
     public PrepopulatedMockHealthReportDatabaseStorage(Context context, File fakeProfileDirectory) throws Exception {
       super(context, fakeProfileDirectory);
 
-      String[] measurementNames = new String[2];
+      measurementNames = new String[2];
       measurementNames[0] = "a_string_measurement";
       measurementNames[1] = "b_integer_measurement";
 
-      int[] measurementVers = new int[2];
+      measurementVers = new int[2];
       measurementVers[0] = 1;
       measurementVers[1] = 2;
 
-      final FieldSpecContainer[] fieldSpecContainers = new FieldSpecContainer[2];
+      fieldSpecContainers = new FieldSpecContainer[2];
       fieldSpecContainers[0] = new FieldSpecContainer(
           new FieldSpec("a_counter_integer_field", Field.TYPE_INTEGER_COUNTER),
           new FieldSpec("a_discrete_string_field", Field.TYPE_STRING_DISCRETE),

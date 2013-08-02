@@ -15,7 +15,9 @@ import org.mozilla.gecko.background.healthreport.test.MockHealthReportDatabaseSt
 import org.mozilla.gecko.background.test.helpers.DBHelpers;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
+import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 
 public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
@@ -197,5 +199,74 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     final PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
     assertNotNull(storage);
+  }
+
+  private int getNonExistentID(SQLiteDatabase db, String table) {
+    final String[] columns = {"id"};
+    final Cursor c = db.query(table, columns, null, null, null, null, "id DESC");
+    try {
+      if (!c.moveToNext()) {
+        return 0;
+      }
+      final int maxID = c.getInt(0);
+      return maxID + 1;
+    } finally {
+      c.close();
+    }
+  }
+
+  public void testForeignKeyConstraints() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final int envID = storage.getEnvironment().register();
+    final int counterFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].counter.name).getID();
+    final int discreteFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].discrete.name).getID();
+
+    final int nonExistentEnvID = getNonExistentID(db, "environments");
+    final int nonExistentFieldID = getNonExistentID(db, "fields");
+    final int nonExistentAddonID = getNonExistentID(db, "addons");
+    final int nonExistentMeasurementID = getNonExistentID(db, "measurements");
+
+    ContentValues v = new ContentValues();
+    v.put("field", counterFieldID);
+    v.put("env", nonExistentEnvID);
+    try {
+      db.insertOrThrow("events_integer", null, v);
+      fail("Should throw - events_integer(env) is referencing non-existent environments(id)");
+    } catch (SQLiteConstraintException e) { }
+    v.put("field", discreteFieldID);
+    try {
+      db.insertOrThrow("events_textual", null, v);
+      fail("Should throw - events_textual(env) is referencing non-existent environments(id)");
+    } catch (SQLiteConstraintException e) { }
+
+    v.put("field", nonExistentFieldID);
+    v.put("env", envID);
+    try {
+      db.insertOrThrow("events_integer", null, v);
+      fail("Should throw - events_integer(field) is referencing non-existent fields(id)");
+    } catch (SQLiteConstraintException e) { }
+    try {
+      db.insertOrThrow("events_textual", null, v);
+      fail("Should throw - events_textual(field) is referencing non-existent fields(id)");
+    } catch (SQLiteConstraintException e) { }
+
+    v = new ContentValues();
+    v.put("addonsID", nonExistentAddonID);
+    try {
+      db.insertOrThrow("environments", null, v);
+      fail("Should throw - environments(addonsID) is referencing non-existent addons(id).");
+    } catch (SQLiteConstraintException e) { }
+
+    v = new ContentValues();
+    v.put("measurement", nonExistentMeasurementID);
+    try {
+      db.insertOrThrow("fields", null, v);
+      fail("Should throw - fields(measurement) is referencing non-existent measurements(id).");
+    } catch (SQLiteConstraintException e) { }
   }
 }
