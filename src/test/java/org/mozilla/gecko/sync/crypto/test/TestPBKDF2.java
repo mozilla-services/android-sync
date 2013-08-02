@@ -11,7 +11,6 @@ import java.security.GeneralSecurityException;
 
 import org.junit.Test;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.crypto.MozOpenSSL;
 import org.mozilla.gecko.sync.crypto.PBKDF2;
 
 public class TestPBKDF2 {
@@ -127,7 +126,7 @@ public class TestPBKDF2 {
     assertExpectedBytes(expectedStr, key);
   }
 
-  private void assertExpectedBytes(final String expectedStr, byte[] key) {
+  public static void assertExpectedBytes(final String expectedStr, byte[] key) {
     assertEquals(expectedStr, Utils.byte2hex(key));
     byte[] expected = Utils.hex2Byte(expectedStr);
 
