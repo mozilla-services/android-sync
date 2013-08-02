@@ -1208,6 +1208,51 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   /**
+   * Deletes field events (rows) with dates before, but not including, the given time.
+   *
+   * @param time milliseconds since epoch. Will be converted by {@link #getDay(long)}.
+   * @return the number of field events (rows) deleted from the database.
+   */
+  public int deleteEventsBefore(long time) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    final String whereClause = "date < ?";
+    final int endDay = this.getDay(time);
+    final String dayString = Integer.toString(endDay, 10);
+    final String[] whereArgs = new String[] {dayString};
+
+    int numRowsDeleted = 0;
+    db.beginTransaction();
+    try {
+      numRowsDeleted += db.delete(EVENTS_TEXTUAL, whereClause, whereArgs);
+      numRowsDeleted += db.delete(EVENTS_INTEGER, whereClause, whereArgs);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+    return numRowsDeleted;
+  }
+
+  // TODO: Name.
+  public int deleteStuffBefore(long time) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    final String whereClause = "date < ?";
+    final int endDay = this.getDay(time);
+    final String dayString = Integer.toString(endDay, 10);
+    final String[] whereArgs = new String[] {dayString};
+
+    int numRowsDeleted = 0;
+    db.beginTransaction();
+    try {
+      numRowsDeleted += db.delete(EVENTS_TEXTUAL, whereClause, whereArgs);
+      numRowsDeleted += db.delete(EVENTS_INTEGER, whereClause, whereArgs);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+    return numRowsDeleted;
+  }
+
+  /**
    * Retrieve a mapping from a table. Keys should be unique; only one key-value
    * pair will be returned for each key.
    */

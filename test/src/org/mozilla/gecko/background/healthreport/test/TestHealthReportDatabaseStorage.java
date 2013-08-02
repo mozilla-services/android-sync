@@ -1,6 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.gecko.background.healthreport.test;
 
@@ -186,5 +185,106 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(field, c.getInt(2));
     assertEquals(value, c.getLong(3));
     return c.moveToNext();
+  }
+
+  /**
+   * Returns a storage instance prepopulated with dummy data to be used for testing.
+   *
+   * Note: Editing this data directly will cause tests relying on it to fail. To add additional
+   * data, two possibilities are 1) this method is wrapped and the data is added to the returned
+   * object, or 2) this method takes an "version" argument with new data additions running only if
+   * the version is greater than some value. Once this is implemented, this comment can be
+   * removed.
+   *
+   * XXX: This is used in lieu of subclassing TestHealthReportDatabaseStorage in an inner class
+   * and prepopulating the storage instance in setUp() because the test runner was unable to find
+   * the inner class in testing.
+   */
+  private MockHealthReportDatabaseStorage getPrepopulatedStorage() throws Exception {
+    final String[] measurementNames = {"a_string_measurement", "b_integer_measurement"};
+    final int[] measurementVer = {1, 2};
+    final MeasurementFields[] measurementFields = {new MeasurementFields() {
+      @Override
+      public Iterable<FieldSpec> getFields() {
+        ArrayList<FieldSpec> fields = new ArrayList<FieldSpec>();
+        fields.add(new FieldSpec("a_counter_integer_field", Field.TYPE_INTEGER_COUNTER));
+        fields.add(new FieldSpec("a_discrete_string_field", Field.TYPE_STRING_DISCRETE));
+        fields.add(new FieldSpec("a_last_string_field", Field.TYPE_STRING_LAST));
+        return fields;
+      }
+    }, new MeasurementFields() {
+      @Override
+      public Iterable<FieldSpec> getFields() {
+        ArrayList<FieldSpec> fields = new ArrayList<FieldSpec>();
+        fields.add(new FieldSpec("b_counter_integer_field", Field.TYPE_INTEGER_COUNTER));
+        fields.add(new FieldSpec("b_discrete_integer_field", Field.TYPE_INTEGER_DISCRETE));
+        fields.add(new FieldSpec("b_last_integer_field", Field.TYPE_INTEGER_LAST));
+        return fields;
+      }
+    }};
+
+    final MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context,
+        fakeProfileDirectory);
+    storage.beginInitialization();
+    for (int i = 0; i < measurementNames.length; i++) {
+      storage.ensureMeasurementInitialized(measurementNames[i], measurementVer[i],
+          measurementFields[i]);
+    }
+    storage.finishInitialization();
+
+    final MockDatabaseEnvironment environment = storage.getEnvironment();
+    environment.mockInit("v123");
+    environment.setJSONForAddons(EXAMPLE_ADDONS);
+    final int env = environment.register();
+
+    String mName = measurementNames[0];
+    int mVer = measurementVer[0];
+    int fieldID = storage.getField(mName, mVer, "a_counter_integer_field").getID();
+    storage.incrementDailyCount(env, storage.getGivenDaysAgo(7), fieldID, 1);
+    storage.incrementDailyCount(env, storage.getGivenDaysAgo(4), fieldID, 2);
+    storage.incrementDailyCount(env, storage.getToday(), fieldID, 3);
+    fieldID = storage.getField(mName, mVer, "a_last_string_field").getID();
+    storage.recordDailyLast(env, storage.getGivenDaysAgo(6), fieldID, "six");
+    storage.recordDailyLast(env, storage.getGivenDaysAgo(3), fieldID, "three");
+    storage.recordDailyLast(env, storage.getToday(), fieldID, "zero");
+    fieldID = storage.getField(mName, mVer, "a_discrete_string_field").getID();
+    storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(5), fieldID, "five");
+    storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(5), fieldID, "five-two");
+    storage.recordDailyDiscrete(env, storage.getGivenDaysAgo(2), fieldID, "two");
+    storage.recordDailyDiscrete(env, storage.getToday(), fieldID, "zero");
+
+    mName = measurementNames[1];
+    mVer = measurementVer[1];
+    fieldID = storage.getField(mName, mVer, "b_counter_integer_field").getID();
+    storage.incrementDailyCount(env, storage.getGivenDaysAgo(2), fieldID, 2);
+    fieldID = storage.getField(mName, mVer, "b_last_integer_field").getID();
+    storage.recordDailyLast(env, storage.getYesterday(), fieldID, 1);
+    fieldID = storage.getField(mName, mVer, "b_discrete_integer_field").getID();
+    storage.recordDailyDiscrete(env, storage.getToday(), fieldID, 0);
+    storage.recordDailyDiscrete(env, storage.getToday(), fieldID, 1);
+
+    return storage;
+  }
+
+  public void testDeleteEventsBefore() throws Exception {
+    final MockHealthReportDatabaseStorage storage = getPrepopulatedStorage();
+    Cursor c = storage.getEventsSince(0);
+    assertEquals(14, c.getCount());
+    c.close();
+
+    assertEquals(2, storage.deleteEventsBefore(storage.getGivenDaysAgoMillis(5)));
+    c = storage.getEventsSince(0);
+    assertEquals(12, c.getCount());
+    c.close();
+
+    assertEquals(2, storage.deleteEventsBefore(storage.getGivenDaysAgoMillis(4)));
+    c = storage.getEventsSince(0);
+    assertEquals(10, c.getCount());
+    c.close();
+
+    assertEquals(5, storage.deleteEventsBefore(storage.now));
+    c = storage.getEventsSince(0);
+    assertEquals(5, c.getCount());
+    c.close();
   }
 }
