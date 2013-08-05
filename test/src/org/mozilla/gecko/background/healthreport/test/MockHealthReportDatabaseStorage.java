@@ -55,6 +55,11 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   }
 
   @Override
+  public int deleteEnvAndEventsBefore(long time, int curEnv) {
+    return super.deleteEnvAndEventsBefore(time, curEnv);
+  }
+
+  @Override
   public int deleteOrphanedEnv(int curEnv) {
     return super.deleteOrphanedEnv(curEnv);
   }

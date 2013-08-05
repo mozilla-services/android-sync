@@ -1252,6 +1252,36 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   /**
+   * Deletes environments and their referring events recorded before the given time. Environments
+   * referenced by no events are deleted, except for the current environment.
+   *
+   * @param time milliseconds since epoch. Will be converted by {@link #getDay(long)}.
+   * @param curEnv The ID of the current environment.
+   * @return The number of environments (not events) deleted.
+   */
+  protected int deleteEnvAndEventsBefore(long time, int curEnv) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    // Delete environments only referenced by events occuring before the given time. Cascade
+    // delete these events.
+    String whereClause =
+        "(SELECT COUNT(*) FROM events WHERE date >= ? " +
+        "    AND events.env = environments.id) = 0 " +
+        "AND id IN (SELECT DISTINCT env FROM events WHERE date < ?)";
+    final int day = this.getDay(time);
+    final String dayString = Integer.toString(day, 10);
+    String[] whereArgs = new String[] {dayString, dayString};
+    int numEnvDeleted = db.delete("environments", whereClause, whereArgs);
+
+    numEnvDeleted += deleteOrphanedEnv(curEnv);
+
+    // We can't get the number of events deleted through cascading deletions so we do not record
+    // the number of events deleted here.
+    deleteEventsBefore(dayString);
+
+    return numEnvDeleted;
+  }
+
+  /**
    * Deletes environments not referenced by any events except for the given current environment.
    */
   protected int deleteOrphanedEnv(int curEnv) {

@@ -355,6 +355,53 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     } catch (IllegalStateException e) { }
   }
 
+  // Largely taken from testDeleteOrphanedEnv and testDeleteEventsBefore.
+  public void testDeleteEnvAndEventsBefore() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    // Insert (and delete) an environment not referenced by any events.
+    ContentValues v = new ContentValues();
+    v.put("hash", "I really hope this is a unique hash! ^_^");
+    v.put("addonsID", DBHelpers.getExistentID(db, "addons"));
+    db.insertOrThrow("environments", null, v);
+    v.put("hash", "Another unique hash!");
+    final int curEnv = (int) db.insertOrThrow("environments", null, v);
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(8), curEnv));
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(8),
+          DBHelpers.getNonExistentID(db, "environments")));
+
+    // Insert (and delete) new environment and referencing events.
+    final long envID = db.insertOrThrow("environments", null, v);
+    v = new ContentValues();
+    v.put("date", storage.getGivenDaysAgo(9));
+    v.put("env", envID);
+    v.put("field", DBHelpers.getExistentID(db, "fields"));
+    db.insertOrThrow("events_integer", null, v);
+    db.insertOrThrow("events_integer", null, v);
+    assertEquals(16, getTotalEventCount(storage));
+    final int nonExistentEnvID = (int) DBHelpers.getNonExistentID(db, "environments");
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(8), nonExistentEnvID));
+    assertEquals(14, getTotalEventCount(storage));
+
+    // Assert only pre-populated storage is stored.
+    assertEquals(1, DBHelpers.getRowCount(db, "environments"));
+
+    assertEquals(0, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(5), nonExistentEnvID));
+    assertEquals(12, getTotalEventCount(storage));
+
+    assertEquals(0, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(4), nonExistentEnvID));
+    assertEquals(10, getTotalEventCount(storage));
+
+    assertEquals(0, storage.deleteEnvAndEventsBefore(storage.now, nonExistentEnvID));
+    assertEquals(5, getTotalEventCount(storage));
+
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.now + HealthReportConstants.MILLISECONDS_PER_DAY,
+          nonExistentEnvID));
+    assertEquals(0, getTotalEventCount(storage));
+  }
+
   public void testDeleteOrphanedEnv() throws Exception {
     final PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
