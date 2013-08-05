@@ -1043,8 +1043,6 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
         db.insertOrThrow(table, null, v);
       } catch (SQLiteConstraintException e) {
         throw new IllegalStateException("Event did not reference existing an environment or field.", e);
-      } catch (Exception e) {
-        Logger.error(LOG_TAG, "Unknown exception thrown while recording daily last value.", e);
       }
     }
   }
@@ -1081,8 +1079,6 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
       db.insertOrThrow(table, null, v);
     } catch (SQLiteConstraintException e) {
       throw new IllegalStateException("Event did not reference existing an environment or field.", e);
-    } catch (Exception e) {
-      Logger.error(LOG_TAG, "Unknown exception thrown while recording daily discrete value.", e);
     }
   }
 
@@ -1157,8 +1153,6 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
         db.insertOrThrow(EVENTS_INTEGER, null, v);
       } catch (SQLiteConstraintException e) {
         throw new IllegalStateException("Event did not reference existing an environment or field.", e);
-      } catch (Exception e) {
-        Logger.error(LOG_TAG, "Unknown exception thrown while incrementing daily count.", e);
       }
     }
   }
