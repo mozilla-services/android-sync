@@ -1251,6 +1251,18 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
                     "date, environment, measurement_name, measurement_version, field_name");
   }
 
+  /**
+   * Deletes environments not referenced by any events except for the given current environment.
+   */
+  protected int deleteOrphanedEnv(int curEnv) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    final String whereClause =
+        "id != ? AND " +
+        "id NOT IN (SELECT env FROM events)";
+    final String[] whereArgs = new String[] {Integer.toString(curEnv)};
+    return db.delete("environments", whereClause, whereArgs);
+  }
+
   protected int deleteEventsBefore(String dayString) {
     final SQLiteDatabase db = this.helper.getWritableDatabase();
     final String whereClause = "date < ?";

@@ -55,6 +55,11 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   }
 
   @Override
+  public int deleteOrphanedEnv(int curEnv) {
+    return super.deleteOrphanedEnv(curEnv);
+  }
+
+  @Override
   public int deleteEventsBefore(String dayString) {
     return super.deleteEventsBefore(dayString);
   }
@@ -88,6 +93,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
     public String[] measurementNames;
     public int[] measurementVers;
     public FieldSpecContainer[] fieldSpecContainers;
+    public int env;
     private final JSONObject addonJSON = new JSONObject(
         "{ " +
         "\"amznUWL2@amazon.com\": { " +
@@ -186,7 +192,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
       final MockDatabaseEnvironment environment = this.getEnvironment();
       environment.mockInit("v123");
       environment.setJSONForAddons(addonJSON);
-      final int env = environment.register();
+      env = environment.register();
 
       String mName = measurementNames[0];
       int mVer = measurementVers[0];

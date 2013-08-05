@@ -64,4 +64,21 @@ public class DBHelpers {
       c.close();
     }
   }
+
+  /**
+   * Returns an ID that exists in the given sqlite table. Assumes that a column named * "id"
+   * exists.
+   */
+  public static long getExistentID(SQLiteDatabase db, String table) {
+    final Cursor c = db.query(table, new String[] {"id"}, null, null, null, null, null, "1");
+    try {
+      if (!c.moveToNext()) {
+        throw new IllegalStateException("Given table does not contain any entries.");
+      }
+      return c.getInt(0);
+    } finally {
+      c.close();
+    }
+  }
+
 }

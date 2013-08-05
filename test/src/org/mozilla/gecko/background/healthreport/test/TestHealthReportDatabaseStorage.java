@@ -355,6 +355,23 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     } catch (IllegalStateException e) { }
   }
 
+  public void testDeleteOrphanedEnv() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final ContentValues v = new ContentValues();
+    v.put("addonsID", DBHelpers.getExistentID(db, "addons"));
+    v.put("hash", "unique");
+    final int envID = (int) db.insert("environments", null, v);
+
+    assertEquals(0, storage.deleteOrphanedEnv(envID));
+    assertEquals(1, storage.deleteOrphanedEnv(storage.env));
+    db.delete("events_integer", null, null);
+    db.delete("events_textual", null, null);
+    assertEquals(1, storage.deleteOrphanedEnv(envID));
+  }
+
   public void testDeleteEventsBefore() throws Exception {
     final PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
