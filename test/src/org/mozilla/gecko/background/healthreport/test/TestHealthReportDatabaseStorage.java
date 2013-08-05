@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.background.common.GlobalConstants;
+import org.mozilla.gecko.background.healthreport.HealthReportStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.healthreport.test.MockHealthReportDatabaseStorage.PrepopulatedMockHealthReportDatabaseStorage;
@@ -265,6 +266,15 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     } catch (SQLiteConstraintException e) { }
   }
 
+  private int getTotalEventCount(HealthReportStorage storage) {
+    final Cursor c = storage.getEventsSince(0);
+    try {
+      return c.getCount();
+    } finally {
+      c.close();
+    }
+  }
+
   public void testCascadingDeletions() throws Exception {
     PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
@@ -343,6 +353,22 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
       storage.recordDailyLast(envID, storage.getToday(), nonExistentFieldID, "iu");
       fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
     } catch (IllegalStateException e) { }
+  }
+
+  public void testDeleteEventsBefore() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertEquals(2, storage.deleteEventsBefore(Integer.toString(storage.getGivenDaysAgo(5))));
+    assertEquals(12, getTotalEventCount(storage));
+
+    assertEquals(2, storage.deleteEventsBefore(Integer.toString(storage.getGivenDaysAgo(4))));
+    assertEquals(10, getTotalEventCount(storage));
+
+    assertEquals(5, storage.deleteEventsBefore(Integer.toString(storage.getToday())));
+    assertEquals(5, getTotalEventCount(storage));
+
+    assertEquals(5, storage.deleteEventsBefore(Integer.toString(storage.getTomorrow())));
+    assertEquals(0, getTotalEventCount(storage));
   }
 
   public void testDeleteOrphanedAddons() throws Exception {

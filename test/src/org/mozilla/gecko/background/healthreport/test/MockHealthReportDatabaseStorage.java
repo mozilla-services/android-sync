@@ -29,6 +29,10 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
     return super.getDay(now);
   }
 
+  public int getTomorrow() {
+    return super.getDay(now + GlobalConstants.MILLISECONDS_PER_DAY);
+  }
+
   public int getGivenDaysAgo(int numDays) {
     return super.getDay(this.getGivenDaysAgoMillis(numDays));
   }
@@ -48,6 +52,11 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   @Override
   public MockDatabaseEnvironment getEnvironment() {
     return new MockDatabaseEnvironment(this);
+  }
+
+  @Override
+  public int deleteEventsBefore(String dayString) {
+    return super.deleteEventsBefore(dayString);
   }
 
   @Override

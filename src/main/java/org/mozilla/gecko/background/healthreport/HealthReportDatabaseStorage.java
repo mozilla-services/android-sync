@@ -1251,6 +1251,14 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
                     "date, environment, measurement_name, measurement_version, field_name");
   }
 
+  protected int deleteEventsBefore(String dayString) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    final String whereClause = "date < ?";
+    final String[] whereArgs = new String[] {dayString};
+    final int numEventsDeleted = db.delete("events_integer", whereClause, whereArgs);
+    return numEventsDeleted + db.delete("events_textual", whereClause, whereArgs);
+  }
+
   /**
    * Deletes addons not referenced by any environments.
    */
