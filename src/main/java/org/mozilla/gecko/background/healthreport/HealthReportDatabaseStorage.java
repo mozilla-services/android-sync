@@ -1252,6 +1252,21 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   /**
+   * Deletes all environments, addons, and events from the database before the given time. If this
+   * data does not have recorded dates but are no longer referenced by other fields, they are also
+   * removed (with exception to the current environment).
+   *
+   * @param time milliseconds since epoch. Will be converted by {@link #getDay(long)}.
+   * @param curEnv The ID of the current environment.
+   * @return The number of environments and addon entries deleted.
+   */
+  public int deleteDataBefore(long time, int curEnv) {
+    int numRowsDeleted = deleteEnvAndEventsBefore(time, curEnv);
+    numRowsDeleted += deleteOrphanedAddons();
+    return numRowsDeleted;
+  }
+
+  /**
    * Deletes environments and their referring events recorded before the given time. Environments
    * referenced by no events are deleted, except for the current environment.
    *
