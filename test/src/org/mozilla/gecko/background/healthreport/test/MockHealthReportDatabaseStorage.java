@@ -54,15 +54,24 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   /**
    * A storage instance prepopulated with dummy data to be used for testing.
    *
-   * XXX: This is used in lieu of subclassing TestHealthReportDatabaseStorage in an inner class
-   * and prepopulating the storage instance in setUp() because the test runner was unable to find
-   * the inner class in testing.
+   * Modifying this data directly will cause tests relying on it to fail so use the versioned
+   * constructor to change the data if it's the desired version. Example:
+   * <pre>
+   *  if (version >= 3) {
+   *    addVersion3Stuff();
+   *  }
+   *  if (version >= 2) {
+   *    addVersion2Stuff();
+   *  }
+   *  addVersion1Stuff();
+   * </pre>
    *
-   * TODO: Modifying this data directly will cause tests relying on it to fail so a versioned
-   * constructor should be added where additional (or entirely different) data is used for each
-   * version.
+   * Don't forget to increment the {@link MAX_VERSION_USED} constant.
    */
   public static class PrepopulatedMockHealthReportDatabaseStorage extends MockHealthReportDatabaseStorage {
+    // A constant to enforce which version constructor is the maximum used so far.
+    private int MAX_VERSION_USED = 1;
+
     public String[] measurementNames;
     public int[] measurementVers;
     public FieldSpecContainer[] fieldSpecContainers;
@@ -113,7 +122,16 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
     }
 
     public PrepopulatedMockHealthReportDatabaseStorage(Context context, File fakeProfileDirectory) throws Exception {
+      this(context, fakeProfileDirectory, 1);
+    }
+
+    public PrepopulatedMockHealthReportDatabaseStorage(Context context, File fakeProfileDirectory, int version) throws Exception {
       super(context, fakeProfileDirectory);
+
+      if (version > MAX_VERSION_USED || version < 1) {
+        throw new IllegalStateException("Invalid version number! Check " +
+            "PrepopulatedMockHealthReportDatabaseStorage.MAX_VERSION_USED!");
+      }
 
       measurementNames = new String[2];
       measurementNames[0] = "a_string_measurement";
