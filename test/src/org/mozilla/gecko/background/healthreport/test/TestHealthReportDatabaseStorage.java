@@ -211,14 +211,12 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
   }
 
   private int getNonExistentID(SQLiteDatabase db, String table) {
-    final String[] columns = {"id"};
-    final Cursor c = db.query(table, columns, null, null, null, null, "id DESC");
+    final Cursor c = db.query(table, new String[] {"MAX(id) + 1"}, null, null, null, null, null);
     try {
       if (!c.moveToNext()) {
         return 0;
       }
-      final int maxID = c.getInt(0);
-      return maxID + 1;
+      return c.getInt(0);
     } finally {
       c.close();
     }
