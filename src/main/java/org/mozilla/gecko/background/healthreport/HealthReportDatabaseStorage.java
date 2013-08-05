@@ -1252,6 +1252,15 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   /**
+   * Deletes addons not referenced by any environments.
+   */
+  protected int deleteOrphanedAddons() {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    final String whereClause = "id NOT IN (SELECT addonsID FROM environments)";
+    return db.delete("addons", whereClause, null);
+  }
+
+  /**
    * Retrieve a mapping from a table. Keys should be unique; only one key-value
    * pair will be returned for each key.
    */

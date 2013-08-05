@@ -344,4 +344,42 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
       fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
     } catch (IllegalStateException e) { }
   }
+
+  public void testDeleteOrphanedAddons() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final ArrayList<Integer> nonOrphanIDs = new ArrayList<Integer>();
+    final Cursor c = db.query("addons", new String[] {"id"}, null, null, null, null, null);
+    try {
+      if (!c.moveToFirst()) {
+        throw new IllegalStateException("addons table does not contain any addons.");
+      }
+      do {
+        nonOrphanIDs.add(c.getInt(0));
+      } while (c.moveToNext());
+    } finally {
+      c.close();
+    }
+
+    // Ensure we don't delete non-orphans.
+    assertEquals(0, storage.deleteOrphanedAddons());
+
+    // Insert orphans.
+    final long[] orphanIDs = new long[2];
+    final ContentValues v = new ContentValues();
+    v.put("body", "addon1");
+    orphanIDs[0] = db.insertOrThrow("addons", null, v);
+    v.put("body", "addon2");
+    orphanIDs[1] = db.insertOrThrow("addons", null, v);
+    assertEquals(2, storage.deleteOrphanedAddons());
+    assertEquals(0, DBHelpers.getRowCount(db, "addons", "ID = ? OR ID = ?",
+        new String[] {Long.toString(orphanIDs[0]), Long.toString(orphanIDs[1])}));
+
+    // Orphan all addons.
+    db.delete("environments", null, null);
+    assertEquals(nonOrphanIDs.size(), storage.deleteOrphanedAddons());
+    assertEquals(0, DBHelpers.getRowCount(db, "addons"));
+  }
 }

@@ -35,10 +35,16 @@ public class DBHelpers {
   }
 
   public static int getRowCount(SQLiteDatabase db, String table) {
-    final Cursor c = db.query(table, null, null, null, null, null, null);
-    final int count = c.getCount();
-    c.close();
-    return count;
+    return getRowCount(db, table, null, null);
+  }
+
+  public static int getRowCount(SQLiteDatabase db, String table, String selection, String[] selectionArgs) {
+    final Cursor c = db.query(table, null, selection, selectionArgs, null, null, null);
+    try {
+      return c.getCount();
+    } finally {
+      c.close();
+    }
   }
 
   /**

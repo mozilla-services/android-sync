@@ -50,6 +50,11 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
     return new MockDatabaseEnvironment(this);
   }
 
+  @Override
+  public int deleteOrphanedAddons() {
+    return super.deleteOrphanedAddons();
+  }
+
   /**
    * A storage instance prepopulated with dummy data to be used for testing.
    *
