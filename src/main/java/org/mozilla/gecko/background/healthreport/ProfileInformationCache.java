@@ -26,7 +26,7 @@ import org.mozilla.gecko.background.healthreport.EnvironmentBuilder.ProfileInfor
 public class ProfileInformationCache implements ProfileInformationProvider {
   private static final String LOG_TAG = "GeckoProfileInfo";
   private static final String CACHE_FILE = "profile_info_cache.json";
-  public static final int FORMAT_VERSION = 1;
+  public static final int FORMAT_VERSION = 2;
 
   protected boolean initialized = false;
   protected boolean needsWrite = false;

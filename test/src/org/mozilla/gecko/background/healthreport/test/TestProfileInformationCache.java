@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
 public class TestProfileInformationCache extends FakeProfileTestCase {
@@ -107,8 +108,9 @@ public class TestProfileInformationCache extends FakeProfileTestCase {
 
   public final void testVersioning() throws JSONException, IOException {
     MockProfileInformationCache cache = makeCache("testVersioning");
+    final int currentVersion = ProfileInformationCache.FORMAT_VERSION;
     final JSONObject json = cache.toJSON();
-    assertEquals(1, json.getInt("version"));
+    assertEquals(currentVersion, json.getInt("version"));
 
     // Initialize enough that we can re-load it.
     cache.beginInitialization();
@@ -117,7 +119,7 @@ public class TestProfileInformationCache extends FakeProfileTestCase {
     cache.writeJSON(json);
     assertTrue(cache.restoreUnlessInitialized());
     cache.beginInitialization();     // So that we'll need to read again.
-    json.put("version", 2);
+    json.put("version", currentVersion + 1);
     cache.writeJSON(json);
 
     // We can't restore a future version.
@@ -133,21 +135,28 @@ public class TestProfileInformationCache extends FakeProfileTestCase {
     jsonInvalid.put("telemetry", false);
     jsonInvalid.put("profileCreated", 1234567L);
 
-    final JSONObject jsonValid = new JSONObject(jsonInvalid, new String[]{"blocklist", "telemetry", "profileCreated"});
-    jsonValid.put("addons", new JSONObject());
+    final JSONObject jsonValidImplicitVer = new JSONObject(jsonInvalid, new String[]{"blocklist", "telemetry", "profileCreated"});
+    jsonValidImplicitVer.put("addons", new JSONObject());
+
+    final JSONObject jsonValidCurrentVer = new JSONObject(jsonInvalid, new String[]{"blocklist", "telemetry", "profileCreated", "addons"});
+    jsonValidCurrentVer.put("version", ProfileInformationCache.FORMAT_VERSION);
 
     cache.writeJSON(jsonInvalid);
     assertFalse(cache.restoreUnlessInitialized());
 
     cache = makeCache("testImplicitV1");
-    cache.writeJSON(jsonValid);
-    assertTrue(cache.restoreUnlessInitialized());
+    cache.writeJSON(jsonValidImplicitVer);
+    assertTrue(ProfileInformationCache.FORMAT_VERSION > 1);
+    // Can't restore since implicit v1 is not the current version.
+    assertFalse(cache.restoreUnlessInitialized());
 
+    cache = makeCache("testImplicitV1");
+    cache.writeJSON(jsonValidCurrentVer);
     cache.beginInitialization();
     cache.setTelemetryEnabled(true);
     cache.completeInitialization();
 
-    assertEquals(1, cache.readJSON().getInt("version"));
+    assertEquals(ProfileInformationCache.FORMAT_VERSION, cache.readJSON().getInt("version"));
   }
 
   @Override
