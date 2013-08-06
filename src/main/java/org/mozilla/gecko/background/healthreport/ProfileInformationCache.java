@@ -66,7 +66,10 @@ public class ProfileInformationCache implements ProfileInformationProvider {
   }
 
   /**
-   * Attempt to restore this object from a JSON blob.
+   * Attempt to restore this object from a JSON blob. If there is a version mismatch, there has
+   * likely been an upgrade to the cache format. The cache can be reconstructed without data loss
+   * so rather than migrating, we invalidate the cache by refusing to store the given JSONObject
+   * and returning false.
    *
    * @return false if there's a version mismatch or an error, true on success.
    */
