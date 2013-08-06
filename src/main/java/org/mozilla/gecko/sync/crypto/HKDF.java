@@ -108,4 +108,8 @@ public class HKDF {
     hasher.reset();
     return ret;
   }
+
+  public static byte[] derive(byte[] skm, byte[] xts, byte[] ctxInfo, int dkLen) throws InvalidKeyException, NoSuchAlgorithmException {
+    return hkdfExpand(hkdfExtract(xts, skm), ctxInfo, dkLen);
+  }
 }
