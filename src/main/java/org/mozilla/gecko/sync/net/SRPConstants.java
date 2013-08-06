@@ -6,6 +6,8 @@ package org.mozilla.gecko.sync.net;
 
 import java.math.BigInteger;
 
+import org.mozilla.gecko.sync.Utils;
+
 /**
  * SRP Group Parameters from
  * <a href="http://tools.ietf.org/html/rfc5054#appendix-A">Appendix A of RFC 5054</a>.
@@ -35,6 +37,10 @@ public class SRPConstants {
       this.hexLength = this.N.toString(16).length();
       this.byteLength = hexLength / 2;
       this.bitLength = this.byteLength * 8;
+    }
+
+    public String hexModN(BigInteger value) {
+      return Utils.byte2hex(Utils.hex2Byte(value.toString(16), byteLength), hexLength);
     }
   }
 
