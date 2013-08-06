@@ -427,6 +427,25 @@ The integration test suite can be run with the following command: ::
 
 .. _`Bug 777846`: https://bugzilla.mozilla.org/show_bug.cgi?id=777846
 
+Generating an HTML report
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After running the test suite via the command line, if you would like
+to generate an HTML report from the most recent test results (which are
+otherwise found in your shell's output and as an XML file), you can use
+the following command: ::
+
+  mvn surefire-report:report-only
+
+The resulting file will be stored at
+``./android-sync-instrumentation/target/site/surefire-report.html``. This
+file is overwritten each time this command is run so be sure to copy the
+file out if you would like to keep it.
+
+More information can be found via the `report plugin's homepage`_.
+
+.. _`report plugin's homepage`: http://maven.apache.org/surefire/maven-surefire-report-plugin/
+
 Running the integration test suite under Eclipse
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
