@@ -26,6 +26,13 @@ import org.mozilla.gecko.background.healthreport.EnvironmentBuilder.ProfileInfor
 public class ProfileInformationCache implements ProfileInformationProvider {
   private static final String LOG_TAG = "GeckoProfileInfo";
   private static final String CACHE_FILE = "profile_info_cache.json";
+
+  /*
+   * FORMAT_VERSION history:
+   *   -: No version number; implicit v1.
+   *   1: Add versioning (Bug 878670).
+   *   2: Bump to regenerate add-on set after landing Bug 900694 (Bug 901622).
+   */
   public static final int FORMAT_VERSION = 2;
 
   protected boolean initialized = false;
