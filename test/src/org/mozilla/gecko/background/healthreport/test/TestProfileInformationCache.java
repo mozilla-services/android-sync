@@ -1,6 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.gecko.background.healthreport.test;
 
@@ -9,6 +8,7 @@ import java.io.IOException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
 public class TestProfileInformationCache extends FakeProfileTestCase {
@@ -108,8 +108,9 @@ public class TestProfileInformationCache extends FakeProfileTestCase {
 
   public final void testVersioning() throws JSONException, IOException {
     MockProfileInformationCache cache = makeCache("testVersioning");
+    final int currentVersion = ProfileInformationCache.FORMAT_VERSION;
     final JSONObject json = cache.toJSON();
-    assertEquals(1, json.getInt("version"));
+    assertEquals(currentVersion, json.getInt("version"));
 
     // Initialize enough that we can re-load it.
     cache.beginInitialization();
@@ -118,37 +119,64 @@ public class TestProfileInformationCache extends FakeProfileTestCase {
     cache.writeJSON(json);
     assertTrue(cache.restoreUnlessInitialized());
     cache.beginInitialization();     // So that we'll need to read again.
-    json.put("version", 2);
+    json.put("version", currentVersion + 1);
     cache.writeJSON(json);
 
     // We can't restore a future version.
     assertFalse(cache.restoreUnlessInitialized());
   }
 
-  public final void testImplicitV1() throws JSONException, IOException {
-    MockProfileInformationCache cache = makeCache("testImplicitV1");
+  public void testRestoreInvalidJSON() throws Exception {
+    final MockProfileInformationCache cache = makeCache("invalid");
 
-    // This is a broken v1 payload without a version number.
-    final JSONObject jsonInvalid = new JSONObject();
-    jsonInvalid.put("blocklist", true);
-    jsonInvalid.put("telemetry", false);
-    jsonInvalid.put("profileCreated", 1234567L);
-
-    final JSONObject jsonValid = new JSONObject(jsonInvalid, new String[]{"blocklist", "telemetry", "profileCreated"});
-    jsonValid.put("addons", new JSONObject());
-
-    cache.writeJSON(jsonInvalid);
+    final JSONObject invalidJSON = new JSONObject();
+    invalidJSON.put("blocklist", true);
+    invalidJSON.put("telemetry", false);
+    invalidJSON.put("profileCreated", 1234567L);
+    cache.writeJSON(invalidJSON);
     assertFalse(cache.restoreUnlessInitialized());
+  }
 
-    cache = makeCache("testImplicitV1");
-    cache.writeJSON(jsonValid);
-    assertTrue(cache.restoreUnlessInitialized());
+  private JSONObject getValidCacheJSON() throws Exception {
+    final JSONObject json = new JSONObject();
+    json.put("blocklist", true);
+    json.put("telemetry", false);
+    json.put("profileCreated", 1234567L);
+    json.put("addons", new JSONObject());
+    json.put("version", ProfileInformationCache.FORMAT_VERSION);
+    return json;
+  }
 
+  public void testRestoreImplicitV1() throws Exception {
+    assertTrue(ProfileInformationCache.FORMAT_VERSION > 1);
+
+    final MockProfileInformationCache cache = makeCache("implicitV1");
+    final JSONObject json = getValidCacheJSON();
+    json.remove("version");
+    cache.writeJSON(json);
+    // Can't restore v1 (which is implicitly set) since it is not the current version.
+    assertFalse(cache.restoreUnlessInitialized());
+  }
+
+  public void testRestoreOldVersion() throws Exception {
+    final int oldVersion = 1;
+    assertTrue(ProfileInformationCache.FORMAT_VERSION > oldVersion);
+
+    final MockProfileInformationCache cache = makeCache("oldVersion");
+    final JSONObject json = getValidCacheJSON();
+    json.put("version", oldVersion);
+    cache.writeJSON(json);
+    assertFalse(cache.restoreUnlessInitialized());
+  }
+
+  public void testRestoreCurrentVersion() throws Exception {
+    final MockProfileInformationCache cache = makeCache("currentVersion");
+    final JSONObject json = getValidCacheJSON();
+    cache.writeJSON(json);
     cache.beginInitialization();
     cache.setTelemetryEnabled(true);
     cache.completeInitialization();
-
-    assertEquals(1, cache.readJSON().getInt("version"));
+    assertEquals(ProfileInformationCache.FORMAT_VERSION, cache.readJSON().getInt("version"));
   }
 
   @Override
