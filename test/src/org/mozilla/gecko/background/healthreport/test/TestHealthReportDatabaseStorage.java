@@ -211,7 +211,9 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
   }
 
   private int getNonExistentID(SQLiteDatabase db, String table) {
-    final Cursor c = db.query(table, new String[] {"MAX(id) + 1"}, null, null, null, null, null);
+    // XXX: We should use selectionArgs to concatenate table, but sqlite throws a syntax error on
+    // "?" because it wants to ensure id is a valid column in table.
+    final Cursor c = db.rawQuery("SELECT MAX(id) + 1 FROM " + table, null);
     try {
       if (!c.moveToNext()) {
         return 0;
