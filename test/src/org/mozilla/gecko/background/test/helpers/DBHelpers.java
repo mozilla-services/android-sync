@@ -4,6 +4,7 @@
 package org.mozilla.gecko.background.test.helpers;
 
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import junit.framework.Assert;
 
 public class DBHelpers {
@@ -31,5 +32,30 @@ public class DBHelpers {
       }
       ++i;
     } while (actual.moveToPosition(i));
+  }
+
+  public static int getRowCount(SQLiteDatabase db, String table) {
+    final Cursor c = db.query(table, null, null, null, null, null, null);
+    final int count = c.getCount();
+    c.close();
+    return count;
+  }
+
+  /**
+   * Returns an ID that is non-existent in the given sqlite table. Assumes that a column named
+   * "id" exists.
+   */
+  public static int getNonExistentID(SQLiteDatabase db, String table) {
+    // XXX: We should use selectionArgs to concatenate table, but sqlite throws a syntax error on
+    // "?" because it wants to ensure id is a valid column in table.
+    final Cursor c = db.rawQuery("SELECT MAX(id) + 1 FROM " + table, null);
+    try {
+      if (!c.moveToNext()) {
+        return 0;
+      }
+      return c.getInt(0);
+    } finally {
+      c.close();
+    }
   }
 }

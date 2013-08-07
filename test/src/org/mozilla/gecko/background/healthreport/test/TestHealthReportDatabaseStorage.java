@@ -210,20 +210,6 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertNotNull(storage);
   }
 
-  private int getNonExistentID(SQLiteDatabase db, String table) {
-    // XXX: We should use selectionArgs to concatenate table, but sqlite throws a syntax error on
-    // "?" because it wants to ensure id is a valid column in table.
-    final Cursor c = db.rawQuery("SELECT MAX(id) + 1 FROM " + table, null);
-    try {
-      if (!c.moveToNext()) {
-        return 0;
-      }
-      return c.getInt(0);
-    } finally {
-      c.close();
-    }
-  }
-
   public void testForeignKeyConstraints() throws Exception {
     final PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
@@ -235,10 +221,10 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     final int discreteFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
         storage.fieldSpecContainers[0].discrete.name).getID();
 
-    final int nonExistentEnvID = getNonExistentID(db, "environments");
-    final int nonExistentFieldID = getNonExistentID(db, "fields");
-    final int nonExistentAddonID = getNonExistentID(db, "addons");
-    final int nonExistentMeasurementID = getNonExistentID(db, "measurements");
+    final int nonExistentEnvID = DBHelpers.getNonExistentID(db, "environments");
+    final int nonExistentFieldID = DBHelpers.getNonExistentID(db, "fields");
+    final int nonExistentAddonID = DBHelpers.getNonExistentID(db, "addons");
+    final int nonExistentMeasurementID = DBHelpers.getNonExistentID(db, "measurements");
 
     ContentValues v = new ContentValues();
     v.put("field", counterFieldID);
@@ -279,27 +265,20 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     } catch (SQLiteConstraintException e) { }
   }
 
-  private int getRowCount(SQLiteDatabase db, String table) {
-    final Cursor c = db.query(table, null, null, null, null, null, null);
-    final int count = c.getCount();
-    c.close();
-    return count;
-  }
-
   public void testCascadingDeletions() throws Exception {
     PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
     SQLiteDatabase db = storage.getDB();
     db.delete("environments", null, null);
-    assertEquals(0, getRowCount(db, "events_integer"));
-    assertEquals(0, getRowCount(db, "events_textual"));
+    assertEquals(0, DBHelpers.getRowCount(db, "events_integer"));
+    assertEquals(0, DBHelpers.getRowCount(db, "events_textual"));
 
     storage = new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
     db = storage.getDB();
     db.delete("measurements", null, null);
-    assertEquals(0, getRowCount(db, "fields"));
-    assertEquals(0, getRowCount(db, "events_integer"));
-    assertEquals(0, getRowCount(db, "events_textual"));
+    assertEquals(0, DBHelpers.getRowCount(db, "fields"));
+    assertEquals(0, DBHelpers.getRowCount(db, "events_integer"));
+    assertEquals(0, DBHelpers.getRowCount(db, "events_textual"));
   }
 
   public void testRestrictedDeletions() throws Exception {
@@ -319,7 +298,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     final SQLiteDatabase db = storage.getDB();
     for (String table : TABLE_NAMES) {
-      if (getRowCount(db, table) != 0) {
+      if (DBHelpers.getRowCount(db, table) != 0) {
         fail("Not everything has been deleted for table " + table + ".");
       }
     }
@@ -336,8 +315,8 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     final int discreteFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
         storage.fieldSpecContainers[0].discrete.name).getID();
 
-    final int nonExistentEnvID = getNonExistentID(db, "environments");
-    final int nonExistentFieldID = getNonExistentID(db, "fields");
+    final int nonExistentEnvID = DBHelpers.getNonExistentID(db, "environments");
+    final int nonExistentFieldID = DBHelpers.getNonExistentID(db, "fields");
 
     try {
       storage.incrementDailyCount(nonExistentEnvID, storage.getToday(), counterFieldID);
