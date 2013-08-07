@@ -6,8 +6,10 @@ package org.mozilla.gecko.background.healthreport.test;
 import java.io.File;
 
 import org.mozilla.gecko.background.healthreport.test.MockHealthReportSQLiteOpenHelper;
+import org.mozilla.gecko.background.test.helpers.DBHelpers;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -32,6 +34,10 @@ public class TestHealthReportSQLiteOpenHelper extends FakeProfileTestCase {
 
   private MockHealthReportSQLiteOpenHelper createHelper(String name) {
     return new MockHealthReportSQLiteOpenHelper(context, fakeProfileDirectory, name);
+  }
+
+  private MockHealthReportSQLiteOpenHelper createHelper(String name, int version) {
+    return new MockHealthReportSQLiteOpenHelper(context, fakeProfileDirectory, name, version);
   }
 
   @Override
@@ -85,5 +91,81 @@ public class TestHealthReportSQLiteOpenHelper extends FakeProfileTestCase {
     } finally {
       db.endTransaction();
     }
+  }
+
+  public void testUpgradeDatabaseFrom4To5() throws Exception {
+    final String dbName = "health-4To5.db";
+    helper = createHelper(dbName, 4);
+    SQLiteDatabase db = helper.getWritableDatabase();
+    db.beginTransaction();
+    try {
+      db.execSQL("PRAGMA foreign_keys=OFF;");
+
+      // Despite being referenced, this addon should be deleted because it is NULL.
+      ContentValues v = new ContentValues();
+      v.put("body", (String) null);
+      final long orphanedAddonID = db.insert("addons", null, v);
+      v.put("body", "addon");
+      final long addonID = db.insert("addons", null, v);
+
+      // environments -> addons
+      v = new ContentValues();
+      v.put("hash", "orphanedEnv");
+      v.put("addonsID", orphanedAddonID);
+      final long orphanedEnvID = db.insert("environments", null, v);
+      v.put("hash", "env");
+      v.put("addonsID", addonID);
+      final long envID = db.insert("environments", null, v);
+
+      v = new ContentValues();
+      v.put("name", "measurement");
+      v.put("version", 1);
+      final long measurementID = db.insert("measurements", null, v);
+
+      // fields -> measurements
+      v = new ContentValues();
+      v.put("name", "orphanedField");
+      v.put("measurement", DBHelpers.getNonExistentID(db, "measurements"));
+      final long orphanedFieldID = db.insert("fields", null, v);
+      v.put("name", "field");
+      v.put("measurement", measurementID);
+      final long fieldID = db.insert("fields", null, v);
+
+      // events -> environments, fields
+      final String[] eventTables = {"events_integer", "events_textual"};
+      for (String table : eventTables) {
+        v = new ContentValues();
+        v.put("env", envID);
+        v.put("field", fieldID);
+        db.insert(table, null, v);
+
+        v.put("env", orphanedEnvID);
+        v.put("field", fieldID);
+        db.insert(table, null, v);
+
+        v.put("env", envID);
+        v.put("field", orphanedFieldID);
+        db.insert(table, null, v);
+
+        v.put("env", orphanedEnvID);
+        v.put("field", orphanedFieldID);
+        db.insert(table, null, v);
+      }
+
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+      helper.close();
+    }
+
+    // Upgrade.
+    helper = createHelper(dbName, 5);
+    db = helper.getReadableDatabase();
+
+    assertEquals(1, DBHelpers.getRowCount(db, "addons"));
+    assertEquals(1, DBHelpers.getRowCount(db, "measurements"));
+    assertEquals(1, DBHelpers.getRowCount(db, "fields"));
+    assertEquals(1, DBHelpers.getRowCount(db, "events_integer"));
+    assertEquals(1, DBHelpers.getRowCount(db, "events_textual"));
   }
 }
