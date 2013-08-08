@@ -160,7 +160,9 @@ public class TestHealthReportSQLiteOpenHelper extends FakeProfileTestCase {
 
     // Upgrade.
     helper = createHelper(dbName, 5);
-    db = helper.getReadableDatabase();
+    // Despite only reading from it, open a writable database so we can better replicate what
+    // might happen in production (most notably, this should enable foreign keys).
+    db = helper.getWritableDatabase();
 
     assertEquals(1, DBHelpers.getRowCount(db, "addons"));
     assertEquals(1, DBHelpers.getRowCount(db, "measurements"));
