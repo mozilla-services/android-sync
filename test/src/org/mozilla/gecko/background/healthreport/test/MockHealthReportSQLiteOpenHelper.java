@@ -25,10 +25,12 @@ public class MockHealthReportSQLiteOpenHelper extends HealthReportSQLiteOpenHelp
 
   @Override
   public void onCreate(SQLiteDatabase db) {
-    if (version == 4) {
+    if (version == HealthReportSQLiteOpenHelper.CURRENT_VERSION) {
+      super.onCreate(db);
+    } else if (version == 4) {
       onCreateSchemaVersion4(db);
     } else {
-      super.onCreate(db);
+      throw new IllegalStateException("Unknown version number, " + version + ".");
     }
   }
 
