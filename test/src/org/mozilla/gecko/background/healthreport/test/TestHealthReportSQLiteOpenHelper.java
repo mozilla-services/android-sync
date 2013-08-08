@@ -5,7 +5,7 @@ package org.mozilla.gecko.background.healthreport.test;
 
 import java.io.File;
 
-import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage.HealthReportSQLiteOpenHelper;
+import org.mozilla.gecko.background.healthreport.test.MockHealthReportSQLiteOpenHelper;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
 import android.database.Cursor;
@@ -13,10 +13,25 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
 public class TestHealthReportSQLiteOpenHelper extends FakeProfileTestCase {
-  private class TestingHelper extends HealthReportSQLiteOpenHelper {
-    public TestingHelper(String name) {
-      super(context, fakeProfileDirectory, name);
+  private MockHealthReportSQLiteOpenHelper helper;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    helper = null;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    if (helper != null) {
+      helper.close();
+      helper = null;
     }
+    super.tearDown();
+  }
+
+  private MockHealthReportSQLiteOpenHelper createHelper(String name) {
+    return new MockHealthReportSQLiteOpenHelper(context, fakeProfileDirectory, name);
   }
 
   @Override
@@ -25,7 +40,7 @@ public class TestHealthReportSQLiteOpenHelper extends FakeProfileTestCase {
   }
 
   public void testOpening() {
-    TestingHelper helper = new TestingHelper("health.db");
+    helper = createHelper("health.db");
     SQLiteDatabase db = helper.getWritableDatabase();
     assertTrue(db.isOpen());
     db.beginTransaction();
@@ -47,7 +62,7 @@ public class TestHealthReportSQLiteOpenHelper extends FakeProfileTestCase {
   }
 
   public void testInit() {
-    TestingHelper helper = new TestingHelper("health-" + System.currentTimeMillis() + ".db");
+    helper = createHelper("health-" + System.currentTimeMillis() + ".db");
     SQLiteDatabase db = helper.getWritableDatabase();
     assertTrue(db.isOpen());
 

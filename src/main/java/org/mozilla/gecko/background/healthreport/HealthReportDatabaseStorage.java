@@ -228,11 +228,16 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
 
     public static boolean CAN_USE_ABSOLUTE_DB_PATH = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO);
     public HealthReportSQLiteOpenHelper(Context context, File profileDirectory, String name) {
+      this(context, profileDirectory, name, CURRENT_VERSION);
+    }
+
+    // For testing DBs of different versions.
+    public HealthReportSQLiteOpenHelper(Context context, File profileDirectory, String name, int version) {
       super(
           (CAN_USE_ABSOLUTE_DB_PATH ? context : new AbsolutePathContext(context, profileDirectory)),
           (CAN_USE_ABSOLUTE_DB_PATH ? getAbsolutePath(profileDirectory, name) : name),
           null,
-          CURRENT_VERSION);
+          version);
 
       if (CAN_USE_ABSOLUTE_DB_PATH) {
         Logger.pii(LOG_TAG, "Opening: " + getAbsolutePath(profileDirectory, name));
