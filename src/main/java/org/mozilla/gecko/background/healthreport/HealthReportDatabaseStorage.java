@@ -408,7 +408,9 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     }
 
     private void upgradeDatabaseFrom4to5(SQLiteDatabase db) {
-      // Delete NULL in addons.body, which appeared as a result of Bug 886156.
+      // Delete NULL in addons.body, which appeared as a result of Bug 886156. Note that the
+      // foreign key constraint, "ON DELETE RESTRICT", may be violated, but since onOpen() is
+      // called after this method, foreign keys are not yet enabled and constraints can be broken.
       db.delete("addons", "body IS NULL", null);
 
       // Purge any data inconsistent with foreign key references (which may have appeared before
