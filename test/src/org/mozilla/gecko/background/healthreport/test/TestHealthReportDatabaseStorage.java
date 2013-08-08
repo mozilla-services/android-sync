@@ -498,9 +498,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     final ArrayList<Integer> nonOrphanIDs = new ArrayList<Integer>();
     final Cursor c = db.query("addons", new String[] {"id"}, null, null, null, null, null);
     try {
-      if (!c.moveToFirst()) {
-        throw new IllegalStateException("addons table does not contain any addons.");
-      }
+      assertTrue(c.moveToFirst());
       do {
         nonOrphanIDs.add(c.getInt(0));
       } while (c.moveToNext());
