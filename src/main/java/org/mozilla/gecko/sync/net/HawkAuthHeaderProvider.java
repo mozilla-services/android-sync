@@ -145,9 +145,8 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
       sb.append("\", ");
     }
     if (extra != null && !extra.isEmpty()) {
-      String escapedExt = extra.replaceAll("\\\\", "\\\\").replaceAll("\"", "\\\"");
       sb.append("ext=\"");
-      sb.append(escapedExt);
+      sb.append(escapeExtraHeaderAttribute(extra));
       sb.append("\", ");
     }
     sb.append("mac=\"");
@@ -155,6 +154,37 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
     sb.append("\"");
 
     return new BasicHeader("Authorization", sb.toString());
+  }
+
+  /**
+   * Escape the user-provided extra string for the ext="" header attribute.
+   * <p>
+   * Hawk escapes the header ext="" attribute differently than it does the extra
+   * line in the normalized request string.
+   * <p>
+   * See <a href="https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/browser.js#L385">https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/browser.js#L385</a>.
+   *
+   * @param extra to escape.
+   * @return extra escaped for the ext="" header attribute.
+   */
+  protected static String escapeExtraHeaderAttribute(String extra) {
+    return extra.replaceAll("\\\\", "\\\\").replaceAll("\"", "\\\"");
+  }
+
+  /**
+   * Escape the user-provided extra string for inserting into the normalized
+   * request string.
+   * <p>
+   * Hawk escapes the header ext="" attribute differently than it does the extra
+   * line in the normalized request string.
+   * <p>
+   * See <a href="https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L67">https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L67</a>.
+   *
+   * @param extra to escape.
+   * @return extra escaped for the normalized request string.
+   */
+  protected static String escapeExtraString(String extra) {
+    return extra.replaceAll("\\\\", "\\\\").replaceAll("\n", "\\n");
   }
 
   /**
@@ -275,8 +305,8 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
       sb.append(hash);
     }
     sb.append("\n");
-    if (extra != null) {
-      sb.append(extra.replaceAll("\\\\", "\\\\").replaceAll("\n", "\\n"));
+    if (extra != null && !extra.isEmpty()) {
+      sb.append(escapeExtraString(extra));
     }
     sb.append("\n");
     if (app != null) {
