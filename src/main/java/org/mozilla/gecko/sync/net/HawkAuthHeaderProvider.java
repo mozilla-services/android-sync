@@ -4,12 +4,13 @@
 
 package org.mozilla.gecko.sync.net;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
@@ -120,8 +121,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
       if (entity == null) {
         throw new IllegalArgumentException("cannot specify payload for request with a null entity");
       }
-      byte[] payloadBytes = getPayloadString(entity);
-      payloadHash = Base64.encodeBase64String(Utils.sha256(payloadBytes));
+      payloadHash = Base64.encodeBase64String(getPayloadHash(entity));
     }
 
     String app = null;
@@ -180,27 +180,49 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
   }
 
   /**
-   * Generate a normalized Hawk payload byte array. This is under-specified; the
-   * code here was reverse engineered from the code at
-   * <a href="https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L81">https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L81</a>.
+   * Generate the SHA-256 hash of a normalized Hawk payload generated from an
+   * HTTP entity.
    * <p>
-   * <b>Warning:</b> this method writes the entity body in order to hash its
-   * content. This could take a long time, use a lot of memory, or interfere
-   * with streaming!
+   * <b>Warning:</b> the entity <b>must</b> be repeatable.  If it is not, this
+   * code throws an <code>IllegalArgumentException</code>.
+   * <p>
+   * This is under-specified; the code here was reverse engineered from the code
+   * at
+   * <a href="https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L81">https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L81</a>.
+   * @param entity to normalize and hash.
+   * @return hash.
+   * @throws IllegalArgumentException if entity is not repeatable.
    */
-  protected static byte[] getPayloadString(HttpEntity entity) throws UnsupportedEncodingException, IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    baos.write(("hawk." + HAWK_HEADER_VERSION + ".payload\n").getBytes("UTF-8"));
-    baos.write(getBaseContentType(entity.getContentType()).getBytes("UTF-8"));
-    baos.write('\n');
-    entity.writeTo(baos);
-    baos.write('\n');
-    return baos.toByteArray();
+  protected static byte[] getPayloadHash(HttpEntity entity) throws UnsupportedEncodingException, IOException, NoSuchAlgorithmException {
+    if (!entity.isRepeatable()) {
+      throw new IllegalArgumentException("entity must be repeatable");
+    }
+    final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    digest.update(("hawk." + HAWK_HEADER_VERSION + ".payload\n").getBytes("UTF-8"));
+    digest.update(getBaseContentType(entity.getContentType()).getBytes("UTF-8"));
+    digest.update("\n".getBytes("UTF-8"));
+    InputStream stream = null;
+    try {
+      stream = entity.getContent();
+      int numRead;
+      byte[] buffer = new byte[4096];
+      while (-1 != (numRead = stream.read(buffer))) {
+        if (numRead > 0) {
+          digest.update(buffer, 0, numRead);
+        }
+      }
+      digest.update("\n".getBytes("UTF-8")); // Trailing newline is specified by Hawk.
+      return digest.digest();
+    } finally {
+      if (stream != null) {
+        stream.close();
+      }
+    }
   }
 
   /**
-   * Generate a normalized Hawk request string. This is under-specified; the code here was
-   * reverse engineered from the code at
+   * Generate a normalized Hawk request string. This is under-specified; the
+   * code here was reverse engineered from the code at
    * <a href="https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L55">https://github.com/hueniverse/hawk/blob/871cc597973110900467bd3dfb84a3c892f678fb/lib/crypto.js#L55</a>.
    * <p>
    * This method trusts its inputs to be valid.

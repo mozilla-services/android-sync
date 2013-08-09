@@ -32,9 +32,9 @@ import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 
 public class TestLiveHawkAuth {
   /**
-   * Hawk comes with an example/usage.js server. Modify it to serve indefinitely
-   * un-comment the following test, and verify that the port and credentials
-   * have not changed; it should pass.
+   * Hawk comes with an example/usage.js server. Modify it to serve indefinitely,
+   * un-comment the following line, and verify that the port and credentials
+   * have not changed; then the following test should pass.
    */
   // @org.junit.Test
   public void testHawkUsage() throws Exception {
@@ -59,6 +59,23 @@ public class TestLiveHawkAuth {
       public void run() {
         try {
           resource.put(new StringEntity("Thank you for flying Hawk"));
+        } catch (UnsupportedEncodingException e) {
+          WaitHelper.getTestWaiter().performNotify(e);
+        }
+      }
+    });
+
+    // PUT with a large (32k or so) body and payload verification.
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 16000; i++) {
+      sb.append(Integer.valueOf(i % 100).toString());
+    }
+    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, true));
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          resource.put(new StringEntity(sb.toString()));
         } catch (UnsupportedEncodingException e) {
           WaitHelper.getTestWaiter().performNotify(e);
         }
