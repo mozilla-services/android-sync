@@ -154,8 +154,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
     sb.append(macString);
     sb.append("\"");
 
-    Header header = new BasicHeader("Authorization", sb.toString());
-    return header;
+    return new BasicHeader("Authorization", sb.toString());
   }
 
   /**
@@ -301,9 +300,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
     hasher.init(keySpec);
     hasher.update(message);
 
-    byte[] hmac = hasher.doFinal();
-
-    return hmac;
+    return hasher.doFinal();
   }
 
   /**
@@ -318,8 +315,6 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
    */
   protected static String getSignature(byte[] requestString, byte[] key)
       throws InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
-    String macString = Base64.encodeBase64String(hmacSha256(requestString, key));
-
-    return macString;
+    return Base64.encodeBase64String(hmacSha256(requestString, key));
   }
 }
