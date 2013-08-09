@@ -1,6 +1,5 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
 
 package org.mozilla.gecko.background.healthreport.test;
 
@@ -12,13 +11,25 @@ import org.json.JSONObject;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
+import org.mozilla.gecko.background.healthreport.test.MockHealthReportDatabaseStorage.PrepopulatedMockHealthReportDatabaseStorage;
 import org.mozilla.gecko.background.test.helpers.DBHelpers;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
+import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 
 public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
+  private String[] TABLE_NAMES = {
+    "addons",
+    "environments",
+    "measurements",
+    "fields",
+    "events_integer",
+    "events_textual"
+  };
+
   @Override
   protected String getCacheSuffix() {
     return File.separator + "health-" + System.currentTimeMillis() + ".profile";
@@ -186,5 +197,151 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(field, c.getInt(2));
     assertEquals(value, c.getLong(3));
     return c.moveToNext();
+  }
+
+  /**
+   * Test robust insertions. This also acts as a test for the getPrepopulatedStorage method,
+   * allowing faster debugging if this fails and other tests relying on getPrepopulatedStorage
+   * also fail.
+   */
+  public void testInsertions() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertNotNull(storage);
+  }
+
+  public void testForeignKeyConstraints() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final int envID = storage.getEnvironment().register();
+    final int counterFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].counter.name).getID();
+    final int discreteFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].discrete.name).getID();
+
+    final int nonExistentEnvID = DBHelpers.getNonExistentID(db, "environments");
+    final int nonExistentFieldID = DBHelpers.getNonExistentID(db, "fields");
+    final int nonExistentAddonID = DBHelpers.getNonExistentID(db, "addons");
+    final int nonExistentMeasurementID = DBHelpers.getNonExistentID(db, "measurements");
+
+    ContentValues v = new ContentValues();
+    v.put("field", counterFieldID);
+    v.put("env", nonExistentEnvID);
+    try {
+      db.insertOrThrow("events_integer", null, v);
+      fail("Should throw - events_integer(env) is referencing non-existent environments(id)");
+    } catch (SQLiteConstraintException e) { }
+    v.put("field", discreteFieldID);
+    try {
+      db.insertOrThrow("events_textual", null, v);
+      fail("Should throw - events_textual(env) is referencing non-existent environments(id)");
+    } catch (SQLiteConstraintException e) { }
+
+    v.put("field", nonExistentFieldID);
+    v.put("env", envID);
+    try {
+      db.insertOrThrow("events_integer", null, v);
+      fail("Should throw - events_integer(field) is referencing non-existent fields(id)");
+    } catch (SQLiteConstraintException e) { }
+    try {
+      db.insertOrThrow("events_textual", null, v);
+      fail("Should throw - events_textual(field) is referencing non-existent fields(id)");
+    } catch (SQLiteConstraintException e) { }
+
+    v = new ContentValues();
+    v.put("addonsID", nonExistentAddonID);
+    try {
+      db.insertOrThrow("environments", null, v);
+      fail("Should throw - environments(addonsID) is referencing non-existent addons(id).");
+    } catch (SQLiteConstraintException e) { }
+
+    v = new ContentValues();
+    v.put("measurement", nonExistentMeasurementID);
+    try {
+      db.insertOrThrow("fields", null, v);
+      fail("Should throw - fields(measurement) is referencing non-existent measurements(id).");
+    } catch (SQLiteConstraintException e) { }
+  }
+
+  public void testCascadingDeletions() throws Exception {
+    PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    SQLiteDatabase db = storage.getDB();
+    db.delete("environments", null, null);
+    assertEquals(0, DBHelpers.getRowCount(db, "events_integer"));
+    assertEquals(0, DBHelpers.getRowCount(db, "events_textual"));
+
+    storage = new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    db = storage.getDB();
+    db.delete("measurements", null, null);
+    assertEquals(0, DBHelpers.getRowCount(db, "fields"));
+    assertEquals(0, DBHelpers.getRowCount(db, "events_integer"));
+    assertEquals(0, DBHelpers.getRowCount(db, "events_textual"));
+  }
+
+  public void testRestrictedDeletions() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    SQLiteDatabase db = storage.getDB();
+    try {
+      db.delete("addons", null, null);
+      fail("Should throw - environment references addons and thus addons cannot be deleted.");
+    } catch (SQLiteConstraintException e) { }
+  }
+
+  public void testDeleteEverything() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    storage.deleteEverything();
+
+    final SQLiteDatabase db = storage.getDB();
+    for (String table : TABLE_NAMES) {
+      if (DBHelpers.getRowCount(db, table) != 0) {
+        fail("Not everything has been deleted for table " + table + ".");
+      }
+    }
+  }
+
+  public void testMeasurementRecordingConstraintViolation() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final int envID = storage.getEnvironment().register();
+    final int counterFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].counter.name).getID();
+    final int discreteFieldID = storage.getField(storage.measurementNames[0], storage.measurementVers[0],
+        storage.fieldSpecContainers[0].discrete.name).getID();
+
+    final int nonExistentEnvID = DBHelpers.getNonExistentID(db, "environments");
+    final int nonExistentFieldID = DBHelpers.getNonExistentID(db, "fields");
+
+    try {
+      storage.incrementDailyCount(nonExistentEnvID, storage.getToday(), counterFieldID);
+      fail("Should throw - event_integer(env) references environments(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyDiscrete(nonExistentEnvID, storage.getToday(), discreteFieldID, "iu");
+      fail("Should throw - event_textual(env) references environments(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyLast(nonExistentEnvID, storage.getToday(), discreteFieldID, "iu");
+      fail("Should throw - event_textual(env) references environments(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+
+    try {
+      storage.incrementDailyCount(envID, storage.getToday(), nonExistentFieldID);
+      fail("Should throw - event_integer(field) references fields(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyDiscrete(envID, storage.getToday(), nonExistentFieldID, "iu");
+      fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
+    try {
+      storage.recordDailyLast(envID, storage.getToday(), nonExistentFieldID, "iu");
+      fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
+    } catch (IllegalStateException e) { }
   }
 }
