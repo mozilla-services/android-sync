@@ -129,7 +129,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
     String requestString = getRequestString(request, "header", timestamp, nonce, payloadHash, extra, app, dlg);
     String macString = getSignature(requestString.getBytes("UTF-8"), this.key);
 
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append("Hawk id=\"");
     sb.append(this.id);
     sb.append("\", ");
@@ -254,7 +254,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
       throw new IllegalArgumentException("Unsupported URI scheme: " + scheme + ".");
     }
 
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append("hawk.");
     sb.append(HAWK_HEADER_VERSION);
     sb.append('.');
