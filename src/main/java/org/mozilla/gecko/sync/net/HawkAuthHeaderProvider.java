@@ -144,7 +144,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
       sb.append(payloadHash);
       sb.append("\", ");
     }
-    if (extra != null && !extra.isEmpty()) {
+    if (extra != null && extra.length() > 0) {
       sb.append("ext=\"");
       sb.append(escapeExtraHeaderAttribute(extra));
       sb.append("\", ");
@@ -305,7 +305,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
       sb.append(hash);
     }
     sb.append("\n");
-    if (extra != null && !extra.isEmpty()) {
+    if (extra != null && extra.length() > 0) {
       sb.append(escapeExtraString(extra));
     }
     sb.append("\n");
