@@ -230,9 +230,8 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
     digest.update(("hawk." + HAWK_HEADER_VERSION + ".payload\n").getBytes("UTF-8"));
     digest.update(getBaseContentType(entity.getContentType()).getBytes("UTF-8"));
     digest.update("\n".getBytes("UTF-8"));
-    InputStream stream = null;
+    InputStream stream = entity.getContent();
     try {
-      stream = entity.getContent();
       int numRead;
       byte[] buffer = new byte[4096];
       while (-1 != (numRead = stream.read(buffer))) {
@@ -243,9 +242,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
       digest.update("\n".getBytes("UTF-8")); // Trailing newline is specified by Hawk.
       return digest.digest();
     } finally {
-      if (stream != null) {
-        stream.close();
-      }
+      stream.close();
     }
   }
 
