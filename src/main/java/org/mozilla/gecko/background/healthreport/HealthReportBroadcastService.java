@@ -2,12 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.background.healthreport.upload;
+package org.mozilla.gecko.background.healthreport;
 
 import org.mozilla.gecko.background.BackgroundService;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
+import org.mozilla.gecko.background.healthreport.upload.HealthReportUploadService;
+import org.mozilla.gecko.background.healthreport.upload.ObsoleteDocumentTracker;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -19,7 +20,7 @@ import android.content.SharedPreferences.Editor;
 /**
  * A service which listens to broadcast intents from the system and from the
  * browser, registering or unregistering the main
- * {@link HealthReportUploadStartReceiver} with the {@link AlarmManager}.
+ * {@link HealthReportUploadService} with the {@link AlarmManager}.
  */
 public class HealthReportBroadcastService extends BackgroundService {
   public static final String LOG_TAG = HealthReportBroadcastService.class.getSimpleName();
@@ -59,18 +60,20 @@ public class HealthReportBroadcastService extends BackgroundService {
    *          to delete so <code>serviceEnabled</code> could be true.
    */
   protected void toggleAlarm(final Context context, String profileName, String profilePath, boolean enabled, boolean serviceEnabled) {
-    Logger.info(LOG_TAG, (serviceEnabled ? "R" : "Unr") + "egistering health report start broadcast receiver.");
+    final Class<?> serviceClass = HealthReportUploadService.class;
+    Logger.info(LOG_TAG, (serviceEnabled ? "R" : "Unr") + "egistering " +
+        serviceClass.getSimpleName() + ".");
 
     // PendingIntents are compared without reference to their extras. Therefore
     // even though we pass the profile details to the action, different
     // profiles will share the *same* pending intent. In a multi-profile future,
     // this will need to be addressed.  See Bug 882182.
-    final Intent service = new Intent(context, HealthReportUploadStartReceiver.class);
+    final Intent service = new Intent(context, serviceClass);
     service.setAction("upload"); // PendingIntents "lose" their extras if no action is set.
     service.putExtra("uploadEnabled", enabled);
     service.putExtra("profileName", profileName);
     service.putExtra("profilePath", profilePath);
-    final PendingIntent pending = PendingIntent.getBroadcast(context, 0, service, PendingIntent.FLAG_CANCEL_CURRENT);
+    final PendingIntent pending = PendingIntent.getService(context, 0, service, PendingIntent.FLAG_CANCEL_CURRENT);
 
     if (!serviceEnabled) {
       cancelAlarm(pending);

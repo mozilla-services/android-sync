@@ -12,7 +12,7 @@
              service in response to external events. UploadStartReceiver
              handles scheduling background work.
           -->
-        <receiver android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportBroadcastReceiver" >
+        <receiver android:name="org.mozilla.gecko.background.healthreport.HealthReportBroadcastReceiver" >
             <intent-filter>
                 <!-- Startup. -->
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -24,7 +24,4 @@
             <intent-filter >
               <action android:name="@ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF" />
             </intent-filter>
-        </receiver>
-
-        <receiver android:name="org.mozilla.gecko.background.healthreport.upload.HealthReportUploadStartReceiver" >
         </receiver>
