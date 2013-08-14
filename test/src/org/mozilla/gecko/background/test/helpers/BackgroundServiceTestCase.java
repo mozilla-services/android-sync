@@ -5,11 +5,14 @@ package org.mozilla.gecko.background.test.helpers;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.test.ServiceTestCase;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
+
+import org.mozilla.gecko.background.common.GlobalConstants;
 
 /**
  * An abstract test class for testing background services. Since we have to wait for background
@@ -18,6 +21,8 @@ import java.util.concurrent.TimeUnit;
  * see {@link TestHealthReportBroadcastService} for an example.
  */
 public abstract class BackgroundServiceTestCase<T extends Service> extends ServiceTestCase<T> {
+  protected static final String SHARED_PREFS_NAME = "BackgroundServiceTestCase";
+
   protected static final int DEFAULT_WAIT_TIME = 10;
   protected static final TimeUnit DEFAULT_WAIT_UNIT = TimeUnit.SECONDS;
 
@@ -41,6 +46,11 @@ public abstract class BackgroundServiceTestCase<T extends Service> extends Servi
   public void tearDown() throws Exception {
     barrier = null;
     intent = null;
+  }
+
+  protected SharedPreferences getSharedPreferences() {
+    return getContext().getSharedPreferences(SHARED_PREFS_NAME,
+        GlobalConstants.SHARED_PREFERENCES_MODE);
   }
 
   protected void awaitOrFail() {

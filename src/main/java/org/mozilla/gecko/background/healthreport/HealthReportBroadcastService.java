@@ -77,6 +77,8 @@ public class HealthReportBroadcastService extends BackgroundService {
 
     if (!serviceEnabled) {
       cancelAlarm(pending);
+      // For testing - allows us to see if the intent, and thus the alarm, has been cancelled.
+      pending.cancel();
       return;
     }
 
