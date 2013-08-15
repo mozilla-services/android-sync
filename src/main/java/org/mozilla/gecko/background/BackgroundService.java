@@ -12,7 +12,6 @@ import org.mozilla.gecko.background.common.log.Logger;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -51,11 +50,6 @@ public abstract class BackgroundService extends IntentService {
       return false;
     }
     return networkInfo.isAvailable();
-  }
-
-  protected static PendingIntent createPendingIntent(Context context, Class<? extends BroadcastReceiver> broadcastReceiverClass) {
-    final Intent service = new Intent(context, broadcastReceiverClass);
-    return PendingIntent.getBroadcast(context, 0, service, PendingIntent.FLAG_CANCEL_CURRENT);
   }
 
   protected AlarmManager getAlarmManager() {

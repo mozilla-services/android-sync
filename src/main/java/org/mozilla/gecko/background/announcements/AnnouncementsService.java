@@ -118,6 +118,11 @@ public class AnnouncementsService extends BackgroundService implements Announcem
     Logger.setThreadLogTag(AnnouncementsConstants.GLOBAL_LOG_TAG);
     Logger.debug(LOG_TAG, "Running AnnouncementsService.");
 
+    if (AnnouncementsConstants.DISABLED) {
+      Logger.debug(LOG_TAG, "Announcements disabled. Returning from AnnouncementsService.");
+      return;
+    }
+
     if (!shouldFetchAnnouncements()) {
       Logger.debug(LOG_TAG, "Not fetching.");
       return;

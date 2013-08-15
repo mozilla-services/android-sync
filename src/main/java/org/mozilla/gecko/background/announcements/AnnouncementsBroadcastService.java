@@ -18,7 +18,7 @@ import android.content.SharedPreferences.Editor;
 /**
  * A service which listens to broadcast intents from the system and from the
  * browser, registering or unregistering the main
- * {@link AnnouncementsStartReceiver} with the {@link AlarmManager}.
+ * {@link AnnouncementsService} with the {@link AlarmManager}.
  */
 public class AnnouncementsBroadcastService extends BackgroundService {
   private static final String WORKER_THREAD_NAME = "AnnouncementsBroadcastServiceWorker";
@@ -29,12 +29,18 @@ public class AnnouncementsBroadcastService extends BackgroundService {
   }
 
   private void toggleAlarm(final Context context, boolean enabled) {
-    Logger.info(LOG_TAG, (enabled ? "R" : "Unr") + "egistering announcements broadcast receiver...");
+    final Class<?> serviceClass = AnnouncementsService.class;
+    Logger.info(LOG_TAG, (enabled ? "R" : "Unr") + "egistering " + serviceClass.getSimpleName() +
+        ".");
 
-    final PendingIntent pending = createPendingIntent(context, AnnouncementsStartReceiver.class);
+    final Intent service = new Intent(context, serviceClass);
+    final PendingIntent pending =  PendingIntent.getService(context, 0, service,
+        PendingIntent.FLAG_CANCEL_CURRENT);
 
     if (!enabled) {
       cancelAlarm(pending);
+      // For testing - allows us to see if the intent, and thus the alarm, has been cancelled.
+      pending.cancel();
       return;
     }
 
