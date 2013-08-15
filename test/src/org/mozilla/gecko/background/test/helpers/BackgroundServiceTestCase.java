@@ -40,17 +40,25 @@ public abstract class BackgroundServiceTestCase<T extends Service> extends Servi
   public void setUp() throws Exception {
     barrier = new CyclicBarrier(2);
     intent = new Intent(getContext(), mServiceClass);
+    clearSharedPrefs();
   }
 
   @Override
   public void tearDown() throws Exception {
     barrier = null;
     intent = null;
+    clearSharedPrefs();
   }
 
   protected SharedPreferences getSharedPreferences() {
     return getContext().getSharedPreferences(SHARED_PREFS_NAME,
         GlobalConstants.SHARED_PREFERENCES_MODE);
+  }
+
+  protected void clearSharedPrefs() {
+    getSharedPreferences().edit()
+        .clear()
+        .commit();
   }
 
   protected void awaitOrFail() {
