@@ -3,9 +3,6 @@
 
 package org.mozilla.gecko.background.healthreport.test;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import java.util.concurrent.BrokenBarrierException;
@@ -53,17 +50,6 @@ public class TestHealthReportBroadcastService
   public void tearDown() throws Exception {
     cancelAlarm(getUploadIntent());
     super.tearDown();
-  }
-
-  protected void cancelAlarm(Intent intent) {
-    final AlarmManager am = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-    final PendingIntent pi = PendingIntent.getService(getContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    am.cancel(pi);
-    pi.cancel();
-  }
-
-  protected boolean isServiceAlarmSet(Intent intent) {
-    return PendingIntent.getService(getContext(), 0, intent, PendingIntent.FLAG_NO_CREATE) != null;
   }
 
   protected Intent getUploadIntent() {

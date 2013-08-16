@@ -141,7 +141,7 @@ public class AnnouncementsService extends BackgroundService implements Announcem
     return getSharedPreferences().getLong(AnnouncementsConstants.PREF_LAST_LAUNCH, 0);
   }
 
-  private SharedPreferences getSharedPreferences() {
+  protected SharedPreferences getSharedPreferences() {
     return this.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, GlobalConstants.SHARED_PREFERENCES_MODE);
   }
 

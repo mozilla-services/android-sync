@@ -28,6 +28,16 @@ public class AnnouncementsBroadcastService extends BackgroundService {
     super(WORKER_THREAD_NAME);
   }
 
+  protected static SharedPreferences getSharedPreferences(Context context) {
+    return context.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH,
+        GlobalConstants.SHARED_PREFERENCES_MODE);
+  }
+
+  protected SharedPreferences getSharedPreferences() {
+    return this.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH,
+        GlobalConstants.SHARED_PREFERENCES_MODE);
+  }
+
   private void toggleAlarm(final Context context, boolean enabled) {
     final Class<?> serviceClass = AnnouncementsService.class;
     Logger.info(LOG_TAG, (enabled ? "R" : "Unr") + "egistering " + serviceClass.getSimpleName() +
@@ -57,7 +67,7 @@ public class AnnouncementsBroadcastService extends BackgroundService {
    */
   public static void recordLastLaunch(final Context context) {
     final long now = System.currentTimeMillis();
-    final SharedPreferences preferences = context.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, GlobalConstants.SHARED_PREFERENCES_MODE);
+    final SharedPreferences preferences = getSharedPreferences(context);
 
     // One of several things might be true, according to our logs:
     //
@@ -99,12 +109,12 @@ public class AnnouncementsBroadcastService extends BackgroundService {
   }
 
   public static long getPollInterval(final Context context) {
-    SharedPreferences preferences = context.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, GlobalConstants.SHARED_PREFERENCES_MODE);
+    final SharedPreferences preferences = getSharedPreferences(context);
     return preferences.getLong(AnnouncementsConstants.PREF_ANNOUNCE_FETCH_INTERVAL_MSEC, AnnouncementsConstants.DEFAULT_ANNOUNCE_FETCH_INTERVAL_MSEC);
   }
 
   public static void setPollInterval(final Context context, long interval) {
-    SharedPreferences preferences = context.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH, GlobalConstants.SHARED_PREFERENCES_MODE);
+    final SharedPreferences preferences = getSharedPreferences(context);
     preferences.edit().putLong(AnnouncementsConstants.PREF_ANNOUNCE_FETCH_INTERVAL_MSEC, interval).commit();
   }
 
@@ -152,8 +162,7 @@ public class AnnouncementsBroadcastService extends BackgroundService {
     // Primarily intended for debugging and testing, but this doesn't do any harm.
     if (!enabled) {
       Logger.info(LOG_TAG, "!enabled: clearing last fetch.");
-      final SharedPreferences sharedPreferences = this.getSharedPreferences(AnnouncementsConstants.PREFS_BRANCH,
-                                                                            GlobalConstants.SHARED_PREFERENCES_MODE);
+      final SharedPreferences sharedPreferences = getSharedPreferences();
       final Editor editor = sharedPreferences.edit();
       editor.remove(AnnouncementsConstants.PREF_LAST_FETCH_LOCAL_TIME);
       editor.remove(AnnouncementsConstants.PREF_EARLIEST_NEXT_ANNOUNCE_FETCH);
