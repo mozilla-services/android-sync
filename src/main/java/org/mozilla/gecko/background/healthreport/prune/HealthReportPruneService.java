@@ -34,5 +34,28 @@ public class HealthReportPruneService extends BackgroundService {
   public void onHandleIntent(Intent intent) {
     Logger.setThreadLogTag(HealthReportConstants.GLOBAL_LOG_TAG);
     Logger.debug(LOG_TAG, "Handling prune intent.");
+
+    if (!isIntentValid(intent)) {
+      Logger.warn(LOG_TAG, "Intent not valid - returning.");
+      return;
+    }
+  }
+
+  protected boolean isIntentValid(Intent intent) {
+    boolean isValid = true;
+
+    final String profileName = intent.getStringExtra("profileName");
+    if (profileName == null) {
+      Logger.warn(LOG_TAG, "Got intent without profileName.");
+      isValid = false;
+    }
+
+    final String profilePath = intent.getStringExtra("profilePath");
+    if (profilePath == null) {
+      Logger.warn(LOG_TAG, "Got intent without profilePath.");
+      isValid = false;
+    }
+
+    return isValid;
   }
 }
