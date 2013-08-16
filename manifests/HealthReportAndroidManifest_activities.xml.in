@@ -7,10 +7,8 @@
              Report upload preference changed" notifications sent by
              Fennec: @ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF.
 
-             We have two receivers.  BroadcastReceiver is a thin
-             receiver whose single purpose is to start the background
-             service in response to external events. UploadStartReceiver
-             handles scheduling background work.
+             BroadcastReceiver is a thin receiver whose purpose is to
+             start the background service in response to external events.
           -->
         <receiver android:name="org.mozilla.gecko.background.healthreport.HealthReportBroadcastReceiver" >
             <intent-filter>

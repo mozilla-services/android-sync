@@ -73,6 +73,8 @@ public abstract class BackgroundService extends IntentService {
   protected void cancelAlarm(PendingIntent pendingIntent) {
     final AlarmManager alarm = getAlarmManager();
     alarm.cancel(pendingIntent);
+    // For testing - allows us to see if the intent, and thus the alarm, has been cancelled.
+    pendingIntent.cancel();
   }
 
   /**

@@ -49,8 +49,6 @@ public class AnnouncementsBroadcastService extends BackgroundService {
 
     if (!enabled) {
       cancelAlarm(pending);
-      // For testing - allows us to see if the intent, and thus the alarm, has been cancelled.
-      pending.cancel();
       return;
     }
 
