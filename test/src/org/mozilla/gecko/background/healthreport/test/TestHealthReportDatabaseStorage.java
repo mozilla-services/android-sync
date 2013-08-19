@@ -525,4 +525,23 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(nonOrphanIDs.size(), storage.deleteOrphanedAddons());
     assertEquals(0, DBHelpers.getRowCount(db, "addons"));
   }
+
+  public void testGetEventCount() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertEquals(14, storage.getEventCount());
+    final SQLiteDatabase db = storage.getDB();
+    db.delete("events_integer", null, null);
+    db.delete("events_textual", null, null);
+    assertEquals(0, storage.getEventCount());
+  }
+
+  public void testGetEnvironmentCount() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertEquals(1, storage.getEnvironmentCount());
+    final SQLiteDatabase db = storage.getDB();
+    db.delete("environments", null, null);
+    assertEquals(0, storage.getEnvironmentCount());
+  }
 }

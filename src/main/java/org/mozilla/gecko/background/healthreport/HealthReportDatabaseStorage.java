@@ -1251,6 +1251,32 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
                     "date, environment, measurement_name, measurement_version, field_name");
   }
 
+  public int getEventCount() {
+    return getRowCount("events");
+  }
+
+  public int getEnvironmentCount() {
+    return getRowCount("environments");
+  }
+
+  private int getRowCount(String table) {
+    final SQLiteDatabase db = this.helper.getReadableDatabase();
+    Cursor c = null;
+    try {
+      // table should be parameterized, but SQL throws a compilation error if the table in unknown
+      // in advance.
+      c = db.rawQuery("SELECT COUNT(*) from " + table, null);
+      if (!c.moveToFirst()) {
+        throw new IllegalStateException("Cursor is empty.");
+      }
+      return c.getInt(0);
+    } finally {
+      if (c != null) {
+        c.close();
+      }
+    }
+  }
+
   /**
    * Deletes all environments, addons, and events from the database before the given time. If this
    * data does not have recorded dates but are no longer referenced by other fields, they are also
@@ -1409,5 +1435,11 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     } finally {
       db.endTransaction();
     }
+  }
+
+  public void pruneEnvironments(final int numToPrune) {
+  }
+
+  public void pruneEvents(final int maxNumToPrune) {
   }
 }

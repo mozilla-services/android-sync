@@ -70,7 +70,43 @@ public class PrunePolicy {
   }
 
   protected boolean attemptPruneBySize(final long time) {
-    return false;
+    final long nextPrune = getNextPruneBySizeTime();
+    if (nextPrune < 0) {
+      Logger.debug(LOG_TAG, "Initializing prune by size time.");
+      editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPrunesBySize());
+      return false;
+    }
+
+    // If the system clock is skewed into the past, making the time between prunes too long, reset
+    // the clock.
+    if (nextPrune > getPruneBySizeSkewLimitMillis() + time) {
+      Logger.debug(LOG_TAG, "Clock skew detected - resetting prune by size time.");
+      editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPrunesBySize());
+      return false;
+    }
+
+    if (nextPrune > time) {
+      Logger.debug(LOG_TAG, "Skipping prune by size - wait period has not yet elapsed.");
+      return false;
+    }
+
+    // Prune environments first because their cascading deletions may delete some events.
+    final HealthReportDatabaseStorage storage = getStorage();
+    final int environmentCount = storage.getEnvironmentCount();
+    if (environmentCount > getMaxEnvironmentCount()) {
+      final int environmentPruneCount = environmentCount - getEnvironmentCountAfterPrune();
+      Logger.debug(LOG_TAG, "Pruning " + environmentPruneCount + " environments.");
+      storage.pruneEnvironments(environmentPruneCount);
+    }
+
+    final int eventCount = storage.getEventCount();
+    if (eventCount > getMaxEventCount()) {
+      final int eventPruneCount = eventCount - getEventCountAfterPrune();
+      Logger.debug(LOG_TAG, "Pruning up to " + eventPruneCount + " events.");
+      storage.pruneEvents(eventPruneCount);
+    }
+    editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPrunesBySize());
+    return true;
   }
 
   protected boolean attemptPruneByDuration(final long time) {
@@ -179,6 +215,11 @@ public class PrunePolicy {
       editor.putLong(HealthReportConstants.PREF_PRUNE_BY_DURATION_TIME, time);
       return this;
     }
+
+    public Editor setNextPruneBySizeTime(final long time) {
+      editor.putLong(HealthReportConstants.PREF_PRUNE_BY_SIZE_TIME, time);
+      return this;
+    }
   }
 
   private long getNextPruneByDurationTime() {
@@ -195,5 +236,33 @@ public class PrunePolicy {
 
   private long getPruneByDurationSkewLimitMillis() {
     return HealthReportConstants.PRUNE_BY_DURATION_SKEW_LIMIT_MILLIS;
+  }
+
+  private long getNextPruneBySizeTime() {
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_PRUNE_BY_SIZE_TIME, -1L);
+  }
+
+  private long getMinimumTimeBetweenPrunesBySize() {
+    return HealthReportConstants.MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE;
+  }
+
+  private long getPruneBySizeSkewLimitMillis() {
+    return HealthReportConstants.PRUNE_BY_SIZE_SKEW_LIMIT_MILLIS;
+  }
+
+  private int getMaxEnvironmentCount() {
+    return HealthReportConstants.MAX_ENVIRONMENT_COUNT;
+  }
+
+  private int getEnvironmentCountAfterPrune() {
+    return HealthReportConstants.ENVIRONMENT_COUNT_AFTER_PRUNE;
+  }
+
+  private int getMaxEventCount() {
+    return HealthReportConstants.MAX_EVENT_COUNT;
+  }
+
+  private int getEventCountAfterPrune() {
+    return HealthReportConstants.EVENT_COUNT_AFTER_PRUNE;
   }
 }
