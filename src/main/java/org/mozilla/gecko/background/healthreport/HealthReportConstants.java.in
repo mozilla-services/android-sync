@@ -104,4 +104,11 @@ public class HealthReportConstants {
   // will handle such API usage.  This obsoletes 2 days worth of old documents
   // at a time.
   public static final int MAXIMUM_DELETIONS_PER_POST = ((int) DEFAULT_MAXIMUM_FAILURES_PER_DAY + 1) * 2;
+
+  public static final String PREF_PRUNE_BY_DURATION_TIME = "healthreport_prune_by_duration_time";
+  public static final long MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION = MILLISECONDS_PER_DAY * 7;
+  // The number of millis into the past the clock can skew before we reset the prune time.
+  public static final long PRUNE_BY_DURATION_SKEW_LIMIT_MILLIS =
+      MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION + 3 * MILLISECONDS_PER_DAY;
+  public static final long EVENT_EXISTENCE_DURATION = MILLISECONDS_PER_SIX_MONTHS;
 }

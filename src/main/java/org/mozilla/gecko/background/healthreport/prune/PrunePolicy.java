@@ -33,15 +33,20 @@ public class PrunePolicy {
 
   protected final Context context;
   protected final SharedPreferences sharedPreferences;
+  protected final Editor editor;
   protected final String profilePath;
 
   protected ContentProviderClient client;
   protected HealthReportDatabaseStorage storage;
+  protected int environmentID;
 
   public PrunePolicy(final Context context, final SharedPreferences sharedPrefs, final String profilePath) {
     this.context = context;
     this.sharedPreferences = sharedPrefs;
+    this.editor = new Editor(this.sharedPreferences.edit());
     this.profilePath = profilePath;
+
+    this.environmentID = -1;
   }
 
   protected SharedPreferences getSharedPreferences() {
@@ -59,6 +64,7 @@ public class PrunePolicy {
       // crashes could be regular. Thus, we choose to quietly fail instead.
       Logger.warn(LOG_TAG, "Got exception pruning document.", e);
     } finally {
+      editor.commit();
       releaseClient();
     }
   }
@@ -68,11 +74,42 @@ public class PrunePolicy {
   }
 
   protected boolean attemptPruneByDuration(final long time) {
-    return false;
+    final long nextPrune = getNextPruneByDurationTime();
+    if (nextPrune < 0) {
+      Logger.debug(LOG_TAG, "Initializing prune by duration time.");
+      editor.setNextPruneByDurationTime(time + getMinimumTimeBetweenPrunesByDuration());
+      return false;
+    }
+
+    // If the system clock is skewed into the past, making the time between prunes too long, reset
+    // the clock.
+    if (nextPrune > getPruneByDurationSkewLimitMillis() + time) {
+      Logger.debug(LOG_TAG, "Clock skew detected - resetting prune by duration time.");
+      editor.setNextPruneByDurationTime(time + getMinimumTimeBetweenPrunesByDuration());
+      return false;
+    }
+
+    if (nextPrune > time) {
+      Logger.debug(LOG_TAG, "Skipping prune by duration - wait period has not yet elapsed.");
+      return false;
+    }
+
+    final long oldEventTime = time - getEventExistenceDuration();
+    Logger.debug(LOG_TAG, "Pruning data older than " + oldEventTime + ".");
+    getStorage().deleteDataBefore(oldEventTime, getEnvironmentID());
+    editor.setNextPruneByDurationTime(time + getMinimumTimeBetweenPrunesByDuration());
+    return true;
   }
 
   protected boolean attemptVacuum(final long time) {
     return false;
+  }
+
+  protected int getEnvironmentID() {
+    if (environmentID < 0) {
+      environmentID = getStorage().getEnvironment().register();
+    }
+    return environmentID;
   }
 
   /**
@@ -125,5 +162,38 @@ public class PrunePolicy {
       client.release();
       client = null;
     }
+  }
+
+  protected static class Editor {
+    protected final SharedPreferences.Editor editor;
+
+    public Editor(final SharedPreferences.Editor editor) {
+      this.editor = editor;
+    }
+
+    public void commit() {
+      editor.commit();
+    }
+
+    public Editor setNextPruneByDurationTime(final long time) {
+      editor.putLong(HealthReportConstants.PREF_PRUNE_BY_DURATION_TIME, time);
+      return this;
+    }
+  }
+
+  private long getNextPruneByDurationTime() {
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_PRUNE_BY_DURATION_TIME, -1L);
+  }
+
+  private long getEventExistenceDuration() {
+    return HealthReportConstants.EVENT_EXISTENCE_DURATION;
+  }
+
+  private long getMinimumTimeBetweenPrunesByDuration() {
+    return HealthReportConstants.MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION;
+  }
+
+  private long getPruneByDurationSkewLimitMillis() {
+    return HealthReportConstants.PRUNE_BY_DURATION_SKEW_LIMIT_MILLIS;
   }
 }
