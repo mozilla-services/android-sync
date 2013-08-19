@@ -5,10 +5,12 @@
 package org.mozilla.gecko.background.healthreport.prune;
 
 import org.mozilla.gecko.background.BackgroundService;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.IBinder;
 
 /**
@@ -30,6 +32,10 @@ public class HealthReportPruneService extends BackgroundService {
     return null;
   }
 
+  protected SharedPreferences getSharedPreferences() {
+    return this.getSharedPreferences(HealthReportConstants.PREFS_BRANCH, GlobalConstants.SHARED_PREFERENCES_MODE);
+  }
+
   @Override
   public void onHandleIntent(Intent intent) {
     Logger.setThreadLogTag(HealthReportConstants.GLOBAL_LOG_TAG);
@@ -39,6 +45,12 @@ public class HealthReportPruneService extends BackgroundService {
       Logger.warn(LOG_TAG, "Intent not valid - returning.");
       return;
     }
+
+    final String profileName = intent.getStringExtra("profileName");
+    final String profilePath = intent.getStringExtra("profilePath");
+    Logger.debug(LOG_TAG, "Ticking for profile " + profileName + " at " + profilePath + ".");
+    final PrunePolicy policy = new PrunePolicy(this, getSharedPreferences(), profilePath);
+    policy.tick(System.currentTimeMillis());
   }
 
   protected boolean isIntentValid(Intent intent) {
