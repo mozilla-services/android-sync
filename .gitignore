@@ -35,3 +35,9 @@ puppet/modules/data/files/*.tar.gz
 /*.htm*
 docs/*.htm*
 preprocess.ini
+jni/scrypt/.deps/
+jni/scrypt/Makefile
+jni/scrypt/config.h
+jni/scrypt/config.log
+jni/scrypt/config.status
+jni/scrypt/stamp-h1

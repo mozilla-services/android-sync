@@ -53,4 +53,19 @@ public class TestScrypt {
         "8e56fd8f4ba5d09ffa1c6d927c40f4c3" +
         "37304049e8a952fbcbf45c6fa77a41a4");
   }
+
+  @Test
+  public void testScryptWrapperEquiv() throws Exception {
+    final byte[] salt = "identity.mozilla.com/picl/v1/scrypt".getBytes("US-ASCII");
+    final int N = 65536;
+    final int r = 8;
+    final int p = 1;
+    final int dkLen = 32;
+
+    long start = System.currentTimeMillis();
+    byte[] scrypt = SCrypt.scrypt("password".getBytes("ASCII"), salt, N, r, p, dkLen);
+    long end = System.currentTimeMillis();
+
+    System.err.println("SCrypt took " + (end - start) + "ms");
+  }
 }
