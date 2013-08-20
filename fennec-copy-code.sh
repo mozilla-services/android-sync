@@ -47,20 +47,25 @@ rsync -C \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
-PREPROCESS_FILES="background/common/GlobalConstants.java sync/SyncConstants.java background/announcements/AnnouncementsConstants.java background/healthreport/HealthReportConstants.java"
+PREPROCESS_FILES="\
+  background/common/GlobalConstants.java \
+  sync/SyncConstants.java \
+  background/announcements/AnnouncementsConstants.java \
+  background/healthreport/HealthReportConstants.java"
 cp $BACKGROUNDSOURCEDIR/common/GlobalConstants.java.in $ANDROID/base/background/common/
 cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
 cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
 cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
 
-echo "Copying preprocessed sync_authenticator.xml."
-cp sync_authenticator.xml.template $ANDROID/base/resources/xml/sync_authenticator.xml.in
-
-echo "Copying preprocessed sync_syncadapter.xml."
-cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
-
-echo "Copying preprocessed sync_options.xml."
-cp sync_options.xml.template $ANDROID/base/resources/xml/sync_options.xml.in
+PP_XML_RESOURCES=" \
+  sync_authenticator \
+  sync_options \
+  sync_syncadapter \
+  "
+for pp in ${PP_XML_RESOURCES} ; do
+  echo "Copying preprocessed ${pp}.xml."
+  cp ${pp}.xml.template $ANDROID/base/resources/xml/${pp}.xml.in
+done
 
 echo "Copying internal dependency sources."
 APACHEDIR="src/main/java/org/mozilla/apache"
@@ -120,7 +125,10 @@ SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
 # XML resources that do not need to be preprocessed.
 SYNC_RES_XML=""
 # XML resources that need to be preprocessed.
-SYNC_PP_RES_XML="res/xml/sync_syncadapter.xml res/xml/sync_options.xml res/xml/sync_authenticator.xml"
+SYNC_PP_RES_XML=""
+for pp in ${PP_XML_RESOURCES} ; do
+  SYNC_PP_RES_XML="res/xml/${pp}.xml ${SYNC_PP_RES_XML}"
+done
 
 dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
 dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
@@ -183,8 +191,8 @@ find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \(
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.
-rm $ANDROID/base/resources/xml/sync_authenticator.xml
-rm $ANDROID/base/resources/xml/sync_syncadapter.xml
-rm $ANDROID/base/resources/xml/sync_options.xml
+for pp in ${PP_XML_RESOURCES} ; do
+  rm $ANDROID/base/resources/xml/${pp}.xml
+done
 
 echo "Done."
