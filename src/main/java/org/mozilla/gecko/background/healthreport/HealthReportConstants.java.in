@@ -121,4 +121,11 @@ public class HealthReportConstants {
   public static final long PRUNE_BY_DURATION_SKEW_LIMIT_MILLIS =
       MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION + 3 * MILLISECONDS_PER_DAY;
   public static final long EVENT_EXISTENCE_DURATION = MILLISECONDS_PER_SIX_MONTHS;
+
+  public static final String PREF_VACUUM_TIME = "healthreport_vacuum_time";
+  public static final long MIN_MILLIS_BETWEEN_VACUUMS = MILLISECONDS_PER_DAY * 14;
+  // The number of millis into the past the clock can skew before we reset the vacuum time.
+  public static final long VACUUM_SKEW_LIMIT_MILLIS =
+      MIN_MILLIS_BETWEEN_VACUUMS + 3 * MILLISECONDS_PER_DAY;
+  public static final float DB_FREE_PAGE_RATIO_LIMIT = 0.10f;
 }

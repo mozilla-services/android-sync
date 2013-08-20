@@ -137,8 +137,56 @@ public class PrunePolicy {
     return true;
   }
 
+  /**
+   * Attempt to vacuum the database. Vacuums will occur when there is excessive fragmentation or
+   * the maximum duration between vacuums is exceeded.
+   */
   protected boolean attemptVacuum(final long time) {
-    return false;
+    // If auto_vacuum is enabled, there are no free pages and we can't get the free page ratio in
+    // order to vacuum on fragmentation amount.
+    final HealthReportDatabaseStorage storage = getStorage();
+    if (storage.isAutoVacuumingDisabled()) {
+      final float freePageRatio = storage.getFreePageRatio();
+      final float freePageRatioLimit = getFreePageRatioLimit();
+      if (freePageRatio > freePageRatioLimit) {
+        Logger.debug(LOG_TAG, "Vacuuming based on fragmentation amount: " + freePageRatio + " / " +
+            freePageRatioLimit);
+        editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+        vacuumAndDisableAutoVacuuming(storage);
+        return true;
+      }
+    }
+
+    // Vacuum if max duration since last vacuum is exceeded.
+    final long nextVacuum = getNextVacuumTime();
+    if (nextVacuum < 0) {
+      Logger.debug(LOG_TAG, "Initializing vacuum time.");
+      editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+      return false;
+    }
+
+    // If the system clock is skewed into the past, making the time between prunes too long, reset
+    // the clock.
+    if (nextVacuum > getVacuumSkewLimitMillis() + time) {
+      Logger.debug(LOG_TAG, "Clock skew detected - resetting vacuum time.");
+      editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+      return false;
+    }
+
+    if (nextVacuum > time) {
+      Logger.debug(LOG_TAG, "Skipping vacuum - wait period has not yet elapsed.");
+      return false;
+    }
+
+    editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+    vacuumAndDisableAutoVacuuming(storage);
+    return true;
+  }
+
+  protected void vacuumAndDisableAutoVacuuming(final HealthReportDatabaseStorage storage) {
+    // The change to auto_vacuum will only take affect after a vacuum.
+    storage.disableAutoVacuuming();
+    storage.vacuum();
   }
 
   protected int getEnvironmentID() {
@@ -220,6 +268,11 @@ public class PrunePolicy {
       editor.putLong(HealthReportConstants.PREF_PRUNE_BY_SIZE_TIME, time);
       return this;
     }
+
+    public Editor setNextVacuumTime(final long time) {
+      editor.putLong(HealthReportConstants.PREF_VACUUM_TIME, time);
+      return this;
+    }
   }
 
   private long getNextPruneByDurationTime() {
@@ -264,5 +317,21 @@ public class PrunePolicy {
 
   private int getEventCountAfterPrune() {
     return HealthReportConstants.EVENT_COUNT_AFTER_PRUNE;
+  }
+
+  private long getNextVacuumTime() {
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_VACUUM_TIME, -1L);
+  }
+
+  private long getMinimumTimeBetweenVacuums() {
+    return HealthReportConstants.MIN_MILLIS_BETWEEN_VACUUMS;
+  }
+
+  private long getVacuumSkewLimitMillis() {
+    return HealthReportConstants.VACUUM_SKEW_LIMIT_MILLIS;
+  }
+
+  private float getFreePageRatioLimit() {
+    return HealthReportConstants.DB_FREE_PAGE_RATIO_LIMIT;
   }
 }

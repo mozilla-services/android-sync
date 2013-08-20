@@ -11,6 +11,7 @@ import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields.FieldSpec;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -72,6 +73,11 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   @Override
   public int deleteOrphanedAddons() {
     return super.deleteOrphanedAddons();
+  }
+
+  @Override
+  public int getIntFromQuery(final String sql, final String[] selectionArgs) {
+    return super.getIntFromQuery(sql, selectionArgs);
   }
 
   /**
@@ -243,6 +249,26 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
         env = environment.register();
         this.recordDailyLast(env, this.getGivenDaysAgo(1000), fieldID, 14);
         this.recordDailyLast(env, this.getToday(), fieldID, 15);
+      }
+    }
+
+    public void insertTextualEvents(final int count) {
+      final ContentValues v = new ContentValues();
+      v.put("env", env);
+      final int fieldID = this.getField(measurementNames[0], measurementVers[0],
+          fieldSpecContainers[0].discrete.name).getID();
+      v.put("field", fieldID);
+      v.put("value", "data");
+      final SQLiteDatabase db = this.helper.getWritableDatabase();
+      db.beginTransaction();
+      try {
+        for (int i = 1; i <= count; i++) {
+          v.put("date", i);
+          db.insertOrThrow("events_textual", null, v);
+        }
+        db.setTransactionSuccessful();
+      } finally {
+        db.endTransaction();
       }
     }
   }

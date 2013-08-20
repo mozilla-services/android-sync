@@ -1028,6 +1028,38 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     this.helper.getWritableDatabase().endTransaction();
   }
 
+  protected int getIntFromQuery(final String sql, final String[] selectionArgs) {
+    final SQLiteDatabase db = this.helper.getReadableDatabase();
+    Cursor c = null;
+    try {
+      c = db.rawQuery(sql, selectionArgs);
+      if (!c.moveToFirst()) {
+        throw new IllegalStateException("Cursor is empty.");
+      }
+      return c.getInt(0);
+    } finally {
+      if (c != null) {
+        c.close();
+      }
+    }
+  }
+
+  protected long getLongFromQuery(final String sql, final String[] selectionArgs) {
+    final SQLiteDatabase db = this.helper.getReadableDatabase();
+    Cursor c = null;
+    try {
+      c = db.rawQuery(sql, selectionArgs);
+      if (!c.moveToFirst()) {
+        throw new IllegalStateException("Cursor is empty.");
+      }
+      return c.getLong(0);
+    } finally {
+      if (c != null) {
+        c.close();
+      }
+    }
+  }
+
   @Override
   public int getDay(long time) {
     return DateUtils.getDay(time);
@@ -1260,21 +1292,9 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   private int getRowCount(String table) {
-    final SQLiteDatabase db = this.helper.getReadableDatabase();
-    Cursor c = null;
-    try {
-      // table should be parameterized, but SQL throws a compilation error if the table in unknown
-      // in advance.
-      c = db.rawQuery("SELECT COUNT(*) from " + table, null);
-      if (!c.moveToFirst()) {
-        throw new IllegalStateException("Cursor is empty.");
-      }
-      return c.getInt(0);
-    } finally {
-      if (c != null) {
-        c.close();
-      }
-    }
+    // table should be parameterized, but SQL throws a compilation error if the table in unknown
+    // in advance.
+    return getIntFromQuery("SELECT COUNT(*) from " + table, null);
   }
 
   /**
@@ -1498,5 +1518,39 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     } finally {
       db.endTransaction();
     }
+  }
+
+  public void vacuum() {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    db.execSQL("vacuum");
+  }
+
+  /**
+   * Disables auto_vacuuming. Changes may only take effect after a "vacuum" command.
+   */
+  public void disableAutoVacuuming() {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    db.execSQL("PRAGMA auto_vacuum=0");
+  }
+
+  public boolean isAutoVacuumingDisabled() {
+    return getIntFromQuery("PRAGMA auto_vacuum", null) == 0;
+  }
+
+  public long getPageCount() {
+    return getLongFromQuery("PRAGMA page_count", null);
+  }
+
+  public long getFreelistCount() {
+    return getLongFromQuery("PRAGMA freelist_count", null);
+  }
+
+  public float getFreePageRatio() {
+    final long freelistCount = getFreelistCount();
+    final long pageCount = getPageCount();
+    if (pageCount == 0) {
+      return 0;
+    }
+    return (float) freelistCount / pageCount;
   }
 }

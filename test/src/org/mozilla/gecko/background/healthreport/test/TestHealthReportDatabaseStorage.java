@@ -591,4 +591,62 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     storage.pruneEvents(14); // Delete < today.
     assertEquals(5, DBHelpers.getRowCount(db, "events"));
   }
+
+  public void testVacuum() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+    // Need to disable auto_vacuum to allow free page fragmentation. Note that the pragma changes
+    // only after a vacuum command.
+    db.execSQL("PRAGMA auto_vacuum=0");
+    db.execSQL("vacuum");
+    assertTrue(storage.isAutoVacuumingDisabled());
+
+    createFreePages(storage);
+    storage.vacuum();
+    assertEquals(0, storage.getFreelistCount());
+  }
+
+  private void createFreePages(final PrepopulatedMockHealthReportDatabaseStorage storage) throws Exception {
+    // Insert and delete until DB has free page fragmentation. The loop helps ensure the
+    // fragmentation occurs without minimal performance usage. Upper loop limits are arbitrary.
+    final SQLiteDatabase db = storage.getDB();
+    for (int i = 10; i <= 1250; i *= 5) {
+      storage.insertTextualEvents(i);
+      db.delete("events_textual", "date < ?", new String[] {Integer.toString(i / 2)});
+      if (storage.getFreelistCount() > 0) {
+        return;
+      }
+    }
+    fail("Database free pages failed to fragment.");
+  }
+
+  public void testDisableAutoVacuuming() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+    // The pragma changes only after a vacuum command.
+    db.execSQL("PRAGMA auto_vacuum=1");
+    db.execSQL("vacuum");
+    assertEquals(1, storage.getIntFromQuery("PRAGMA auto_vacuum", null));
+    storage.disableAutoVacuuming();
+    db.execSQL("vacuum");
+    assertTrue(storage.isAutoVacuumingDisabled());
+  }
+
+  public void testIsAutoVacuumingDisabled() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+    // The pragma changes only after a vacuum command.
+    db.execSQL("PRAGMA auto_vacuum=0");
+    db.execSQL("vacuum");
+    assertTrue(storage.isAutoVacuumingDisabled());
+    db.execSQL("PRAGMA auto_vacuum=1");
+    db.execSQL("vacuum");
+    assertFalse(storage.isAutoVacuumingDisabled());
+    db.execSQL("PRAGMA auto_vacuum=2");
+    db.execSQL("vacuum");
+    assertFalse(storage.isAutoVacuumingDisabled());
+  }
 }
