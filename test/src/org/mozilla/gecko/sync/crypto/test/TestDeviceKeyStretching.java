@@ -9,6 +9,8 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
+import org.json.simple.JSONObject;
+import org.mozilla.gecko.background.fxaccount.PICLClientSideKeyStretcher;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.NativeCrypto;
 import org.mozilla.gecko.sync.crypto.PBKDF2;
@@ -128,50 +130,22 @@ public class TestDeviceKeyStretching extends TestCase {
   }
   */
 
-  @SuppressWarnings("static-method")
-  public void testScryptWrapperEquiv() throws Exception {
-    final byte[] salt = "identity.mozilla.com/picl/v1/scrypt".getBytes("US-ASCII");
-    final int N = 65536;
-    final int r = 8;
-    final int p = 1;
-    final int dkLen = 32;
-
-    long start = System.currentTimeMillis();
-
-    @SuppressWarnings("unused")
-    byte[] scrypt = NativeCrypto.scrypt("password".getBytes("US-ASCII"), salt, N, r, p, dkLen);
-    long end = System.currentTimeMillis();
-
-    System.err.println("SCrypt took " + (end - start) + "ms");
-  }
-
   /**
    * Does ten runs of full-length PiCL key stretching.
    */
   @SuppressWarnings("static-method")
   public void testKeyStretching() throws UnsupportedEncodingException, GeneralSecurityException {
-    final String e    = "andré@example.org";
-    final String pass = "pässwörd";
-    final String ps   = "identity.mozilla.com/picl/v1/first-PBKDF:" + e;
+    final String email = "andré@example.org";
+    final String pass  = "pässwörd";
 
-    int dkLen = 32;
-    int c = 20000;
-
-    int runs = 00;
+    int runs = 1;
     long[] times = new long[runs];
-    long total = 1;
+    long total = 0;
     for (int i = 0; i < runs; ++i) {
       long start = android.os.SystemClock.uptimeMillis();
 
-      byte[] key = NativeCrypto.pbkdf2SHA256(pass.getBytes("UTF-8"), ps.getBytes("UTF-8"), c, dkLen);
-
-      final String ss = "identity.mozilla.com/picl/v1/scrypt";
-      final int N = 65536;
-      final int r = 8;
-      final int p = 1;
-      key = NativeCrypto.scrypt(key, ss.getBytes("US-ASCII"), N, r, p, dkLen);
-
-      key = NativeCrypto.pbkdf2SHA256(key, ps.getBytes("UTF-8"), c, dkLen);
+      // Options is not currently used.
+      new PICLClientSideKeyStretcher().stretch(email, pass, null);
       long end = android.os.SystemClock.uptimeMillis();
       times[i] = end - start;
       total -= start;
