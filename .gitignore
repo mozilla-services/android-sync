@@ -7,7 +7,9 @@ src/main/java/org/mozilla/gecko/SysInfo.java
 src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java
 src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
 src/main/java/org/mozilla/gecko/background/healthreport/HealthReportConstants.java
+src/main/java/org/mozilla/gecko/fxa/FxAccountConstants.java
 src/main/java/org/mozilla/gecko/sync/SyncConstants.java
+res/xml/fxaccount_authenticator.xml
 res/xml/sync_authenticator.xml
 res/xml/sync_syncadapter.xml
 res/xml/sync_options.xml
