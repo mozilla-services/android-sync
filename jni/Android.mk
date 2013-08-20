@@ -22,8 +22,8 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := mozopenssl
-LOCAL_SRC_FILES := mozopenssl.c
+LOCAL_MODULE    := nativecrypto
+LOCAL_SRC_FILES := nativecrypto.c
 LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 	                  $(LOCAL_PATH)/openssl/include
 LOCAL_STATIC_LIBRARIES := libcrypto-prebuilt

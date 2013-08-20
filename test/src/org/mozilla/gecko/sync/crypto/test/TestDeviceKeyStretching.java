@@ -10,7 +10,7 @@ import java.util.Arrays;
 import junit.framework.TestCase;
 
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.crypto.MozOpenSSL;
+import org.mozilla.gecko.sync.crypto.NativeCrypto;
 import org.mozilla.gecko.sync.crypto.PBKDF2;
 
 import com.lambdaworks.crypto.SCrypt;
@@ -165,7 +165,7 @@ public class TestDeviceKeyStretching extends TestCase {
     for (int i = 0; i < runs; ++i) {
       long start = android.os.SystemClock.uptimeMillis();
 
-      byte[] key = MozOpenSSL.pbkdf2SHA256(pass.getBytes("UTF-8"), ps.getBytes("UTF-8"), c, dkLen);
+      byte[] key = NativeCrypto.pbkdf2SHA256(pass.getBytes("UTF-8"), ps.getBytes("UTF-8"), c, dkLen);
 
       final String ss = "identity.mozilla.com/picl/v1/scrypt";
       final int N = 65536;
@@ -173,7 +173,7 @@ public class TestDeviceKeyStretching extends TestCase {
       final int p = 1;
       key = SCrypt.scrypt(key, ss.getBytes("US-ASCII"), N, r, p, dkLen);
 
-      key = MozOpenSSL.pbkdf2SHA256(key, ps.getBytes("UTF-8"), c, dkLen);
+      key = NativeCrypto.pbkdf2SHA256(key, ps.getBytes("UTF-8"), c, dkLen);
       long end = android.os.SystemClock.uptimeMillis();
       times[i] = end - start;
       total -= start;
@@ -206,7 +206,7 @@ public class TestDeviceKeyStretching extends TestCase {
                                 final String expectedStr)
                                                     throws GeneralSecurityException, UnsupportedEncodingException {
     long start = System.currentTimeMillis();
-    byte[] key = MozOpenSSL.pbkdf2SHA256(p.getBytes("US-ASCII"), s.getBytes("US-ASCII"), c, dkLen);
+    byte[] key = NativeCrypto.pbkdf2SHA256(p.getBytes("US-ASCII"), s.getBytes("US-ASCII"), c, dkLen);
     assertNotNull(key);
 
     long end = System.currentTimeMillis();

@@ -2,14 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozopenssl.h"
+#include "nativecrypto.h"
 
 #include <jni.h>
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
-JNIEXPORT jbyteArray JNICALL Java_org_mozilla_gecko_sync_crypto_MozOpenSSL_pbkdf2SHA256
+JNIEXPORT jbyteArray JNICALL Java_org_mozilla_gecko_sync_crypto_NativeCrypto_pbkdf2SHA256
   (JNIEnv *env, jclass jc, jbyteArray password, jbyteArray salt, jint c, jint dkLen) {
 
 	jbyte *pj = (*env)->GetByteArrayElements(env, password, 0);
