@@ -9,7 +9,6 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 
-import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.fxaccount.PICLClientSideKeyStretcher;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.NativeCrypto;
@@ -131,7 +130,7 @@ public class TestDeviceKeyStretching extends TestCase {
   */
 
   /**
-   * Does ten runs of full-length PiCL key stretching.
+   * Does several runs of full-length PiCL key stretching.
    */
   @SuppressWarnings("static-method")
   public void testKeyStretching() throws UnsupportedEncodingException, GeneralSecurityException {
