@@ -5,6 +5,7 @@ package org.mozilla.gecko.sync.crypto.test;
 
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 
 import junit.framework.TestCase;
 
@@ -12,11 +13,13 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.MozOpenSSL;
 import org.mozilla.gecko.sync.crypto.PBKDF2;
 
+import com.lambdaworks.crypto.SCrypt;
+
 // Test vectors from
 // SHA-1:   <http://tools.ietf.org/html/draft-josefsson-pbkdf2-test-vectors-06>
 // SHA-256: <https://github.com/ircmaxell/PHP-PasswordLib/blob/master/test/Data/Vectors/pbkdf2-draft-josefsson-sha256.test-vectors>
 //          <https://gitorious.org/scrypt/nettle-scrypt/blobs/37c0d5288e991604fe33dba2f1724986a8dddf56/testsuite/pbkdf2-test.c>
-public class TestPBKDF2 extends TestCase {
+public class TestDeviceKeyStretching extends TestCase {
 
   public final void testPBKDF2SHA1A() throws GeneralSecurityException, UnsupportedEncodingException {
     String  p = "password";
@@ -92,6 +95,102 @@ public class TestPBKDF2 extends TestCase {
     checkPBKDF2SHA256("password", "salt", 80000, 32, null);
   }
 
+  public void testA() throws Exception {
+    checkScrypt("", "", 16, 1, 1, 64, "" +
+        "77d6576238657b203b19ca42c18a0497" +
+        "f16b4844e3074ae8dfdffa3fede21442" +
+        "fcd0069ded0948f8326a753a0fc81f17" +
+        "e8d3e0fb2e0d3628cf35e20c38d18906");
+  }
+
+  public void testB() throws Exception {
+    checkScrypt("password", "NaCl", 1024, 8, 16, 64, "" +
+        "fdbabe1c9d3472007856e7190d01e9fe" +
+        "7c6ad7cbc8237830e77376634b373162" +
+        "2eaf30d92e22a3886ff109279d9830da" +
+        "c727afb94a83ee6d8360cbdfa2cc0640");
+  }
+
+  public void testC() throws Exception {
+    checkScrypt("pleaseletmein", "SodiumChloride", 16384, 8, 1, 64, "" +
+        "7023bdcb3afd7348461c06cd81fd38eb" +
+        "fda8fbba904f8e3ea9b543f6545da1f2" +
+        "d5432955613f0fcf62d49705242a9af9" +
+        "e61e85dc0d651e40dfcf017b45575887");
+  }
+
+  /*
+  // This test takes a long time.
+  public void testD() throws Exception {
+    checkScrypt("pleaseletmein", "SodiumChloride", 1048576, 8, 1, 64, "" +
+        "2101cb9b6a511aaeaddbbe09cf70f881" +
+        "ec568d574a2ffd4dabe5ee9820adaa47" +
+        "8e56fd8f4ba5d09ffa1c6d927c40f4c3" +
+        "37304049e8a952fbcbf45c6fa77a41a4");
+  }
+  */
+
+  @SuppressWarnings("static-method")
+  public void testScryptWrapperEquiv() throws Exception {
+    final byte[] salt = "identity.mozilla.com/picl/v1/scrypt".getBytes("US-ASCII");
+    final int N = 65536;
+    final int r = 8;
+    final int p = 1;
+    final int dkLen = 32;
+
+    long start = System.currentTimeMillis();
+
+    @SuppressWarnings("unused")
+    byte[] scrypt = SCrypt.scrypt("password".getBytes("US-ASCII"), salt, N, r, p, dkLen);
+    long end = System.currentTimeMillis();
+
+    System.err.println("SCrypt took " + (end - start) + "ms");
+  }
+
+  /**
+   * Does ten runs of full-length PiCL key stretching.
+   */
+  @SuppressWarnings("static-method")
+  public void testKeyStretching() throws UnsupportedEncodingException, GeneralSecurityException {
+    final String e    = "andré@example.org";
+    final String pass = "pässwörd";
+    final String ps   = "identity.mozilla.com/picl/v1/first-PBKDF:" + e;
+
+    int dkLen = 32;
+    int c = 20000;
+
+    int runs = 00;
+    long[] times = new long[runs];
+    long total = 1;
+    for (int i = 0; i < runs; ++i) {
+      long start = android.os.SystemClock.uptimeMillis();
+
+      byte[] key = MozOpenSSL.pbkdf2SHA256(pass.getBytes("UTF-8"), ps.getBytes("UTF-8"), c, dkLen);
+
+      final String ss = "identity.mozilla.com/picl/v1/scrypt";
+      final int N = 65536;
+      final int r = 8;
+      final int p = 1;
+      key = SCrypt.scrypt(key, ss.getBytes("US-ASCII"), N, r, p, dkLen);
+
+      key = MozOpenSSL.pbkdf2SHA256(key, ps.getBytes("UTF-8"), c, dkLen);
+      long end = android.os.SystemClock.uptimeMillis();
+      times[i] = end - start;
+      total -= start;
+      total += end;
+    }
+    Arrays.sort(times);
+
+    double mean;
+    if (runs > 2) {
+      System.err.println("Ignoring extremes " + times[0] + ", " + times[runs - 1]);
+      mean = (total - times[0] - times[runs - 1]) / (runs - 2);
+    } else {
+      mean = runs <= 0 ? 0 : total / runs;
+    }
+    System.err.println("Mean time: " + mean);
+  }
+  
   private void checkPBKDF2SHA1(String p, String s, int c, int dkLen,
                               final String expectedStr)
                                                     throws GeneralSecurityException,
@@ -121,7 +220,13 @@ public class TestPBKDF2 extends TestCase {
     assertExpectedBytes(expectedStr, key);
   }
 
-  private void assertExpectedBytes(final String expectedStr, byte[] key) {
+  private void checkScrypt(String passwd, String salt, int N, int r, int p, int dkLen, final String expectedStr)
+      throws UnsupportedEncodingException, GeneralSecurityException {
+    byte[] scrypt = SCrypt.scrypt(passwd.getBytes("ASCII"), salt.getBytes("ASCII"), N, r, p, dkLen);
+    assertExpectedBytes(expectedStr, scrypt);
+  }
+
+  public static void assertExpectedBytes(final String expectedStr, byte[] key) {
     assertEquals(expectedStr, Utils.byte2hex(key));
     byte[] expected = Utils.hex2Byte(expectedStr);
 
