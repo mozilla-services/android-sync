@@ -1440,6 +1440,46 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   public void pruneEnvironments(final int numToPrune) {
   }
 
+  /**
+   * Prunes up to a maximum of the given number of the oldest events. While it is more correct to
+   * prune the exact given amount, there is no unique identifier among events so we cannot be so
+   * precise. Instead, we prune on date, deleting all events up to the day before our count of
+   * events reaches the given maximum. Note that this technicality means this method cannot be
+   * used to delete all events.
+   */
   public void pruneEvents(final int maxNumToPrune) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    Cursor c = null;
+    long pruneDate = -1;
+    try {
+      c = db.rawQuery(
+          "SELECT MAX(date) " +
+          "FROM (SELECT date " +
+          "      FROM events " +
+          "      ORDER BY date " +
+          "      LIMIT ?)",
+          new String[] {Integer.toString(maxNumToPrune)});
+      if (!c.moveToFirst()) {
+        Logger.debug(LOG_TAG, "No max date found in events: table is likely empty. Not pruning " +
+            "events.");
+        return;
+      }
+      pruneDate = c.getLong(0);
+    } finally {
+      if (c != null) {
+        c.close();
+      }
+    }
+
+    final String selection = "date < ?";
+    final String[] selectionArgs = new String[] {Long.toString(pruneDate)};
+    db.beginTransaction();
+    try {
+      db.delete(EVENTS_INTEGER, selection, selectionArgs);
+      db.delete(EVENTS_TEXTUAL, selection, selectionArgs);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
   }
 }

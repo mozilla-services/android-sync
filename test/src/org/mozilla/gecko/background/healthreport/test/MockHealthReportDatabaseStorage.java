@@ -90,6 +90,9 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
    * </pre>
    *
    * Don't forget to increment the {@link MAX_VERSION_USED} constant.
+   *
+   * Note that all instances of this class use the same underlying database and so each newly
+   * created instance will share the same data.
    */
   public static class PrepopulatedMockHealthReportDatabaseStorage extends MockHealthReportDatabaseStorage {
     // A constant to enforce which version constructor is the maximum used so far.

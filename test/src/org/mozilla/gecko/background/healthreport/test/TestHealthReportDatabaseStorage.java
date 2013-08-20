@@ -544,4 +544,19 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     db.delete("environments", null, null);
     assertEquals(0, storage.getEnvironmentCount());
   }
+
+  public void testPruneEvents() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    SQLiteDatabase db = storage.getDB();
+    assertEquals(14, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(1); // Delete < 7 days ago.
+    assertEquals(14, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(2); // Delete < 5 days ago.
+    assertEquals(13, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(5); // Delete < 2 days ago.
+    assertEquals(9, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(14); // Delete < today.
+    assertEquals(5, DBHelpers.getRowCount(db, "events"));
+  }
 }
