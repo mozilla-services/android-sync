@@ -15,6 +15,9 @@ extern "C" {
 JNIEXPORT jbyteArray JNICALL Java_org_mozilla_gecko_sync_crypto_NativeCrypto_pbkdf2SHA256
   (JNIEnv *, jclass, jbyteArray, jbyteArray, jint, jint);
 
+JNIEXPORT jbyteArray JNICALL Java_org_mozilla_gecko_sync_crypto_NativeCrypto_scrypt
+  (JNIEnv *env, jclass cls, jbyteArray passwd, jbyteArray salt, jint N, jint r, jint p, jint dkLen);
+
 #ifdef __cplusplus
 }
 #endif

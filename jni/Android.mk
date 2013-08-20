@@ -16,8 +16,7 @@ LOCAL_MODULE    := nativecrypto
 # Can only use SSE on x86.
 LOCAL_SRC_FILES := nativecrypto.c \
                    scrypt/c/crypto_scrypt-nosse.c \
-                   scrypt/c/sha256.c \
-									 scrypt_jni.c
+                   scrypt/c/sha256.c
 LOCAL_C_INCLUDES := $(LOCAL_PATH) \
 	                  $(LOCAL_PATH)/scrypt/include \
 	                  $(LOCAL_PATH)/openssl/include
