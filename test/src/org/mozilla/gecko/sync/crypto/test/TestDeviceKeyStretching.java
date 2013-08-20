@@ -13,8 +13,6 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.NativeCrypto;
 import org.mozilla.gecko.sync.crypto.PBKDF2;
 
-import com.lambdaworks.crypto.SCrypt;
-
 // Test vectors from
 // SHA-1:   <http://tools.ietf.org/html/draft-josefsson-pbkdf2-test-vectors-06>
 // SHA-256: <https://github.com/ircmaxell/PHP-PasswordLib/blob/master/test/Data/Vectors/pbkdf2-draft-josefsson-sha256.test-vectors>
@@ -141,7 +139,7 @@ public class TestDeviceKeyStretching extends TestCase {
     long start = System.currentTimeMillis();
 
     @SuppressWarnings("unused")
-    byte[] scrypt = SCrypt.scrypt("password".getBytes("US-ASCII"), salt, N, r, p, dkLen);
+    byte[] scrypt = NativeCrypto.scrypt("password".getBytes("US-ASCII"), salt, N, r, p, dkLen);
     long end = System.currentTimeMillis();
 
     System.err.println("SCrypt took " + (end - start) + "ms");
@@ -171,7 +169,7 @@ public class TestDeviceKeyStretching extends TestCase {
       final int N = 65536;
       final int r = 8;
       final int p = 1;
-      key = SCrypt.scrypt(key, ss.getBytes("US-ASCII"), N, r, p, dkLen);
+      key = NativeCrypto.scrypt(key, ss.getBytes("US-ASCII"), N, r, p, dkLen);
 
       key = NativeCrypto.pbkdf2SHA256(key, ps.getBytes("UTF-8"), c, dkLen);
       long end = android.os.SystemClock.uptimeMillis();
@@ -222,7 +220,7 @@ public class TestDeviceKeyStretching extends TestCase {
 
   private void checkScrypt(String passwd, String salt, int N, int r, int p, int dkLen, final String expectedStr)
       throws UnsupportedEncodingException, GeneralSecurityException {
-    byte[] scrypt = SCrypt.scrypt(passwd.getBytes("ASCII"), salt.getBytes("ASCII"), N, r, p, dkLen);
+    byte[] scrypt = NativeCrypto.scrypt(passwd.getBytes("ASCII"), salt.getBytes("ASCII"), N, r, p, dkLen);
     assertExpectedBytes(expectedStr, scrypt);
   }
 
