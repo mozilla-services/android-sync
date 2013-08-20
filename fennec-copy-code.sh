@@ -16,15 +16,17 @@ rsync -a manifests $SERVICES/
 
 echo "Copying sources. All use of R must be compiled with Fennec."
 SOURCEROOT="src/main/java/org/mozilla/gecko"
+FXASOURCEDIR="$SOURCEROOT/fxa"
 SYNCSOURCEDIR="$SOURCEROOT/sync"
 BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
-SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
+SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$FXASOURCEDIR" "$SYNCSOURCEDIR" \
   -name '*.java' \
   -and -not -name 'AnnouncementsConstants.java' \
   -and -not -name 'HealthReportConstants.java' \
   -and -not -name 'GlobalConstants.java' \
   -and -not -name 'BrowserContract.java' \
   -and -not -name 'AppConstants.java' \
+  -and -not -name 'FxAccountConstants.java' \
   -and -not -name 'SysInfo.java' \
   -and -not -name 'SyncConstants.java' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
@@ -46,18 +48,26 @@ rsync -C \
   --exclude '*.in' \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
+rsync -C \
+  --exclude 'FxAccountConstants.java' \
+  --exclude '*.in' \
+  -a $FXASOURCEDIR $ANDROID/base/
+
 echo "Copying preprocessed constants files."
 PREPROCESS_FILES="\
   background/common/GlobalConstants.java \
+  fxa/FxAccountConstants.java \
   sync/SyncConstants.java \
   background/announcements/AnnouncementsConstants.java \
   background/healthreport/HealthReportConstants.java"
 cp $BACKGROUNDSOURCEDIR/common/GlobalConstants.java.in $ANDROID/base/background/common/
+cp $FXASOURCEDIR/FxAccountConstants.java.in $ANDROID/base/fxa/
 cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
 cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
 cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
 
 PP_XML_RESOURCES=" \
+  fxaccount_authenticator \
   sync_authenticator \
   sync_syncadapter \
   sync_options"
