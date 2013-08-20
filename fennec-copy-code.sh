@@ -68,6 +68,10 @@ cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base
 
 PP_XML_RESOURCES=" \
   fxaccount_authenticator \
+  fxaccount_bookmarks_syncadapter \
+  fxaccount_history_syncadapter \
+  fxaccount_passwords_syncadapter \
+  fxaccount_tabs_syncadapter \
   sync_authenticator \
   sync_syncadapter \
   sync_options"
