@@ -10,7 +10,6 @@ import java.security.GeneralSecurityException;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.NativeCrypto;
-import org.mozilla.gecko.sync.crypto.PBKDF2;
 
 public class PICLClientSideKeyStretcher implements ClientSideKeyStretcher {
   /**
@@ -32,11 +31,11 @@ public class PICLClientSideKeyStretcher implements ClientSideKeyStretcher {
     byte[] emailUTF8 = email.getBytes("UTF-8");
     byte[] passwordUTF8 = password.getBytes("UTF-8");
 
-    byte[] k1 = PBKDF2.pbkdf2SHA256(passwordUTF8, FxAccountUtils.KWE("first-PBKDF", emailUTF8), 20*1000, 1*32);
+    byte[] k1 = NativeCrypto.pbkdf2SHA256(passwordUTF8, FxAccountUtils.KWE("first-PBKDF", emailUTF8), 20*1000, 1*32);
     byte[] k2 = NativeCrypto.scrypt(k1, FxAccountUtils.KW("scrypt"), 64*1024, 8, 1, 1*32);
 
     byte[] in = Utils.concatAll(k2, passwordUTF8);
-    byte[] stretchedPW = PBKDF2.pbkdf2SHA256(in, FxAccountUtils.KWE("second-PBKDF", emailUTF8), 20*1000, 1*32);
+    byte[] stretchedPW = NativeCrypto.pbkdf2SHA256(in, FxAccountUtils.KWE("second-PBKDF", emailUTF8), 20*1000, 1*32);
 
     return stretchedPW;
   }
