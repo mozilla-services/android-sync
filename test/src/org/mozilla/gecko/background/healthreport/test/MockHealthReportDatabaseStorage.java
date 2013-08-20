@@ -96,7 +96,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
    */
   public static class PrepopulatedMockHealthReportDatabaseStorage extends MockHealthReportDatabaseStorage {
     // A constant to enforce which version constructor is the maximum used so far.
-    private int MAX_VERSION_USED = 1;
+    private int MAX_VERSION_USED = 2;
 
     public String[] measurementNames;
     public int[] measurementVers;
@@ -197,7 +197,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
       }
       this.finishInitialization();
 
-      final MockDatabaseEnvironment environment = this.getEnvironment();
+      MockDatabaseEnvironment environment = this.getEnvironment();
       environment.mockInit("v123");
       environment.setJSONForAddons(addonJSON);
       env = environment.register();
@@ -229,6 +229,21 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
       this.recordDailyDiscrete(env, this.getToday(), fieldID, 1);
       fieldID = this.getField(mName, mVer, fieldSpecCont.last.name).getID();
       this.recordDailyLast(env, this.getYesterday(), fieldID, 1);
+
+      if (version >= 2) {
+        // Insert more diverse environments.
+        for (int i = 1; i <= 3; i++) {
+          environment = this.getEnvironment();
+          environment.mockInit("v" + i);
+          env = environment.register();
+          this.recordDailyLast(env, this.getGivenDaysAgo(7 * i + 1), fieldID, 13);
+        }
+        environment = this.getEnvironment();
+        environment.mockInit("v4");
+        env = environment.register();
+        this.recordDailyLast(env, this.getGivenDaysAgo(1000), fieldID, 14);
+        this.recordDailyLast(env, this.getToday(), fieldID, 15);
+      }
     }
   }
 }

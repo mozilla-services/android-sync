@@ -545,6 +545,38 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(0, storage.getEnvironmentCount());
   }
 
+  public void testPruneEnvironments() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory, 2);
+    final SQLiteDatabase db = storage.getDB();
+    assertEquals(5, DBHelpers.getRowCount(db, "environments"));
+    storage.pruneEnvironments(1);
+    assertTrue(!getEnvAppVersions(db).contains("v3"));
+    storage.pruneEnvironments(2);
+    assertTrue(!getEnvAppVersions(db).contains("v2"));
+    assertTrue(!getEnvAppVersions(db).contains("v1"));
+    storage.pruneEnvironments(1);
+    assertTrue(!getEnvAppVersions(db).contains("v123"));
+    storage.pruneEnvironments(1);
+    assertTrue(!getEnvAppVersions(db).contains("v4"));
+  }
+
+  private ArrayList<String> getEnvAppVersions(final SQLiteDatabase db) {
+    ArrayList<String> out = new ArrayList<String>();
+    Cursor c = null;
+    try {
+      c = db.query(true, "environments", new String[] {"appVersion"}, null, null, null, null, null, null);
+      while (c.moveToNext()) {
+        out.add(c.getString(0));
+      }
+    } finally {
+      if (c != null) {
+        c.close();
+      }
+    }
+    return out;
+  }
+
   public void testPruneEvents() throws Exception {
     final PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);

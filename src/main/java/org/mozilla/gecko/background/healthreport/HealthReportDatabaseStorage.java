@@ -1437,7 +1437,24 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     }
   }
 
+  /**
+   * Prunes the given number of least-recently used environments.
+   */
   public void pruneEnvironments(final int numToPrune) {
+    final SQLiteDatabase db = this.helper.getWritableDatabase();
+    db.beginTransaction();
+    try {
+      db.delete("environments",
+          "id in (SELECT env " +
+          "       FROM events " +
+          "       GROUP BY env " +
+          "       ORDER BY MAX(date), env " +
+          "       LIMIT ?)",
+          new String[] {Integer.toString(numToPrune)});
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
   }
 
   /**
