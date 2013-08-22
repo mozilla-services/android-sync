@@ -11,7 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 
 /**
- * Watch for notifications to start the Health Report background upload service.
+ * Watch for notifications to start Health Report background services.
  *
  * Some observations:
  *
@@ -32,12 +32,7 @@ public class HealthReportBroadcastReceiver extends BroadcastReceiver {
    */
   @Override
   public void onReceive(Context context, Intent intent) {
-    if (HealthReportConstants.UPLOAD_FEATURE_DISABLED) {
-      Logger.debug(LOG_TAG, "Health report upload feature is compile-time disabled; not forwarding intent.");
-      return;
-    }
-
-    Logger.debug(LOG_TAG, "Health report upload feature is compile-time enabled; forwarding intent.");
+    Logger.debug(LOG_TAG, "Received intent - forwarding to BroadcastService.");
     Intent service = new Intent(context, HealthReportBroadcastService.class);
     service.putExtras(intent);
     service.setAction(intent.getAction());

@@ -22,4 +22,7 @@
             <intent-filter >
               <action android:name="@ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF" />
             </intent-filter>
+            <intent-filter >
+              <action android:name="@ANDROID_PACKAGE_NAME@.HEALTHREPORT_PRUNE" />
+            </intent-filter>
         </receiver>

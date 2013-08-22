@@ -404,7 +404,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(1, DBHelpers.getRowCount(db, "addons"));
 
     // 2 = 1 addon + 1 env.
-    assertEquals(2, storage.deleteDataBefore(storage.now + HealthReportConstants.MILLISECONDS_PER_DAY,
+    assertEquals(2, storage.deleteDataBefore(storage.now + GlobalConstants.MILLISECONDS_PER_DAY,
           nonExistentEnvID));
     assertEquals(0, getTotalEventCount(storage));
     assertEquals(0, DBHelpers.getRowCount(db, "addons"));
@@ -452,7 +452,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(0, storage.deleteEnvAndEventsBefore(storage.now, nonExistentEnvID));
     assertEquals(5, getTotalEventCount(storage));
 
-    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.now + HealthReportConstants.MILLISECONDS_PER_DAY,
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.now + GlobalConstants.MILLISECONDS_PER_DAY,
           nonExistentEnvID));
     assertEquals(0, getTotalEventCount(storage));
   }

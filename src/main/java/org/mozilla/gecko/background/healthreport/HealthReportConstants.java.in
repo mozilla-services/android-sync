@@ -24,13 +24,17 @@ public class HealthReportConstants {
   // settings are stored.
   public static final String PREFS_BRANCH = "background";
 
-  // How frequently the submission policy is ticked over. This is how frequently our
-  // intent is scheduled to be called by the Android Alarm Manager, not how
-  // frequently we actually submit.
+  // How frequently the submission and prune policies are ticked over. This is how frequently our
+  // intent is scheduled to be called by the Android Alarm Manager, not how frequently we
+  // actually submit. These values are set as preferences rather than constants so that testing
+  // addons can change their values.
   public static final String PREF_SUBMISSION_INTENT_INTERVAL_MSEC = "healthreport_submission_intent_interval_msec";
   public static final long DEFAULT_SUBMISSION_INTENT_INTERVAL_MSEC = GlobalConstants.MILLISECONDS_PER_DAY / 24;
+  public static final String PREF_PRUNE_INTENT_INTERVAL_MSEC = "healthreport_prune_intent_interval_msec";
+  public static final long DEFAULT_PRUNE_INTENT_INTERVAL_MSEC = GlobalConstants.MILLISECONDS_PER_DAY;
 
   public static final String ACTION_HEALTHREPORT_UPLOAD_PREF = "@ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF";
+  public static final String ACTION_HEALTHREPORT_PRUNE = "@ANDROID_PACKAGE_NAME@.HEALTHREPORT_PRUNE";
 
   public static final String PREF_MINIMUM_TIME_BETWEEN_UPLOADS = "healthreport_time_between_uploads";
   public static final long DEFAULT_MINIMUM_TIME_BETWEEN_UPLOADS = GlobalConstants.MILLISECONDS_PER_DAY;
@@ -106,26 +110,26 @@ public class HealthReportConstants {
   public static final int MAXIMUM_DELETIONS_PER_POST = ((int) DEFAULT_MAXIMUM_FAILURES_PER_DAY + 1) * 2;
 
   public static final String PREF_PRUNE_BY_SIZE_TIME = "healthreport_prune_by_size_time";
-  public static final long MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE = MILLISECONDS_PER_DAY;
+  public static final long MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE = GlobalConstants.MILLISECONDS_PER_DAY;
   // The number of millis into the past the clock can skew before we reset the prune time.
   public static final long PRUNE_BY_SIZE_SKEW_LIMIT_MILLIS =
-      MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE + 3 * MILLISECONDS_PER_DAY;
+      MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
   public static final int MAX_ENVIRONMENT_COUNT = 50;
   public static final int ENVIRONMENT_COUNT_AFTER_PRUNE = 40;
   public static final int MAX_EVENT_COUNT = 20000;
   public static final int EVENT_COUNT_AFTER_PRUNE = 16000;
 
   public static final String PREF_PRUNE_BY_DURATION_TIME = "healthreport_prune_by_duration_time";
-  public static final long MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION = MILLISECONDS_PER_DAY * 7;
+  public static final long MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION = GlobalConstants.MILLISECONDS_PER_DAY * 7;
   // The number of millis into the past the clock can skew before we reset the prune time.
   public static final long PRUNE_BY_DURATION_SKEW_LIMIT_MILLIS =
-      MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION + 3 * MILLISECONDS_PER_DAY;
-  public static final long EVENT_EXISTENCE_DURATION = MILLISECONDS_PER_SIX_MONTHS;
+      MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
+  public static final long EVENT_EXISTENCE_DURATION = GlobalConstants.MILLISECONDS_PER_SIX_MONTHS;
 
   public static final String PREF_VACUUM_TIME = "healthreport_vacuum_time";
-  public static final long MIN_MILLIS_BETWEEN_VACUUMS = MILLISECONDS_PER_DAY * 14;
+  public static final long MIN_MILLIS_BETWEEN_VACUUMS = GlobalConstants.MILLISECONDS_PER_DAY * 14;
   // The number of millis into the past the clock can skew before we reset the vacuum time.
   public static final long VACUUM_SKEW_LIMIT_MILLIS =
-      MIN_MILLIS_BETWEEN_VACUUMS + 3 * MILLISECONDS_PER_DAY;
+      MIN_MILLIS_BETWEEN_VACUUMS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
   public static final float DB_FREE_PAGE_RATIO_LIMIT = 0.10f;
 }
