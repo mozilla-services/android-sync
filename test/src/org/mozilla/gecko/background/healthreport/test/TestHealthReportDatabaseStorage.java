@@ -469,9 +469,19 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
 
     assertEquals(0, storage.deleteOrphanedEnv(envID));
     assertEquals(1, storage.deleteOrphanedEnv(storage.env));
-    db.delete("events_integer", null, null);
-    db.delete("events_textual", null, null);
+    this.deleteEvents(db);
     assertEquals(1, storage.deleteOrphanedEnv(envID));
+  }
+
+  private void deleteEvents(final SQLiteDatabase db) throws Exception {
+    db.beginTransaction();
+    try {
+      db.delete("events_integer", null, null);
+      db.delete("events_textual", null, null);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
   }
 
   public void testDeleteEventsBefore() throws Exception {
@@ -531,8 +541,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
     assertEquals(14, storage.getEventCount());
     final SQLiteDatabase db = storage.getDB();
-    db.delete("events_integer", null, null);
-    db.delete("events_textual", null, null);
+    this.deleteEvents(db);
     assertEquals(0, storage.getEventCount());
   }
 
@@ -608,8 +617,8 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
   }
 
   private void createFreePages(final PrepopulatedMockHealthReportDatabaseStorage storage) throws Exception {
-    // Insert and delete until DB has free page fragmentation. The loop helps ensure the
-    // fragmentation occurs without minimal performance usage. Upper loop limits are arbitrary.
+    // Insert and delete until DB has free page fragmentation. The loop helps ensure that the
+    // fragmentation will occur with minimal disk usage. The upper loop limits are arbitrary.
     final SQLiteDatabase db = storage.getDB();
     for (int i = 10; i <= 1250; i *= 5) {
       storage.insertTextualEvents(i);

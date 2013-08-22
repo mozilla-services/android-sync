@@ -110,26 +110,27 @@ public class HealthReportConstants {
   public static final int MAXIMUM_DELETIONS_PER_POST = ((int) DEFAULT_MAXIMUM_FAILURES_PER_DAY + 1) * 2;
 
   public static final String PREF_PRUNE_BY_SIZE_TIME = "healthreport_prune_by_size_time";
-  public static final long MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE = GlobalConstants.MILLISECONDS_PER_DAY;
+  public static final long MINIMUM_TIME_BETWEEN_PRUNE_BY_SIZE_CHECKS_MILLIS =
+      GlobalConstants.MILLISECONDS_PER_DAY;
   // The number of millis into the past the clock can skew before we reset the prune time.
   public static final long PRUNE_BY_SIZE_SKEW_LIMIT_MILLIS =
-      MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
+      MINIMUM_TIME_BETWEEN_PRUNE_BY_SIZE_CHECKS_MILLIS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
   public static final int MAX_ENVIRONMENT_COUNT = 50;
   public static final int ENVIRONMENT_COUNT_AFTER_PRUNE = 40;
   public static final int MAX_EVENT_COUNT = 20000;
   public static final int EVENT_COUNT_AFTER_PRUNE = 16000;
 
-  public static final String PREF_PRUNE_BY_DURATION_TIME = "healthreport_prune_by_duration_time";
-  public static final long MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION = GlobalConstants.MILLISECONDS_PER_DAY * 7;
+  public static final String PREF_EXPIRATION_TIME = "healthreport_expiration_time";
+  public static final long MINIMUM_TIME_BETWEEN_EXPIRATION_CHECKS_MILLIS = GlobalConstants.MILLISECONDS_PER_DAY * 7;
   // The number of millis into the past the clock can skew before we reset the prune time.
-  public static final long PRUNE_BY_DURATION_SKEW_LIMIT_MILLIS =
-      MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
+  public static final long EXPIRATION_SKEW_LIMIT_MILLIS =
+      MINIMUM_TIME_BETWEEN_EXPIRATION_CHECKS_MILLIS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
   public static final long EVENT_EXISTENCE_DURATION = GlobalConstants.MILLISECONDS_PER_SIX_MONTHS;
 
   public static final String PREF_VACUUM_TIME = "healthreport_vacuum_time";
-  public static final long MIN_MILLIS_BETWEEN_VACUUMS = GlobalConstants.MILLISECONDS_PER_DAY * 14;
+  public static final long MINIMUM_TIME_BETWEEN_VACUUM_CHECKS_MILLIS = GlobalConstants.MILLISECONDS_PER_DAY * 14;
   // The number of millis into the past the clock can skew before we reset the vacuum time.
   public static final long VACUUM_SKEW_LIMIT_MILLIS =
-      MIN_MILLIS_BETWEEN_VACUUMS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
+      MINIMUM_TIME_BETWEEN_VACUUM_CHECKS_MILLIS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
   public static final float DB_FREE_PAGE_RATIO_LIMIT = 0.10f;
 }

@@ -5,9 +5,11 @@
 package org.mozilla.gecko.background.healthreport.prune;
 
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.healthreport.Environment;
 import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
+import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -38,7 +40,7 @@ public class PrunePolicy {
 
   protected ContentProviderClient client;
   protected HealthReportDatabaseStorage storage;
-  protected int environmentID;
+  protected int currentEnvironmentID; // So we don't prune the current environment.
 
   public PrunePolicy(final Context context, final SharedPreferences sharedPrefs, final String profilePath) {
     this.context = context;
@@ -46,7 +48,7 @@ public class PrunePolicy {
     this.editor = new Editor(this.sharedPreferences.edit());
     this.profilePath = profilePath;
 
-    this.environmentID = -1;
+    this.currentEnvironmentID = -1;
   }
 
   protected SharedPreferences getSharedPreferences() {
@@ -55,16 +57,21 @@ public class PrunePolicy {
 
   public void tick(final long time) {
     try {
-      attemptPruneBySize(time);
-      attemptPruneByDuration(time);
-      attemptVacuum(time);
+      try {
+        attemptPruneBySize(time);
+        attemptExpiration(time);
+        attemptVacuum(time);
+      } catch (Exception e) {
+        // While catching Exception is ordinarily bad form, this Service runs in the same process
+        // as Fennec so if we crash, it crashes. Additionally, this Service runs regularly so
+        // these crashes could be regular. Thus, we choose to quietly fail instead.
+        Logger.error(LOG_TAG, "Got exception pruning document.", e);
+      } finally {
+        editor.commit();
+      }
     } catch (Exception e) {
-      // While catching Exception is ordinarily bad form, this Service runs in the same process as
-      // Fennec so if we crash, it crashes. Additionally, this Service runs regularly so these
-      // crashes could be regular. Thus, we choose to quietly fail instead.
-      Logger.warn(LOG_TAG, "Got exception pruning document.", e);
+      Logger.error(LOG_TAG, "Got exception committing to SharedPreferences.", e);
     } finally {
-      editor.commit();
       releaseClient();
     }
   }
@@ -72,25 +79,27 @@ public class PrunePolicy {
   protected boolean attemptPruneBySize(final long time) {
     final long nextPrune = getNextPruneBySizeTime();
     if (nextPrune < 0) {
-      Logger.debug(LOG_TAG, "Initializing prune by size time.");
-      editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPrunesBySize());
+      Logger.debug(LOG_TAG, "Initializing prune-by-size time.");
+      editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPruneBySizeChecks());
       return false;
     }
 
     // If the system clock is skewed into the past, making the time between prunes too long, reset
     // the clock.
     if (nextPrune > getPruneBySizeSkewLimitMillis() + time) {
-      Logger.debug(LOG_TAG, "Clock skew detected - resetting prune by size time.");
-      editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPrunesBySize());
+      Logger.debug(LOG_TAG, "Clock skew detected - resetting prune-by-size time.");
+      editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPruneBySizeChecks());
       return false;
     }
 
     if (nextPrune > time) {
-      Logger.debug(LOG_TAG, "Skipping prune by size - wait period has not yet elapsed.");
+      Logger.debug(LOG_TAG, "Skipping prune-by-size - wait period has not yet elapsed.");
       return false;
     }
 
-    // Prune environments first because their cascading deletions may delete some events.
+    // Prune environments first because their cascading deletions may delete some events. These
+    // environments are pruned in order of least-recently used first. Note that orphaned
+    // environments are ignored here and should be removed elsewhere.
     final HealthReportDatabaseStorage storage = getStorage();
     final int environmentCount = storage.getEnvironmentCount();
     if (environmentCount > getMaxEnvironmentCount()) {
@@ -105,35 +114,35 @@ public class PrunePolicy {
       Logger.debug(LOG_TAG, "Pruning up to " + eventPruneCount + " events.");
       storage.pruneEvents(eventPruneCount);
     }
-    editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPrunesBySize());
+    editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPruneBySizeChecks());
     return true;
   }
 
-  protected boolean attemptPruneByDuration(final long time) {
-    final long nextPrune = getNextPruneByDurationTime();
+  protected boolean attemptExpiration(final long time) {
+    final long nextPrune = getNextExpirationTime();
     if (nextPrune < 0) {
-      Logger.debug(LOG_TAG, "Initializing prune by duration time.");
-      editor.setNextPruneByDurationTime(time + getMinimumTimeBetweenPrunesByDuration());
+      Logger.debug(LOG_TAG, "Initializing expiration time.");
+      editor.setNextExpirationTime(time + getMinimumTimeBetweenExpirationChecks());
       return false;
     }
 
     // If the system clock is skewed into the past, making the time between prunes too long, reset
     // the clock.
-    if (nextPrune > getPruneByDurationSkewLimitMillis() + time) {
-      Logger.debug(LOG_TAG, "Clock skew detected - resetting prune by duration time.");
-      editor.setNextPruneByDurationTime(time + getMinimumTimeBetweenPrunesByDuration());
+    if (nextPrune > getExpirationSkewLimitMillis() + time) {
+      Logger.debug(LOG_TAG, "Clock skew detected - resetting expiration time.");
+      editor.setNextExpirationTime(time + getMinimumTimeBetweenExpirationChecks());
       return false;
     }
 
     if (nextPrune > time) {
-      Logger.debug(LOG_TAG, "Skipping prune by duration - wait period has not yet elapsed.");
+      Logger.debug(LOG_TAG, "Skipping expiration - wait period has not yet elapsed.");
       return false;
     }
 
     final long oldEventTime = time - getEventExistenceDuration();
     Logger.debug(LOG_TAG, "Pruning data older than " + oldEventTime + ".");
-    getStorage().deleteDataBefore(oldEventTime, getEnvironmentID());
-    editor.setNextPruneByDurationTime(time + getMinimumTimeBetweenPrunesByDuration());
+    getStorage().deleteDataBefore(oldEventTime, getCurrentEnvironmentID());
+    editor.setNextExpirationTime(time + getMinimumTimeBetweenExpirationChecks());
     return true;
   }
 
@@ -151,7 +160,7 @@ public class PrunePolicy {
       if (freePageRatio > freePageRatioLimit) {
         Logger.debug(LOG_TAG, "Vacuuming based on fragmentation amount: " + freePageRatio + " / " +
             freePageRatioLimit);
-        editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+        editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuumChecks());
         vacuumAndDisableAutoVacuuming(storage);
         return true;
       }
@@ -161,7 +170,7 @@ public class PrunePolicy {
     final long nextVacuum = getNextVacuumTime();
     if (nextVacuum < 0) {
       Logger.debug(LOG_TAG, "Initializing vacuum time.");
-      editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+      editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuumChecks());
       return false;
     }
 
@@ -169,7 +178,7 @@ public class PrunePolicy {
     // the clock.
     if (nextVacuum > getVacuumSkewLimitMillis() + time) {
       Logger.debug(LOG_TAG, "Clock skew detected - resetting vacuum time.");
-      editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+      editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuumChecks());
       return false;
     }
 
@@ -178,7 +187,7 @@ public class PrunePolicy {
       return false;
     }
 
-    editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuums());
+    editor.setNextVacuumTime(time + getMinimumTimeBetweenVacuumChecks());
     vacuumAndDisableAutoVacuuming(storage);
     return true;
   }
@@ -189,11 +198,16 @@ public class PrunePolicy {
     storage.vacuum();
   }
 
-  protected int getEnvironmentID() {
-    if (environmentID < 0) {
-      environmentID = getStorage().getEnvironment().register();
+  protected int getCurrentEnvironmentID() {
+    if (currentEnvironmentID < 0) {
+      final ProfileInformationCache cache = new ProfileInformationCache(profilePath);
+      if (!cache.restoreUnlessInitialized()) {
+        throw new IllegalStateException("Current environment unknown.");
+      }
+      final Environment env = EnvironmentBuilder.getCurrentEnvironment(cache);
+      currentEnvironmentID = env.register();
     }
-    return environmentID;
+    return currentEnvironmentID;
   }
 
   /**
@@ -259,8 +273,8 @@ public class PrunePolicy {
       editor.commit();
     }
 
-    public Editor setNextPruneByDurationTime(final long time) {
-      editor.putLong(HealthReportConstants.PREF_PRUNE_BY_DURATION_TIME, time);
+    public Editor setNextExpirationTime(final long time) {
+      editor.putLong(HealthReportConstants.PREF_EXPIRATION_TIME, time);
       return this;
     }
 
@@ -275,28 +289,28 @@ public class PrunePolicy {
     }
   }
 
-  private long getNextPruneByDurationTime() {
-    return getSharedPreferences().getLong(HealthReportConstants.PREF_PRUNE_BY_DURATION_TIME, -1L);
+  private long getNextExpirationTime() {
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_EXPIRATION_TIME, -1L);
   }
 
   private long getEventExistenceDuration() {
     return HealthReportConstants.EVENT_EXISTENCE_DURATION;
   }
 
-  private long getMinimumTimeBetweenPrunesByDuration() {
-    return HealthReportConstants.MIN_MILLIS_BETWEEN_PRUNES_BY_DURATION;
+  private long getMinimumTimeBetweenExpirationChecks() {
+    return HealthReportConstants.MINIMUM_TIME_BETWEEN_EXPIRATION_CHECKS_MILLIS;
   }
 
-  private long getPruneByDurationSkewLimitMillis() {
-    return HealthReportConstants.PRUNE_BY_DURATION_SKEW_LIMIT_MILLIS;
+  private long getExpirationSkewLimitMillis() {
+    return HealthReportConstants.EXPIRATION_SKEW_LIMIT_MILLIS;
   }
 
   private long getNextPruneBySizeTime() {
     return getSharedPreferences().getLong(HealthReportConstants.PREF_PRUNE_BY_SIZE_TIME, -1L);
   }
 
-  private long getMinimumTimeBetweenPrunesBySize() {
-    return HealthReportConstants.MIN_MILLIS_BETWEEN_PRUNES_BY_SIZE;
+  private long getMinimumTimeBetweenPruneBySizeChecks() {
+    return HealthReportConstants.MINIMUM_TIME_BETWEEN_PRUNE_BY_SIZE_CHECKS_MILLIS;
   }
 
   private long getPruneBySizeSkewLimitMillis() {
@@ -323,8 +337,8 @@ public class PrunePolicy {
     return getSharedPreferences().getLong(HealthReportConstants.PREF_VACUUM_TIME, -1L);
   }
 
-  private long getMinimumTimeBetweenVacuums() {
-    return HealthReportConstants.MIN_MILLIS_BETWEEN_VACUUMS;
+  private long getMinimumTimeBetweenVacuumChecks() {
+    return HealthReportConstants.MINIMUM_TIME_BETWEEN_VACUUM_CHECKS_MILLIS;
   }
 
   private long getVacuumSkewLimitMillis() {
