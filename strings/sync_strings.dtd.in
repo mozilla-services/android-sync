@@ -109,3 +109,13 @@
 
 <!-- Firefox Account strings -->
 <!ENTITY fxaccount.label '&fxaccountBrand.fullName.label;'>
+<!ENTITY fxaccount.create.account.label 'CREATE ACCOUNT'>
+<!ENTITY fxaccount.sign.in.label 'SIGN IN'>
+<!ENTITY fxaccount.description 'Short description of how awesome this
+         account is, or &lt;a href="http://mozilla.com"&gt;learn
+         more&lt;/a&gt;.'>
+<!ENTITY fxaccount.policy 'By proceeding you agree with the &lt;a
+         href="http://mozilla.com"&gt;Terms of Service&lt;/a&gt; and &lt;a
+         href="http://mozilla.com"&gt;Privacy Policy&lt;/a&gt;.'>
+<!ENTITY fxaccount.forgot.password '&lt;a
+         href="http://mozilla.com"&gt;Forgot password&lt;/a&gt;?'>

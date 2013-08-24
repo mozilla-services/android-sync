@@ -4,17 +4,18 @@
 
 package org.mozilla.gecko.fxa.authenticator;
 
-import org.mozilla.gecko.AppConstants;
+
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.activities.FxAccountSetupActivity;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.accounts.NetworkErrorException;
-import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
@@ -36,40 +37,14 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
           throws NetworkErrorException {
     Logger.debug(LOG_TAG, "addAccount");
 
-    final Bundle res = new Bundle();
+    final Intent intent = new Intent(context, FxAccountSetupActivity.class);
+    intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
+    intent.putExtra("accountType", FxAccountConstants.ACCOUNT_TYPE);
 
-    if (!FxAccountConstants.ACCOUNT_TYPE.equals(accountType)) {
-      res.putInt(AccountManager.KEY_ERROR_CODE, -1);
-      res.putString(AccountManager.KEY_ERROR_MESSAGE, "Not adding unknown account type.");
-      return res;
-    }
+    final Bundle result = new Bundle();
+    result.putParcelable(AccountManager.KEY_INTENT, intent);
 
-    final Account account = new Account("test@test.com", FxAccountConstants.ACCOUNT_TYPE);
-    final String password = "password";
-    final Bundle userData = Bundle.EMPTY;
-
-    if (!accountManager.addAccountExplicitly(account, password, userData)) {
-      res.putInt(AccountManager.KEY_ERROR_CODE, -1);
-      res.putString(AccountManager.KEY_ERROR_MESSAGE, "Failed to add account explicitly.");
-      return res;
-    }
-
-    Logger.info(LOG_TAG, "Added account named " + account.name + " of type " + account.type);
-
-    // Enable syncing by default.
-    for (String authority : new String[] {
-        AppConstants.ANDROID_PACKAGE_NAME + ".db.browser",
-        AppConstants.ANDROID_PACKAGE_NAME + ".db.formhistory",
-        AppConstants.ANDROID_PACKAGE_NAME + ".db.tabs",
-        AppConstants.ANDROID_PACKAGE_NAME + ".db.passwords",
-        }) {
-      ContentResolver.setSyncAutomatically(account, authority, true);
-      ContentResolver.setIsSyncable(account, authority, 1);
-    }
-
-    res.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-    res.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
-    return res;
+    return result;
   }
 
   @Override
