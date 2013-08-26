@@ -11,6 +11,39 @@ WARNING="These files are managed in the android-sync repo. Do not modify directl
 echo "Creating README.txt."
 echo $WARNING > $SERVICES/README.txt
 
+echo "Copying instrumentation tests..."
+INSTRUMENTATION_TESTS_DIR=$ANDROID/base/instrumentation-tests
+
+INSTRUMENTATION_TESTS_JAVA_FILES=$(find \
+  "test/src" \
+  "src/main/java/org/mozilla/android/sync/test/helpers" \
+  -name '*.java' \
+  | sed "s,^test/src,src," \
+  | sed "s,^src/main/java/,src/," \
+  | $SORT_CMD)
+
+INSTRUMENTATION_TESTS_RES_FILES=$(find \
+  "test/res" \
+  -type f \
+  | sed "s,^test/res,res," \
+  | $SORT_CMD)
+
+rsync -C -a \
+  test/src \
+  $INSTRUMENTATION_TESTS_DIR
+
+rsync -C -a \
+  src/main/java/org/mozilla/android/sync/test/helpers/* \
+  $INSTRUMENTATION_TESTS_DIR/src/org/mozilla/android/sync/test/helpers
+
+rsync -C -a \
+  test/res \
+  $INSTRUMENTATION_TESTS_DIR
+
+rsync -C -a \
+  test/AndroidManifest.xml.in \
+  $INSTRUMENTATION_TESTS_DIR
+
 echo "Copying manifests..."
 rsync -a manifests $SERVICES/
 
@@ -159,6 +192,9 @@ dump_mkfile_variable "SYNC_RES_XML" "$SYNC_RES_XML"
 dump_mkfile_variable "SYNC_PP_RES_XML" "$SYNC_PP_RES_XML"
 
 dump_mkfile_variable "SYNC_THIRDPARTY_JAVA_FILES" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
+
+dump_mkfile_variable "INSTRUMENTATION_TESTS_JAVA_FILES" "$INSTRUMENTATION_TESTS_JAVA_FILES"
+dump_mkfile_variable "INSTRUMENTATION_TESTS_RES_FILES" "$INSTRUMENTATION_TESTS_RES_FILES"
 
 # Finished creating Makefile for Mozilla.
 
