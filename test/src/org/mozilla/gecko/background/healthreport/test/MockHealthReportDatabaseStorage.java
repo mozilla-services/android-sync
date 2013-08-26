@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import org.json.JSONObject;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
-import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields.FieldSpec;
 
 import android.content.Context;
@@ -113,7 +112,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
       }
 
       public ArrayList<FieldSpec> asList() {
-        final ArrayList<FieldSpec> out = new ArrayList(3);
+        final ArrayList<FieldSpec> out = new ArrayList<FieldSpec>(3);
         out.add(counter);
         out.add(discrete);
         out.add(last);
