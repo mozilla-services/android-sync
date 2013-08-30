@@ -283,7 +283,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
         });
   }
 
-  private enum SubmissionsFieldName {
+  public static enum SubmissionsFieldName {
     FIRST_ATTEMPT("firstDocumentUploadAttempt"),
     CONTINUATION_ATTEMPT("continuationDocumentUploadAttempt"),
     SUCCESS("uploadSuccess"),
@@ -297,15 +297,73 @@ public class AndroidSubmissionClient implements SubmissionClient {
       this.name = name;
     }
 
-    protected String getName() {
+    public String getName() {
       return name;
     }
 
-    protected int getID(HealthReportStorage storage) {
+    public int getID(HealthReportStorage storage) {
       final Field field = storage.getField(MEASUREMENT_NAME_SUBMISSIONS,
                                            MEASUREMENT_VERSION_SUBMISSIONS,
                                            name);
       return field.getID();
+    }
+  }
+
+  /**
+   * Encapsulates the counting mechanisms for submissions status counts. Ensures multiple failures
+   * and successes are not recorded for a single instance.
+   */
+  protected class SubmissionsStatusCounter {
+    private final int env;
+    private final int day;
+    private final HealthReportStorage storage;
+
+    private boolean isUploadStatusCountIncremented;
+
+    public SubmissionsStatusCounter(final int env, final int day, final HealthReportStorage storage) {
+      this.env = env;
+      this.day = day;
+      this.storage = storage;
+
+      this.isUploadStatusCountIncremented = false;
+    }
+
+    public void incrementFirstUploadAttemptCount() {
+      Logger.debug(LOG_TAG, "Incrementing first upload attempt field.");
+      storage.incrementDailyCount(env, day, SubmissionsFieldName.FIRST_ATTEMPT.getID(storage));
+    }
+
+    public void incrementContinuationAttemptCount() {
+      // TODO: Worth protecting to ensure both of these methods are not called?
+      Logger.debug(LOG_TAG, "Incrementing continuation upload attempt field.");
+      storage.incrementDailyCount(env, day, SubmissionsFieldName.CONTINUATION_ATTEMPT.getID(storage));
+    }
+
+    public void incrementUploadSuccessCount() {
+      incrementStatusCount(SubmissionsFieldName.SUCCESS.getID(storage), "success");
+    }
+
+    public void incrementUploadClientFailureCount() {
+      incrementStatusCount(SubmissionsFieldName.CLIENT_FAILURE.getID(storage), "client failure");
+    }
+
+    public void incrementUploadTransportFailureCount() {
+      incrementStatusCount(SubmissionsFieldName.TRANSPORT_FAILURE.getID(storage), "transport failure");
+    }
+
+    public void incrementUploadServerFailureCount() {
+      incrementStatusCount(SubmissionsFieldName.SERVER_FAILURE.getID(storage), "server failure");
+    }
+
+    private void incrementStatusCount(final int fieldID, final String countType) {
+      if (!isUploadStatusCountIncremented) {
+        Logger.debug(LOG_TAG, "Incrementing upload attempt " + countType + " count.");
+        storage.incrementDailyCount(env, day, fieldID);
+        isUploadStatusCountIncremented = true;
+      } else {
+        Logger.warn(LOG_TAG, "Upload status count already incremented - not incrementing " +
+            countType + " count.");
+      }
     }
   }
 }
