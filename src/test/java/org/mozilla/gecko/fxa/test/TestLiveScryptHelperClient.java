@@ -49,7 +49,7 @@ public class TestLiveScryptHelperClient {
     return delegate.output;
   }
 
-  @org.junit.Test
+  // @org.junit.Test
   public void testScrypt() throws Exception {
     // Test vector from https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#stretch-KDF.
     Assert.assertEquals("5b82f146a64126923e4167a0350bb181feba61f63cb1714012b19cb0be0119c5",
