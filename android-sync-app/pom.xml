@@ -72,6 +72,12 @@
       <version>4.1.21</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.madgag</groupId>
+      <artifactId>sc-light-jdk15on</artifactId>
+      <version>1.47.0.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -151,6 +157,7 @@
           </dependency>
         </dependencies>
         <configuration>
+          <!-- <argLine>-Xmx2048m</argLine> -->
           <runOrder>random</runOrder>
           <excludedGroups>org.mozilla.android.sync.test.integration.IntegrationTestCategory</excludedGroups>
         </configuration>
