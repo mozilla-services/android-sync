@@ -49,11 +49,16 @@ public class HealthReportPruneService extends BackgroundService {
     final String profileName = intent.getStringExtra("profileName");
     final String profilePath = intent.getStringExtra("profilePath");
     Logger.debug(LOG_TAG, "Ticking for profile " + profileName + " at " + profilePath + ".");
-    final PrunePolicy policy = new PrunePolicy(this, getSharedPreferences(), profilePath);
+    final PrunePolicy policy = getPrunePolicy(profilePath);
     policy.tick(System.currentTimeMillis());
   }
 
-  protected boolean isIntentValid(Intent intent) {
+  // Generator function wraps constructor for testing purposes.
+  protected PrunePolicy getPrunePolicy(final String profilePath) {
+    return new PrunePolicy(this, getSharedPreferences(), profilePath);
+  }
+
+  protected boolean isIntentValid(final Intent intent) {
     boolean isValid = true;
 
     final String profileName = intent.getStringExtra("profileName");
