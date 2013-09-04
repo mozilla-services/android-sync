@@ -10,6 +10,7 @@ import java.util.concurrent.BrokenBarrierException;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportBroadcastService;
+import org.mozilla.gecko.background.healthreport.prune.HealthReportPruneService;
 import org.mozilla.gecko.background.healthreport.upload.HealthReportUploadService;
 import org.mozilla.gecko.background.test.helpers.BackgroundServiceTestCase;
 
@@ -55,6 +56,12 @@ public class TestHealthReportBroadcastService
   protected Intent getUploadIntent() {
     final Intent intent = new Intent(getContext(), HealthReportUploadService.class);
     intent.setAction("upload");
+    return intent;
+  }
+
+  protected Intent getPruneIntent() {
+    final Intent intent = new Intent(getContext(), HealthReportPruneService.class);
+    intent.setAction("prune");
     return intent;
   }
 
@@ -125,5 +132,15 @@ public class TestHealthReportBroadcastService
     awaitOrFail();
 
     assertFalse(isServiceAlarmSet(getUploadIntent()));
+  }
+
+  public void testPruneService() throws Exception {
+    intent.setAction(HealthReportConstants.ACTION_HEALTHREPORT_PRUNE)
+        .putExtra("profileName", "profileName")
+        .putExtra("profilePath", "profilePath");
+    startService(intent);
+    awaitOrFail();
+    assertTrue(isServiceAlarmSet(getPruneIntent()));
+    barrier.reset();
   }
 }
