@@ -11,6 +11,15 @@ import java.security.NoSuchAlgorithmException;
 import org.mozilla.gecko.sync.Utils;
 
 public class FxAccountUtils {
+  protected static String bytes(String string) {
+    try {
+      return Utils.byte2hex(string.getBytes("UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      // This should never happen.
+      return null;
+    }
+  }
+
   public static byte[] KW(String name) throws UnsupportedEncodingException {
     return Utils.concatAll(
         "identity.mozilla.com/picl/v1/".getBytes("UTF-8"),
