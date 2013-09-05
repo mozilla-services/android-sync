@@ -55,7 +55,7 @@ public class TestHealthReportUploadService
     intent.putExtra("profileName", "profileName")
         .putExtra("profilePath", "profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(isFirstRunSet());
     barrier.reset();
 
@@ -63,7 +63,7 @@ public class TestHealthReportUploadService
     intent.putExtra("uploadEnabled", true)
         .removeExtra("profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(isFirstRunSet());
     barrier.reset();
 
@@ -72,7 +72,7 @@ public class TestHealthReportUploadService
         .removeExtra("profileName");
     startService(intent);
     assertFalse(isFirstRunSet());
-    awaitOrFail();
+    await();
     assertFalse(isFirstRunSet());
   }
 
@@ -81,7 +81,7 @@ public class TestHealthReportUploadService
         .putExtra("profilePath", "profilePath")
         .putExtra("uploadEnabled", false);
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(isFirstRunSet());
   }
 
@@ -90,7 +90,7 @@ public class TestHealthReportUploadService
         .putExtra("profilePath", "profilePath")
         .putExtra("uploadEnabled", true);
     startService(intent);
-    awaitOrFail();
+    await();
     assertTrue(isFirstRunSet());
   }
 }

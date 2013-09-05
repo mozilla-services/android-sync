@@ -71,7 +71,7 @@ public class TestHealthReportBroadcastService
         .putExtra("profileName", "profileName")
         .putExtra("profilePath", "profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertFalse(isServiceAlarmSet(getUploadIntent()));
     barrier.reset();
@@ -80,7 +80,7 @@ public class TestHealthReportBroadcastService
     intent.putExtra("enabled", true)
         .removeExtra("profileName");
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertFalse(isServiceAlarmSet(getUploadIntent()));
     barrier.reset();
@@ -89,7 +89,7 @@ public class TestHealthReportBroadcastService
     intent.putExtra("profileName", "profileName")
         .removeExtra("profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertFalse(isServiceAlarmSet(getUploadIntent()));
   }
@@ -100,7 +100,7 @@ public class TestHealthReportBroadcastService
         .putExtra("profileName", "profileName")
         .putExtra("profilePath", "profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertFalse(isServiceAlarmSet(getUploadIntent()));
   }
@@ -111,7 +111,7 @@ public class TestHealthReportBroadcastService
         .putExtra("profileName", "profileName")
         .putExtra("profilePath", "profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertTrue(isServiceAlarmSet(getUploadIntent()));
   }
@@ -122,14 +122,14 @@ public class TestHealthReportBroadcastService
         .putExtra("profileName", "profileName")
         .putExtra("profilePath", "profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertTrue(isServiceAlarmSet(getUploadIntent()));
     barrier.reset();
 
     intent.putExtra("enabled", false);
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertFalse(isServiceAlarmSet(getUploadIntent()));
   }
@@ -139,7 +139,7 @@ public class TestHealthReportBroadcastService
         .putExtra("profileName", "profileName")
         .putExtra("profilePath", "profilePath");
     startService(intent);
-    awaitOrFail();
+    await();
     assertTrue(isServiceAlarmSet(getPruneIntent()));
     barrier.reset();
   }

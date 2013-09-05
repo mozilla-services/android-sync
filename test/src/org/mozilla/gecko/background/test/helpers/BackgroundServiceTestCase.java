@@ -12,8 +12,6 @@ import android.content.SharedPreferences;
 import android.test.ServiceTestCase;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.TimeUnit;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
 
@@ -25,9 +23,6 @@ import org.mozilla.gecko.background.common.GlobalConstants;
  */
 public abstract class BackgroundServiceTestCase<T extends Service> extends ServiceTestCase<T> {
   protected static final String SHARED_PREFS_NAME = "BackgroundServiceTestCase";
-
-  protected static final int DEFAULT_WAIT_TIME = 10;
-  protected static final TimeUnit DEFAULT_WAIT_UNIT = TimeUnit.SECONDS;
 
   private final Class<T> mServiceClass;
 
@@ -64,12 +59,9 @@ public abstract class BackgroundServiceTestCase<T extends Service> extends Servi
         .commit();
   }
 
-  protected void awaitOrFail() {
+  protected void await() {
     try {
-      barrier.await(DEFAULT_WAIT_TIME, DEFAULT_WAIT_UNIT);
-    } catch (TimeoutException e) {
-      fail("Background Service did not complete within " + DEFAULT_WAIT_TIME + " " +
-          DEFAULT_WAIT_UNIT.toString().toLowerCase() + ".");
+      barrier.await();
     } catch (InterruptedException e) {
       fail("Test runner thread should not be interrupted.");
     } catch (BrokenBarrierException e) {

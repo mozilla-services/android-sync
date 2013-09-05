@@ -63,7 +63,7 @@ public class TestAnnouncementsBroadcastService
     // Intent without "enabled" extra is ignored.
     intent.setAction(AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF);
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertFalse(isServiceAlarmSet(getServiceIntent()));
   }
@@ -72,7 +72,7 @@ public class TestAnnouncementsBroadcastService
     intent.setAction(AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF)
         .putExtra("enabled", false);
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(isServiceAlarmSet(getServiceIntent()));
   }
 
@@ -80,7 +80,7 @@ public class TestAnnouncementsBroadcastService
     intent.setAction(AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF)
         .putExtra("enabled", true);
     startService(intent);
-    awaitOrFail();
+    await();
     assertTrue(isServiceAlarmSet(getServiceIntent()));
   }
 
@@ -88,14 +88,14 @@ public class TestAnnouncementsBroadcastService
     intent.setAction(AnnouncementsConstants.ACTION_ANNOUNCEMENTS_PREF)
         .putExtra("enabled", true);
     startService(intent);
-    awaitOrFail();
+    await();
 
     assertTrue(isServiceAlarmSet(getServiceIntent()));
     barrier.reset();
 
     intent.putExtra("enabled", false);
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(isServiceAlarmSet(getServiceIntent()));
   }
 }

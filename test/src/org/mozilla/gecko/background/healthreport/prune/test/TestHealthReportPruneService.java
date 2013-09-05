@@ -88,14 +88,14 @@ public class TestHealthReportPruneService
   public void testIsIntentValid() throws Exception {
     // No profilePath or profileName.
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(getService().wasTickCalled());
     barrier.reset();
 
     // No profilePath.
     intent.putExtra("profileName", "profileName");
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(getService().wasTickCalled());
     barrier.reset();
 
@@ -103,13 +103,13 @@ public class TestHealthReportPruneService
     intent.putExtra("profilePath", "profilePath")
           .removeExtra("profileName");
     startService(intent);
-    awaitOrFail();
+    await();
     assertFalse(getService().wasTickCalled());
     barrier.reset();
 
     intent.putExtra("profileName", "profileName");
     startService(intent);
-    awaitOrFail();
+    await();
     assertTrue(getService().wasTickCalled());
   }
 }
