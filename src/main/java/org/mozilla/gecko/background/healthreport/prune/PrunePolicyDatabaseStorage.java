@@ -21,8 +21,8 @@ import android.content.Context;
  * so we wait until our first {@link cleanup} call since we are vacuuming anyway. Note that this
  * cleanup must be time-based - see {@link shouldCleanupEarly}.
  */
-public class AndroidPrunePolicyStorage implements PrunePolicyStorage {
-  public static final String LOG_TAG = AndroidPrunePolicyStorage.class.getSimpleName();
+public class PrunePolicyDatabaseStorage implements PrunePolicyStorage {
+  public static final String LOG_TAG = PrunePolicyDatabaseStorage.class.getSimpleName();
 
   private final Context context;
   private final String profilePath;
@@ -32,7 +32,7 @@ public class AndroidPrunePolicyStorage implements PrunePolicyStorage {
 
   private int currentEnvironmentID; // So we don't prune the current environment.
 
-  public AndroidPrunePolicyStorage(final Context context, final String profilePath) {
+  public PrunePolicyDatabaseStorage(final Context context, final String profilePath) {
     this.context = context;
     this.profilePath = profilePath;
 
@@ -47,8 +47,21 @@ public class AndroidPrunePolicyStorage implements PrunePolicyStorage {
     getStorage().pruneEnvironments(count);
   }
 
+  /**
+   * Deletes data recorded before the given time. Note that if this method fails to retrieve the
+   * current environment from the profile cache, it will not delete data so be sure to prune by
+   * other methods (e.g. {@link pruneEvents}) as well.
+   */
   public int deleteDataBefore(final long time) {
-    return getStorage().deleteDataBefore(time, getCurrentEnvironmentID());
+    final int currentEnvironmentID;
+    try {
+      currentEnvironmentID = getCurrentEnvironmentID();
+    } catch (IllegalStateException e) {
+      Logger.error(LOG_TAG, "Could not delete data - the current environment could not be " +
+          "retrieved.", e);
+      return -1;
+    }
+    return getStorage().deleteDataBefore(time, currentEnvironmentID);
   }
 
   public boolean shouldCleanupEarly() {

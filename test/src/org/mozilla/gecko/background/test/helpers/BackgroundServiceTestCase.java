@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.test.ServiceTestCase;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.UUID;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
 
@@ -22,7 +23,12 @@ import org.mozilla.gecko.background.common.GlobalConstants;
  * see {@link TestHealthReportBroadcastService} for an example.
  */
 public abstract class BackgroundServiceTestCase<T extends Service> extends ServiceTestCase<T> {
-  protected static final String SHARED_PREFS_NAME = "BackgroundServiceTestCase";
+  private static final String SHARED_PREFS_PREFIX = "BackgroundServiceTestCase-";
+  // Ideally, this would not be static so multiple test classes can be run in parallel. However,
+  // mServiceClass can only retrieve this reference statically because mServiceClass cannot get a
+  // reference to the Test* class as ServiceTestCase instantiates it via reflection and we can't
+  // pass it as a constructor arg.
+  protected static String sharedPrefsName;
 
   private final Class<T> mServiceClass;
 
@@ -38,18 +44,18 @@ public abstract class BackgroundServiceTestCase<T extends Service> extends Servi
   public void setUp() throws Exception {
     barrier = new CyclicBarrier(2);
     intent = new Intent(getContext(), mServiceClass);
-    clearSharedPrefs();
+    sharedPrefsName = SHARED_PREFS_PREFIX + mServiceClass.getName() + "-" + UUID.randomUUID();
   }
 
   @Override
   public void tearDown() throws Exception {
     barrier = null;
     intent = null;
-    clearSharedPrefs();
+    clearSharedPrefs(); // Not necessary but reduces file system cruft.
   }
 
   protected SharedPreferences getSharedPreferences() {
-    return getContext().getSharedPreferences(SHARED_PREFS_NAME,
+    return getContext().getSharedPreferences(sharedPrefsName,
         GlobalConstants.SHARED_PREFERENCES_MODE);
   }
 

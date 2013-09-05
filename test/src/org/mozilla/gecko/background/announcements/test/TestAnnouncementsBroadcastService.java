@@ -18,7 +18,7 @@ public class TestAnnouncementsBroadcastService
   public static class MockAnnouncementsBroadcastService extends AnnouncementsBroadcastService {
     @Override
     protected SharedPreferences getSharedPreferences() {
-      return this.getSharedPreferences(SHARED_PREFS_NAME,
+      return this.getSharedPreferences(sharedPrefsName,
           GlobalConstants.SHARED_PREFERENCES_MODE);
     }
 

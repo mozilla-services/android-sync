@@ -9,9 +9,9 @@ import android.test.mock.MockContext;
 import java.util.concurrent.BrokenBarrierException;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
-import org.mozilla.gecko.background.healthreport.prune.AndroidPrunePolicyStorage;
 import org.mozilla.gecko.background.healthreport.prune.HealthReportPruneService;
 import org.mozilla.gecko.background.healthreport.prune.PrunePolicy;
+import org.mozilla.gecko.background.healthreport.prune.PrunePolicyDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.prune.PrunePolicyStorage;
 import org.mozilla.gecko.background.test.helpers.BackgroundServiceTestCase;
 
@@ -22,7 +22,7 @@ public class TestHealthReportPruneService
 
     @Override
     protected SharedPreferences getSharedPreferences() {
-      return this.getSharedPreferences(SHARED_PREFS_NAME,
+      return this.getSharedPreferences(sharedPrefsName,
           GlobalConstants.SHARED_PREFERENCES_MODE);
     }
 
@@ -45,7 +45,7 @@ public class TestHealthReportPruneService
 
     @Override
     public PrunePolicy getPrunePolicy(final String profilePath) {
-      final PrunePolicyStorage storage = new AndroidPrunePolicyStorage(new MockContext(), profilePath);
+      final PrunePolicyStorage storage = new PrunePolicyDatabaseStorage(new MockContext(), profilePath);
       prunePolicy = new MockPrunePolicy(storage, getSharedPreferences());
       return prunePolicy;
     }

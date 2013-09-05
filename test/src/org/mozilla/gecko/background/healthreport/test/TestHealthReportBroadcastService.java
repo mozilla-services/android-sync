@@ -19,7 +19,7 @@ public class TestHealthReportBroadcastService
   public static class MockHealthReportBroadcastService extends HealthReportBroadcastService {
     @Override
     protected SharedPreferences getSharedPreferences() {
-      return this.getSharedPreferences(SHARED_PREFS_NAME, GlobalConstants.SHARED_PREFERENCES_MODE);
+      return this.getSharedPreferences(sharedPrefsName, GlobalConstants.SHARED_PREFERENCES_MODE);
     }
 
     @Override
