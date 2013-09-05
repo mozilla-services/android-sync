@@ -4,7 +4,9 @@
 
 package org.mozilla.gecko.sync.crypto;
 
+import java.security.GeneralSecurityException;
+
 public interface PBKDF2 {
-  public byte[] pbkdf2SHA1(byte[] p, byte[] s, int c, int dkLen);
-  public byte[] pbkdf2SHA256(byte[] p, byte[] s, int c, int dkLen);
+  public byte[] pbkdf2SHA1(byte[] password, byte[] salt, int c, int dkLenInBytes) throws GeneralSecurityException;
+  public byte[] pbkdf2SHA256(byte[] password, byte[] salt, int c, int dkLenInBytes) throws GeneralSecurityException;
 }

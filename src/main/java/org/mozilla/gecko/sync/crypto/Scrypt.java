@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.crypto;
 
+import java.security.GeneralSecurityException;
+
 public interface Scrypt {
-  public byte[] scrypt(byte[] password, byte[] salt, int N, int r, int p, int dkLen);
+  public byte[] scrypt(byte[] password, byte[] salt, int N, int r, int p, int dkLen) throws GeneralSecurityException;
 }
