@@ -7,20 +7,20 @@ package org.mozilla.gecko.fxa.activities;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 
-import android.accounts.AccountAuthenticatorActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTabHost;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TabHost;
 import android.widget.TextView;
 
 /**
  * Activity which displays login screen to the user.
  */
-public class FxAccountSetupActivity extends AccountAuthenticatorActivity {
-  public static final String LOG_TAG = FxAccountSetupActivity.class.getSimpleName();
+public class FxAccountSetupActivity extends FragmentActivity {
+  protected static final String LOG_TAG = FxAccountSetupActivity.class.getSimpleName();
 
   /**
    * {@inheritDoc}
@@ -32,21 +32,21 @@ public class FxAccountSetupActivity extends AccountAuthenticatorActivity {
     super.onCreate(icicle);
     setContentView(R.layout.fxaccount_setup);
 
-    TabHost tabs = (TabHost) findViewById(R.id.tabhost);
-    tabs.setup();
+    FragmentTabHost tabHost = (FragmentTabHost) findViewById(android.R.id.tabhost);
+    tabHost.setup(this, getSupportFragmentManager(), R.id.tabcontent);
 
-    TabHost.TabSpec createAccountTab = tabs.newTabSpec("create_account");
-    createAccountTab.setContent(R.id.create_account_tab);
+    TabHost.TabSpec createAccountTab = tabHost.newTabSpec("create_account");
     createAccountTab.setIndicator(getResources().getString(R.string.fxaccount_create_account_label));
-    tabs.addTab(createAccountTab);
+    tabHost.addTab(createAccountTab, FxAccountCreateAccountFragment.class, null);
 
-    TabHost.TabSpec signInTab = tabs.newTabSpec("sign_in");
-    signInTab.setContent(R.id.sign_in_tab);
+    TabHost.TabSpec signInTab = tabHost.newTabSpec("sign_in");
     signInTab.setIndicator(getResources().getString(R.string.fxaccount_sign_in_label));
-    tabs.addTab(signInTab);
+    tabHost.addTab(signInTab, FxAccountSignInFragment.class, null);
+  }
 
-    for (int id : new int[] { R.id.description, R.id.policy, R.id.forgot_password }) {
-      TextView textView = (TextView) findViewById(id);
+  public static void linkifyTextViews(View view, int[] textViews) {
+    for (int id : textViews) {
+      TextView textView = (TextView) view.findViewById(id);
       if (textView == null) {
         Logger.warn(LOG_TAG, "Could not process links for view with id " + id + ".");
         continue;
@@ -54,25 +54,5 @@ public class FxAccountSetupActivity extends AccountAuthenticatorActivity {
       textView.setMovementMethod(LinkMovementMethod.getInstance());
       textView.setText(Html.fromHtml(textView.getText().toString()));
     }
-  }
-
-  public void onCreateAccount(View view) {
-    view = findViewById(R.id.create_account_tab);
-    Logger.debug(LOG_TAG, "onCreateAccount: Asking for username/password for new account.");
-    String email = ((EditText) view.findViewById(R.id.email)).getText().toString();
-    String password = ((EditText) view.findViewById(R.id.password)).getText().toString();
-    String password2 = ((EditText) view.findViewById(R.id.password2)).getText().toString();
-    Logger.debug(LOG_TAG, "onCreateAccount: email: " + email);
-    Logger.debug(LOG_TAG, "onCreateAccount: password: " + password);
-    Logger.debug(LOG_TAG, "onCreateAccount: password2: " + password2);
-  }
-
-  public void onSignIn(View view) {
-    view = findViewById(R.id.sign_in_tab);
-    Logger.debug(LOG_TAG, "onSignIn: Asking for username/password for existing account.");
-    String email = ((EditText) view.findViewById(R.id.email)).getText().toString();
-    String password = ((EditText) view.findViewById(R.id.password)).getText().toString();
-    Logger.debug(LOG_TAG, "onCreateAccount: email: " + email);
-    Logger.debug(LOG_TAG, "onCreateAccount: password: " + password);
   }
 }

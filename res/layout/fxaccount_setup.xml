@@ -5,146 +5,27 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
-	android:orientation="vertical" >
+<android.support.v4.app.FragmentTabHost xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@android:id/tabhost"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent" >
 
-	<TabHost
-		android:id="@+id/tabhost"
+	<LinearLayout
 		android:layout_width="match_parent"
-		android:layout_height="match_parent" >
+		android:layout_height="match_parent"
+		android:orientation="vertical" >
 
-		<LinearLayout
+		<TabWidget
+			android:id="@android:id/tabs"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:orientation="vertical" >
+			android:layout_height="wrap_content" >
+		</TabWidget>
 
-			<TabWidget
-				android:id="@android:id/tabs"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content" >
-			</TabWidget>
+		<FrameLayout
+			android:id="@+id/tabcontent"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent" >
+		</FrameLayout>
+	</LinearLayout>
 
-			<FrameLayout
-				android:id="@android:id/tabcontent"
-				android:layout_width="match_parent"
-				android:layout_height="match_parent" >
-
-				<ScrollView
-					android:id="@+id/create_account_tab"
-					android:layout_width="match_parent"
-					android:layout_height="match_parent" >
-
-					<LinearLayout
-						style="@style/FxAccountMiddle"
-						android:layout_width="match_parent"
-						android:layout_height="match_parent"
-						android:orientation="vertical" >
-
-						<TextView
-							android:id="@+id/description"
-							android:layout_width="wrap_content"
-							android:layout_height="wrap_content"
-							android:layout_marginBottom="10dp"
-							android:text="@string/fxaccount_description" />
-
-						<EditText
-							android:id="@+id/email"
-							style="@style/FxAccountEditItem"
-							android:layout_marginBottom="10dp"
-							android:ems="10"
-							android:hint="Email address"
-							android:inputType="textEmailAddress" >
-
-							<requestFocus />
-						</EditText>
-
-						<EditText
-							android:id="@+id/password"
-							style="@style/FxAccountEditItem"
-							android:layout_marginBottom="10dp"
-							android:ems="10"
-							android:hint="Password"
-							android:inputType="textPassword" />
-
-						<EditText
-							android:id="@+id/password2"
-							style="@style/FxAccountEditItem"
-							android:layout_marginBottom="10dp"
-							android:ems="10"
-							android:hint="Confirm password"
-							android:inputType="textPassword" />
-
-						<TextView
-							android:id="@+id/policy"
-							android:layout_width="wrap_content"
-							android:layout_height="wrap_content"
-							android:layout_marginBottom="30dp"
-							android:text="@string/fxaccount_policy" />
-
-						<Button
-							android:id="@+id/create_account_button"
-							android:layout_width="wrap_content"
-							android:layout_height="wrap_content"
-							android:layout_gravity="center_horizontal"
-							android:onClick="onCreateAccount"
-							android:paddingLeft="20dp"
-							android:paddingRight="20dp"
-							android:text="Create Account" />
-					</LinearLayout>
-				</ScrollView>
-
-				<ScrollView
-					android:id="@+id/sign_in_tab"
-					android:layout_width="match_parent"
-					android:layout_height="match_parent" >
-
-					<LinearLayout
-						style="@style/FxAccountMiddle"
-						android:layout_width="match_parent"
-						android:layout_height="match_parent"
-						android:orientation="vertical" >
-
-						<EditText
-							android:id="@+id/email"
-							style="@style/FxAccountEditItem"
-							android:layout_marginBottom="10dp"
-							android:ems="10"
-							android:hint="Email address"
-							android:inputType="textEmailAddress" >
-
-							<requestFocus />
-						</EditText>
-
-						<EditText
-							android:id="@+id/password"
-							style="@style/FxAccountEditItem"
-							android:layout_marginBottom="10dp"
-							android:ems="10"
-							android:hint="Password"
-							android:inputType="textPassword" />
-
-						<TextView
-							android:id="@+id/forgot_password"
-							android:layout_width="wrap_content"
-							android:layout_height="wrap_content"
-							android:layout_marginBottom="30dp"
-							android:text="@string/fxaccount_forgot_password" />
-
-						<Button
-							android:id="@+id/sign_in_button"
-							android:layout_width="wrap_content"
-							android:layout_height="wrap_content"
-							android:layout_gravity="center_horizontal"
-							android:onClick="onSignIn"
-							android:paddingLeft="20dp"
-							android:paddingRight="20dp"
-							android:text="Sign in" />
-					</LinearLayout>
-				</ScrollView>
-			</FrameLayout>
-		</LinearLayout>
-	</TabHost>
-
-</LinearLayout>
+</android.support.v4.app.FragmentTabHost>

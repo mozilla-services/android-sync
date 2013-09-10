@@ -61,6 +61,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+	    <groupId>com.google.android</groupId>
+	    <artifactId>support-v4</artifactId>
+	    <version>r7</version>
+    </dependency>
+    <dependency>
       <groupId>javassist</groupId>
       <artifactId>javassist</artifactId>
       <version>3.12.1.GA</version>
