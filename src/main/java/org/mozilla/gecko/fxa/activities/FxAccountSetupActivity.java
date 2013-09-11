@@ -4,19 +4,19 @@
 
 package org.mozilla.gecko.fxa.activities;
 
-import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTabHost;
+import android.widget.TabHost;
 
 /**
  * Activity which displays login screen to the user.
  */
-public class FxAccountSetupActivity extends Activity {
+public class FxAccountSetupActivity
+    extends FragmentActivity {
   protected static final String LOG_TAG = FxAccountSetupActivity.class.getSimpleName();
 
   /**
@@ -28,21 +28,16 @@ public class FxAccountSetupActivity extends Activity {
 
     super.onCreate(icicle);
     setContentView(R.layout.fxaccount_setup);
-  }
 
-  @Override
-  public void onResume() {
-    Logger.debug(LOG_TAG, "onResume()");
+    FragmentTabHost tabHost = (FragmentTabHost) findViewById(android.R.id.tabhost);
+    tabHost.setup(this, getSupportFragmentManager(), R.id.tabcontent);
 
-    super.onResume();
+    TabHost.TabSpec createAccountTab = tabHost.newTabSpec("create_account");
+    createAccountTab.setIndicator(getResources().getString(R.string.fxaccount_create_account_tab_label));
+    tabHost.addTab(createAccountTab, FxAccountCreateAccountFragment.class, null);
 
-    // Start Fennec at about:accounts page.
-    Intent intent = new Intent(Intent.ACTION_VIEW);
-    intent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
-        AppConstants.ANDROID_PACKAGE_NAME + ".App");
-    intent.setData(Uri.parse("about:accounts"));
-
-    startActivity(intent);
-    finish();
+    TabHost.TabSpec signInTab = tabHost.newTabSpec("sign_in");
+    signInTab.setIndicator(getResources().getString(R.string.fxaccount_sign_in_tab_label));
+    tabHost.addTab(signInTab, FxAccountSignInFragment.class, null);
   }
 }

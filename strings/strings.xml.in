@@ -100,3 +100,14 @@
 
   <!-- Firefox Account strings -->
   <string name="fxaccount_label">&fxaccount.label;</string>
+  <string name="fxaccount_create_account_tab_label">&fxaccount.create.account.tab.label;</string>
+  <string name="fxaccount_sign_in_tab_label">&fxaccount.sign.in.tab.label;</string>
+  <string name="fxaccount_description">&fxaccount.description;</string>
+  <string name="fxaccount_policy">&fxaccount.policy;</string>
+  <string name="fxaccount_forgot_password">&fxaccount.forgot.password;</string>
+  <string name="fxaccount_create_account_button_label">&fxaccount.create.account.button.label;</string>
+  <string name="fxaccount_sign_in_button_label">&fxaccount.sign.in.button.label;</string>
+
+  <string name="fxaccount_email_hint">&fxaccount.email.hint;</string>
+  <string name="fxaccount_password_hint">&fxaccount.password.hint;</string>
+  <string name="fxaccount_password2_hint">&fxaccount.password2.hint;</string>

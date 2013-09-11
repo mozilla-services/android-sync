@@ -1,0 +1,61 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:gravity="center_horizontal"
+	android:orientation="vertical" >
+
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent" >
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="vertical" >
+
+			<LinearLayout
+				style="@style/FxAccountMiddle"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:orientation="vertical" >
+
+				<EditText
+					android:id="@+id/email"
+					style="@style/FxAccountEditItem"
+					android:layout_marginBottom="10dp"
+					android:ems="10"
+					android:hint="@string/fxaccount_email_hint"
+					android:inputType="textEmailAddress" >
+
+					<requestFocus />
+				</EditText>
+
+				<EditText
+					android:id="@+id/password"
+					style="@style/FxAccountEditItem"
+					android:layout_marginBottom="10dp"
+					android:ems="10"
+					android:hint="@string/fxaccount_password_hint"
+					android:inputType="textPassword" />
+
+				<TextView
+					android:id="@+id/forgot_password"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginBottom="30dp"
+					android:text="@string/fxaccount_forgot_password" />
+
+				<Button
+					android:id="@+id/sign_in_button"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="center_horizontal"
+					android:onClick="onSignIn"
+					android:paddingLeft="20dp"
+					android:paddingRight="20dp"
+					android:text="@string/fxaccount_sign_in_button_label" />
+			</LinearLayout>
+		</LinearLayout>
+	</ScrollView>
+
+</LinearLayout>
