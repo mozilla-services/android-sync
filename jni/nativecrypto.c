@@ -11,6 +11,44 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+// For PBKDF2 via OpenSSL.
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+
+/**
+ * Helper function to invoke OpenSSL's PBKDF2 implementation
+ * with JNI arguments.
+ */
+jbyteArray pbkdf2SHA256_openssl
+  (JNIEnv *env, jclass jc, jbyteArray password, jbyteArray salt, jint c, jint dkLen) {
+
+	jbyte *pj = (*env)->GetByteArrayElements(env, password, 0);
+  unsigned char *p = (unsigned char *)pj;
+  int passwordLength = (*env)->GetArrayLength(env, password);
+
+  jbyte *sj = (*env)->GetByteArrayElements(env, salt, 0);
+  unsigned char *s = (unsigned char *)sj;
+  int saltLength = (*env)->GetArrayLength(env, salt);
+
+  unsigned char *out = (unsigned char *) malloc(sizeof(unsigned char) * dkLen);
+  if (out == NULL) {
+    return out;
+  }
+
+  const EVP_MD *digest = EVP_sha256();
+
+  int rc = PKCS5_PBKDF2_HMAC(p, passwordLength, s, saltLength, c, digest, dkLen, out);
+
+  (*env)->ReleaseByteArrayElements(env, password, pj, JNI_ABORT);
+  (*env)->ReleaseByteArrayElements(env, salt, sj, JNI_ABORT);
+
+  jbyteArray result = (*env)->NewByteArray(env, dkLen);
+  (*env)->SetByteArrayRegion(env, result, 0, dkLen, out);
+  free(out);
+
+  return result;
+}
+
 /**
  * Helper function to invoke scrypt's internal PBKDF2 function
  * with JNI arguments.
@@ -47,7 +85,7 @@ jbyteArray pbkdf2SHA256_scrypt
 
 JNIEXPORT jbyteArray JNICALL Java_org_mozilla_gecko_sync_crypto_NativeCrypto_pbkdf2SHA256
   (JNIEnv *env, jclass jc, jbyteArray password, jbyteArray salt, jint c, jint dkLen) {
-    return pbkdf2SHA256_scrypt(env, jc, password, salt, c, dkLen);
+    return pbkdf2SHA256_openssl(env, jc, password, salt, c, dkLen);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_org_mozilla_gecko_sync_crypto_NativeCrypto_scrypt
