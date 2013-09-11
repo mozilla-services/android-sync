@@ -27,6 +27,11 @@ public class TestPrunePolicy {
     public boolean attemptPruneBySize(final long time) {
       return super.attemptPruneBySize(time);
     }
+
+    @Override
+    public boolean attemptExpiration(final long time) {
+      return super.attemptExpiration(time);
+    }
   }
 
   public static class MockPrunePolicyStorage implements PrunePolicyStorage {
@@ -37,6 +42,7 @@ public class TestPrunePolicy {
     // TODO: Each method was called with what args?
     public boolean wasPruneEventsCalled = false;
     public boolean wasPruneEnvironmentsCalled = false;
+    public boolean wasDeleteDataBeforeCalled = false;
 
     public MockPrunePolicyStorage() { }
 
@@ -49,7 +55,7 @@ public class TestPrunePolicy {
     }
 
     public int deleteDataBefore(final long time) {
-      // TODO: Fill this out.
+      wasDeleteDataBeforeCalled = true;
       return -1;
     }
 
@@ -84,6 +90,13 @@ public class TestPrunePolicy {
 
   public boolean attemptPruneBySize(final long time) {
     final boolean retval = policy.attemptPruneBySize(time);
+    // This commit may be deferred over multiple methods so we ensure it runs.
+    sharedPrefs.edit().commit();
+    return retval;
+  }
+
+  public boolean attemptExpiration(final long time) {
+    final boolean retval = policy.attemptExpiration(time);
     // This commit may be deferred over multiple methods so we ensure it runs.
     sharedPrefs.edit().commit();
     return retval;
@@ -164,6 +177,47 @@ public class TestPrunePolicy {
     assertTrue(storage.wasPruneEventsCalled);
   }
 
+  @Test
+  public void testAttemptExpirationInit() throws Exception {
+    assertFalse(containsNextExpirationTime());
+    attemptExpiration(START_TIME);
+
+    // Next time should be initialized.
+    assertTrue(containsNextExpirationTime());
+    assertTrue(getNextExpirationTime() > 0);
+    assertFalse(storage.wasDeleteDataBeforeCalled);
+  }
+
+  @Test
+  public void testAttemptExpirationEarly() throws Exception {
+    final long nextTime = START_TIME + 1;
+    setNextExpirationTime(nextTime);
+    attemptExpiration(START_TIME);
+
+    // We didn't prune so next time remains the same.
+    assertEquals(nextTime, getNextExpirationTime());
+    assertFalse(storage.wasDeleteDataBeforeCalled);
+  }
+
+  @Test
+  public void testAttemptExpirationSkewed() throws Exception {
+    setNextExpirationTime(START_TIME + getExpirationSkewLimit() + 1);
+    attemptExpiration(START_TIME);
+
+    // Skewed so the next time is reset.
+    assertEquals(START_TIME + getMinimumTimeBetweenExpirationChecks(), getNextExpirationTime());
+    assertFalse(storage.wasDeleteDataBeforeCalled);
+  }
+
+  @Test
+  public void testAttemptExpirationSuccess() throws Exception {
+    setNextExpirationTime(START_TIME - 1);
+    attemptExpiration(START_TIME);
+
+    assertEquals(START_TIME + getMinimumTimeBetweenExpirationChecks(), getNextExpirationTime());
+    assertTrue(storage.wasDeleteDataBeforeCalled);
+  }
+
   public int getMaximumEnvironmentCount() {
     return HealthReportConstants.MAX_ENVIRONMENT_COUNT;
   }
@@ -190,5 +244,25 @@ public class TestPrunePolicy {
 
   public boolean containsNextPruneBySizeTime() {
     return sharedPrefs.contains(HealthReportConstants.PREF_PRUNE_BY_SIZE_TIME);
+  }
+
+  public long getExpirationSkewLimit() {
+    return HealthReportConstants.EXPIRATION_SKEW_LIMIT_MILLIS;
+  }
+
+  public long getMinimumTimeBetweenExpirationChecks() {
+    return HealthReportConstants.MINIMUM_TIME_BETWEEN_EXPIRATION_CHECKS_MILLIS;
+  }
+
+  public long getNextExpirationTime() {
+    return sharedPrefs.getLong(HealthReportConstants.PREF_EXPIRATION_TIME, -1);
+  }
+
+  public void setNextExpirationTime(final long time) {
+    sharedPrefs.edit().putLong(HealthReportConstants.PREF_EXPIRATION_TIME, time).commit();
+  }
+
+  public boolean containsNextExpirationTime() {
+    return sharedPrefs.contains(HealthReportConstants.PREF_EXPIRATION_TIME);
   }
 }

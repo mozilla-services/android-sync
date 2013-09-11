@@ -29,7 +29,8 @@ public class AndroidPrunePolicyStorage implements PrunePolicyStorage {
 
   private ContentProviderClient client;
   private HealthReportDatabaseStorage storage;
-  protected int currentEnvironmentID; // So we don't prune the current environment.
+
+  private int currentEnvironmentID; // So we don't prune the current environment.
 
   public AndroidPrunePolicyStorage(final Context context, final String profilePath) {
     this.context = context;
