@@ -9,12 +9,19 @@ import org.mozilla.gecko.background.common.log.Logger;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Patterns;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 public class FxAccountCreateAccountFragment extends Fragment implements OnClickListener {
   protected static final String LOG_TAG = FxAccountCreateAccountFragment.class.getSimpleName();
@@ -24,6 +31,12 @@ public class FxAccountCreateAccountFragment extends Fragment implements OnClickL
   protected EditText password2Edit;
   protected Button button;
 
+  protected TextView emailError;
+  protected TextView passwordError;
+
+  protected TextChangedListener textChangedListener;
+  protected EditorActionListener editorActionListener;
+  protected OnFocusChangeListener focusChangeListener;
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -46,6 +59,19 @@ public class FxAccountCreateAccountFragment extends Fragment implements OnClickL
     // Second password can be null.
     password2Edit = (EditText) v.findViewById(R.id.password2);
 
+    emailError = (TextView) ensureFindViewById(v, R.id.email_error, "email error");
+    passwordError = (TextView) ensureFindViewById(v, R.id.password_error, "password error");
+
+    textChangedListener = new TextChangedListener();
+    editorActionListener = new EditorActionListener();
+    focusChangeListener = new FocusChangeListener();
+
+    addListeners(emailEdit);
+    addListeners(passwordEdit);
+    if (password2Edit != null) {
+      addListeners(password2Edit);
+    }
+
     button = (Button) ensureFindViewById(v, R.id.create_account_button, "button");
     button.setOnClickListener(this);
     return v;
@@ -62,6 +88,9 @@ public class FxAccountCreateAccountFragment extends Fragment implements OnClickL
   public void onClick(View v) {
     switch (v.getId()) {
     case R.id.create_account_button:
+      if (!validate(false)) {
+        return;
+      }
       onCreateAccount(v);
       break;
     }
@@ -82,5 +111,113 @@ public class FxAccountCreateAccountFragment extends Fragment implements OnClickL
       throw new RuntimeException(message);
     }
     return view;
+  }
+
+  protected void addListeners(EditText editText) {
+    editText.addTextChangedListener(textChangedListener);
+    editText.setOnEditorActionListener(editorActionListener);
+    editText.setOnFocusChangeListener(focusChangeListener);
+  }
+
+  protected class FocusChangeListener implements OnFocusChangeListener {
+    @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+      if (hasFocus) {
+        return;
+      }
+      validate(false);
+    }
+  }
+
+  protected class EditorActionListener implements OnEditorActionListener {
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+      validate(false);
+      return false;
+    }
+  }
+
+  protected class TextChangedListener implements TextWatcher {
+    @Override
+    public void afterTextChanged(Editable s) {
+      validate(true);
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+      // Do nothing.
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+      // Do nothing.
+    }
+  }
+
+  /**
+   * Show or hide error messaging.
+   *
+   * @param removeOnly
+   *          if true, possibly remove existing error messages but do not set an
+   *          error message if one was not present.
+   * @param errorResourceId
+   *          of error string, or -1 to hide.
+   * @param errorView
+   *          <code>TextView</code> instance to display error message in.
+   * @param edits
+   *          <code>EditText</code> instances to style.
+   */
+  protected void setError(boolean removeOnly, int errorResourceId, TextView errorView, EditText... edits) {
+    if (removeOnly && errorResourceId != -1) {
+      return;
+    }
+
+    int res = errorResourceId == -1 ? R.drawable.fxaccount_textfield_background : R.drawable.fxaccount_textfield_error_background;
+    for (EditText edit : edits) {
+      if (edit == null) {
+        continue;
+      }
+      edit.setBackgroundResource(res);
+    }
+    if (errorResourceId == -1) {
+      errorView.setVisibility(View.GONE);
+      errorView.setText(null);
+    } else {
+      errorView.setText(errorResourceId);
+      errorView.setVisibility(View.VISIBLE);
+    }
+  }
+
+  protected boolean validate(boolean removeOnly) {
+    boolean enabled = true;
+    final String email = emailEdit.getText().toString();
+    final String password = passwordEdit.getText().toString();
+
+    if (email.length() == 0 || Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+      setError(removeOnly, -1, emailError, emailEdit);
+    } else {
+      enabled = false;
+      setError(removeOnly, R.string.fxaccount_bad_email, emailError, emailEdit);
+    }
+
+    if (password2Edit != null) {
+      final String password2 = password2Edit.getText().toString();
+      enabled = enabled && password2.length() > 0;
+
+      boolean passwordsMatch = password.equals(password2);
+      if (passwordsMatch) {
+        setError(removeOnly, -1, passwordError, passwordEdit, password2Edit);
+      } else {
+        enabled = false;
+        setError(removeOnly, R.string.fxaccount_bad_passwords, passwordError, passwordEdit, password2Edit);
+      }
+    }
+
+    if (enabled != button.isEnabled()) {
+      Logger.debug(LOG_TAG, (enabled ? "En" : "Dis") + "abling button.");
+      button.setEnabled(enabled);
+    }
+
+    return enabled;
   }
 }

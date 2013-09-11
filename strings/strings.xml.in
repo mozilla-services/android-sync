@@ -111,3 +111,6 @@
   <string name="fxaccount_email_hint">&fxaccount.email.hint;</string>
   <string name="fxaccount_password_hint">&fxaccount.password.hint;</string>
   <string name="fxaccount_password2_hint">&fxaccount.password2.hint;</string>
+
+  <string name="fxaccount_bad_email">&fxaccount.bad.email;</string>
+  <string name="fxaccount_bad_passwords">&fxaccount.bad.passwords;</string>

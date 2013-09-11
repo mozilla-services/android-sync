@@ -30,6 +30,14 @@
 					<requestFocus />
 				</EditText>
 
+				<TextView
+					android:id="@+id/email_error"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:layout_marginBottom="10dp"
+					android:textColor="@color/fxaccount_error_dark"
+					android:visibility="gone" />
+
 				<EditText
 					android:id="@+id/password"
 					style="@style/FxAccountEditItem"
