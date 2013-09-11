@@ -30,6 +30,16 @@
           <updatePolicy>always</updatePolicy>
         </releases>
     </repository>
+
+    <!-- From http://stackoverflow.com/questions/18380337/android-support-library-setup-with-maven -->
+    <repository>
+      <id>android-support-mvn-repo</id>
+      <url>https://raw.github.com/kmchugh/android.support/mvn-repo</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>daily</updatePolicy>
+      </snapshots>
+    </repository>
   </repositories>
 
   <dependencyManagement>
