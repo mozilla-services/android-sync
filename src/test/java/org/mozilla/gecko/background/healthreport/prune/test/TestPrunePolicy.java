@@ -32,6 +32,11 @@ public class TestPrunePolicy {
     public boolean attemptExpiration(final long time) {
       return super.attemptExpiration(time);
     }
+
+    @Override
+    protected boolean attemptStorageCleanup(final long time) {
+      return super.attemptStorageCleanup(time);
+    }
   }
 
   public static class MockPrunePolicyStorage implements PrunePolicyStorage {
@@ -43,6 +48,9 @@ public class TestPrunePolicy {
     public boolean wasPruneEventsCalled = false;
     public boolean wasPruneEnvironmentsCalled = false;
     public boolean wasDeleteDataBeforeCalled = false;
+    public boolean wasCleanupCalled = false;
+
+    public boolean shouldCleanupEarly = false;
 
     public MockPrunePolicyStorage() { }
 
@@ -60,12 +68,11 @@ public class TestPrunePolicy {
     }
 
     public boolean shouldCleanupEarly() {
-      // TODO: Fill this out.
-      return false;
+      return shouldCleanupEarly;
     }
 
     public void cleanup() {
-      // TODO: Fill this out.
+      wasCleanupCalled = true;
     }
 
     public int getEventCount() { return eventCount; }
@@ -97,6 +104,13 @@ public class TestPrunePolicy {
 
   public boolean attemptExpiration(final long time) {
     final boolean retval = policy.attemptExpiration(time);
+    // This commit may be deferred over multiple methods so we ensure it runs.
+    sharedPrefs.edit().commit();
+    return retval;
+  }
+
+  public boolean attemptStorageCleanup(final long time) {
+    final boolean retval = policy.attemptStorageCleanup(time);
     // This commit may be deferred over multiple methods so we ensure it runs.
     sharedPrefs.edit().commit();
     return retval;
@@ -218,6 +232,57 @@ public class TestPrunePolicy {
     assertTrue(storage.wasDeleteDataBeforeCalled);
   }
 
+  @Test
+  public void testAttemptCleanupInit() throws Exception {
+    assertFalse(containsNextCleanupTime());
+    attemptStorageCleanup(START_TIME);
+
+    // Next time should be initialized.
+    assertTrue(containsNextCleanupTime());
+    assertTrue(getNextCleanupTime() > 0);
+    assertFalse(storage.wasCleanupCalled);
+  }
+
+  @Test
+  public void testAttemptCleanupEarly() throws Exception {
+    final long nextTime = START_TIME + 1;
+    setNextCleanupTime(nextTime);
+    attemptStorageCleanup(START_TIME);
+
+    // We didn't prune so next time remains the same.
+    assertEquals(nextTime, getNextCleanupTime());
+    assertFalse(storage.wasCleanupCalled);
+  }
+
+  @Test
+  public void testAttemptCleanupSkewed() throws Exception {
+    setNextCleanupTime(START_TIME + getCleanupSkewLimit() + 1);
+    attemptStorageCleanup(START_TIME);
+
+    // Skewed so the next time is reset.
+    assertEquals(START_TIME + getMinimumTimeBetweenCleanupChecks(), getNextCleanupTime());
+    assertFalse(storage.wasCleanupCalled);
+  }
+
+  @Test
+  public void testAttemptCleanupShouldCleanupEarly() throws Exception {
+    setNextCleanupTime(START_TIME - 1);
+    storage.shouldCleanupEarly = true;
+    attemptStorageCleanup(START_TIME);
+
+    assertEquals(START_TIME + getMinimumTimeBetweenCleanupChecks(), getNextCleanupTime());
+    assertTrue(storage.wasCleanupCalled);
+  }
+
+  @Test
+  public void testAttemptCleanupSuccess() throws Exception {
+    setNextCleanupTime(START_TIME - 1);
+    attemptStorageCleanup(START_TIME);
+
+    assertEquals(START_TIME + getMinimumTimeBetweenCleanupChecks(), getNextCleanupTime());
+    assertTrue(storage.wasCleanupCalled);
+  }
+
   public int getMaximumEnvironmentCount() {
     return HealthReportConstants.MAX_ENVIRONMENT_COUNT;
   }
@@ -264,5 +329,25 @@ public class TestPrunePolicy {
 
   public boolean containsNextExpirationTime() {
     return sharedPrefs.contains(HealthReportConstants.PREF_EXPIRATION_TIME);
+  }
+
+  public long getCleanupSkewLimit() {
+    return HealthReportConstants.CLEANUP_SKEW_LIMIT_MILLIS;
+  }
+
+  public long getMinimumTimeBetweenCleanupChecks() {
+    return HealthReportConstants.MINIMUM_TIME_BETWEEN_CLEANUP_CHECKS_MILLIS;
+  }
+
+  public long getNextCleanupTime() {
+    return sharedPrefs.getLong(HealthReportConstants.PREF_CLEANUP_TIME, -1);
+  }
+
+  public void setNextCleanupTime(final long time) {
+    sharedPrefs.edit().putLong(HealthReportConstants.PREF_CLEANUP_TIME, time).commit();
+  }
+
+  public boolean containsNextCleanupTime() {
+    return sharedPrefs.contains(HealthReportConstants.PREF_CLEANUP_TIME);
   }
 }
