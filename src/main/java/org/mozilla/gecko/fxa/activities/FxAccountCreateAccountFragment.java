@@ -39,6 +39,8 @@ public class FxAccountCreateAccountFragment extends Fragment implements OnClickL
       Bundle savedInstanceState) {
     View v = inflater.inflate(R.layout.fxaccount_create_account_fragment, container, false);
 
+    FxAccountSetupActivity.linkifyTextViews(v, new int[] { R.id.description, R.id.policy });
+
     emailEdit = (EditText) ensureFindViewById(v, R.id.email, "email");
     passwordEdit = (EditText) ensureFindViewById(v, R.id.password, "password");
     // Second password can be null.

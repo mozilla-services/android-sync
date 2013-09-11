@@ -32,6 +32,8 @@ public class FxAccountSignInFragment extends Fragment implements OnClickListener
       Bundle savedInstanceState) {
     View v = inflater.inflate(R.layout.fxaccount_sign_in_fragment, container, false);
 
+    FxAccountSetupActivity.linkifyTextViews(v, new int[] { R.id.forgot_password });
+
     Button b = (Button) v.findViewById(R.id.sign_in_button);
     b.setOnClickListener(this);
 
