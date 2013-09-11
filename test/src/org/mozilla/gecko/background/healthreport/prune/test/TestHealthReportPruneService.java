@@ -3,15 +3,16 @@
 
 package org.mozilla.gecko.background.healthreport.prune.test;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.test.mock.MockContext;
 import java.util.concurrent.BrokenBarrierException;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
+import org.mozilla.gecko.background.healthreport.prune.AndroidPrunePolicyStorage;
 import org.mozilla.gecko.background.healthreport.prune.HealthReportPruneService;
 import org.mozilla.gecko.background.healthreport.prune.PrunePolicy;
+import org.mozilla.gecko.background.healthreport.prune.PrunePolicyStorage;
 import org.mozilla.gecko.background.test.helpers.BackgroundServiceTestCase;
 
 public class TestHealthReportPruneService
@@ -44,7 +45,8 @@ public class TestHealthReportPruneService
 
     @Override
     public PrunePolicy getPrunePolicy(final String profilePath) {
-      prunePolicy = new MockPrunePolicy(new MockContext(), getSharedPreferences(), profilePath);
+      final PrunePolicyStorage storage = new AndroidPrunePolicyStorage(new MockContext(), profilePath);
+      prunePolicy = new MockPrunePolicy(storage, getSharedPreferences());
       return prunePolicy;
     }
 
@@ -60,9 +62,8 @@ public class TestHealthReportPruneService
   public static class MockPrunePolicy extends PrunePolicy {
     private boolean wasTickCalled;
 
-    public MockPrunePolicy(final Context context, final SharedPreferences sharedPreferences,
-        final String profilePath) {
-      super(context, sharedPreferences, profilePath);
+    public MockPrunePolicy(final PrunePolicyStorage storage, final SharedPreferences sharedPreferences) {
+      super(storage, sharedPreferences);
       wasTickCalled = false;
     }
 

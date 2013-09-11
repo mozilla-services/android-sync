@@ -127,10 +127,10 @@ public class HealthReportConstants {
       MINIMUM_TIME_BETWEEN_EXPIRATION_CHECKS_MILLIS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
   public static final long EVENT_EXISTENCE_DURATION = GlobalConstants.MILLISECONDS_PER_SIX_MONTHS;
 
-  public static final String PREF_VACUUM_TIME = "healthreport_vacuum_time";
-  public static final long MINIMUM_TIME_BETWEEN_VACUUM_CHECKS_MILLIS = GlobalConstants.MILLISECONDS_PER_DAY * 14;
-  // The number of millis into the past the clock can skew before we reset the vacuum time.
-  public static final long VACUUM_SKEW_LIMIT_MILLIS =
-      MINIMUM_TIME_BETWEEN_VACUUM_CHECKS_MILLIS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
+  public static final String PREF_CLEANUP_TIME = "healthreport_cleanup_time";
+  public static final long MINIMUM_TIME_BETWEEN_CLEANUP_CHECKS_MILLIS = GlobalConstants.MILLISECONDS_PER_DAY * 14;
+  // The number of millis into the past the clock can skew before we reset the cleanup time.
+  public static final long CLEANUP_SKEW_LIMIT_MILLIS =
+      MINIMUM_TIME_BETWEEN_CLEANUP_CHECKS_MILLIS + 3 * GlobalConstants.MILLISECONDS_PER_DAY;
   public static final float DB_FREE_PAGE_RATIO_LIMIT = 0.10f;
 }

@@ -55,7 +55,8 @@ public class HealthReportPruneService extends BackgroundService {
 
   // Generator function wraps constructor for testing purposes.
   protected PrunePolicy getPrunePolicy(final String profilePath) {
-    return new PrunePolicy(this, getSharedPreferences(), profilePath);
+    final PrunePolicyStorage storage = new AndroidPrunePolicyStorage(this, profilePath);
+    return new PrunePolicy(storage, getSharedPreferences());
   }
 
   protected boolean isIntentValid(final Intent intent) {
