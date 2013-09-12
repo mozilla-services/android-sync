@@ -5,11 +5,10 @@
 package org.mozilla.gecko.sync.crypto;
 
 /**
- * Wrapper to perform PBKDF2-HMAC-SHA-256 using libcrypto from OpenSSL.
+ * Wrapper to perform PBKDF2-HMAC-SHA-256 in native code.
  */
 public class NativeCrypto {
     static {
-      System.loadLibrary("crypto");
       System.loadLibrary("nativecrypto");
     }
 
