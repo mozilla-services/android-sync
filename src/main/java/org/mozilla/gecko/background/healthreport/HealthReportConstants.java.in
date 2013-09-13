@@ -5,6 +5,8 @@
 
 package org.mozilla.gecko.background.healthreport;
 
+import org.mozilla.gecko.background.common.GlobalConstants;
+
 public class HealthReportConstants {
   public static final String HEALTH_AUTHORITY = "@ANDROID_PACKAGE_NAME@.health";
   public static final String GLOBAL_LOG_TAG = "GeckoHealth";
@@ -15,8 +17,8 @@ public class HealthReportConstants {
    */
   public static final long EARLIEST_LAST_PING = 1367500000000L;
 
-  public static final long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-  public static final long MILLISECONDS_PER_SIX_MONTHS = 180 * MILLISECONDS_PER_DAY;
+  public static final long MILLISECONDS_PER_DAY = GlobalConstants.MILLISECONDS_PER_DAY;
+  public static final long MILLISECONDS_PER_SIX_MONTHS = GlobalConstants.MILLISECONDS_PER_SIX_MONTHS;
 
   // Not `final` so we have the option to turn this on at runtime with a magic addon.
   public static boolean UPLOAD_FEATURE_DISABLED = false;

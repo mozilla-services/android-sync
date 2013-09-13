@@ -10,9 +10,9 @@ import java.io.IOException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.Environment;
 import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.test.helpers.FakeProfileTestCase;
 
 public class TestEnvironmentBuilder extends FakeProfileTestCase {
@@ -47,7 +47,7 @@ public class TestEnvironmentBuilder extends FakeProfileTestCase {
                            File.separator + "testPersisting");
     subdir.mkdir();
     long now = System.currentTimeMillis();
-    int expectedDays = (int) (now / HealthReportConstants.MILLISECONDS_PER_DAY);
+    int expectedDays = (int) (now / GlobalConstants.MILLISECONDS_PER_DAY);
 
     MockProfileInformationCache cache = new MockProfileInformationCache(subdir.getAbsolutePath());
     assertFalse(cache.getFile().exists());
