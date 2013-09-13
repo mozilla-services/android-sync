@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.mozilla.gecko.background.common.DateUtils;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 
@@ -76,10 +77,10 @@ public class HealthReportGenerator {
     JSONObject document = new JSONObject();
 
     if (lastPingTime >= HealthReportConstants.EARLIEST_LAST_PING) {
-      document.put("lastPingDate", HealthReportUtils.getDateString(lastPingTime));
+      document.put("lastPingDate", DateUtils.getDateString(lastPingTime));
     }
 
-    document.put("thisPingDate", HealthReportUtils.getDateString(now()));
+    document.put("thisPingDate", DateUtils.getDateString(now()));
     document.put("version", PAYLOAD_VERSION);
 
     document.put("environments", getEnvironmentsJSON(currentEnvironment, envs));
@@ -147,7 +148,7 @@ public class HealthReportGenerator {
 
         if (dateChanged) {
           if (dateObject != null) {
-            days.put(HealthReportUtils.getDateStringForDay(lastDate), dateObject);
+            days.put(DateUtils.getDateStringForDay(lastDate), dateObject);
           }
           dateObject = new JSONObject();
           lastDate = cDate;
@@ -179,7 +180,7 @@ public class HealthReportGenerator {
         cursor.moveToNext();
         continue;
       }
-      days.put(HealthReportUtils.getDateStringForDay(lastDate), dateObject);
+      days.put(DateUtils.getDateStringForDay(lastDate), dateObject);
     } finally {
       cursor.close();
     }
