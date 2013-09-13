@@ -99,6 +99,7 @@ def main():
         "src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java.in",
         "src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java.in",
         "src/main/java/org/mozilla/gecko/background/healthreport/HealthReportConstants.java.in",
+        "src/main/java/org/mozilla/gecko/fxa/FxAccountConstants.java.in",
         "src/main/java/org/mozilla/gecko/sync/SyncConstants.java.in",
         "AndroidManifest.xml.in",
         "test/AndroidManifest.xml.in",
@@ -106,6 +107,11 @@ def main():
         ]
 
     dot_templates = {
+        "fxaccount_authenticator.xml.template": "res/xml/fxaccount_authenticator.xml",
+        "fxaccount_bookmarks_syncadapter.xml.template": "res/xml/fxaccount_bookmarks_syncadapter.xml",
+        "fxaccount_history_syncadapter.xml.template":   "res/xml/fxaccount_history_syncadapter.xml",
+        "fxaccount_passwords_syncadapter.xml.template": "res/xml/fxaccount_passwords_syncadapter.xml",
+        "fxaccount_tabs_syncadapter.xml.template":      "res/xml/fxaccount_tabs_syncadapter.xml",
         "strings/strings.xml.template":    "res/values/strings.xml",
         "sync_authenticator.xml.template": "res/xml/sync_authenticator.xml",
         "sync_syncadapter.xml.template":   "res/xml/sync_syncadapter.xml",
