@@ -4,10 +4,19 @@
 
 exitcode=0
 
+if [ "$1" == "-b" ] || [ "$1" == "--base" ]; then
+  shift
+  BASE="$1"
+  shift
+else
+  BASE="develop"
+fi
+echo "Verifying HEAD headers against $BASE."
+
 # first files commited but not merged to develop.
-python "tools/check_headers.py" -l "package" -f "tools/COPYRIGHT_MPL" -x "test" "$@" `git diff --name-only develop HEAD | grep ^src/main/java/org/mozilla/.*\\.java$` || exitcode=$?
-python "tools/check_headers.py" -l "package" -f "tools/COPYRIGHT_PD" "$@"            `git diff --name-only develop HEAD | grep ^src/test/java/org/mozilla/.*\\.java$` || exitcode=$?
-python "tools/check_headers.py" -l "package" -f "tools/COPYRIGHT_PD" "$@"            `git diff --name-only develop HEAD | grep ^test/src/org/mozilla/.*\\.java$` || exitcode=$?
+python "tools/check_headers.py" -l "package" -f "tools/COPYRIGHT_MPL" -x "test" "$@" `git diff --name-only $BASE HEAD | grep ^src/main/java/org/mozilla/.*\\.java$` || exitcode=$?
+python "tools/check_headers.py" -l "package" -f "tools/COPYRIGHT_PD" "$@"            `git diff --name-only $BASE HEAD | grep ^src/test/java/org/mozilla/.*\\.java$` || exitcode=$?
+python "tools/check_headers.py" -l "package" -f "tools/COPYRIGHT_PD" "$@"            `git diff --name-only $BASE HEAD | grep ^test/src/org/mozilla/.*\\.java$` || exitcode=$?
 
 # second files we are modifying.
 python "tools/check_headers.py" -l "package" -f "tools/COPYRIGHT_MPL" -x "test" "$@" `git ls-files --modified | grep ^src/main/java/org/mozilla/.*\\.java$` || exitcode=$?
