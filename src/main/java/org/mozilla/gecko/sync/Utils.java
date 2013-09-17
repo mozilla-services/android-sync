@@ -143,6 +143,17 @@ public class Utils {
     return converter.decode(translated.toUpperCase());
   }
 
+  public static byte[] hex2Byte(String str, int byteLength) {
+    byte[] second = hex2Byte(str);
+    if (second.length >= byteLength) {
+      return second;
+    }
+    // New Java arrays are zeroed:
+    // http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.12.5
+    byte[] first = new byte[byteLength - second.length];
+    return Utils.concatAll(first, second);
+  }
+
   public static byte[] hex2Byte(String str) {
     if (str.length() % 2 == 1) {
       str = "0" + str;
