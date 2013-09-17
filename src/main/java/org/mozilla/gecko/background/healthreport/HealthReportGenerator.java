@@ -129,7 +129,8 @@ public class HealthReportGenerator {
       JSONObject dateObject = null;
       JSONObject envObject = null;
 
-      SparseArray<String> dayMemo = new SparseArray<String>(90);  // A decent default size.
+      DateUtils.DateFormatter dateFormatter = new DateUtils.DateFormatter();
+
       while (!cursor.isAfterLast()) {
         int cEnv = cursor.getInt(1);
         if (cEnv == -1 ||
@@ -149,7 +150,7 @@ public class HealthReportGenerator {
 
         if (dateChanged) {
           if (dateObject != null) {
-            days.put(DateUtils.getDateStringForDay(lastDate, dayMemo), dateObject);
+            days.put(dateFormatter.getDateStringForDay(lastDate), dateObject);
           }
           dateObject = new JSONObject();
           lastDate = cDate;
@@ -181,7 +182,7 @@ public class HealthReportGenerator {
         cursor.moveToNext();
         continue;
       }
-      days.put(DateUtils.getDateStringForDay(lastDate, dayMemo), dateObject);
+      days.put(dateFormatter.getDateStringForDay(lastDate), dateObject);
     } finally {
       cursor.close();
     }

@@ -65,7 +65,7 @@ public class TestDateUtils extends TestCase {
   public void testDayTiming() {
     long start = 33 * 365;
     long end   = start + 90;
-    int reps   = 50;
+    int reps   = 1;
     long t0 = android.os.SystemClock.elapsedRealtime();
     for (long i = start; i < end; ++i) {
       for (int j = 0; j < reps; ++j) {
@@ -74,16 +74,6 @@ public class TestDateUtils extends TestCase {
     }
     long t1 = android.os.SystemClock.elapsedRealtime();
     System.err.println("Non-memo: " + (t1 - t0));
-
-    t0 = android.os.SystemClock.elapsedRealtime();
-    SparseArray<String> memo = new SparseArray<String>(90);
-    for (long i = start; i < end; ++i) {
-      for (int j = 0; j < reps; ++j) {
-        DateUtils.getDateStringForDay(i, memo);
-      }
-    }
-    t1 = android.os.SystemClock.elapsedRealtime();
-    System.err.println("Memo: " + (t1 - t0));
   }
   */
 }
