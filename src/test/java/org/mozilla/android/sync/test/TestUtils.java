@@ -63,4 +63,11 @@ public class TestUtils extends Utils {
     assertEquals("XXX@XXX.XXX", Utils.obfuscateEmail("foo@bar.com"));
     assertEquals("XXXX@XXX.XXXX.XX", Utils.obfuscateEmail("foot@bar.test.ca"));
   }
+
+  @Test
+  public void testByte2Hex() {
+    assertEquals("00017fff", Utils.byte2hex(new byte[] { 0, 1, 127, (byte) 255 }));
+    assertEquals("000017fff", Utils.byte2hex(new byte[] { 0, 1, 127, (byte) 255 }, 9));
+    assertEquals("0000017fff", Utils.byte2hex(new byte[] { 0, 1, 127, (byte) 255 }, 10));
+  }
 }
