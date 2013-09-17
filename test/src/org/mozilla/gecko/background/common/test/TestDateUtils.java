@@ -17,14 +17,14 @@ import junit.framework.TestCase;
 
 public class TestDateUtils extends TestCase {
   // Our old, correct implementation -- used to test the new one.
-  public static String getDateStringFormatter(long time) {
+  public static String getDateStringUsingFormatter(long time) {
     final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     format.setTimeZone(TimeZone.getTimeZone("UTC"));
     return format.format(time);
   }
 
   private void checkDateString(long time) {
-    assertEquals(getDateStringFormatter(time),
+    assertEquals(getDateStringUsingFormatter(time),
                  DateUtils.getDateString(time));
   }
 
