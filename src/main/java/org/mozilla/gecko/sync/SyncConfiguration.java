@@ -17,7 +17,6 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
-import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.SharedPreferences;
@@ -184,14 +183,14 @@ public class SyncConfiguration {
   public String          userAPI;
   public URI             serverURL;
   public URI             clusterURL;
-  public String          username;
   public KeyBundle       syncKeyBundle;
 
   public CollectionKeys  collectionKeys;
   public InfoCollections infoCollections;
   public MetaGlobal      metaGlobal;
-  public String          password;
   public String          syncID;
+
+  protected final String username;
 
   /**
    * Persisted collection of enabledEngineNames.
@@ -245,6 +244,8 @@ public class SyncConfiguration {
   public String          prefsPath;
   public PrefsSource     prefsSource;
 
+  protected final AuthHeaderProvider authHeaderProvider;
+
   public static final String PREF_PREFS_VERSION = "prefs.version";
   public static final long CURRENT_PREFS_VERSION = 1;
 
@@ -269,7 +270,9 @@ public class SyncConfiguration {
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
    * provide access to preferences.
    */
-  public SyncConfiguration(String prefsPath, PrefsSource prefsSource) {
+  public SyncConfiguration(String username, AuthHeaderProvider authHeaderProvider, String prefsPath, PrefsSource prefsSource) {
+    this.username = username;
+    this.authHeaderProvider = authHeaderProvider;
     this.prefsPath   = prefsPath;
     this.prefsSource = prefsSource;
     this.loadFromPrefs(getPrefs());
@@ -440,7 +443,7 @@ public class SyncConfiguration {
   }
 
   public AuthHeaderProvider getAuthHeaderProvider() {
-    return new BasicAuthHeaderProvider(username, password);
+    return authHeaderProvider;
   }
 
   public CollectionKeys getCollectionKeys() {
