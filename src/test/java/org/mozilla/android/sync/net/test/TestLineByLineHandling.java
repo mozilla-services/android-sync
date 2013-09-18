@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequestDelegate;
@@ -59,6 +60,11 @@ public class TestLineByLineHandling {
 
     @Override
     public String credentials() {
+      return null;
+    }
+
+    @Override
+    public AuthHeaderProvider getAuthHeaderProvider() {
       return null;
     }
 

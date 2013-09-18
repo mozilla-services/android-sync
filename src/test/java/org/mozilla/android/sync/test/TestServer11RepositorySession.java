@@ -24,6 +24,7 @@ import org.mozilla.gecko.sync.JSONRecordFetcher;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -81,6 +82,10 @@ public class TestServer11RepositorySession implements CredentialsSource {
   @Override
   public String credentials() {
     return USER_PASS;
+  }
+
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return null;
   }
 
   private HTTPServerTestHelper data     = new HTTPServerTestHelper();
@@ -213,7 +218,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
         this.handle(request, response, 400, "NOOOO");
       }
     };
-    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(LOCAL_COUNTS_URL, this.credentials());
+    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(LOCAL_COUNTS_URL, getAuthHeaderProvider());
     final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);

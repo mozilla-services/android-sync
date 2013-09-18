@@ -29,6 +29,7 @@ import org.mozilla.gecko.sync.delegates.JSONRecordFetchDelegate;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
 import org.mozilla.gecko.sync.net.SyncResponse;
@@ -92,6 +93,10 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   @Override
   public String credentials() {
     return config.credentials();
+  }
+
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return null;
   }
 
   public URI wboURI(String collection, String id) throws URISyntaxException {
@@ -548,7 +553,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   }
 
   public void fetchInfoCollections(JSONRecordFetchDelegate callback) throws URISyntaxException {
-    final JSONRecordFetcher fetcher = new JSONRecordFetcher(config.infoCollectionsURL(), credentials());
+    final JSONRecordFetcher fetcher = new JSONRecordFetcher(config.infoCollectionsURL(), getAuthHeaderProvider());
     fetcher.fetch(callback);
   }
 
@@ -602,6 +607,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public String credentials() {
         return self.credentials();
+      }
+
+      @Override
+      public AuthHeaderProvider getAuthHeaderProvider() {
+        return null;
       }
     };
 
@@ -870,6 +880,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public String credentials() {
         return credentials.credentials();
+      }
+
+      @Override
+      public AuthHeaderProvider getAuthHeaderProvider() {
+        return null;
       }
     };
     request.delete();

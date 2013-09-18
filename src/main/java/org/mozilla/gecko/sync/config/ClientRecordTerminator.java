@@ -8,6 +8,7 @@ import java.net.URI;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
@@ -42,6 +43,11 @@ public class ClientRecordTerminator {
       @Override
       public String credentials() {
         return username + ":" + password;
+      }
+
+      @Override
+      public AuthHeaderProvider getAuthHeaderProvider() {
+        return null;
       }
 
       @Override

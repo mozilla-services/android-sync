@@ -16,6 +16,7 @@ import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -65,6 +66,11 @@ implements SyncStorageRequestDelegate {
   @Override
   public String credentials() {
     return session.credentials();
+  }
+
+  @Override
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return null;
   }
 
   @Override

@@ -23,6 +23,7 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
@@ -417,6 +418,11 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
       @Override
       public String credentials() {
         return credentials.credentials();
+      }
+
+      @Override
+      public AuthHeaderProvider getAuthHeaderProvider() {
+        return null;
       }
     };
 

@@ -16,6 +16,7 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedSyncIDException;
 import org.mozilla.gecko.sync.MetaGlobalException.MetaGlobalMalformedVersionException;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -248,6 +249,11 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   // SyncStorageRequestDelegate methods for fetching.
   public String credentials() {
     return this.credentials;
+  }
+
+  @Override
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return null;
   }
 
   public String ifUnmodifiedSince() {

@@ -17,6 +17,7 @@ import org.junit.experimental.categories.Category;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -42,9 +43,14 @@ public class TestWBOCollectionRequestDelegate {
     }
 
     @Override
+    public AuthHeaderProvider getAuthHeaderProvider() {
+      return null;
+    }
+
+    @Override
     public String ifUnmodifiedSince() {
       return null;
-    }    
+    }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse response) {

@@ -5,7 +5,9 @@
 package org.mozilla.gecko.sync.net;
 
 public interface SyncStorageRequestDelegate {
+  public AuthHeaderProvider getAuthHeaderProvider();
   String credentials();
+
   String ifUnmodifiedSince();
 
   // TODO: at this point we can access X-Weave-Timestamp, compare

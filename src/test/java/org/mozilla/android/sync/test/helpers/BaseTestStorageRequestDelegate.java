@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -18,6 +19,11 @@ public class BaseTestStorageRequestDelegate implements
   @Override
   public String credentials() {
     return _credentials;
+  }
+
+  @Override
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return null;
   }
 
   @Override

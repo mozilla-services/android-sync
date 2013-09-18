@@ -14,20 +14,20 @@ import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.JSONRecordFetcher;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 import org.mozilla.gecko.sync.stage.SafeConstrainedServer11Repository;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
-public class TestSafeConstrainedServer11Repository implements CredentialsSource {
+public class TestSafeConstrainedServer11Repository {
   private static final int     TEST_PORT      = HTTPServerTestHelper.getTestPort();
   private static final String  TEST_SERVER    = "http://localhost:" + TEST_PORT + "/";
   private static final String  TEST_USERNAME  = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
   private static final String  TEST_BASE_PATH = "/1.1/" + TEST_USERNAME + "/";
 
-  @Override
-  public String credentials() {
+  public AuthHeaderProvider getAuthHeaderProvider() {
     return null;
   }
 
@@ -72,11 +72,17 @@ public class TestSafeConstrainedServer11Repository implements CredentialsSource 
     final CountsMockServer server = new CountsMockServer();
     data.startHTTPServer(server);
 
+    final CredentialsSource credentialsSource = new CredentialsSource() {
+      @Override
+      public String credentials() {
+        return null;
+      }
+    };
+
     try {
       String countsURL = TEST_SERVER + TEST_BASE_PATH + "info/collection_counts";
-      JSONRecordFetcher countFetcher = new JSONRecordFetcher(countsURL, this.credentials());
+      JSONRecordFetcher countFetcher = new JSONRecordFetcher(countsURL, getAuthHeaderProvider());
       String sort = "sortindex";
-      CredentialsSource credentialsSource = this;
       String collection = "rotary";
 
       final int TEST_LIMIT = 1000;
