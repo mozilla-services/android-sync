@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.healthreport.test.MockHealthReportDatabaseStorage.PrepopulatedMockHealthReportDatabaseStorage;
@@ -146,10 +146,10 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     storage.incrementDailyCount(envA, storage.getToday(), fieldID, 2);
 
     // After inserting, we have events.
-    assertTrue(storage.hasEventSince(storage.now - HealthReportConstants.MILLISECONDS_PER_DAY));
+    assertTrue(storage.hasEventSince(storage.now - GlobalConstants.MILLISECONDS_PER_DAY));
     assertTrue(storage.hasEventSince(storage.now));
     // But not in the future.
-    assertFalse(storage.hasEventSince(storage.now + HealthReportConstants.MILLISECONDS_PER_DAY));
+    assertFalse(storage.hasEventSince(storage.now + GlobalConstants.MILLISECONDS_PER_DAY));
 
     MockDatabaseEnvironment environmentB = storage.getEnvironment();
     environmentB.mockInit("v234");
