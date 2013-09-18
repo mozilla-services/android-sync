@@ -98,26 +98,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
     return config.wboURI(collection, id);
   }
 
-  /*
-   * Validators.
-   */
-  private static boolean isInvalidString(String s) {
-    return s == null ||
-           s.trim().length() == 0;
-  }
-
-  private static boolean anyInvalidStrings(String s, String...strings) {
-    if (isInvalidString(s)) {
-      return true;
-    }
-    for (String str : strings) {
-      if (isInvalidString(str)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public GlobalSession(String userAPI,
                        String serverURL,
                        String username,
@@ -129,12 +109,11 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
                        Bundle extras,
                        ClientsDataDelegate clientsDelegate)
                            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
+    if (username == null) {
+      throw new IllegalArgumentException("username must not be null.");
+    }
     if (callback == null) {
       throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
-    }
-
-    if (anyInvalidStrings(username, password)) {
-      throw new SyncConfigurationException();
     }
 
     Logger.debug(LOG_TAG, "GlobalSession initialized with bundle " + extras);
