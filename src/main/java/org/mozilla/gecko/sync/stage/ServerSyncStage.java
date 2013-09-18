@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutorService;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
@@ -149,7 +148,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     return new Server11Repository(session.config.getClusterURLString(),
                                   session.config.username,
                                   getCollection(),
-                                  session);
+                                  session.getAuthHeaderProvider());
   }
 
   /**
@@ -375,7 +374,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
   /**
    * Asynchronously wipe collection on server.
    */
-  protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
+  protected void wipeServer(final AuthHeaderProvider authHeaderProvider, final WipeServerDelegate wipeDelegate) {
     SyncStorageRequest request;
 
     try {
@@ -416,13 +415,8 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
       }
 
       @Override
-      public String credentials() {
-        return credentials.credentials();
-      }
-
-      @Override
       public AuthHeaderProvider getAuthHeaderProvider() {
-        return null;
+        return authHeaderProvider;
       }
     };
 
@@ -442,7 +436,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     final Runnable doWipe = new Runnable() {
       @Override
       public void run() {
-        wipeServer(session, new WipeServerDelegate() {
+        wipeServer(session.getAuthHeaderProvider(), new WipeServerDelegate() {
           @Override
           public void onWiped(long timestamp) {
             synchronized (monitor) {

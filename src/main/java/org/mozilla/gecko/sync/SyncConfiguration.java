@@ -16,12 +16,14 @@ import java.util.Set;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
-public class SyncConfiguration implements CredentialsSource {
+public class SyncConfiguration {
 
   public class EditorBranch implements Editor {
 
@@ -437,9 +439,8 @@ public class SyncConfiguration implements CredentialsSource {
     // TODO: keys.
   }
 
-  @Override
-  public String credentials() {
-    return username + ":" + password;
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return new BasicAuthHeaderProvider(username, password);
   }
 
   public CollectionKeys getCollectionKeys() {

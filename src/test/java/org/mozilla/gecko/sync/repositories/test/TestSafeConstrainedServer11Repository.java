@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
-import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.JSONRecordFetcher;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
@@ -72,13 +71,6 @@ public class TestSafeConstrainedServer11Repository {
     final CountsMockServer server = new CountsMockServer();
     data.startHTTPServer(server);
 
-    final CredentialsSource credentialsSource = new CredentialsSource() {
-      @Override
-      public String credentials() {
-        return null;
-      }
-    };
-
     try {
       String countsURL = TEST_SERVER + TEST_BASE_PATH + "info/collection_counts";
       JSONRecordFetcher countFetcher = new JSONRecordFetcher(countsURL, getAuthHeaderProvider());
@@ -87,7 +79,7 @@ public class TestSafeConstrainedServer11Repository {
 
       final int TEST_LIMIT = 1000;
       final SafeConstrainedServer11Repository repo = new SafeConstrainedServer11Repository(
-          TEST_SERVER, TEST_USERNAME, collection, credentialsSource, TEST_LIMIT, sort, countFetcher);
+          TEST_SERVER, TEST_USERNAME, collection, null, TEST_LIMIT, sort, countFetcher);
 
       final AtomicBoolean shouldSkipLots = new AtomicBoolean(false);
       final AtomicBoolean shouldSkipFew = new AtomicBoolean(true);

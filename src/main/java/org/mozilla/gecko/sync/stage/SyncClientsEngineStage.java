@@ -97,13 +97,8 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
     boolean localAccountGUIDDownloaded = false;
 
     @Override
-    public String credentials() {
-      return session.credentials();
-    }
-
-    @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
-      return null;
+      return session.getAuthHeaderProvider();
     }
 
     @Override
@@ -221,13 +216,8 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
     public boolean currentlyUploadingLocalRecord;
 
     @Override
-    public String credentials() {
-      return session.credentials();
-    }
-
-    @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
-      return null;
+      return session.getAuthHeaderProvider();
     }
 
     private void setUploadDetails(boolean isLocalRecord) {

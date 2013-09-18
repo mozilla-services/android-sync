@@ -64,13 +64,8 @@ implements SyncStorageRequestDelegate {
   }
 
   @Override
-  public String credentials() {
-    return session.credentials();
-  }
-
-  @Override
   public AuthHeaderProvider getAuthHeaderProvider() {
-    return null;
+    return session.getAuthHeaderProvider();
   }
 
   @Override

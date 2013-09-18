@@ -28,9 +28,9 @@ public class ClientRecordTerminator {
   }
 
   public static void deleteClientRecord(final String username,
-      final String password,
       final String clusterURL,
-      final String clientGuid)
+      final String clientGuid,
+      final AuthHeaderProvider authHeaderProvider)
     throws Exception {
 
     // Would prefer to delegate to SyncConfiguration, but that would proliferate static methods.
@@ -41,13 +41,8 @@ public class ClientRecordTerminator {
     final SyncStorageRecordRequest r = new SyncStorageRecordRequest(wboURI);
     r.delegate = new SyncStorageRequestDelegate() {
       @Override
-      public String credentials() {
-        return username + ":" + password;
-      }
-
-      @Override
       public AuthHeaderProvider getAuthHeaderProvider() {
-        return null;
+        return authHeaderProvider;
       }
 
       @Override

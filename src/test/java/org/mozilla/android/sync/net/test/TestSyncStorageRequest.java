@@ -16,7 +16,9 @@ import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
@@ -33,12 +35,18 @@ public class TestSyncStorageRequest {
   private static final String EXPECTED_RETRY_AFTER_ERROR_MESSAGE = "{error:'informative error message'}";
 
   // Corresponds to rnewman+testandroid@mozilla.com.
-  private static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
+  private static final String TEST_USERNAME    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
+  private static final String TEST_PASSWORD    = "password";
+  private final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD);
 
   private HTTPServerTestHelper data = new HTTPServerTestHelper();
 
   public class TestSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
+    public TestSyncStorageRequestDelegate(AuthHeaderProvider authHeaderProvider) {
+      super(authHeaderProvider);
+    }
+
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
@@ -58,6 +66,10 @@ public class TestSyncStorageRequest {
 
   public class TestBadSyncStorageRequestDelegate extends
       BaseTestStorageRequestDelegate {
+
+    public TestBadSyncStorageRequestDelegate(AuthHeaderProvider authHeaderProvider) {
+      super(authHeaderProvider);
+    }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse res) {
@@ -81,8 +93,7 @@ public class TestSyncStorageRequest {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer();
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL));
-    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
+    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate(authHeaderProvider);
     r.delegate = delegate;
     r.get();
     // Server is stopped in the callback.
@@ -100,8 +111,7 @@ public class TestSyncStorageRequest {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new ErrorMockServer());
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL));
-    TestBadSyncStorageRequestDelegate delegate = new TestBadSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
+    TestBadSyncStorageRequestDelegate delegate = new TestBadSyncStorageRequestDelegate(authHeaderProvider);
     r.delegate = delegate;
     r.post(new JSONObject());
     // Server is stopped in the callback.
@@ -109,8 +119,11 @@ public class TestSyncStorageRequest {
 
   // Test that the Retry-After header is correctly parsed and that handleRequestFailure
   // is being called.
-  public class TestRetryAfterSyncStorageRequestDelegate extends
-  BaseTestStorageRequestDelegate {
+  public class TestRetryAfterSyncStorageRequestDelegate extends BaseTestStorageRequestDelegate {
+
+    public TestRetryAfterSyncStorageRequestDelegate(AuthHeaderProvider authHeaderProvider) {
+      super(authHeaderProvider);
+    }
 
     @Override
     public void handleRequestFailure(SyncStorageResponse res) {
@@ -143,7 +156,7 @@ public class TestSyncStorageRequest {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new RetryAfterMockServer());
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_BAD_REQUEST_URL)); // URL not used -- we 503 every response
-    TestRetryAfterSyncStorageRequestDelegate delegate = new TestRetryAfterSyncStorageRequestDelegate();
+    TestRetryAfterSyncStorageRequestDelegate delegate = new TestRetryAfterSyncStorageRequestDelegate(authHeaderProvider);
     r.delegate = delegate;
     r.post(new JSONObject());
     // Server is stopped in the callback.
@@ -153,6 +166,10 @@ public class TestSyncStorageRequest {
   // is still being called.
   public class TestWeaveBackoffSyncStorageRequestDelegate extends
   TestSyncStorageRequestDelegate {
+
+    public TestWeaveBackoffSyncStorageRequestDelegate(AuthHeaderProvider authHeaderProvider) {
+      super(authHeaderProvider);
+    }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
@@ -175,8 +192,7 @@ public class TestSyncStorageRequest {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new WeaveBackoffMockServer());
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
-    TestWeaveBackoffSyncStorageRequestDelegate delegate = new TestWeaveBackoffSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
+    TestWeaveBackoffSyncStorageRequestDelegate delegate = new TestWeaveBackoffSyncStorageRequestDelegate(new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD));
     r.delegate = delegate;
     r.post(new JSONObject());
     // Server is stopped in the callback.
@@ -186,6 +202,10 @@ public class TestSyncStorageRequest {
   // that handleRequestSuccess is still being called.
   public class TestHeadersSyncStorageRequestDelegate extends
   TestSyncStorageRequestDelegate {
+
+    public TestHeadersSyncStorageRequestDelegate(AuthHeaderProvider authHeaderProvider) {
+      super(authHeaderProvider);
+    }
 
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
@@ -217,8 +237,7 @@ public class TestSyncStorageRequest {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new HeadersMockServer());
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
-    TestHeadersSyncStorageRequestDelegate delegate = new TestHeadersSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
+    TestHeadersSyncStorageRequestDelegate delegate = new TestHeadersSyncStorageRequestDelegate(authHeaderProvider);
     r.delegate = delegate;
     r.post(new JSONObject());
     // Server is stopped in the callback.
@@ -238,8 +257,7 @@ public class TestSyncStorageRequest {
     BaseResource.rewriteLocalhost = false;
     data.startHTTPServer(new DeleteMockServer());
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(LOCAL_META_URL)); // URL re-used -- we need any successful response
-    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
+    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate(authHeaderProvider);
     r.delegate = delegate;
     r.delete();
     // Server is stopped in the callback.

@@ -59,11 +59,6 @@ public class TestLineByLineHandling {
     }
 
     @Override
-    public String credentials() {
-      return null;
-    }
-
-    @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
       return null;
     }

@@ -22,7 +22,6 @@ import org.mozilla.gecko.background.testhelpers.MockGlobalSession;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.AlreadySyncingException;
 import org.mozilla.gecko.sync.CollectionKeys;
-import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -35,6 +34,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.stage.FetchMetaGlobalStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.simpleframework.http.Request;
@@ -131,7 +131,7 @@ public class TestFetchMetaGlobalStage {
 
       // Don't really wipeServer.
       @Override
-      protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
+      protected void wipeServer(final AuthHeaderProvider authHeaderProvider, final WipeServerDelegate wipeDelegate) {
         calledWipeServer = true;
         wipeDelegate.onWiped(System.currentTimeMillis());
       }

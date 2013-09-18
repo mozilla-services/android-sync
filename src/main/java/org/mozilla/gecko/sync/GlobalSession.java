@@ -59,7 +59,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
-public class GlobalSession implements CredentialsSource, PrefsSource, HttpResponseObserver {
+public class GlobalSession implements PrefsSource, HttpResponseObserver {
   private static final String LOG_TAG = "GlobalSession";
 
   public static final String API_VERSION   = "1.1";
@@ -90,13 +90,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   /*
    * Config passthrough for convenience.
    */
-  @Override
-  public String credentials() {
-    return config.credentials();
-  }
-
   public AuthHeaderProvider getAuthHeaderProvider() {
-    return null;
+    return config.getAuthHeaderProvider();
   }
 
   public URI wboURI(String collection, String id) throws URISyntaxException {
@@ -568,7 +563,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   public void uploadKeys(final CollectionKeys keys,
                          final KeyUploadDelegate keyUploadDelegate) {
     SyncStorageRecordRequest request;
-    final GlobalSession self = this;
     try {
       request = new SyncStorageRecordRequest(this.config.keysURI());
     } catch (URISyntaxException e) {
@@ -593,7 +587,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       @Override
       public void handleRequestFailure(SyncStorageResponse response) {
         Logger.debug(LOG_TAG, "Failed to upload keys.");
-        self.interpretHTTPFailure(response.httpResponse());
+        GlobalSession.this.interpretHTTPFailure(response.httpResponse());
         BaseResource.consumeEntity(response); // The exception thrown should not need the body of the response.
         keyUploadDelegate.onKeyUploadFailed(new HTTPFailureException(response));
       }
@@ -605,13 +599,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
 
       @Override
-      public String credentials() {
-        return self.credentials();
-      }
-
-      @Override
       public AuthHeaderProvider getAuthHeaderProvider() {
-        return null;
+        return GlobalSession.this.getAuthHeaderProvider();
       }
     };
 
@@ -737,7 +726,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
 
     final MetaGlobal mg = session.generateNewMetaGlobal();
 
-    session.wipeServer(session, new WipeServerDelegate() {
+    session.wipeServer(session.getAuthHeaderProvider(), new WipeServerDelegate() {
 
       @Override
       public void onWiped(long timestamp) {
@@ -837,7 +826,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   // reset client to prompt reupload.
   // If sync ID mismatch: take that syncID and reset client.
 
-  protected void wipeServer(final CredentialsSource credentials, final WipeServerDelegate wipeDelegate) {
+  protected void wipeServer(final AuthHeaderProvider authHeaderProvider, final WipeServerDelegate wipeDelegate) {
     SyncStorageRequest request;
     final GlobalSession self = this;
 
@@ -878,13 +867,8 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       }
 
       @Override
-      public String credentials() {
-        return credentials.credentials();
-      }
-
-      @Override
       public AuthHeaderProvider getAuthHeaderProvider() {
-        return null;
+        return GlobalSession.this.getAuthHeaderProvider();
       }
     };
     request.delete();
@@ -976,7 +960,6 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
   public MetaGlobal generateNewMetaGlobal() {
     final String newSyncID   = Utils.generateGuid();
     final String metaURL     = this.config.metaURL();
-    final String credentials = this.credentials();
 
     ExtendedJSONObject engines = new ExtendedJSONObject();
     for (String engineName : enabledEngineNames()) {
@@ -996,7 +979,7 @@ public class GlobalSession implements CredentialsSource, PrefsSource, HttpRespon
       engines.put(engineName, engineSettings.toJSONObject());
     }
 
-    MetaGlobal metaGlobal = new MetaGlobal(metaURL, credentials);
+    MetaGlobal metaGlobal = new MetaGlobal(metaURL, this.getAuthHeaderProvider());
     metaGlobal.setSyncID(newSyncID);
     metaGlobal.setStorageVersion(STORAGE_VERSION);
     metaGlobal.setEngines(engines);

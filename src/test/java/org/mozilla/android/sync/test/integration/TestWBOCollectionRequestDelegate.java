@@ -19,6 +19,7 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageCollectionRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.net.WBOCollectionRequestDelegate;
@@ -29,7 +30,7 @@ public class TestWBOCollectionRequestDelegate {
 
   static final String REMOTE_BOOKMARKS_URL = "https://phx-sync545.services.mozilla.com/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/bookmarks?full=1";
   static final String USERNAME     = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd";
-  static final String USER_PASS    = "c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd:password";
+  static final String PASSWORD     = "password";
   static final String SYNC_KEY     = "6m8mv8ex2brqnrmsb9fjuvfg7y";
 
   public class LiveDelegate extends WBOCollectionRequestDelegate {
@@ -38,13 +39,8 @@ public class TestWBOCollectionRequestDelegate {
     public ArrayList<CryptoRecord> wbos = new ArrayList<CryptoRecord>();
 
     @Override
-    public String credentials() {
-      return USER_PASS;
-    }
-
-    @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
-      return null;
+      return new BasicAuthHeaderProvider(USERNAME, PASSWORD);
     }
 
     @Override

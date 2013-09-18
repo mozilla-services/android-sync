@@ -136,13 +136,8 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String credentials() {
-      return serverRepository.credentialsSource.credentials();
-    }
-
-    @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
-      return null;
+      return serverRepository.getAuthHeaderProvider();
     }
 
     @Override
@@ -448,13 +443,8 @@ public class Server11RepositorySession extends RepositorySession {
     }
 
     @Override
-    public String credentials() {
-      return serverRepository.credentialsSource.credentials();
-    }
-
-    @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
-      return null;
+      return serverRepository.getAuthHeaderProvider();
     }
 
     @Override

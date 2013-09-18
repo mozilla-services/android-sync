@@ -8,8 +8,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
-import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionCreationDelegate;
 
 import android.content.Context;
@@ -27,7 +27,7 @@ public class Server11Repository extends Repository {
   protected String collection;
   private String collectionPath;
   private URI collectionPathURI;
-  public CredentialsSource credentialsSource;
+  protected final AuthHeaderProvider authHeaderProvider;
   public static final String VERSION_PATH_FRAGMENT = "1.1/";
 
   /**
@@ -40,14 +40,14 @@ public class Server11Repository extends Repository {
    *        Name of the collection (string)
    * @throws URISyntaxException
    */
-  public Server11Repository(String serverURI, String username, String collection, CredentialsSource credentialsSource) throws URISyntaxException {
+  public Server11Repository(String serverURI, String username, String collection, AuthHeaderProvider authHeaderProvider) throws URISyntaxException {
     this.serverURI  = serverURI;
     this.username   = username;
     this.collection = collection;
 
     this.collectionPath = this.serverURI + VERSION_PATH_FRAGMENT + this.username + "/storage/" + this.collection;
     this.collectionPathURI = new URI(this.collectionPath);
-    this.credentialsSource = credentialsSource;
+    this.authHeaderProvider = authHeaderProvider;
   }
 
   @Override
@@ -108,5 +108,9 @@ public class Server11Repository extends Repository {
   @SuppressWarnings("static-method")
   protected String getDefaultSort() {
     return null;
+  }
+
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return authHeaderProvider;
   }
 }

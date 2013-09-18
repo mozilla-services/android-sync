@@ -39,11 +39,6 @@ public class JSONRecordFetcher {
 
     // SyncStorageRequestDelegate methods for fetching.
     @Override
-    public String credentials() {
-      return null;
-    }
-
-    @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
       return authHeaderProvider;
     }

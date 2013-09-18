@@ -9,21 +9,26 @@ import java.io.IOException;
 
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageRequestDelegate;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class BaseTestStorageRequestDelegate implements
     SyncStorageRequestDelegate {
-  public String _credentials;
 
-  @Override
-  public String credentials() {
-    return _credentials;
+  protected final AuthHeaderProvider authHeaderProvider;
+
+  public BaseTestStorageRequestDelegate(AuthHeaderProvider authHeaderProvider) {
+    this.authHeaderProvider = authHeaderProvider;
+  }
+
+  public BaseTestStorageRequestDelegate(String username, String password) {
+    this(new BasicAuthHeaderProvider(username, password));
   }
 
   @Override
   public AuthHeaderProvider getAuthHeaderProvider() {
-    return null;
+    return authHeaderProvider;
   }
 
   @Override
