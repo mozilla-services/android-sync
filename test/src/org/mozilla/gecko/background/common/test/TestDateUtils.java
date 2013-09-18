@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import org.mozilla.gecko.background.common.DateUtils;
+import org.mozilla.gecko.background.common.DateUtils.DateFormatter;
 import org.mozilla.gecko.background.common.GlobalConstants;
 
 //import android.util.SparseArray;
@@ -36,6 +37,13 @@ public class TestDateUtils extends TestCase {
     for (long i = 0L; i < (2 * GlobalConstants.MILLISECONDS_PER_DAY); i += 11000) {
       checkDateString(i);
     }
+  }
+
+  @SuppressWarnings("static-method")
+  public void testReuse() {
+    DateFormatter formatter = new DateFormatter();
+    long time = System.currentTimeMillis();
+    assertEquals(formatter.getDateString(time), formatter.getDateString(time));
   }
 
   // Perf tests. Disabled until you need them.
