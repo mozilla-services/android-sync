@@ -40,9 +40,12 @@ public class PrunePolicy {
   public void tick(final long time) {
     try {
       try {
-        attemptPruneBySize(time);
-        attemptExpiration(time);
-        attemptStorageCleanup(time);
+        boolean pruned = attemptPruneBySize(time);
+        pruned = attemptExpiration(time) ? true : pruned;
+        // We only need to cleanup after a large pruning.
+        if (pruned) {
+          attemptStorageCleanup(time);
+        }
       } catch (Exception e) {
         // While catching Exception is ordinarily bad form, this Service runs in the same process
         // as Fennec so if we crash, it crashes. Additionally, this Service runs regularly so
