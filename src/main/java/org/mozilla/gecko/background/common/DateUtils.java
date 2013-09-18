@@ -13,8 +13,8 @@ public class DateUtils {
   private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
   public static final class DateFormatter {
-    private Calendar calendar;
-    private Formatter formatter;
+    private final Calendar calendar;
+    private final Formatter formatter;
 
     public DateFormatter() {
       this.calendar = Calendar.getInstance(UTC);
