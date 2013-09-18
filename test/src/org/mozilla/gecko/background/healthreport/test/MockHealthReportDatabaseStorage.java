@@ -7,7 +7,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import org.json.JSONObject;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields.FieldSpec;
 
@@ -18,7 +18,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   public long now = System.currentTimeMillis();
 
   public long getOneDayAgo() {
-    return now - HealthReportConstants.MILLISECONDS_PER_DAY;
+    return now - GlobalConstants.MILLISECONDS_PER_DAY;
   }
 
   public int getYesterday() {
@@ -34,7 +34,7 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
   }
 
   public long getGivenDaysAgoMillis(int numDays) {
-    return now - numDays * HealthReportConstants.MILLISECONDS_PER_DAY;
+    return now - numDays * GlobalConstants.MILLISECONDS_PER_DAY;
   }
 
   public MockHealthReportDatabaseStorage(Context context, File fakeProfileDirectory) {
