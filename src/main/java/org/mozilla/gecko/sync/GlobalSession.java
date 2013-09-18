@@ -134,11 +134,9 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     this.context         = context;
     this.clientsDelegate = clientsDelegate;
 
-    config = new SyncConfiguration(prefsPath, this);
+    config = new SyncConfiguration(username, password, prefsPath, this);
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;
-    config.username      = username;
-    config.password      = password;
     config.syncKeyBundle = syncKeyBundle;
 
     registerCommands();

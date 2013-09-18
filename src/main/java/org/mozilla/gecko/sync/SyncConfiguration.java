@@ -184,14 +184,15 @@ public class SyncConfiguration {
   public String          userAPI;
   public URI             serverURL;
   public URI             clusterURL;
-  public String          username;
   public KeyBundle       syncKeyBundle;
 
   public CollectionKeys  collectionKeys;
   public InfoCollections infoCollections;
   public MetaGlobal      metaGlobal;
-  public String          password;
   public String          syncID;
+
+  protected final String username;
+  protected final String password;
 
   /**
    * Persisted collection of enabledEngineNames.
@@ -269,7 +270,9 @@ public class SyncConfiguration {
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
    * provide access to preferences.
    */
-  public SyncConfiguration(String prefsPath, PrefsSource prefsSource) {
+  public SyncConfiguration(String username, String password, String prefsPath, PrefsSource prefsSource) {
+    this.username = username;
+    this.password = password;
     this.prefsPath   = prefsPath;
     this.prefsSource = prefsSource;
     this.loadFromPrefs(getPrefs());
