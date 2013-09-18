@@ -107,7 +107,7 @@ public class TestServer11RepositorySession {
   }
 
   public class TestSyncStorageRequestDelegate extends
-      BaseTestStorageRequestDelegate {
+  BaseTestStorageRequestDelegate {
     public TestSyncStorageRequestDelegate(String username, String password) {
       super(username, password);
     }
@@ -153,7 +153,7 @@ public class TestServer11RepositorySession {
     final String COLLECTION = "test";
 
     final TrackingWBORepository local = getLocal(100);
-    final Server11Repository remote = new Server11Repository(TEST_SERVER, TEST_USERNAME, COLLECTION, authHeaderProvider);
+    final Server11Repository remote = new Server11Repository(COLLECTION, getCollectionURL(COLLECTION), authHeaderProvider);
     KeyBundle collectionKey = new KeyBundle(TEST_USERNAME, SYNC_KEY);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey);
     cryptoRepo.recordFactory = new BookmarkRecordFactory();
@@ -169,6 +169,10 @@ public class TestServer11RepositorySession {
     } finally {
       data.stopHTTPServer();
     }
+  }
+
+  protected String getCollectionURL(String collection) {
+    return LOCAL_BASE_URL + "/storage/" + collection;
   }
 
   @Test
@@ -219,7 +223,9 @@ public class TestServer11RepositorySession {
       }
     };
     final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(LOCAL_COUNTS_URL, getAuthHeaderProvider());
-    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, TEST_USERNAME, "bookmarks",
+    String collection = "bookmarks";
+    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(collection,
+        getCollectionURL(collection),
         getAuthHeaderProvider(), 5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);

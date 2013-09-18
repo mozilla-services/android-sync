@@ -21,12 +21,8 @@ import android.content.Context;
  * @author rnewman
  */
 public class Server11Repository extends Repository {
-
-  private String serverURI;
-  private String username;
   protected String collection;
-  private String collectionPath;
-  private URI collectionPathURI;
+  protected URI collectionURI;
   protected final AuthHeaderProvider authHeaderProvider;
   public static final String VERSION_PATH_FRAGMENT = "1.1/";
 
@@ -40,13 +36,9 @@ public class Server11Repository extends Repository {
    *        Name of the collection (string)
    * @throws URISyntaxException
    */
-  public Server11Repository(String serverURI, String username, String collection, AuthHeaderProvider authHeaderProvider) throws URISyntaxException {
-    this.serverURI  = serverURI;
-    this.username   = username;
+  public Server11Repository(String collection, String collectionPath, AuthHeaderProvider authHeaderProvider) throws URISyntaxException {
     this.collection = collection;
-
-    this.collectionPath = this.serverURI + VERSION_PATH_FRAGMENT + this.username + "/storage/" + this.collection;
-    this.collectionPathURI = new URI(this.collectionPath);
+    this.collectionURI = new URI(collectionPath);
     this.authHeaderProvider = authHeaderProvider;
   }
 
@@ -57,7 +49,7 @@ public class Server11Repository extends Repository {
   }
 
   public URI collectionURI() {
-    return this.collectionPathURI;
+    return this.collectionURI;
   }
 
   public URI collectionURI(boolean full, long newer, long limit, String sort, String ids) throws URISyntaxException {
@@ -81,7 +73,7 @@ public class Server11Repository extends Repository {
     }
 
     if (params.size() == 0) {
-      return this.collectionPathURI;
+      return this.collectionURI;
     }
 
     StringBuilder out = new StringBuilder();
@@ -91,12 +83,12 @@ public class Server11Repository extends Repository {
       indicator = '&';
       out.append(param);
     }
-    String uri = this.collectionPath + out.toString();
+    String uri = this.collectionURI + out.toString();
     return new URI(uri);
   }
 
   public URI wboURI(String id) throws URISyntaxException {
-    return new URI(this.collectionPath + "/" + id);
+    return new URI(this.collectionURI + "/" + id);
   }
 
   // Override these.

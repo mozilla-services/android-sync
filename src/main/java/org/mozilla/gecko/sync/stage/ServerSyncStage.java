@@ -145,9 +145,9 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
 
   // Override this in subclasses.
   protected Repository getRemoteRepository() throws URISyntaxException {
-    return new Server11Repository(session.config.getClusterURLString(),
-                                  session.config.username,
-                                  getCollection(),
+    String collection = getCollection();
+    return new Server11Repository(collection,
+                                  session.config.getCollectionURLString(collection),
                                   session.getAuthHeaderProvider());
   }
 

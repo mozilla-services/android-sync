@@ -79,7 +79,7 @@ public class TestSafeConstrainedServer11Repository {
 
       final int TEST_LIMIT = 1000;
       final SafeConstrainedServer11Repository repo = new SafeConstrainedServer11Repository(
-          TEST_SERVER, TEST_USERNAME, collection, null, TEST_LIMIT, sort, countFetcher);
+          collection, getCollectionURL(collection), null, TEST_LIMIT, sort, countFetcher);
 
       final AtomicBoolean shouldSkipLots = new AtomicBoolean(false);
       final AtomicBoolean shouldSkipFew = new AtomicBoolean(true);
@@ -127,5 +127,9 @@ public class TestSafeConstrainedServer11Repository {
     } finally {
       data.stopHTTPServer();
     }
+  }
+
+  protected String getCollectionURL(String collection) {
+    return TEST_BASE_PATH + "/storage/" + collection;
   }
 }

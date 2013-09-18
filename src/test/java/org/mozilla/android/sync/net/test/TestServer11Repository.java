@@ -1,3 +1,6 @@
+/* Any copyright is dedicated to the Public Domain.
+   http://creativecommons.org/publicdomain/zero/1.0/ */
+
 package org.mozilla.android.sync.net.test;
 
 import static org.junit.Assert.assertEquals;
@@ -10,9 +13,8 @@ import org.mozilla.gecko.sync.repositories.Server11Repository;
 
 public class TestServer11Repository {
 
-  private static final String SERVER_URI = "http://foo.com/";
-  private static final String USERNAME   = "johndoe";
   private static final String COLLECTION = "bookmarks";
+  private static final String COLLECTION_URL = "http://foo.com/1.1/n6ec3u5bee3tixzp2asys7bs6fve4jfw/storage/" + COLLECTION;
 
   public static void assertQueryEquals(String expected, URI u) {
     assertEquals(expected, u.getRawQuery());
@@ -21,7 +23,7 @@ public class TestServer11Repository {
   @SuppressWarnings("static-method")
   @Test
   public void testCollectionURI() throws URISyntaxException {
-    Server11Repository r = new Server11Repository(SERVER_URI, USERNAME, COLLECTION, null);
+    Server11Repository r = new Server11Repository(COLLECTION, COLLECTION_URL, null);
     assertQueryEquals("full=1&newer=5000.000",              r.collectionURI(true,  5000000L, -1,    null, null));
     assertQueryEquals("newer=1230.000",                     r.collectionURI(false, 1230000L, -1,    null, null));
     assertQueryEquals("newer=5000.000&limit=10",            r.collectionURI(false, 5000000L, 10,    null, null));

@@ -32,15 +32,14 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
   // This can be lazily evaluated if we need it.
   private JSONRecordFetcher countFetcher;
 
-  public SafeConstrainedServer11Repository(String serverURI,
-                                           String username,
-                                           String collection,
+  public SafeConstrainedServer11Repository(String collection,
+                                           String collectionPath,
                                            AuthHeaderProvider authHeaderProvider,
                                            long limit,
                                            String sort,
                                            JSONRecordFetcher countFetcher)
     throws URISyntaxException {
-    super(serverURI, username, collection, authHeaderProvider, limit, sort);
+    super(collection, collectionPath, authHeaderProvider, limit, sort);
     this.countFetcher = countFetcher;
   }
 

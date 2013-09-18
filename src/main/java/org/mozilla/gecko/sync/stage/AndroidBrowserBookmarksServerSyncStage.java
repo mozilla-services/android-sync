@@ -44,9 +44,10 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
     // going to screw up. SafeConstrainedServer11Repository does this. See Bug 814331.
     AuthHeaderProvider authHeaderProvider = session.getAuthHeaderProvider();
     final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(session.config.infoCollectionCountsURL(), authHeaderProvider);
-    return new SafeConstrainedServer11Repository(session.config.getClusterURLString(),
-                                                 session.config.username,
-                                                 getCollection(),
+    String collection = getCollection();
+    return new SafeConstrainedServer11Repository(
+                                                 collection,
+                                                 session.config.getCollectionURLString(collection),
                                                  session.getAuthHeaderProvider(),
                                                  BOOKMARKS_REQUEST_LIMIT,
                                                  BOOKMARKS_SORT,
