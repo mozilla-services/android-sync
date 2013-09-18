@@ -53,15 +53,7 @@ public class PrunePolicyDatabaseStorage implements PrunePolicyStorage {
    * other methods (e.g. {@link pruneEvents}) as well.
    */
   public int deleteDataBefore(final long time) {
-    final int currentEnvironmentID;
-    try {
-      currentEnvironmentID = getCurrentEnvironmentID();
-    } catch (IllegalStateException e) {
-      Logger.error(LOG_TAG, "Could not delete data - the current environment could not be " +
-          "retrieved.", e);
-      return -1;
-    }
-    return getStorage().deleteDataBefore(time, currentEnvironmentID);
+    return getStorage().deleteDataBefore(time, getCurrentEnvironmentID());
   }
 
   public boolean shouldCleanupEarly() {
