@@ -31,6 +31,7 @@ import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
 import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
@@ -134,7 +135,9 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     this.context         = context;
     this.clientsDelegate = clientsDelegate;
 
-    config = new SyncConfiguration(username, password, prefsPath, this);
+    final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(username, password);
+    config = new SyncConfiguration(username, authHeaderProvider, prefsPath, this);
+
     config.userAPI       = userAPI;
     config.serverURL     = serverURI;
     config.syncKeyBundle = syncKeyBundle;
