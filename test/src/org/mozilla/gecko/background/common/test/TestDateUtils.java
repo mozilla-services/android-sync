@@ -25,7 +25,7 @@ public class TestDateUtils extends TestCase {
 
   private void checkDateString(long time) {
     assertEquals(getDateStringUsingFormatter(time),
-                 DateUtils.getDateString(time));
+                 new DateUtils.DateFormatter().getDateString(time));
   }
 
   public void testDateImplementations() {

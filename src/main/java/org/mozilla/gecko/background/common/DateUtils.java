@@ -38,8 +38,4 @@ public class DateUtils {
   public static int getDay(final long time) {
     return (int) Math.floor(time / GlobalConstants.MILLISECONDS_PER_DAY);
   }
-
-  public static String getDateString(long time) {
-    return new DateFormatter().getDateString(time);
-  }
 }

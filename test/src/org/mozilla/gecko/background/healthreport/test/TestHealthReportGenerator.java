@@ -251,7 +251,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
 
     long now = System.currentTimeMillis();
     JSONObject document = gen.generateDocument(0, 0, env1);
-    String today = DateUtils.getDateString(now);
+    String today = new DateUtils.DateFormatter().getDateString(now);
 
     assertFalse(document.has("lastPingDate"));
     document = gen.generateDocument(0, HealthReportConstants.EARLIEST_LAST_PING, env1);
@@ -345,7 +345,7 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
 
     long now = System.currentTimeMillis();
     int day = storage.getDay(now);
-    final String todayString = DateUtils.getDateString(now);
+    final String todayString = new DateUtils.DateFormatter().getDateString(now);
 
     int counter = storage.getField("org.mozilla.testm5", 1, "counter").getID();
     int discrete_int = storage.getField("org.mozilla.testm5", 1, "discrete_int").getID();
