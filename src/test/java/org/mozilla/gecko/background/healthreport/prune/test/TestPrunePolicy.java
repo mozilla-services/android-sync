@@ -136,7 +136,7 @@ public class TestPrunePolicy {
 
   @Test
   public void testAttemptPruneBySizeSkewed() throws Exception {
-    setNextPruneBySizeTime(START_TIME + getPruneBySizeSkewLimit() + 1);
+    setNextPruneBySizeTime(START_TIME + getMinimumTimeBetweenPruneBySizeChecks() + 1);
     attemptPruneBySize(START_TIME);
 
     // Skewed so the next time is reset.
@@ -209,7 +209,7 @@ public class TestPrunePolicy {
 
   @Test
   public void testAttemptExpirationSkewed() throws Exception {
-    setNextExpirationTime(START_TIME + getExpirationSkewLimit() + 1);
+    setNextExpirationTime(START_TIME + getMinimumTimeBetweenExpirationChecks() + 1);
     attemptExpiration(START_TIME);
 
     // Skewed so the next time is reset.
@@ -250,7 +250,7 @@ public class TestPrunePolicy {
 
   @Test
   public void testAttemptCleanupSkewed() throws Exception {
-    setNextCleanupTime(START_TIME + getCleanupSkewLimit() + 1);
+    setNextCleanupTime(START_TIME + getMinimumTimeBetweenCleanupChecks() + 1);
     attemptStorageCleanup(START_TIME);
 
     // Skewed so the next time is reset.
@@ -275,10 +275,6 @@ public class TestPrunePolicy {
     return HealthReportConstants.MAX_EVENT_COUNT;
   }
 
-  public long getPruneBySizeSkewLimit() {
-    return HealthReportConstants.PRUNE_BY_SIZE_SKEW_LIMIT_MILLIS;
-  }
-
   public long getMinimumTimeBetweenPruneBySizeChecks() {
     return HealthReportConstants.MINIMUM_TIME_BETWEEN_PRUNE_BY_SIZE_CHECKS_MILLIS;
   }
@@ -295,10 +291,6 @@ public class TestPrunePolicy {
     return sharedPrefs.contains(HealthReportConstants.PREF_PRUNE_BY_SIZE_TIME);
   }
 
-  public long getExpirationSkewLimit() {
-    return HealthReportConstants.EXPIRATION_SKEW_LIMIT_MILLIS;
-  }
-
   public long getMinimumTimeBetweenExpirationChecks() {
     return HealthReportConstants.MINIMUM_TIME_BETWEEN_EXPIRATION_CHECKS_MILLIS;
   }
@@ -313,10 +305,6 @@ public class TestPrunePolicy {
 
   public boolean containsNextExpirationTime() {
     return sharedPrefs.contains(HealthReportConstants.PREF_EXPIRATION_TIME);
-  }
-
-  public long getCleanupSkewLimit() {
-    return HealthReportConstants.CLEANUP_SKEW_LIMIT_MILLIS;
   }
 
   public long getMinimumTimeBetweenCleanupChecks() {

@@ -71,7 +71,7 @@ public class PrunePolicy {
 
     // If the system clock is skewed into the past, making the time between prunes too long, reset
     // the clock.
-    if (nextPrune > getPruneBySizeSkewLimitMillis() + time) {
+    if (nextPrune > getMinimumTimeBetweenPruneBySizeChecks() + time) {
       Logger.debug(LOG_TAG, "Clock skew detected - resetting prune-by-size time.");
       editor.setNextPruneBySizeTime(time + getMinimumTimeBetweenPruneBySizeChecks());
       return false;
@@ -112,7 +112,7 @@ public class PrunePolicy {
 
     // If the system clock is skewed into the past, making the time between prunes too long, reset
     // the clock.
-    if (nextPrune > getExpirationSkewLimitMillis() + time) {
+    if (nextPrune > getMinimumTimeBetweenExpirationChecks() + time) {
       Logger.debug(LOG_TAG, "Clock skew detected - resetting expiration time.");
       editor.setNextExpirationTime(time + getMinimumTimeBetweenExpirationChecks());
       return false;
@@ -141,7 +141,7 @@ public class PrunePolicy {
 
     // If the system clock is skewed into the past, making the time between cleanups too long,
     // reset the clock.
-    if (nextCleanup > getCleanupSkewLimitMillis() + time) {
+    if (nextCleanup > getMinimumTimeBetweenCleanupChecks() + time) {
       Logger.debug(LOG_TAG, "Clock skew detected - resetting cleanup time.");
       editor.setNextCleanupTime(time + getMinimumTimeBetweenCleanupChecks());
       return false;
@@ -196,20 +196,12 @@ public class PrunePolicy {
     return HealthReportConstants.MINIMUM_TIME_BETWEEN_EXPIRATION_CHECKS_MILLIS;
   }
 
-  private long getExpirationSkewLimitMillis() {
-    return HealthReportConstants.EXPIRATION_SKEW_LIMIT_MILLIS;
-  }
-
   private long getNextPruneBySizeTime() {
     return getSharedPreferences().getLong(HealthReportConstants.PREF_PRUNE_BY_SIZE_TIME, -1L);
   }
 
   private long getMinimumTimeBetweenPruneBySizeChecks() {
     return HealthReportConstants.MINIMUM_TIME_BETWEEN_PRUNE_BY_SIZE_CHECKS_MILLIS;
-  }
-
-  private long getPruneBySizeSkewLimitMillis() {
-    return HealthReportConstants.PRUNE_BY_SIZE_SKEW_LIMIT_MILLIS;
   }
 
   private int getMaxEnvironmentCount() {
@@ -234,9 +226,5 @@ public class PrunePolicy {
 
   private long getMinimumTimeBetweenCleanupChecks() {
     return HealthReportConstants.MINIMUM_TIME_BETWEEN_CLEANUP_CHECKS_MILLIS;
-  }
-
-  private long getCleanupSkewLimitMillis() {
-    return HealthReportConstants.CLEANUP_SKEW_LIMIT_MILLIS;
   }
 }
