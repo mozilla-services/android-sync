@@ -11,6 +11,46 @@ WARNING="These files are managed in the android-sync repo. Do not modify directl
 echo "Creating README.txt."
 echo $WARNING > $SERVICES/README.txt
 
+echo "Copying background tests..."
+BACKGROUND_TESTS_DIR=$ANDROID/tests/background/junit3
+mkdir -p $BACKGROUND_TESTS_DIR
+
+BACKGROUND_SRC_DIR="test/src/org/mozilla/gecko/background"
+BACKGROUND_TESTHELPERS_SRC_DIR="src/main/java/org/mozilla/gecko/background/testhelpers"
+
+BACKGROUND_TESTS_JAVA_FILES=$(find \
+  $BACKGROUND_SRC_DIR/* \
+  $BACKGROUND_TESTHELPERS_SRC_DIR/* \
+  -name '*.java' \
+  | sed "s,^$BACKGROUND_SRC_DIR,src," \
+  | sed "s,^$BACKGROUND_TESTHELPERS_SRC_DIR,src/testhelpers," \
+  | $SORT_CMD)
+
+BACKGROUND_TESTS_RES_FILES=$(find \
+  "test/res" \
+  -type f \
+  | sed "s,^test/res,res," \
+  | $SORT_CMD)
+
+mkdir -p $BACKGROUND_TESTS_DIR/src
+rsync -C -a \
+  $BACKGROUND_SRC_DIR/* \
+  $BACKGROUND_TESTS_DIR/src
+
+mkdir -p $BACKGROUND_TESTS_DIR/src/testhelpers
+rsync -C -a \
+  $BACKGROUND_TESTHELPERS_SRC_DIR/* \
+  $BACKGROUND_TESTS_DIR/src/testhelpers
+
+rsync -C -a \
+  test/res \
+  $BACKGROUND_TESTS_DIR
+
+rsync -C -a \
+  test/AndroidManifest.xml.in \
+  $BACKGROUND_TESTS_DIR
+echo "Copying background tests... done."
+
 echo "Copying manifests..."
 rsync -a manifests $SERVICES/
 
@@ -149,6 +189,15 @@ dump_mkfile_variable "SYNC_RES_XML" "$SYNC_RES_XML"
 dump_mkfile_variable "SYNC_PP_RES_XML" "$SYNC_PP_RES_XML"
 
 dump_mkfile_variable "SYNC_THIRDPARTY_JAVA_FILES" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
+
+
+# Creating Makefile for Mozilla.
+MKFILE=$ANDROID/tests/background/junit3/android-services-files.mk
+echo "Creating background tests makefile for including in the Mozilla build system at $MKFILE"
+cat tools/makefile_mpl.txt > $MKFILE
+echo "# $WARNING" >> $MKFILE
+dump_mkfile_variable "BACKGROUND_TESTS_JAVA_FILES" "$BACKGROUND_TESTS_JAVA_FILES"
+dump_mkfile_variable "BACKGROUND_TESTS_RES_FILES" "$BACKGROUND_TESTS_RES_FILES"
 
 # Finished creating Makefile for Mozilla.
 
