@@ -50,8 +50,6 @@ public class TestPrunePolicy {
     public boolean wasDeleteDataBeforeCalled = false;
     public boolean wasCleanupCalled = false;
 
-    public boolean shouldCleanupEarly = false;
-
     public MockPrunePolicyStorage() { }
 
     public void pruneEvents(final int maxNumToPrune) {
@@ -65,10 +63,6 @@ public class TestPrunePolicy {
     public int deleteDataBefore(final long time) {
       wasDeleteDataBeforeCalled = true;
       return -1;
-    }
-
-    public boolean shouldCleanupEarly() {
-      return shouldCleanupEarly;
     }
 
     public void cleanup() {
@@ -262,16 +256,6 @@ public class TestPrunePolicy {
     // Skewed so the next time is reset.
     assertEquals(START_TIME + getMinimumTimeBetweenCleanupChecks(), getNextCleanupTime());
     assertFalse(storage.wasCleanupCalled);
-  }
-
-  @Test
-  public void testAttemptCleanupShouldCleanupEarly() throws Exception {
-    setNextCleanupTime(START_TIME - 1);
-    storage.shouldCleanupEarly = true;
-    attemptStorageCleanup(START_TIME);
-
-    assertEquals(START_TIME + getMinimumTimeBetweenCleanupChecks(), getNextCleanupTime());
-    assertTrue(storage.wasCleanupCalled);
   }
 
   @Test

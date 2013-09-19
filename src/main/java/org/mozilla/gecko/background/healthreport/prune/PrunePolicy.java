@@ -17,8 +17,8 @@ import android.content.SharedPreferences;
  *   2) Expired data pruning: Data that is kept around longer than is useful.
  *   3) Cleanup: To deal with storage maintenance (e.g. bloat and fragmentation)
  *
- * (1) and (2) are performed periodically on their own schedules. (3) will occur via a timed
- * schedule (like (1) and (2)), or additionally when cleanup is required.
+ * (1) and (2) are performed periodically on their own schedules. (3) will activate after a
+ * certain duration but only after (1) or (2) is performed.
  */
 public class PrunePolicy {
   public static final String LOG_TAG = PrunePolicy.class.getSimpleName();
@@ -131,13 +131,6 @@ public class PrunePolicy {
   }
 
   protected boolean attemptStorageCleanup(final long time) {
-    if (storage.shouldCleanupEarly()) {
-      Logger.debug(LOG_TAG, "Cleanup up storage early.");
-      editor.setNextCleanupTime(time + getMinimumTimeBetweenCleanupChecks());
-      storage.cleanup();
-      return true;
-    }
-
     // Cleanup if max duration since last cleanup is exceeded.
     final long nextCleanup = getNextCleanupTime();
     if (nextCleanup < 0) {

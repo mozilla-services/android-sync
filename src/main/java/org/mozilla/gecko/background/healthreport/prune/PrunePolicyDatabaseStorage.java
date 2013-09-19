@@ -7,7 +7,6 @@ package org.mozilla.gecko.background.healthreport.prune;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.healthreport.Environment;
 import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 
@@ -18,8 +17,7 @@ import android.content.Context;
  * Abstracts over the Storage instance behind the PrunePolicy. The underlying storage instance is
  * a {@link HealthReportDatabaseStorage} instance. Since our cleanup routine vacuums, auto_vacuum
  * can be disabled. It is enabled by default, however, turning it off requires an expensive vacuum
- * so we wait until our first {@link cleanup} call since we are vacuuming anyway. Note that this
- * cleanup must be time-based - see {@link shouldCleanupEarly}.
+ * so we wait until our first {@link cleanup} call since we are vacuuming anyway.
  */
 public class PrunePolicyDatabaseStorage implements PrunePolicyStorage {
   public static final String LOG_TAG = PrunePolicyDatabaseStorage.class.getSimpleName();
@@ -54,22 +52,6 @@ public class PrunePolicyDatabaseStorage implements PrunePolicyStorage {
    */
   public int deleteDataBefore(final long time) {
     return getStorage().deleteDataBefore(time, getCurrentEnvironmentID());
-  }
-
-  public boolean shouldCleanupEarly() {
-    final HealthReportDatabaseStorage storage = getStorage();
-    // If auto_vacuum is enabled, there are no free pages and we can't get the free page ratio in
-    // order to know if we need to vacuum on fragmentation amount.
-    if (storage.isAutoVacuumingDisabled()) {
-      final float freePageRatio = storage.getFreePageRatio();
-      final float freePageRatioLimit = getFreePageRatioLimit();
-      if (freePageRatio > freePageRatioLimit) {
-        Logger.debug(LOG_TAG, "Vacuuming based on fragmentation amount: " + freePageRatio + " / " +
-            freePageRatioLimit);
-        return true;
-      }
-    }
-    return false;
   }
 
   public void cleanup() {
@@ -145,9 +127,5 @@ public class PrunePolicyDatabaseStorage implements PrunePolicyStorage {
       currentEnvironmentID = env.register();
     }
     return currentEnvironmentID;
-  }
-
-  private float getFreePageRatioLimit() {
-    return HealthReportConstants.DB_FREE_PAGE_RATIO_LIMIT;
   }
 }

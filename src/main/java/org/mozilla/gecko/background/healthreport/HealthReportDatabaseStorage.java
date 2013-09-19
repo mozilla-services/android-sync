@@ -1030,19 +1030,6 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     }
   }
 
-  protected long getLongFromQuery(final String sql, final String[] selectionArgs) {
-    final SQLiteDatabase db = this.helper.getReadableDatabase();
-    final Cursor c = db.rawQuery(sql, selectionArgs);
-    try {
-      if (!c.moveToFirst()) {
-        throw new IllegalStateException("Cursor is empty.");
-      }
-      return c.getLong(0);
-    } finally {
-      c.close();
-    }
-  }
-
   @Override
   public int getDay(long time) {
     return DateUtils.getDay(time);
@@ -1553,26 +1540,5 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   public void disableAutoVacuuming() {
     final SQLiteDatabase db = this.helper.getWritableDatabase();
     db.execSQL("PRAGMA auto_vacuum=0");
-  }
-
-  public boolean isAutoVacuumingDisabled() {
-    return getIntFromQuery("PRAGMA auto_vacuum", null) == 0;
-  }
-
-  public long getPageCount() {
-    return getLongFromQuery("PRAGMA page_count", null);
-  }
-
-  public long getFreelistCount() {
-    return getLongFromQuery("PRAGMA freelist_count", null);
-  }
-
-  public float getFreePageRatio() {
-    final long freelistCount = getFreelistCount();
-    final long pageCount = getPageCount();
-    if (pageCount == 0) {
-      return 0;
-    }
-    return (float) freelistCount / pageCount;
   }
 }

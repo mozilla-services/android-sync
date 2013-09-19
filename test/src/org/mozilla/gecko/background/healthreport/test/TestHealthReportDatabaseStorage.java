@@ -609,11 +609,19 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     // only after a vacuum command.
     db.execSQL("PRAGMA auto_vacuum=0");
     db.execSQL("vacuum");
-    assertTrue(storage.isAutoVacuumingDisabled());
+    assertTrue(isAutoVacuumingDisabled(storage));
 
     createFreePages(storage);
     storage.vacuum();
-    assertEquals(0, storage.getFreelistCount());
+    assertEquals(0, getFreelistCount(storage));
+  }
+
+  public long getFreelistCount(final MockHealthReportDatabaseStorage storage) {
+    return storage.getIntFromQuery("PRAGMA freelist_count", null);
+  }
+
+  public boolean isAutoVacuumingDisabled(final MockHealthReportDatabaseStorage storage) {
+    return storage.getIntFromQuery("PRAGMA auto_vacuum", null) == 0;
   }
 
   private void createFreePages(final PrepopulatedMockHealthReportDatabaseStorage storage) throws Exception {
@@ -623,7 +631,7 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     for (int i = 10; i <= 1250; i *= 5) {
       storage.insertTextualEvents(i);
       db.delete("events_textual", "date < ?", new String[] {Integer.toString(i / 2)});
-      if (storage.getFreelistCount() > 0) {
+      if (getFreelistCount(storage) > 0) {
         return;
       }
     }
@@ -640,22 +648,6 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     assertEquals(1, storage.getIntFromQuery("PRAGMA auto_vacuum", null));
     storage.disableAutoVacuuming();
     db.execSQL("vacuum");
-    assertTrue(storage.isAutoVacuumingDisabled());
-  }
-
-  public void testIsAutoVacuumingDisabled() throws Exception {
-    final PrepopulatedMockHealthReportDatabaseStorage storage =
-        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
-    final SQLiteDatabase db = storage.getDB();
-    // The pragma changes only after a vacuum command.
-    db.execSQL("PRAGMA auto_vacuum=0");
-    db.execSQL("vacuum");
-    assertTrue(storage.isAutoVacuumingDisabled());
-    db.execSQL("PRAGMA auto_vacuum=1");
-    db.execSQL("vacuum");
-    assertFalse(storage.isAutoVacuumingDisabled());
-    db.execSQL("PRAGMA auto_vacuum=2");
-    db.execSQL("vacuum");
-    assertFalse(storage.isAutoVacuumingDisabled());
+    assertTrue(isAutoVacuumingDisabled(storage));
   }
 }

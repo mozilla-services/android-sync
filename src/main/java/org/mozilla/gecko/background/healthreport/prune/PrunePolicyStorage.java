@@ -13,7 +13,6 @@ public interface PrunePolicyStorage {
 
   public int deleteDataBefore(final long time);
 
-  public boolean shouldCleanupEarly();
   public void cleanup();
 
   public int getEventCount();
