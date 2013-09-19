@@ -11,6 +11,7 @@ import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields.FieldSpec;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -27,6 +28,10 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
 
   public int getToday() {
     return super.getDay(now);
+  }
+
+  public int getTomorrow() {
+    return super.getDay(now + GlobalConstants.MILLISECONDS_PER_DAY);
   }
 
   public int getGivenDaysAgo(int numDays) {
@@ -50,6 +55,31 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
     return new MockDatabaseEnvironment(this);
   }
 
+  @Override
+  public int deleteEnvAndEventsBefore(long time, int curEnv) {
+    return super.deleteEnvAndEventsBefore(time, curEnv);
+  }
+
+  @Override
+  public int deleteOrphanedEnv(int curEnv) {
+    return super.deleteOrphanedEnv(curEnv);
+  }
+
+  @Override
+  public int deleteEventsBefore(String dayString) {
+    return super.deleteEventsBefore(dayString);
+  }
+
+  @Override
+  public int deleteOrphanedAddons() {
+    return super.deleteOrphanedAddons();
+  }
+
+  @Override
+  public int getIntFromQuery(final String sql, final String[] selectionArgs) {
+    return super.getIntFromQuery(sql, selectionArgs);
+  }
+
   /**
    * A storage instance prepopulated with dummy data to be used for testing.
    *
@@ -66,14 +96,18 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
    * </pre>
    *
    * Don't forget to increment the {@link MAX_VERSION_USED} constant.
+   *
+   * Note that all instances of this class use the same underlying database and so each newly
+   * created instance will share the same data.
    */
   public static class PrepopulatedMockHealthReportDatabaseStorage extends MockHealthReportDatabaseStorage {
     // A constant to enforce which version constructor is the maximum used so far.
-    private int MAX_VERSION_USED = 1;
+    private int MAX_VERSION_USED = 2;
 
     public String[] measurementNames;
     public int[] measurementVers;
     public FieldSpecContainer[] fieldSpecContainers;
+    public int env;
     private final JSONObject addonJSON = new JSONObject(
         "{ " +
         "\"amznUWL2@amazon.com\": { " +
@@ -169,10 +203,10 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
       }
       this.finishInitialization();
 
-      final MockDatabaseEnvironment environment = this.getEnvironment();
+      MockDatabaseEnvironment environment = this.getEnvironment();
       environment.mockInit("v123");
       environment.setJSONForAddons(addonJSON);
-      final int env = environment.register();
+      env = environment.register();
 
       String mName = measurementNames[0];
       int mVer = measurementVers[0];
@@ -201,6 +235,41 @@ public class MockHealthReportDatabaseStorage extends HealthReportDatabaseStorage
       this.recordDailyDiscrete(env, this.getToday(), fieldID, 1);
       fieldID = this.getField(mName, mVer, fieldSpecCont.last.name).getID();
       this.recordDailyLast(env, this.getYesterday(), fieldID, 1);
+
+      if (version >= 2) {
+        // Insert more diverse environments.
+        for (int i = 1; i <= 3; i++) {
+          environment = this.getEnvironment();
+          environment.mockInit("v" + i);
+          env = environment.register();
+          this.recordDailyLast(env, this.getGivenDaysAgo(7 * i + 1), fieldID, 13);
+        }
+        environment = this.getEnvironment();
+        environment.mockInit("v4");
+        env = environment.register();
+        this.recordDailyLast(env, this.getGivenDaysAgo(1000), fieldID, 14);
+        this.recordDailyLast(env, this.getToday(), fieldID, 15);
+      }
+    }
+
+    public void insertTextualEvents(final int count) {
+      final ContentValues v = new ContentValues();
+      v.put("env", env);
+      final int fieldID = this.getField(measurementNames[0], measurementVers[0],
+          fieldSpecContainers[0].discrete.name).getID();
+      v.put("field", fieldID);
+      v.put("value", "data");
+      final SQLiteDatabase db = this.helper.getWritableDatabase();
+      db.beginTransaction();
+      try {
+        for (int i = 1; i <= count; i++) {
+          v.put("date", i);
+          db.insertOrThrow("events_textual", null, v);
+        }
+        db.setTransactionSuccessful();
+      } finally {
+        db.endTransaction();
+      }
     }
   }
 }

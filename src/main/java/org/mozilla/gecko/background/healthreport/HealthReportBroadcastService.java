@@ -2,12 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.background.healthreport.upload;
+package org.mozilla.gecko.background.healthreport;
 
 import org.mozilla.gecko.background.BackgroundService;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
+import org.mozilla.gecko.background.healthreport.prune.HealthReportPruneService;
+import org.mozilla.gecko.background.healthreport.upload.HealthReportUploadService;
+import org.mozilla.gecko.background.healthreport.upload.ObsoleteDocumentTracker;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -18,8 +20,8 @@ import android.content.SharedPreferences.Editor;
 
 /**
  * A service which listens to broadcast intents from the system and from the
- * browser, registering or unregistering the main
- * {@link HealthReportUploadStartReceiver} with the {@link AlarmManager}.
+ * browser, registering or unregistering the background health report services with the
+ * {@link AlarmManager}.
  */
 public class HealthReportBroadcastService extends BackgroundService {
   public static final String LOG_TAG = HealthReportBroadcastService.class.getSimpleName();
@@ -33,12 +35,22 @@ public class HealthReportBroadcastService extends BackgroundService {
     return this.getSharedPreferences(HealthReportConstants.PREFS_BRANCH, GlobalConstants.SHARED_PREFERENCES_MODE);
   }
 
-  public long getPollInterval() {
+  public long getSubmissionPollInterval() {
     return getSharedPreferences().getLong(HealthReportConstants.PREF_SUBMISSION_INTENT_INTERVAL_MSEC, HealthReportConstants.DEFAULT_SUBMISSION_INTENT_INTERVAL_MSEC);
   }
 
-  public void setPollInterval(long interval) {
+  public void setSubmissionPollInterval(final long interval) {
     getSharedPreferences().edit().putLong(HealthReportConstants.PREF_SUBMISSION_INTENT_INTERVAL_MSEC, interval).commit();
+  }
+
+  public long getPrunePollInterval() {
+    return getSharedPreferences().getLong(HealthReportConstants.PREF_PRUNE_INTENT_INTERVAL_MSEC,
+        HealthReportConstants.DEFAULT_PRUNE_INTENT_INTERVAL_MSEC);
+  }
+
+  public void setPrunePollInterval(final long interval) {
+    getSharedPreferences().edit().putLong(HealthReportConstants.PREF_PRUNE_INTENT_INTERVAL_MSEC,
+        interval).commit();
   }
 
   /**
@@ -58,26 +70,29 @@ public class HealthReportBroadcastService extends BackgroundService {
    *          submitting, <code>enabled</code> could be false but we could need
    *          to delete so <code>serviceEnabled</code> could be true.
    */
-  protected void toggleAlarm(final Context context, String profileName, String profilePath, boolean enabled, boolean serviceEnabled) {
-    Logger.info(LOG_TAG, (serviceEnabled ? "R" : "Unr") + "egistering health report start broadcast receiver.");
+  protected void toggleSubmissionAlarm(final Context context, String profileName, String profilePath,
+      boolean enabled, boolean serviceEnabled) {
+    final Class<?> serviceClass = HealthReportUploadService.class;
+    Logger.info(LOG_TAG, (serviceEnabled ? "R" : "Unr") + "egistering " +
+        serviceClass.getSimpleName() + ".");
 
     // PendingIntents are compared without reference to their extras. Therefore
     // even though we pass the profile details to the action, different
     // profiles will share the *same* pending intent. In a multi-profile future,
     // this will need to be addressed.  See Bug 882182.
-    final Intent service = new Intent(context, HealthReportUploadStartReceiver.class);
+    final Intent service = new Intent(context, serviceClass);
     service.setAction("upload"); // PendingIntents "lose" their extras if no action is set.
     service.putExtra("uploadEnabled", enabled);
     service.putExtra("profileName", profileName);
     service.putExtra("profilePath", profilePath);
-    final PendingIntent pending = PendingIntent.getBroadcast(context, 0, service, PendingIntent.FLAG_CANCEL_CURRENT);
+    final PendingIntent pending = PendingIntent.getService(context, 0, service, PendingIntent.FLAG_CANCEL_CURRENT);
 
     if (!serviceEnabled) {
       cancelAlarm(pending);
       return;
     }
 
-    final long pollInterval = getPollInterval();
+    final long pollInterval = getSubmissionPollInterval();
     scheduleAlarm(pollInterval, pending);
   }
 
@@ -85,17 +100,30 @@ public class HealthReportBroadcastService extends BackgroundService {
   protected void onHandleIntent(Intent intent) {
     Logger.setThreadLogTag(HealthReportConstants.GLOBAL_LOG_TAG);
 
+    // The same intent can be handled by multiple methods so do not short-circuit evaluate.
+    boolean handled = attemptHandleIntentForUpload(intent);
+    handled = attemptHandleIntentForPrune(intent) ? true : handled;
+
+    if (!handled) {
+      Logger.warn(LOG_TAG, "Unhandled intent with action " + intent.getAction() + ".");
+    }
+  }
+
+  /**
+   * Attempts to handle the given intent for FHR document upload. If it cannot, false is returned.
+   */
+  protected boolean attemptHandleIntentForUpload(final Intent intent) {
     if (HealthReportConstants.UPLOAD_FEATURE_DISABLED) {
       Logger.debug(LOG_TAG, "Health report upload feature is compile-time disabled; not handling intent.");
-      return;
+      return false;
     }
 
     final String action = intent.getAction();
     Logger.debug(LOG_TAG, "Health report upload feature is compile-time enabled; handling intent with action " + action + ".");
 
     if (HealthReportConstants.ACTION_HEALTHREPORT_UPLOAD_PREF.equals(action)) {
-      handlePrefIntent(intent);
-      return;
+      handleUploadPrefIntent(intent);
+      return true;
     }
 
     if (Intent.ACTION_BOOT_COMPLETED.equals(action) ||
@@ -103,11 +131,10 @@ public class HealthReportBroadcastService extends BackgroundService {
       BackgroundService.reflectContextToFennec(this,
           GlobalConstants.GECKO_PREFERENCES_CLASS,
           GlobalConstants.GECKO_BROADCAST_HEALTHREPORT_UPLOAD_PREF_METHOD);
-      return;
+      return true;
     }
 
-    // Failure case.
-    Logger.warn(LOG_TAG, "Unknown intent " + action + ".");
+    return false;
   }
 
   /**
@@ -115,7 +142,7 @@ public class HealthReportBroadcastService extends BackgroundService {
    * of the value of the user preference. Look at the value and toggle the
    * alarm service accordingly.
    */
-  protected void handlePrefIntent(Intent intent) {
+  protected void handleUploadPrefIntent(Intent intent) {
     if (!intent.hasExtra("enabled")) {
       Logger.warn(LOG_TAG, "Got " + HealthReportConstants.ACTION_HEALTHREPORT_UPLOAD_PREF + " intent without enabled. Ignoring.");
       return;
@@ -134,7 +161,8 @@ public class HealthReportBroadcastService extends BackgroundService {
       return;
     }
 
-    Logger.pii(LOG_TAG, "Updating health report alarm for profile " + profileName + " at " + profilePath + ".");
+    Logger.pii(LOG_TAG, "Updating health report upload alarm for profile " + profileName + " at " +
+        profilePath + ".");
 
     final SharedPreferences sharedPrefs = getSharedPreferences();
     final ObsoleteDocumentTracker tracker = new ObsoleteDocumentTracker(sharedPrefs);
@@ -160,6 +188,57 @@ public class HealthReportBroadcastService extends BackgroundService {
     // The user can toggle us off or on, or we can have obsolete documents to
     // remove.
     final boolean serviceEnabled = hasObsoleteIds || enabled;
-    toggleAlarm(this, profileName, profilePath, enabled, serviceEnabled);
+    toggleSubmissionAlarm(this, profileName, profilePath, enabled, serviceEnabled);
+  }
+
+  /**
+   * Attempts to handle the given intent for FHR data pruning. If it cannot, false is returned.
+   */
+  protected boolean attemptHandleIntentForPrune(final Intent intent) {
+    final String action = intent.getAction();
+    Logger.debug(LOG_TAG, "Prune: Handling intent with action, " + action + ".");
+
+    if (HealthReportConstants.ACTION_HEALTHREPORT_PRUNE.equals(action)) {
+      handlePruneIntent(intent);
+      return true;
+    }
+
+    if (Intent.ACTION_BOOT_COMPLETED.equals(action) ||
+        Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(action)) {
+      BackgroundService.reflectContextToFennec(this,
+          GlobalConstants.GECKO_PREFERENCES_CLASS,
+          GlobalConstants.GECKO_BROADCAST_HEALTHREPORT_PRUNE_METHOD);
+      return true;
+    }
+
+    return false;
+  }
+
+  protected void handlePruneIntent(final Intent intent) {
+    final String profileName = intent.getStringExtra("profileName");
+    final String profilePath = intent.getStringExtra("profilePath");
+
+    if (profileName == null || profilePath == null) {
+      Logger.warn(LOG_TAG, "Got " + HealthReportConstants.ACTION_HEALTHREPORT_PRUNE + " intent " +
+          "without profilePath or profileName. Ignoring.");
+      return;
+    }
+
+    final Class<?> serviceClass = HealthReportPruneService.class;
+    final Intent service = new Intent(this, serviceClass);
+    service.setAction("prune"); // Intents without actions have their extras removed.
+    service.putExtra("profileName", profileName);
+    service.putExtra("profilePath", profilePath);
+    final PendingIntent pending = PendingIntent.getService(this, 0, service,
+        PendingIntent.FLAG_CANCEL_CURRENT);
+
+    // Set a regular alarm to start PruneService. Since the various actions that PruneService can
+    // take occur on irregular intervals, we can be more efficient by only starting the Service
+    // when one of these time limits runs out.  However, subsequent Service invocations must then
+    // be registered by the PruneService itself, which would fail if the PruneService crashes.
+    // Thus, we set this regular (and slightly inefficient) alarm.
+    Logger.info(LOG_TAG, "Registering " + serviceClass.getSimpleName() + ".");
+    final long pollInterval = getPrunePollInterval();
+    scheduleAlarm(pollInterval, pending);
   }
 }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.background.common.GlobalConstants;
+import org.mozilla.gecko.background.healthreport.HealthReportStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.healthreport.test.MockHealthReportDatabaseStorage.PrepopulatedMockHealthReportDatabaseStorage;
@@ -265,6 +266,15 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     } catch (SQLiteConstraintException e) { }
   }
 
+  private int getTotalEventCount(HealthReportStorage storage) {
+    final Cursor c = storage.getEventsSince(0);
+    try {
+      return c.getCount();
+    } finally {
+      c.close();
+    }
+  }
+
   public void testCascadingDeletions() throws Exception {
     PrepopulatedMockHealthReportDatabaseStorage storage =
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
@@ -343,5 +353,301 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
       storage.recordDailyLast(envID, storage.getToday(), nonExistentFieldID, "iu");
       fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
     } catch (IllegalStateException e) { }
+  }
+
+  // Largely taken from testDeleteEnvAndEventsBefore and testDeleteOrphanedAddons.
+  public void testDeleteDataBefore() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    // Insert (and delete) an environment not referenced by any events.
+    ContentValues v = new ContentValues();
+    v.put("hash", "I really hope this is a unique hash! ^_^");
+    v.put("addonsID", DBHelpers.getExistentID(db, "addons"));
+    db.insertOrThrow("environments", null, v);
+    v.put("hash", "Another unique hash!");
+    final int curEnv = (int) db.insertOrThrow("environments", null, v);
+    final ContentValues addonV = new ContentValues();
+    addonV.put("body", "addon1");
+    db.insertOrThrow("addons", null, addonV);
+    // 2 = 1 addon + 1 env.
+    assertEquals(2, storage.deleteDataBefore(storage.getGivenDaysAgoMillis(8), curEnv));
+    assertEquals(1, storage.deleteDataBefore(storage.getGivenDaysAgoMillis(8),
+          DBHelpers.getNonExistentID(db, "environments")));
+    assertEquals(1, DBHelpers.getRowCount(db, "addons"));
+
+    // Insert (and delete) new environment and referencing events.
+    final long envID = db.insertOrThrow("environments", null, v);
+    v = new ContentValues();
+    v.put("date", storage.getGivenDaysAgo(9));
+    v.put("env", envID);
+    v.put("field", DBHelpers.getExistentID(db, "fields"));
+    db.insertOrThrow("events_integer", null, v);
+    db.insertOrThrow("events_integer", null, v);
+    assertEquals(16, getTotalEventCount(storage));
+    final int nonExistentEnvID = (int) DBHelpers.getNonExistentID(db, "environments");
+    assertEquals(1, storage.deleteDataBefore(storage.getGivenDaysAgoMillis(8), nonExistentEnvID));
+    assertEquals(14, getTotalEventCount(storage));
+
+    // Assert only pre-populated storage is stored.
+    assertEquals(1, DBHelpers.getRowCount(db, "environments"));
+
+    assertEquals(0, storage.deleteDataBefore(storage.getGivenDaysAgoMillis(5), nonExistentEnvID));
+    assertEquals(12, getTotalEventCount(storage));
+
+    assertEquals(0, storage.deleteDataBefore(storage.getGivenDaysAgoMillis(4), nonExistentEnvID));
+    assertEquals(10, getTotalEventCount(storage));
+
+    assertEquals(0, storage.deleteDataBefore(storage.now, nonExistentEnvID));
+    assertEquals(5, getTotalEventCount(storage));
+    assertEquals(1, DBHelpers.getRowCount(db, "addons"));
+
+    // 2 = 1 addon + 1 env.
+    assertEquals(2, storage.deleteDataBefore(storage.now + GlobalConstants.MILLISECONDS_PER_DAY,
+          nonExistentEnvID));
+    assertEquals(0, getTotalEventCount(storage));
+    assertEquals(0, DBHelpers.getRowCount(db, "addons"));
+  }
+
+  // Largely taken from testDeleteOrphanedEnv and testDeleteEventsBefore.
+  public void testDeleteEnvAndEventsBefore() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    // Insert (and delete) an environment not referenced by any events.
+    ContentValues v = new ContentValues();
+    v.put("hash", "I really hope this is a unique hash! ^_^");
+    v.put("addonsID", DBHelpers.getExistentID(db, "addons"));
+    db.insertOrThrow("environments", null, v);
+    v.put("hash", "Another unique hash!");
+    final int curEnv = (int) db.insertOrThrow("environments", null, v);
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(8), curEnv));
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(8),
+          DBHelpers.getNonExistentID(db, "environments")));
+
+    // Insert (and delete) new environment and referencing events.
+    final long envID = db.insertOrThrow("environments", null, v);
+    v = new ContentValues();
+    v.put("date", storage.getGivenDaysAgo(9));
+    v.put("env", envID);
+    v.put("field", DBHelpers.getExistentID(db, "fields"));
+    db.insertOrThrow("events_integer", null, v);
+    db.insertOrThrow("events_integer", null, v);
+    assertEquals(16, getTotalEventCount(storage));
+    final int nonExistentEnvID = (int) DBHelpers.getNonExistentID(db, "environments");
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(8), nonExistentEnvID));
+    assertEquals(14, getTotalEventCount(storage));
+
+    // Assert only pre-populated storage is stored.
+    assertEquals(1, DBHelpers.getRowCount(db, "environments"));
+
+    assertEquals(0, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(5), nonExistentEnvID));
+    assertEquals(12, getTotalEventCount(storage));
+
+    assertEquals(0, storage.deleteEnvAndEventsBefore(storage.getGivenDaysAgoMillis(4), nonExistentEnvID));
+    assertEquals(10, getTotalEventCount(storage));
+
+    assertEquals(0, storage.deleteEnvAndEventsBefore(storage.now, nonExistentEnvID));
+    assertEquals(5, getTotalEventCount(storage));
+
+    assertEquals(1, storage.deleteEnvAndEventsBefore(storage.now + GlobalConstants.MILLISECONDS_PER_DAY,
+          nonExistentEnvID));
+    assertEquals(0, getTotalEventCount(storage));
+  }
+
+  public void testDeleteOrphanedEnv() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final ContentValues v = new ContentValues();
+    v.put("addonsID", DBHelpers.getExistentID(db, "addons"));
+    v.put("hash", "unique");
+    final int envID = (int) db.insert("environments", null, v);
+
+    assertEquals(0, storage.deleteOrphanedEnv(envID));
+    assertEquals(1, storage.deleteOrphanedEnv(storage.env));
+    this.deleteEvents(db);
+    assertEquals(1, storage.deleteOrphanedEnv(envID));
+  }
+
+  private void deleteEvents(final SQLiteDatabase db) throws Exception {
+    db.beginTransaction();
+    try {
+      db.delete("events_integer", null, null);
+      db.delete("events_textual", null, null);
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+  }
+
+  public void testDeleteEventsBefore() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertEquals(2, storage.deleteEventsBefore(Integer.toString(storage.getGivenDaysAgo(5))));
+    assertEquals(12, getTotalEventCount(storage));
+
+    assertEquals(2, storage.deleteEventsBefore(Integer.toString(storage.getGivenDaysAgo(4))));
+    assertEquals(10, getTotalEventCount(storage));
+
+    assertEquals(5, storage.deleteEventsBefore(Integer.toString(storage.getToday())));
+    assertEquals(5, getTotalEventCount(storage));
+
+    assertEquals(5, storage.deleteEventsBefore(Integer.toString(storage.getTomorrow())));
+    assertEquals(0, getTotalEventCount(storage));
+  }
+
+  public void testDeleteOrphanedAddons() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+
+    final ArrayList<Integer> nonOrphanIDs = new ArrayList<Integer>();
+    final Cursor c = db.query("addons", new String[] {"id"}, null, null, null, null, null);
+    try {
+      assertTrue(c.moveToFirst());
+      do {
+        nonOrphanIDs.add(c.getInt(0));
+      } while (c.moveToNext());
+    } finally {
+      c.close();
+    }
+
+    // Ensure we don't delete non-orphans.
+    assertEquals(0, storage.deleteOrphanedAddons());
+
+    // Insert orphans.
+    final long[] orphanIDs = new long[2];
+    final ContentValues v = new ContentValues();
+    v.put("body", "addon1");
+    orphanIDs[0] = db.insertOrThrow("addons", null, v);
+    v.put("body", "addon2");
+    orphanIDs[1] = db.insertOrThrow("addons", null, v);
+    assertEquals(2, storage.deleteOrphanedAddons());
+    assertEquals(0, DBHelpers.getRowCount(db, "addons", "ID = ? OR ID = ?",
+        new String[] {Long.toString(orphanIDs[0]), Long.toString(orphanIDs[1])}));
+
+    // Orphan all addons.
+    db.delete("environments", null, null);
+    assertEquals(nonOrphanIDs.size(), storage.deleteOrphanedAddons());
+    assertEquals(0, DBHelpers.getRowCount(db, "addons"));
+  }
+
+  public void testGetEventCount() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertEquals(14, storage.getEventCount());
+    final SQLiteDatabase db = storage.getDB();
+    this.deleteEvents(db);
+    assertEquals(0, storage.getEventCount());
+  }
+
+  public void testGetEnvironmentCount() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    assertEquals(1, storage.getEnvironmentCount());
+    final SQLiteDatabase db = storage.getDB();
+    db.delete("environments", null, null);
+    assertEquals(0, storage.getEnvironmentCount());
+  }
+
+  public void testPruneEnvironments() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory, 2);
+    final SQLiteDatabase db = storage.getDB();
+    assertEquals(5, DBHelpers.getRowCount(db, "environments"));
+    storage.pruneEnvironments(1);
+    assertTrue(!getEnvAppVersions(db).contains("v3"));
+    storage.pruneEnvironments(2);
+    assertTrue(!getEnvAppVersions(db).contains("v2"));
+    assertTrue(!getEnvAppVersions(db).contains("v1"));
+    storage.pruneEnvironments(1);
+    assertTrue(!getEnvAppVersions(db).contains("v123"));
+    storage.pruneEnvironments(1);
+    assertTrue(!getEnvAppVersions(db).contains("v4"));
+  }
+
+  private ArrayList<String> getEnvAppVersions(final SQLiteDatabase db) {
+    ArrayList<String> out = new ArrayList<String>();
+    Cursor c = null;
+    try {
+      c = db.query(true, "environments", new String[] {"appVersion"}, null, null, null, null, null, null);
+      while (c.moveToNext()) {
+        out.add(c.getString(0));
+      }
+    } finally {
+      if (c != null) {
+        c.close();
+      }
+    }
+    return out;
+  }
+
+  public void testPruneEvents() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    SQLiteDatabase db = storage.getDB();
+    assertEquals(14, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(1); // Delete < 7 days ago.
+    assertEquals(14, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(2); // Delete < 5 days ago.
+    assertEquals(13, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(5); // Delete < 2 days ago.
+    assertEquals(9, DBHelpers.getRowCount(db, "events"));
+    storage.pruneEvents(14); // Delete < today.
+    assertEquals(5, DBHelpers.getRowCount(db, "events"));
+  }
+
+  public void testVacuum() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+    // Need to disable auto_vacuum to allow free page fragmentation. Note that the pragma changes
+    // only after a vacuum command.
+    db.execSQL("PRAGMA auto_vacuum=0");
+    db.execSQL("vacuum");
+    assertTrue(isAutoVacuumingDisabled(storage));
+
+    createFreePages(storage);
+    storage.vacuum();
+    assertEquals(0, getFreelistCount(storage));
+  }
+
+  public long getFreelistCount(final MockHealthReportDatabaseStorage storage) {
+    return storage.getIntFromQuery("PRAGMA freelist_count", null);
+  }
+
+  public boolean isAutoVacuumingDisabled(final MockHealthReportDatabaseStorage storage) {
+    return storage.getIntFromQuery("PRAGMA auto_vacuum", null) == 0;
+  }
+
+  private void createFreePages(final PrepopulatedMockHealthReportDatabaseStorage storage) throws Exception {
+    // Insert and delete until DB has free page fragmentation. The loop helps ensure that the
+    // fragmentation will occur with minimal disk usage. The upper loop limits are arbitrary.
+    final SQLiteDatabase db = storage.getDB();
+    for (int i = 10; i <= 1250; i *= 5) {
+      storage.insertTextualEvents(i);
+      db.delete("events_textual", "date < ?", new String[] {Integer.toString(i / 2)});
+      if (getFreelistCount(storage) > 0) {
+        return;
+      }
+    }
+    fail("Database free pages failed to fragment.");
+  }
+
+  public void testDisableAutoVacuuming() throws Exception {
+    final PrepopulatedMockHealthReportDatabaseStorage storage =
+        new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+    // The pragma changes only after a vacuum command.
+    db.execSQL("PRAGMA auto_vacuum=1");
+    db.execSQL("vacuum");
+    assertEquals(1, storage.getIntFromQuery("PRAGMA auto_vacuum", null));
+    storage.disableAutoVacuuming();
+    db.execSQL("vacuum");
+    assertTrue(isAutoVacuumingDisabled(storage));
   }
 }
