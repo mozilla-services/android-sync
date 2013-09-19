@@ -5,8 +5,8 @@ package org.mozilla.gecko.background.sync.helpers;
 
 import static junit.framework.Assert.assertNotNull;
 
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;
 import org.mozilla.gecko.sync.repositories.Repository;
 import org.mozilla.gecko.sync.repositories.RepositorySession;

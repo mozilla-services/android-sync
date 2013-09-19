@@ -27,6 +27,7 @@ SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
   -and -not -name 'AppConstants.java' \
   -and -not -name 'SysInfo.java' \
   -and -not -name 'SyncConstants.java' \
+  -and -not -path '*testhelpers*' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
 
 rsync -C \
@@ -35,6 +36,7 @@ rsync -C \
   --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
+  --exclude '*testhelper*' \
   -a $SYNCSOURCEDIR $ANDROID/base/
 
 rsync -C \
@@ -44,6 +46,7 @@ rsync -C \
   --exclude 'AnnouncementsConstants.java' \
   --exclude 'HealthReportConstants.java' \
   --exclude '*.in' \
+  --exclude '*testhelper*' \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
@@ -192,7 +195,7 @@ find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \(
 
 # These seem to get copied anyway.
 for pp in ${PP_XML_RESOURCES} ; do
-  rm $ANDROID/base/resources/xml/${pp}.xml
+  rm -f $ANDROID/base/resources/xml/${pp}.xml
 done
 
 echo "Done."

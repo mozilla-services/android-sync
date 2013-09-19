@@ -4,9 +4,9 @@
 package org.mozilla.gecko.background.sync;
 
 import org.json.simple.JSONArray;
-import org.mozilla.android.sync.test.helpers.DefaultGlobalSessionCallback;
-import org.mozilla.android.sync.test.helpers.MockClientsDataDelegate;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
+import org.mozilla.gecko.background.testhelpers.DefaultGlobalSessionCallback;
+import org.mozilla.gecko.background.testhelpers.MockClientsDataDelegate;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.crypto.KeyBundle;

@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 
 import junit.framework.AssertionFailedError;
 
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 
 public abstract class DefaultDelegate {
   protected ExecutorService executor;

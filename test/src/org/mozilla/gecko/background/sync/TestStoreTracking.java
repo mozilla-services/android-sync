@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.AssertionFailedError;
 
-import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
 import org.mozilla.gecko.background.sync.helpers.SimpleSuccessBeginDelegate;
@@ -16,6 +15,7 @@ import org.mozilla.gecko.background.sync.helpers.SimpleSuccessCreationDelegate;
 import org.mozilla.gecko.background.sync.helpers.SimpleSuccessFetchDelegate;
 import org.mozilla.gecko.background.sync.helpers.SimpleSuccessFinishDelegate;
 import org.mozilla.gecko.background.sync.helpers.SimpleSuccessStoreDelegate;
+import org.mozilla.gecko.background.testhelpers.WBORepository;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;

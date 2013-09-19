@@ -5,10 +5,10 @@ package org.mozilla.gecko.background.common;
 
 import junit.framework.AssertionFailedError;
 
-import org.mozilla.android.sync.test.helpers.WaitHelper;
-import org.mozilla.android.sync.test.helpers.WaitHelper.InnerError;
-import org.mozilla.android.sync.test.helpers.WaitHelper.TimeoutError;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
+import org.mozilla.gecko.background.testhelpers.WaitHelper.InnerError;
+import org.mozilla.gecko.background.testhelpers.WaitHelper.TimeoutError;
 import org.mozilla.gecko.sync.ThreadPool;
 
 public class TestWaitHelper extends AndroidSyncTestCase {

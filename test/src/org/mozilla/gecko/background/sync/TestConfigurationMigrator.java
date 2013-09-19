@@ -5,9 +5,9 @@ package org.mozilla.gecko.background.sync;
 
 import java.util.Map;
 
-import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;

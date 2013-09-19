@@ -8,8 +8,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
+import org.mozilla.gecko.background.testhelpers.MockGlobalSession;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;

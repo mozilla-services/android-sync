@@ -6,7 +6,6 @@ package org.mozilla.gecko.background.db;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
 import org.mozilla.gecko.background.sync.helpers.ExpectFetchDelegate;
 import org.mozilla.gecko.background.sync.helpers.ExpectFetchSinceDelegate;
@@ -14,6 +13,7 @@ import org.mozilla.gecko.background.sync.helpers.ExpectGuidsSinceDelegate;
 import org.mozilla.gecko.background.sync.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.background.sync.helpers.PasswordHelpers;
 import org.mozilla.gecko.background.sync.helpers.SessionTestHelper;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;

@@ -6,8 +6,8 @@ package org.mozilla.android.sync.test;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.android.sync.test.helpers.WBORepository;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.testhelpers.WBORepository;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
 import org.mozilla.gecko.sync.repositories.InvalidSessionTransitionException;

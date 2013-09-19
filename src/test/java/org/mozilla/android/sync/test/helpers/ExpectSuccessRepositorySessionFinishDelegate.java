@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 
 import junit.framework.AssertionFailedError;
 
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.RepositorySession;
 import org.mozilla.gecko.sync.repositories.RepositorySessionBundle;
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionFinishDelegate;

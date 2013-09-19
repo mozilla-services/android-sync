@@ -6,12 +6,12 @@ package org.mozilla.gecko.background.sync;
 import java.io.IOException;
 
 import org.json.simple.parser.ParseException;
-import org.mozilla.android.sync.test.helpers.BaseMockServerSyncStage;
-import org.mozilla.android.sync.test.helpers.DefaultGlobalSessionCallback;
-import org.mozilla.android.sync.test.helpers.MockRecord;
-import org.mozilla.android.sync.test.helpers.WBORepository;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
+import org.mozilla.gecko.background.testhelpers.BaseMockServerSyncStage;
+import org.mozilla.gecko.background.testhelpers.DefaultGlobalSessionCallback;
+import org.mozilla.gecko.background.testhelpers.MockRecord;
+import org.mozilla.gecko.background.testhelpers.WBORepository;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;

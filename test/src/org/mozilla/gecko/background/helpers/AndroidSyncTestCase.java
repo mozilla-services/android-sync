@@ -5,7 +5,7 @@ package org.mozilla.gecko.background.helpers;
 
 import junit.framework.AssertionFailedError;
 
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 
 import android.app.Activity;
 import android.content.Context;

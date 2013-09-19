@@ -5,7 +5,6 @@ package org.mozilla.gecko.background.db;
 
 import java.util.concurrent.ExecutorService;
 
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
 import org.mozilla.gecko.background.sync.helpers.DefaultBeginDelegate;
@@ -26,6 +25,7 @@ import org.mozilla.gecko.background.sync.helpers.ExpectManyStoredDelegate;
 import org.mozilla.gecko.background.sync.helpers.ExpectStoreCompletedDelegate;
 import org.mozilla.gecko.background.sync.helpers.ExpectStoredDelegate;
 import org.mozilla.gecko.background.sync.helpers.SessionTestHelper;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.repositories.InactiveSessionException;
