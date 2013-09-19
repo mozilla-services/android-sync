@@ -22,6 +22,7 @@ import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
 import org.mozilla.gecko.sync.synchronizer.Synchronizer;
@@ -155,7 +156,7 @@ public class TestResetting extends AndroidSyncTestCase {
     return new GlobalSession(
         SyncConfiguration.DEFAULT_USER_API,
         null,
-        TEST_USERNAME, TEST_PASSWORD, null,
+        TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
         callback, getApplicationContext(), null, null) {
 
