@@ -38,7 +38,6 @@ public class TestWipeServer {
   static final String TEST_ACCOUNT      = "nalexander+test0425@mozilla.com";
   static final String TEST_USERNAME     = "6gnkjphdltbntwnrgvu46ey6mu7ncjdl";
   static final String TEST_PASSWORD     = "test0425";
-  static final String TEST_USER_PASS    = TEST_USERNAME + ":" + TEST_PASSWORD;
   static final String TEST_SYNC_KEY     = "fuyx96ea8rkfazvjdfuqumupye"; // Weave.Identity.syncKey
 
   private KeyBundle syncKeyBundle;

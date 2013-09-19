@@ -12,6 +12,8 @@ import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -30,7 +32,16 @@ public class MockPrefsGlobalSession extends GlobalSession {
       Bundle extras, ClientsDataDelegate clientsDelegate)
       throws SyncConfigurationException, IllegalArgumentException, IOException,
       ParseException, NonObjectJSONException {
-    super(userAPI, serverURL, username, password, prefsPath, syncKeyBundle,
+    this(userAPI, serverURL, username, new BasicAuthHeaderProvider(username, password), prefsPath, syncKeyBundle, callback, context, extras, clientsDelegate);
+  }
+
+  public MockPrefsGlobalSession(String userAPI, String serverURL,
+      String username, AuthHeaderProvider authHeaderProvider, String prefsPath,
+      KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context,
+      Bundle extras, ClientsDataDelegate clientsDelegate)
+      throws SyncConfigurationException, IllegalArgumentException, IOException,
+      ParseException, NonObjectJSONException {
+    super(userAPI, serverURL, username, authHeaderProvider, prefsPath, syncKeyBundle,
         callback, context, extras, clientsDelegate);
   }
 

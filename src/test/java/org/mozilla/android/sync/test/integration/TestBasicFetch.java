@@ -85,17 +85,25 @@ public class TestBasicFetch {
     }
 
     public ExtendedJSONObject decrypt(String syncKey) throws Exception {
+      return decrypt(new KeyBundle(TEST_USERNAME, syncKey));
+    }
+
+    public ExtendedJSONObject decrypt(KeyBundle keyBundle) throws Exception {
       CryptoRecord rec;
       rec = CryptoRecord.fromJSONRecord(body);
-      rec.keyBundle = new KeyBundle(TEST_USERNAME, syncKey);
+      rec.keyBundle = keyBundle;
       rec.decrypt();
       return rec.payload;
     }
   }
 
   public static LiveDelegate realLiveFetch(String username, String password, String url) throws URISyntaxException {
+    return realLiveFetch(new BasicAuthHeaderProvider(username, password), url);
+  }
+
+  public static LiveDelegate realLiveFetch(AuthHeaderProvider authHeaderProvider, String url) throws URISyntaxException {
     final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url));
-    LiveDelegate delegate = new LiveDelegate(username, password);
+    LiveDelegate delegate = new LiveDelegate(authHeaderProvider);
     r.delegate = delegate;
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
@@ -107,8 +115,12 @@ public class TestBasicFetch {
   }
 
   public static LiveDelegate realLivePut(String username, String password, String url, final CryptoRecord record) throws URISyntaxException {
+    return realLivePut(new BasicAuthHeaderProvider(username, password), url, record);
+  }
+
+  public static LiveDelegate realLivePut(AuthHeaderProvider authHeaderProvider, String url, final CryptoRecord record) throws URISyntaxException {
     final SyncStorageRecordRequest r = new SyncStorageRecordRequest(new URI(url));
-    LiveDelegate delegate = new LiveDelegate(username, password);
+    LiveDelegate delegate = new LiveDelegate(authHeaderProvider);
     r.delegate = delegate;
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
