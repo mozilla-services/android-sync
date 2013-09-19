@@ -35,10 +35,16 @@ public class DBHelpers {
   }
 
   public static int getRowCount(SQLiteDatabase db, String table) {
-    final Cursor c = db.query(table, null, null, null, null, null, null);
-    final int count = c.getCount();
-    c.close();
-    return count;
+    return getRowCount(db, table, null, null);
+  }
+
+  public static int getRowCount(SQLiteDatabase db, String table, String selection, String[] selectionArgs) {
+    final Cursor c = db.query(table, null, selection, selectionArgs, null, null, null);
+    try {
+      return c.getCount();
+    } finally {
+      c.close();
+    }
   }
 
   /**
@@ -58,4 +64,21 @@ public class DBHelpers {
       c.close();
     }
   }
+
+  /**
+   * Returns an ID that exists in the given sqlite table. Assumes that a column named * "id"
+   * exists.
+   */
+  public static long getExistentID(SQLiteDatabase db, String table) {
+    final Cursor c = db.query(table, new String[] {"id"}, null, null, null, null, null, "1");
+    try {
+      if (!c.moveToNext()) {
+        throw new IllegalStateException("Given table does not contain any entries.");
+      }
+      return c.getInt(0);
+    } finally {
+      c.close();
+    }
+  }
+
 }

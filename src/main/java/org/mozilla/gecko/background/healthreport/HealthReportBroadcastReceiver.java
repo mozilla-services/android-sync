@@ -2,17 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.background.healthreport.upload;
+package org.mozilla.gecko.background.healthreport;
 
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
 /**
- * Watch for notifications to start the Health Report background upload service.
+ * Watch for notifications to start Health Report background services.
  *
  * Some observations:
  *
@@ -33,12 +32,7 @@ public class HealthReportBroadcastReceiver extends BroadcastReceiver {
    */
   @Override
   public void onReceive(Context context, Intent intent) {
-    if (HealthReportConstants.UPLOAD_FEATURE_DISABLED) {
-      Logger.debug(LOG_TAG, "Health report upload feature is compile-time disabled; not forwarding intent.");
-      return;
-    }
-
-    Logger.debug(LOG_TAG, "Health report upload feature is compile-time enabled; forwarding intent.");
+    Logger.debug(LOG_TAG, "Received intent - forwarding to BroadcastService.");
     Intent service = new Intent(context, HealthReportBroadcastService.class);
     service.putExtras(intent);
     service.setAction(intent.getAction());
