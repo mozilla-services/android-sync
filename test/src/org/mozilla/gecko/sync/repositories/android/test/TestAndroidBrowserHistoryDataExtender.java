@@ -22,7 +22,7 @@ import org.mozilla.gecko.sync.repositories.domain.HistoryRecord;
 
 import android.database.Cursor;
 
-public class AndroidBrowserHistoryDataExtenderTest extends AndroidSyncTestCase {
+public class TestAndroidBrowserHistoryDataExtender extends AndroidSyncTestCase {
 
   protected AndroidBrowserHistoryDataExtender extender;
   protected static final String LOG_TAG = "SyncHistoryVisitsTest";

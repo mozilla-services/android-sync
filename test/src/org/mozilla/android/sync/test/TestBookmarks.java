@@ -44,7 +44,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 
-public class BookmarksTest extends AndroidSyncTestCase {
+public class TestBookmarks extends AndroidSyncTestCase {
 
   protected static final String LOG_TAG = "BookmarksTest";
 

@@ -32,7 +32,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
-public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserRepositoryTest {
+public class TestAndroidBrowserBookmarksRepository extends AndroidBrowserRepositoryTestCase {
 
   @Override
   protected AndroidBrowserRepository getRepository() {
@@ -55,7 +55,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
       }
     };
   }
-  
+
   @Override
   protected AndroidBrowserRepositoryDataAccessor getDataAccessor() {
     return new AndroidBrowserBookmarksDataAccessor(getApplicationContext());
@@ -134,14 +134,14 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     expected[2] = BookmarkHelpers.createBookmark2();
     basicFetchAllTest(expected);
   }
-  
+
   @Override
   public void testGuidsSinceReturnMultipleRecords() {
     BookmarkRecord record0 = BookmarkHelpers.createBookmark1();
     BookmarkRecord record1 = BookmarkHelpers.createBookmark2();
     guidsSinceReturnMultipleRecords(record0, record1);
   }
-  
+
   @Override
   public void testGuidsSinceReturnNoRecords() {
     guidsSinceReturnNoRecords(BookmarkHelpers.createBookmarkInMobileFolder1());
@@ -150,7 +150,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   @Override
   public void testFetchSinceOneRecord() {
     fetchSinceOneRecord(BookmarkHelpers.createBookmarkInMobileFolder1(),
-                        BookmarkHelpers.createBookmarkInMobileFolder2());
+        BookmarkHelpers.createBookmarkInMobileFolder2());
   }
 
   @Override
@@ -161,9 +161,9 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   @Override
   public void testFetchOneRecordByGuid() {
     fetchOneRecordByGuid(BookmarkHelpers.createBookmarkInMobileFolder1(),
-                         BookmarkHelpers.createBookmarkInMobileFolder2());
+        BookmarkHelpers.createBookmarkInMobileFolder2());
   }
-  
+
   @Override
   public void testFetchMultipleRecordsByGuids() {
     BookmarkRecord record0 = BookmarkHelpers.createFolder1();
@@ -171,19 +171,19 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     BookmarkRecord record2 = BookmarkHelpers.createBookmark2();
     fetchMultipleRecordsByGuids(record0, record1, record2);
   }
-  
+
   @Override
   public void testFetchNoRecordByGuid() {
     fetchNoRecordByGuid(BookmarkHelpers.createBookmark1());
   }
-  
-    
+
+
   @Override
   public void testWipe() {
     doWipe(BookmarkHelpers.createBookmarkInMobileFolder1(),
-           BookmarkHelpers.createBookmarkInMobileFolder2());
+        BookmarkHelpers.createBookmarkInMobileFolder2());
   }
-  
+
   @Override
   public void testStore() {
     basicStoreTest(BookmarkHelpers.createBookmark1());
@@ -219,14 +219,14 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   public void testStoreSeparator() {
     basicStoreFailTest(BookmarkHelpers.createSeparator());
   }
-  */
-  
+   */
+
   protected void basicStoreFailTest(Record record) {
     final RepositorySession session = createAndBeginSession();
     performWait(storeRunnable(session, record, new ExpectInvalidTypeStoreDelegate()));
     dispose(session);
   }
-  
+
   /*
    * Re-parenting tests
    */
@@ -240,7 +240,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     };
     doMultipleFolderReparentingTest(expected);
   }
-  
+
   // Insert 3 folders and 4 bookmarks in different orders
   // and make sure they come out parented correctly
   public void testMultipleFolderReparenting1() throws InactiveSessionException {
@@ -255,7 +255,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     };
     doMultipleFolderReparentingTest(expected);
   }
-  
+
   public void testMultipleFolderReparenting2() throws InactiveSessionException {
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
@@ -268,7 +268,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     };
     doMultipleFolderReparentingTest(expected);
   }
-  
+
   public void testMultipleFolderReparenting3() throws InactiveSessionException {
     Record[] expected = new Record[] {
         BookmarkHelpers.createBookmark1(),
@@ -281,7 +281,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     };
     doMultipleFolderReparentingTest(expected);
   }
-  
+
   private void doMultipleFolderReparentingTest(Record[] expected) throws InactiveSessionException {
     final RepositorySession session = createAndBeginSession();
     doStore(session, expected);
@@ -289,7 +289,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     performWait(fetchAllRunnable(session, delegate));
     performWait(finishRunnable(session, new ExpectFinishDelegate()));
   }
-  
+
   /*
    * Test storing identical records with different guids.
    * For bookmarks identical is defined by the following fields
@@ -299,7 +299,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
   public void testStoreIdenticalExceptGuid() {
     storeIdenticalExceptGuid(BookmarkHelpers.createBookmarkInMobileFolder1());
   }
-  
+
   /*
    * More complicated situation in which we insert a folder
    * followed by a couple of its children. We then insert
@@ -342,7 +342,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     bmk4.parentName = bmk3.parentName;
 
     doStore(session, new Record[] {
-      record1, record2, record3, bmk4
+        record1, record2, record3, bmk4
     });
     BookmarkRecord bmk1 = (BookmarkRecord) record1;
     bmk1.parentID = record3.guid;
@@ -354,7 +354,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     fetchAllRunnable(session, preparedExpectFetchDelegate(expect));
     dispose(session);
   }
-  
+
   @Override
   public void testRemoteNewerTimeStamp() {
     BookmarkRecord local = BookmarkHelpers.createBookmarkInMobileFolder1();
@@ -368,21 +368,21 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     BookmarkRecord remote = BookmarkHelpers.createBookmarkInMobileFolder2();
     localNewerTimeStamp(local, remote);
   }
-  
+
   @Override
   public void testDeleteRemoteNewer() {
     BookmarkRecord local = BookmarkHelpers.createBookmarkInMobileFolder1();
     BookmarkRecord remote = BookmarkHelpers.createBookmarkInMobileFolder2();
     deleteRemoteNewer(local, remote);
   }
-  
+
   @Override
   public void testDeleteLocalNewer() {
     BookmarkRecord local = BookmarkHelpers.createBookmarkInMobileFolder1();
     BookmarkRecord remote = BookmarkHelpers.createBookmarkInMobileFolder2();
     deleteLocalNewer(local, remote);
   }
-  
+
   @Override
   public void testDeleteRemoteLocalNonexistent() {
     BookmarkRecord remote = BookmarkHelpers.createBookmark2();
@@ -407,13 +407,13 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
         BookmarkHelpers.createBookmark2()
     };
     System.out.println("TEST: Inserting " + expected[0].guid + ", "
-                                          + expected[1].guid + ", "
-                                          + expected[2].guid);
+        + expected[1].guid + ", "
+        + expected[2].guid);
     doStore(session, expected);
 
     ExpectFetchDelegate delegate = preparedExpectFetchDelegate(expected);
     performWait(fetchAllRunnable(session, delegate));
-    
+
     int found = 0;
     boolean foundFolder = false;
     for (int i = 0; i < delegate.records.size(); i++) {
@@ -434,15 +434,15 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     assertEquals(2, found);
     dispose(session);
   }
-  
+
   public void testSqlInjectPurgeDeleteAndUpdateByGuid() {
     // Some setup.
     RepositorySession session = createAndBeginSession();
     AndroidBrowserRepositoryDataAccessor db = getDataAccessor();
-    
+
     ContentValues cv = new ContentValues();
     cv.put(BrowserContract.SyncColumns.IS_DELETED, 1);
-    
+
     // Create and insert 2 bookmarks, 2nd one is evil (attempts injection).
     BookmarkRecord bmk1 = BookmarkHelpers.createBookmark1();
     BookmarkRecord bmk2 = BookmarkHelpers.createBookmark2();
@@ -508,7 +508,7 @@ public class AndroidBrowserBookmarksRepositoryTest extends AndroidBrowserReposit
     }
     dispose(session);
   }
-  
+
   protected Cursor getAllBookmarks() {
     Context context = getApplicationContext();
     Cursor cur = context.getContentResolver().query(BrowserContractHelpers.BOOKMARKS_CONTENT_URI,

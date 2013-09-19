@@ -30,7 +30,7 @@ import org.mozilla.gecko.sync.synchronizer.SynchronizerDelegate;
 
 import android.content.Context;
 
-public class StoreTrackingTest extends AndroidSyncTestCase {
+public class TestStoreTracking extends AndroidSyncTestCase {
   public void assertEq(Object expected, Object actual) {
     try {
       assertEquals(expected, actual);

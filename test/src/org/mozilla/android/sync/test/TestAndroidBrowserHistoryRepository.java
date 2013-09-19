@@ -32,7 +32,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
-public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositoryTest {
+public class TestAndroidBrowserHistoryRepository extends AndroidBrowserRepositoryTestCase {
 
   @Override
   protected AndroidBrowserRepository getRepository() {
@@ -86,7 +86,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   public void testStoreIdenticalExceptGuid() {
     storeIdenticalExceptGuid(HistoryHelpers.createHistory1());
   }
-  
+
   @Override
   public void testCleanMultipleRecords() {
     cleanMultipleRecords(
@@ -95,8 +95,8 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
         HistoryHelpers.createHistory3(),
         HistoryHelpers.createHistory4(),
         HistoryHelpers.createHistory5()
-    );
-  } 
+        );
+  }
 
   @Override
   public void testGuidsSinceReturnMultipleRecords() {
@@ -104,7 +104,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     HistoryRecord record1 = HistoryHelpers.createHistory2();
     guidsSinceReturnMultipleRecords(record0, record1);
   }
-  
+
   @Override
   public void testGuidsSinceReturnNoRecords() {
     guidsSinceReturnNoRecords(HistoryHelpers.createHistory3());
@@ -115,18 +115,18 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     fetchSinceOneRecord(HistoryHelpers.createHistory1(),
         HistoryHelpers.createHistory2());
   }
-  
+
   @Override
   public void testFetchSinceReturnNoRecords() {
     fetchSinceReturnNoRecords(HistoryHelpers.createHistory3());
   }
-  
+
   @Override
   public void testFetchOneRecordByGuid() {
     fetchOneRecordByGuid(HistoryHelpers.createHistory1(),
         HistoryHelpers.createHistory2());
   }
-  
+
   @Override
   public void testFetchMultipleRecordsByGuids() {
     HistoryRecord record0 = HistoryHelpers.createHistory1();
@@ -134,22 +134,22 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     HistoryRecord record2 = HistoryHelpers.createHistory3();
     fetchMultipleRecordsByGuids(record0, record1, record2);
   }
-  
+
   @Override
   public void testFetchNoRecordByGuid() {
     fetchNoRecordByGuid(HistoryHelpers.createHistory1());
   }
-  
+
   @Override
   public void testWipe() {
     doWipe(HistoryHelpers.createHistory2(), HistoryHelpers.createHistory3());
   }
-  
+
   @Override
   public void testStore() {
     basicStoreTest(HistoryHelpers.createHistory1());
   }
-  
+
   @Override
   public void testRemoteNewerTimeStamp() {
     HistoryRecord local = HistoryHelpers.createHistory1();
@@ -163,21 +163,21 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     HistoryRecord remote = HistoryHelpers.createHistory2();
     localNewerTimeStamp(local, remote);
   }
-  
+
   @Override
   public void testDeleteRemoteNewer() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
     deleteRemoteNewer(local, remote);
   }
-  
+
   @Override
   public void testDeleteLocalNewer() {
     HistoryRecord local = HistoryHelpers.createHistory1();
     HistoryRecord remote = HistoryHelpers.createHistory2();
     deleteLocalNewer(local, remote);
   }
-  
+
   @Override
   public void testDeleteRemoteLocalNonexistent() {
     deleteRemoteLocalNonexistent(HistoryHelpers.createHistory2());
@@ -249,10 +249,10 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
   @SuppressWarnings("unchecked")
   public void testAddOneVisit() {
     final RepositorySession session = createAndBeginSession();
-    
+
     HistoryRecord record0 = HistoryHelpers.createHistory3();
     performWait(storeRunnable(session, record0));
-    
+
     // Add one visit to the count and put in a new
     // last visited date.
     ContentValues cv = new ContentValues();
@@ -262,24 +262,24 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     cv.put(BrowserContract.History.DATE_LAST_VISITED, newVisitTime);
     final AndroidBrowserRepositoryDataAccessor dataAccessor = getDataAccessor();
     dataAccessor.updateByGuid(record0.guid, cv);
-    
+
     // Add expected visit to record for verification.
     JSONObject expectedVisit = new JSONObject();
     expectedVisit.put("date", newVisitTime * 1000);    // Microseconds.
     expectedVisit.put("type", 1L);
     record0.visits.add(expectedVisit);
-    
+
     performWait(fetchRunnable(session, new String[] { record0.guid }, new ExpectFetchDelegate(new Record[] { record0 })));
     closeDataAccessor(dataAccessor);
   }
-  
+
   @SuppressWarnings("unchecked")
   public void testAddMultipleVisits() {
     final RepositorySession session = createAndBeginSession();
-    
+
     HistoryRecord record0 = HistoryHelpers.createHistory4();
     performWait(storeRunnable(session, record0));
-    
+
     // Add three visits to the count and put in a new
     // last visited date.
     ContentValues cv = new ContentValues();
@@ -292,7 +292,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
 
     // Now shift to microsecond timing for visits.
     long newMicroVisitTime = newVisitTime * 1000;
-    
+
     // Add expected visits to record for verification
     JSONObject expectedVisit = new JSONObject();
     expectedVisit.put("date", newMicroVisitTime);
@@ -306,7 +306,7 @@ public class AndroidBrowserHistoryRepositoryTest extends AndroidBrowserRepositor
     expectedVisit.put("date", newMicroVisitTime - 2000);
     expectedVisit.put("type", 1L);
     record0.visits.add(expectedVisit);
-    
+
     ExpectFetchDelegate delegate = new ExpectFetchDelegate(new Record[] { record0 });
     performWait(fetchRunnable(session, new String[] { record0.guid }, delegate));
 

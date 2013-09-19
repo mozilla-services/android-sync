@@ -10,7 +10,7 @@ import org.mozilla.android.sync.test.helpers.WaitHelper.InnerError;
 import org.mozilla.android.sync.test.helpers.WaitHelper.TimeoutError;
 import org.mozilla.gecko.sync.ThreadPool;
 
-public class WaitHelperTest extends AndroidSyncTestCase {
+public class TestWaitHelper extends AndroidSyncTestCase {
   private static final String ERROR_UNIQUE_IDENTIFIER = "error unique identifier";
 
   public static int NO_WAIT    = 1;               // Milliseconds.
@@ -58,7 +58,7 @@ public class WaitHelperTest extends AndroidSyncTestCase {
 
   public WaitHelper waitHelper;
 
-  public WaitHelperTest() {
+  public TestWaitHelper() {
     super();
   }
 

@@ -23,7 +23,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.os.RemoteException;
 
-public class FennecTabsRepositorySessionTest extends AndroidSyncTestCase {
+public class TestFennecTabsRepositorySession extends AndroidSyncTestCase {
   public static final String TEST_CLIENT_GUID = "test guid"; // Real GUIDs never contain spaces.
   public static final String TEST_CLIENT_NAME = "test client name";
 
@@ -38,7 +38,7 @@ public class FennecTabsRepositorySessionTest extends AndroidSyncTestCase {
     return cr.acquireContentProviderClient(BrowserContract.Tabs.CONTENT_URI);
   }
 
-  public FennecTabsRepositorySessionTest() throws NoContentProviderException {
+  public TestFennecTabsRepositorySession() throws NoContentProviderException {
     super();
   }
 
