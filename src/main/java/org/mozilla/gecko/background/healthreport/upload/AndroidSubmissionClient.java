@@ -313,7 +313,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
    * Encapsulates the counting mechanisms for submissions status counts. Ensures multiple failures
    * and successes are not recorded for a single instance.
    */
-  protected class SubmissionsStatusCounter {
+  public static class SubmissionsStatusCounter {
     private final int env;
     private final int day;
     private final HealthReportStorage storage;
