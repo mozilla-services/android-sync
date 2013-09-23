@@ -32,6 +32,7 @@ MANGLED_ANDROID_PACKAGE_NAME = org.mozilla.f3nn3c
 # line:
 #
 # ANDROID_PACKAGE_NAME = org.mozilla.fennec_%(USERNAME)s
+# MANGLED_ANDROID_PACKAGE_NAME = org.mozilla.f3nn3c_%(USERNAME)s
 
 # Keep MOZ_ANDROID_SHARED_ID consistent with
 # mobile/android/base/Makefile.in.  If the shared IDs are not the
@@ -41,14 +42,33 @@ MANGLED_ANDROID_PACKAGE_NAME = org.mozilla.f3nn3c
 MOZ_ANDROID_SHARED_ID = %(ANDROID_PACKAGE_NAME)s.sharedID
 
 # We intentionally change the MOZ_ANDROID_SHARED_ACCOUNT_TYPE.  In
-# Fennec, this is:
+# Fennec, these are:
 #
-# MOZ_ANDROID_SHARED_ACCOUNT_TYPE = %(ANDROID_PACKAGE_NAME)s_sync"
+# MOZ_ANDROID_SHARED_ACCOUNT_TYPE = %(ANDROID_PACKAGE_NAME)s_sync
+# MOZ_ANDROID_SHARED_FXACCOUNT_TYPE = %(ANDROID_PACKAGE_NAME)s_fxa
 #
 # Since we want to test without reference to the installed Fennec, we
-# define our own testing Android Account type:
+# define our own testing Android Account types:
 
 MOZ_ANDROID_SHARED_ACCOUNT_TYPE = %(ANDROID_PACKAGE_NAME)s_sync_test
+
+# The mozilla-central hg repository and the android-sync git
+# repository both build the same set of JUnit 3 instrumentation tests.
+# m-c's tests run against the code linked into the Fennec APK; a-s's
+# tests run against the code linked into the org.mozilla.gecko APK.
+# The following two settings control what the JUnit 3 test package is
+# called, and what package it runs against.
+#
+# In mozilla-central, these are:
+#
+# ANDROID_BACKGROUND_TEST_PACKAGE_NAME = org.mozilla.background.test
+# ANDROID_BACKGROUND_TARGET_PACKAGE_NAME = %(ANDROID_PACKAGE_NAME)s
+#
+# Since we want to test without reference to the installed Fennec, we
+# define our own package names:
+
+ANDROID_BACKGROUND_TEST_PACKAGE_NAME = org.mozilla.gecko.test
+ANDROID_BACKGROUND_TARGET_PACKAGE_NAME = org.mozilla.gecko
 
 # For standalone use.
 MOZ_UPDATE_CHANNEL = default

@@ -11,6 +11,46 @@ WARNING="These files are managed in the android-sync repo. Do not modify directl
 echo "Creating README.txt."
 echo $WARNING > $SERVICES/README.txt
 
+echo "Copying background tests..."
+BACKGROUND_TESTS_DIR=$ANDROID/tests/background/junit3
+mkdir -p $BACKGROUND_TESTS_DIR
+
+BACKGROUND_SRC_DIR="test/src/org/mozilla/gecko/background"
+BACKGROUND_TESTHELPERS_SRC_DIR="src/main/java/org/mozilla/gecko/background/testhelpers"
+
+BACKGROUND_TESTS_JAVA_FILES=$(find \
+  $BACKGROUND_SRC_DIR/* \
+  $BACKGROUND_TESTHELPERS_SRC_DIR/* \
+  -name '*.java' \
+  | sed "s,^$BACKGROUND_SRC_DIR,src," \
+  | sed "s,^$BACKGROUND_TESTHELPERS_SRC_DIR,src/testhelpers," \
+  | $SORT_CMD)
+
+BACKGROUND_TESTS_RES_FILES=$(find \
+  "test/res" \
+  -type f \
+  | sed "s,^test/res,res," \
+  | $SORT_CMD)
+
+mkdir -p $BACKGROUND_TESTS_DIR/src
+rsync -C -a \
+  $BACKGROUND_SRC_DIR/* \
+  $BACKGROUND_TESTS_DIR/src
+
+mkdir -p $BACKGROUND_TESTS_DIR/src/testhelpers
+rsync -C -a \
+  $BACKGROUND_TESTHELPERS_SRC_DIR/* \
+  $BACKGROUND_TESTS_DIR/src/testhelpers
+
+rsync -C -a \
+  test/res \
+  $BACKGROUND_TESTS_DIR
+
+rsync -C -a \
+  test/AndroidManifest.xml.in \
+  $BACKGROUND_TESTS_DIR
+echo "Copying background tests... done."
+
 echo "Copying manifests..."
 rsync -a manifests $SERVICES/
 
@@ -27,6 +67,7 @@ SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
   -and -not -name 'AppConstants.java' \
   -and -not -name 'SysInfo.java' \
   -and -not -name 'SyncConstants.java' \
+  -and -not -path '*testhelpers*' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
 
 rsync -C \
@@ -35,6 +76,7 @@ rsync -C \
   --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
+  --exclude '*testhelper*' \
   -a $SYNCSOURCEDIR $ANDROID/base/
 
 rsync -C \
@@ -44,23 +86,29 @@ rsync -C \
   --exclude 'AnnouncementsConstants.java' \
   --exclude 'HealthReportConstants.java' \
   --exclude '*.in' \
+  --exclude '*testhelper*' \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
-PREPROCESS_FILES="background/common/GlobalConstants.java sync/SyncConstants.java background/announcements/AnnouncementsConstants.java background/healthreport/HealthReportConstants.java"
+PREPROCESS_FILES="\
+  background/common/GlobalConstants.java \
+  sync/SyncConstants.java \
+  background/announcements/AnnouncementsConstants.java \
+  background/healthreport/HealthReportConstants.java"
 cp $BACKGROUNDSOURCEDIR/common/GlobalConstants.java.in $ANDROID/base/background/common/
 cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
 cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
 cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
 
-echo "Copying preprocessed sync_authenticator.xml."
-cp sync_authenticator.xml.template $ANDROID/base/resources/xml/sync_authenticator.xml.in
-
-echo "Copying preprocessed sync_syncadapter.xml."
-cp sync_syncadapter.xml.template $ANDROID/base/resources/xml/sync_syncadapter.xml.in
-
-echo "Copying preprocessed sync_options.xml."
-cp sync_options.xml.template $ANDROID/base/resources/xml/sync_options.xml.in
+PP_XML_RESOURCES=" \
+  sync_authenticator \
+  sync_options \
+  sync_syncadapter \
+  "
+for pp in ${PP_XML_RESOURCES} ; do
+  echo "Copying preprocessed ${pp}.xml."
+  cp ${pp}.xml.template $ANDROID/base/resources/xml/${pp}.xml.in
+done
 
 echo "Copying internal dependency sources."
 APACHEDIR="src/main/java/org/mozilla/apache"
@@ -120,7 +168,10 @@ SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
 # XML resources that do not need to be preprocessed.
 SYNC_RES_XML=""
 # XML resources that need to be preprocessed.
-SYNC_PP_RES_XML="res/xml/sync_syncadapter.xml res/xml/sync_options.xml res/xml/sync_authenticator.xml"
+SYNC_PP_RES_XML=""
+for pp in ${PP_XML_RESOURCES} ; do
+  SYNC_PP_RES_XML="res/xml/${pp}.xml ${SYNC_PP_RES_XML}"
+done
 
 dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
 dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
@@ -138,6 +189,15 @@ dump_mkfile_variable "SYNC_RES_XML" "$SYNC_RES_XML"
 dump_mkfile_variable "SYNC_PP_RES_XML" "$SYNC_PP_RES_XML"
 
 dump_mkfile_variable "SYNC_THIRDPARTY_JAVA_FILES" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
+
+
+# Creating Makefile for Mozilla.
+MKFILE=$ANDROID/tests/background/junit3/android-services-files.mk
+echo "Creating background tests makefile for including in the Mozilla build system at $MKFILE"
+cat tools/makefile_mpl.txt > $MKFILE
+echo "# $WARNING" >> $MKFILE
+dump_mkfile_variable "BACKGROUND_TESTS_JAVA_FILES" "$BACKGROUND_TESTS_JAVA_FILES"
+dump_mkfile_variable "BACKGROUND_TESTS_RES_FILES" "$BACKGROUND_TESTS_RES_FILES"
 
 # Finished creating Makefile for Mozilla.
 
@@ -183,8 +243,8 @@ find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \(
 # We manually manage res/xml in the Fennec Makefile.
 
 # These seem to get copied anyway.
-rm $ANDROID/base/resources/xml/sync_authenticator.xml
-rm $ANDROID/base/resources/xml/sync_syncadapter.xml
-rm $ANDROID/base/resources/xml/sync_options.xml
+for pp in ${PP_XML_RESOURCES} ; do
+  rm -f $ANDROID/base/resources/xml/${pp}.xml
+done
 
 echo "Done."
