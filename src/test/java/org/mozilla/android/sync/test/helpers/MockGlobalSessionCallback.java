@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;

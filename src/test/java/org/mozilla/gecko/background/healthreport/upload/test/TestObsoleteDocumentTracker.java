@@ -17,9 +17,9 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.upload.ObsoleteDocumentTracker;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import android.content.SharedPreferences;

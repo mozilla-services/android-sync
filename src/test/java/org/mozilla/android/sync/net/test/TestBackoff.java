@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
+import org.mozilla.gecko.background.testhelpers.MockGlobalSession;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 
@@ -15,7 +16,6 @@ import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
-import org.mozilla.android.sync.test.helpers.MockGlobalSession;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 
 public class TestBackoff {

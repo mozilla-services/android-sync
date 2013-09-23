@@ -13,7 +13,7 @@ import org.json.simple.parser.ParseException;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;

@@ -22,9 +22,9 @@ import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionFetch
 import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionFinishDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositorySessionStoreDelegate;
 import org.mozilla.android.sync.test.helpers.ExpectSuccessRepositoryWipeDelegate;
-import org.mozilla.android.sync.test.helpers.MockRecord;
-import org.mozilla.android.sync.test.helpers.WBORepository;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.background.testhelpers.MockRecord;
+import org.mozilla.gecko.background.testhelpers.WBORepository;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
