@@ -25,7 +25,9 @@ public abstract class FakeProfileTestCase extends ActivityInstrumentationTestCas
     super(Activity.class);
   }
 
-  protected abstract String getCacheSuffix();
+  protected String getCacheSuffix() {
+    return this.getClass().getName() + "-" + System.currentTimeMillis();
+  }
 
   @Override
   protected void setUp() throws Exception {

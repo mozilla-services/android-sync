@@ -31,11 +31,6 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     "events_textual"
   };
 
-  @Override
-  protected String getCacheSuffix() {
-    return File.separator + "health-" + System.currentTimeMillis() + ".profile";
-  }
-
   public static class MockMeasurementFields implements MeasurementFields {
     @Override
     public Iterable<FieldSpec> getFields() {

@@ -27,11 +27,6 @@ public class TestHealthReportProvider extends DBProviderTestCase<HealthReportPro
     super(providerClass, providerAuthority);
   }
 
-  @Override
-  protected String getCacheSuffix() {
-    return File.separator + "health-" + System.currentTimeMillis() + ".profile";
-  }
-
   private Uri getCompleteUri(String rest) {
     return Uri.parse("content://" + HealthReportProvider.HEALTH_AUTHORITY + rest +
                      (rest.indexOf('?') == -1 ? "?" : "&") +

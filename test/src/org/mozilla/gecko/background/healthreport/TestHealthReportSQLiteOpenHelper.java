@@ -39,11 +39,6 @@ public class TestHealthReportSQLiteOpenHelper extends FakeProfileTestCase {
     return new MockHealthReportSQLiteOpenHelper(context, fakeProfileDirectory, name, version);
   }
 
-  @Override
-  protected String getCacheSuffix() {
-    return File.separator + "testHealth";
-  }
-
   public void testOpening() {
     helper = createHelper("health.db");
     SQLiteDatabase db = helper.getWritableDatabase();
