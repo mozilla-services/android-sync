@@ -20,9 +20,9 @@
                 <action android:name="android.intent.action.EXTERNAL_APPLICATIONS_AVAILABLE" />
             </intent-filter>
             <intent-filter >
-              <action android:name="@ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF" />
+                <action android:name="@ANDROID_PACKAGE_NAME@.HEALTHREPORT_UPLOAD_PREF" />
             </intent-filter>
             <intent-filter >
-              <action android:name="@ANDROID_PACKAGE_NAME@.HEALTHREPORT_PRUNE" />
+                <action android:name="@ANDROID_PACKAGE_NAME@.HEALTHREPORT_PRUNE" />
             </intent-filter>
         </receiver>
