@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.background.bagheera.BagheeraClient;
 import org.mozilla.gecko.background.bagheera.BagheeraRequestDelegate;
@@ -87,6 +88,22 @@ public class AndroidSubmissionClient implements SubmissionClient {
     }
   }
 
+  protected HealthReportDatabaseStorage getStorage(final ContentProviderClient client,
+      final String profilePath) {
+    return EnvironmentBuilder.getStorage(client, profilePath);
+  }
+
+  protected ProfileInformationCache getProfileInformationCache(final String profilePath) {
+    return new ProfileInformationCache(profilePath);
+  }
+
+  protected JSONObject generateDocument(final HealthReportStorage storage, final long localTime,
+      final long last, final String profilePath) throws JSONException {
+    final long since = localTime - GlobalConstants.MILLISECONDS_PER_SIX_MONTHS;
+    final HealthReportGenerator generator = new HealthReportGenerator(storage);
+    return generator.generateDocument(since, last, profilePath);
+  }
+
   protected void uploadPayload(String id, String payload, Collection<String> oldIds, BagheeraRequestDelegate uploadDelegate) {
     final BagheeraClient client = new BagheeraClient(getDocumentServerURI());
 
@@ -123,23 +140,21 @@ public class AndroidSubmissionClient implements SubmissionClient {
       // Storage instance is owned by HealthReportProvider, so we don't need to
       // close it. It's worth noting that this call will fail if called
       // out-of-process.
-      HealthReportDatabaseStorage storage = EnvironmentBuilder.getStorage(client, profilePath);
+      final HealthReportDatabaseStorage storage = getStorage(client, profilePath);
       if (storage == null) {
         // TODO: Bug 910898 - Store error in SharedPrefs so we can increment next time with storage.
         delegate.onHardFailure(localTime, null, "No storage when generating report.", null);
         return;
       }
 
-      long since = localTime - GlobalConstants.MILLISECONDS_PER_SIX_MONTHS;
       long last = Math.max(getLastUploadLocalTime(), HealthReportConstants.EARLIEST_LAST_PING);
-
       if (!storage.hasEventSince(last)) {
         delegate.onHardFailure(localTime, null, "No new events in storage.", null);
         return;
       }
 
       initializeStorageForUploadProviders(storage);
-      final ProfileInformationCache profileCache = new ProfileInformationCache(profilePath);
+      final ProfileInformationCache profileCache = getProfileInformationCache(profilePath);
       if (!profileCache.restoreUnlessInitialized()) {
         Logger.warn(LOG_TAG, "Not enough profile information to compute current environment.");
         return;
@@ -150,8 +165,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
 
       try {
         incrementSubmissionAttemptCount(statusCounter);
-        final HealthReportGenerator generator = new HealthReportGenerator(storage);
-        final JSONObject document = generator.generateDocument(since, last, profilePath);
+        final JSONObject document = generateDocument(storage, localTime, last, profilePath);
         if (document == null) {
           statusCounter.incrementUploadClientFailureCount();
           delegate.onHardFailure(localTime, null, "Generator returned null document.", null);
