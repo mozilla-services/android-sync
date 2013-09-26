@@ -12,7 +12,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 
 import org.junit.Assert;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;

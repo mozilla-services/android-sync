@@ -14,10 +14,10 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.bagheera.BagheeraClient;
 import org.mozilla.gecko.background.bagheera.BagheeraRequestDelegate;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.net.BaseResource;
 
 import ch.boye.httpclientandroidlib.HttpResponse;

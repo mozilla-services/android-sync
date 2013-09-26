@@ -174,8 +174,10 @@ need a fairly involved toolchain, including:
 
 * Java;
 * the Android SDK;
-* Maven 3;
+* Maven 3 (note that `v3.1.0 is broken`_);
 * the android-sync repository.
+
+.. _`v3.1.0 is broken`: https://code.google.com/p/maven-android-plugin/issues/detail?can=2&q=395&colspec=ID%20Type%20Component%20OpSys%20Status%20Priority%20Milestone%20Owner%20Summary&id=395
 
 To make it easier for new contributors to contribute to Mozilla's
 Android services, we've created a Vagrant configuration that uses

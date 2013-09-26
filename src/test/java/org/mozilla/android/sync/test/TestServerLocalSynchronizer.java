@@ -18,9 +18,9 @@ import org.mozilla.android.sync.test.SynchronizerHelpers.FinishErrorWBORepositor
 import org.mozilla.android.sync.test.SynchronizerHelpers.FinishFailedException;
 import org.mozilla.android.sync.test.SynchronizerHelpers.SerialFailStoreWBORepository;
 import org.mozilla.android.sync.test.SynchronizerHelpers.TrackingWBORepository;
-import org.mozilla.android.sync.test.helpers.WBORepository;
-import org.mozilla.android.sync.test.helpers.WaitHelper;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.testhelpers.WBORepository;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
 import org.mozilla.gecko.sync.repositories.StoreFailedException;
 import org.mozilla.gecko.sync.repositories.domain.BookmarkRecord;

@@ -10,7 +10,7 @@ import static org.junit.Assert.assertNull;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.crypto.CryptoException;

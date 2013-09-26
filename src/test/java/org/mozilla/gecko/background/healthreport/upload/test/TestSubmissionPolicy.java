@@ -14,12 +14,12 @@ import java.util.HashSet;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mozilla.android.sync.test.helpers.MockSharedPreferences;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.upload.SubmissionClient;
 import org.mozilla.gecko.background.healthreport.upload.SubmissionPolicy;
 import org.mozilla.gecko.background.healthreport.upload.test.TestObsoleteDocumentTracker.MockObsoleteDocumentTracker;
 import org.mozilla.gecko.background.healthreport.upload.test.TestSubmissionPolicy.MockSubmissionClient.Response;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import android.content.SharedPreferences;
