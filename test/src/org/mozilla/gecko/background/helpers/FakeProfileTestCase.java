@@ -25,6 +25,10 @@ public abstract class FakeProfileTestCase extends ActivityInstrumentationTestCas
     super(Activity.class);
   }
 
+  /**
+   * Returns the profile cache suffix. This is computed once for each test function (in setUp()).
+   * Note that the return value is not cached.
+   */
   protected String getCacheSuffix() {
     return this.getClass().getName() + "-" + System.currentTimeMillis();
   }
