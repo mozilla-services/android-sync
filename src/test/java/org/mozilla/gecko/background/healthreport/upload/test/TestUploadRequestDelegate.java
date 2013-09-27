@@ -8,6 +8,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 
 import org.junit.Before;
@@ -26,6 +28,10 @@ public class TestUploadRequestDelegate {
 
     public MockSubmissionsStatusCounter() {
       super(0, 0, null);
+      reset();
+    }
+
+    public void reset() {
       invocationResults = new HashMap<InvocationResult, Boolean>();
     }
 
@@ -94,5 +100,39 @@ public class TestUploadRequestDelegate {
   public void testHandleSuccess() throws Exception {
     delegate.handleSuccess(0, null, null, null);
     statusCounter.assertResult(InvocationResult.SUCCESS);
+  }
+
+  @Test
+  public void testHandleFailure() throws Exception {
+    delegate.handleFailure(404, null, null);
+    statusCounter.assertResult(InvocationResult.SERVER_FAILURE);
+  }
+
+  @Test(expected=IllegalStateException.class)
+  public void testHandleFailureSuccess200() throws Exception {
+    delegate.handleFailure(200, null, null);
+  }
+
+  @Test(expected=IllegalStateException.class)
+  public void testHandleFailureSuccess201() throws Exception {
+    delegate.handleFailure(201, null, null);
+  }
+
+  @Test
+  public void testHandleError() throws Exception {
+    delegate.handleError(new IllegalStateException());
+    statusCounter.assertResult(InvocationResult.TRANSPORT_FAILURE);
+    statusCounter.reset();
+
+    final Exception[] clientExceptions = new Exception[] {
+        new IllegalArgumentException(),
+        new UnsupportedEncodingException(),
+        new URISyntaxException("input", "a good raisin")
+    };
+    for (Exception e : clientExceptions) {
+      delegate.handleError(e);
+      statusCounter.assertResult(InvocationResult.CLIENT_FAILURE);
+      statusCounter.reset();
+    }
   }
 }
