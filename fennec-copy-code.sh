@@ -56,10 +56,15 @@ rsync -a manifests $SERVICES/
 
 echo "Copying sources. All use of R must be compiled with Fennec."
 SOURCEROOT="src/main/java/org/mozilla/gecko"
+BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
+BROWSERIDSOURCEDIR="$SOURCEROOT/browserid"
 FXASOURCEDIR="$SOURCEROOT/fxa"
 SYNCSOURCEDIR="$SOURCEROOT/sync"
-BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
-SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$FXASOURCEDIR" "$SYNCSOURCEDIR" \
+SOURCEFILES=$(find \
+  "$BACKGROUNDSOURCEDIR" \
+  "$BROWSERIDSOURCEDIR" \
+  "$FXASOURCEDIR" \
+  "$SYNCSOURCEDIR" \
   -name '*.java' \
   -and -not -name 'AnnouncementsConstants.java' \
   -and -not -name 'HealthReportConstants.java' \
@@ -95,6 +100,10 @@ rsync -C \
   --exclude 'FxAccountConstants.java' \
   --exclude '*.in' \
   -a $FXASOURCEDIR $ANDROID/base/
+
+rsync -C \
+  --exclude '*.in' \
+  -a $BROWSERIDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
 PREPROCESS_FILES="\
