@@ -265,7 +265,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
     }
   };
 
-  protected class UploadRequestDelegate extends RequestDelegate {
+  public class UploadRequestDelegate extends RequestDelegate {
     private final SubmissionsStatusCounter statusCounter;
 
     public UploadRequestDelegate(Delegate delegate, long localTime, boolean isUpload, String id,
