@@ -60,11 +60,13 @@ BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
 BROWSERIDSOURCEDIR="$SOURCEROOT/browserid"
 FXASOURCEDIR="$SOURCEROOT/fxa"
 SYNCSOURCEDIR="$SOURCEROOT/sync"
+TOKENSERVERSOURCEDIR="$SOURCEROOT/tokenserver"
 SOURCEFILES=$(find \
   "$BACKGROUNDSOURCEDIR" \
   "$BROWSERIDSOURCEDIR" \
   "$FXASOURCEDIR" \
   "$SYNCSOURCEDIR" \
+  "$TOKENSERVERSOURCEDIR" \
   -name '*.java' \
   -and -not -name 'AnnouncementsConstants.java' \
   -and -not -name 'HealthReportConstants.java' \
@@ -80,15 +82,6 @@ SOURCEFILES=$(find \
 rsync -C \
   --exclude 'AppConstants.java' \
   --exclude 'SysInfo.java' \
-  --exclude 'SyncConstants.java' \
-  --exclude 'BrowserContract.java' \
-  --exclude '*.in' \
-  --exclude '*testhelper*' \
-  -a $SYNCSOURCEDIR $ANDROID/base/
-
-rsync -C \
-  --exclude 'AppConstants.java' \
-  --exclude 'SysInfo.java' \
   --exclude 'GlobalConstants.java' \
   --exclude 'AnnouncementsConstants.java' \
   --exclude 'HealthReportConstants.java' \
@@ -97,13 +90,26 @@ rsync -C \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 rsync -C \
+  --exclude '*.in' \
+  -a $BROWSERIDSOURCEDIR $ANDROID/base/
+
+rsync -C \
   --exclude 'FxAccountConstants.java' \
   --exclude '*.in' \
   -a $FXASOURCEDIR $ANDROID/base/
 
 rsync -C \
+  --exclude 'AppConstants.java' \
+  --exclude 'SysInfo.java' \
+  --exclude 'SyncConstants.java' \
+  --exclude 'BrowserContract.java' \
   --exclude '*.in' \
-  -a $BROWSERIDSOURCEDIR $ANDROID/base/
+  --exclude '*testhelper*' \
+  -a $SYNCSOURCEDIR $ANDROID/base/
+
+rsync -C \
+  --exclude '*.in' \
+  -a $TOKENSERVERSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
 PREPROCESS_FILES="\
