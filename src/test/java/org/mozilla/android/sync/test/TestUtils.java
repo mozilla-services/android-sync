@@ -62,6 +62,23 @@ public class TestUtils extends Utils {
   }
 
   @Test
+  public void testByte2Hex2ByteAndViceVersa() throws Exception { // There and back again!
+    for (int i = 0; i < BYTE_ARRS.length; ++i) {
+      // byte2Hex2Byte
+      final byte[] b = BYTE_ARRS[i];
+      final String s = Utils.byte2Hex(b);
+      assertTrue(Arrays.equals(b, Utils.hex2Byte(s)));
+    }
+
+    // hex2Byte2Hex
+    for (int i = 0; i < STRING_ARR.length; ++i) {
+      final String s = STRING_ARR[i];
+      final byte[] b = Utils.hex2Byte(s);
+      assertEquals(s, Utils.byte2Hex(b));
+    }
+  }
+
+  @Test
   public void testToCommaSeparatedString() {
     ArrayList<String> xs = new ArrayList<String>();
     assertEquals("", Utils.toCommaSeparatedString(null));
