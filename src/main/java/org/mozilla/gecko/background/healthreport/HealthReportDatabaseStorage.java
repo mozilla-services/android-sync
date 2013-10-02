@@ -1339,6 +1339,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   // Called internally only to ensure the same db instance is used.
+  @SuppressWarnings("static-method")
   protected int deleteOrphanedEnv(final SQLiteDatabase db, final int curEnv) {
     final String whereClause =
         "id != ? AND " +
@@ -1353,6 +1354,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   // Called internally only to ensure the same db instance is used.
+  @SuppressWarnings("static-method")
   protected int deleteEventsBefore(final SQLiteDatabase db, final String dayString) {
     final String whereClause = "date < ?";
     final String[] whereArgs = new String[] {dayString};
@@ -1377,6 +1379,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   }
 
   // Called internally only to ensure the same db instance is used.
+  @SuppressWarnings("static-method")
   protected int deleteOrphanedAddons(final SQLiteDatabase db) {
     final String whereClause = "id NOT IN (SELECT addonsID FROM environments)";
     return db.delete("addons", whereClause, null);
