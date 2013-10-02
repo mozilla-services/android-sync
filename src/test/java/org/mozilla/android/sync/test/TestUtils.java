@@ -22,6 +22,34 @@ public class TestUtils extends Utils {
   }
 
   @Test
+  public void testByte2Hex() throws Exception {
+    final byte[][] byteArrs = {
+      new byte[] {'	'}, // Tab.
+      new byte[] {'0'},
+      new byte[] {'A'},
+      new byte[] {'a'},
+      new byte[] {'I', 'U'},
+      new byte[] {'`', 'h', 'g', ' ', 's', '`'},
+      new byte[] {}
+    };
+    final String[] expectedArr = {
+      "09",
+      "30",
+      "41",
+      "61",
+      "4955",
+      "606867207360",
+      ""
+    };
+
+    for (int i = 0; i < byteArrs.length; ++i) {
+      final byte[] b = byteArrs[i];
+      final String expected = expectedArr[i];
+      assertEquals(expected, Utils.byte2hex(b));
+    }
+  }
+
+  @Test
   public void testToCommaSeparatedString() {
     ArrayList<String> xs = new ArrayList<String>();
     assertEquals("", Utils.toCommaSeparatedString(null));
