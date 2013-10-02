@@ -82,8 +82,8 @@ public class Utils {
   /**
    * Helper to convert a byte array to a hex-encoded string
    */
-  public static String byte2hex(byte[] b) {
-    StringBuilder hs = new StringBuilder(b.length * 2);
+  public static String byte2hex(final byte[] b) {
+    final StringBuilder hs = new StringBuilder(b.length * 2);
     String stmp;
 
     for (int n = 0; n < b.length; n++) {
