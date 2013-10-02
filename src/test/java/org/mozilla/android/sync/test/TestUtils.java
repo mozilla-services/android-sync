@@ -21,30 +21,31 @@ public class TestUtils extends Utils {
     }
   }
 
+  public static final byte[][] BYTE_ARRS = {
+    new byte[] {'	'}, // Tab.
+    new byte[] {'0'},
+    new byte[] {'A'},
+    new byte[] {'a'},
+    new byte[] {'I', 'U'},
+    new byte[] {'`', 'h', 'g', ' ', 's', '`'},
+    new byte[] {}
+  };
+  // Indices correspond with the above array.
+  public static final String[] STRING_ARR = {
+    "09",
+    "30",
+    "41",
+    "61",
+    "4955",
+    "606867207360",
+    ""
+  };
+
   @Test
   public void testByte2Hex() throws Exception {
-    final byte[][] byteArrs = {
-      new byte[] {'	'}, // Tab.
-      new byte[] {'0'},
-      new byte[] {'A'},
-      new byte[] {'a'},
-      new byte[] {'I', 'U'},
-      new byte[] {'`', 'h', 'g', ' ', 's', '`'},
-      new byte[] {}
-    };
-    final String[] expectedArr = {
-      "09",
-      "30",
-      "41",
-      "61",
-      "4955",
-      "606867207360",
-      ""
-    };
-
-    for (int i = 0; i < byteArrs.length; ++i) {
-      final byte[] b = byteArrs[i];
-      final String expected = expectedArr[i];
+    for (int i = 0; i < BYTE_ARRS.length; ++i) {
+      final byte[] b = BYTE_ARRS[i];
+      final String expected = STRING_ARR[i];
       assertEquals(expected, Utils.byte2hex(b));
     }
   }
