@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.Scanner;
 
 import org.json.JSONException;
@@ -32,8 +33,9 @@ public class ProfileInformationCache implements ProfileInformationProvider {
    *   -: No version number; implicit v1.
    *   1: Add versioning (Bug 878670).
    *   2: Bump to regenerate add-on set after landing Bug 900694 (Bug 901622).
+   *   3: Add distribution, osLocale, appLocale.
    */
-  public static final int FORMAT_VERSION = 2;
+  public static final int FORMAT_VERSION = 3;
 
   protected boolean initialized = false;
   protected boolean needsWrite = false;
@@ -42,7 +44,29 @@ public class ProfileInformationCache implements ProfileInformationProvider {
 
   private volatile boolean blocklistEnabled = true;
   private volatile boolean telemetryEnabled = false;
+  private volatile boolean acceptLangIsUserSet = false;
+
   private volatile long profileCreationTime = 0;
+  private volatile String distribution = "";
+
+  // There are really four kinds of locale in play:
+  //
+  // * The OS
+  // * The Android environment of the app (setDefault)
+  // * The Gecko locale
+  // * The requested content locale (Accept-Language).
+  //
+  // We track only the first two, assuming that the Gecko locale will typically
+  // be the same as the app locale.
+  //
+  // The app locale is fetched from the PIC because it can be modified at
+  // runtime -- it won't necessarily be what Locale.getDefaultLocale() returns
+  // in a fresh non-browser profile.
+  //
+  // We also track the OS locale here for the same reason -- we need to store
+  // the default (OS) value before the locale-switching code takes effect!
+  private volatile String osLocale = "";
+  private volatile String appLocale = "";
 
   private volatile JSONObject addons = null;
 
@@ -62,7 +86,11 @@ public class ProfileInformationCache implements ProfileInformationProvider {
       object.put("version", FORMAT_VERSION);
       object.put("blocklist", blocklistEnabled);
       object.put("telemetry", telemetryEnabled);
+      object.put("acceptLangIsUserSet", acceptLangIsUserSet);
       object.put("profileCreated", profileCreationTime);
+      object.put("osLocale", osLocale);
+      object.put("appLocale", appLocale);
+      object.put("distribution", distribution);
       object.put("addons", addons);
     } catch (JSONException e) {
       // There isn't much we can do about this.
@@ -86,8 +114,12 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     case FORMAT_VERSION:
       blocklistEnabled = object.getBoolean("blocklist");
       telemetryEnabled = object.getBoolean("telemetry");
+      acceptLangIsUserSet = object.getBoolean("acceptLangIsUserSet");
       profileCreationTime = object.getLong("profileCreated");
       addons = object.getJSONObject("addons");
+      distribution = object.getString("distribution");
+      osLocale = object.getString("osLocale");
+      appLocale = object.getString("appLocale");
       return true;
     default:
       Logger.warn(LOG_TAG, "Unable to restore from version " + version + " PIC file: expecting " + FORMAT_VERSION);
@@ -207,6 +239,18 @@ public class ProfileInformationCache implements ProfileInformationProvider {
   }
 
   @Override
+  public boolean acceptLangIsUserSet() {
+    ensureInitialized();
+    return telemetryEnabled;
+  }
+
+  public void setAcceptLangIsUserSet(boolean value) {
+    Logger.debug(LOG_TAG, "Setting accept-lang as user-set: " + value);
+    acceptLangIsUserSet = value;
+    needsWrite = true;
+  }
+
+  @Override
   public long getProfileCreationTime() {
     ensureInitialized();
     return profileCreationTime;
@@ -216,6 +260,64 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     Logger.debug(LOG_TAG, "Setting profile creation time: " + value);
     profileCreationTime = value;
     needsWrite = true;
+  }
+
+  @Override
+  public String getDistributionString() {
+    return distribution;
+  }
+
+  /**
+   * Ensure that your arguments are non-null.
+   */
+  public void setDistributionString(String distributionID, String distributionVersion) {
+    Logger.debug(LOG_TAG, "Setting distribution: " + distributionID + ", " + distributionVersion);
+    distribution = distributionID + ":" + distributionVersion;
+  }
+
+  @Override
+  public String getAppLocale() {
+    return appLocale;
+  }
+
+  public void setAppLocale(String value) {
+    if (value.equalsIgnoreCase(appLocale)) {
+      return;
+    }
+    Logger.debug(LOG_TAG, "Setting app locale: " + value);
+    appLocale = value.toLowerCase(Locale.US);
+    needsWrite = true;
+  }
+
+  @Override
+  public String getOSLocale() {
+    return osLocale;
+  }
+
+  public void setOSLocale(String value) {
+    if (value.equalsIgnoreCase(osLocale)) {
+      return;
+    }
+    Logger.debug(LOG_TAG, "Setting OS locale: " + value);
+    osLocale = value.toLowerCase(Locale.US);
+    needsWrite = true;
+  }
+
+  /**
+   * Update the PIC, if necessary, to match the current locale environment.
+   *
+   * @return true if the PIC needed to be updated.
+   */
+  public boolean updateLocales(String osLocale, String appLocale) {
+    if (this.osLocale.equalsIgnoreCase(osLocale) &&
+        (appLocale == null || this.appLocale.equalsIgnoreCase(appLocale))) {
+      return false;
+    }
+    this.setOSLocale(osLocale);
+    if (appLocale != null) {
+      this.setAppLocale(appLocale);
+    }
+    return true;
   }
 
   @Override

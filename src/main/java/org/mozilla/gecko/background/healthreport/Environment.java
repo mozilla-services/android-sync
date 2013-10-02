@@ -32,12 +32,15 @@ import org.mozilla.gecko.background.common.log.Logger;
 public abstract class Environment {
   private static final String LOG_TAG = "GeckoEnvironment";
 
-  public static int VERSION = 1;
+  // Version 2 adds osLocale, appLocale, acceptLangSet, and distribution.
+  public static int VERSION = 2;
 
   protected final Class<? extends EnvironmentAppender> appenderClass;
 
   protected volatile String hash = null;
   protected volatile int id = -1;
+
+  public int version = VERSION;
 
   // org.mozilla.profile.age.
   public int profileCreation;
@@ -73,6 +76,11 @@ public abstract class Environment {
   public int extensionCount;
   public int pluginCount;
   public int themeCount;
+
+  public String osLocale;                // The Android OS "Locale" value.
+  public String appLocale;
+  public int acceptLangSet;
+  public String distribution;            // ID + version. Typically empty.
 
   public Environment() {
     this(Environment.HashAppender.class);
@@ -197,6 +205,11 @@ public abstract class Environment {
     if (addons != null) {
       appendSortedAddons(getNonIgnoredAddons(), appender);
     }
+
+    // v2.
+    appender.append(osLocale);
+    appender.append(appLocale);
+    appender.append(distribution);
 
     return hash = appender.toString();
   }
