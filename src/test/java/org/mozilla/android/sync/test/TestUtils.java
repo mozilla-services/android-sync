@@ -4,10 +4,12 @@
 package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.junit.Test;
 import org.mozilla.gecko.sync.Utils;
@@ -46,7 +48,16 @@ public class TestUtils extends Utils {
     for (int i = 0; i < BYTE_ARRS.length; ++i) {
       final byte[] b = BYTE_ARRS[i];
       final String expected = STRING_ARR[i];
-      assertEquals(expected, Utils.byte2hex(b));
+      assertEquals(expected, Utils.byte2Hex(b));
+    }
+  }
+
+  @Test
+  public void testHex2Byte() throws Exception {
+    for (int i = 0; i < STRING_ARR.length; ++i) {
+      final String s = STRING_ARR[i];
+      final byte[] expected = BYTE_ARRS[i];
+      assertTrue(Arrays.equals(expected, Utils.hex2Byte(s)));
     }
   }
 
