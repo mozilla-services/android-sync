@@ -63,12 +63,14 @@ MOZ_ANDROID_SHARED_ACCOUNT_TYPE = %(ANDROID_PACKAGE_NAME)s_sync_test
 #
 # ANDROID_BACKGROUND_TEST_PACKAGE_NAME = org.mozilla.background.test
 # ANDROID_BACKGROUND_TARGET_PACKAGE_NAME = %(ANDROID_PACKAGE_NAME)s
+# ANDROID_BACKGROUND_APP_DISPLAYNAME = $(MOZ_APP_DISPLAYNAME) Background Tests
 #
 # Since we want to test without reference to the installed Fennec, we
 # define our own package names:
 
 ANDROID_BACKGROUND_TEST_PACKAGE_NAME = org.mozilla.gecko.test
 ANDROID_BACKGROUND_TARGET_PACKAGE_NAME = org.mozilla.gecko
+ANDROID_BACKGROUND_APP_DISPLAYNAME = FxSync Background Tests
 
 # For standalone use.
 MOZ_UPDATE_CHANNEL = default
