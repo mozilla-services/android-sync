@@ -100,16 +100,6 @@ cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
 cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
 cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
 
-PP_XML_RESOURCES=" \
-  sync_authenticator \
-  sync_options \
-  sync_syncadapter \
-  "
-for pp in ${PP_XML_RESOURCES} ; do
-  echo "Copying preprocessed ${pp}.xml."
-  cp ${pp}.xml.template $ANDROID/base/resources/xml/${pp}.xml.in
-done
-
 echo "Copying internal dependency sources."
 APACHEDIR="src/main/java/org/mozilla/apache"
 APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,apache/," | $SORT_CMD)
@@ -166,12 +156,7 @@ SYNC_RES_VALUES="res/values/sync_styles.xml"
 SYNC_RES_VALUES_V11="res/values-v11/sync_styles.xml"
 SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
 # XML resources that do not need to be preprocessed.
-SYNC_RES_XML=""
-# XML resources that need to be preprocessed.
-SYNC_PP_RES_XML=""
-for pp in ${PP_XML_RESOURCES} ; do
-  SYNC_PP_RES_XML="res/xml/${pp}.xml ${SYNC_PP_RES_XML}"
-done
+SYNC_RES_XML="res/xml/sync_authenticator.xml res/xml/sync_syncadapter.xml res/xml/sync_options.xml"
 
 dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
 dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
@@ -186,7 +171,6 @@ dump_mkfile_variable "SYNC_RES_VALUES" "$SYNC_RES_VALUES"
 dump_mkfile_variable "SYNC_RES_VALUES_V11" "$SYNC_RES_VALUES_V11"
 dump_mkfile_variable "SYNC_RES_VALUES_LARGE_V11" "$SYNC_RES_VALUES_LARGE_V11"
 dump_mkfile_variable "SYNC_RES_XML" "$SYNC_RES_XML"
-dump_mkfile_variable "SYNC_PP_RES_XML" "$SYNC_PP_RES_XML"
 
 dump_mkfile_variable "SYNC_THIRDPARTY_JAVA_FILES" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
 
@@ -241,10 +225,5 @@ find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \(
 find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-mdpi-resources.mn
 find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-hdpi-resources.mn
 # We manually manage res/xml in the Fennec Makefile.
-
-# These seem to get copied anyway.
-for pp in ${PP_XML_RESOURCES} ; do
-  rm -f $ANDROID/base/resources/xml/${pp}.xml
-done
 
 echo "Done."

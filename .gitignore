@@ -8,9 +8,6 @@ src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.
 src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
 src/main/java/org/mozilla/gecko/background/healthreport/HealthReportConstants.java
 src/main/java/org/mozilla/gecko/sync/SyncConstants.java
-res/xml/sync_authenticator.xml
-res/xml/sync_syncadapter.xml
-res/xml/sync_options.xml
 res/values/strings.xml
 .DS_Store
 .metadata
