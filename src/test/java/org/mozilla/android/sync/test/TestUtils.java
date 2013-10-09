@@ -4,10 +4,12 @@
 package org.mozilla.android.sync.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.junit.Test;
 import org.mozilla.gecko.sync.Utils;
@@ -18,6 +20,61 @@ public class TestUtils extends Utils {
   public void testGenerateGUID() {
     for (int i = 0; i < 1000; ++i) {
       assertEquals(12, Utils.generateGuid().length());
+    }
+  }
+
+  public static final byte[][] BYTE_ARRS = {
+    new byte[] {'	'}, // Tab.
+    new byte[] {'0'},
+    new byte[] {'A'},
+    new byte[] {'a'},
+    new byte[] {'I', 'U'},
+    new byte[] {'`', 'h', 'g', ' ', 's', '`'},
+    new byte[] {}
+  };
+  // Indices correspond with the above array.
+  public static final String[] STRING_ARR = {
+    "09",
+    "30",
+    "41",
+    "61",
+    "4955",
+    "606867207360",
+    ""
+  };
+
+  @Test
+  public void testByte2Hex() throws Exception {
+    for (int i = 0; i < BYTE_ARRS.length; ++i) {
+      final byte[] b = BYTE_ARRS[i];
+      final String expected = STRING_ARR[i];
+      assertEquals(expected, Utils.byte2Hex(b));
+    }
+  }
+
+  @Test
+  public void testHex2Byte() throws Exception {
+    for (int i = 0; i < STRING_ARR.length; ++i) {
+      final String s = STRING_ARR[i];
+      final byte[] expected = BYTE_ARRS[i];
+      assertTrue(Arrays.equals(expected, Utils.hex2Byte(s)));
+    }
+  }
+
+  @Test
+  public void testByte2Hex2ByteAndViceVersa() throws Exception { // There and back again!
+    for (int i = 0; i < BYTE_ARRS.length; ++i) {
+      // byte2Hex2Byte
+      final byte[] b = BYTE_ARRS[i];
+      final String s = Utils.byte2Hex(b);
+      assertTrue(Arrays.equals(b, Utils.hex2Byte(s)));
+    }
+
+    // hex2Byte2Hex
+    for (int i = 0; i < STRING_ARR.length; ++i) {
+      final String s = STRING_ARR[i];
+      final byte[] b = Utils.hex2Byte(s);
+      assertEquals(s, Utils.byte2Hex(b));
     }
   }
 
