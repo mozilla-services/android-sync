@@ -682,7 +682,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     }
 
     public void init(ContentValues v) {
-      version         = v.containsKey("version") ? v.getAsInteger("version") : Environment.VERSION;
+      version         = v.containsKey("version") ? v.getAsInteger("version") : Environment.CURRENT_VERSION;
       profileCreation = v.getAsInteger("profileCreation");
       cpuCount        = v.getAsInteger("cpuCount");
       memoryMB        = v.getAsInteger("memoryMB");

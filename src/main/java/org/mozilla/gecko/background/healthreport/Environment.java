@@ -33,14 +33,14 @@ public abstract class Environment {
   private static final String LOG_TAG = "GeckoEnvironment";
 
   // Version 2 adds osLocale, appLocale, acceptLangSet, and distribution.
-  public static int VERSION = 2;
+  public static final int CURRENT_VERSION = 2;
 
   protected final Class<? extends EnvironmentAppender> appenderClass;
 
   protected volatile String hash = null;
   protected volatile int id = -1;
 
-  public int version = VERSION;
+  public int version = CURRENT_VERSION;
 
   // org.mozilla.profile.age.
   public int profileCreation;
