@@ -58,7 +58,7 @@ public class EnvironmentBuilder {
   public static interface ProfileInformationProvider {
     public boolean isBlocklistEnabled();
     public boolean isTelemetryEnabled();
-    public boolean acceptLangIsUserSet();
+    public boolean isAcceptLangUserSet();
     public long getProfileCreationTime();
 
     public String getDistributionString();
@@ -135,6 +135,7 @@ public class EnvironmentBuilder {
     e.distribution = info.getDistributionString();
     e.osLocale = info.getOSLocale();
     e.appLocale = info.getAppLocale();
+    e.acceptLangSet = info.isAcceptLangUserSet() ? 1 : 0;
   }
 
   /**

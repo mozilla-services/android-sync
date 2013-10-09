@@ -44,7 +44,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
 
   private volatile boolean blocklistEnabled = true;
   private volatile boolean telemetryEnabled = false;
-  private volatile boolean acceptLangIsUserSet = false;
+  private volatile boolean isAcceptLangUserSet = false;
 
   private volatile long profileCreationTime = 0;
   private volatile String distribution = "";
@@ -86,7 +86,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
       object.put("version", FORMAT_VERSION);
       object.put("blocklist", blocklistEnabled);
       object.put("telemetry", telemetryEnabled);
-      object.put("acceptLangIsUserSet", acceptLangIsUserSet);
+      object.put("isAcceptLangUserSet", isAcceptLangUserSet);
       object.put("profileCreated", profileCreationTime);
       object.put("osLocale", osLocale);
       object.put("appLocale", appLocale);
@@ -114,7 +114,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     case FORMAT_VERSION:
       blocklistEnabled = object.getBoolean("blocklist");
       telemetryEnabled = object.getBoolean("telemetry");
-      acceptLangIsUserSet = object.getBoolean("acceptLangIsUserSet");
+      isAcceptLangUserSet = object.getBoolean("isAcceptLangUserSet");
       profileCreationTime = object.getLong("profileCreated");
       addons = object.getJSONObject("addons");
       distribution = object.getString("distribution");
@@ -239,14 +239,14 @@ public class ProfileInformationCache implements ProfileInformationProvider {
   }
 
   @Override
-  public boolean acceptLangIsUserSet() {
+  public boolean isAcceptLangUserSet() {
     ensureInitialized();
-    return telemetryEnabled;
+    return isAcceptLangUserSet;
   }
 
-  public void setAcceptLangIsUserSet(boolean value) {
+  public void setAcceptLangUserSet(boolean value) {
     Logger.debug(LOG_TAG, "Setting accept-lang as user-set: " + value);
-    acceptLangIsUserSet = value;
+    isAcceptLangUserSet = value;
     needsWrite = true;
   }
 

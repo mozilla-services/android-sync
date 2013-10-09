@@ -209,6 +209,7 @@ public abstract class Environment {
     // v2.
     appender.append(osLocale);
     appender.append(appLocale);
+    appender.append(acceptLangSet);
     appender.append(distribution);
 
     return hash = appender.toString();
