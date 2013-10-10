@@ -107,9 +107,6 @@ def main():
 
     dot_templates = {
         "strings/strings.xml.template":    "res/values/strings.xml",
-        "sync_authenticator.xml.template": "res/xml/sync_authenticator.xml",
-        "sync_syncadapter.xml.template":   "res/xml/sync_syncadapter.xml",
-        "sync_options.xml.template":       "res/xml/sync_options.xml",
         }
 
     for input_filename in dot_ins:
