@@ -264,6 +264,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
 
   @Override
   public String getDistributionString() {
+    ensureInitialized();
     return distribution;
   }
 
@@ -273,10 +274,12 @@ public class ProfileInformationCache implements ProfileInformationProvider {
   public void setDistributionString(String distributionID, String distributionVersion) {
     Logger.debug(LOG_TAG, "Setting distribution: " + distributionID + ", " + distributionVersion);
     distribution = distributionID + ":" + distributionVersion;
+    needsWrite = true;
   }
 
   @Override
   public String getAppLocale() {
+    ensureInitialized();
     return appLocale;
   }
 
@@ -291,6 +294,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
 
   @Override
   public String getOSLocale() {
+    ensureInitialized();
     return osLocale;
   }
 
@@ -322,15 +326,19 @@ public class ProfileInformationCache implements ProfileInformationProvider {
 
   @Override
   public JSONObject getAddonsJSON() {
+    ensureInitialized();
     return addons;
   }
 
   public void updateJSONForAddon(String id, String json) throws Exception {
     addons.put(id, new JSONObject(json));
+    needsWrite = true;
   }
 
   public void removeAddon(String id) {
-    addons.remove(id);
+    if (null != addons.remove(id)) {
+      needsWrite = true;
+    }
   }
 
   /**
@@ -342,6 +350,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
     }
     try {
       addons.put(id, json);
+      needsWrite = true;
     } catch (Exception e) {
       // Why would this happen?
       Logger.warn(LOG_TAG, "Unexpected failure updating JSON for add-on.", e);
@@ -355,9 +364,11 @@ public class ProfileInformationCache implements ProfileInformationProvider {
    */
   public void setJSONForAddons(String json) throws Exception {
     addons = new JSONObject(json);
+    needsWrite = true;
   }
 
   public void setJSONForAddons(JSONObject json) {
     addons = json;
+    needsWrite = true;
   }
 }
