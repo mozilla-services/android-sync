@@ -443,7 +443,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
       db.execSQL("ALTER TABLE environments ADD COLUMN distribution TEXT DEFAULT ''");
       db.execSQL("ALTER TABLE environments ADD COLUMN osLocale TEXT DEFAULT ''");
       db.execSQL("ALTER TABLE environments ADD COLUMN appLocale TEXT DEFAULT ''");
-      db.execSQL("ALTER TABLE environments ADD COLUMN acceptLangSet INTEGER");
+      db.execSQL("ALTER TABLE environments ADD COLUMN acceptLangSet INTEGER DEFAULT 0");
 
       // Recreate view.
       createAddonsEnvironmentsView(db);
