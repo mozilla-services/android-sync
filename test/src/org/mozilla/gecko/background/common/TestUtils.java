@@ -108,7 +108,7 @@ public class TestUtils extends AndroidSyncTestCase {
     assertFalse(nonexistent.exists());
     try {
       deleteDirectoryRecursively(nonexistent);
-      fail("deleteDirectoryRecursively(null) should throw Exception");
+      fail("deleteDirectoryRecursively on a nonexistent directory should throw Exception");
     } catch (IllegalStateException e) { }
 
     // Empty dir.
