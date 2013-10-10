@@ -80,14 +80,14 @@ public class TestUtils extends AndroidSyncTestCase {
     assertStagesFromBundle(all, new String[] { "sync1", "sync2" }, new String[] { "skip1", "skip2" }, new String[] { "sync1", "sync2" });
   }
 
-  public static void deleteDirectory(final File dir) throws IOException {
+  public static void deleteDirectoryRecursively(final File dir) throws IOException {
     if (!dir.isDirectory()) {
       throw new IllegalStateException("Given directory, " + dir + ", is not a directory!");
     }
 
     for (File f : dir.listFiles()) {
       if (f.isDirectory()) {
-        deleteDirectory(f);
+        deleteDirectoryRecursively(f);
       } else if (!f.delete()) {
         // Since this method is for testing, we assume we should be able to do this.
         throw new IOException("Could not delete file, " + f.getAbsolutePath() + ". Permissions?");
@@ -107,19 +107,19 @@ public class TestUtils extends AndroidSyncTestCase {
     final File nonexistent = new File("nonexistentDirectory"); // Hopefully. ;)
     assertFalse(nonexistent.exists());
     try {
-      deleteDirectory(nonexistent);
-      fail("deleteDirectory(null) should throw Exception");
+      deleteDirectoryRecursively(nonexistent);
+      fail("deleteDirectoryRecursively(null) should throw Exception");
     } catch (IllegalStateException e) { }
 
     // Empty dir.
     File dir = mkdir(TEST_DIR);
-    deleteDirectory(dir);
+    deleteDirectoryRecursively(dir);
     assertFalse(dir.exists());
 
     // Filled dir.
     dir = mkdir(TEST_DIR);
     populateDir(dir);
-    deleteDirectory(dir);
+    deleteDirectoryRecursively(dir);
     assertFalse(dir.exists());
 
     // Filled dir with empty dir.
@@ -127,7 +127,7 @@ public class TestUtils extends AndroidSyncTestCase {
     populateDir(dir);
     File subDir = new File(TEST_DIR + File.separator + "subDir");
     assertTrue(subDir.mkdir());
-    deleteDirectory(dir);
+    deleteDirectoryRecursively(dir);
     assertFalse(subDir.exists()); // For short-circuiting errors.
     assertFalse(dir.exists());
 
@@ -137,7 +137,7 @@ public class TestUtils extends AndroidSyncTestCase {
     subDir = new File(TEST_DIR + File.separator + "subDir");
     assertTrue(subDir.mkdir());
     populateDir(subDir);
-    deleteDirectory(dir);
+    deleteDirectoryRecursively(dir);
     assertFalse(subDir.exists()); // For short-circuiting errors.
     assertFalse(dir.exists());
   }

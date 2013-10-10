@@ -29,7 +29,7 @@ public abstract class FakeProfileTestCase extends ActivityInstrumentationTestCas
     File cache = context.getCacheDir();
     fakeProfileDirectory = new File(cache.getAbsolutePath() + getCacheSuffix());
     if (fakeProfileDirectory.exists()) {
-      TestUtils.deleteDirectory(fakeProfileDirectory);
+      TestUtils.deleteDirectoryRecursively(fakeProfileDirectory);
     }
     if (!fakeProfileDirectory.mkdir()) {
       throw new IllegalStateException("Could not create temporary directory.");
@@ -38,7 +38,7 @@ public abstract class FakeProfileTestCase extends ActivityInstrumentationTestCas
 
   @Override
   protected void tearDown() throws Exception {
-    TestUtils.deleteDirectory(fakeProfileDirectory);
+    TestUtils.deleteDirectoryRecursively(fakeProfileDirectory);
     super.tearDown();
   }
 }
