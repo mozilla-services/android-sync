@@ -388,6 +388,14 @@ public class HealthReportGenerator {
     return gecko;
   }
 
+  // Null-safe string comparison.
+  private static boolean stringsDiffer(final String a, final String b) {
+    if (a == null) {
+      return b != null;
+    }
+    return !a.equals(b);
+  }
+
   private static JSONObject getAppInfo(Environment e, Environment current) throws JSONException {
     JSONObject appinfo = new JSONObject();
     int changes = 0;
@@ -399,9 +407,27 @@ public class HealthReportGenerator {
       appinfo.put("isTelemetryEnabled", e.isTelemetryEnabled);
       changes++;
     }
+    if (current == null || current.acceptLangSet != e.acceptLangSet) {
+      appinfo.put("acceptLangIsUserSet", e.acceptLangSet);
+      changes++;
+    }
+    if (current == null || stringsDiffer(current.osLocale, e.osLocale)) {
+      appinfo.put("osLocale", e.osLocale);
+      changes++;
+    }
+    if (current == null || stringsDiffer(current.appLocale, e.appLocale)) {
+      appinfo.put("appLocale", e.appLocale);
+      changes++;
+    }
+    if (current == null || stringsDiffer(current.distribution, e.distribution)) {
+      appinfo.put("distribution", e.distribution);
+      changes++;
+    }
+
     if (current != null && changes == 0) {
       return null;
     }
+
     appinfo.put("_v", 2);
     return appinfo;
   }
