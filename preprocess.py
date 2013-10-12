@@ -113,9 +113,6 @@ def main():
         "fxaccount_passwords_syncadapter.xml.template": "res/xml/fxaccount_passwords_syncadapter.xml",
         "fxaccount_tabs_syncadapter.xml.template":      "res/xml/fxaccount_tabs_syncadapter.xml",
         "strings/strings.xml.template":    "res/values/strings.xml",
-        "sync_authenticator.xml.template": "res/xml/sync_authenticator.xml",
-        "sync_syncadapter.xml.template":   "res/xml/sync_syncadapter.xml",
-        "sync_options.xml.template":       "res/xml/sync_options.xml",
         }
 
     for input_filename in dot_ins:
