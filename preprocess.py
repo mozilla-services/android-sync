@@ -107,11 +107,6 @@ def main():
         ]
 
     dot_templates = {
-        "fxaccount_authenticator.xml.template": "res/xml/fxaccount_authenticator.xml",
-        "fxaccount_bookmarks_syncadapter.xml.template": "res/xml/fxaccount_bookmarks_syncadapter.xml",
-        "fxaccount_history_syncadapter.xml.template":   "res/xml/fxaccount_history_syncadapter.xml",
-        "fxaccount_passwords_syncadapter.xml.template": "res/xml/fxaccount_passwords_syncadapter.xml",
-        "fxaccount_tabs_syncadapter.xml.template":      "res/xml/fxaccount_tabs_syncadapter.xml",
         "strings/strings.xml.template":    "res/values/strings.xml",
         }
 

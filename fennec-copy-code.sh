@@ -180,7 +180,7 @@ SYNC_RES_VALUES="res/values/sync_styles.xml"
 SYNC_RES_VALUES_V11="res/values-v11/sync_styles.xml"
 SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
 # XML resources that do not need to be preprocessed.
-SYNC_RES_XML="res/xml/sync_authenticator.xml res/xml/sync_syncadapter.xml res/xml/sync_options.xml"
+SYNC_RES_XML=$(find res/xml -name '*.xml' | $SORT_CMD)
 
 dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
 dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
