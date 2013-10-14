@@ -57,8 +57,13 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     assertFalse(bar.has("b"));
   }
 
+  // We don't initialize the env in testHashing, so these are just the default
+  // values for the Java types, in order.
   private static final String EXPECTED_MOCK_BASE_HASH = "000nullnullnullnullnullnullnull"
                                                         + "nullnullnullnullnullnull00000";
+
+  // v2 fields.
+  private static final String EXPECTED_MOCK_BASE_HASH_SUFFIX = "null" + "null" + 0 + "null";
 
   public void testHashing() throws JSONException {
     MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context, fakeProfileDirectory);
@@ -96,10 +101,10 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
     "}");
     env.addons.put("{addonA}", addonA1);
 
-    assertEquals(EXPECTED_MOCK_BASE_HASH + addonAHash, env.getHash());
+    assertEquals(EXPECTED_MOCK_BASE_HASH + addonAHash + EXPECTED_MOCK_BASE_HASH_SUFFIX, env.getHash());
 
     env.addons.put("{addonA}", addonA1rev);
-    assertEquals(EXPECTED_MOCK_BASE_HASH + addonAHash, env.getHash());
+    assertEquals(EXPECTED_MOCK_BASE_HASH + addonAHash + EXPECTED_MOCK_BASE_HASH_SUFFIX, env.getHash());
   }
 
   private void assertJSONDiff(JSONObject source, JSONObject diff) throws JSONException {
