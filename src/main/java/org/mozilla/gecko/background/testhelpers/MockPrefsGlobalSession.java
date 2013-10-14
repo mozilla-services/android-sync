@@ -26,22 +26,22 @@ public class MockPrefsGlobalSession extends GlobalSession {
 
   public MockSharedPreferences prefs;
 
-  public MockPrefsGlobalSession(String userAPI, String serverURL,
+  public MockPrefsGlobalSession(String serverURL,
       String username, String password, String prefsPath,
       KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context,
       Bundle extras, ClientsDataDelegate clientsDelegate)
       throws SyncConfigurationException, IllegalArgumentException, IOException,
       ParseException, NonObjectJSONException {
-    this(userAPI, serverURL, username, new BasicAuthHeaderProvider(username, password), prefsPath, syncKeyBundle, callback, context, extras, clientsDelegate);
+    this(serverURL, username, new BasicAuthHeaderProvider(username, password), prefsPath, syncKeyBundle, callback, context, extras, clientsDelegate);
   }
 
-  public MockPrefsGlobalSession(String userAPI, String serverURL,
+  public MockPrefsGlobalSession(String serverURL,
       String username, AuthHeaderProvider authHeaderProvider, String prefsPath,
       KeyBundle syncKeyBundle, GlobalSessionCallback callback, Context context,
       Bundle extras, ClientsDataDelegate clientsDelegate)
       throws SyncConfigurationException, IllegalArgumentException, IOException,
       ParseException, NonObjectJSONException {
-    super(userAPI, serverURL, username, authHeaderProvider, prefsPath, syncKeyBundle,
+    super(serverURL, username, authHeaderProvider, prefsPath, syncKeyBundle,
         callback, context, extras, clientsDelegate);
   }
 

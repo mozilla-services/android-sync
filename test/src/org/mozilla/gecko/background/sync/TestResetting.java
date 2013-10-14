@@ -16,7 +16,6 @@ import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SynchronizerConfiguration;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -154,7 +153,6 @@ public class TestResetting extends AndroidSyncTestCase {
 
   private GlobalSession createDefaultGlobalSession(final GlobalSessionCallback callback) throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     return new GlobalSession(
-        SyncConfiguration.DEFAULT_USER_API,
         null,
         TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),

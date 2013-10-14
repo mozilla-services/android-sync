@@ -505,8 +505,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     // TODO: default serverURL.
     final KeyBundle keyBundle = new KeyBundle(username, syncKey);
     final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(username, password);
-    GlobalSession globalSession = new GlobalSession(SyncConfiguration.DEFAULT_USER_API,
-                                                    serverURL, username, authHeaderProvider, prefsPath,
+    GlobalSession globalSession = new GlobalSession(serverURL, username, authHeaderProvider, prefsPath,
                                                     keyBundle, this, this.mContext, extras, this);
 
     globalSession.start();

@@ -27,7 +27,6 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.MetaGlobal;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
@@ -56,7 +55,7 @@ public class TestFreshStart {
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
 
     callback = new MockGlobalSessionCallback();
-    session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
         syncKeyBundle, callback, null, null, null) {
       @Override
       public CollectionKeys generateNewCryptoKeys() {

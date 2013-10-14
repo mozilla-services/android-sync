@@ -38,7 +38,6 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -74,7 +73,7 @@ public class TestGlobalSession {
   public void testGetSyncStagesBy() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, NoSuchStageException {
 
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    GlobalSession s = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL,
+    GlobalSession s = new MockPrefsGlobalSession(TEST_CLUSTER_URL,
                                                  TEST_USERNAME, TEST_PASSWORD, null,
                                                  new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
                                                  callback, /* context */ null, null, null);
@@ -332,7 +331,7 @@ public class TestGlobalSession {
   @Test
   public void testGenerateNewMetaGlobalNonePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
 
     // Verify we fill in all of our known engines when none are persisted.
@@ -352,7 +351,7 @@ public class TestGlobalSession {
   @Test
   public void testGenerateNewMetaGlobalSomePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
 
     // Verify we preserve engines with version 0 if some are persisted.
@@ -380,7 +379,7 @@ public class TestGlobalSession {
   public void testUploadUpdatedMetaGlobal() throws Exception {
     // Set up session with meta/global.
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
     session.config.metaGlobal = session.generateNewMetaGlobal();
     session.enginesToUpdate.clear();

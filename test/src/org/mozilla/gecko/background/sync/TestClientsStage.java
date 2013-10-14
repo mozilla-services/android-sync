@@ -8,7 +8,6 @@ import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
 import org.mozilla.gecko.background.testhelpers.DefaultGlobalSessionCallback;
 import org.mozilla.gecko.background.testhelpers.MockClientsDataDelegate;
 import org.mozilla.gecko.sync.GlobalSession;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
@@ -42,7 +41,6 @@ public class TestClientsStage extends AndroidSyncTestCase {
     final ClientsDataDelegate delegate = new MockClientsDataDelegate();
 
     final GlobalSession session = new GlobalSession(
-        SyncConfiguration.DEFAULT_USER_API,
         null,
         TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
