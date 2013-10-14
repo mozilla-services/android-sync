@@ -398,37 +398,79 @@ public class HealthReportGenerator {
 
   private static JSONObject getAppInfo(Environment e, Environment current) throws JSONException {
     JSONObject appinfo = new JSONObject();
-    int changes = 0;
-    if (current == null || current.isBlocklistEnabled != e.isBlocklistEnabled) {
-      appinfo.put("isBlocklistEnabled", e.isBlocklistEnabled);
-      changes++;
-    }
-    if (current == null || current.isTelemetryEnabled != e.isTelemetryEnabled) {
-      appinfo.put("isTelemetryEnabled", e.isTelemetryEnabled);
-      changes++;
-    }
-    if (current == null || current.acceptLangSet != e.acceptLangSet) {
-      appinfo.put("acceptLangIsUserSet", e.acceptLangSet);
-      changes++;
-    }
-    if (current == null || stringsDiffer(current.osLocale, e.osLocale)) {
-      appinfo.put("osLocale", e.osLocale);
-      changes++;
-    }
-    if (current == null || stringsDiffer(current.appLocale, e.appLocale)) {
-      appinfo.put("appLocale", e.appLocale);
-      changes++;
-    }
-    if (current == null || stringsDiffer(current.distribution, e.distribution)) {
-      appinfo.put("distribution", e.distribution);
-      changes++;
+
+    Logger.debug(LOG_TAG, "Generating appinfo for v" + e.version + " env " + e.hash);
+
+    // Is the environment in question newer than the diff target, or is
+    // there no diff target?
+    boolean outdated = current == null ||
+                       e.version > current.version;
+
+    // Is the environment in question a different version (lower or higher),
+    // or is there no diff target?
+    boolean differ = outdated || current.version > e.version;
+
+    // Always produce an output object if there's a version mismatch or this
+    // isn't a diff. Otherwise, track as we go if there's any difference.
+    boolean changes = differ;
+
+    switch (e.version) {
+    // There's a straightforward correspondence between environment versions
+    // and appinfo versions.
+    case 2:
+      appinfo.put("_v", 3);
+      break;
+    case 1:
+      appinfo.put("_v", 2);
+      break;
+    default:
+      Logger.warn(LOG_TAG, "Unknown environment version: " + e.version);
+      return appinfo;
     }
 
-    if (current != null && changes == 0) {
+    // Environment v2 only.
+    switch (e.version) {
+    case 2:
+      if (outdated ||
+          stringsDiffer(current.osLocale, e.osLocale)) {
+        appinfo.put("osLocale", e.osLocale);
+        changes = true;
+      }
+
+      if (outdated ||
+          stringsDiffer(current.appLocale, e.appLocale)) {
+        appinfo.put("appLocale", e.appLocale);
+        changes = true;
+      }
+
+      if (outdated ||
+          stringsDiffer(current.distribution, e.distribution)) {
+        appinfo.put("distribution", e.distribution);
+        changes = true;
+      }
+      // Fall through.
+
+    case 1:
+      // Environment v1 and v2.
+      // There is no older version than v1, so don't check outdated.
+      if (current == null || current.isBlocklistEnabled != e.isBlocklistEnabled) {
+        appinfo.put("isBlocklistEnabled", e.isBlocklistEnabled);
+        changes = true;
+      }
+      if (current == null || current.isTelemetryEnabled != e.isTelemetryEnabled) {
+        appinfo.put("isTelemetryEnabled", e.isTelemetryEnabled);
+        changes = true;
+      }
+      if (current == null || current.acceptLangSet != e.acceptLangSet) {
+        appinfo.put("acceptLangIsUserSet", e.acceptLangSet);
+        changes = true;
+      }
+    }
+
+    if (!changes) {
       return null;
     }
 
-    appinfo.put("_v", 2);
     return appinfo;
   }
 
