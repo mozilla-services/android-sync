@@ -180,7 +180,6 @@ public class SyncConfiguration {
   private static final String LOG_TAG = "SyncConfiguration";
 
   // These must be set in GlobalSession's constructor.
-  public String          userAPI;
   public URI             serverURL;
   public URI             clusterURL;
   public KeyBundle       syncKeyBundle;

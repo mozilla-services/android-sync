@@ -98,8 +98,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     return config.wboURI(collection, id);
   }
 
-  public GlobalSession(String userAPI,
-                       String serverURL,
+  public GlobalSession(String serverURL,
                        String username,
                        AuthHeaderProvider authHeaderProvider,
                        String prefsPath,
@@ -136,7 +135,6 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
 
     config = new SyncConfiguration(username, authHeaderProvider, prefsPath, this);
 
-    config.userAPI       = userAPI;
     config.serverURL     = serverURI;
     config.syncKeyBundle = syncKeyBundle;
 
