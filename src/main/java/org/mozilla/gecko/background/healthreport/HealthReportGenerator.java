@@ -448,6 +448,13 @@ public class HealthReportGenerator {
         appinfo.put("distribution", e.distribution);
         changes = true;
       }
+
+      if (outdated ||
+          current.acceptLangSet != e.acceptLangSet) {
+        appinfo.put("acceptLangIsUserSet", e.acceptLangSet);
+        changes = true;
+      }
+
       // Fall through.
 
     case 1:
@@ -457,12 +464,9 @@ public class HealthReportGenerator {
         appinfo.put("isBlocklistEnabled", e.isBlocklistEnabled);
         changes = true;
       }
+
       if (current == null || current.isTelemetryEnabled != e.isTelemetryEnabled) {
         appinfo.put("isTelemetryEnabled", e.isTelemetryEnabled);
-        changes = true;
-      }
-      if (current == null || current.acceptLangSet != e.acceptLangSet) {
-        appinfo.put("acceptLangIsUserSet", e.acceptLangSet);
         changes = true;
       }
     }
