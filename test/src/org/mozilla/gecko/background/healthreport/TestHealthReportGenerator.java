@@ -15,6 +15,10 @@ import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
 import org.mozilla.gecko.background.helpers.FakeProfileTestCase;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.SparseArray;
+
 public class TestHealthReportGenerator extends FakeProfileTestCase {
   @SuppressWarnings("static-method")
   public void testOptObject() throws JSONException {
@@ -410,5 +414,92 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
   @Override
   protected String getCacheSuffix() {
     return File.separator + "health-" + System.currentTimeMillis() + ".profile";
+  }
+
+
+  public void testEnvironmentDiffing() throws JSONException {
+    // Manually insert a v1 environment.
+    MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final SQLiteDatabase db = storage.getDB();
+    storage.deleteEverything();
+    MockDatabaseEnvironment v1env = storage.getEnvironment();
+    v1env.mockInit("27.0a1");
+    v1env.version = 1;
+    v1env.appLocale = "";
+    v1env.osLocale  = "";
+    v1env.distribution = "";
+    v1env.acceptLangSet = 0;
+    int v1ID = v1env.register();
+
+    // Verify.
+    final String[] cols = new String[] {"id", "version", "hash", "osLocale", "acceptLangSet"};
+    final Cursor c1 = db.query("environments", cols, "id = " + v1ID, null, null, null, null);
+    String v1envHash;
+    try {
+      assertTrue(c1.moveToFirst());
+      assertEquals(1, c1.getCount());
+      assertEquals(v1ID, c1.getInt(0));
+      assertEquals(1, c1.getInt(1));
+      v1envHash = c1.getString(2);
+      assertNotNull(v1envHash);
+      assertEquals("", c1.getString(3));
+      assertEquals(0, c1.getInt(4));
+    } finally {
+      c1.close();
+    }
+
+    // Insert a v2 environment.
+    MockDatabaseEnvironment v2env = storage.getEnvironment();
+    v2env.mockInit("27.0a1");
+    v2env.appLocale = v2env.osLocale = "en_us";
+    v2env.acceptLangSet = 1;
+
+    int v2ID = v2env.register();
+    assertFalse(v1ID == v2ID);
+    final Cursor c2 = db.query("environments", cols, "id = " + v2ID, null, null, null, null);
+    String v2envHash;
+    try {
+      assertTrue(c2.moveToFirst());
+      assertEquals(1, c2.getCount());
+      assertEquals(v2ID, c2.getInt(0));
+      assertEquals(2, c2.getInt(1));
+      v2envHash = c2.getString(2);
+      assertNotNull(v2envHash);
+      assertEquals("en_us", c2.getString(3));
+      assertEquals(1, c2.getInt(4));
+    } finally {
+      c2.close();
+    }
+
+    assertFalse(v1envHash.equals(v2envHash));
+
+    // Now let's diff based on DB contents.
+    SparseArray<Environment> envs = storage.getEnvironmentRecordsByID();
+
+    JSONObject oldEnv = HealthReportGenerator.jsonify(envs.get(v1ID), null).getJSONObject("org.mozilla.appInfo.appinfo");
+    JSONObject newEnv = HealthReportGenerator.jsonify(envs.get(v2ID), null).getJSONObject("org.mozilla.appInfo.appinfo");
+
+    // Generate the new env as if the old were the current. This should rarely happen in practice.
+    // Fields supported by the new env but not the old will appear, even if the 'default' for the
+    // old implementation is equal to the new env's value.
+    JSONObject newVsOld = HealthReportGenerator.jsonify(envs.get(v2ID), envs.get(v1ID)).getJSONObject("org.mozilla.appInfo.appinfo");
+
+    // Generate the old env as if the new were the current. This is normal. Fields not supported by the old
+    // environment version should not appear in the output.
+    JSONObject oldVsNew = HealthReportGenerator.jsonify(envs.get(v1ID), envs.get(v2ID)).getJSONObject("org.mozilla.appInfo.appinfo");
+    assertEquals(2, oldEnv.getInt("_v"));
+    assertEquals(3, newEnv.getInt("_v"));
+    assertEquals(2, oldVsNew.getInt("_v"));
+    assertEquals(3, newVsOld.getInt("_v"));
+
+    assertFalse(oldVsNew.has("osLocale"));
+    assertFalse(oldVsNew.has("appLocale"));
+    assertFalse(oldVsNew.has("distribution"));
+    assertFalse(oldVsNew.has("acceptLangIsUserSet"));
+
+    assertTrue(newVsOld.has("osLocale"));
+    assertTrue(newVsOld.has("appLocale"));
+    assertTrue(newVsOld.has("distribution"));
+    assertTrue(newVsOld.has("acceptLangIsUserSet"));
   }
 }
