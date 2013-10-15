@@ -412,7 +412,7 @@ public class HealthReportGenerator {
 
     // Always produce an output object if there's a version mismatch or this
     // isn't a diff. Otherwise, track as we go if there's any difference.
-    boolean changes = differ;
+    boolean changed = differ;
 
     switch (e.version) {
     // There's a straightforward correspondence between environment versions
@@ -428,54 +428,75 @@ public class HealthReportGenerator {
       return appinfo;
     }
 
-    // Environment v2 only.
     switch (e.version) {
     case 2:
-      if (outdated ||
-          stringsDiffer(current.osLocale, e.osLocale)) {
-        appinfo.put("osLocale", e.osLocale);
-        changes = true;
+      if (populateAppInfoV2(appinfo, e, current, outdated)) {
+        changed = true;
       }
-
-      if (outdated ||
-          stringsDiffer(current.appLocale, e.appLocale)) {
-        appinfo.put("appLocale", e.appLocale);
-        changes = true;
-      }
-
-      if (outdated ||
-          stringsDiffer(current.distribution, e.distribution)) {
-        appinfo.put("distribution", e.distribution);
-        changes = true;
-      }
-
-      if (outdated ||
-          current.acceptLangSet != e.acceptLangSet) {
-        appinfo.put("acceptLangIsUserSet", e.acceptLangSet);
-        changes = true;
-      }
-
       // Fall through.
 
     case 1:
-      // Environment v1 and v2.
       // There is no older version than v1, so don't check outdated.
-      if (current == null || current.isBlocklistEnabled != e.isBlocklistEnabled) {
-        appinfo.put("isBlocklistEnabled", e.isBlocklistEnabled);
-        changes = true;
-      }
-
-      if (current == null || current.isTelemetryEnabled != e.isTelemetryEnabled) {
-        appinfo.put("isTelemetryEnabled", e.isTelemetryEnabled);
-        changes = true;
+      if (populateAppInfoV1(e, current, appinfo)) {
+        changed = true;
       }
     }
 
-    if (!changes) {
+    if (!changed) {
       return null;
     }
 
     return appinfo;
+  }
+
+  private static boolean populateAppInfoV1(Environment e,
+                                           Environment current,
+                                           JSONObject appinfo)
+    throws JSONException {
+    boolean changes = false;
+    if (current == null || current.isBlocklistEnabled != e.isBlocklistEnabled) {
+      appinfo.put("isBlocklistEnabled", e.isBlocklistEnabled);
+      changes = true;
+    }
+
+    if (current == null || current.isTelemetryEnabled != e.isTelemetryEnabled) {
+      appinfo.put("isTelemetryEnabled", e.isTelemetryEnabled);
+      changes = true;
+    }
+
+    return changes;
+  }
+
+  private static boolean populateAppInfoV2(JSONObject appinfo,
+                                           Environment e,
+                                           Environment current,
+                                           final boolean outdated)
+    throws JSONException {
+    boolean changes = false;
+    if (outdated ||
+        stringsDiffer(current.osLocale, e.osLocale)) {
+      appinfo.put("osLocale", e.osLocale);
+      changes = true;
+    }
+
+    if (outdated ||
+        stringsDiffer(current.appLocale, e.appLocale)) {
+      appinfo.put("appLocale", e.appLocale);
+      changes = true;
+    }
+
+    if (outdated ||
+        stringsDiffer(current.distribution, e.distribution)) {
+      appinfo.put("distribution", e.distribution);
+      changes = true;
+    }
+
+    if (outdated ||
+        current.acceptLangSet != e.acceptLangSet) {
+      appinfo.put("acceptLangIsUserSet", e.acceptLangSet);
+      changes = true;
+    }
+    return changes;
   }
 
   private static JSONObject getAddonCounts(Environment e, Environment current) throws JSONException {
