@@ -69,8 +69,10 @@ public class MockMyIDTokenFactory {
    */
   public String createMockMyIDCertificate(final VerifyingPublicKey publicKeyToSign, final String username)
       throws Exception {
+    long now = System.currentTimeMillis();
     return createMockMyIDCertificate(publicKeyToSign, username,
-        System.currentTimeMillis(), JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS );
+        now + JSONWebTokenUtils.DEFAULT_CERTIFICATE_ISSUED_AT_SKEW,
+        JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS);
   }
 
   /**
@@ -119,7 +121,7 @@ public class MockMyIDTokenFactory {
       throws Exception {
     long now = System.currentTimeMillis();
     return createMockMyIDAssertion(keyPair, username, audience,
-        now, JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS,
-        now + 1, JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
+        now + JSONWebTokenUtils.DEFAULT_CERTIFICATE_ISSUED_AT_SKEW, JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS,
+        now + JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUED_AT_SKEW, JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
   }
 }
