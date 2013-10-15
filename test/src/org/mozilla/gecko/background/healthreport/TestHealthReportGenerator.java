@@ -419,54 +419,66 @@ public class TestHealthReportGenerator extends FakeProfileTestCase {
 
   public void testEnvironmentDiffing() throws JSONException {
     // Manually insert a v1 environment.
-    MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context, fakeProfileDirectory);
+    final MockHealthReportDatabaseStorage storage = new MockHealthReportDatabaseStorage(context, fakeProfileDirectory);
     final SQLiteDatabase db = storage.getDB();
     storage.deleteEverything();
-    MockDatabaseEnvironment v1env = storage.getEnvironment();
+    final MockDatabaseEnvironment v1env = storage.getEnvironment();
     v1env.mockInit("27.0a1");
     v1env.version = 1;
     v1env.appLocale = "";
     v1env.osLocale  = "";
     v1env.distribution = "";
     v1env.acceptLangSet = 0;
-    int v1ID = v1env.register();
+    final int v1ID = v1env.register();
 
     // Verify.
-    final String[] cols = new String[] {"id", "version", "hash", "osLocale", "acceptLangSet"};
+    final String[] cols = new String[] {
+      "id", "version", "hash",
+      "osLocale", "acceptLangSet", "appLocale", "distribution"
+    };
+
     final Cursor c1 = db.query("environments", cols, "id = " + v1ID, null, null, null, null);
     String v1envHash;
     try {
       assertTrue(c1.moveToFirst());
       assertEquals(1, c1.getCount());
+
       assertEquals(v1ID, c1.getInt(0));
-      assertEquals(1, c1.getInt(1));
+      assertEquals(1,    c1.getInt(1));
+
       v1envHash = c1.getString(2);
       assertNotNull(v1envHash);
       assertEquals("", c1.getString(3));
-      assertEquals(0, c1.getInt(4));
+      assertEquals(0,  c1.getInt(4));
+      assertEquals("", c1.getString(5));
+      assertEquals("", c1.getString(6));
     } finally {
       c1.close();
     }
 
     // Insert a v2 environment.
-    MockDatabaseEnvironment v2env = storage.getEnvironment();
+    final MockDatabaseEnvironment v2env = storage.getEnvironment();
     v2env.mockInit("27.0a1");
     v2env.appLocale = v2env.osLocale = "en_us";
     v2env.acceptLangSet = 1;
 
-    int v2ID = v2env.register();
+    final int v2ID = v2env.register();
     assertFalse(v1ID == v2ID);
     final Cursor c2 = db.query("environments", cols, "id = " + v2ID, null, null, null, null);
     String v2envHash;
     try {
       assertTrue(c2.moveToFirst());
       assertEquals(1, c2.getCount());
+
       assertEquals(v2ID, c2.getInt(0));
-      assertEquals(2, c2.getInt(1));
+      assertEquals(2,    c2.getInt(1));
+
       v2envHash = c2.getString(2);
       assertNotNull(v2envHash);
       assertEquals("en_us", c2.getString(3));
-      assertEquals(1, c2.getInt(4));
+      assertEquals(1,       c2.getInt(4));
+      assertEquals("en_us", c2.getString(5));
+      assertEquals("",      c2.getString(6));
     } finally {
       c2.close();
     }
