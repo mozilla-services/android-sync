@@ -403,12 +403,12 @@ public class HealthReportGenerator {
 
     // Is the environment in question newer than the diff target, or is
     // there no diff target?
-    boolean outdated = current == null ||
-                       e.version > current.version;
+    final boolean outdated = current == null ||
+                             e.version > current.version;
 
     // Is the environment in question a different version (lower or higher),
     // or is there no diff target?
-    boolean differ = outdated || current.version > e.version;
+    final boolean differ = outdated || current.version > e.version;
 
     // Always produce an output object if there's a version mismatch or this
     // isn't a diff. Otherwise, track as we go if there's any difference.
