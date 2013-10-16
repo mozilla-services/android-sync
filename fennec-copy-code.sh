@@ -101,19 +101,22 @@ cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/ba
 cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
 
 echo "Copying internal dependency sources."
-APACHEDIR="src/main/java/org/mozilla/apache"
-APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,apache/," | $SORT_CMD)
-rsync -C -a $APACHEDIR $ANDROID/base/
+mkdir -p $ANDROID/thirdparty/ch/boye/httpclientandroidlib/
+mkdir -p $ANDROID/thirdparty/org/json/simple/
+mkdir -p $ANDROID/thirdparty/org/mozilla/apache/
+
+APACHEDIR="src/main/java/org/mozilla/apache/"
+APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,org/mozilla/apache/," | $SORT_CMD)
+rsync -C -a $APACHEDIR $ANDROID/thirdparty/org/mozilla/apache/
 
 echo "Copying external dependency sources."
-JSONLIB=external/json-simple-1.1/src/org/json/simple
-HTTPLIB=external/httpclientandroidlib/httpclientandroidlib/src/ch/boye/httpclientandroidlib
-JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB/,json-simple/," | $SORT_CMD)
-HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,httpclientandroidlib/," | $SORT_CMD)
-mkdir -p $ANDROID/base/json-simple/
-rsync -C -a $HTTPLIB $ANDROID/base/
-rsync -C -a $JSONLIB/ $ANDROID/base/json-simple/
-cp external/json-simple-1.1/LICENSE.txt $ANDROID/base/json-simple/
+JSONLIB=external/json-simple-1.1/src/org/json/simple/
+HTTPLIB=external/httpclientandroidlib/httpclientandroidlib/src/ch/boye/httpclientandroidlib/
+JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB/,org/json/simple/," | $SORT_CMD)
+HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,ch/boye/httpclientandroidlib/," | $SORT_CMD)
+rsync -C -a $HTTPLIB $ANDROID/thirdparty/ch/boye/httpclientandroidlib/
+rsync -C -a $JSONLIB $ANDROID/thirdparty/org/json/simple/
+cp external/json-simple-1.1/LICENSE.txt $ANDROID/thirdparty/org/json/simple/
 
 # Creating Makefile for Mozilla.
 MKFILE=$ANDROID/base/android-services-files.mk
@@ -192,7 +195,7 @@ done
 
 echo "Writing README."
 echo $WARNING > $ANDROID/base/sync/README.txt
-echo $WARNING > $ANDROID/base/httpclientandroidlib/README.txt
+echo $WARNING > $ANDROID/thirdparty/ch/boye/httpclientandroidlib/README.txt
 true > $SERVICES/java-sources.mn
 for f in $SOURCEFILES ; do
     echo $f >> $SERVICES/java-sources.mn
