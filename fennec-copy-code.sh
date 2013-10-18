@@ -144,36 +144,43 @@ function dump_mkfile_variable {
     echo "" >> $output_file
 }
 
+# Write a list of files to a mozbuild variable.
+# turn
+# VAR:=1.java 2.java
+# into
+# VAR += [\
+#   '1.java',
+#   '2.java',
+# ]
+function dump_mozbuild_variable {
+    output_file=$1
+    variable_name=$2
+    shift
+    shift
+
+    echo "$variable_name += [" >> $output_file
+    for var in "$@" ; do
+        for f in $var ; do
+            echo "    '$f'," >> $output_file
+        done
+    done
+    echo "]" >> $output_file
+}
+
 # Prefer PNGs in drawable-*: Android lint complains about PNG files in drawable.
-SYNC_RES_DRAWABLE=$(find res/drawable -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' \) | $SORT_CMD)
-
-SYNC_RES_DRAWABLE_LDPI=$(find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | $SORT_CMD)
-SYNC_RES_DRAWABLE_MDPI=$(find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | $SORT_CMD)
-SYNC_RES_DRAWABLE_HDPI=$(find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | $SORT_CMD)
-
-SYNC_RES_LAYOUT=$(find res/layout -name '*.xml' | $SORT_CMD)
-SYNC_RES_VALUES="res/values/sync_styles.xml"
-SYNC_RES_VALUES_V11="res/values-v11/sync_styles.xml"
-SYNC_RES_VALUES_LARGE_V11="res/values-large-v11/sync_styles.xml"
-# XML resources that do not need to be preprocessed.
-SYNC_RES_XML="res/xml/sync_authenticator.xml res/xml/sync_syncadapter.xml res/xml/sync_options.xml"
+SYNC_RES=$(find res -name 'sync*' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,resources/,' | $SORT_CMD)
 
 dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
 dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
 
-dump_mkfile_variable "SYNC_RES_DRAWABLE" "$SYNC_RES_DRAWABLE"
-dump_mkfile_variable "SYNC_RES_DRAWABLE_LDPI" "$SYNC_RES_DRAWABLE_LDPI"
-dump_mkfile_variable "SYNC_RES_DRAWABLE_MDPI" "$SYNC_RES_DRAWABLE_MDPI"
-dump_mkfile_variable "SYNC_RES_DRAWABLE_HDPI" "$SYNC_RES_DRAWABLE_HDPI"
-
-dump_mkfile_variable "SYNC_RES_LAYOUT" "$SYNC_RES_LAYOUT"
-dump_mkfile_variable "SYNC_RES_VALUES" "$SYNC_RES_VALUES"
-dump_mkfile_variable "SYNC_RES_VALUES_V11" "$SYNC_RES_VALUES_V11"
-dump_mkfile_variable "SYNC_RES_VALUES_LARGE_V11" "$SYNC_RES_VALUES_LARGE_V11"
-dump_mkfile_variable "SYNC_RES_XML" "$SYNC_RES_XML"
-
 dump_mkfile_variable "SYNC_THIRDPARTY_JAVA_FILES" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
 
+# Creating moz.build file for Mozilla.
+MOZBUILDFILE=$ANDROID/base/android-services.mozbuild
+echo "Creating moz.build file for including in the Mozilla build system at $MOZBUILDFILE"
+cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
+
+dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES" "$SYNC_RES"
 
 # Creating Makefile for Mozilla.
 MKFILE=$ANDROID/tests/background/junit3/android-services-files.mk
@@ -181,7 +188,12 @@ echo "Creating background tests makefile for including in the Mozilla build syst
 cat tools/makefile_mpl.txt > $MKFILE
 echo "# $WARNING" >> $MKFILE
 dump_mkfile_variable "BACKGROUND_TESTS_JAVA_FILES" "$BACKGROUND_TESTS_JAVA_FILES"
-dump_mkfile_variable "BACKGROUND_TESTS_RES_FILES" "$BACKGROUND_TESTS_RES_FILES"
+
+# Creating moz.build for Mozilla.
+MOZBUILDFILE=$ANDROID/tests/background/junit3/android-services.mozbuild
+echo "Creating background tests moz.build file for including in the Mozilla build system at $MOZBUILDFILE"
+cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
+dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES" "$BACKGROUND_TESTS_RES_FILES"
 
 # Finished creating Makefile for Mozilla.
 
