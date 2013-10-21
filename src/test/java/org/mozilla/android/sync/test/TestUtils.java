@@ -79,6 +79,32 @@ public class TestUtils extends Utils {
   }
 
   @Test
+  public void testByte2HexLength() throws Exception {
+    for (int i = 0; i < BYTE_ARRS.length; ++i) {
+      final byte[] b = BYTE_ARRS[i];
+      final String expected = STRING_ARR[i];
+      assertEquals(expected, Utils.byte2Hex(b, b.length));
+      assertEquals("0" + expected, Utils.byte2Hex(b, b.length + 1));
+      assertEquals("00" + expected, Utils.byte2Hex(b, b.length + 2));
+    }
+  }
+
+  @Test
+  public void testHex2ByteLength() throws Exception {
+    for (int i = 0; i < STRING_ARR.length; ++i) {
+      final String s = STRING_ARR[i];
+      final byte[] expected = BYTE_ARRS[i];
+      assertTrue(Arrays.equals(expected, Utils.hex2Byte(s)));
+      final byte[] expected1 = new byte[expected.length + 1];
+      System.arraycopy(expected, 0, expected1, 1, expected.length);
+      assertTrue(Arrays.equals(expected1, Utils.hex2Byte("00" + s)));
+      final byte[] expected2 = new byte[expected.length + 2];
+      System.arraycopy(expected, 0, expected2, 2, expected.length);
+      assertTrue(Arrays.equals(expected2, Utils.hex2Byte("0000" + s)));
+    }
+  }
+
+  @Test
   public void testToCommaSeparatedString() {
     ArrayList<String> xs = new ArrayList<String>();
     assertEquals("", Utils.toCommaSeparatedString(null));

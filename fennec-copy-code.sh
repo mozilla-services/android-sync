@@ -56,28 +56,28 @@ rsync -a manifests $SERVICES/
 
 echo "Copying sources. All use of R must be compiled with Fennec."
 SOURCEROOT="src/main/java/org/mozilla/gecko"
-SYNCSOURCEDIR="$SOURCEROOT/sync"
 BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
-SOURCEFILES=$(find "$BACKGROUNDSOURCEDIR" "$SYNCSOURCEDIR" \
+BROWSERIDSOURCEDIR="$SOURCEROOT/browserid"
+FXASOURCEDIR="$SOURCEROOT/fxa"
+SYNCSOURCEDIR="$SOURCEROOT/sync"
+TOKENSERVERSOURCEDIR="$SOURCEROOT/tokenserver"
+SOURCEFILES=$(find \
+  "$BACKGROUNDSOURCEDIR" \
+  "$BROWSERIDSOURCEDIR" \
+  "$FXASOURCEDIR" \
+  "$SYNCSOURCEDIR" \
+  "$TOKENSERVERSOURCEDIR" \
   -name '*.java' \
   -and -not -name 'AnnouncementsConstants.java' \
   -and -not -name 'HealthReportConstants.java' \
   -and -not -name 'GlobalConstants.java' \
   -and -not -name 'BrowserContract.java' \
   -and -not -name 'AppConstants.java' \
+  -and -not -name 'FxAccountConstants.java' \
   -and -not -name 'SysInfo.java' \
   -and -not -name 'SyncConstants.java' \
   -and -not -path '*testhelpers*' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
-
-rsync -C \
-  --exclude 'AppConstants.java' \
-  --exclude 'SysInfo.java' \
-  --exclude 'SyncConstants.java' \
-  --exclude 'BrowserContract.java' \
-  --exclude '*.in' \
-  --exclude '*testhelper*' \
-  -a $SYNCSOURCEDIR $ANDROID/base/
 
 rsync -C \
   --exclude 'AppConstants.java' \
@@ -89,13 +89,37 @@ rsync -C \
   --exclude '*testhelper*' \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
+rsync -C \
+  --exclude '*.in' \
+  -a $BROWSERIDSOURCEDIR $ANDROID/base/
+
+rsync -C \
+  --exclude 'FxAccountConstants.java' \
+  --exclude '*.in' \
+  -a $FXASOURCEDIR $ANDROID/base/
+
+rsync -C \
+  --exclude 'AppConstants.java' \
+  --exclude 'SysInfo.java' \
+  --exclude 'SyncConstants.java' \
+  --exclude 'BrowserContract.java' \
+  --exclude '*.in' \
+  --exclude '*testhelper*' \
+  -a $SYNCSOURCEDIR $ANDROID/base/
+
+rsync -C \
+  --exclude '*.in' \
+  -a $TOKENSERVERSOURCEDIR $ANDROID/base/
+
 echo "Copying preprocessed constants files."
 PREPROCESS_FILES="\
   background/common/GlobalConstants.java \
+  fxa/FxAccountConstants.java \
   sync/SyncConstants.java \
   background/announcements/AnnouncementsConstants.java \
   background/healthreport/HealthReportConstants.java"
 cp $BACKGROUNDSOURCEDIR/common/GlobalConstants.java.in $ANDROID/base/background/common/
+cp $FXASOURCEDIR/FxAccountConstants.java.in $ANDROID/base/fxa/
 cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
 cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
 cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
@@ -171,7 +195,7 @@ function dump_mozbuild_variable {
 }
 
 # Prefer PNGs in drawable-*: Android lint complains about PNG files in drawable.
-SYNC_RES=$(find res -name 'sync*' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,resources/,' | $SORT_CMD)
+SYNC_RES=$(find res \( -name 'sync*' -or -name 'fxa*' \) \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,resources/,' | $SORT_CMD)
 
 dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
 dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
