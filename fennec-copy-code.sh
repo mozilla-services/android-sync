@@ -224,23 +224,9 @@ dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES" "$BACKGROUND_TESTS_RES_F
 
 # Finished creating Makefile for Mozilla.
 
-true > $SERVICES/preprocess-sources.mn
-for f in $PREPROCESS_FILES ; do
-    echo $f >> $SERVICES/preprocess-sources.mn
-done
-
 echo "Writing README."
 echo $WARNING > $ANDROID/base/sync/README.txt
 echo $WARNING > $ANDROID/thirdparty/ch/boye/httpclientandroidlib/README.txt
-true > $SERVICES/java-sources.mn
-for f in $SOURCEFILES ; do
-    echo $f >> $SERVICES/java-sources.mn
-done
-
-true > $SERVICES/java-third-party-sources.mn
-for f in $HTTPLIBFILES $JSONLIBFILES $APACHEFILES ; do
-    echo $f >> $SERVICES/java-third-party-sources.mn
-done
 
 echo "Copying resources..."
 # I'm guessing these go here.
@@ -255,14 +241,5 @@ rsync -a res/values-large-v11/sync_styles.xml $ANDROID/base/resources/values-lar
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -a strings/strings.xml.in $SERVICES/
 rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
-
-echo "res/values/sync_styles.xml " > $SERVICES/android-values-resources.mn
-echo "res/values-large-v11/sync_styles.xml " > $SERVICES/android-values-resources.mn
-find res/layout         -name '*.xml' | $SORT_CMD > $SERVICES/android-layout-resources.mn
-find res/drawable       -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-resources.mn
-find res/drawable-ldpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-ldpi-resources.mn
-find res/drawable-mdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-mdpi-resources.mn
-find res/drawable-hdpi  -not -name 'icon.png' -not -name 'ic_status_logo.png' \( -name '*.xml' -or -name '*.png' \) | sed "s,res/,mobile/android/base/resources/," | $SORT_CMD > $SERVICES/android-drawable-hdpi-resources.mn
-# We manually manage res/xml in the Fennec Makefile.
 
 echo "Done."
