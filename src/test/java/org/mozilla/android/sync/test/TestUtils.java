@@ -84,8 +84,8 @@ public class TestUtils extends Utils {
       final byte[] b = BYTE_ARRS[i];
       final String expected = STRING_ARR[i];
       assertEquals(expected, Utils.byte2Hex(b, b.length));
-      assertEquals("0" + expected, Utils.byte2Hex(b, b.length + 1));
-      assertEquals("00" + expected, Utils.byte2Hex(b, b.length + 2));
+      assertEquals("0" + expected, Utils.byte2Hex(b, 2 * b.length + 1));
+      assertEquals("00" + expected, Utils.byte2Hex(b, 2 * b.length + 2));
     }
   }
 
