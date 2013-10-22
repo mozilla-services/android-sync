@@ -143,7 +143,7 @@ public class TestEnsureClusterURLStage {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
-    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
     assertEquals(null, session.config.getClusterURL());
 
@@ -180,7 +180,7 @@ public class TestEnsureClusterURLStage {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
-    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
     assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
@@ -221,7 +221,7 @@ public class TestEnsureClusterURLStage {
 
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
-    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
     assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
@@ -265,7 +265,7 @@ public class TestEnsureClusterURLStage {
 
     final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
-    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage());
+    .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
     assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
