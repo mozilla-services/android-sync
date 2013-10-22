@@ -3,7 +3,6 @@
 
 package org.mozilla.gecko.background.healthreport;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import org.json.JSONException;

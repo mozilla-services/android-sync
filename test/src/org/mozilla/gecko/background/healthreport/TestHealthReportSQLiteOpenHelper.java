@@ -3,8 +3,6 @@
 
 package org.mozilla.gecko.background.healthreport;
 
-import java.io.File;
-
 import org.mozilla.gecko.background.helpers.DBHelpers;
 import org.mozilla.gecko.background.helpers.FakeProfileTestCase;
 

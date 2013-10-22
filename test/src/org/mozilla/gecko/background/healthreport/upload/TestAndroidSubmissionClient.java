@@ -6,19 +6,21 @@ package org.mozilla.gecko.background.healthreport.upload;
 import java.util.Collection;
 
 import org.mozilla.gecko.background.bagheera.BagheeraRequestDelegate;
+import org.mozilla.gecko.background.healthreport.Environment;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.MockHealthReportDatabaseStorage.PrepopulatedMockHealthReportDatabaseStorage;
 import org.mozilla.gecko.background.healthreport.MockProfileInformationCache;
 import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
-import org.mozilla.gecko.background.healthreport.testhelpers.StubDelegate;
 import org.mozilla.gecko.background.healthreport.upload.AndroidSubmissionClient;
 import org.mozilla.gecko.background.healthreport.upload.AndroidSubmissionClient.SubmissionsFieldName;
 import org.mozilla.gecko.background.helpers.FakeProfileTestCase;
+import org.mozilla.gecko.background.testhelpers.StubDelegate;
 
 import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.SharedPreferences;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class TestAndroidSubmissionClient extends FakeProfileTestCase {
@@ -36,34 +38,8 @@ public class TestAndroidSubmissionClient extends FakeProfileTestCase {
     }
 
     @Override
-    public HealthReportDatabaseStorage getStorage(final ContentProviderClient client,
-        final String profilePath) {
+    public HealthReportDatabaseStorage getStorage(final ContentProviderClient client) {
       return storage;
-    }
-
-    @Override
-    public ProfileInformationCache getProfileInformationCache(final String profilePath) {
-      final MockProfileInformationCache cache = new MockProfileInformationCache(profilePath);
-      cache.setInitialized(true); // Will throw errors otherwise.
-      return cache;
-    }
-
-    @Override
-    public JSONObject generateDocument(final HealthReportStorage storage, final long localTime,
-        final long last, final String profilePath) {
-      switch (documentStatus) {
-      case VALID:
-        return new JSONObject(); // Beyond == null, we don't check for valid FHR documents.
-
-      case NULL:
-        return null;
-
-      case EXCEPTION:
-        throw new IllegalStateException("Intended Exception");
-
-      default:
-        throw new IllegalStateException("Unintended Exception");
-      }
     }
 
     @Override
@@ -89,6 +65,69 @@ public class TestAndroidSubmissionClient extends FakeProfileTestCase {
 
       default:
         throw new IllegalStateException("Unknown submissionState, " + submissionState);
+      }
+    }
+
+    @Override
+    public SubmissionsTracker getSubmissionsTracker(final HealthReportStorage storage,
+        final long localTime, final boolean hasUploadBeenRequested) {
+      return new MockSubmissionsTracker(storage, localTime, hasUploadBeenRequested);
+    }
+
+    public class MockSubmissionsTracker extends SubmissionsTracker {
+      public MockSubmissionsTracker (final HealthReportStorage storage, final long localTime,
+          final boolean hasUploadBeenRequested) {
+        super(storage, localTime, hasUploadBeenRequested);
+      }
+
+      @Override
+      public ProfileInformationCache getProfileInformationCache() {
+        final MockProfileInformationCache cache = new MockProfileInformationCache(profilePath);
+        cache.setInitialized(true); // Will throw errors otherwise.
+        return cache;
+      }
+
+      @Override
+      public TrackingGenerator getGenerator() {
+        return new MockTrackingGenerator();
+      }
+
+      public class MockTrackingGenerator extends TrackingGenerator {
+        @Override
+        public JSONObject generateDocument(final long localTime, final long last,
+            final String profilePath) throws JSONException {
+          switch (documentStatus) {
+          case VALID:
+            return new JSONObject(); // Beyond == null, we don't check for valid FHR documents.
+
+          case NULL:
+            // The overridden method should return null since we return a null has for the current
+            // Environment.
+            return super.generateDocument(localTime, last, profilePath);
+
+          case EXCEPTION:
+            throw new IllegalStateException("Intended Exception");
+
+          default:
+            throw new IllegalStateException("Unintended Exception");
+          }
+        }
+
+        // Used in super.generateDocument, where a null document is returned if getHash returns null
+        @Override
+        public Environment getCurrentEnvironment() {
+          return new Environment() {
+            @Override
+            public int register() {
+              return 0;
+            }
+
+            @Override
+            public String getHash() {
+              return null;
+            }
+          };
+        }
       }
     }
   }

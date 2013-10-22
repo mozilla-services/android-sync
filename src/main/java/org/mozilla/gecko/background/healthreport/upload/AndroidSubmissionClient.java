@@ -16,6 +16,7 @@ import org.mozilla.gecko.background.bagheera.BagheeraClient;
 import org.mozilla.gecko.background.bagheera.BagheeraRequestDelegate;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.healthreport.Environment;
 import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportDatabaseStorage;
@@ -23,7 +24,6 @@ import org.mozilla.gecko.background.healthreport.HealthReportGenerator;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.Field;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields;
-import org.mozilla.gecko.background.healthreport.HealthReportStorage.MeasurementFields.FieldSpec;
 import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 import org.mozilla.gecko.sync.net.BaseResource;
 
@@ -79,28 +79,14 @@ public class AndroidSubmissionClient implements SubmissionClient {
       .commit();
   }
 
-  protected void incrementSubmissionAttemptCount(final SubmissionsStatusCounter statusCounter) {
-    // TODO: Bug 910898 - Add errors from sharedPrefs to storage instance.
-    if (!hasUploadBeenRequested()) {
-      statusCounter.incrementFirstUploadAttemptCount();
-    } else {
-      statusCounter.incrementContinuationAttemptCount();
-    }
-  }
-
-  protected HealthReportDatabaseStorage getStorage(final ContentProviderClient client,
-      final String profilePath) {
+  protected HealthReportDatabaseStorage getStorage(final ContentProviderClient client) {
     return EnvironmentBuilder.getStorage(client, profilePath);
   }
 
-  protected ProfileInformationCache getProfileInformationCache(final String profilePath) {
-    return new ProfileInformationCache(profilePath);
-  }
-
-  protected JSONObject generateDocument(final HealthReportStorage storage, final long localTime,
-      final long last, final String profilePath) throws JSONException {
+  protected JSONObject generateDocument(final long localTime, final long last,
+      final SubmissionsTracker tracker) throws JSONException {
     final long since = localTime - GlobalConstants.MILLISECONDS_PER_SIX_MONTHS;
-    final HealthReportGenerator generator = new HealthReportGenerator(storage);
+    final HealthReportGenerator generator = tracker.getGenerator();
     return generator.generateDocument(since, last, profilePath);
   }
 
@@ -140,7 +126,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
       // Storage instance is owned by HealthReportProvider, so we don't need to
       // close it. It's worth noting that this call will fail if called
       // out-of-process.
-      final HealthReportDatabaseStorage storage = getStorage(client, profilePath);
+      final HealthReportDatabaseStorage storage = getStorage(client);
       if (storage == null) {
         // TODO: Bug 910898 - Store error in SharedPrefs so we can increment next time with storage.
         delegate.onHardFailure(localTime, null, "No storage when generating report.", null);
@@ -154,31 +140,24 @@ public class AndroidSubmissionClient implements SubmissionClient {
       }
 
       initializeStorageForUploadProviders(storage);
-      final ProfileInformationCache profileCache = getProfileInformationCache(profilePath);
-      if (!profileCache.restoreUnlessInitialized()) {
-        Logger.warn(LOG_TAG, "Not enough profile information to compute current environment.");
-        return;
-      }
-      final int env = EnvironmentBuilder.registerCurrentEnvironment(storage, profileCache);
-      final int day = storage.getDay(localTime);
-      final SubmissionsStatusCounter statusCounter = new SubmissionsStatusCounter(env, day, storage);
 
+      final SubmissionsTracker tracker =
+          getSubmissionsTracker(storage, localTime, hasUploadBeenRequested());
       try {
-        incrementSubmissionAttemptCount(statusCounter);
-        final JSONObject document = generateDocument(storage, localTime, last, profilePath);
+        // TODO: Bug 910898 - Add errors from sharedPrefs to tracker.
+        final JSONObject document = generateDocument(localTime, last, tracker);
         if (document == null) {
-          statusCounter.incrementUploadClientFailureCount();
           delegate.onHardFailure(localTime, null, "Generator returned null document.", null);
           return;
         }
 
-        final BagheeraRequestDelegate uploadDelegate = new UploadRequestDelegate(delegate,
-            localTime, true, id, statusCounter);
+        final BagheeraRequestDelegate uploadDelegate = tracker.getDelegate(delegate, localTime,
+            true, id);
         this.uploadPayload(id, document.toString(), oldIds, uploadDelegate);
       } catch (Exception e) {
         // Incrementing the failure count here could potentially cause the failure count to be
         // incremented twice, but this helper class checks and prevents this.
-        statusCounter.incrementUploadClientFailureCount();
+        tracker.incrementUploadClientFailureCount();
         throw e;
       }
     } catch (Exception e) {
@@ -189,6 +168,11 @@ public class AndroidSubmissionClient implements SubmissionClient {
     } finally {
       client.release();
     }
+  }
+
+  protected SubmissionsTracker getSubmissionsTracker(final HealthReportStorage storage,
+      final long localTime, final boolean hasUploadBeenRequested) {
+    return new SubmissionsTracker(storage, localTime, hasUploadBeenRequested);
   }
 
   @Override
@@ -265,47 +249,6 @@ public class AndroidSubmissionClient implements SubmissionClient {
     }
   };
 
-  public class UploadRequestDelegate extends RequestDelegate {
-    private final SubmissionsStatusCounter statusCounter;
-
-    public UploadRequestDelegate(Delegate delegate, long localTime, boolean isUpload, String id,
-        final SubmissionsStatusCounter statusCounter) {
-      super(delegate, localTime, isUpload, id);
-      this.statusCounter = statusCounter;
-    }
-
-    @Override
-    public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
-      statusCounter.incrementUploadSuccessCount();
-      super.handleSuccess(status, namespace, id, response);
-    }
-
-    @Override
-    public void handleFailure(int status, String namespace, HttpResponse response) {
-      switch (status) {
-      case 200:
-      case 201:
-        throw new IllegalStateException("Did not expect HTTP success.");
-
-      default:
-        statusCounter.incrementUploadServerFailureCount();
-      }
-      super.handleFailure(status, namespace, response);
-    }
-
-    @Override
-    public void handleError(Exception e) {
-      if (e instanceof IllegalArgumentException ||
-          e instanceof UnsupportedEncodingException ||
-          e instanceof URISyntaxException) {
-        statusCounter.incrementUploadClientFailureCount();
-      } else {
-        statusCounter.incrementUploadTransportFailureCount();
-      }
-      super.handleError(e);
-    }
-  }
-
   private void initializeStorageForUploadProviders(HealthReportDatabaseStorage storage) {
     storage.beginInitialization();
     try {
@@ -314,6 +257,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
     } catch (Exception e) {
       // TODO: Bug 910898 - Store error in SharedPrefs so we can increment next time with storage.
       storage.abortInitialization();
+      throw new IllegalStateException("Could not initialize storage for upload provider.", e);
     }
   }
 
@@ -326,8 +270,8 @@ public class AndroidSubmissionClient implements SubmissionClient {
           public Iterable<FieldSpec> getFields() {
             final ArrayList<FieldSpec> out = new ArrayList<FieldSpec>();
             for (SubmissionsFieldName fieldName : SubmissionsFieldName.values()) {
-              FieldSpec lol = new FieldSpec(fieldName.getName(), Field.TYPE_INTEGER_COUNTER);
-              out.add(lol);
+              FieldSpec spec = new FieldSpec(fieldName.getName(), Field.TYPE_INTEGER_COUNTER);
+              out.add(spec);
             }
             return out;
           }
@@ -364,30 +308,51 @@ public class AndroidSubmissionClient implements SubmissionClient {
    * Encapsulates the counting mechanisms for submissions status counts. Ensures multiple failures
    * and successes are not recorded for a single instance.
    */
-  public static class SubmissionsStatusCounter {
-    private final int env;
-    private final int day;
+  public class SubmissionsTracker {
     private final HealthReportStorage storage;
+    private final ProfileInformationCache profileCache;
+    private final int day;
+    private final int envID;
 
     private boolean isUploadStatusCountIncremented;
 
-    public SubmissionsStatusCounter(final int env, final int day, final HealthReportStorage storage) {
-      this.env = env;
-      this.day = day;
+    public SubmissionsTracker(final HealthReportStorage storage, final long localTime,
+        final boolean hasUploadBeenRequested) throws IllegalStateException {
       this.storage = storage;
+      this.profileCache = getProfileInformationCache();
+      this.day = storage.getDay(localTime);
+      this.envID = registerCurrentEnvironment();
 
       this.isUploadStatusCountIncremented = false;
+
+      if (!hasUploadBeenRequested) {
+        incrementFirstUploadAttemptCount();
+      } else {
+        incrementContinuationAttemptCount();
+      }
     }
 
-    public void incrementFirstUploadAttemptCount() {
+    protected ProfileInformationCache getProfileInformationCache() {
+      final ProfileInformationCache profileCache = new ProfileInformationCache(profilePath);
+      if (!profileCache.restoreUnlessInitialized()) {
+        Logger.warn(LOG_TAG, "Not enough profile information to compute current environment.");
+        throw new IllegalStateException("Could not retrieve current environment.");
+      }
+      return profileCache;
+    }
+
+    protected int registerCurrentEnvironment() {
+      return EnvironmentBuilder.registerCurrentEnvironment(storage, profileCache);
+    }
+
+    protected void incrementFirstUploadAttemptCount() {
       Logger.debug(LOG_TAG, "Incrementing first upload attempt field.");
-      storage.incrementDailyCount(env, day, SubmissionsFieldName.FIRST_ATTEMPT.getID(storage));
+      storage.incrementDailyCount(envID, day, SubmissionsFieldName.FIRST_ATTEMPT.getID(storage));
     }
 
-    public void incrementContinuationAttemptCount() {
-      // TODO: Worth protecting to ensure both of these methods are not called?
+    protected void incrementContinuationAttemptCount() {
       Logger.debug(LOG_TAG, "Incrementing continuation upload attempt field.");
-      storage.incrementDailyCount(env, day, SubmissionsFieldName.CONTINUATION_ATTEMPT.getID(storage));
+      storage.incrementDailyCount(envID, day, SubmissionsFieldName.CONTINUATION_ATTEMPT.getID(storage));
     }
 
     public void incrementUploadSuccessCount() {
@@ -409,11 +374,79 @@ public class AndroidSubmissionClient implements SubmissionClient {
     private void incrementStatusCount(final int fieldID, final String countType) {
       if (!isUploadStatusCountIncremented) {
         Logger.debug(LOG_TAG, "Incrementing upload attempt " + countType + " count.");
-        storage.incrementDailyCount(env, day, fieldID);
+        storage.incrementDailyCount(envID, day, fieldID);
         isUploadStatusCountIncremented = true;
       } else {
         Logger.warn(LOG_TAG, "Upload status count already incremented - not incrementing " +
             countType + " count.");
+      }
+    }
+
+    public TrackingGenerator getGenerator() {
+      return new TrackingGenerator();
+    }
+
+    public class TrackingGenerator extends HealthReportGenerator {
+      public TrackingGenerator() {
+        super(storage);
+      }
+
+      @Override
+      public JSONObject generateDocument(long since, long lastPingTime,
+          String generationProfilePath) throws JSONException {
+        final JSONObject document;
+        // If the given profilePath matches the one we cached for the tracker, use the cached env.
+        if (generationProfilePath == profilePath) {
+          final Environment environment = getCurrentEnvironment();
+          document = super.generateDocument(since, lastPingTime, environment);
+        } else {
+          document = super.generateDocument(since, lastPingTime, generationProfilePath);
+        }
+
+        if (document == null) {
+          incrementUploadClientFailureCount();
+        }
+        return document;
+      }
+
+      protected Environment getCurrentEnvironment() {
+        return EnvironmentBuilder.getCurrentEnvironment(profileCache);
+      }
+    }
+
+    public TrackingRequestDelegate getDelegate(final Delegate delegate, final long localTime,
+        final boolean isUpload, final String id) {
+      return new TrackingRequestDelegate(delegate, localTime, isUpload, id);
+    }
+
+    public class TrackingRequestDelegate extends RequestDelegate {
+      public TrackingRequestDelegate(final Delegate delegate, final long localTime,
+          final boolean isUpload, final String id) {
+        super(delegate, localTime, isUpload, id);
+      }
+
+      @Override
+      public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
+        super.handleSuccess(status, namespace, id, response);
+        incrementUploadSuccessCount();
+      }
+
+      @Override
+      public void handleFailure(int status, String namespace, HttpResponse response) {
+        super.handleFailure(status, namespace, response);
+        incrementUploadServerFailureCount();
+      }
+
+      @Override
+      public void handleError(Exception e) {
+        super.handleError(e);
+        if (e instanceof IllegalArgumentException ||
+            e instanceof UnsupportedEncodingException ||
+            e instanceof URISyntaxException) {
+          incrementUploadClientFailureCount();
+        } else {
+          incrementUploadTransportFailureCount();
+        }
       }
     }
   }
