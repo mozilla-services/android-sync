@@ -22,12 +22,13 @@ import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.BaseGlobalSessionCallback;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
-import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.delegates.JSONRecordFetchDelegate;
 import org.mozilla.gecko.sync.delegates.KeyUploadDelegate;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
+import org.mozilla.gecko.sync.delegates.NodeAssignmentCallback;
 import org.mozilla.gecko.sync.delegates.WipeServerDelegate;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -70,9 +71,10 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
   protected Map<Stage, GlobalSyncStage> stages;
   public Stage currentState = Stage.idle;
 
-  public final GlobalSessionCallback callback;
-  private Context context;
-  private ClientsDataDelegate clientsDelegate;
+  public final BaseGlobalSessionCallback callback;
+  protected final Context context;
+  protected final ClientsDataDelegate clientsDelegate;
+  protected final NodeAssignmentCallback nodeAssignmentCallback;
 
   /**
    * Map from engine name to new settings for an updated meta/global record.
@@ -103,10 +105,11 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
                        AuthHeaderProvider authHeaderProvider,
                        String prefsPath,
                        KeyBundle syncKeyBundle,
-                       GlobalSessionCallback callback,
+                       BaseGlobalSessionCallback callback,
                        Context context,
                        Bundle extras,
-                       ClientsDataDelegate clientsDelegate)
+                       ClientsDataDelegate clientsDelegate,
+                       NodeAssignmentCallback nodeAssignmentCallback)
                            throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
     if (username == null) {
       throw new IllegalArgumentException("username must not be null.");
@@ -132,6 +135,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     this.callback        = callback;
     this.context         = context;
     this.clientsDelegate = clientsDelegate;
+    this.nodeAssignmentCallback = nodeAssignmentCallback;
 
     config = new SyncConfiguration(username, authHeaderProvider, prefsPath, this);
 
@@ -199,7 +203,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     HashMap<Stage, GlobalSyncStage> stages = new HashMap<Stage, GlobalSyncStage>();
 
     stages.put(Stage.checkPreconditions,      new CheckPreconditionsStage());
-    stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage());
+    stages.put(Stage.ensureClusterURL,        new EnsureClusterURLStage(nodeAssignmentCallback));
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
     stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage());
