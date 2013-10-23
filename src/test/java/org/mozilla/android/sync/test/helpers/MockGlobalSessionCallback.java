@@ -20,6 +20,16 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
  * WaitHelper performWait.
  */
 public class MockGlobalSessionCallback implements GlobalSessionCallback {
+  public final String nodeWeaveURL;
+
+  public MockGlobalSessionCallback(String nodeWeaveURL) {
+    this.nodeWeaveURL = nodeWeaveURL;
+  }
+
+  public MockGlobalSessionCallback() {
+    this(null);
+  }
+
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
@@ -104,5 +114,10 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   @Override
   public boolean wantNodeAssignment() {
     return false;
+  }
+
+  @Override
+  public String nodeWeaveURL() {
+    return nodeWeaveURL;
   }
 }

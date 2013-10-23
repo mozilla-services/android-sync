@@ -119,12 +119,6 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     }
 
     Logger.debug(LOG_TAG, "GlobalSession initialized with bundle " + extras);
-    URI serverURI;
-    try {
-      serverURI = (serverURL == null) ? null : new URI(serverURL);
-    } catch (URISyntaxException e) {
-      throw new SyncConfigurationException();
-    }
 
     if (syncKeyBundle == null ||
         syncKeyBundle.getEncryptionKey() == null ||
@@ -138,8 +132,6 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     this.nodeAssignmentCallback = nodeAssignmentCallback;
 
     config = new SyncConfiguration(username, authHeaderProvider, prefsPath, this);
-
-    config.serverURL     = serverURI;
     config.syncKeyBundle = syncKeyBundle;
 
     registerCommands();

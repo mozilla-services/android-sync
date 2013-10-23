@@ -364,7 +364,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
           final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
           self.accountSharedPreferences = Utils.getSharedPreferences(mContext, product, username, serverURL, profile, version);
           self.clientsDataDelegate = new SharedPreferencesClientsDataDelegate(accountSharedPreferences);
-          self.nodeAssignmentDelegate = new SharedPreferencesNodeAssignmentCallback(accountSharedPreferences);
+          self.nodeAssignmentDelegate = new SharedPreferencesNodeAssignmentCallback(accountSharedPreferences, serverURL);
 
           Logger.info(LOG_TAG,
               "Client is named '" + clientsDataDelegate.getClientName() + "'" +
@@ -550,6 +550,22 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
                                    GlobalSession globalSession) {
     Logger.trace(LOG_TAG, "Stage completed: " + currentState);
   }
+
+  public String nodeWeaveURL() {
+    // return this.nodeWeaveURL((this.serverURL == null) ? null : this.serverURL.toASCIIString());
+    return null;
+  }
+
+//  public String nodeWeaveURL(String serverURL) {
+//    String userPart = username + "/node/weave";
+//    if (serverURL == null) {
+//      return DEFAULT_USER_API + userPart;
+//    }
+//    if (!serverURL.endsWith("/")) {
+//      serverURL = serverURL + "/";
+//    }
+//    return serverURL + "user/1.0/" + userPart;
+//  }
 
   @Override
   public void informUnauthorizedResponse(GlobalSession session, URI oldClusterURL) {
