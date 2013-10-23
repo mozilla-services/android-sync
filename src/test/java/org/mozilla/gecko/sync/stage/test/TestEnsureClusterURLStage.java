@@ -141,7 +141,7 @@ public class TestEnsureClusterURLStage {
    */
   public void testNodeAssignedIfNotSet() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_SERVER);
-    final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
+    final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
     .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
@@ -178,7 +178,7 @@ public class TestEnsureClusterURLStage {
   @Test
   public void testNodeNotAssignedIfSet() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_SERVER);
-    final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
+    final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
     .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
@@ -219,7 +219,7 @@ public class TestEnsureClusterURLStage {
       }
     };
 
-    final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
+    final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
     .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
@@ -263,7 +263,7 @@ public class TestEnsureClusterURLStage {
       }
     };
 
-    final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
+    final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
     .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
@@ -297,7 +297,7 @@ public class TestEnsureClusterURLStage {
   @Test
   public void testInterpretHTTPFailureCallsMaybeNodeReassigned() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_SERVER);
-    final GlobalSession session = new MockGlobalSession(TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
+    final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
     final HttpResponse response = new BasicHttpResponse(

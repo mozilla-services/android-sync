@@ -100,8 +100,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     return config.wboURI(collection, id);
   }
 
-  public GlobalSession(String serverURL,
-                       String username,
+  public GlobalSession(String username,
                        AuthHeaderProvider authHeaderProvider,
                        String prefsPath,
                        KeyBundle syncKeyBundle,

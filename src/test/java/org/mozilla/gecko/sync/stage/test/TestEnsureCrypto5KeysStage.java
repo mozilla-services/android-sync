@@ -57,8 +57,8 @@ public class TestEnsureCrypto5KeysStage {
   @Before
   public void setUp() throws Exception {
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
-    callback = new MockGlobalSessionCallback();
-    session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+    callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+    session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
       syncKeyBundle, callback) {
       @Override
       protected void prepareStages() {
