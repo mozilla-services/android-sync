@@ -19,7 +19,6 @@ import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 
 public class TestBackoff {
-  private final String TEST_CLUSTER_URL         = "http://localhost:8080/";
   private final String TEST_USERNAME            = "johndoe";
   private final String TEST_PASSWORD            = "password";
   private final String TEST_SYNC_KEY            = "abcdeabcdeabcdeabcdeabcdea";
@@ -33,7 +32,7 @@ public class TestBackoff {
   public void testBackoffCalledIfBackoffHeaderPresent() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(
@@ -61,7 +60,7 @@ public class TestBackoff {
   public void testBackoffNotCalledIfBackoffHeaderNotPresent() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(
@@ -88,7 +87,7 @@ public class TestBackoff {
   public void testBackoffCalledIfMultipleBackoffHeadersPresent() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(

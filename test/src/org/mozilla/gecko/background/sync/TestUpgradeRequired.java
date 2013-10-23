@@ -170,7 +170,7 @@ public class TestUpgradeRequired extends AndroidSyncTestCase {
     };
 
     final GlobalSession session = new MockGlobalSession(
-        TEST_SERVER, TEST_USERNAME, TEST_PASSWORD,
+        TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
     session.interpretHTTPFailure(simulate400());
