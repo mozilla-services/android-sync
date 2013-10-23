@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.sync;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.mozilla.gecko.sync.delegates.NodeAssignmentCallback;
 
@@ -12,9 +13,20 @@ import android.content.SharedPreferences.Editor;
 
 public class SharedPreferencesNodeAssignmentCallback implements NodeAssignmentCallback {
   protected final SharedPreferences sharedPreferences;
+  protected final String nodeWeaveURL;
 
-  public SharedPreferencesNodeAssignmentCallback(SharedPreferences sharedPreferences) {
+  public SharedPreferencesNodeAssignmentCallback(SharedPreferences sharedPreferences, String nodeWeaveURL)
+      throws SyncConfigurationException {
     this.sharedPreferences = sharedPreferences;
+    if (nodeWeaveURL == null) {
+      throw new IllegalArgumentException("nodeWeaveURL must not be null");
+    }
+    try {
+      new URI(nodeWeaveURL);
+    } catch (URISyntaxException e) {
+      throw new SyncConfigurationException();
+    }
+    this.nodeWeaveURL = nodeWeaveURL;
   }
 
   public synchronized boolean getClusterURLIsStale() {
@@ -42,5 +54,10 @@ public class SharedPreferencesNodeAssignmentCallback implements NodeAssignmentCa
   @Override
   public void informNodeAssigned(GlobalSession session, URI oldClusterURL, URI newClusterURL) {
     setClusterURLIsStale(false);
+  }
+
+  @Override
+  public String nodeWeaveURL() {
+    return this.nodeWeaveURL;
   }
 }

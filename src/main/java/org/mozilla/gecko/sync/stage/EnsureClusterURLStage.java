@@ -224,7 +224,12 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
         int statusCode = response.getStatusLine().getStatusCode();
         Logger.warn(LOG_TAG, "Got HTTP failure fetching node assignment: " + statusCode);
         if (statusCode == 404) {
-          URI serverURL = session.config.serverURL;
+          URI serverURL = null;
+          try {
+            serverURL = new URI(callback.nodeWeaveURL());
+          } catch (URISyntaxException e) {
+            // Fall through to abort.
+          }
           if (serverURL != null) {
             Logger.info(LOG_TAG, "Using serverURL <" + serverURL.toASCIIString() + "> as clusterURL.");
             session.config.setClusterURL(serverURL);
@@ -232,7 +237,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
             return;
           }
           Logger.warn(LOG_TAG, "No serverURL set to use as fallback cluster URL. Aborting sync.");
-          // Fallthrough to abort.
+          // Fall through to abort.
         } else {
           session.interpretHTTPFailure(response);
         }
@@ -249,7 +254,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
       @Override
       public void run() {
         try {
-          fetchClusterURL(session.config.nodeWeaveURL(), delegate);
+          fetchClusterURL(callback.nodeWeaveURL(), delegate);
         } catch (URISyntaxException e) {
           session.abort(e, "Invalid URL for node/weave.");
         }

@@ -364,7 +364,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
           final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
           self.accountSharedPreferences = Utils.getSharedPreferences(mContext, product, username, serverURL, profile, version);
           self.clientsDataDelegate = new SharedPreferencesClientsDataDelegate(accountSharedPreferences);
-          self.nodeAssignmentDelegate = new SharedPreferencesNodeAssignmentCallback(accountSharedPreferences);
+          final String nodeWeaveURL = Utils.nodeWeaveURL(serverURL, username);
+          self.nodeAssignmentDelegate = new SharedPreferencesNodeAssignmentCallback(accountSharedPreferences, nodeWeaveURL);
 
           Logger.info(LOG_TAG,
               "Client is named '" + clientsDataDelegate.getClientName() + "'" +

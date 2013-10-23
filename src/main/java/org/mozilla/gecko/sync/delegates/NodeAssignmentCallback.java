@@ -12,7 +12,7 @@ public interface NodeAssignmentCallback {
   /**
    * If true, request node assignment from the server, i.e., fetch node/weave cluster URL.
    */
-  boolean wantNodeAssignment();
+  public boolean wantNodeAssignment();
 
   /**
    * Called when a new node is assigned. If there already was an old node, the
@@ -25,7 +25,7 @@ public interface NodeAssignmentCallback {
    * @param newClusterURL
    *          The new node/weave cluster URL (not null).
    */
-  void informNodeAssigned(GlobalSession globalSession, URI oldClusterURL, URI newClusterURL);
+  public void informNodeAssigned(GlobalSession globalSession, URI oldClusterURL, URI newClusterURL);
 
   /**
    * Called when wantNodeAssignment() is true, and the new node assignment is
@@ -36,5 +36,7 @@ public interface NodeAssignmentCallback {
    * @param failedClusterURL
    *          The new node/weave cluster URL.
    */
-  void informNodeAuthenticationFailed(GlobalSession globalSession, URI failedClusterURL);
+  public void informNodeAuthenticationFailed(GlobalSession globalSession, URI failedClusterURL);
+
+  public String nodeWeaveURL();
 }
