@@ -18,6 +18,7 @@ import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
+import org.mozilla.gecko.sync.SharedPreferencesNodeAssignmentCallback;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncConstants;
@@ -27,8 +28,8 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.delegates.BaseGlobalSessionCallback;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
-import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.ConnectionMonitorThread;
@@ -52,7 +53,7 @@ import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 
-public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSessionCallback {
+public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlobalSessionCallback {
   private static final String  LOG_TAG = "SyncAdapter";
 
   private static final int     BACKOFF_PAD_SECONDS = 5;
@@ -197,6 +198,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
   protected boolean thisSyncIsForced = false;
   protected SharedPreferences accountSharedPreferences;
   protected SharedPreferencesClientsDataDelegate clientsDataDelegate;
+  protected SharedPreferencesNodeAssignmentCallback nodeAssignmentDelegate;
 
   /**
    * Return the number of milliseconds until we're allowed to sync again,
@@ -222,7 +224,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
       return false;
     }
 
-    if (wantNodeAssignment()) {
+    if (nodeAssignmentDelegate.wantNodeAssignment()) {
       /*
        * We recently had a 401 and we aborted the last sync. We should kick off
        * another sync to fetch a new node/weave cluster URL, since ours is
@@ -362,6 +364,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
           final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
           self.accountSharedPreferences = Utils.getSharedPreferences(mContext, product, username, serverURL, profile, version);
           self.clientsDataDelegate = new SharedPreferencesClientsDataDelegate(accountSharedPreferences);
+          self.nodeAssignmentDelegate = new SharedPreferencesNodeAssignmentCallback(accountSharedPreferences);
 
           Logger.info(LOG_TAG,
               "Client is named '" + clientsDataDelegate.getClientName() + "'" +
@@ -509,7 +512,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     final KeyBundle keyBundle = new KeyBundle(username, syncKey);
     final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(username, password);
     GlobalSession globalSession = new GlobalSession(serverURL, username, authHeaderProvider, prefsPath,
-                                                    keyBundle, this, this.mContext, extras, clientsDataDelegate, this);
+                                                    keyBundle, this, this.mContext, extras, clientsDataDelegate, nodeAssignmentDelegate);
 
     globalSession.start();
   }
@@ -548,36 +551,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements GlobalSe
     Logger.trace(LOG_TAG, "Stage completed: " + currentState);
   }
 
-  public synchronized boolean getClusterURLIsStale() {
-    return accountSharedPreferences.getBoolean(SyncConfiguration.PREF_CLUSTER_URL_IS_STALE, false);
-  }
-
-  public synchronized void setClusterURLIsStale(boolean clusterURLIsStale) {
-    Editor edit = accountSharedPreferences.edit();
-    edit.putBoolean(SyncConfiguration.PREF_CLUSTER_URL_IS_STALE, clusterURLIsStale);
-    edit.commit();
-  }
-
-  @Override
-  public boolean wantNodeAssignment() {
-    return getClusterURLIsStale();
-  }
-
-  @Override
-  public void informNodeAuthenticationFailed(GlobalSession session, URI failedClusterURL) {
-    // TODO: communicate to the user interface that we need a new user password!
-    // TODO: only freshen the cluster URL (better yet, forget the cluster URL) after the user has provided new credentials.
-    setClusterURLIsStale(false);
-  }
-
-  @Override
-  public void informNodeAssigned(GlobalSession session, URI oldClusterURL, URI newClusterURL) {
-    setClusterURLIsStale(false);
-  }
-
   @Override
   public void informUnauthorizedResponse(GlobalSession session, URI oldClusterURL) {
-    setClusterURLIsStale(true);
+    nodeAssignmentDelegate.setClusterURLIsStale(true);
   }
 
   @Override
