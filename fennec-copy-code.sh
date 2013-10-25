@@ -118,12 +118,6 @@ rsync -C -a $HTTPLIB $ANDROID/thirdparty/ch/boye/httpclientandroidlib/
 rsync -C -a $JSONLIB $ANDROID/thirdparty/org/json/simple/
 cp external/json-simple-1.1/LICENSE.txt $ANDROID/thirdparty/org/json/simple/
 
-# Creating Makefile for Mozilla.
-MKFILE=$ANDROID/base/android-services-files.mk
-echo "Creating makefile for including in the Mozilla build system at $MKFILE"
-cat tools/makefile_mpl.txt > $MKFILE
-echo "# $WARNING" >> $MKFILE
-
 # Write a list of files to a Makefile variable.
 # turn
 # VAR:=1.java 2.java
@@ -161,7 +155,7 @@ function dump_mozbuild_variable {
     shift
     shift
 
-    echo "$variable_name += [" >> $output_file
+    echo "$variable_name [" >> $output_file
     for var in "$@" ; do
         for f in $var ; do
             echo "    '$f'," >> $output_file
@@ -173,17 +167,18 @@ function dump_mozbuild_variable {
 # Prefer PNGs in drawable-*: Android lint complains about PNG files in drawable.
 SYNC_RES=$(find res -name 'sync*' \( -name '*.xml' -or -name '*.png' \) | sed 's,res/,resources/,' | $SORT_CMD)
 
-dump_mkfile_variable "SYNC_PP_JAVA_FILES" "$PREPROCESS_FILES"
-dump_mkfile_variable "SYNC_JAVA_FILES" "$SOURCEFILES"
-
-dump_mkfile_variable "SYNC_THIRDPARTY_JAVA_FILES" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
-
 # Creating moz.build file for Mozilla.
 MOZBUILDFILE=$ANDROID/base/android-services.mozbuild
 echo "Creating moz.build file for including in the Mozilla build system at $MOZBUILDFILE"
 cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
 
-dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES" "$SYNC_RES"
+dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES +=" "$SYNC_RES"
+echo >> $MOZBUILDFILE
+dump_mozbuild_variable $MOZBUILDFILE "sync_thirdparty_java_files =" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
+echo >> $MOZBUILDFILE
+dump_mozbuild_variable $MOZBUILDFILE "sync_java_files =" "$SOURCEFILES"
+echo >> $MOZBUILDFILE
+dump_mozbuild_variable $MOZBUILDFILE "sync_generated_java_files =" "$PREPROCESS_FILES"
 
 # Creating Makefile for Mozilla.
 MKFILE=$ANDROID/tests/background/junit3/android-services-files.mk
@@ -196,7 +191,7 @@ dump_mkfile_variable "BACKGROUND_TESTS_JAVA_FILES" "$BACKGROUND_TESTS_JAVA_FILES
 MOZBUILDFILE=$ANDROID/tests/background/junit3/android-services.mozbuild
 echo "Creating background tests moz.build file for including in the Mozilla build system at $MOZBUILDFILE"
 cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
-dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES" "$BACKGROUND_TESTS_RES_FILES"
+dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES +=" "$BACKGROUND_TESTS_RES_FILES"
 
 # Finished creating Makefile for Mozilla.
 
