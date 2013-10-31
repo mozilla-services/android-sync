@@ -92,3 +92,14 @@ To run the integration test suite under Eclipse:
 
 You can debug under Eclipse using ``Debug > Debug As ... > Android JUnit
 Test.``.
+
+Shared test code
+----------------
+
+Some test code is shared between both the unit test suite
+and the integration test suite. This code may be found in:
+``src/main/java/org/mozilla/gecko/background/testhelpers``. This
+directory is exported to
+``<path-to-mozilla-central>/mobile/android/tests/background/junit3/src/testhelpers``
+by the ``fennec-copy-code.sh`` script. This shared code should be kept as
+minimal as possible.
