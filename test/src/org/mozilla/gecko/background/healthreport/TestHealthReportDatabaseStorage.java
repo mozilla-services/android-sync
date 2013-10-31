@@ -3,7 +3,6 @@
 
 package org.mozilla.gecko.background.healthreport;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import org.json.JSONException;
@@ -30,11 +29,6 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
     "events_integer",
     "events_textual"
   };
-
-  @Override
-  protected String getCacheSuffix() {
-    return File.separator + "health-" + System.currentTimeMillis() + ".profile";
-  }
 
   public static class MockMeasurementFields implements MeasurementFields {
     @Override
