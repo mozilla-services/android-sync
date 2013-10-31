@@ -105,17 +105,17 @@ mkdir -p $ANDROID/thirdparty/ch/boye/httpclientandroidlib/
 mkdir -p $ANDROID/thirdparty/org/json/simple/
 mkdir -p $ANDROID/thirdparty/org/mozilla/apache/
 
-APACHEDIR="src/main/java/org/mozilla/apache/"
-APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR/,org/mozilla/apache/," | $SORT_CMD)
-rsync -C -a $APACHEDIR $ANDROID/thirdparty/org/mozilla/apache/
+APACHEDIR="src/main/java/org/mozilla/apache"
+APACHEFILES=$(find "$APACHEDIR" -name '*.java' | sed "s,$APACHEDIR,org/mozilla/apache," | $SORT_CMD)
+rsync -C -a "$APACHEDIR/" "$ANDROID/thirdparty/org/mozilla/apache"
 
 echo "Copying external dependency sources."
-JSONLIB=external/json-simple-1.1/src/org/json/simple/
-HTTPLIB=external/httpclientandroidlib/httpclientandroidlib/src/ch/boye/httpclientandroidlib/
-JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB/,org/json/simple/," | $SORT_CMD)
-HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB/,ch/boye/httpclientandroidlib/," | $SORT_CMD)
-rsync -C -a $HTTPLIB $ANDROID/thirdparty/ch/boye/httpclientandroidlib/
-rsync -C -a $JSONLIB $ANDROID/thirdparty/org/json/simple/
+JSONLIB=external/json-simple-1.1/src/org/json/simple
+HTTPLIB=external/httpclientandroidlib/httpclientandroidlib/src/ch/boye/httpclientandroidlib
+JSONLIBFILES=$(find "$JSONLIB" -name '*.java' | sed "s,$JSONLIB,org/json/simple," | $SORT_CMD)
+HTTPLIBFILES=$(find "$HTTPLIB" -name '*.java' | sed "s,$HTTPLIB,ch/boye/httpclientandroidlib," | $SORT_CMD)
+rsync -C -a "$HTTPLIB/" "$ANDROID/thirdparty/ch/boye/httpclientandroidlib/"
+rsync -C -a "$JSONLIB/" "$ANDROID/thirdparty/org/json/simple/"
 cp external/json-simple-1.1/LICENSE.txt $ANDROID/thirdparty/org/json/simple/
 
 # Write a list of files to a Makefile variable.
