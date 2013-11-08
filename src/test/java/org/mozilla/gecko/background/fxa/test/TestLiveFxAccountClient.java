@@ -37,6 +37,9 @@ public class TestLiveFxAccountClient {
   protected static final String TEST_EMAIL_UNICODE = "andré@example.org";
   protected static final String TEST_PASSWORD_UNICODE = "pässwörd";
 
+  protected static final String TEST_EMAIL_TURKISH = "Atatürk@turkish.abcçdefgğhıijklmnoöprsştuüvyz.org";
+  protected static final String TEST_PASSWORD_TURKISH = "İIiı";
+
   // If these don't stay fixed, we have to delete the accounts every test.
   protected static final String TEST_MAINSALT = "" +
       "00f0000000000000" +
@@ -197,6 +200,10 @@ public class TestLiveFxAccountClient {
 
     // Fixed account, unicode.
     doTestCreateAndLogin(TEST_EMAIL_UNICODE, TEST_PASSWORD_UNICODE,
+        TEST_MAINSALT, TEST_SRPSALT, true);
+
+    // Fixed account, Turkish.
+    doTestCreateAndLogin(TEST_EMAIL_TURKISH, TEST_PASSWORD_TURKISH,
         TEST_MAINSALT, TEST_SRPSALT, true);
   }
 
