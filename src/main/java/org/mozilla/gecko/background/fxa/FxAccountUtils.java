@@ -17,13 +17,8 @@ public class FxAccountUtils {
   public static final int HASH_LENGTH_BYTES = 16;
   public static final int HASH_LENGTH_HEX = 2 * HASH_LENGTH_BYTES;
 
-  public static String bytes(String string) {
-    try {
-      return Utils.byte2Hex(string.getBytes("UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      // This should never happen.
-      return null;
-    }
+  public static String bytes(String string) throws UnsupportedEncodingException {
+    return Utils.byte2Hex(string.getBytes("UTF-8"));
   }
 
   public static byte[] KW(String name) throws UnsupportedEncodingException {

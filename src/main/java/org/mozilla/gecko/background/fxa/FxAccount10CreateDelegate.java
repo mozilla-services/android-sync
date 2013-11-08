@@ -29,9 +29,13 @@ public class FxAccount10CreateDelegate implements CreateDelegate {
 
   @SuppressWarnings("unchecked")
   @Override
-  public JSONObject createBody() {
+  public JSONObject createBody() throws FxAccountClientException {
     final JSONObject body = new JSONObject();
-    body.put("email", FxAccountUtils.bytes(email));
+    try {
+      body.put("email", FxAccountUtils.bytes(email));
+    } catch (UnsupportedEncodingException e) {
+      throw new FxAccountClientException(e);
+    }
 
     final JSONObject stretching = new JSONObject();
     stretching.put("type", "PBKDF2/scrypt/PBKDF2/v1");

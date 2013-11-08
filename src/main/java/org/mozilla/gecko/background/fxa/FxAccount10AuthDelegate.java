@@ -60,10 +60,14 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
 
   @SuppressWarnings("unchecked")
   @Override
-  public JSONObject authStartBody() {
-    final JSONObject body = new JSONObject();
-    body.put("email", FxAccountUtils.bytes(email));
-    return body;
+  public JSONObject authStartBody() throws FxAccountClientException {
+    try {
+      final JSONObject body = new JSONObject();
+      body.put("email", FxAccountUtils.bytes(email));
+      return body;
+    } catch (UnsupportedEncodingException e) {
+      throw new FxAccountClientException(e);
+    }
   }
 
   @Override

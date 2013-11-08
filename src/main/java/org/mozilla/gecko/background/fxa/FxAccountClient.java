@@ -63,7 +63,7 @@ public class FxAccountClient {
   }
 
   public interface CreateDelegate {
-    public JSONObject createBody();
+    public JSONObject createBody() throws FxAccountClientException;
   }
 
   public interface AuthDelegate {
@@ -252,7 +252,14 @@ public class FxAccountClient {
   }
 
   protected void createAccount(final CreateDelegate createDelegate, final RequestDelegate<String> delegate) {
-    JSONObject body = createDelegate.createBody();
+    JSONObject body = null;
+    try {
+      body = createDelegate.createBody();
+    } catch (FxAccountClientException e) {
+      delegate.handleError(new FxAccountClientException(e));
+      return;
+    }
+
     final BaseResource resource = new BaseResource(makeURI("account/create", delegate));
     resource.delegate = new ResourceDelegate<String>(resource, delegate) {
       @Override
