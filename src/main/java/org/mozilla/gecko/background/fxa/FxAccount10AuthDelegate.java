@@ -131,15 +131,15 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
    * @throws FxAccountClientMalformedAuthException
    */
   protected void throwIfParametersAreBad(ExtendedJSONObject params) throws FxAccountClientMalformedAuthException {
-    ExtendedJSONObject expected = new ExtendedJSONObject();
-    expected.put("type", "PBKDF2/scrypt/PBKDF2/v1");
-    expected.put("PBKDF2_rounds_1", 20000L);
-    expected.put("scrypt_N", 65536L);
-    expected.put("scrypt_r", 8L);
-    expected.put("scrypt_p", 1L);
-    expected.put("PBKDF2_rounds_2", 20000L);
-    expected.put("salt", params.getString("salt"));
-    if (!expected.equals(params)) {
+    if (params == null ||
+        params.size() != 7 ||
+        params.getString("salt") == null ||
+        !("PBKDF2/scrypt/PBKDF2/v1".equals(params.getString("type"))) ||
+        20000 != params.getLong("PBKDF2_rounds_1") ||
+        65536 != params.getLong("scrypt_N") ||
+        8 != params.getLong("scrypt_r") ||
+        1 != params.getLong("scrypt_p") ||
+        20000 != params.getLong("PBKDF2_rounds_2")) {
       throw new FxAccountClientMalformedAuthException("malformed passwordStretching parameters: '" + params.toJSONString() + "'.");
     }
   }
