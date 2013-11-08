@@ -47,7 +47,7 @@ public class AndroidBrowserHistoryServerSyncStage extends ServerSyncStage {
     String collection = getCollection();
     return new ConstrainedServer11Repository(
                                              collection,
-                                             session.config.getCollectionURLString(collection),
+                                             session.config.storageURL(),
                                              session.getAuthHeaderProvider(),
                                              HISTORY_REQUEST_LIMIT,
                                              HISTORY_SORT);

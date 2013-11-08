@@ -27,18 +27,16 @@ public class Server11Repository extends Repository {
   public static final String VERSION_PATH_FRAGMENT = "1.1/";
 
   /**
+   * Construct a new repository that fetches and stores against the Sync 1.1. API.
    *
-   * @param serverURI
-   *        URI of the Sync 1.1 server (string)
-   * @param username
-   *        Username on the server (string)
-   * @param collection
-   *        Name of the collection (string)
+   * @param collection name.
+   * @param storageURL full URL to storage endpoint.
+   * @param authHeaderProvider to use in requests.
    * @throws URISyntaxException
    */
-  public Server11Repository(String collection, String collectionPath, AuthHeaderProvider authHeaderProvider) throws URISyntaxException {
+  public Server11Repository(String collection, String storageURL, AuthHeaderProvider authHeaderProvider) throws URISyntaxException {
     this.collection = collection;
-    this.collectionURI = new URI(collectionPath);
+    this.collectionURI = new URI(storageURL + (storageURL.endsWith("/") ? collection : "/" + collection));
     this.authHeaderProvider = authHeaderProvider;
   }
 

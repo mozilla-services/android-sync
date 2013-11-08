@@ -481,16 +481,20 @@ public class SyncConfiguration {
   }
 
   public String metaURL() {
-    return clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage/meta/global";
+    return storageURL() + "/meta/global";
   }
 
-  public String storageURL(boolean trailingSlash) {
-    return clusterURL + GlobalSession.API_VERSION + "/" + username +
-           (trailingSlash ? "/storage/" : "/storage");
+  /**
+   * Return path to storage endpoint without trailing slash.
+   *
+   * @return storage endpoint without trailing slash.
+   */
+  public String storageURL() {
+    return clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage";
   }
 
   public URI collectionURI(String collection) throws URISyntaxException {
-    return new URI(storageURL(true) + collection);
+    return new URI(storageURL() + "/" + collection);
   }
 
   public URI collectionURI(String collection, boolean full) throws URISyntaxException {
@@ -505,12 +509,12 @@ public class SyncConfiguration {
       }
       uriParams = params.toString();
     }
-    String uri = storageURL(true) + collection + uriParams;
+    String uri = storageURL() + "/" + collection + uriParams;
     return new URI(uri);
   }
 
   public URI wboURI(String collection, String id) throws URISyntaxException {
-    return new URI(storageURL(true) + collection + "/" + id);
+    return new URI(storageURL() + "/" + collection + "/" + id);
   }
 
   public URI keysURI() throws URISyntaxException {
@@ -604,12 +608,5 @@ public class SyncConfiguration {
 
   public PersistedMetaGlobal persistedMetaGlobal() {
     return new PersistedMetaGlobal(getPrefs());
-  }
-
-  // XXX
-  public static final String VERSION_PATH_FRAGMENT = "1.1/";
-
-  public String getCollectionURLString(String collection) {
-    return getClusterURLString() + VERSION_PATH_FRAGMENT + this.username + "/storage/" + collection;
   }
 }

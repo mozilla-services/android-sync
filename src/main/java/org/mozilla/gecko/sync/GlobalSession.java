@@ -828,7 +828,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRequest(config.storageURL(false));
+      request = new SyncStorageRequest(config.storageURL());
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
