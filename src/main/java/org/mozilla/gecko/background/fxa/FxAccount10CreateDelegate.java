@@ -29,7 +29,7 @@ public class FxAccount10CreateDelegate implements CreateDelegate {
 
   @SuppressWarnings("unchecked")
   @Override
-  public JSONObject createBody() throws FxAccountClientException {
+  public JSONObject getCreateBody() throws FxAccountClientException {
     final JSONObject body = new JSONObject();
     try {
       body.put("email", FxAccountUtils.bytes(email));

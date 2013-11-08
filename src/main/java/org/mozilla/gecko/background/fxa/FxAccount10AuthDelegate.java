@@ -60,7 +60,7 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
 
   @SuppressWarnings("unchecked")
   @Override
-  public JSONObject authStartBody() throws FxAccountClientException {
+  public JSONObject getAuthStartBody() throws FxAccountClientException {
     try {
       final JSONObject body = new JSONObject();
       body.put("email", FxAccountUtils.bytes(email));
@@ -71,7 +71,7 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
   }
 
   @Override
-  public void notifyAuthStartResponse(final ExtendedJSONObject body) throws FxAccountClientException {
+  public void onAuthStartResponse(final ExtendedJSONObject body) throws FxAccountClientException {
     String srpToken = null;
     String srpSalt = null;
     String srpB = null;
@@ -193,7 +193,7 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
 
   @SuppressWarnings("unchecked")
   @Override
-  public JSONObject authFinishBody() throws FxAccountClientException {
+  public JSONObject getAuthFinishBody() throws FxAccountClientException {
     if (internalAuthState == null) {
       throw new FxAccountClientException("auth must be successfully notified before calling authFinishBody.");
     }
