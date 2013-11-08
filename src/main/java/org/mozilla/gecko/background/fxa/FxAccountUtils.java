@@ -17,19 +17,21 @@ public class FxAccountUtils {
   public static final int HASH_LENGTH_BYTES = 16;
   public static final int HASH_LENGTH_HEX = 2 * HASH_LENGTH_BYTES;
 
+  public static final String KW_VERSION_STRING = "identity.mozilla.com/picl/v1/";
+
   public static String bytes(String string) throws UnsupportedEncodingException {
     return Utils.byte2Hex(string.getBytes("UTF-8"));
   }
 
   public static byte[] KW(String name) throws UnsupportedEncodingException {
     return Utils.concatAll(
-        "identity.mozilla.com/picl/v1/".getBytes("UTF-8"),
+        KW_VERSION_STRING.getBytes("UTF-8"),
         name.getBytes("UTF-8"));
   }
 
   public static byte[] KWE(String name, byte[] emailUTF8) throws UnsupportedEncodingException {
     return Utils.concatAll(
-        "identity.mozilla.com/picl/v1/".getBytes("UTF-8"),
+        KW_VERSION_STRING.getBytes("UTF-8"),
         name.getBytes("UTF-8"),
         ":".getBytes("UTF-8"),
         emailUTF8);
