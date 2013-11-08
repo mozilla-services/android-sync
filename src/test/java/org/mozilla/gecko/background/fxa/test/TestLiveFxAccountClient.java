@@ -228,11 +228,8 @@ public class TestLiveFxAccountClient {
     try {
       String uid = createAccount(email, stretchedPWBytes, mainSalt, srpSalt);
       Assert.assertNotNull(uid);
-    } catch (Throwable e) {
-      if (!(e instanceof HTTPFailureException)) {
-        throw e;
-      }
-      SyncStorageResponse response = ((HTTPFailureException) e).response;
+    } catch (HTTPFailureException e) {
+      SyncStorageResponse response = e.response;
       if (accountMayExist) {
         Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
       } else {
@@ -243,11 +240,8 @@ public class TestLiveFxAccountClient {
     try {
       createAccount(email, stretchedPWBytes, mainSalt, srpSalt);
       Assert.fail();
-    } catch (Throwable e) {
-      if (!(e instanceof HTTPFailureException)) {
-        throw e;
-      }
-      SyncStorageResponse response = ((HTTPFailureException) e).response;
+    } catch (HTTPFailureException e) {
+      SyncStorageResponse response = e.response;
       Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
     }
 
@@ -270,11 +264,8 @@ public class TestLiveFxAccountClient {
     try {
       uid = createAccount(TEST_EMAIL, stretchedPWBytes, TEST_MAINSALT, TEST_SRPSALT);
       Assert.assertNotNull(uid);
-    } catch (Throwable e) {
-      if (!(e instanceof HTTPFailureException)) {
-        throw e;
-      }
-      SyncStorageResponse response = ((HTTPFailureException) e).response;
+    } catch (HTTPFailureException e) {
+      SyncStorageResponse response = e.response;
       Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
     }
 
@@ -294,22 +285,16 @@ public class TestLiveFxAccountClient {
     try {
       sessionDestroy(sessionToken2);
       Assert.fail("Expected second session destroy with token sessionToken2 to fail.");
-    } catch (Throwable e) {
-      if (!(e instanceof HTTPFailureException)) {
-        throw e;
-      }
-      SyncStorageResponse response = ((HTTPFailureException) e).response;
+    } catch (HTTPFailureException e) {
+      SyncStorageResponse response = e.response;
       Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 401, response.getStatusCode());
     }
 
     try {
       sessionDestroy(sessionToken1);
       Assert.fail("Expected second session destroy with token sessionToken1 to fail.");
-    } catch (Throwable e) {
-      if (!(e instanceof HTTPFailureException)) {
-        throw e;
-      }
-      SyncStorageResponse response = ((HTTPFailureException) e).response;
+    } catch (HTTPFailureException e) {
+      SyncStorageResponse response = e.response;
       Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 401, response.getStatusCode());
     }
   }
@@ -322,11 +307,8 @@ public class TestLiveFxAccountClient {
     try {
       uid = createAccount(TEST_EMAIL, stretchedPWBytes, TEST_MAINSALT, TEST_SRPSALT);
       Assert.assertNotNull(uid);
-    } catch (Throwable e) {
-      if (!(e instanceof HTTPFailureException)) {
-        throw e;
-      }
-      SyncStorageResponse response = ((HTTPFailureException) e).response;
+    } catch (HTTPFailureException e) {
+      SyncStorageResponse response = e.response;
       Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
     }
 
