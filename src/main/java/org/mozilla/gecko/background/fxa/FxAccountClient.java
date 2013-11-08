@@ -50,6 +50,8 @@ import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 public class FxAccountClient {
   protected static final String LOG_TAG = FxAccountClient.class.getSimpleName();
 
+  protected static final String VERSION_FRAGMENT = "v1/";
+
   protected final String serverURI;
   protected final Executor executor;
 
@@ -60,7 +62,7 @@ public class FxAccountClient {
     if (executor == null) {
       throw new IllegalArgumentException("Must provide a non-null executor.");
     }
-    this.serverURI = serverURI.endsWith("/") ? serverURI : serverURI + "/";
+    this.serverURI = (serverURI.endsWith("/") ? serverURI : serverURI + "/") + VERSION_FRAGMENT;
     this.executor = executor;
   }
 
@@ -435,7 +437,7 @@ public class FxAccountClient {
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
     try {
-      byte[] derived = HKDF.derive(sessionToken, new byte[0], FxAccountUtils.KW("session"), 2*32);
+      byte[] derived = HKDF.derive(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), 2*32);
       System.arraycopy(derived, 0*32, tokenId, 0, 1*32);
       System.arraycopy(derived, 1*32, reqHMACKey, 0, 1*32);
     } catch (Exception e) {
@@ -526,14 +528,17 @@ public class FxAccountClient {
   public void keys(byte[] keyFetchToken, final RequestDelegate<TwoKeys> delegate) {
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
+    final byte[] keyRequestKey = new byte[32];
     final byte[] respHMACKey = new byte[32];
     final byte[] respXORKey = new byte[64];
     try {
-      byte[] derived = HKDF.derive(keyFetchToken, new byte[0], FxAccountUtils.KW("account/keys"), 5*32);
+      byte[] derived = HKDF.derive(keyFetchToken, new byte[0], FxAccountUtils.KW("keyFetchToken"), 3*32);
       System.arraycopy(derived, 0*32, tokenId, 0, 1*32);
       System.arraycopy(derived, 1*32, reqHMACKey, 0, 1*32);
-      System.arraycopy(derived, 2*32, respHMACKey, 0, 1*32);
-      System.arraycopy(derived, 3*32, respXORKey, 0, 2*32);
+      System.arraycopy(derived, 2*32, keyRequestKey, 0, 1*32);
+      derived = HKDF.derive(keyRequestKey, new byte[0], FxAccountUtils.KW("account/keys"), 3*32);
+      System.arraycopy(derived, 0*32, respHMACKey, 0, 1*32);
+      System.arraycopy(derived, 1*32, respXORKey, 0, 2*32);
     } catch (Exception e) {
       final Exception ex = e;
       executor.execute(new Runnable() {
@@ -585,7 +590,7 @@ public class FxAccountClient {
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
     try {
-      byte[] derived = HKDF.derive(sessionToken, new byte[0], FxAccountUtils.KW("session"), 2*32);
+      byte[] derived = HKDF.derive(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), 2*32);
       System.arraycopy(derived, 0*32, tokenId, 0, 1*32);
       System.arraycopy(derived, 1*32, reqHMACKey, 0, 1*32);
     } catch (Exception e) {
