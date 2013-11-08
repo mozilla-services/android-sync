@@ -184,7 +184,6 @@ public class FxAccountClient {
       }
     }
 
-
     protected void invokeHandleFailure(final int status, final HttpResponse response) {
       executor.execute(new Runnable() {
         @Override
@@ -232,13 +231,7 @@ public class FxAccountClient {
         resource.post(requestBody);
       }
     } catch (UnsupportedEncodingException e) {
-      final Exception ex = e;
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(ex);
-        }
-      });
+      invokeHandleError(delegate, e);
       return;
     }
   }
@@ -249,12 +242,8 @@ public class FxAccountClient {
     try {
       createAccount(new FxAccount10CreateDelegate(email, stretchedPWBytes, srpSalt, mainSalt), delegate);
     } catch (final Exception e) {
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(e);
-        }
-      });
+      invokeHandleError(delegate, e);
+      return;
     }
   }
 
@@ -263,7 +252,7 @@ public class FxAccountClient {
     try {
       body = createDelegate.getCreateBody();
     } catch (FxAccountClientException e) {
-      delegate.handleError(new FxAccountClientException(e));
+      invokeHandleError(delegate, e);
       return;
     }
 
@@ -294,7 +283,7 @@ public class FxAccountClient {
     try {
       body = authDelegate.getAuthStartBody();
     } catch (FxAccountClientException e) {
-      delegate.handleError(e);
+      invokeHandleError(delegate, e);
       return;
     }
 
@@ -326,7 +315,7 @@ public class FxAccountClient {
     try {
       body = authDelegate.getAuthFinishBody();
     } catch (FxAccountClientException e) {
-      delegate.handleError(e);
+      invokeHandleError(delegate, e);
       return;
     }
 
@@ -367,12 +356,8 @@ public class FxAccountClient {
 
       @Override
       public void handleError(final Exception e) {
-        executor.execute(new Runnable() {
-          @Override
-          public void run() {
-            delegate.handleError(e);
-          }
-        });
+        invokeHandleError(delegate, e);
+        return;
       }
 
       @Override
@@ -392,18 +377,9 @@ public class FxAccountClient {
     final byte[] reqHMACKey = new byte[32];
     final byte[] requestKey = new byte[32];
     try {
-      byte[] derived = HKDF.derive(authToken, new byte[0], FxAccountUtils.KW("authToken"), 3*32);
-      System.arraycopy(derived, 0*32, tokenId, 0, 1*32);
-      System.arraycopy(derived, 1*32, reqHMACKey, 0, 1*32);
-      System.arraycopy(derived, 2*32, requestKey, 0, 1*32);
+      HKDF.deriveMany(authToken, new byte[0], FxAccountUtils.KW("authToken"), tokenId, reqHMACKey, requestKey);
     } catch (Exception e) {
-      final Exception ex = e;
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(ex);
-        }
-      });
+      invokeHandleError(delegate, e);
       return;
     }
 
@@ -437,17 +413,9 @@ public class FxAccountClient {
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
     try {
-      byte[] derived = HKDF.derive(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), 2*32);
-      System.arraycopy(derived, 0*32, tokenId, 0, 1*32);
-      System.arraycopy(derived, 1*32, reqHMACKey, 0, 1*32);
+      HKDF.deriveMany(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), tokenId, reqHMACKey);
     } catch (Exception e) {
-      final Exception ex = e;
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(ex);
-        }
-      });
+      invokeHandleError(delegate, e);
       return;
     }
 
@@ -468,6 +436,9 @@ public class FxAccountClient {
     post(resource, null, delegate);
   }
 
+  /**
+   * Don't call this directly. Use <code>unbundleBody</code> instead.
+   */
   protected void unbundleBytes(byte[] bundleBytes, byte[] respHMACKey, byte[] respXORKey, byte[]... rest)
       throws InvalidKeyException, NoSuchAlgorithmException, FxAccountClientException {
     if (bundleBytes.length < 32) {
@@ -511,6 +482,9 @@ public class FxAccountClient {
       length += array.length;
     }
 
+    if (body == null) {
+      throw new FxAccountClientException("body must be non-null");
+    }
     String bundle = body.getString("bundle");
     if (bundle == null) {
       throw new FxAccountClientException("bundle must be a non-null string");
@@ -519,34 +493,19 @@ public class FxAccountClient {
 
     final byte[] respHMACKey = new byte[32];
     final byte[] respXORKey = new byte[length];
-    byte[] respKeys = HKDF.derive(requestKey, new byte[0], ctxInfo, length + 32);
-    System.arraycopy(respKeys, 0*32, respHMACKey, 0, 1*32);
-    System.arraycopy(respKeys, 1*32, respXORKey, 0, length);
+    HKDF.deriveMany(requestKey, new byte[0], ctxInfo, respHMACKey, respXORKey);
     unbundleBytes(bundleBytes, respHMACKey, respXORKey, rest);
   }
 
   public void keys(byte[] keyFetchToken, final RequestDelegate<TwoKeys> delegate) {
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
-    final byte[] keyRequestKey = new byte[32];
-    final byte[] respHMACKey = new byte[32];
-    final byte[] respXORKey = new byte[64];
+    final byte[] requestKey = new byte[32];
     try {
-      byte[] derived = HKDF.derive(keyFetchToken, new byte[0], FxAccountUtils.KW("keyFetchToken"), 3*32);
-      System.arraycopy(derived, 0*32, tokenId, 0, 1*32);
-      System.arraycopy(derived, 1*32, reqHMACKey, 0, 1*32);
-      System.arraycopy(derived, 2*32, keyRequestKey, 0, 1*32);
-      derived = HKDF.derive(keyRequestKey, new byte[0], FxAccountUtils.KW("account/keys"), 3*32);
-      System.arraycopy(derived, 0*32, respHMACKey, 0, 1*32);
-      System.arraycopy(derived, 1*32, respXORKey, 0, 2*32);
+      HKDF.deriveMany(keyFetchToken, new byte[0], FxAccountUtils.KW("keyFetchToken"), tokenId, reqHMACKey, requestKey);
     } catch (Exception e) {
-      final Exception ex = e;
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(ex);
-        }
-      });
+      invokeHandleError(delegate, e);
+      return;
     }
 
     BaseResource resource;
@@ -561,15 +520,9 @@ public class FxAccountClient {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
-          String bundle = body.getString("bundle");
-          if (bundle == null) {
-            delegate.handleError(new FxAccountClientException("bundle must be a non-null string"));
-            return;
-          }
-          byte[] bundleBytes = Utils.hex2Byte(bundle);
           byte[] kA = new byte[32];
           byte[] wrapkB = new byte[32];
-          unbundleBytes(bundleBytes, respHMACKey, respXORKey, kA, wrapkB);
+          unbundleBody(body, requestKey, FxAccountUtils.KW("account/keys"), kA, wrapkB);
           delegate.handleSuccess(new TwoKeys(kA, wrapkB));
           return;
         } catch (Exception e) {
@@ -590,17 +543,10 @@ public class FxAccountClient {
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
     try {
-      byte[] derived = HKDF.derive(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), 2*32);
-      System.arraycopy(derived, 0*32, tokenId, 0, 1*32);
-      System.arraycopy(derived, 1*32, reqHMACKey, 0, 1*32);
+      HKDF.deriveMany(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), tokenId, reqHMACKey);
     } catch (Exception e) {
-      final Exception ex = e;
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(ex);
-        }
-      });
+      invokeHandleError(delegate, e);
+      return;
     }
 
     BaseResource resource;
