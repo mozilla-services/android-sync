@@ -117,6 +117,15 @@ public class FxAccountClient {
     }
   }
 
+  protected <T> void invokeHandleError(final RequestDelegate<T> delegate, final Exception e) {
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        delegate.handleError(e);
+      }
+    });
+  }
+
   /**
    * Translate resource callbacks into request callbacks invoked on the provided
    * executor.
@@ -173,14 +182,6 @@ public class FxAccountClient {
       }
     }
 
-    protected void invokeHandleError(final Exception e) {
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(e);
-        }
-      });
-    }
 
     protected void invokeHandleFailure(final int status, final HttpResponse response) {
       executor.execute(new Runnable() {
@@ -207,36 +208,21 @@ public class FxAccountClient {
 
     @Override
     public void handleHttpProtocolException(final ClientProtocolException e) {
-      invokeHandleError(e);
+      invokeHandleError(delegate, e);
     }
 
     @Override
     public void handleHttpIOException(IOException e) {
-      invokeHandleError(e);
+      invokeHandleError(delegate, e);
     }
 
     @Override
     public void handleTransportException(GeneralSecurityException e) {
-      invokeHandleError(e);
+      invokeHandleError(delegate, e);
     }
   }
 
-  protected <T> URI makeURI(String path, final RequestDelegate<T> delegate) {
-    try {
-      return new URI(serverURI + path);
-    } catch (URISyntaxException e) {
-      final Exception ex = e;
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          delegate.handleError(ex);
-        }
-      });
-      return null;
-    }
-  }
-
-  protected <T> void post(final BaseResource resource, final JSONObject requestBody, final RequestDelegate<T> delegate) {
+  protected <T> void post(BaseResource resource, final JSONObject requestBody, final RequestDelegate<T> delegate) {
     try {
       if (requestBody == null) {
         resource.post((HttpEntity) null);
@@ -279,7 +265,14 @@ public class FxAccountClient {
       return;
     }
 
-    final BaseResource resource = new BaseResource(makeURI("account/create", delegate));
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "account/create"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
     resource.delegate = new ResourceDelegate<String>(resource, delegate) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
@@ -303,7 +296,14 @@ public class FxAccountClient {
       return;
     }
 
-    final BaseResource resource = new BaseResource(makeURI("auth/start", delegate));
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "auth/start"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
     resource.delegate = new ResourceDelegate<AuthDelegate>(resource, delegate) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
@@ -328,7 +328,14 @@ public class FxAccountClient {
       return;
     }
 
-    final BaseResource resource = new BaseResource(makeURI("auth/finish", delegate));
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "auth/finish"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
     resource.delegate = new ResourceDelegate<byte[]>(resource, delegate) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
@@ -398,7 +405,14 @@ public class FxAccountClient {
       return;
     }
 
-    final BaseResource resource = new BaseResource(makeURI("session/create", delegate));
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "session/create"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
     resource.delegate = new ResourceDelegate<TwoTokens>(resource, delegate, tokenId, reqHMACKey, false) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
@@ -435,7 +449,14 @@ public class FxAccountClient {
       return;
     }
 
-    final BaseResource resource = new BaseResource(makeURI("session/destroy", delegate));
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "session/destroy"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
     resource.delegate = new ResourceDelegate<Void>(resource, delegate, tokenId, reqHMACKey, false) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
@@ -523,7 +544,14 @@ public class FxAccountClient {
       });
     }
 
-    final BaseResource resource = new BaseResource(makeURI("account/keys", delegate));
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "account/keys"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
     resource.delegate = new ResourceDelegate<TwoKeys>(resource, delegate, tokenId, reqHMACKey, false) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
@@ -570,7 +598,14 @@ public class FxAccountClient {
       });
     }
 
-    final BaseResource resource = new BaseResource(makeURI("certificate/sign", delegate));
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "certificate/sign"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
     resource.delegate = new ResourceDelegate<String>(resource, delegate, tokenId, reqHMACKey, true) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
