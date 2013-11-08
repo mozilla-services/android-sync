@@ -47,7 +47,7 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
     String collection = getCollection();
     return new SafeConstrainedServer11Repository(
                                                  collection,
-                                                 session.config.getCollectionURLString(collection),
+                                                 session.config.storageURL(),
                                                  session.getAuthHeaderProvider(),
                                                  BOOKMARKS_REQUEST_LIMIT,
                                                  BOOKMARKS_SORT,

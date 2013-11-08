@@ -609,11 +609,4 @@ public class SyncConfiguration {
   public PersistedMetaGlobal persistedMetaGlobal() {
     return new PersistedMetaGlobal(getPrefs());
   }
-
-  // XXX
-  public static final String VERSION_PATH_FRAGMENT = "1.1/";
-
-  public String getCollectionURLString(String collection) {
-    return getClusterURLString() + VERSION_PATH_FRAGMENT + this.username + "/storage/" + collection;
-  }
 }

@@ -19,8 +19,8 @@ public class ConstrainedServer11Repository extends Server11Repository {
   private String sort = null;
   private long limit  = -1;
 
-  public ConstrainedServer11Repository(String collection, String collectionPath, AuthHeaderProvider authHeaderProvider, long limit, String sort) throws URISyntaxException {
-    super(collection, collectionPath, authHeaderProvider);
+  public ConstrainedServer11Repository(String collection, String storageURL, AuthHeaderProvider authHeaderProvider, long limit, String sort) throws URISyntaxException {
+    super(collection, storageURL, authHeaderProvider);
     this.limit = limit;
     this.sort  = sort;
   }
