@@ -24,7 +24,7 @@ public class FxAccount10CreateDelegate implements CreateDelegate {
     this.mainSalt = mainSalt;
     this.srpSalt = srpSalt;
     byte[] srpSaltBytes = Utils.hex2Byte(srpSalt, FxAccountUtils.SALT_LENGTH_BYTES);
-    this.v = FxAccountUtils.v(email.getBytes("UTF-8"), stretchedPWBytes, srpSaltBytes, SRPConstants._2048.g, SRPConstants._2048.N);
+    this.v = FxAccountUtils.srpVerifierLowercaseV(email.getBytes("UTF-8"), stretchedPWBytes, srpSaltBytes, SRPConstants._2048.g, SRPConstants._2048.N);
   }
 
   @SuppressWarnings("unchecked")

@@ -40,7 +40,7 @@ public class FxAccountUtils {
   /**
    * Calculate the SRP verifier <tt>x</tt> value.
    */
-  public static BigInteger x(byte[] emailUTF8, byte[] srpPWBytes, byte[] srpSaltBytes)
+  public static BigInteger srpVerifierLowercaseX(byte[] emailUTF8, byte[] srpPWBytes, byte[] srpSaltBytes)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
     byte[] inner = Utils.sha256(Utils.concatAll(emailUTF8, ":".getBytes("UTF-8"), srpPWBytes));
     byte[] outer = Utils.sha256(Utils.concatAll(srpSaltBytes, inner));
@@ -50,9 +50,9 @@ public class FxAccountUtils {
   /**
    * Calculate the SRP verifier <tt>v</tt> value.
    */
-  public static BigInteger v(byte[] emailUTF8, byte[] srpPWBytes, byte[] srpSaltBytes, BigInteger g, BigInteger N)
+  public static BigInteger srpVerifierLowercaseV(byte[] emailUTF8, byte[] srpPWBytes, byte[] srpSaltBytes, BigInteger g, BigInteger N)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    BigInteger x = x(emailUTF8, srpPWBytes, srpSaltBytes);
+    BigInteger x = srpVerifierLowercaseX(emailUTF8, srpPWBytes, srpSaltBytes);
     BigInteger v = g.modPow(x, N);
     return v;
   }

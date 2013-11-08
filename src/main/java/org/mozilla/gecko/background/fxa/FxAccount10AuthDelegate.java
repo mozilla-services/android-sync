@@ -149,7 +149,7 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
     authState.mainSalt = mainSalt;
     authState.srpSalt = srpSalt;
 
-    authState.x = FxAccountUtils.x(email.getBytes("UTF-8"), this.stretchedPWBytes, Utils.hex2Byte(srpSalt, FxAccountUtils.SALT_LENGTH_BYTES));
+    authState.x = FxAccountUtils.srpVerifierLowercaseX(email.getBytes("UTF-8"), this.stretchedPWBytes, Utils.hex2Byte(srpSalt, FxAccountUtils.SALT_LENGTH_BYTES));
 
     authState.A = g.modPow(a, N);
     String srpA = FxAccountUtils.hexModN(authState.A, N);
