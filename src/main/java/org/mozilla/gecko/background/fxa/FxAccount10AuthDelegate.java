@@ -72,6 +72,10 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
 
   @Override
   public void onAuthStartResponse(final ExtendedJSONObject body) throws FxAccountClientException {
+    if (this.internalAuthState != null) {
+      throw new FxAccountClientException("auth must not be written before calling onAuthStartResponse");
+    }
+
     String srpToken = null;
     String srpSalt = null;
     String srpB = null;
@@ -195,7 +199,7 @@ public class FxAccount10AuthDelegate implements FxAccountClient.AuthDelegate {
   @Override
   public JSONObject getAuthFinishBody() throws FxAccountClientException {
     if (internalAuthState == null) {
-      throw new FxAccountClientException("auth must be successfully notified before calling authFinishBody.");
+      throw new FxAccountClientException("auth must be successfully written before calling getAuthFinishBody.");
     }
     JSONObject body = new JSONObject();
     body.put("srpToken", internalAuthState.srpToken);
