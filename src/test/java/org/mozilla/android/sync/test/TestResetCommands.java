@@ -22,7 +22,6 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -76,7 +75,6 @@ public class TestResetCommands {
 
     // Side-effect: modifies global command processor.
     final GlobalSession session = new MockPrefsGlobalSession(
-        SyncConfiguration.DEFAULT_USER_API,
         null,
         TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),

@@ -24,6 +24,7 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.delegates.MetaGlobalDelegate;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
@@ -49,18 +50,20 @@ public class TestMetaGlobal {
       "\"payload\":\"{}\"," +
       "\"username\":\"5817483\",\"modified\":1.32046073744E9}";
 
+  public MetaGlobal global;
+
   @SuppressWarnings("static-method")
   @Before
   public void setUp() {
     BaseResource.rewriteLocalhost = false;
+    global = new MetaGlobal(META_URL, new BasicAuthHeaderProvider(USER_PASS));
   }
 
   @SuppressWarnings("static-method")
   @Test
   public void testSyncID() {
-    MetaGlobal g = new MetaGlobal(META_URL, USER_PASS);
-    g.setSyncID("foobar");
-    assertEquals(g.getSyncID(), "foobar");
+    global.setSyncID("foobar");
+    assertEquals(global.getSyncID(), "foobar");
   }
 
   public class MockMetaGlobalFetchDelegate implements MetaGlobalDelegate {
@@ -117,7 +120,6 @@ public class TestMetaGlobal {
   @Test
   public void testFetchMissing() {
     MockServer missingMetaGlobalServer = new MockServer(404, "{}");
-    final MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     global.setSyncID(TEST_SYNC_ID);
     assertEquals(TEST_SYNC_ID, global.getSyncID());
 
@@ -133,7 +135,6 @@ public class TestMetaGlobal {
   @Test
   public void testFetchExisting() {
     MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_RESPONSE);
-    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
     assertNull(global.getSyncID());
     assertNull(global.getEngines());
     assertNull(global.getStorageVersion());
@@ -156,7 +157,6 @@ public class TestMetaGlobal {
   @Test
   public void testFetchNoPayload() {
     MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_NO_PAYLOAD_RESPONSE);
-    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
 
     data.startHTTPServer(existingMetaGlobalServer);
     final MockMetaGlobalFetchDelegate delegate = doFetch(global);
@@ -168,7 +168,6 @@ public class TestMetaGlobal {
   @Test
   public void testFetchEmptyPayload() {
     MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_EMPTY_PAYLOAD_RESPONSE);
-    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
 
     data.startHTTPServer(existingMetaGlobalServer);
     final MockMetaGlobalFetchDelegate delegate = doFetch(global);
@@ -183,7 +182,6 @@ public class TestMetaGlobal {
   @Test
   public void testFetchMalformedPayload() {
     MockServer existingMetaGlobalServer = new MockServer(200, TEST_META_GLOBAL_MALFORMED_PAYLOAD_RESPONSE);
-    MetaGlobal global = new MetaGlobal(META_URL, USER_PASS);
 
     data.startHTTPServer(existingMetaGlobalServer);
     final MockMetaGlobalFetchDelegate delegate = doFetch(global);
@@ -247,9 +245,8 @@ public class TestMetaGlobal {
   public void testUpload() {
     long TEST_STORAGE_VERSION = 111;
     String TEST_SYNC_ID = "testSyncID";
-    MetaGlobal mg = new MetaGlobal(META_URL, USER_PASS);
-    mg.setSyncID(TEST_SYNC_ID);
-    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
+    global.setSyncID(TEST_SYNC_ID);
+    global.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
     final AtomicBoolean mgUploaded = new AtomicBoolean(false);
     final MetaGlobal uploadedMg = new MetaGlobal(null, null);
@@ -277,7 +274,7 @@ public class TestMetaGlobal {
     };
 
     data.startHTTPServer(server);
-    final MockMetaGlobalFetchDelegate delegate = doUpload(mg);
+    final MockMetaGlobalFetchDelegate delegate = doUpload(global);
     data.stopHTTPServer();
 
     assertTrue(delegate.successCalled);

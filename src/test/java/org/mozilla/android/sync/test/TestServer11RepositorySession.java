@@ -19,12 +19,13 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.background.testhelpers.MockRecord;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
-import org.mozilla.gecko.sync.CredentialsSource;
 import org.mozilla.gecko.sync.JSONRecordFetcher;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.middleware.Crypto5MiddlewareRepository;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.FetchFailedException;
@@ -46,7 +47,7 @@ import org.simpleframework.http.Response;
 
 import ch.boye.httpclientandroidlib.HttpEntity;
 
-public class TestServer11RepositorySession implements CredentialsSource {
+public class TestServer11RepositorySession {
 
   public class POSTMockServer extends MockServer {
     @Override
@@ -71,16 +72,17 @@ public class TestServer11RepositorySession implements CredentialsSource {
   static final String LOCAL_COUNTS_URL    = LOCAL_INFO_BASE_URL + "collection_counts";
 
   // Corresponds to rnewman+atest1@mozilla.com, local.
-  static final String USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
-  static final String USER_PASS         = "n6ec3u5bee3tixzp2asys7bs6fve4jfw:password";
+  static final String TEST_USERNAME          = "n6ec3u5bee3tixzp2asys7bs6fve4jfw";
+  static final String TEST_PASSWORD          = "passowrd";
   static final String SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
+
+  public final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD);
 
   // Few-second timeout so that our longer operations don't time out and cause spurious error-handling results.
   private static final int SHORT_TIMEOUT = 10000;
 
-  @Override
-  public String credentials() {
-    return USER_PASS;
+  public AuthHeaderProvider getAuthHeaderProvider() {
+    return new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD);
   }
 
   private HTTPServerTestHelper data     = new HTTPServerTestHelper();
@@ -105,7 +107,11 @@ public class TestServer11RepositorySession implements CredentialsSource {
   }
 
   public class TestSyncStorageRequestDelegate extends
-      BaseTestStorageRequestDelegate {
+  BaseTestStorageRequestDelegate {
+    public TestSyncStorageRequestDelegate(String username, String password) {
+      super(username, password);
+    }
+
     @Override
     public void handleRequestSuccess(SyncStorageResponse res) {
       assertTrue(res.wasSuccessful());
@@ -128,8 +134,7 @@ public class TestServer11RepositorySession implements CredentialsSource {
 
     URI uri = new URI(LOCAL_REQUEST_URL);
     SyncStorageRecordRequest r = new SyncStorageRecordRequest(uri);
-    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate();
-    delegate._credentials = USER_PASS;
+    TestSyncStorageRequestDelegate delegate = new TestSyncStorageRequestDelegate(TEST_USERNAME, TEST_PASSWORD);
     r.delegate = delegate;
     r.post(session.getEntity());
   }
@@ -148,8 +153,8 @@ public class TestServer11RepositorySession implements CredentialsSource {
     final String COLLECTION = "test";
 
     final TrackingWBORepository local = getLocal(100);
-    final Server11Repository remote = new Server11Repository(TEST_SERVER, USERNAME, COLLECTION, this);
-    KeyBundle collectionKey = new KeyBundle(USERNAME, SYNC_KEY);
+    final Server11Repository remote = new Server11Repository(COLLECTION, getCollectionURL(COLLECTION), authHeaderProvider);
+    KeyBundle collectionKey = new KeyBundle(TEST_USERNAME, SYNC_KEY);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey);
     cryptoRepo.recordFactory = new BookmarkRecordFactory();
 
@@ -164,6 +169,10 @@ public class TestServer11RepositorySession implements CredentialsSource {
     } finally {
       data.stopHTTPServer();
     }
+  }
+
+  protected String getCollectionURL(String collection) {
+    return LOCAL_BASE_URL + "/storage/" + collection;
   }
 
   @Test
@@ -213,8 +222,11 @@ public class TestServer11RepositorySession implements CredentialsSource {
         this.handle(request, response, 400, "NOOOO");
       }
     };
-    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(LOCAL_COUNTS_URL, this.credentials());
-    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(TEST_SERVER, USERNAME, "bookmarks", this, 5000, "sortindex", countsFetcher);
+    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(LOCAL_COUNTS_URL, getAuthHeaderProvider());
+    String collection = "bookmarks";
+    final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(collection,
+        getCollectionURL(collection),
+        getAuthHeaderProvider(), 5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);
     final AtomicBoolean out = new AtomicBoolean(false);
