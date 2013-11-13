@@ -17,6 +17,8 @@ import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NoCollectionKeysSetException;
 import org.mozilla.gecko.sync.PersistedMetaGlobal;
 import org.mozilla.gecko.sync.crypto.CryptoException;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 
 public class TestPersistedMetaGlobal {
   MockSharedPreferences prefs = null;
@@ -48,17 +50,18 @@ public class TestPersistedMetaGlobal {
   @Test
   public void testPersistMetaGlobal() throws Exception {
     PersistedMetaGlobal persisted = new PersistedMetaGlobal(prefs);
+    AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(TEST_CREDENTIALS);
 
     // Test fresh start.
-    assertNull(persisted.metaGlobal(TEST_META_URL, TEST_CREDENTIALS));
+    assertNull(persisted.metaGlobal(TEST_META_URL, authHeaderProvider));
 
     // Test persisting.
     String body = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
-    MetaGlobal mg = new MetaGlobal(TEST_META_URL, TEST_CREDENTIALS);
+    MetaGlobal mg = new MetaGlobal(TEST_META_URL, authHeaderProvider);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(body));
     persisted.persistMetaGlobal(mg);
 
-    MetaGlobal persistedGlobal = persisted.metaGlobal(TEST_META_URL, TEST_CREDENTIALS);
+    MetaGlobal persistedGlobal = persisted.metaGlobal(TEST_META_URL, authHeaderProvider);
     assertNotNull(persistedGlobal);
     assertEquals("zPSQTm7WBVWB", persistedGlobal.getSyncID());
     assertTrue(persistedGlobal.getEngines() instanceof ExtendedJSONObject);

@@ -23,7 +23,6 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -38,7 +37,6 @@ public class TestWipeServer {
   static final String TEST_ACCOUNT      = "nalexander+test0425@mozilla.com";
   static final String TEST_USERNAME     = "6gnkjphdltbntwnrgvu46ey6mu7ncjdl";
   static final String TEST_PASSWORD     = "test0425";
-  static final String TEST_USER_PASS    = TEST_USERNAME + ":" + TEST_PASSWORD;
   static final String TEST_SYNC_KEY     = "fuyx96ea8rkfazvjdfuqumupye"; // Weave.Identity.syncKey
 
   private KeyBundle syncKeyBundle;
@@ -53,7 +51,7 @@ public class TestWipeServer {
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
 
     callback = new MockGlobalSessionCallback();
-    session = new MockPrefsGlobalSession(SyncConfiguration.DEFAULT_USER_API, TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
         syncKeyBundle, callback, null, null, null);
     session.config.clusterURL = new URI(TEST_CLUSTER_URL);
   }
