@@ -90,15 +90,20 @@ rsync -C \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
-PREPROCESS_FILES="\
-  background/common/GlobalConstants.java \
-  sync/SyncConstants.java \
-  background/announcements/AnnouncementsConstants.java \
-  background/healthreport/HealthReportConstants.java"
-cp $BACKGROUNDSOURCEDIR/common/GlobalConstants.java.in $ANDROID/base/background/common/
-cp $SYNCSOURCEDIR/SyncConstants.java.in $ANDROID/base/sync/
-cp $BACKGROUNDSOURCEDIR/announcements/AnnouncementsConstants.java.in $ANDROID/base/background/announcements/
-cp $BACKGROUNDSOURCEDIR/healthreport/HealthReportConstants.java.in $ANDROID/base/background/healthreport/
+
+# The grep line removes files in the root: those are provided by
+# Fennec itself.
+PREPROCESS_FILES=$(find \
+  "$SOURCEROOT" \
+  -name '*.java.in' \
+  | grep "$SOURCEROOT/.*/" \
+  | sed "s,.java.in,.java," \
+  | sed "s,$SOURCEROOT/,," | $SORT_CMD)
+for i in $PREPROCESS_FILES; do
+# Just in case, delete the processed version.
+  rm -f "$ANDROID/base/$i";
+  cp "$SOURCEROOT/$i.in" "$ANDROID/base/$i.in";
+done
 
 echo "Copying internal dependency sources."
 mkdir -p $ANDROID/thirdparty/ch/boye/httpclientandroidlib/
@@ -178,7 +183,7 @@ dump_mozbuild_variable $MOZBUILDFILE "sync_thirdparty_java_files =" "$HTTPLIBFIL
 echo >> $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_java_files =" "$SOURCEFILES"
 echo >> $MOZBUILDFILE
-dump_mozbuild_variable $MOZBUILDFILE "sync_generated_java_files =" "$PREPROCESS_FILES"
+dump_mozbuild_variable $MOZBUILDFILE "sync_generated_java_files =" $(echo "$PREPROCESS_FILES" | sed "s,^,org/mozilla/gecko/,")
 
 # Creating Makefile for Mozilla.
 MKFILE=$ANDROID/tests/background/junit3/android-services-files.mk
