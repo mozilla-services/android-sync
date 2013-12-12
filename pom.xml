@@ -72,7 +72,7 @@
           <version>3.6.0</version>
           <configuration>
             <sdk>
-              <platform>15</platform>
+              <platform>16</platform>
             </sdk>
             <emulator>
               <avd>23</avd>
