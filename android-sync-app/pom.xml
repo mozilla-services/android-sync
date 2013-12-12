@@ -32,6 +32,13 @@
 
     <!-- Make httpclientandroidlib work. -->
     <dependency>
+      <groupId>android.content</groupId>
+      <artifactId>sharedpreferences-stub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>android.util</groupId>
       <artifactId>log-unstub</artifactId>
       <version>1</version>
