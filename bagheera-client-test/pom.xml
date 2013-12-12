@@ -37,6 +37,13 @@
       <optional>true</optional>
     </dependency>
 
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty</artifactId>
+      <version>3.5.7.Final</version>
+      <scope>test</scope>
+    </dependency>
+
     <!-- For testing Bagheera client. -->
     <dependency>
       <groupId>com.mozilla</groupId>
@@ -46,6 +53,13 @@
     </dependency>
 
     <!-- Make httpclientandroidlib work. -->
+    <dependency>
+      <groupId>android.content</groupId>
+      <artifactId>sharedpreferences-stub</artifactId>
+      <version>1</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>android.util</groupId>
       <artifactId>log-unstub</artifactId>

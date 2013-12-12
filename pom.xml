@@ -69,10 +69,10 @@
         <plugin>
           <groupId>com.jayway.maven.plugins.android.generation2</groupId>
           <artifactId>android-maven-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.8.0</version>
           <configuration>
             <sdk>
-              <platform>15</platform>
+              <platform>16</platform>
             </sdk>
             <emulator>
               <avd>23</avd>

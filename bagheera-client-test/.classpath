@@ -9,13 +9,11 @@
        unit tests to function. -->
 	<classpathentry kind="var" path="M2_REPO/android/util/base64-unstub/1/base64-unstub-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/util/log-unstub/1/log-unstub-1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/android/content/sharedpreferences-stub/1/sharedpreferences-stub-1.jar"/>
 
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 
-  <!-- Gosh, it'd be nice if we just relied on M2Eclipse and had it resolve these deps. -->
 	<classpathentry kind="var" path="M2_REPO/com/mozilla/bagheera/0.11/bagheera-0.11.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/fasterxml/jackson/core/jackson-core/2.0.6/jackson-core-2.0.6.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/github/sgroschupf/zkclient/0.1/zkclient-0.1.jar"/>
