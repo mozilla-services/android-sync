@@ -18,8 +18,6 @@ res/values/strings.xml
 *.jar
 *.class
 target
-.project
-.classpath
 local.properties
 bin
 gen
