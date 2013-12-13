@@ -177,8 +177,6 @@ MOZBUILDFILE=$ANDROID/base/android-services.mozbuild
 echo "Creating moz.build file for including in the Mozilla build system at $MOZBUILDFILE"
 cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
 
-dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES +=" "$SYNC_RES"
-echo >> $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_thirdparty_java_files =" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
 echo >> $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_java_files =" "$SOURCEFILES"
@@ -196,7 +194,6 @@ dump_mkfile_variable "BACKGROUND_TESTS_JAVA_FILES" "$BACKGROUND_TESTS_JAVA_FILES
 MOZBUILDFILE=$ANDROID/tests/background/junit3/android-services.mozbuild
 echo "Creating background tests moz.build file for including in the Mozilla build system at $MOZBUILDFILE"
 cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
-dump_mozbuild_variable $MOZBUILDFILE "ANDROID_RESFILES +=" "$BACKGROUND_TESTS_RES_FILES"
 
 # Finished creating Makefile for Mozilla.
 
