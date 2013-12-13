@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry including="**/*.java" kind="src" output="bin/test-classes" path="src/test/java"/>
-	<classpathentry kind="src" path="gen"/>
 
 	<classpathentry combineaccessrules="false" kind="src" path="/android-sync"/>
 	<classpathentry kind="output" path="bin/classes"/>
