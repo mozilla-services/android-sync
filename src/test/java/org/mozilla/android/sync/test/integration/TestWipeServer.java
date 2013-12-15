@@ -50,8 +50,8 @@ public class TestWipeServer {
 
     syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
 
-    callback = new MockGlobalSessionCallback();
-    session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+    session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
         syncKeyBundle, callback, null, null, null);
     session.config.clusterURL = new URI(TEST_CLUSTER_URL);
   }

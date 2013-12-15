@@ -75,7 +75,6 @@ public class TestResetCommands {
 
     // Side-effect: modifies global command processor.
     final GlobalSession session = new MockPrefsGlobalSession(
-        null,
         TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
         callback, null, null, null) {
