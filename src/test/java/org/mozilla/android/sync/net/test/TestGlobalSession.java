@@ -73,8 +73,7 @@ public class TestGlobalSession {
   public void testGetSyncStagesBy() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, NoSuchStageException {
 
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    GlobalSession s = new MockPrefsGlobalSession(TEST_CLUSTER_URL,
-                                                 TEST_USERNAME, TEST_PASSWORD, null,
+    GlobalSession s = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
                                                  new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
                                                  callback, /* context */ null, null, null);
 
@@ -107,8 +106,8 @@ public class TestGlobalSession {
   @Test
   public void testBackoffCalledByHandleHTTPError() {
     try {
-      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       final HttpResponse response = new BasicHttpResponse(
@@ -138,8 +137,8 @@ public class TestGlobalSession {
   @Test
   public void testSuccessCalledAfterStages() {
     try {
-      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
@@ -170,7 +169,7 @@ public class TestGlobalSession {
   @Test
   public void testBackoffCalledInStages() {
     try {
-      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
+      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
 
       // Stage fakes a 503 and sets X-Weave-Backoff header to the given seconds.
       final GlobalSyncStage stage = new MockAbstractNonRepositorySyncStage() {
@@ -185,7 +184,7 @@ public class TestGlobalSession {
       };
 
       // Session installs fake stage to fetch info/collections.
-      final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
           new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
       .withStage(Stage.fetchInfoCollections, stage);
 
@@ -262,8 +261,8 @@ public class TestGlobalSession {
       }
     };
 
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD,
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+    final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback).withStage(Stage.syncBookmarks, stage);
 
     data.startHTTPServer(server);
@@ -331,7 +330,7 @@ public class TestGlobalSession {
   @Test
   public void testGenerateNewMetaGlobalNonePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
 
     // Verify we fill in all of our known engines when none are persisted.
@@ -351,7 +350,7 @@ public class TestGlobalSession {
   @Test
   public void testGenerateNewMetaGlobalSomePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
 
     // Verify we preserve engines with version 0 if some are persisted.
@@ -379,7 +378,7 @@ public class TestGlobalSession {
   public void testUploadUpdatedMetaGlobal() throws Exception {
     // Set up session with meta/global.
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(TEST_CLUSTER_URL, TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
     session.config.metaGlobal = session.generateNewMetaGlobal();
     session.enginesToUpdate.clear();

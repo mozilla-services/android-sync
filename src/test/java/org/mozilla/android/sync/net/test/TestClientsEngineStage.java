@@ -64,9 +64,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   // Static so we can set it during the constructor. This is so evil.
   private static MockGlobalSessionCallback callback;
   private static GlobalSession initializeSession() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
-    callback = new MockGlobalSessionCallback();
+    callback = new MockGlobalSessionCallback(TEST_SERVER);
 
-    GlobalSession session = new MockClientsGlobalSession(TEST_SERVER, USERNAME, PASSWORD, new KeyBundle(USERNAME, SYNC_KEY), callback);
+    GlobalSession session = new MockClientsGlobalSession(USERNAME, PASSWORD, new KeyBundle(USERNAME, SYNC_KEY), callback);
     session.config.setClusterURL(new URI(TEST_SERVER));
     session.config.setCollectionKeys(CollectionKeys.generateCollectionKeys());
     return session;
@@ -167,8 +167,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public static class MockClientsGlobalSession extends MockGlobalSession {
     private ClientsDataDelegate clientsDataDelegate = new MockClientsDataDelegate();
   
-    public MockClientsGlobalSession(String clusterURL,
-                                    String username,
+    public MockClientsGlobalSession(String username,
                                     String password,
                                     KeyBundle syncKeyBundle,
                                     GlobalSessionCallback callback)
@@ -177,7 +176,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
                IOException,
                ParseException,
                NonObjectJSONException {
-      super(clusterURL, username, password, syncKeyBundle, callback);
+      super(username, password, syncKeyBundle, callback);
     }
   
     @Override

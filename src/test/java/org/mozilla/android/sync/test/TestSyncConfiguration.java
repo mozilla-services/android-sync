@@ -23,9 +23,7 @@ public class TestSyncConfiguration implements PrefsSource {
   @Test
   public void testURLs() throws Exception {
     SyncConfiguration config = new SyncConfiguration("username", null, "prefsPath", this);
-    config.serverURL = new URI("http://userapi.com/endpoint");
     config.clusterURL = new URI("https://db.com/internal/");
-    Assert.assertEquals("http://userapi.com/endpoint/user/1.0/username/node/weave", config.nodeWeaveURL());
     Assert.assertEquals("https://db.com/internal/1.1/username/info/collections", config.infoCollectionsURL());
     Assert.assertEquals("https://db.com/internal/1.1/username/info/collection_counts", config.infoCollectionCountsURL());
     Assert.assertEquals("https://db.com/internal/1.1/username/storage/meta/global", config.metaURL());
