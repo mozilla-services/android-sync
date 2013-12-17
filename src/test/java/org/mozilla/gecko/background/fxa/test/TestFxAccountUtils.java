@@ -7,8 +7,10 @@ import java.math.BigInteger;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.SRPConstants;
 
 public class TestFxAccountUtils {
@@ -61,5 +63,12 @@ public class TestFxAccountUtils {
 
     String expectedVHex = "00173ffa0263e63ccfd6791b8ee2a40f048ec94cd95aa8a3125726f9805e0c8283c658dc0b607fbb25db68e68e93f2658483049c68af7e8214c49fde2712a775b63e545160d64b00189a86708c69657da7a1678eda0cd79f86b8560ebdb1ffc221db360eab901d643a75bf1205070a5791230ae56466b8c3c1eb656e19b794f1ea0d2a077b3a755350208ea0118fec8c4b2ec344a05c66ae1449b32609ca7189451c259d65bd15b34d8729afdb5faff8af1f3437bbdc0c3d0b069a8ab2a959c90c5a43d42082c77490f3afcc10ef5648625c0605cdaace6c6fdc9e9a7e6635d619f50af7734522470502cab26a52a198f5b00a279858916507b0b4e9ef9524d6";
     Assert.assertEquals(expectedVHex, FxAccountUtils.hexModN(v, SRPConstants._2048.N));
+  }
+
+  public void testGenerateSyncKeyBundle() throws Exception {
+    byte[] kB = Utils.hex2Byte("d02d8fe39f28b601159c543f2deeb8f72bdf2043e8279aa08496fbd9ebaea361");
+    KeyBundle bundle = FxAccountUtils.generateSyncKeyBundle(kB);
+    Assert.assertEquals("rsLwECkgPYeGbYl92e23FskfIbgld9TgeifEaB9ZwTI=", Base64.encodeBase64String(bundle.getEncryptionKey()));
+    Assert.assertEquals("fs75EseCD/VOLodlIGmwNabBjhTYBHFCe7CGIf0t8Tw=", Base64.encodeBase64String(bundle.getHMACKey()));
   }
 }

@@ -77,6 +77,6 @@ public class TestLiveTLSSocketFactory {
 
   @Test
   public void testIDPWeakerCiphersuitesNotAllowed() throws Exception {
-    testSSLConnection("https://idp.dev.lcip.org");
+    testSSLConnection("https://api-accounts.dev.lcip.org");
   }
 }
