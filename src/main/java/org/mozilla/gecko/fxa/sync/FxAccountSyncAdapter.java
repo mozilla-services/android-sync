@@ -117,7 +117,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       Logger.info(LOG_TAG, "Generated keypair. ");
 
       final FxAccount fxAccount = FxAccountAuthenticator.fromAndroidAccount(getContext(), account);
-      fxAccount.login(getContext(), keyPair, new FxAccount.Delegate() {
+      final String tokenServerEndpoint = fxAccount.authEndpoint + (fxAccount.authEndpoint.endsWith("/") ? "" : "/") + "1.0/sync/1.1";
+
+      fxAccount.login(getContext(), tokenServerEndpoint, keyPair, new FxAccount.Delegate() {
         @Override
         public void handleSuccess(final String uid, final String endpoint, final AuthHeaderProvider authHeaderProvider) {
           Logger.pii(LOG_TAG, "Got token! uid is " + uid + " and endpoint is " + endpoint + ".");
