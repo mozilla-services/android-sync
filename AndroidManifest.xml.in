@@ -33,6 +33,7 @@
 #include manifests/SyncAndroidManifest_activities.xml.in
 #include manifests/SyncAndroidManifest_services.xml.in
 
+#include manifests/FxAccountAndroidManifest_activities.xml.in
 #include manifests/FxAccountAndroidManifest_services.xml.in
     </application>
 

@@ -26,10 +26,10 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 
 @Category(IntegrationTestCategory.class)
 public class TestLiveFxAccountClient {
-  protected static final String TEST_SERVERURI = "http://127.0.0.1:9000";
+  protected static final String TEST_SERVERURI = "http://127.0.0.1:9000/";
   // These tests fail against the live dev server because the accounts created
   // need to be manually verified.
-  // protected static final String TEST_SERVERURI = "https://idp.dev.lcip.org";
+  // protected static final String TEST_SERVERURI = "https://api-accounts.dev.lcip.org/";
 
   protected static final String TEST_EMAIL = "andre@example.org";
   protected static final String TEST_PASSWORD = "password";
@@ -333,6 +333,6 @@ public class TestLiveFxAccountClient {
     ExtendedJSONObject cert = new ExtendedJSONObject(new String(Base64.decodeBase64(rsaCert.split("\\.")[1]), "UTF-8"));
     Assert.assertNotNull(cert.getObject("principal"));
     String email = cert.getObject("principal").getString("email");
-    Assert.assertEquals(TEST_SERVERURI.split("//")[1], email.split("@")[1]);
+    Assert.assertEquals(TEST_SERVERURI.split("//")[1].split("/")[0], email.split("@")[1]);
   }
 }
