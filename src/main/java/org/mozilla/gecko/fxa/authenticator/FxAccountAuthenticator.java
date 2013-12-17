@@ -7,6 +7,7 @@ package org.mozilla.gecko.fxa.authenticator;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.activities.FxAccountSetupActivity;
 import org.mozilla.gecko.fxa.sync.FxAccount;
 import org.mozilla.gecko.sync.Utils;
 
@@ -18,7 +19,6 @@ import android.accounts.NetworkErrorException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
 public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
@@ -86,11 +86,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
       return res;
     }
 
-    // Start Fennec at about:accounts page.
-    Intent intent = new Intent(Intent.ACTION_VIEW);
-    intent.setClassName(AppConstants.ANDROID_PACKAGE_NAME,
-        AppConstants.ANDROID_PACKAGE_NAME + ".App");
-    intent.setData(Uri.parse("about:accounts"));
+    Intent intent = new Intent(context, FxAccountSetupActivity.class);
     res.putParcelable(AccountManager.KEY_INTENT, intent);
     return res;
   }
