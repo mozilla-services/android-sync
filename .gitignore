@@ -1,5 +1,4 @@
 obj
-libs
 AndroidManifest.xml
 R.java
 src/main/java/org/mozilla/gecko/AppConstants.java
