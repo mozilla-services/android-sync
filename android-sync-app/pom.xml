@@ -149,6 +149,7 @@
           </dex>
           <androidManifestFile>${project.basedir}/../AndroidManifest.xml</androidManifestFile>
           <resourceDirectory>${project.basedir}/../res</resourceDirectory>
+          <nativeLibrariesDirectory>${project.basedir}/../libs</nativeLibrariesDirectory>
         </configuration>
         <extensions>true</extensions>
       </plugin>
