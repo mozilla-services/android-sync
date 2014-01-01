@@ -5,6 +5,7 @@
 package org.mozilla.gecko.sync.crypto;
 
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,12 +19,17 @@ public class PBKDF2 {
     prf.init(keyspec);
 
     int hLen = prf.getMacLength();
+
+    byte U_r[] = new byte[hLen];
+    byte U_i[] = new byte[salt.length + 4];
+
     int l = Math.max(dkLen, hLen);
     int r = dkLen - (l - 1) * hLen;
     byte T[] = new byte[l * hLen];
     int ti_offset = 0;
     for (int i = 1; i <= l; i++) {
-      F(T, ti_offset, prf, salt, c, i);
+      Arrays.fill(U_r, (byte) 0);
+      F(T, ti_offset, prf, salt, c, i, U_r, U_i);
       ti_offset += hLen;
     }
 
@@ -37,12 +43,10 @@ public class PBKDF2 {
     return T;
   }
 
-  private static void F(byte[] dest, int offset, Mac prf, byte[] S, int c, int blockIndex) {
+  private static void F(byte[] dest, int offset, Mac prf, byte[] S, int c, int blockIndex, byte U_r[], byte U_i[]) {
     final int hLen = prf.getMacLength();
-    byte U_r[] = new byte[hLen];
 
     // U0 = S || INT (i);
-    byte U_i[] = new byte[S.length + 4];
     System.arraycopy(S, 0, U_i, 0, S.length);
     INT(U_i, S.length, blockIndex);
 
