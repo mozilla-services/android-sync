@@ -16,33 +16,12 @@ import org.mozilla.gecko.sync.crypto.PBKDF2;
 /**
  * Test PBKDF2 implementations against vectors from
  * <dl>
- * <dt>SHA-1</dt>
- * <dd><a href="http://tools.ietf.org/html/draft-josefsson-pbkdf2-test-vectors-06">http://tools.ietf.org/html/draft-josefsson-pbkdf2-test-vectors-06</a></dd>
  * <dt>SHA-256</dt>
  * <dd><a href="https://github.com/ircmaxell/PHP-PasswordLib/blob/master/test/Data/Vectors/pbkdf2-draft-josefsson-sha256.test-vectors">https://github.com/ircmaxell/PHP-PasswordLib/blob/master/test/Data/Vectors/pbkdf2-draft-josefsson-sha256.test-vectors</a></dd>
  * <dd><a href="https://gitorious.org/scrypt/nettle-scrypt/blobs/37c0d5288e991604fe33dba2f1724986a8dddf56/testsuite/pbkdf2-test.c">https://gitorious.org/scrypt/nettle-scrypt/blobs/37c0d5288e991604fe33dba2f1724986a8dddf56/testsuite/pbkdf2-test.c</a></dd>
  * </dl>
  */
 public class TestPBKDF2 {
-  @Test
-  public final void testPBKDF2SHA1A() throws GeneralSecurityException, UnsupportedEncodingException {
-    String  p = "password";
-    String  s = "salt";
-    int dkLen = 20;
-
-    checkPBKDF2SHA1(p, s, 1, dkLen, "0c60c80f961f0e71f3a9b524af6012062fe037a6");
-    checkPBKDF2SHA1(p, s, 2, dkLen, "ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957");
-    checkPBKDF2SHA1(p, s, 4096, dkLen, "4b007901b765489abead49d926f721d065a429c1");
-  }
-
-  @Test
-  public final void testPBKDF2SHA1B() throws GeneralSecurityException, UnsupportedEncodingException {
-    String  p = "passwordPASSWORDpassword";
-    String  s = "saltSALTsaltSALTsaltSALTsaltSALTsalt";
-    int dkLen = 25;
-
-    checkPBKDF2SHA1(p, s, 4096, dkLen, "3d2eec4fe41c849b80c8d83662c0e44a8b291a964cf2f07038");
-  }
 
   @Test
   public final void testPBKDF2SHA256A() throws UnsupportedEncodingException, GeneralSecurityException {
@@ -111,17 +90,6 @@ public class TestPBKDF2 {
     checkPBKDF2SHA256("password", "salt", 80000, 32, null);
   }
   */
-
-  private void checkPBKDF2SHA1(String p, String s, int c, int dkLen,
-      final String expectedStr)
-          throws GeneralSecurityException,
-          UnsupportedEncodingException {
-    long start = System.currentTimeMillis();
-    byte[] key = PBKDF2.pbkdf2SHA1(p.getBytes("US-ASCII"), s.getBytes("US-ASCII"), c, dkLen);
-    long end = System.currentTimeMillis();
-    System.err.println("SHA-1 " + c + " took " + (end - start) + "ms");
-    assertExpectedBytes(expectedStr, key);
-  }
 
   private void checkPBKDF2SHA256(String p, String s, int c, int dkLen,
       final String expectedStr)

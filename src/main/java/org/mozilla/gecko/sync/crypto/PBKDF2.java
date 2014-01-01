@@ -4,30 +4,12 @@
 
 package org.mozilla.gecko.sync.crypto;
 
-import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 
 import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class PBKDF2 {
-  public static byte[] pbkdf2SHA1(byte[] password, byte[] salt, int c, int dkLen)
-      throws GeneralSecurityException {
-    // Won't work on API level 8, but this is trivial.
-    SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-    PBEKeySpec keySpec;
-    try {
-      keySpec = new PBEKeySpec(new String(password, "UTF-8").toCharArray(), salt, c, dkLen * 8);
-    } catch (UnsupportedEncodingException e) {
-      throw new GeneralSecurityException(e);
-    }
-    SecretKey key = factory.generateSecret(keySpec);
-    return key.getEncoded();
-  }
-
   public static byte[] pbkdf2SHA256(byte[] password, byte[] salt, int c, int dkLen)
       throws GeneralSecurityException {
     final String algorithm = "HmacSHA256";
