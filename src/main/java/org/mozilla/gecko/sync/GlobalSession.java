@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.NotificationHelper;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.EndOfLifeHandler.EOLCode;
@@ -63,7 +64,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
-public class GlobalSession implements PrefsSource, HttpResponseObserver {
+public class GlobalSession implements PrefsSource, HttpResponseObserver, EOLDelegate {
   private static final String LOG_TAG = "GlobalSession";
 
   public static final String API_VERSION   = "1.1";
@@ -78,6 +79,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
   protected final Context context;
   protected final ClientsDataDelegate clientsDelegate;
   protected final NodeAssignmentCallback nodeAssignmentCallback;
+  protected final EndOfLifeHandler eolHandler;
 
   /**
    * Map from engine name to new settings for an updated meta/global record.
@@ -135,6 +137,8 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
 
     config = new SyncConfiguration(username, authHeaderProvider, prefsPath, this);
     config.syncKeyBundle = syncKeyBundle;
+
+    this.eolHandler = new EndOfLifeHandler(config.getPrefs(), this);
 
     registerCommands();
     prepareStages();
@@ -983,16 +987,6 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
   }
 
   /**
-   * Suggest that your Sync client needs to be upgraded to work
-   * with this server.
-   */
-  public void requiresUpgrade() {
-    Logger.info(LOG_TAG, "Client outdated storage version; requires update.");
-    // TODO: notify UI.
-    this.abort(null, "Requires upgrade");
-  }
-
-  /**
    * If meta/global is missing or malformed, throws a MetaGlobalException.
    * Otherwise, returns true if there is an entry for this engine in the
    * meta/global "engines" object.
@@ -1061,11 +1055,17 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
   }
 
   /**
-   * Observe all HTTP response for backoff requests on all status codes, not just errors.
+   * Observe all HTTP response for backoff and EOL requests on all status codes, not just errors.
    */
   @Override
   public void observeHttpResponse(HttpResponse response) {
-    long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
+    final SyncResponse syncResponse = new SyncResponse(response);
+
+    // EOL handling.
+    eolHandler.handleServerResponse(syncResponse);
+
+    // Backoff handling.
+    long responseBackoff = syncResponse.totalBackoffInMilliseconds();
     if (responseBackoff <= 0) {
       return;
     }
@@ -1080,5 +1080,46 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
         return;
       }
     }
+  }
+
+  /**
+   * Suggest that your Sync client needs to be upgraded to work
+   * with this server.
+   */
+  public void requiresUpgrade() {
+    Logger.info(LOG_TAG, "Client outdated storage version; requires update.");
+    this.callback.disableAccount(this, true);
+    // TODO: notify UI.
+    this.abort(null, "Requires upgrade.");
+  }
+
+  /*
+   * EOL handling methods.
+   */
+  @Override
+  public void disableAccount() {
+    // Disable permanently. No sense in re-enabling it after upgrade if the
+    // service is reporting EOL.
+    Logger.info(LOG_TAG, "Server reported EOL; disabling account.");
+    this.callback.disableAccount(this, false);
+    this.abort(null, "Account disabled.");
+  }
+
+  @Override
+  public void displayMessageForEOLCode(EOLCode code, String url) {
+    final int title;
+    final int message;
+    switch (code) {
+    case HARD:
+      title = R.string.sync_notification_hard_eol_title;
+      message = R.string.sync_notification_hard_eol_message;
+      break;
+    default:
+      title = R.string.sync_notification_soft_eol_title;
+      message = R.string.sync_notification_soft_eol_message;
+      break;
+    }
+
+    NotificationHelper.displayNotification(context, 0, title, message, url);
   }
 }
