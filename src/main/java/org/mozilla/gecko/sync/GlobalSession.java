@@ -531,7 +531,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
         return;
       }
       if (SyncStorageResponse.RESPONSE_CLIENT_UPGRADE_REQUIRED.equals(body)) {
-        callback.informUpgradeRequiredResponse(this);
+        this.requiresUpgrade();
         return;
       }
     } catch (Exception e) {

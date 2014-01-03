@@ -49,7 +49,7 @@ public class TestUpgradeRequired extends MockAccountTest {
     assertFalse(UpgradeRequiredHelper.willEnableOnUpgrade(account, accountManager));
 
     LeakySyncAdapter adapter = new LeakySyncAdapter(context, true, account);
-    adapter.informUpgradeRequiredResponse(null);
+    adapter.disableAccount(null, true);
 
     // Oh god.
     try {
@@ -92,7 +92,7 @@ public class TestUpgradeRequired extends MockAccountTest {
     final Result calledUpgradeRequired = new Result();
     final GlobalSessionCallback callback = new DefaultGlobalSessionCallback() {
       @Override
-      public void informUpgradeRequiredResponse(final GlobalSession session) {
+      public void disableAccount(final GlobalSession session, boolean untilUpgraded) {
         calledUpgradeRequired.called = true;
       }
     };
