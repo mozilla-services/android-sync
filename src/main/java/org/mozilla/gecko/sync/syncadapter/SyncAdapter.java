@@ -76,28 +76,37 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
     return accountSharedPreferences.getLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, 0);
   }
 
-  public synchronized void setEarliestNextSync(long next, boolean dueToBackoff) {
+  /**
+   * Set the earliest next sync time to the provided millisecond timestamp,
+   * and clear the in-backoff flag.
+   */
+  public synchronized void setEarliestNextSync(long next) {
     Editor edit = accountSharedPreferences.edit();
     edit.putLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, next);
-    if (dueToBackoff) {
-      edit.putBoolean(SyncConfiguration.PREF_IN_BACKOFF, true);
-    } else {
-      edit.remove(SyncConfiguration.PREF_IN_BACKOFF);
-    }
+    edit.remove(SyncConfiguration.PREF_IN_BACKOFF);
     edit.commit();
   }
 
-  public synchronized void extendEarliestNextSync(long next, boolean dueToBackoff) {
+  private synchronized void extendEarliestNextSyncClearingBackoff(long next) {
+    if (accountSharedPreferences.getLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, 0) >= next) {
+      // Yes, this can leave a backoff flag extant. Not a worry.
+      return;
+    }
+
+    Editor edit = accountSharedPreferences.edit();
+    edit.putLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, next);
+    edit.remove(SyncConfiguration.PREF_IN_BACKOFF);
+    edit.commit();
+  }
+
+  private synchronized void extendEarliestNextSyncReflectingBackoff(long next) {
     if (accountSharedPreferences.getLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, 0) >= next) {
       return;
     }
+
     Editor edit = accountSharedPreferences.edit();
     edit.putLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, next);
-    if (dueToBackoff) {
-      edit.putBoolean(SyncConfiguration.PREF_IN_BACKOFF, true);
-    } else {
-      edit.remove(SyncConfiguration.PREF_IN_BACKOFF);
-    }
+    edit.putBoolean(SyncConfiguration.PREF_IN_BACKOFF, true);
     edit.commit();
   }
 
@@ -264,7 +273,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
     if (backoff > 0) {
       // Fuzz the backoff time (up to 25% more) to prevent client lock-stepping; agrees with desktop.
       final long fuzzedBackoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
-      this.extendEarliestNextSync(System.currentTimeMillis() + fuzzedBackoff, true);
+      this.extendEarliestNextSyncReflectingBackoff(System.currentTimeMillis() + fuzzedBackoff);
     }
   }
 
@@ -432,10 +441,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
 
           if (thisSyncIsForced) {
             Logger.info(LOG_TAG, "Setting minimum next sync time to " + next + " (" + interval + "ms from now).");
-            setEarliestNextSync(next, false);
+            setEarliestNextSync(next);
           } else {
             Logger.info(LOG_TAG, "Extending minimum next sync time to " + next + " (" + interval + "ms from now).");
-            extendEarliestNextSync(next, false);
+            extendEarliestNextSyncClearingBackoff(next);
           }
         }
         Logger.info(LOG_TAG, "Sync took " + Utils.formatDuration(syncStartTimestamp, System.currentTimeMillis()) + ".");
