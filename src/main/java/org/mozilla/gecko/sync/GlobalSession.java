@@ -205,6 +205,8 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver, EOLDele
     stages.put(Stage.fetchInfoCollections,    new FetchInfoCollectionsStage());
     stages.put(Stage.fetchMetaGlobal,         new FetchMetaGlobalStage());
     stages.put(Stage.ensureKeysStage,         new EnsureCrypto5KeysStage());
+    stages.put(Stage.attemptMigrationStage,   new MigrationSentinelSyncStage());
+
     stages.put(Stage.syncClientsEngine,       new SyncClientsEngineStage());
 
     stages.put(Stage.syncTabs,                new FennecTabsServerSyncStage());
