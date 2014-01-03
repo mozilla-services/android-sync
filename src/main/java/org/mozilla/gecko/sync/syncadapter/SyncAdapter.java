@@ -76,18 +76,28 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
     return accountSharedPreferences.getLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, 0);
   }
 
-  public synchronized void setEarliestNextSync(long next) {
+  public synchronized void setEarliestNextSync(long next, boolean dueToBackoff) {
     Editor edit = accountSharedPreferences.edit();
     edit.putLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, next);
+    if (dueToBackoff) {
+      edit.putBoolean(SyncConfiguration.PREF_IN_BACKOFF, true);
+    } else {
+      edit.remove(SyncConfiguration.PREF_IN_BACKOFF);
+    }
     edit.commit();
   }
 
-  public synchronized void extendEarliestNextSync(long next) {
+  public synchronized void extendEarliestNextSync(long next, boolean dueToBackoff) {
     if (accountSharedPreferences.getLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, 0) >= next) {
       return;
     }
     Editor edit = accountSharedPreferences.edit();
     edit.putLong(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC, next);
+    if (dueToBackoff) {
+      edit.putBoolean(SyncConfiguration.PREF_IN_BACKOFF, true);
+    } else {
+      edit.remove(SyncConfiguration.PREF_IN_BACKOFF);
+    }
     edit.commit();
   }
 
@@ -249,7 +259,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
     if (backoff > 0) {
       // Fuzz the backoff time (up to 25% more) to prevent client lock-stepping; agrees with desktop.
       final long fuzzedBackoff = backoff + Math.round((double) backoff * 0.25d * Math.random());
-      this.extendEarliestNextSync(System.currentTimeMillis() + fuzzedBackoff);
+      this.extendEarliestNextSync(System.currentTimeMillis() + fuzzedBackoff, true);
     }
   }
 
@@ -417,10 +427,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
 
           if (thisSyncIsForced) {
             Logger.info(LOG_TAG, "Setting minimum next sync time to " + next + " (" + interval + "ms from now).");
-            setEarliestNextSync(next);
+            setEarliestNextSync(next, false);
           } else {
             Logger.info(LOG_TAG, "Extending minimum next sync time to " + next + " (" + interval + "ms from now).");
-            extendEarliestNextSync(next);
+            extendEarliestNextSync(next, false);
           }
         }
         Logger.info(LOG_TAG, "Sync took " + Utils.formatDuration(syncStartTimestamp, System.currentTimeMillis()) + ".");

@@ -63,7 +63,7 @@ public class SyncAccounts {
    * Do not call this method from the main thread.
    */
   public static boolean syncAccountsExist(Context c) {
-    final boolean accountsExist = AccountManager.get(c).getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC).length > 0;
+    final boolean accountsExist = syncAccounts(c).length > 0;
     if (accountsExist) {
       return true;
     }
@@ -319,6 +319,52 @@ public class SyncAccounts {
     return account;
   }
 
+  /**
+   * Allow a caller to remove soft rate limits for all Sync accounts. This
+   * allows for ordinary syncs -- as would be triggered by launching the browser
+   * -- to proceed unencumbered, resulting in a more up-to-date user experience.
+   */
+  public static void permitRoutineSyncs(Context context) {
+    if (!ContentResolver.getMasterSyncAutomatically()) {
+      return;
+    }
+
+    Account[] accounts = syncAccounts(context);
+    if (accounts.length == 0) {
+      return;
+    }
+
+    AccountManager accountManager = AccountManager.get(context);
+
+    for (Account account : accounts) {
+      if (!ContentResolver.getSyncAutomatically(account, BrowserContract.AUTHORITY)) {
+        continue;
+      }
+      try {
+        SharedPreferences prefs = getAccountSharedPreferences(context, accountManager, account);
+        if (prefs.getBoolean(SyncConfiguration.PREF_IN_BACKOFF, false)) {
+          // We're in backoff. Do nothing until a routine sync clears this pref.
+          continue;
+        }
+
+        // Otherwise, open the door!
+        prefs.edit().remove(SyncConfiguration.PREF_EARLIEST_NEXT_SYNC).commit();
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Couldn't permit routine sync for account.", e);
+      }
+    }
+  }
+
+  private static SharedPreferences getAccountSharedPreferences(Context context, AccountManager accountManager, Account account) throws NoSuchAlgorithmException, UnsupportedEncodingException, CredentialException {
+    final SyncAccountParameters params = blockingFromAndroidAccountV0(context, accountManager, account);
+    final String username  = params.username; // Encoded with Utils.usernameFromAccount.
+    final String serverURL = params.serverURL;
+    final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+    final String profile = Constants.DEFAULT_PROFILE;
+    final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+    return Utils.getSharedPreferences(context, product, username, serverURL, profile, version);
+  }
+
   public static void setIsSyncable(Account account, boolean isSyncable) {
     String authority = BrowserContract.AUTHORITY;
     ContentResolver.setIsSyncable(account, authority, isSyncable ? 1 : 0);
@@ -343,6 +389,7 @@ public class SyncAccounts {
       }
     });
   }
+
   /**
    * Bug 721760: try to start a vendor-specific Accounts & Sync activity on Moto
    * Blur devices.
