@@ -13,17 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.background.common.NotificationHelper;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
 import org.mozilla.gecko.sync.repositories.domain.ClientRecord;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 
 /**
  * Process commands received from Sync clients.
@@ -251,26 +247,12 @@ public class CommandProcessor {
       title = args.get(2);
     }
 
-    final String ns = Context.NOTIFICATION_SERVICE;
-    final NotificationManager notificationManager = (NotificationManager) context.getSystemService(ns);
-
-    // Create a Notificiation.
-    final int icon = R.drawable.icon;
     String notificationTitle = context.getString(R.string.sync_new_tab);
     if (title != null) {
       notificationTitle = notificationTitle.concat(": " + title);
     }
 
-    final long when = System.currentTimeMillis();
-    Notification notification = new Notification(icon, notificationTitle, when);
-    notification.flags = Notification.FLAG_AUTO_CANCEL;
-
-    // Set pending intent associated with the notification.
-    Intent notificationIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-    PendingIntent contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
-    notification.setLatestEventInfo(context, notificationTitle, uri, contentIntent);
-
-    // Send notification.
-    notificationManager.notify(currentId.getAndIncrement(), notification);
+    NotificationHelper.displayNotification(context, currentId.getAndIncrement(), notificationTitle, uri, uri);
   }
+
 }

@@ -19,7 +19,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.background.common.NotificationHelper;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.sync.EndOfLifeHandler.EOLCode;
+import org.mozilla.gecko.sync.EndOfLifeHandler.EOLDelegate;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.BaseGlobalSessionCallback;
