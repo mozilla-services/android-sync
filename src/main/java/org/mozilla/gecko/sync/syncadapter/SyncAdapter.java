@@ -182,7 +182,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
       // Uncheck Sync checkbox because we cannot sync this instance.
       if (e instanceof SecurityException) {
         Logger.error(LOG_TAG, "SecurityException, multiple Fennecs. Disabling this instance.", e);
-        SyncAccounts.backgroundSetSyncAutomatically(localAccount, false);
+        ThreadPool.run(new Runnable() {
+          @Override
+          public void run() {
+            SyncAccounts.setSyncAutomatically(localAccount, false);
+          }
+        });
         return;
       }
       // Generic exception.
