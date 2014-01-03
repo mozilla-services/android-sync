@@ -8,6 +8,7 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
 import javax.crypto.Mac;
+import javax.crypto.ShortBufferException;
 import javax.crypto.spec.SecretKeySpec;
 
 public class PBKDF2 {
@@ -22,6 +23,7 @@ public class PBKDF2 {
 
     byte U_r[] = new byte[hLen];
     byte U_i[] = new byte[salt.length + 4];
+    byte scratch[] = new byte[hLen];
 
     int l = Math.max(dkLen, hLen);
     int r = dkLen - (l - 1) * hLen;
@@ -29,7 +31,7 @@ public class PBKDF2 {
     int ti_offset = 0;
     for (int i = 1; i <= l; i++) {
       Arrays.fill(U_r, (byte) 0);
-      F(T, ti_offset, prf, salt, c, i, U_r, U_i);
+      F(T, ti_offset, prf, salt, c, i, U_r, U_i, scratch);
       ti_offset += hLen;
     }
 
@@ -43,7 +45,8 @@ public class PBKDF2 {
     return T;
   }
 
-  private static void F(byte[] dest, int offset, Mac prf, byte[] S, int c, int blockIndex, byte U_r[], byte U_i[]) {
+  private static void F(byte[] dest, int offset, Mac prf, byte[] S, int c, int blockIndex, byte U_r[], byte U_i[], byte[] scratch)
+      throws ShortBufferException, IllegalStateException {
     final int hLen = prf.getMacLength();
 
     // U0 = S || INT (i);
@@ -51,7 +54,9 @@ public class PBKDF2 {
     INT(U_i, S.length, blockIndex);
 
     for (int i = 0; i < c; i++) {
-      U_i = prf.doFinal(U_i);
+      prf.update(U_i);
+      prf.doFinal(scratch, 0);
+      U_i = scratch;
       xor(U_r, U_i);
     }
 
