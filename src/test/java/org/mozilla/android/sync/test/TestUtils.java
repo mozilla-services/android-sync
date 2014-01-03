@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 
 public class TestUtils extends Utils {
 
@@ -122,25 +123,11 @@ public class TestUtils extends Utils {
   @Test
   public void testUsernameFromAccount() throws NoSuchAlgorithmException, UnsupportedEncodingException {
     assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", Utils.sha1Base32("foobar@baz.com"));
-    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", Utils.usernameFromAccount("foobar@baz.com"));
-    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", Utils.usernameFromAccount("FooBar@Baz.com"));
-    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", Utils.usernameFromAccount("xee7ffonluzpdp66l6xgpyh2v2w6ojkc"));
-    assertEquals("foobar",                           Utils.usernameFromAccount("foobar"));
-    assertEquals("foobar",                           Utils.usernameFromAccount("FOOBAr"));
-  }
-
-  @Test
-  public void testGetPrefsPath() throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    assertEquals("ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.sha1Base32("test.url.com:xee7ffonluzpdp66l6xgpyh2v2w6ojkc"));
-
-    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("product", "foobar@baz.com", "test.url.com", "default", 0));
-    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("org.mozilla.firefox_beta", "FooBar@Baz.com", "test.url.com", "default", 0));
-    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.getPrefsPath("org.mozilla.firefox", "xee7ffonluzpdp66l6xgpyh2v2w6ojkc", "test.url.com", "profile", 0));
-
-    assertEquals("sync.prefs.product.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.default.1", Utils.getPrefsPath("product", "foobar@baz.com", "test.url.com", "default", 1));
-    assertEquals("sync.prefs.with!spaces_underbars!periods.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.default.1", Utils.getPrefsPath("with spaces_underbars.periods", "foobar@baz.com", "test.url.com", "default", 1));
-    assertEquals("sync.prefs.org!mozilla!firefox_beta.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.default.2", Utils.getPrefsPath("org.mozilla.firefox_beta", "FooBar@Baz.com", "test.url.com", "default", 2));
-    assertEquals("sync.prefs.org!mozilla!firefox.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.profile.3", Utils.getPrefsPath("org.mozilla.firefox", "xee7ffonluzpdp66l6xgpyh2v2w6ojkc", "test.url.com", "profile", 3));
+    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", SyncAccounts.usernameFromAccount("foobar@baz.com"));
+    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", SyncAccounts.usernameFromAccount("FooBar@Baz.com"));
+    assertEquals("xee7ffonluzpdp66l6xgpyh2v2w6ojkc", SyncAccounts.usernameFromAccount("xee7ffonluzpdp66l6xgpyh2v2w6ojkc"));
+    assertEquals("foobar",                           SyncAccounts.usernameFromAccount("foobar"));
+    assertEquals("foobar",                           SyncAccounts.usernameFromAccount("FOOBAr"));
   }
 
   @Test

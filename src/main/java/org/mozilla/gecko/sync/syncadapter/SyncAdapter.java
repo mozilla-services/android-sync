@@ -372,7 +372,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
           final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
           final String profile = Constants.DEFAULT_PROFILE;
           final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
-          self.accountSharedPreferences = Utils.getSharedPreferences(mContext, product, username, serverURL, profile, version);
+          self.accountSharedPreferences = SyncAccounts.getSharedPreferences(mContext, product, username, serverURL, profile, version);
           self.clientsDataDelegate = new SharedPreferencesClientsDataDelegate(accountSharedPreferences);
           final String nodeWeaveURL = Utils.nodeWeaveURL(serverURL, username);
           self.nodeAssignmentDelegate = new SharedPreferencesNodeAssignmentCallback(accountSharedPreferences, nodeWeaveURL);
@@ -397,7 +397,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
             }
           }
 
-          final String prefsPath = Utils.getPrefsPath(product, username, serverURL, profile, version);
+          final String prefsPath = SyncAccounts.getPrefsPath(product, username, serverURL, profile, version);
           self.performSync(account, extras, authority, provider, syncResult,
               username, password, prefsPath, serverURL, syncKey);
         } catch (Exception e) {

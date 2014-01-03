@@ -165,7 +165,7 @@ public class TestAccountPickler extends AndroidSyncTestCase {
       assertEquals(TEST_SYNCKEY, syncKey);
 
       // Verify shared prefs parameters are in place.
-      final SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME, TEST_SERVER_URL, TEST_PROFILE, TEST_VERSION);
+      final SharedPreferences prefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME, TEST_SERVER_URL, TEST_PROFILE, TEST_VERSION);
       final String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
       final String clientName = prefs.getString(SyncConfiguration.PREF_CLIENT_NAME, null);
       final String clientGuid = prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null);

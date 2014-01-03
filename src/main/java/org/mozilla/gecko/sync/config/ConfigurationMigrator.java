@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -303,8 +304,8 @@ public class ConfigurationMigrator {
     final String GLOBAL_SHARED_PREFS = "sync.prefs.global";
 
     final SharedPreferences globalPrefs = context.getSharedPreferences(GLOBAL_SHARED_PREFS, Utils.SHARED_PREFERENCES_MODE);
-    final SharedPreferences accountPrefs = Utils.getSharedPreferences(context, product, username, serverURL, profile, 0);
-    final SharedPreferences newPrefs = Utils.getSharedPreferences(context, product, username, serverURL, profile, 1);
+    final SharedPreferences accountPrefs = SyncAccounts.getSharedPreferences(context, product, username, serverURL, profile, 0);
+    final SharedPreferences newPrefs = SyncAccounts.getSharedPreferences(context, product, username, serverURL, profile, 1);
 
     upgradeGlobals0to1(globalPrefs, newPrefs);
     upgradeAndroidAccount0to1(accountManager, account, newPrefs);
@@ -317,8 +318,8 @@ public class ConfigurationMigrator {
     final String GLOBAL_SHARED_PREFS = "sync.prefs.global";
 
     final SharedPreferences globalPrefs = context.getSharedPreferences(GLOBAL_SHARED_PREFS, Utils.SHARED_PREFERENCES_MODE);
-    final SharedPreferences accountPrefs = Utils.getSharedPreferences(context, product, username, serverURL, profile, 0);
-    final SharedPreferences oldPrefs = Utils.getSharedPreferences(context, product, username, serverURL, profile, 1);
+    final SharedPreferences accountPrefs = SyncAccounts.getSharedPreferences(context, product, username, serverURL, profile, 0);
+    final SharedPreferences oldPrefs = SyncAccounts.getSharedPreferences(context, product, username, serverURL, profile, 1);
 
     downgradeGlobals1to0(oldPrefs, globalPrefs);
     downgradeAndroidAccount1to0(oldPrefs, accountManager, account);

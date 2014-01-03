@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync.setup;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -293,9 +294,9 @@ public class SyncAccounts {
       final String profile = Constants.DEFAULT_PROFILE;
       final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
 
-      final SharedPreferences.Editor editor = Utils.getSharedPreferences(context, product, username, serverURL, profile, version).edit();
+      final SharedPreferences.Editor editor = getSharedPreferences(context, product, username, serverURL, profile, version).edit();
       if (clearPreferences) {
-        final String prefsPath = Utils.getPrefsPath(product, username, serverURL, profile, version);
+        final String prefsPath = getPrefsPath(product, username, serverURL, profile, version);
         Logger.info(LOG_TAG, "Clearing preferences path " + prefsPath + " for this account.");
         editor.clear();
       }
@@ -353,16 +354,6 @@ public class SyncAccounts {
         Logger.warn(LOG_TAG, "Couldn't permit routine sync for account.", e);
       }
     }
-  }
-
-  private static SharedPreferences getAccountSharedPreferences(Context context, AccountManager accountManager, Account account) throws NoSuchAlgorithmException, UnsupportedEncodingException, CredentialException {
-    final SyncAccountParameters params = blockingFromAndroidAccountV0(context, accountManager, account);
-    final String username  = params.username; // Encoded with Utils.usernameFromAccount.
-    final String serverURL = params.serverURL;
-    final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
-    final String profile = Constants.DEFAULT_PROFILE;
-    final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
-    return Utils.getSharedPreferences(context, product, username, serverURL, profile, version);
   }
 
   public static void setIsSyncable(Account account, boolean isSyncable) {
@@ -476,7 +467,7 @@ public class SyncAccounts {
       throws CredentialException {
     String username;
     try {
-      username = Utils.usernameFromAccount(account.name);
+      username = SyncAccounts.usernameFromAccount(account.name);
     } catch (NoSuchAlgorithmException e) {
       throw new CredentialException.MissingCredentialException("username");
     } catch (UnsupportedEncodingException e) {
@@ -609,7 +600,7 @@ public class SyncAccounts {
       final String product, final String profile, final long version)
           throws CredentialException, NoSuchAlgorithmException, UnsupportedEncodingException {
     SyncAccountParameters params = SyncAccounts.blockingFromAndroidAccountV0(context, accountManager, account);
-    String prefsPath = Utils.getPrefsPath(product, params.username, params.serverURL, profile, version);
+    String prefsPath = getPrefsPath(product, params.username, params.serverURL, profile, version);
 
     return context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
   }
@@ -640,5 +631,65 @@ public class SyncAccounts {
     final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
 
     return blockingPrefsFromAndroidAccountV0(context, accountManager, account, product, profile, version);
+  }
+
+  private static SharedPreferences getAccountSharedPreferences(Context context, AccountManager accountManager, Account account) throws NoSuchAlgorithmException, UnsupportedEncodingException, CredentialException {
+    final SyncAccountParameters params = blockingFromAndroidAccountV0(context, accountManager, account);
+    final String username  = params.username; // Encoded with Utils.usernameFromAccount.
+    final String serverURL = params.serverURL;
+    final String product = GlobalConstants.BROWSER_INTENT_PACKAGE;
+    final String profile = Constants.DEFAULT_PROFILE;
+    final long version = SyncConfiguration.CURRENT_PREFS_VERSION;
+    return getSharedPreferences(context, product, username, serverURL, profile, version);
+  }
+
+  public static SharedPreferences getSharedPreferences(final Context context, final String product, final String username, final String serverURL, final String profile, final long version)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    String prefsPath = getPrefsPath(product, username, serverURL, profile, version);
+    return context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
+  }
+
+  /**
+   * Get shared preferences path for a Sync account.
+   *
+   * @param product the Firefox Sync product package name (like "org.mozilla.firefox").
+   * @param username the Sync account name, optionally encoded with <code>Utils.usernameFromAccount</code>.
+   * @param serverURL the Sync account server URL.
+   * @param profile the Firefox profile name.
+   * @param version the version of preferences to reference.
+   * @return the path.
+   * @throws NoSuchAlgorithmException
+   * @throws UnsupportedEncodingException
+   */
+  public static String getPrefsPath(final String product, final String username, final String serverURL, final String profile, final long version)
+      throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    final String encodedAccount = Utils.sha1Base32(serverURL + ":" + SyncAccounts.usernameFromAccount(username));
+
+    if (version <= 0) {
+      return "sync.prefs." + encodedAccount;
+    } else {
+      final String sanitizedProduct = product.replace('.', '!').replace(' ', '!');
+      return "sync.prefs." + sanitizedProduct + "." + encodedAccount + "." + profile + "." + version;
+    }
+  }
+
+  /**
+   * If we encounter characters not allowed by the API (as found for
+   * instance in an email address), hash the value.
+   * @param account
+   *        An account string.
+   * @return
+   *        An acceptable string.
+   * @throws UnsupportedEncodingException
+   * @throws NoSuchAlgorithmException
+   */
+  public static String usernameFromAccount(final String account) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    if (account == null || account.equals("")) {
+      throw new IllegalArgumentException("No account name provided.");
+    }
+    if (account.matches("^[A-Za-z0-9._-]+$")) {
+      return account.toLowerCase(Locale.US);
+    }
+    return Utils.sha1Base32(account.toLowerCase(Locale.US));
   }
 }

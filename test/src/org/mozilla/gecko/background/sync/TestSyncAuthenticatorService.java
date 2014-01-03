@@ -5,7 +5,6 @@ package org.mozilla.gecko.background.sync;
 
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
 import org.mozilla.gecko.sync.SyncConstants;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
@@ -51,7 +50,7 @@ public class TestSyncAuthenticatorService extends AndroidSyncTestCase {
 
     assertEquals(TEST_USERNAME, bundle.getString(AccountManager.KEY_ACCOUNT_NAME));
     assertEquals(SyncConstants.ACCOUNTTYPE_SYNC, bundle.getString(AccountManager.KEY_ACCOUNT_TYPE));
-    assertEquals(Utils.usernameFromAccount(TEST_USERNAME), bundle.getString(Constants.OPTION_USERNAME));
+    assertEquals(SyncAccounts.usernameFromAccount(TEST_USERNAME), bundle.getString(Constants.OPTION_USERNAME));
     assertEquals(TEST_PASSWORD, bundle.getString(AccountManager.KEY_AUTHTOKEN));
     assertEquals(TEST_SYNCKEY, bundle.getString(Constants.OPTION_SYNCKEY));
     assertEquals(TEST_SERVERURL, bundle.getString(Constants.OPTION_SERVER));

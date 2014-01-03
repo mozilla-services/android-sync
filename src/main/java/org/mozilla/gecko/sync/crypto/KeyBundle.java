@@ -14,6 +14,7 @@ import javax.crypto.Mac;
 
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 
 public class KeyBundle {
     private static final String KEY_ALGORITHM_SPEC = "AES";
@@ -43,7 +44,7 @@ public class KeyBundle {
       }
       // Hash appropriately.
       try {
-        username = Utils.usernameFromAccount(username);
+        username = SyncAccounts.usernameFromAccount(username);
       } catch (NoSuchAlgorithmException e) {
         throw new IllegalArgumentException("Invalid username.");
       } catch (UnsupportedEncodingException e) {

@@ -27,10 +27,10 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.MetaGlobal;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 
 @Category(IntegrationTestCategory.class)
 public class TestFreshStart {
@@ -95,7 +95,7 @@ public class TestFreshStart {
 
   @Test
   public void testLiveFreshStart() throws Exception {
-    assertEquals(TEST_USERNAME, Utils.usernameFromAccount(TEST_ACCOUNT));
+    assertEquals(TEST_USERNAME, SyncAccounts.usernameFromAccount(TEST_ACCOUNT));
     session.config.enabledEngineNames = new HashSet<String>();
     session.config.enabledEngineNames.add("bookmarks");
     session.config.enabledEngineNames.add("clients");

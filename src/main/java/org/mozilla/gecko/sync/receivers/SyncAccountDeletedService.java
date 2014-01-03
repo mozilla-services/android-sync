@@ -9,11 +9,11 @@ import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.config.ClientRecordTerminator;
 import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.setup.Constants;
+import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
 
 import android.accounts.AccountManager;
@@ -85,7 +85,7 @@ public class SyncAccountDeletedService extends IntentService {
       final String password, final String serverURL) {
     String encodedUsername;
     try {
-      encodedUsername = Utils.usernameFromAccount(accountName);
+      encodedUsername = SyncAccounts.usernameFromAccount(accountName);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception deleting client record from server; ignoring.", e);
       return;
@@ -107,7 +107,7 @@ public class SyncAccountDeletedService extends IntentService {
 
     SharedPreferences prefs;
     try {
-      prefs = Utils.getSharedPreferences(context, product, encodedUsername, serverURL, profile, version);
+      prefs = SyncAccounts.getSharedPreferences(context, product, encodedUsername, serverURL, profile, version);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Caught exception fetching preferences; not deleting client record from server.", e);
       return;

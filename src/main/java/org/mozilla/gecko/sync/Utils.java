@@ -31,7 +31,6 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 
 public class Utils {
@@ -212,59 +211,9 @@ public class Utils {
     return sha1.digest(utf8.getBytes("UTF-8"));
   }
 
-  protected static String sha1Base32(final String utf8)
+  public static String sha1Base32(final String utf8)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
     return new Base32().encodeAsString(sha1(utf8)).toLowerCase(Locale.US);
-  }
-
-  /**
-   * If we encounter characters not allowed by the API (as found for
-   * instance in an email address), hash the value.
-   * @param account
-   *        An account string.
-   * @return
-   *        An acceptable string.
-   * @throws UnsupportedEncodingException
-   * @throws NoSuchAlgorithmException
-   */
-  public static String usernameFromAccount(final String account) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    if (account == null || account.equals("")) {
-      throw new IllegalArgumentException("No account name provided.");
-    }
-    if (account.matches("^[A-Za-z0-9._-]+$")) {
-      return account.toLowerCase(Locale.US);
-    }
-    return sha1Base32(account.toLowerCase(Locale.US));
-  }
-
-  public static SharedPreferences getSharedPreferences(final Context context, final String product, final String username, final String serverURL, final String profile, final long version)
-      throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    String prefsPath = getPrefsPath(product, username, serverURL, profile, version);
-    return context.getSharedPreferences(prefsPath, SHARED_PREFERENCES_MODE);
-  }
-
-  /**
-   * Get shared preferences path for a Sync account.
-   *
-   * @param product the Firefox Sync product package name (like "org.mozilla.firefox").
-   * @param username the Sync account name, optionally encoded with <code>Utils.usernameFromAccount</code>.
-   * @param serverURL the Sync account server URL.
-   * @param profile the Firefox profile name.
-   * @param version the version of preferences to reference.
-   * @return the path.
-   * @throws NoSuchAlgorithmException
-   * @throws UnsupportedEncodingException
-   */
-  public static String getPrefsPath(final String product, final String username, final String serverURL, final String profile, final long version)
-      throws NoSuchAlgorithmException, UnsupportedEncodingException {
-    final String encodedAccount = sha1Base32(serverURL + ":" + usernameFromAccount(username));
-
-    if (version <= 0) {
-      return "sync.prefs." + encodedAccount;
-    } else {
-      final String sanitizedProduct = product.replace('.', '!').replace(' ', '!');
-      return "sync.prefs." + sanitizedProduct + "." + encodedAccount + "." + profile + "." + version;
-    }
   }
 
   public static void addToIndexBucketMap(TreeMap<Long, ArrayList<String>> map, long index, String value) {

@@ -168,7 +168,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     account = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNotNull(account);
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
+    SharedPreferences prefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
         SyncConstants.DEFAULT_AUTH_SERVER, TEST_PROFILE, TEST_VERSION);
 
     // Verify that client record is set.
@@ -186,7 +186,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     account = SyncAccounts.createSyncAccount(syncAccount, false);
     assertNotNull(account);
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
+    SharedPreferences prefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
         TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
     String clusterURL = prefs.getString(SyncConfiguration.PREF_CLUSTER_URL, null);
     assertNotNull(clusterURL);
@@ -204,7 +204,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     final String TEST_PREFERENCE = "testPreference";
     final String TEST_SYNC_ID = "testSyncID";
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
+    SharedPreferences prefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
         TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
     prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
@@ -224,7 +224,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
    */
   public void testCreateSyncAccountWithExistingPreferences() throws Exception {
 
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
+    SharedPreferences prefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME,
         TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
 
     prefs.edit().putString(SyncConfiguration.PREF_SYNC_ID, TEST_SYNC_ID).commit();
@@ -246,7 +246,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
   protected void assertParams(final SyncAccountParameters params) throws Exception {
     assertNotNull(params);
     assertEquals(context, params.context);
-    assertEquals(Utils.usernameFromAccount(TEST_USERNAME), params.username);
+    assertEquals(SyncAccounts.usernameFromAccount(TEST_USERNAME), params.username);
     assertEquals(TEST_PASSWORD, params.password);
     assertEquals(TEST_SERVERURL, params.serverURL);
     assertEquals(TEST_SYNCKEY, params.syncKey);
@@ -309,7 +309,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
       // Can't use assertParams because Sync key is deleted.
       assertNotNull(params);
       assertEquals(context, params.context);
-      assertEquals(Utils.usernameFromAccount(TEST_USERNAME), params.username);
+      assertEquals(SyncAccounts.usernameFromAccount(TEST_USERNAME), params.username);
       assertEquals(TEST_PASSWORD, params.password);
       assertEquals(TEST_SERVERURL, params.serverURL);
       assertEquals("", params.syncKey);
@@ -325,7 +325,7 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
     // Create test account with prefs. We use a different username to avoid a
     // timing issue, where the delayed clean-up of the account created by the
     // previous test deletes the preferences for this account.
-    SharedPreferences prefs = Utils.getSharedPreferences(context, TEST_PRODUCT,
+    SharedPreferences prefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT,
         TEST_USERNAME + "2", TEST_SERVERURL, TEST_PROFILE, TEST_VERSION);
     prefs.edit().putString(TEST_PREFERENCE, TEST_SYNC_ID).commit();
 
@@ -339,5 +339,18 @@ public class TestSyncAccounts extends AndroidSyncTestCase {
         account, TEST_PRODUCT, TEST_PROFILE, TEST_VERSION);
     assertNotNull(sharedPreferences);
     assertEquals(TEST_SYNC_ID, sharedPreferences.getString(TEST_PREFERENCE, null));
+  }
+
+  public void testGetPrefsPath() throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    assertEquals("ore7dlrwqi6xr7honxdtpvmh6tly4r7k", Utils.sha1Base32("test.url.com:xee7ffonluzpdp66l6xgpyh2v2w6ojkc"));
+
+    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", SyncAccounts.getPrefsPath("product", "foobar@baz.com", "test.url.com", "default", 0));
+    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", SyncAccounts.getPrefsPath("org.mozilla.firefox_beta", "FooBar@Baz.com", "test.url.com", "default", 0));
+    assertEquals("sync.prefs.ore7dlrwqi6xr7honxdtpvmh6tly4r7k", SyncAccounts.getPrefsPath("org.mozilla.firefox", "xee7ffonluzpdp66l6xgpyh2v2w6ojkc", "test.url.com", "profile", 0));
+
+    assertEquals("sync.prefs.product.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.default.1", SyncAccounts.getPrefsPath("product", "foobar@baz.com", "test.url.com", "default", 1));
+    assertEquals("sync.prefs.with!spaces_underbars!periods.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.default.1", SyncAccounts.getPrefsPath("with spaces_underbars.periods", "foobar@baz.com", "test.url.com", "default", 1));
+    assertEquals("sync.prefs.org!mozilla!firefox_beta.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.default.2", SyncAccounts.getPrefsPath("org.mozilla.firefox_beta", "FooBar@Baz.com", "test.url.com", "default", 2));
+    assertEquals("sync.prefs.org!mozilla!firefox.ore7dlrwqi6xr7honxdtpvmh6tly4r7k.profile.3", SyncAccounts.getPrefsPath("org.mozilla.firefox", "xee7ffonluzpdp66l6xgpyh2v2w6ojkc", "test.url.com", "profile", 3));
   }
 }

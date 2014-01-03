@@ -9,7 +9,6 @@ import java.security.NoSuchAlgorithmException;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConstants;
-import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 
 import android.accounts.AbstractAccountAuthenticator;
@@ -110,7 +109,7 @@ public class SyncAuthenticatorService extends Service {
 
     // Username after hashing.
     try {
-      String username = Utils.usernameFromAccount(account.name);
+      String username = SyncAccounts.usernameFromAccount(account.name);
       Logger.pii(LOG_TAG, "Account " + account.name + " hashes to " + username + ".");
       Logger.debug(LOG_TAG, "Setting username. Null? " + (username == null));
       result.putString(Constants.OPTION_USERNAME, username);

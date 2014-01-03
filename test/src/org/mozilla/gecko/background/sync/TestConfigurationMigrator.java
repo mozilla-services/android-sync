@@ -204,7 +204,7 @@ public class TestConfigurationMigrator extends AndroidSyncTestCase {
     final String ACCOUNT_SHARED_PREFS_NAME = "sync.prefs.3qyu5zoqpuu4zhdiv5l2qthsiter3vop";
     final String GLOBAL_SHARED_PREFS_NAME = "sync.prefs.global";
 
-    final String path = Utils.getPrefsPath(TEST_PRODUCT, TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, 0);
+    final String path = SyncAccounts.getPrefsPath(TEST_PRODUCT, TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, 0);
     assertEquals(ACCOUNT_SHARED_PREFS_NAME, path);
     final SharedPreferences accountPrefs = context.getSharedPreferences(ACCOUNT_SHARED_PREFS_NAME, Utils.SHARED_PREFERENCES_MODE);
     final SharedPreferences globalPrefs = context.getSharedPreferences(GLOBAL_SHARED_PREFS_NAME, Utils.SHARED_PREFERENCES_MODE);
@@ -212,7 +212,7 @@ public class TestConfigurationMigrator extends AndroidSyncTestCase {
     accountPrefs.edit().clear().commit();
     globalPrefs.edit().clear().commit();
     // Clear prefs we're about to write into.
-    final SharedPreferences existingPrefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, 1);
+    final SharedPreferences existingPrefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, 1);
     existingPrefs.edit().clear().commit();
 
     final AccountManager accountManager = AccountManager.get(context);
@@ -239,7 +239,7 @@ public class TestConfigurationMigrator extends AndroidSyncTestCase {
     assertFalse(origAccountPrefs.isEmpty());
     assertFalse(origGlobalPrefs.isEmpty());
 
-    final SharedPreferences newPrefs = Utils.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, 1);
+    final SharedPreferences newPrefs = SyncAccounts.getSharedPreferences(context, TEST_PRODUCT, TEST_USERNAME, TEST_SERVERURL, TEST_PROFILE, 1);
 
     // Some global stuff.
     assertEquals(false, newPrefs.getBoolean(SyncConfiguration.PREF_CLUSTER_URL_IS_STALE, true));
