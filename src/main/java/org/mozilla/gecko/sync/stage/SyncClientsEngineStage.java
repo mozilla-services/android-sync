@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.CommandProcessor.Command;
@@ -363,6 +364,7 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
 
     ClientRecord r = new ClientRecord(ourGUID);
     r.name = ourName;
+    r.version = GlobalConstants.MOZ_APP_VERSION;
     return r;
   }
 

@@ -386,6 +386,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/newlines");
         for (int i = 0; i < 5; i++) {
           ClientRecord record = new ClientRecord();
+          if (i != 2) {   // So we test null version.
+            record.version = Integer.toString(28 + i);
+          }
           expectedClients.add(record);
           CryptoRecord cryptoRecord = cryptoFromClient(record);
           bodyStream.print(cryptoRecord.toJSONString() + "\n");
@@ -521,7 +524,10 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     assertEquals(expectedClients.size(), numRecordsFromGetRequest);
     for (int i = 0; i < downloadedClients.size(); i++) {
-      assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
+      final ClientRecord downloaded = downloadedClients.get(i);
+      final ClientRecord expected = expectedClients.get(i);
+      assertTrue(expected.guid.equals(downloaded.guid));
+      assertEquals(expected.version, downloaded.version);
     }
     assertTrue(mockDataAccessorIsClosed());
   }
