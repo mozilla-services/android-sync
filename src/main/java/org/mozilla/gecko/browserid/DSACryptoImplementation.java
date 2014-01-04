@@ -34,7 +34,7 @@ public class DSACryptoImplementation {
     }
 
     @Override
-    public String serialize() {
+    public ExtendedJSONObject toJSONObject() {
       DSAParams params = publicKey.getParams();
       ExtendedJSONObject o = new ExtendedJSONObject();
       o.put("algorithm", "DS");
@@ -42,7 +42,7 @@ public class DSACryptoImplementation {
       o.put("g", params.getG().toString(16));
       o.put("p", params.getP().toString(16));
       o.put("q", params.getQ().toString(16));
-      return o.toJSONString();
+      return o;
     }
 
     @Override
@@ -88,7 +88,7 @@ public class DSACryptoImplementation {
     }
 
     @Override
-    public String serialize() {
+    public ExtendedJSONObject toJSONObject() {
       DSAParams params = privateKey.getParams();
       ExtendedJSONObject o = new ExtendedJSONObject();
       o.put("algorithm", "DS");
@@ -96,7 +96,7 @@ public class DSACryptoImplementation {
       o.put("g", params.getG().toString(16));
       o.put("p", params.getP().toString(16));
       o.put("q", params.getQ().toString(16));
-      return o.toJSONString();
+      return o;
     }
 
     @Override

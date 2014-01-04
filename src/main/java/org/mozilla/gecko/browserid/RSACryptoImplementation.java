@@ -31,12 +31,12 @@ public class RSACryptoImplementation {
     }
 
     @Override
-    public String serialize() {
+    public ExtendedJSONObject toJSONObject() {
       ExtendedJSONObject o = new ExtendedJSONObject();
       o.put("algorithm", "RS");
       o.put("n", publicKey.getModulus().toString(10));
       o.put("e", publicKey.getPublicExponent().toString(10));
-      return o.toJSONString();
+      return o;
     }
 
     @Override
@@ -62,12 +62,12 @@ public class RSACryptoImplementation {
     }
 
     @Override
-    public String serialize() {
+    public ExtendedJSONObject toJSONObject() {
       ExtendedJSONObject o = new ExtendedJSONObject();
       o.put("algorithm", "RS");
       o.put("n", privateKey.getModulus().toString(10));
-      o.put("e", privateKey.getPrivateExponent().toString(10));
-      return o.toJSONString();
+      o.put("d", privateKey.getPrivateExponent().toString(10));
+      return o;
     }
 
     @Override
