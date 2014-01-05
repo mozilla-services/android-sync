@@ -19,9 +19,18 @@ import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.NonObjectJSONException;
 
 public class RSACryptoImplementation {
   public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
+
+  /**
+   * Parameters are serialized as decimal strings. Hex-versus-decimal was
+   * reverse-engineered from what the Persona public verifier accepted. We
+   * expect to follow the JOSE/JWT spec as it solidifies, and that will probably
+   * mean unifying this base.
+   */
+  protected static final int SERIALIZATION_BASE = 10;
 
   protected static class RSAVerifyingPublicKey implements VerifyingPublicKey {
     protected final RSAPublicKey publicKey;
@@ -30,12 +39,18 @@ public class RSACryptoImplementation {
       this.publicKey = publicKey;
     }
 
+    /**
+     * Serialize to a JSON object.
+     * <p>
+     * Parameters are serialized as decimal strings. Hex-versus-decimal was
+     * reverse-engineered from what the Persona public verifier accepted.
+     */
     @Override
     public ExtendedJSONObject toJSONObject() {
       ExtendedJSONObject o = new ExtendedJSONObject();
       o.put("algorithm", "RS");
-      o.put("n", publicKey.getModulus().toString(10));
-      o.put("e", publicKey.getPublicExponent().toString(10));
+      o.put("n", publicKey.getModulus().toString(SERIALIZATION_BASE));
+      o.put("e", publicKey.getPublicExponent().toString(SERIALIZATION_BASE));
       return o;
     }
 
@@ -61,12 +76,18 @@ public class RSACryptoImplementation {
       return "RS" + (privateKey.getModulus().bitLength() + 7)/8;
     }
 
+    /**
+     * Serialize to a JSON object.
+     * <p>
+     * Parameters are serialized as decimal strings. Hex-versus-decimal was
+     * reverse-engineered from what the Persona public verifier accepted.
+     */
     @Override
     public ExtendedJSONObject toJSONObject() {
       ExtendedJSONObject o = new ExtendedJSONObject();
       o.put("algorithm", "RS");
-      o.put("n", privateKey.getModulus().toString(10));
-      o.put("d", privateKey.getPrivateExponent().toString(10));
+      o.put("n", privateKey.getModulus().toString(SERIALIZATION_BASE));
+      o.put("d", privateKey.getPrivateExponent().toString(SERIALIZATION_BASE));
       return o;
     }
 
@@ -113,5 +134,53 @@ public class RSACryptoImplementation {
     KeySpec keySpec = new RSAPublicKeySpec(n, e);
     RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(keySpec);
     return new RSAVerifyingPublicKey(publicKey);
+  }
+
+  public static SigningPrivateKey createPrivateKey(ExtendedJSONObject o) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    String algorithm = o.getString("algorithm");
+    if (!"RS".equals(algorithm)) {
+      throw new InvalidKeySpecException("algorithm must equal RS, was " + algorithm);
+    }
+    try {
+      BigInteger n = new BigInteger(o.getString("n"), SERIALIZATION_BASE);
+      BigInteger d = new BigInteger(o.getString("d"), SERIALIZATION_BASE);
+      return createPrivateKey(n, d);
+    } catch (NullPointerException e) {
+      throw new InvalidKeySpecException("n and d must be integers encoded as strings, base " + SERIALIZATION_BASE);
+    } catch (NumberFormatException e) {
+      throw new InvalidKeySpecException("n and d must be integers encoded as strings, base " + SERIALIZATION_BASE);
+    }
+  }
+
+  public static VerifyingPublicKey createPublicKey(ExtendedJSONObject o) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    String algorithm = o.getString("algorithm");
+    if (!"RS".equals(algorithm)) {
+      throw new InvalidKeySpecException("algorithm must equal RS, was " + algorithm);
+    }
+    try {
+      BigInteger n = new BigInteger(o.getString("n"), SERIALIZATION_BASE);
+      BigInteger e = new BigInteger(o.getString("e"), SERIALIZATION_BASE);
+      return createPublicKey(n, e);
+    } catch (NullPointerException e) {
+      throw new InvalidKeySpecException("n and e must be integers encoded as strings, base " + SERIALIZATION_BASE);
+    } catch (NumberFormatException e) {
+      throw new InvalidKeySpecException("n and e must be integers encoded as strings, base " + SERIALIZATION_BASE);
+    }
+  }
+
+  public static BrowserIDKeyPair fromJSONObject(ExtendedJSONObject o) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    try {
+      ExtendedJSONObject privateKey = o.getObject(BrowserIDKeyPair.JSON_KEY_PRIVATEKEY);
+      ExtendedJSONObject publicKey = o.getObject(BrowserIDKeyPair.JSON_KEY_PUBLICKEY);
+      if (privateKey == null) {
+        throw new InvalidKeySpecException("privateKey must not be null");
+      }
+      if (publicKey == null) {
+        throw new InvalidKeySpecException("publicKey must not be null");
+      }
+      return new BrowserIDKeyPair(createPrivateKey(privateKey), createPublicKey(publicKey));
+    } catch (NonObjectJSONException e) {
+      throw new InvalidKeySpecException("privateKey and publicKey must be JSON objects");
+    }
   }
 }
