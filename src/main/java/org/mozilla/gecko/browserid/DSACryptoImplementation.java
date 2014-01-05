@@ -121,7 +121,7 @@ public class DSACryptoImplementation {
     }
   }
 
-  public static BrowserIDKeyPair generateKeypair(int keysize)
+  public static BrowserIDKeyPair generateKeyPair(int keysize)
       throws NoSuchAlgorithmException {
     final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DSA");
     keyPairGenerator.initialize(keysize);

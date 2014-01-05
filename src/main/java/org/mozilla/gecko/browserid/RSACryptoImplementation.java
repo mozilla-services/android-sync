@@ -80,7 +80,7 @@ public class RSACryptoImplementation {
     }
   }
 
-  public static BrowserIDKeyPair generateKeypair(final int keysize) throws NoSuchAlgorithmException {
+  public static BrowserIDKeyPair generateKeyPair(final int keysize) throws NoSuchAlgorithmException {
     final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
     keyPairGenerator.initialize(keysize);
     final KeyPair keyPair = keyPairGenerator.generateKeyPair();
