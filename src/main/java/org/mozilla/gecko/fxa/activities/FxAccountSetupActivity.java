@@ -6,7 +6,9 @@ package org.mozilla.gecko.fxa.activities;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTabHost;
@@ -54,6 +56,16 @@ public class FxAccountSetupActivity
       }
       textView.setMovementMethod(LinkMovementMethod.getInstance());
       textView.setText(Html.fromHtml(textView.getText().toString()));
+    }
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    if (FxAccountAuthenticator.getFirefoxAccounts(this).length > 0) {
+      Intent intent = new Intent(this, FxAccountStatusActivity.class);
+      startActivity(intent);
+      finish();
     }
   }
 }
