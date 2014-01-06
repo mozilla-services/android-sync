@@ -4,8 +4,14 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import java.io.UnsupportedEncodingException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient20;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -81,7 +87,16 @@ public class FxAccountCreateAccountFragment extends Fragment implements OnClickL
     Logger.debug(LOG_TAG, "onCreateAccount: Asking for username/password for new account.");
     String email = emailEdit.getText().toString();
     String password = passwordEdit.getText().toString();
-    String password2 = password2Edit.getText().toString();
+
+    String serverURI = FxAccountConstants.DEFAULT_IDP_ENDPOINT;
+    Executor executor = Executors.newSingleThreadExecutor();
+    FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
+    try {
+      new FxAccountLoginTask(getActivity(), true, email, password, client).execute();
+    } catch (UnsupportedEncodingException e) {
+      // Show error here.
+      Logger.error(LOG_TAG, "Got creating account and logging in.", e);
+    }
   }
 
   @Override

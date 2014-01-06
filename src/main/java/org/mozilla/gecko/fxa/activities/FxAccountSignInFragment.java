@@ -4,8 +4,14 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import java.io.UnsupportedEncodingException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient20;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -45,6 +51,16 @@ public class FxAccountSignInFragment extends Fragment implements OnClickListener
     Logger.debug(LOG_TAG, "onSignIn: Asking for username/password for existing account.");
     String email = ((EditText) view.findViewById(R.id.email)).getText().toString();
     String password = ((EditText) view.findViewById(R.id.password)).getText().toString();
+
+    String serverURI = FxAccountConstants.DEFAULT_IDP_ENDPOINT;
+    Executor executor = Executors.newSingleThreadExecutor();
+    FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
+    try {
+      new FxAccountLoginTask(getActivity(), false, email, password, client).execute();
+    } catch (UnsupportedEncodingException e) {
+      // Show error here.
+      Logger.error(LOG_TAG, "Got exception logging in.", e);
+    }
   }
 
   @Override
