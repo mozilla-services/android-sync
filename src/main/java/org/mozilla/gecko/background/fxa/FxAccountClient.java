@@ -52,6 +52,12 @@ public class FxAccountClient {
 
   protected static final String VERSION_FRAGMENT = "v1/";
 
+  public static final String JSON_KEY_EMAIL = "email";
+  public static final String JSON_KEY_KEYFETCHTOKEN = "keyFetchToken";
+  public static final String JSON_KEY_SESSIONTOKEN = "sessionToken";
+  public static final String JSON_KEY_UID = "uid";
+  public static final String JSON_KEY_VERIFIED = "verified";
+
   protected final String serverURI;
   protected final Executor executor;
 
