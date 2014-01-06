@@ -145,4 +145,18 @@ public class TestExtendedJSONObject {
     q.put("modified", o.get("modified"));
     assertEquals(o, q);
   }
+
+  @Test
+  public void testGetBoolean() throws Exception {
+    ExtendedJSONObject o = new ExtendedJSONObject("{\"truekey\":true, \"falsekey\":false, \"stringkey\":\"string\"}");
+    assertEquals(true, o.getBoolean("truekey"));
+    assertEquals(false, o.getBoolean("falsekey"));
+    try {
+      o.getBoolean("stringkey");
+      fail();
+    } catch (Exception e) {
+      assertTrue(e instanceof ClassCastException);
+    }
+    assertEquals(null, o.getBoolean("missingkey"));
+  }
 }

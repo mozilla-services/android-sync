@@ -183,11 +183,17 @@ public class ExtendedJSONObject {
   public Object get(String key) {
     return this.object.get(key);
   }
+
   public Long getLong(String key) {
     return (Long) this.get(key);
   }
+
   public String getString(String key) {
     return (String) this.get(key);
+  }
+
+  public Boolean getBoolean(String key) {
+    return (Boolean) this.get(key);
   }
 
   /**
