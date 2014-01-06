@@ -386,6 +386,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
         PrintStream bodyStream = this.handleBasicHeaders(request, response, 200, "application/newlines");
         for (int i = 0; i < 5; i++) {
           ClientRecord record = new ClientRecord();
+          if (i != 2) {   // So we test null version.
+            record.version = Integer.toString(28 + i);
+          }
           expectedClients.add(record);
           CryptoRecord cryptoRecord = cryptoFromClient(record);
           bodyStream.print(cryptoRecord.toJSONString() + "\n");
@@ -452,15 +455,33 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public void testShouldUploadNoCommandsToProcess() throws NullCursorException {
     // shouldUpload() returns true.
     assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     assertTrue(shouldUpload());
 
     // Set the timestamp to be a little earlier than refresh time,
     // so shouldUpload() returns false.
     setRecentClientRecordTimestamp();
     assertFalse(0 == session.config.getPersistedServerClientRecordTimestamp());
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     assertFalse(shouldUpload());
+
+    // Now simulate observing a client record with the incorrect version.
+
+    ClientRecord outdatedRecord = new ClientRecord("dontmatter12", "clients", System.currentTimeMillis(), false);
+
+    outdatedRecord.version = getLocalClientVersion();
+    handleDownloadedLocalRecord(outdatedRecord);
+
+    assertEquals(outdatedRecord.lastModified, session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(shouldUploadLocalRecord);
+    assertFalse(shouldUpload());
+
+    outdatedRecord.version = outdatedRecord.version + "a1";
+    handleDownloadedLocalRecord(outdatedRecord);
+
+    // Now we think we need to upload because the version is outdated.
+    assertTrue(shouldUploadLocalRecord);
+    assertTrue(shouldUpload());
   }
 
   @SuppressWarnings("unchecked")
@@ -470,7 +491,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     // it has not been long enough yet to require an upload.
     processCommands(new JSONArray());
     setRecentClientRecordTimestamp();
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     assertFalse(shouldUpload());
 
     // shouldUpload() returns true since array is size 1 even though
@@ -480,7 +501,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     processCommands(commands);
     setRecentClientRecordTimestamp();
     assertEquals(1, commands.size());
-    assertTrue(commandsProcessedShouldUpload);
+    assertTrue(shouldUploadLocalRecord);
     assertTrue(shouldUpload());
   }
 
@@ -521,7 +542,10 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     assertEquals(expectedClients.size(), numRecordsFromGetRequest);
     for (int i = 0; i < downloadedClients.size(); i++) {
-      assertTrue(expectedClients.get(i).guid.equals(downloadedClients.get(i).guid));
+      final ClientRecord downloaded = downloadedClients.get(i);
+      final ClientRecord expected = expectedClients.get(i);
+      assertTrue(expected.guid.equals(downloaded.guid));
+      assertEquals(expected.version, downloaded.version);
     }
     assertTrue(mockDataAccessorIsClosed());
   }
@@ -529,7 +553,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   @Test
   public void testCheckAndUploadClientRecord() {
     uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     assertEquals(0, session.config.getPersistedServerClientRecordTimestamp());
     currentUploadMockServer = new UploadMockServer();
     // performNotify() occurs in MockGlobalSessionCallback.
@@ -606,7 +630,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
   /**
    * The following 8 tests are for ClientUploadDelegate.handleRequestFailure().
-   * for the varying values of uploadAttemptsCount, commandsProcessedShouldUpload,
+   * for the varying values of uploadAttemptsCount, shouldUploadLocalRecord,
    * and the type of server error.
    *
    * The first 4 are for 412 Precondition Failures.
@@ -614,7 +638,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
    */
   @Test
   public void testHandle412UploadFailureLowCount() {
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
     assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
@@ -624,7 +648,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
   @Test
   public void testHandle412UploadFailureHighCount() {
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
     uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
@@ -634,7 +658,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
   @Test
   public void testHandle412UploadFailureLowCountWithCommand() {
-    commandsProcessedShouldUpload = true;
+    shouldUploadLocalRecord = true;
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
     assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
@@ -644,7 +668,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
   @Test
   public void testHandle412UploadFailureHighCountWithCommand() {
-    commandsProcessedShouldUpload = true;
+    shouldUploadLocalRecord = true;
     currentUploadMockServer = new MockServer(HttpStatus.SC_PRECONDITION_FAILED, null);
     uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
@@ -655,7 +679,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   @Test
   public void testHandleMiscUploadFailureLowCount() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
     assertEquals(0, uploadAttemptsCount.get());
@@ -665,7 +689,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   @Test
   public void testHandleMiscUploadFailureHighCount() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
-    assertFalse(commandsProcessedShouldUpload);
+    assertFalse(shouldUploadLocalRecord);
     uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
     assertEquals(MAX_UPLOAD_FAILURE_COUNT, uploadAttemptsCount.get());
@@ -675,7 +699,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   @Test
   public void testHandleMiscUploadFailureHighCountWithCommands() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
-    commandsProcessedShouldUpload = true;
+    shouldUploadLocalRecord = true;
     uploadAttemptsCount.set(MAX_UPLOAD_FAILURE_COUNT);
     performFailingUpload();
     assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
@@ -685,7 +709,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   @Test
   public void testHandleMiscUploadFailureMaxAttempts() {
     currentUploadMockServer = new MockServer(HttpStatus.SC_BAD_REQUEST, null);
-    commandsProcessedShouldUpload = true;
+    shouldUploadLocalRecord = true;
     assertEquals(0, uploadAttemptsCount.get());
     performFailingUpload();
     assertEquals(MAX_UPLOAD_FAILURE_COUNT + 1, uploadAttemptsCount.get());
@@ -705,10 +729,36 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   }
 
   @Test
-  public void testAddCommands() throws NullCursorException {
+  public void testAddCommandsToUnversionedClient() throws NullCursorException {
     db = new TestAddCommandsMockClientsDatabaseAccessor();
-    this.addCommands(new ClientRecord());
+
+    final ClientRecord remoteRecord = new ClientRecord();
+    remoteRecord.version = null;
+    final String expectedGUID = remoteRecord.guid;
+
+    this.addCommands(remoteRecord);
     assertEquals(1, toUpload.size());
-    assertEquals(4, toUpload.get(0).commands.size());
+
+    final ClientRecord recordToUpload = toUpload.get(0);
+    assertEquals(4, recordToUpload.commands.size());
+    assertEquals(expectedGUID, recordToUpload.guid);
+    assertEquals(null, recordToUpload.version);
+  }
+
+  @Test
+  public void testAddCommandsToVersionedClient() throws NullCursorException {
+    db = new TestAddCommandsMockClientsDatabaseAccessor();
+
+    final ClientRecord remoteRecord = new ClientRecord();
+    remoteRecord.version = "12a1";
+    final String expectedGUID = remoteRecord.guid;
+
+    this.addCommands(remoteRecord);
+    assertEquals(1, toUpload.size());
+
+    final ClientRecord recordToUpload = toUpload.get(0);
+    assertEquals(4, recordToUpload.commands.size());
+    assertEquals(expectedGUID, recordToUpload.guid);
+    assertEquals("12a1", recordToUpload.version);
   }
 }

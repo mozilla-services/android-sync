@@ -33,6 +33,7 @@ public class TestClientRecord {
     assertEquals(null, cryptoRecord.payload.get("collection"));
     assertEquals(null, cryptoRecord.payload.get("lastModified"));
     assertEquals(null, cryptoRecord.payload.get("deleted"));
+    assertEquals(null, cryptoRecord.payload.get("version"));
     assertEquals(record.name, cryptoRecord.payload.get("name"));
     assertEquals(record.type, cryptoRecord.payload.get("type"));
   }
@@ -56,6 +57,7 @@ public class TestClientRecord {
   public void testCopyWithIDs() {
     // Test ClientRecord.copyWithIDs.
     ClientRecord record1 = new ClientRecord();
+    record1.version = "20";
     String newGUID = Utils.generateGuid();
     ClientRecord record2 = (ClientRecord) record1.copyWithIDs(newGUID, 0);
     assertEquals(newGUID, record2.guid);
@@ -65,6 +67,7 @@ public class TestClientRecord {
     assertEquals(record1.deleted, record2.deleted);
     assertEquals(record1.name, record2.name);
     assertEquals(record1.type, record2.type);
+    assertEquals(record1.version, record2.version);
   }
 
   @Test
@@ -73,6 +76,8 @@ public class TestClientRecord {
     ClientRecord record1 = new ClientRecord();
     ClientRecord record2 = new ClientRecord();
     record2.guid = record1.guid;
+    record2.version = "20";
+    record1.version = null;
 
     ClientRecord record3 = new ClientRecord(Utils.generateGuid());
     record3.name = "New Name";
