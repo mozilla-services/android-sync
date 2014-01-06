@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonArrayJSONException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.UnexpectedJSONException.BadRequiredFieldJSONException;
 
 public class TestExtendedJSONObject {
   public static String exampleJSON = "{\"modified\":1233702554.25,\"success\":[\"{GXS58IDC}12\",\"{GXS58IDC}13\",\"{GXS58IDC}15\",\"{GXS58IDC}16\",\"{GXS58IDC}18\",\"{GXS58IDC}19\"],\"failed\":{\"{GXS58IDC}11\":[\"invalid parentid\"],\"{GXS58IDC}14\":[\"invalid parentid\"],\"{GXS58IDC}17\":[\"invalid parentid\"],\"{GXS58IDC}20\":[\"invalid parentid\"]}}";
@@ -158,5 +159,34 @@ public class TestExtendedJSONObject {
       assertTrue(e instanceof ClassCastException);
     }
     assertEquals(null, o.getBoolean("missingkey"));
+  }
+
+  protected void assertException(ExtendedJSONObject o, String[] requiredFields, Class<?> requiredFieldClass) {
+    try {
+      o.throwIfFieldsMissingOrMisTyped(requiredFields, requiredFieldClass);
+      fail();
+    } catch (Exception e) {
+      assertTrue(e instanceof BadRequiredFieldJSONException);
+    }
+  }
+
+  @Test
+  public void testThrow() throws Exception {
+    ExtendedJSONObject o = new ExtendedJSONObject("{\"true\":true, \"false\":false, \"string\":\"string\", \"long\":40000000000, \"int\":40, \"nested\":{\"inner\":10}}");
+    o.throwIfFieldsMissingOrMisTyped(new String[] { "true", "false" }, Boolean.class);
+    o.throwIfFieldsMissingOrMisTyped(new String[] { "string" }, String.class);
+    o.throwIfFieldsMissingOrMisTyped(new String[] { "long" }, Long.class);
+    o.throwIfFieldsMissingOrMisTyped(new String[] { "int" }, Long.class);
+    o.throwIfFieldsMissingOrMisTyped(new String[] { "int" }, null);
+
+    // Perhaps a bit unexpected, but we'll document it here.
+    o.throwIfFieldsMissingOrMisTyped(new String[] { "nested" }, JSONObject.class);
+
+    // Should fail.
+    assertException(o, new String[] { "int" }, Integer.class); // Irritating, but...
+    assertException(o, new String[] { "long" }, Integer.class); // Ditto.
+    assertException(o, new String[] { "missing" }, String.class);
+    assertException(o, new String[] { "missing" }, null);
+    assertException(o, new String[] { "string", "int" }, String.class); // Irritating, but...
   }
 }
