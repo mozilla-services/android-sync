@@ -12,6 +12,7 @@ import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.background.fxa.FxAccountClient;
+import org.mozilla.gecko.background.fxa.FxAccountClient.StatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
@@ -66,7 +67,12 @@ public class TestLiveFxAccountClient20 {
     }
   }
 
-  protected String createAccount(final String email, final String password)
+  public enum VerificationState {
+    UNVERIFIED,
+    PREVERIFIED,
+  }
+
+  protected String createAccount(final String email, final String password, final VerificationState preVerified)
       throws Throwable {
     final byte[] emailUTF8 = email.getBytes("UTF-8");
     final byte[] passwordUTF8 = password.getBytes("UTF-8");
@@ -76,7 +82,8 @@ public class TestLiveFxAccountClient20 {
       waitHelper.performWait(new Runnable() {
         @Override
         public void run() {
-          client.createAccount(emailUTF8, passwordUTF8, true, new BaseDelegate<String>(waitHelper) {
+          boolean wantVerified = preVerified == VerificationState.PREVERIFIED;
+          client.createAccount(emailUTF8, passwordUTF8, wantVerified, new BaseDelegate<String>(waitHelper) {
             @Override
             public void handleSuccess(String uid) {
               uids[0] = uid;
@@ -170,6 +177,24 @@ public class TestLiveFxAccountClient20 {
     return ret[0];
   }
 
+  protected StatusResponse status(final byte[] sessionToken) {
+    final StatusResponse ret[] =  new StatusResponse[1];
+    final WaitHelper waitHelper = WaitHelper.getTestWaiter();
+    waitHelper.performWait(new Runnable() {
+      @Override
+      public void run() {
+        client.status(sessionToken, new BaseDelegate<StatusResponse>(waitHelper) {
+          @Override
+          public void handleSuccess(StatusResponse response) {
+            ret[0] = response;
+            waitHelper.performNotify();
+          }
+        });
+      }
+    });
+    return ret[0];
+  }
+
   @Test
   public void testCreateDeterministic() throws Throwable {
     // Fixed account, no unicode.
@@ -206,10 +231,29 @@ public class TestLiveFxAccountClient20 {
     }
   }
 
+  @Test
+  public void testCreateUnverified() throws Throwable {
+    // Random account.
+    long now = System.currentTimeMillis();
+    String email = "" + now + "@example.org";
+    String password = "" + now + "password";
+    doTestCreateAndLogin(email, password, false, VerificationState.UNVERIFIED);
+
+    LoginResponse login = login(email, password, false);
+    StatusResponse status = status(login.sessionToken);
+    Assert.assertEquals(email, status.email);
+    Assert.assertFalse(status.verified);
+  }
+
   protected void doTestCreateAndLogin(final String email, String password, final boolean accountMayExist)
       throws Throwable {
+    doTestCreateAndLogin(email, password, accountMayExist, VerificationState.PREVERIFIED);
+  }
+
+  protected void doTestCreateAndLogin(final String email, String password, final boolean accountMayExist, VerificationState preVerified)
+      throws Throwable {
     try {
-      String uid = createAccount(email, password);
+      String uid = createAccount(email, password, preVerified);
       Assert.assertNotNull(uid);
     } catch (HTTPFailureException e) {
       SyncStorageResponse response = e.response;
@@ -221,7 +265,7 @@ public class TestLiveFxAccountClient20 {
     }
 
     try {
-      createAccount(email, password);
+      createAccount(email, password, preVerified);
       Assert.fail();
     } catch (HTTPFailureException e) {
       SyncStorageResponse response = e.response;
@@ -232,29 +276,31 @@ public class TestLiveFxAccountClient20 {
     Assert.assertNotNull(loginResponse);
     Assert.assertNotNull(loginResponse.uid);
     Assert.assertNotNull(loginResponse.sessionToken);
-    Assert.assertTrue(loginResponse.verified);
+    Assert.assertTrue(loginResponse.verified == (preVerified == VerificationState.PREVERIFIED));
 
     LoginResponse keysResponse = login(email, password, true);
     Assert.assertNotNull(keysResponse);
     Assert.assertNotNull(keysResponse.uid);
     Assert.assertNotNull(keysResponse.sessionToken);
-    Assert.assertTrue(keysResponse.verified);
+    Assert.assertTrue(keysResponse.verified == (preVerified == VerificationState.PREVERIFIED));
     Assert.assertNotNull(keysResponse.keyFetchToken);
 
     Assert.assertEquals(loginResponse.uid, keysResponse.uid);
     Assert.assertFalse(loginResponse.sessionToken.equals(keysResponse.sessionToken));
 
-    TwoKeys keys = keys(keysResponse.keyFetchToken);
+    if (preVerified == VerificationState.PREVERIFIED) {
+      TwoKeys keys = keys(keysResponse.keyFetchToken);
 
-    Assert.assertEquals(32, keys.kA.length);
-    Assert.assertEquals(32, keys.wrapkB.length);
+      Assert.assertEquals(32, keys.kA.length);
+      Assert.assertEquals(32, keys.wrapkB.length);
+    }
   }
 
   @Test
   public void testSessionDestroy() throws Throwable {
     String uid = null;
     try {
-      uid = createAccount(TEST_EMAIL, TEST_PASSWORD);
+      uid = createAccount(TEST_EMAIL, TEST_PASSWORD, VerificationState.PREVERIFIED);
       Assert.assertNotNull(uid);
     } catch (HTTPFailureException e) {
       SyncStorageResponse response = e.response;
@@ -289,7 +335,7 @@ public class TestLiveFxAccountClient20 {
   public void testCertificateSign() throws Throwable {
     String uid = null;
     try {
-      uid = createAccount(TEST_EMAIL, TEST_PASSWORD);
+      uid = createAccount(TEST_EMAIL, TEST_PASSWORD, VerificationState.PREVERIFIED);
       Assert.assertNotNull(uid);
     } catch (HTTPFailureException e) {
       SyncStorageResponse response = e.response;
