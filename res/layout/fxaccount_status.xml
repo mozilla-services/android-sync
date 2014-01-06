@@ -1,0 +1,182 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical" >
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <LinearLayout
+            style="@style/FxAccountMiddle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+
+            <FrameLayout
+                android:id="@+id/frame"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <LinearLayout
+                    android:id="@+id/new_user"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone" >
+
+                    <TextView
+                        style="@style/FxAccountHeaderItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Firefox Accounts" >
+                    </TextView>
+
+                    <TextView
+                        style="@style/FxAccountTextItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Sync your bookmarks, history, and settings to your Firefox Account to access from any Firefox." >
+                    </TextView>
+
+                    <Button
+                        android:id="@+id/get_started_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="30dp"
+                        android:onClick="onClickGetStarted"
+                        android:paddingLeft="20dp"
+                        android:paddingRight="20dp"
+                        android:text="Get started" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/existing_user"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="visible" >
+
+                    <TextView
+                        style="@style/FxAccountHeaderItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Firefox Account" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/email"
+                        style="@style/FxAccountTextItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp" >
+                    </TextView>
+
+                    <TextView
+                        android:id="@+id/change_password"
+                        style="@style/FxAccountLinkItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Change password" >
+                    </TextView>
+
+                    <FrameLayout
+                        android:id="@+id/connection_status_view"
+                        style="@style/FxAccountTextItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp" >
+
+                        <Button
+                            android:id="@+id/unverified_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:onClick="onClickVerify"
+                            android:text="Your account needs to be verified. Tap here to verify and start syncing."
+                            android:visibility="gone" >
+                        </Button>
+
+                        <Button
+                            android:id="@+id/sign_in_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:onClick="onClickSignIn"
+                            android:text="Your account details are out of date. Tap here to sign in again and resume syncing."
+                            android:visibility="gone" >
+                        </Button>
+
+                        <TextView
+                            android:id="@+id/syncing_view"
+                            style="@style/FxAccountTextItem"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:text="Firefox is syncing..."
+                            android:visibility="visible" >
+                        </TextView>
+                    </FrameLayout>
+
+                    <TextView
+                        style="@style/FxAccountHeaderItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Sync" >
+                    </TextView>
+
+                    <CheckBox
+                        android:id="@+id/bookmarks_checkbox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:enabled="true"
+                        android:text="Bookmarks" />
+
+                    <CheckBox
+                        android:id="@+id/bookmarks_history"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:enabled="true"
+                        android:text="History" />
+
+                    <CheckBox
+                        android:id="@+id/bookmarks_passwords"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:enabled="true"
+                        android:text="Passwords" />
+
+                    <CheckBox
+                        android:id="@+id/bookmarks_tabs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:enabled="true"
+                        android:text="Open tabs" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <Button
+                android:id="@+id/refresh_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="30dp"
+                android:onClick="onClickRefresh"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:text="Refresh" />
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
