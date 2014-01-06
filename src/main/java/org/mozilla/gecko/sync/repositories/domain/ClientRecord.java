@@ -19,9 +19,22 @@ public class ClientRecord extends Record {
   public static final long CLIENTS_TTL = 21 * 24 * 60 * 60; // 21 days in seconds.
   public static final String DEFAULT_CLIENT_NAME = "Default Name";
 
+  /**
+   * Each of these fields is 'owned' by the client it represents. For example,
+   * the "version" field is the Firefox version of that client; some time after
+   * that client upgrades, it'll upload a new record with its new version.
+   *
+   * The only exception is for commands. When a command is sent to a client, the
+   * sender will download its current record, append the command to the
+   * "commands" array, and reupload the record. After processing, the recipient
+   * will reupload its record with an empty commands array.
+   *
+   * Note that the version, then, will remain the version of the recipient, as
+   * with the other descriptive fields.
+   */
   public String name = ClientRecord.DEFAULT_CLIENT_NAME;
   public String type = ClientRecord.CLIENT_TYPE;
-  public String version = null;
+  public String version = null;                      // Free-form string, optional.
   public JSONArray commands;
 
   public ClientRecord(String guid, String collection, long lastModified, boolean deleted) {
