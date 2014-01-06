@@ -3,8 +3,6 @@
 	<classpathentry including="**/*.java" kind="src" output="bin/test-classes" path="src/test/java"/>
 	<classpathentry including="**/*.java" kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="output" path="bin/classes"/>
-
 	<classpathentry including="**/*.java" kind="src" path="external/httpclientandroidlib/httpclientandroidlib/src">
 		<attributes>
 			<attribute name="ignore_optional_problems" value="true"/>
@@ -17,12 +15,12 @@
 	</classpathentry>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/simpleframework/simple/4.1.21/simple-4.1.21.jar"/>
-  <!-- Stub/unstub libraries must come before Android libraries for
-       unit tests to function. -->
 	<classpathentry kind="var" path="M2_REPO/android/util/base64-unstub/1/base64-unstub-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/util/log-unstub/1/log-unstub-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/content/sharedpreferences-stub/1/sharedpreferences-stub-1.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
