@@ -174,13 +174,13 @@ public class TestLiveFxAccountClient10 {
     return authTokens[0];
   }
 
-  protected String certificateSign(final ExtendedJSONObject publicKey, final int duration, final byte[] sessionToken) {
+  protected String certificateSign(final ExtendedJSONObject publicKey, final int durationInMilliseconds, final byte[] sessionToken) {
     final String ret[] =  new String[1];
     final WaitHelper waitHelper = WaitHelper.getTestWaiter();
     waitHelper.performWait(new Runnable() {
       @Override
       public void run() {
-        client.sign(sessionToken, publicKey, duration, new BaseDelegate<String>(waitHelper) {
+        client.sign(sessionToken, publicKey, durationInMilliseconds, new BaseDelegate<String>(waitHelper) {
           @Override
           public void handleSuccess(String cert) {
             ret[0] = cert;

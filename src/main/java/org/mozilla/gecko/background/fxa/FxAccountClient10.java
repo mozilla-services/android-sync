@@ -604,10 +604,10 @@ public class FxAccountClient10 {
   }
 
   @SuppressWarnings("unchecked")
-  public void sign(final byte[] sessionToken, final ExtendedJSONObject publicKey, long durationInSeconds, final RequestDelegate<String> delegate) {
+  public void sign(final byte[] sessionToken, final ExtendedJSONObject publicKey, long durationInMilliseconds, final RequestDelegate<String> delegate) {
     final JSONObject body = new JSONObject();
     body.put("publicKey", publicKey);
-    body.put("duration", durationInSeconds);
+    body.put("duration", durationInMilliseconds);
 
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
