@@ -540,6 +540,69 @@ public class FxAccountClient {
     resource.get();
   }
 
+  /**
+   * Thin container for status response.
+   */
+  public static class StatusResponse {
+    public final String email;
+    public final boolean verified;
+    public StatusResponse(String email, boolean verified) {
+      this.email = email;
+      this.verified = verified;
+    }
+  }
+
+  /**
+   * Query the status of an account given a valid session token.
+   * <p>
+   * This API is a little odd: the auth server returns the email and
+   * verification state of the account that corresponds to the (opaque) session
+   * token. It might fail if the session token is unknown (or invalid, or
+   * revoked).
+   *
+   * @param sessionToken
+   *          to query.
+   * @param delegate
+   *          to invoke callbacks.
+   */
+  public void status(byte[] sessionToken, final RequestDelegate<StatusResponse> delegate) {
+    final byte[] tokenId = new byte[32];
+    final byte[] reqHMACKey = new byte[32];
+    final byte[] requestKey = new byte[32];
+    try {
+      HKDF.deriveMany(sessionToken, new byte[0], FxAccountUtils.KW("sessionToken"), tokenId, reqHMACKey, requestKey);
+    } catch (Exception e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
+    BaseResource resource;
+    try {
+      resource = new BaseResource(new URI(serverURI + "recovery_email/status"));
+    } catch (URISyntaxException e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
+    resource.delegate = new ResourceDelegate<StatusResponse>(resource, delegate, tokenId, reqHMACKey, false) {
+      @Override
+      public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
+        try {
+          String[] requiredStringFields = new String[] { JSON_KEY_EMAIL };
+          body.throwIfFieldsMissingOrMisTyped(requiredStringFields, String.class);
+          String email = body.getString(JSON_KEY_EMAIL);
+          Boolean verified = body.getBoolean(JSON_KEY_VERIFIED);
+          delegate.handleSuccess(new StatusResponse(email, verified));
+          return;
+        } catch (Exception e) {
+          delegate.handleError(e);
+          return;
+        }
+      }
+    };
+    resource.get();
+  }
+
   @SuppressWarnings("unchecked")
   public void sign(final byte[] sessionToken, final ExtendedJSONObject publicKey, long durationInSeconds, final RequestDelegate<String> delegate) {
     final JSONObject body = new JSONObject();
