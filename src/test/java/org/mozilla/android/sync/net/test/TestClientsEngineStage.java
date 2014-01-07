@@ -470,6 +470,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     ClientRecord outdatedRecord = new ClientRecord("dontmatter12", "clients", System.currentTimeMillis(), false);
 
     outdatedRecord.version = getLocalClientVersion();
+    outdatedRecord.protocols = getLocalClientProtocols();
     handleDownloadedLocalRecord(outdatedRecord);
 
     assertEquals(outdatedRecord.lastModified, session.config.getPersistedServerClientRecordTimestamp());
@@ -481,6 +482,21 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
     // Now we think we need to upload because the version is outdated.
     assertTrue(shouldUploadLocalRecord);
+    assertTrue(shouldUpload());
+
+    shouldUploadLocalRecord = false;
+    assertFalse(shouldUpload());
+
+    // If the protocol list is missing or wrong, we should reupload.
+    outdatedRecord.protocols = new JSONArray();
+    handleDownloadedLocalRecord(outdatedRecord);
+    assertTrue(shouldUpload());
+
+    shouldUploadLocalRecord = false;
+    assertFalse(shouldUpload());
+
+    outdatedRecord.protocols.add("1.0");
+    handleDownloadedLocalRecord(outdatedRecord);
     assertTrue(shouldUpload());
   }
 
