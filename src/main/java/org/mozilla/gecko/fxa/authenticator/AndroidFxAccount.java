@@ -208,8 +208,8 @@ public class AndroidFxAccount implements AbstractFxAccount {
 
     Bundle userdata = new Bundle();
     userdata.putString(AndroidFxAccount.ACCOUNT_KEY_SERVERURI, serverURI);
-    userdata.putString(AndroidFxAccount.ACCOUNT_KEY_SESSION_TOKEN, Utils.byte2Hex(sessionToken));
-    userdata.putString(AndroidFxAccount.ACCOUNT_KEY_KEY_FETCH_TOKEN, Utils.byte2Hex(keyFetchToken));
+    userdata.putString(AndroidFxAccount.ACCOUNT_KEY_SESSION_TOKEN, sessionToken == null ? null : Utils.byte2Hex(sessionToken));
+    userdata.putString(AndroidFxAccount.ACCOUNT_KEY_KEY_FETCH_TOKEN, keyFetchToken == null ? null : Utils.byte2Hex(keyFetchToken));
     userdata.putString(AndroidFxAccount.ACCOUNT_KEY_VERIFIED, Boolean.valueOf(verified).toString());
     userdata.putString(AndroidFxAccount.ACCOUNT_KEY_UNWRAPKB, Utils.byte2Hex(unwrapBkey));
 
