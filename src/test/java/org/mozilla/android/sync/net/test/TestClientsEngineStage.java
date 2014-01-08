@@ -451,6 +451,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     });
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testShouldUploadNoCommandsToProcess() throws NullCursorException {
     // shouldUpload() returns true.
