@@ -45,7 +45,7 @@ public class TestLiveMockMyIDTokenFactory {
 
     mockMyIdTokenFactory = new MockMyIDTokenFactory();
 
-    keyPair = RSACryptoImplementation.generateKeypair(1024); // No need for strong keys while testing.
+    keyPair = RSACryptoImplementation.generateKeyPair(1024); // No need for strong keys while testing.
     publicKey = keyPair.getPublic();
     privateKey = keyPair.getPrivate();
   }
@@ -95,7 +95,7 @@ public class TestLiveMockMyIDTokenFactory {
 
   @Test
   public void testDSASuccess() throws Exception {
-    BrowserIDKeyPair keyPair = DSACryptoImplementation.generateKeypair(1024);
+    BrowserIDKeyPair keyPair = DSACryptoImplementation.generateKeyPair(1024);
     String assertion = mockMyIdTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_AUDIENCE);
     assertVerifySuccess(TEST_AUDIENCE, assertion);
   }

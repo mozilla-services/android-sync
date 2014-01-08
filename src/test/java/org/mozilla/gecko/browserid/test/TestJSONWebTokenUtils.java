@@ -40,14 +40,14 @@ public class TestJSONWebTokenUtils {
 
   @Test
   public void testEncodeDecodeSuccessRSA() throws Exception {
-    doTestEncodeDecode(RSACryptoImplementation.generateKeypair(1024));
-    doTestEncodeDecode(RSACryptoImplementation.generateKeypair(2048));
+    doTestEncodeDecode(RSACryptoImplementation.generateKeyPair(1024));
+    doTestEncodeDecode(RSACryptoImplementation.generateKeyPair(2048));
   }
 
   @Test
   public void testEncodeDecodeSuccessDSA() throws Exception {
-    doTestEncodeDecode(DSACryptoImplementation.generateKeypair(512));
-    doTestEncodeDecode(DSACryptoImplementation.generateKeypair(1024));
+    doTestEncodeDecode(DSACryptoImplementation.generateKeyPair(512));
+    doTestEncodeDecode(DSACryptoImplementation.generateKeyPair(1024));
   }
 
   public static String TEST_ASSERTION_ISSUER = "127.0.0.1";

@@ -41,7 +41,7 @@ public class TestLiveTokenServerClient {
 
   public TestLiveTokenServerClient() throws NoSuchAlgorithmException {
     this.mockMyIDTokenFactory = new MockMyIDTokenFactory();
-    this.keyPair = RSACryptoImplementation.generateKeypair(1024);
+    this.keyPair = RSACryptoImplementation.generateKeyPair(1024);
   }
 
   @Before
