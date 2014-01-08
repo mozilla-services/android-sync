@@ -13,14 +13,17 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.SRPConstants;
 
+/**
+ * Test vectors from
+ * <a href="https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#stretch-KDF">https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#stretch-KDF</a>
+ * and
+ * <a href="https://github.com/mozilla/fxa-auth-server/wiki/onepw-protocol/5a9bc81e499306d769ca19b40b50fa60123df15d">https://github.com/mozilla/fxa-auth-server/wiki/onepw-protocol/5a9bc81e499306d769ca19b40b50fa60123df15d</a>.
+ */
 public class TestFxAccountUtils {
   protected static void assertEncoding(String base16String, String utf8String) throws Exception {
     Assert.assertEquals(base16String, FxAccountUtils.bytes(utf8String));
   }
 
-  /**
-   * Test vectors from <a href="https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#stretch-KDF">https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#stretch-KDF</a>.
-   */
   @Test
   public void testUTF8Encoding() throws Exception {
     assertEncoding("616e6472c3a9406578616d706c652e6f7267", "andré@example.org");
@@ -65,10 +68,24 @@ public class TestFxAccountUtils {
     Assert.assertEquals(expectedVHex, FxAccountUtils.hexModN(v, SRPConstants._2048.N));
   }
 
+  @Test
   public void testGenerateSyncKeyBundle() throws Exception {
     byte[] kB = Utils.hex2Byte("d02d8fe39f28b601159c543f2deeb8f72bdf2043e8279aa08496fbd9ebaea361");
     KeyBundle bundle = FxAccountUtils.generateSyncKeyBundle(kB);
     Assert.assertEquals("rsLwECkgPYeGbYl92e23FskfIbgld9TgeifEaB9ZwTI=", Base64.encodeBase64String(bundle.getEncryptionKey()));
     Assert.assertEquals("fs75EseCD/VOLodlIGmwNabBjhTYBHFCe7CGIf0t8Tw=", Base64.encodeBase64String(bundle.getHMACKey()));
+  }
+
+  @Test
+  public void testGeneration() throws Exception {
+    byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(
+        Utils.hex2Byte("616e6472c3a9406578616d706c652e6f7267"),
+        Utils.hex2Byte("70c3a4737377c3b67264"));
+    Assert.assertEquals("e4e8889bd8bd61ad6de6b95c059d56e7b50dacdaf62bd84644af7e2add84345d",
+        Utils.byte2Hex(quickStretchedPW));
+    Assert.assertEquals("247b675ffb4c46310bc87e26d712153abe5e1c90ef00a4784594f97ef54f2375",
+        Utils.byte2Hex(FxAccountUtils.generateAuthPW(quickStretchedPW)));
+    Assert.assertEquals("de6a2648b78284fcb9ffa81ba95803309cfba7af583c01a8a1a63e567234dd28",
+        Utils.byte2Hex(FxAccountUtils.generateUnwrapBKey(quickStretchedPW)));
   }
 }
