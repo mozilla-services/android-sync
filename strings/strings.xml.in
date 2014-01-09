@@ -115,3 +115,6 @@
 
   <string name="fxaccount_sign_in_instead">&fxaccount.sign.in.instead;</string>
   <string name="fxaccount_sign_up_instead">&fxaccount.sign.up.instead;</string>
+
+  <string name="fxaccount_options_title">&fxaccount.options.title;</string>
+  <string name="fxaccount_options_configure_title">&fxaccount.options.configure.title;</string>

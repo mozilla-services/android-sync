@@ -128,3 +128,7 @@
 <!ENTITY fxaccount.bad.passwords 'Your passwords must match.'>
 <!ENTITY fxaccount.sign.in.instead 'Already have an account? Sign in instead.'>
 <!ENTITY fxaccount.sign.up.instead 'Don\&apos;t have an account? Sign up instead.'>
+
+<!-- Android > Accounts > [Firefox Account] Screen -->
+<!ENTITY fxaccount.options.title 'Options'>
+<!ENTITY fxaccount.options.configure.title 'Configure your Firefox Account'>
