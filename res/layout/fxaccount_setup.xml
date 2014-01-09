@@ -1,29 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- This Source Code Form is subject to the terms of the Mozilla Public
+<!--
+   This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
-   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-<android.support.v4.app.FragmentTabHost xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@android:id/tabhost"
-	android:layout_width="match_parent"
-	android:layout_height="match_parent" >
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
 
-	<LinearLayout
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:orientation="vertical" >
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
 
-		<TabWidget
-			android:id="@android:id/tabs"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content" >
-		</TabWidget>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
 
-		<FrameLayout
-			android:id="@+id/tabcontent"
-			android:layout_width="match_parent"
-			android:layout_height="match_parent" >
-		</FrameLayout>
-	</LinearLayout>
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
 
-</android.support.v4.app.FragmentTabHost>
+                <LinearLayout
+                    android:id="@+id/sign_up_view"
+                    style="@style/FxAccountMiddle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="visible" >
+
+                    <TextView
+                        style="@style/FxAccountHeaderItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Firefox Accounts" />
+
+                    <TextView
+                        style="@style/FxAccountTextItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Create an account to access Sync" />
+
+                    <EditText
+                        android:id="@+id/email"
+                        style="@style/FxAccountEditItem"
+                        android:layout_marginBottom="10dp"
+                        android:background="@drawable/fxaccount_textfield_background"
+                        android:ems="10"
+                        android:hint="@string/fxaccount_email_hint"
+                        android:inputType="textEmailAddress" >
+
+                        <requestFocus />
+                    </EditText>
+
+                    <EditText
+                        android:id="@+id/password"
+                        style="@style/FxAccountEditItem"
+                        android:layout_marginBottom="30dp"
+                        android:background="@drawable/fxaccount_textfield_background"
+                        android:ems="10"
+                        android:hint="@string/fxaccount_password_hint"
+                        android:inputType="textPassword" />
+
+                    <Button
+                        android:id="@+id/sign_up_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="30dp"
+                        android:paddingLeft="20dp"
+                        android:paddingRight="20dp"
+                        android:text="@string/fxaccount_sign_up_button_label" />
+
+                    <TextView
+                        android:id="@+id/sign_in_instead"
+                        style="@style/FxAccountLinkItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="10dp"
+                        android:focusable="true"
+                        android:text="@string/fxaccount_sign_in_instead" />
+
+                    <TextView
+                        android:id="@+id/policy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="@string/fxaccount_policy" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/sign_in_view"
+                    style="@style/FxAccountMiddle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone" >
+
+                    <TextView
+                        style="@style/FxAccountHeaderItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Firefox Accounts" />
+
+                    <TextView
+                        style="@style/FxAccountTextItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="Connect to an account to access Sync" />
+
+                    <EditText
+                        android:id="@+id/email"
+                        style="@style/FxAccountEditItem"
+                        android:layout_marginBottom="10dp"
+                        android:background="@drawable/fxaccount_textfield_background"
+                        android:ems="10"
+                        android:hint="@string/fxaccount_email_hint"
+                        android:inputType="textEmailAddress" >
+
+                        <requestFocus />
+                    </EditText>
+
+                    <EditText
+                        android:id="@+id/password"
+                        style="@style/FxAccountEditItem"
+                        android:layout_marginBottom="30dp"
+                        android:background="@drawable/fxaccount_textfield_background"
+                        android:ems="10"
+                        android:hint="@string/fxaccount_password_hint"
+                        android:inputType="textPassword" />
+
+                    <TextView
+                        android:id="@+id/forgot_password"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="30dp"
+                        android:text="@string/fxaccount_forgot_password" />
+
+                    <Button
+                        android:id="@+id/sign_in_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="30dp"
+                        android:paddingLeft="20dp"
+                        android:paddingRight="20dp"
+                        android:text="@string/fxaccount_sign_in_button_label" />
+
+                    <TextView
+                        android:id="@+id/sign_up_instead"
+                        style="@style/FxAccountLinkItem"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="10dp"
+                        android:focusable="true"
+                        android:text="@string/fxaccount_sign_up_instead" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/remote_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:textColor="@color/fxaccount_error_light"
+                android:visibility="gone" />
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

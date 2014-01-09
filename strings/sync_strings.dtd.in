@@ -119,10 +119,12 @@
          href="http://mozilla.com"&gt;Privacy Policy&lt;/a&gt;.'>
 <!ENTITY fxaccount.forgot.password '&lt;a
          href="http://mozilla.com"&gt;Forgot password&lt;/a&gt;?'>
-<!ENTITY fxaccount.create.account.button.label 'Create Account'>
+<!ENTITY fxaccount.sign.up.button.label 'Create Account'>
 <!ENTITY fxaccount.sign.in.button.label 'Sign In'>
 <!ENTITY fxaccount.email.hint 'Email'>
 <!ENTITY fxaccount.password.hint 'Password'>
 <!ENTITY fxaccount.password2.hint 'Confirm password'>
 <!ENTITY fxaccount.bad.email 'We need a real email address.'>
 <!ENTITY fxaccount.bad.passwords 'Your passwords must match.'>
+<!ENTITY fxaccount.sign.in.instead 'Already have an account? Sign in instead.'>
+<!ENTITY fxaccount.sign.up.instead 'Don\&apos;t have an account? Sign up instead.'>
