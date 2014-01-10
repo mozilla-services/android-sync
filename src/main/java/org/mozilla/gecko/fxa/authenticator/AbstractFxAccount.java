@@ -40,6 +40,9 @@ public interface AbstractFxAccount {
    */
   public String getServerURI();
 
+  public boolean isValid();
+  public void setInvalid();
+
   public byte[] getSessionToken();
   public byte[] getKeyFetchToken();
 

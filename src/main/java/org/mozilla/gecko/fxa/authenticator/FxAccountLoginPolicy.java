@@ -89,7 +89,7 @@ public class FxAccountLoginPolicy {
     String serverURI = fxAccount.getServerURI();
     byte[] emailUTF8 = fxAccount.getEmailUTF8();
     byte[] quickStretchedPW = fxAccount.getQuickStretchedPW();
-    if (serverURI == null || emailUTF8 == null || quickStretchedPW == null) {
+    if (!fxAccount.isValid() || serverURI == null || emailUTF8 == null || quickStretchedPW == null) {
       return AccountState.Invalid;
     }
 
@@ -419,6 +419,10 @@ public class FxAccountLoginPolicy {
       }
       BrowserIDKeyPair keyPair = fxAccount.getAssertionKeyPair();
       if (keyPair == null) {
+        // If we can't fetch a keypair, we probably have some crypto
+        // configuration error on device, which we are never going to recover
+        // from. Mark the account invalid.
+        fxAccount.setInvalid();
         throw new IllegalStateException("keyPair must not be null");
       }
       final VerifyingPublicKey publicKey = keyPair.getPublic();
@@ -465,7 +469,16 @@ public class FxAccountLoginPolicy {
       if (certificate == null) {
         throw new IllegalStateException("certificate must not be null");
       }
-      String assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, delegate.audience);
+      String assertion;
+      try {
+        assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, delegate.audience);
+      } catch (Exception e) {
+        // If we can't sign an assertion, we probably have some crypto
+        // configuration error on device, which we are never going to recover
+        // from. Mark the account invalid before raising the exception.
+        fxAccount.setInvalid();
+        throw e;
+      }
       fxAccount.setAssertion(assertion);
       if (Logger.LOG_PERSONAL_INFORMATION) {
         Logger.pii(LOG_TAG, "Generated assertion " + assertion);

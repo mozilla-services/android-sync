@@ -36,6 +36,7 @@ public class AndroidFxAccount implements AbstractFxAccount {
   public static final String ACCOUNT_KEY_SERVERURI = "serverURI";
   public static final String ACCOUNT_KEY_SESSION_TOKEN = "sessionToken";
   public static final String ACCOUNT_KEY_KEY_FETCH_TOKEN = "keyFetchToken";
+  public static final String ACCOUNT_KEY_VALID = "valid";
   public static final String ACCOUNT_KEY_VERIFIED = "verified";
   public static final String ACCOUNT_KEY_KA = "kA";
   public static final String ACCOUNT_KEY_KB = "kB";
@@ -258,5 +259,15 @@ public class AndroidFxAccount implements AbstractFxAccount {
     }
     FxAccountAuthenticator.enableSyncing(context, account);
     return account;
+  }
+
+  @Override
+  public boolean isValid() {
+    return Boolean.valueOf(accountManager.getUserData(account, ACCOUNT_KEY_VALID));
+  }
+
+  @Override
+  public void setInvalid() {
+    accountManager.setUserData(account, ACCOUNT_KEY_VALID, Boolean.valueOf(false).toString());
   }
 }

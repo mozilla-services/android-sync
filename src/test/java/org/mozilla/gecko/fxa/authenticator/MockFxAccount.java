@@ -19,6 +19,8 @@ public class MockFxAccount implements AbstractFxAccount {
   public byte[] quickStretchedPW = null;
 
   public String serverURI = null;
+  public boolean valid = true;
+
   public byte[] sessionToken;
   public byte[] keyFetchToken;
   public boolean verified = false;
@@ -159,5 +161,15 @@ public class MockFxAccount implements AbstractFxAccount {
     }
     fxAccount.assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), fxAccount.certificate, "http://testAudience.com");
     return fxAccount;
+  }
+
+  @Override
+  public boolean isValid() {
+    return valid;
+  }
+
+  @Override
+  public void setInvalid() {
+    valid = false;
   }
 }
