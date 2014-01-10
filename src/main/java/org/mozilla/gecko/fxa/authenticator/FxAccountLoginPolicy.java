@@ -18,6 +18,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.browserid.VerifyingPublicKey;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginAccountNotVerifiedException;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginBadPasswordException;
 import org.mozilla.gecko.sync.HTTPFailureException;
@@ -40,13 +41,20 @@ public class FxAccountLoginPolicy {
     this.executor = executor;
   }
 
-  protected void invokeHandleHardFailure(final FxAccountLoginDelegate delegate, final FxAccountLoginException e) {
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        delegate.handleError(e);
-      }
-    });
+  public long certificateDurationInMilliseconds = JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
+  public long assertionDurationInMilliseconds = JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
+
+  public long getCertificateDurationInMilliseconds() {
+    return certificateDurationInMilliseconds;
+  }
+
+  public long getAssertionDurationInMilliseconds() {
+    return assertionDurationInMilliseconds;
+  }
+
+  protected FxAccountClient makeFxAccountClient() {
+    String serverURI = fxAccount.getServerURI();
+    return new FxAccountClient20(serverURI, executor);
   }
 
   /**
@@ -170,7 +178,15 @@ public class FxAccountLoginPolicy {
    */
   public void login(final String audience, final FxAccountLoginDelegate delegate) {
     final AccountState initialState = getAccountState(fxAccount);
+    Logger.info(LOG_TAG, "Logging in account from initial state " + initialState + ".");
+
     final LinkedList<LoginStage> stages = getStages(initialState);
+    final LinkedList<String> stageNames = new LinkedList<String>();
+    for (LoginStage stage : stages) {
+      stageNames.add(stage.getClass().getSimpleName());
+    }
+    Logger.info(LOG_TAG, "Executing stages: [" + Utils.toCommaSeparatedString(stageNames) + "]");
+
     LoginStageDelegate loginStageDelegate = new LoginStageDelegate(stages, audience, delegate);
     loginStageDelegate.advance();
   }
@@ -181,6 +197,8 @@ public class FxAccountLoginPolicy {
     public final FxAccountLoginDelegate delegate;
     public final FxAccountClient client;
 
+    protected LoginStage currentStage = null;
+
     public LoginStageDelegate(LinkedList<LoginStage> stages, String audience, FxAccountLoginDelegate delegate) {
       this.stages = stages;
       this.audience = audience;
@@ -188,9 +206,18 @@ public class FxAccountLoginPolicy {
       this.client = makeFxAccountClient();
     }
 
+    protected void invokeHandleHardFailure(final FxAccountLoginDelegate delegate, final FxAccountLoginException e) {
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          delegate.handleError(e);
+        }
+      });
+    }
+
     public void advance() {
-      LoginStage stage = stages.poll();
-      if (stage == null) {
+      currentStage = stages.poll();
+      if (currentStage == null) {
         // No more stages.  But we haven't seen an assertion. Failure!
         Logger.info(LOG_TAG, "No more stages: login failed?");
         invokeHandleHardFailure(delegate, new FxAccountLoginException("No more stages, but no assertion: login failed?"));
@@ -198,7 +225,8 @@ public class FxAccountLoginPolicy {
       }
 
       try {
-        stage.execute(this);
+        Logger.info(LOG_TAG, "Executing stage: " + currentStage.getClass().getSimpleName());
+        currentStage.execute(this);
       } catch (Exception e) {
         Logger.info(LOG_TAG, "Got exception during stage.", e);
         invokeHandleHardFailure(delegate, new FxAccountLoginException(e));
@@ -207,7 +235,7 @@ public class FxAccountLoginPolicy {
     }
 
     public void handleStageSuccess() {
-      Logger.info(LOG_TAG, "Stage succeeded.");
+      Logger.info(LOG_TAG, "Stage succeeded: " + currentStage.getClass().getSimpleName());
       advance();
     }
 
@@ -262,9 +290,9 @@ public class FxAccountLoginPolicy {
         public void handleSuccess(LoginResponse result) {
           fxAccount.setSessionToken(result.sessionToken);
           fxAccount.setKeyFetchToken(result.keyFetchToken);
-          if (Logger.LOG_PERSONAL_INFORMATION) {
-            Logger.pii(LOG_TAG, "Fetched sessionToken : " + Utils.byte2Hex(result.sessionToken));
-            Logger.pii(LOG_TAG, "Fetched keyFetchToken: " + Utils.byte2Hex(result.keyFetchToken));
+          if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+            FxAccountConstants.pii(LOG_TAG, "Fetched sessionToken : " + Utils.byte2Hex(result.sessionToken));
+            FxAccountConstants.pii(LOG_TAG, "Fetched keyFetchToken: " + Utils.byte2Hex(result.keyFetchToken));
           }
           delegate.handleStageSuccess();
         }
@@ -365,8 +393,8 @@ public class FxAccountLoginPolicy {
         @Override
         public void handleSuccess(LoginResponse result) {
           fxAccount.setKeyFetchToken(result.keyFetchToken);
-          if (Logger.LOG_PERSONAL_INFORMATION) {
-            Logger.pii(LOG_TAG, "Fetched keyFetchToken: " + Utils.byte2Hex(result.keyFetchToken));
+          if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+            FxAccountConstants.pii(LOG_TAG, "Fetched keyFetchToken: " + Utils.byte2Hex(result.keyFetchToken));
           }
           delegate.handleStageSuccess();
         }
@@ -409,10 +437,10 @@ public class FxAccountLoginPolicy {
         public void handleSuccess(TwoKeys result) {
           fxAccount.setKa(result.kA);
           fxAccount.setWrappedKb(result.wrapkB);
-          if (Logger.LOG_PERSONAL_INFORMATION) {
-            Logger.pii(LOG_TAG, "Fetched kA: " + Utils.byte2Hex(result.kA));
-            Logger.pii(LOG_TAG, "And wrapkB: " + Utils.byte2Hex(result.wrapkB));
-            Logger.pii(LOG_TAG, "Giving kB : " + Utils.byte2Hex(fxAccount.getKb()));
+          if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+            FxAccountConstants.pii(LOG_TAG, "Fetched kA: " + Utils.byte2Hex(result.kA));
+            FxAccountConstants.pii(LOG_TAG, "And wrapkB: " + Utils.byte2Hex(result.wrapkB));
+            FxAccountConstants.pii(LOG_TAG, "Giving kB : " + Utils.byte2Hex(fxAccount.getKb()));
           }
           delegate.handleStageSuccess();
         }
@@ -437,10 +465,7 @@ public class FxAccountLoginPolicy {
       }
       final VerifyingPublicKey publicKey = keyPair.getPublic();
 
-      // TODO Make this duration configurable (that is, part of the policy).
-      long certificateDurationInMilliseconds = JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
-
-      delegate.client.sign(sessionToken, publicKey.toJSONObject(), certificateDurationInMilliseconds, new RequestDelegate<String>() {
+      delegate.client.sign(sessionToken, publicKey.toJSONObject(), getCertificateDurationInMilliseconds(), new RequestDelegate<String>() {
         @Override
         public void handleError(Exception e) {
           delegate.handleError(new FxAccountLoginException(e));
@@ -465,8 +490,8 @@ public class FxAccountLoginPolicy {
         @Override
         public void handleSuccess(String certificate) {
           fxAccount.setCertificate(certificate);
-          if (Logger.LOG_PERSONAL_INFORMATION) {
-            Logger.pii(LOG_TAG, "Fetched certificate " + certificate);
+          if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+            FxAccountConstants.pii(LOG_TAG, "Fetched certificate: " + certificate);
             JSONWebTokenUtils.dumpCertificate(certificate);
           }
           delegate.handleStageSuccess();
@@ -488,7 +513,9 @@ public class FxAccountLoginPolicy {
       }
       String assertion;
       try {
-        assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, delegate.audience);
+        long now = System.currentTimeMillis();
+        assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, delegate.audience,
+            JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, now, getAssertionDurationInMilliseconds());
       } catch (Exception e) {
         // If we can't sign an assertion, we probably have some crypto
         // configuration error on device, which we are never going to recover
@@ -497,8 +524,8 @@ public class FxAccountLoginPolicy {
         throw e;
       }
       fxAccount.setAssertion(assertion);
-      if (Logger.LOG_PERSONAL_INFORMATION) {
-        Logger.pii(LOG_TAG, "Generated assertion " + assertion);
+      if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+        FxAccountConstants.pii(LOG_TAG, "Generated assertion: " + assertion);
         JSONWebTokenUtils.dumpAssertion(assertion);
       }
       delegate.handleStageSuccess();
@@ -519,12 +546,9 @@ public class FxAccountLoginPolicy {
   public class FailStage implements LoginStage {
     @Override
     public void execute(final LoginStageDelegate delegate) {
+      AccountState finalState = getAccountState(fxAccount);
+      Logger.info(LOG_TAG, "Failed to login account; final state is " + finalState + ".");
       delegate.handleError(new FxAccountLoginException("Failed to login."));
     }
-  }
-
-  protected FxAccountClient makeFxAccountClient() {
-    String serverURI = fxAccount.getServerURI();
-    return new FxAccountClient20(serverURI, executor);
   }
 }
