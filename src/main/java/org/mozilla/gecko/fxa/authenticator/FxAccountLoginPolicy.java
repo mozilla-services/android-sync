@@ -87,9 +87,9 @@ public class FxAccountLoginPolicy {
 
   public AccountState getAccountState(AbstractFxAccount fxAccount) {
     String serverURI = fxAccount.getServerURI();
-    String email = fxAccount.getEmail();
-    String password = fxAccount.getPassword(); // XXX YYY
-    if (serverURI == null || email == null || password == null) {
+    byte[] emailUTF8 = fxAccount.getEmailUTF8();
+    byte[] quickStretchedPW = fxAccount.getQuickStretchedPW();
+    if (serverURI == null || emailUTF8 == null || quickStretchedPW == null) {
       return AccountState.Invalid;
     }
 
@@ -230,16 +230,16 @@ public class FxAccountLoginPolicy {
   public class EnsureSessionTokenStage implements LoginStage {
     @Override
     public void execute(final LoginStageDelegate delegate) throws Exception {
-      String email = fxAccount.getEmail();
-      if (email == null) {
-        throw new IllegalStateException("email must not be null");
+      byte[] emailUTF8 = fxAccount.getEmailUTF8();
+      if (emailUTF8 == null) {
+        throw new IllegalStateException("emailUTF8 must not be null");
       }
-      String password = fxAccount.getPassword(); // XXX Derivative of password.
-      if (password == null) {
-        throw new IllegalStateException("password must not be null");
+      byte[] quickStretchedPW = fxAccount.getQuickStretchedPW();
+      if (quickStretchedPW == null) {
+        throw new IllegalStateException("quickStretchedPW must not be null");
       }
 
-      delegate.client.loginAndGetKeys(email.getBytes("UTF-8"), password.getBytes("UTF-8"), new RequestDelegate<FxAccountClient20.LoginResponse>() {
+      delegate.client.loginAndGetKeys(emailUTF8, quickStretchedPW, new RequestDelegate<FxAccountClient20.LoginResponse>() {
         @Override
         public void handleError(Exception e) {
           delegate.handleError(new FxAccountLoginException(e));
@@ -310,17 +310,20 @@ public class FxAccountLoginPolicy {
     }
   }
 
+  public static int[] DUMMY = null;
+
   public class EnsureKeyFetchTokenStage implements LoginStage {
     @Override
     public void execute(final LoginStageDelegate delegate) throws Exception {
-      String email = fxAccount.getEmail();
-      if (email == null) {
-        throw new IllegalStateException("email must not be null");
+      byte[] emailUTF8 = fxAccount.getEmailUTF8();
+      if (emailUTF8 == null) {
+        throw new IllegalStateException("emailUTF8 must not be null");
       }
-      String password = fxAccount.getPassword(); // XXX Derivative of password.
-      if (password == null) {
-        throw new IllegalStateException("password must not be null");
+      byte[] quickStretchedPW = fxAccount.getQuickStretchedPW();
+      if (quickStretchedPW == null) {
+        throw new IllegalStateException("quickStretchedPW must not be null");
       }
+
       boolean verified = fxAccount.isVerified();
       if (!verified) {
         throw new IllegalStateException("must be verified");
@@ -334,7 +337,7 @@ public class FxAccountLoginPolicy {
         return;
       }
 
-      delegate.client.loginAndGetKeys(email.getBytes("UTF-8"), password.getBytes("UTF-8"), new RequestDelegate<FxAccountClient20.LoginResponse>() {
+      delegate.client.loginAndGetKeys(emailUTF8, quickStretchedPW, new RequestDelegate<FxAccountClient20.LoginResponse>() {
         @Override
         public void handleError(Exception e) {
           delegate.handleError(new FxAccountLoginException(e));

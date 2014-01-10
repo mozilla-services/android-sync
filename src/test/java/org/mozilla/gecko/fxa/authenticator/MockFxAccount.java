@@ -5,6 +5,7 @@ package org.mozilla.gecko.fxa.authenticator;
 
 import java.security.GeneralSecurityException;
 
+import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
@@ -14,8 +15,8 @@ import org.mozilla.gecko.fxa.authenticator.FxAccountLoginPolicy.AccountState;
 import org.mozilla.gecko.sync.Utils;
 
 public class MockFxAccount implements AbstractFxAccount {
-  public String email = null;
-  public String password = null;
+  public byte[] emailUTF8 = null;
+  public byte[] quickStretchedPW = null;
 
   public String serverURI = null;
   public byte[] sessionToken;
@@ -33,13 +34,13 @@ public class MockFxAccount implements AbstractFxAccount {
   public String assertion;
 
   @Override
-  public String getEmail() {
-    return email;
+  public byte[] getEmailUTF8() {
+    return emailUTF8;
   }
 
   @Override
-  public String getPassword() {
-    return password;
+  public byte[] getQuickStretchedPW() {
+    return quickStretchedPW;
   }
 
   @Override
@@ -131,8 +132,8 @@ public class MockFxAccount implements AbstractFxAccount {
     if (state == AccountState.Invalid) {
       return fxAccount;
     }
-    fxAccount.email = "testEmail@test.com";
-    fxAccount.password = "testPassword";
+    fxAccount.emailUTF8 = "testEmail@test.com".getBytes("UTF-8");
+    fxAccount.quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(fxAccount.emailUTF8, "testPassword".getBytes("UTF-8"));
     fxAccount.serverURI = FxAccountConstants.DEFAULT_IDP_ENDPOINT;
     if (state == AccountState.NeedsSessionToken) {
       return fxAccount;

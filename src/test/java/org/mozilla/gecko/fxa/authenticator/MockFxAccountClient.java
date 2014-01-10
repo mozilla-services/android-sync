@@ -66,8 +66,7 @@ public class MockFxAccountClient implements FxAccountClient {
   }
 
   @Override
-  public void loginAndGetKeys(byte[] emailUTF8, byte[] passwordUTF8, RequestDelegate<LoginResponse> requestDelegate) {
-    // requestDelegate.handleError(new RuntimeException("GOTCHA"));
+  public void loginAndGetKeys(byte[] emailUTF8, byte[] quickStretchedPW, RequestDelegate<LoginResponse> requestDelegate) {
     byte[] sessionToken = Utils.generateRandomBytes(32);
     byte[] keyFetchToken = Utils.generateRandomBytes(32);
     requestDelegate.handleSuccess(new LoginResponse("serverURI", "uid", false, sessionToken, keyFetchToken));
@@ -75,7 +74,6 @@ public class MockFxAccountClient implements FxAccountClient {
 
   @Override
   public void keys(byte[] keyFetchToken, RequestDelegate<TwoKeys> requestDelegate) {
-    // requestDelegate.handleError(new RuntimeException("GOTCHA"));
     byte[] kA = Utils.generateRandomBytes(32);
     byte[] wrapkB = Utils.generateRandomBytes(32);
     requestDelegate.handleSuccess(new TwoKeys(kA, wrapkB));

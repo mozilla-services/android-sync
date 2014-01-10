@@ -84,6 +84,6 @@ public interface AbstractFxAccount {
   public String getAssertion();
   public void setAssertion(String assertion);
 
-  public String getEmail();
-  public String getPassword();
+  public byte[] getEmailUTF8();
+  public byte[] getQuickStretchedPW();
 }

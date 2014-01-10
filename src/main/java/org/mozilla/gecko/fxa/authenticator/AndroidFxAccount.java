@@ -69,13 +69,18 @@ public class AndroidFxAccount implements AbstractFxAccount {
   }
 
   @Override
-  public String getEmail() {
-    return account.name;
+  public byte[] getEmailUTF8() {
+    try {
+      return account.name.getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // Ignore.
+      return null;
+    }
   }
 
   @Override
-  public String getPassword() {
-    return accountManager.getPassword(account);
+  public byte[] getQuickStretchedPW() {
+    return Utils.hex2Byte(accountManager.getPassword(account));
   }
 
   @Override
@@ -247,7 +252,7 @@ public class AndroidFxAccount implements AbstractFxAccount {
 
     Account account = new Account(email, FxAccountConstants.ACCOUNT_TYPE);
     AccountManager accountManager = AccountManager.get(context);
-    boolean added = accountManager.addAccountExplicitly(account, password, userdata); // XXX Utils.byte2Hex(quickStretchedPW)
+    boolean added = accountManager.addAccountExplicitly(account, Utils.byte2Hex(quickStretchedPW), userdata);
     if (!added) {
       return null;
     }

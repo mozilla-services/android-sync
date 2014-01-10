@@ -11,9 +11,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 public interface FxAccountClient {
-  // public void createAccount(final byte[] emailUTF8, final byte[] passwordUTF8, final boolean preVerified, final RequestDelegate<String> delegate);
-  // public void login(final byte[] emailUTF8, final byte[] passwordUTF8, final RequestDelegate<LoginResponse> delegate);
-  public void loginAndGetKeys(final byte[] emailUTF8, final byte[] passwordUTF8, final RequestDelegate<LoginResponse> requestDelegate);
+  public void loginAndGetKeys(final byte[] emailUTF8, final byte[] quickStretchedPW, final RequestDelegate<LoginResponse> requestDelegate);
   public void status(byte[] sessionToken, RequestDelegate<StatusResponse> requestDelegate);
   public void keys(byte[] keyFetchToken, RequestDelegate<TwoKeys> requestDelegate);
   public void sign(byte[] sessionToken, ExtendedJSONObject publicKey, long certificateDurationInMilliseconds, RequestDelegate<String> requestDelegate);
