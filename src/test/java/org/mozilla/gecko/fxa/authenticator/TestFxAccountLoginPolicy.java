@@ -33,6 +33,9 @@ public class TestFxAccountLoginPolicy {
 
     public BrowserIDKeyPair assertionKeyPair;
 
+    public String certificate;
+    public String assertion;
+
     @Override
     public String getServerURI() {
       return serverURI;
@@ -88,13 +91,33 @@ public class TestFxAccountLoginPolicy {
     }
 
     @Override
-    public void invalidateSessionToken() {
-      sessionToken = null;
+    public void setSessionToken(byte[] sessionToken) {
+      this.sessionToken = sessionToken;
     }
 
     @Override
-    public void invalidateKeyFetchToken() {
-      keyFetchToken = null;
+    public void setKeyFetchToken(byte[] keyFetchToken) {
+      this.keyFetchToken = keyFetchToken;
+    }
+
+    @Override
+    public String getCertificate() {
+      return certificate;
+    }
+
+    @Override
+    public void setCertificate(String certificate) {
+      this.certificate = certificate;
+    }
+
+    @Override
+    public String getAssertion() {
+      return certificate;
+    }
+
+    @Override
+    public void setAssertion(String assertion) {
+      this.assertion = assertion;
     }
   }
 

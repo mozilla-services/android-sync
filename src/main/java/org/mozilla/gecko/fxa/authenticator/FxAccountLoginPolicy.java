@@ -49,6 +49,75 @@ public class FxAccountLoginPolicy {
   }
 
   /**
+   * Check if this certificate is not worth generating an assertion from: for
+   * example, because it is not well-formed, or it is already expired.
+   *
+   * @param certificate
+   *          to check.
+   * @return if it is definitely not worth generating an assertion from this
+   *         certificate.
+   */
+  protected boolean isInvalidCertificate(String certificate) {
+    return true;
+  }
+
+  /**
+   * Check if this assertion is not worth presenting to the token server: for
+   * example, because it is not well-formed, or it is already expired.
+   *
+   * @param assertion
+   *          to check.
+   * @return if assertion is definitely not worth presenting to the token
+   *         server.
+   */
+  protected boolean isInvalidAssertion(String assertion) {
+    return true;
+  }
+
+  public enum AccountState {
+    Invalid,
+    NeedsSessionToken,
+    NeedsVerification,
+    NeedsKeys,
+    NeedsCertificate,
+    NeedsAssertion,
+    Valid,
+  };
+
+  public AccountState getAccountState(AbstractFxAccount fxAccount) {
+    String serverURI = fxAccount.getServerURI();
+    if (serverURI == null) {
+      return AccountState.Invalid;
+    }
+
+    byte[] sessionToken = fxAccount.getSessionToken();
+    if (sessionToken == null) {
+      return AccountState.NeedsSessionToken;
+    }
+
+    if (!fxAccount.isVerified()) {
+      return AccountState.NeedsVerification;
+    }
+
+    // Verify against server?  Tricky.
+    if (fxAccount.getKa() == null || fxAccount.getKb() == null) {
+      return AccountState.NeedsKeys;
+    }
+
+    String certificate = fxAccount.getCertificate();
+    if (certificate == null || isInvalidCertificate(certificate)) {
+      return AccountState.NeedsCertificate;
+    }
+
+    String assertion = fxAccount.getAssertion();
+    if (assertion == null || isInvalidAssertion(assertion)) {
+      return AccountState.NeedsAssertion;
+    }
+
+    return AccountState.Valid;
+  }
+
+  /**
    * Do as much of a Firefox Account login dance as possible.
    * <p>
    * To avoid deeply nested callbacks, we maintain a simple queue of stages to

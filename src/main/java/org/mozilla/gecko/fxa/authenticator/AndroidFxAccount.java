@@ -31,6 +31,8 @@ import android.os.Bundle;
 public class AndroidFxAccount implements AbstractFxAccount {
   protected static final String LOG_TAG = AndroidFxAccount.class.getSimpleName();
 
+  public static final String ACCOUNT_KEY_ASSERTION = "assertion";
+  public static final String ACCOUNT_KEY_CERTIFICATE = "certificate";
   public static final String ACCOUNT_KEY_SERVERURI = "serverURI";
   public static final String ACCOUNT_KEY_SESSION_TOKEN = "sessionToken";
   public static final String ACCOUNT_KEY_KEY_FETCH_TOKEN = "keyFetchToken";
@@ -90,13 +92,13 @@ public class AndroidFxAccount implements AbstractFxAccount {
   }
 
   @Override
-  public void invalidateSessionToken() {
-    accountManager.setUserData(account, ACCOUNT_KEY_SESSION_TOKEN, null);
+  public void setSessionToken(byte[] sessionToken) {
+    accountManager.setUserData(account, ACCOUNT_KEY_SESSION_TOKEN, sessionToken == null ? null : Utils.byte2Hex(sessionToken));
   }
 
   @Override
-  public void invalidateKeyFetchToken() {
-    accountManager.setUserData(account, ACCOUNT_KEY_KEY_FETCH_TOKEN, null);
+  public void setKeyFetchToken(byte[] keyFetchToken) {
+    accountManager.setUserData(account, ACCOUNT_KEY_KEY_FETCH_TOKEN, keyFetchToken == null ? null : Utils.byte2Hex(keyFetchToken));
   }
 
   @Override
@@ -153,6 +155,26 @@ public class AndroidFxAccount implements AbstractFxAccount {
     BrowserIDKeyPair keyPair = generateNewAssertionKeyPair();
     accountManager.setUserData(account, ACCOUNT_KEY_ASSERTION_KEY_PAIR, keyPair.toJSONObject().toJSONString());
     return keyPair;
+  }
+
+  @Override
+  public String getCertificate() {
+    return accountManager.getUserData(account, ACCOUNT_KEY_CERTIFICATE);
+  }
+
+  @Override
+  public void setCertificate(String certificate) {
+    accountManager.setUserData(account, ACCOUNT_KEY_CERTIFICATE, certificate);
+  }
+
+  @Override
+  public String getAssertion() {
+    return accountManager.getUserData(account, ACCOUNT_KEY_ASSERTION);
+  }
+
+  @Override
+  public void setAssertion(String assertion) {
+    accountManager.setUserData(account, ACCOUNT_KEY_ASSERTION, assertion);
   }
 
   /**
