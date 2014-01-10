@@ -17,7 +17,6 @@ import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountSignInTask;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountSignUpTask;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
@@ -219,9 +218,8 @@ public class FxAccountSetupActivity extends FragmentActivity {
       }
 
       // For great debugging.
-      ExtendedJSONObject o = new AndroidFxAccount(activity, account).toJSONObject();
-      for (String key : o.keySet()) {
-        System.out.println(key + ": " + o.getString(key));
+      if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+        new AndroidFxAccount(activity, account).dump();
       }
 
       Toast.makeText(getApplicationContext(), "Got success creating account.", Toast.LENGTH_LONG).show();
@@ -281,9 +279,8 @@ public class FxAccountSetupActivity extends FragmentActivity {
       }
 
       // For great debugging.
-      ExtendedJSONObject o = new AndroidFxAccount(activity, account).toJSONObject();
-      for (String key : o.keySet()) {
-        System.out.println(key + ": " + o.getString(key));
+      if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+        new AndroidFxAccount(activity, account).dump();
       }
 
       Toast.makeText(getApplicationContext(), "Got success creating account.", Toast.LENGTH_LONG).show();

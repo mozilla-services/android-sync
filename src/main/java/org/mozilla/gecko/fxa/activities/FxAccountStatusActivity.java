@@ -66,7 +66,6 @@ public class FxAccountStatusActivity extends FragmentActivity {
     existingUserView.setVisibility(View.VISIBLE);
 
     AndroidFxAccount fxAccount = new AndroidFxAccount(this, account);
-    Logger.warn(LOG_TAG, fxAccount.toJSONObject().toJSONString());
 
     email.setText(account.name);
 
@@ -91,9 +90,38 @@ public class FxAccountStatusActivity extends FragmentActivity {
     refresh(accounts[0]);
   }
 
+  protected void dumpAccountDetails() {
+    Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
+    if (accounts.length < 1) {
+      return;
+    }
+    AndroidFxAccount fxAccount = new AndroidFxAccount(this, accounts[0]);
+    fxAccount.dump();
+  }
+
+  protected void resetAccountTokens() {
+    Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
+    if (accounts.length < 1) {
+      return;
+    }
+    AndroidFxAccount fxAccount = new AndroidFxAccount(this, accounts[0]);
+    fxAccount.resetAccountTokens();
+    fxAccount.dump();
+  }
+
   public void onClickRefresh(View view) {
     Logger.debug(LOG_TAG, "Refreshing.");
     refresh();
+  }
+
+  public void onClickResetAccountTokens(View view) {
+    Logger.debug(LOG_TAG, "Resetting account tokens.");
+    resetAccountTokens();
+  }
+
+  public void onClickDumpAccountDetails(View view) {
+    Logger.debug(LOG_TAG, "Dumping account details.");
+    dumpAccountDetails();
   }
 
   public void onClickGetStarted(View view) {

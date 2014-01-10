@@ -167,8 +167,7 @@
             </FrameLayout>
 
             <Button
-                android:id="@+id/refresh_button"
-                android:layout_width="wrap_content"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="30dp"
@@ -176,6 +175,26 @@
                 android:paddingLeft="20dp"
                 android:paddingRight="20dp"
                 android:text="Refresh" />
+
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="30dp"
+                android:onClick="onClickDumpAccountDetails"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:text="Dump Account Details" />
+
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="30dp"
+                android:onClick="onClickResetAccountTokens"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:text="Reset Account Tokens" />
         </LinearLayout>
     </ScrollView>
 
