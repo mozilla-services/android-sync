@@ -251,6 +251,10 @@ public class FxAccountLoginPolicy {
             delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
             return;
           }
+          // We just got denied for a sessionToken. That's a problem with
+          // our email or password. Only thing to do is mark the account
+          // invalid and ask for user intervention.
+          fxAccount.setInvalid();
           delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected email/password while fetching sessionToken."));
         }
 
@@ -292,6 +296,8 @@ public class FxAccountLoginPolicy {
             delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
             return;
           }
+          // We just got denied due to our sessionToken.  Invalidate it.
+          fxAccount.setSessionToken(null);
           delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected session token while fetching status."));
         }
 
@@ -329,7 +335,7 @@ public class FxAccountLoginPolicy {
         throw new IllegalStateException("must be verified");
       }
 
-      // We might already have a valid keyFetchToken. If so, try it. If it's noo
+      // We might already have a valid keyFetchToken. If so, try it. If it's not
       // valid, we'll invalidate it in EnsureKeysStage.
       if (fxAccount.getKeyFetchToken() != null) {
         Logger.info(LOG_TAG, "Using existing keyFetchToken.");
@@ -349,6 +355,10 @@ public class FxAccountLoginPolicy {
             delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
             return;
           }
+          // We just got denied for a keyFetchToken. That's a problem with
+          // our email or password. Only thing to do is mark the account
+          // invalid and ask for user intervention.
+          fxAccount.setInvalid();
           delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected email/password while fetching keyFetchToken."));
         }
 
@@ -442,6 +452,13 @@ public class FxAccountLoginPolicy {
             delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
             return;
           }
+          // Our sessionToken was just rejected; we should get a new
+          // sessionToken. TODO: Make sure the exception below is fine
+          // enough grained.
+          // Since this is the place we'll see the majority of lifecylcle
+          // auth problems, we should be much more aggressive bumping the
+          // state machine out of this state when we don't get success.
+          fxAccount.setSessionToken(null);
           delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected session token while fetching status."));
         }
 
@@ -502,7 +519,7 @@ public class FxAccountLoginPolicy {
   public class FailStage implements LoginStage {
     @Override
     public void execute(final LoginStageDelegate delegate) {
-      delegate.handleError(new FxAccountLoginException("FAILURE IS NOT AN OPTION"));
+      delegate.handleError(new FxAccountLoginException("Failed to login."));
     }
   }
 

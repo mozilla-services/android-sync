@@ -131,12 +131,13 @@ public class MockFxAccount implements AbstractFxAccount {
 
   public static MockFxAccount makeAccount(AccountState state) throws Exception {
     MockFxAccount fxAccount = new MockFxAccount();
-    if (state == AccountState.Invalid) {
-      return fxAccount;
-    }
     fxAccount.emailUTF8 = "testEmail@test.com".getBytes("UTF-8");
     fxAccount.quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(fxAccount.emailUTF8, "testPassword".getBytes("UTF-8"));
     fxAccount.serverURI = FxAccountConstants.DEFAULT_IDP_ENDPOINT;
+    if (state == AccountState.Invalid) {
+      fxAccount.setInvalid();
+      return fxAccount;
+    }
     if (state == AccountState.NeedsSessionToken) {
       return fxAccount;
     }
