@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.fxa.activities;
 
-import java.io.UnsupportedEncodingException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
