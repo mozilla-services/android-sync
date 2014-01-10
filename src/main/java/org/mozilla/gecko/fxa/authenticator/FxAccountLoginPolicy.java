@@ -4,23 +4,24 @@
 
 package org.mozilla.gecko.fxa.authenticator;
 
-import java.security.GeneralSecurityException;
 import java.util.LinkedList;
 import java.util.concurrent.Executor;
 
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient;
 import org.mozilla.gecko.background.fxa.FxAccountClient10;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
+import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
-import org.mozilla.gecko.browserid.SigningPrivateKey;
 import org.mozilla.gecko.browserid.VerifyingPublicKey;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginAccountNotVerifiedException;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginBadPasswordException;
 import org.mozilla.gecko.sync.HTTPFailureException;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 import android.content.Context;
@@ -58,7 +59,7 @@ public class FxAccountLoginPolicy {
    *         certificate.
    */
   protected boolean isInvalidCertificate(String certificate) {
-    return true;
+    return false;
   }
 
   /**
@@ -71,7 +72,7 @@ public class FxAccountLoginPolicy {
    *         server.
    */
   protected boolean isInvalidAssertion(String assertion) {
-    return true;
+    return false;
   }
 
   public enum AccountState {
@@ -86,7 +87,9 @@ public class FxAccountLoginPolicy {
 
   public AccountState getAccountState(AbstractFxAccount fxAccount) {
     String serverURI = fxAccount.getServerURI();
-    if (serverURI == null) {
+    String email = fxAccount.getEmail();
+    String password = fxAccount.getPassword(); // XXX YYY
+    if (serverURI == null || email == null || password == null) {
       return AccountState.Invalid;
     }
 
@@ -117,6 +120,45 @@ public class FxAccountLoginPolicy {
     return AccountState.Valid;
   }
 
+  protected interface LoginStage {
+    public void execute(LoginStageDelegate delegate) throws Exception;
+  }
+
+  protected LinkedList<LoginStage> getStages(AccountState state) {
+    final LinkedList<LoginStage> stages = new LinkedList<LoginStage>();
+    if (state == AccountState.Invalid) {
+      stages.addFirst(new FailStage());
+      return stages;
+    }
+
+    stages.addFirst(new SuccessStage());
+    if (state == AccountState.Valid) {
+      return stages;
+    }
+    stages.addFirst(new EnsureAssertionStage());
+    if (state == AccountState.NeedsAssertion) {
+      return stages;
+    }
+    stages.addFirst(new EnsureCertificateStage());
+    if (state == AccountState.NeedsCertificate) {
+      return stages;
+    }
+    stages.addFirst(new EnsureKeysStage());
+    stages.addFirst(new EnsureKeyFetchTokenStage());
+    if (state == AccountState.NeedsKeys) {
+      return stages;
+    }
+    stages.addFirst(new EnsureVerificationStage());
+    if (state == AccountState.NeedsVerification) {
+      return stages;
+    }
+    stages.addFirst(new EnsureSessionTokenStage());
+    if (state == AccountState.NeedsSessionToken) {
+      return stages;
+    }
+    return stages;
+  }
+
   /**
    * Do as much of a Firefox Account login dance as possible.
    * <p>
@@ -127,100 +169,102 @@ public class FxAccountLoginPolicy {
    * @param delegate providing callbacks to invoke.
    */
   public void login(final String audience, final FxAccountLoginDelegate delegate) {
-    final LinkedList<LoginStage> stages = new LinkedList<LoginStage>();
-    stages.add(new CheckPreconditionsLoginStage());
-    stages.add(new CheckVerifiedLoginStage());
-    stages.add(new EnsureDerivedKeysLoginStage());
-    stages.add(new FetchCertificateLoginStage());
-
-    advance(audience, stages, delegate);
+    final AccountState initialState = getAccountState(fxAccount);
+    final LinkedList<LoginStage> stages = getStages(initialState);
+    LoginStageDelegate loginStageDelegate = new LoginStageDelegate(stages, audience, delegate);
+    loginStageDelegate.advance();
   }
 
-  protected interface LoginStageDelegate {
-    public String getAssertionAudience();
-    public void handleError(FxAccountLoginException e);
-    public void handleStageSuccess();
-    public void handleLoginSuccess(String assertion);
-  }
+  protected class LoginStageDelegate {
+    public final LinkedList<LoginStage> stages;
+    public final String audience;
+    public final FxAccountLoginDelegate delegate;
+    public final FxAccountClient client;
 
-  protected interface LoginStage {
-    public void execute(LoginStageDelegate delegate);
-  }
+    public LoginStageDelegate(LinkedList<LoginStage> stages, String audience, FxAccountLoginDelegate delegate) {
+      this.stages = stages;
+      this.audience = audience;
+      this.delegate = delegate;
+      this.client = makeFxAccountClient();
+    }
 
-  /**
-   * Pop the next stage off <code>stages</code> and execute it.
-   * <p>
-   * This trades stack efficiency for implementation simplicity.
-   *
-   * @param delegate
-   * @param stages
-   */
-  protected void advance(final String audience, final LinkedList<LoginStage> stages, final FxAccountLoginDelegate delegate) {
-    LoginStage stage = stages.poll();
-    if (stage == null) {
-      // No more stages.  But we haven't seen an assertion. Failure!
-      Logger.info(LOG_TAG, "No more stages: login failed?");
-      invokeHandleHardFailure(delegate, new FxAccountLoginException("No more stages, but no assertion: login failed?"));
+    public void advance() {
+      LoginStage stage = stages.poll();
+      if (stage == null) {
+        // No more stages.  But we haven't seen an assertion. Failure!
+        Logger.info(LOG_TAG, "No more stages: login failed?");
+        invokeHandleHardFailure(delegate, new FxAccountLoginException("No more stages, but no assertion: login failed?"));
+        return;
+      }
+
+      try {
+        stage.execute(this);
+      } catch (Exception e) {
+        Logger.info(LOG_TAG, "Got exception during stage.", e);
+        invokeHandleHardFailure(delegate, new FxAccountLoginException(e));
+        return;
+      }
+    }
+
+    public void handleStageSuccess() {
+      Logger.info(LOG_TAG, "Stage succeeded.");
+      advance();
+    }
+
+    public void handleLoginSuccess(final String assertion) {
+      Logger.info(LOG_TAG, "Login succeeded.");
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          delegate.handleSuccess(assertion);
+        }
+      });
       return;
     }
 
-    stage.execute(new LoginStageDelegate() {
-      @Override
-      public void handleStageSuccess() {
-        Logger.info(LOG_TAG, "Stage succeeded.");
-        advance(audience, stages, delegate);
-      }
-
-      @Override
-      public void handleLoginSuccess(final String assertion) {
-        Logger.info(LOG_TAG, "Login succeeded.");
-        executor.execute(new Runnable() {
-          @Override
-          public void run() {
-            delegate.handleSuccess(assertion);
-          }
-        });
-        return;
-      }
-
-      @Override
-      public void handleError(FxAccountLoginException e) {
-        invokeHandleHardFailure(delegate, e);
-      }
-
-      @Override
-      public String getAssertionAudience() {
-        return audience;
-      }
-    });
+    public void handleError(FxAccountLoginException e) {
+      invokeHandleHardFailure(delegate, e);
+    }
   }
 
-  /**
-   * Verify we have a valid server URI, session token, etc. If not, we have to
-   * prompt for credentials.
-   */
-  public class CheckPreconditionsLoginStage implements LoginStage {
+  public class EnsureSessionTokenStage implements LoginStage {
     @Override
-    public void execute(final LoginStageDelegate delegate) {
-      final String audience = delegate.getAssertionAudience();
-      if (audience == null) {
-        delegate.handleError(new FxAccountLoginException("Account has no audience."));
-        return;
+    public void execute(final LoginStageDelegate delegate) throws Exception {
+      String email = fxAccount.getEmail();
+      if (email == null) {
+        throw new IllegalStateException("email must not be null");
+      }
+      String password = fxAccount.getPassword(); // XXX Derivative of password.
+      if (password == null) {
+        throw new IllegalStateException("password must not be null");
       }
 
-      String serverURI = fxAccount.getServerURI();
-      if (serverURI == null) {
-        delegate.handleError(new FxAccountLoginException("Account has no server URI."));
-        return;
-      }
+      delegate.client.loginAndGetKeys(email.getBytes("UTF-8"), password.getBytes("UTF-8"), new RequestDelegate<FxAccountClient20.LoginResponse>() {
+        @Override
+        public void handleError(Exception e) {
+          delegate.handleError(new FxAccountLoginException(e));
+        }
 
-      byte[] sessionToken = fxAccount.getSessionToken();
-      if (sessionToken == null) {
-        delegate.handleError(new FxAccountLoginBadPasswordException("Account has no session token."));
-        return;
-      }
+        @Override
+        public void handleFailure(int status, HttpResponse response) {
+          if (status != 401) {
+            delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
+            return;
+          }
+          delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected email/password while fetching sessionToken."));
+        }
 
-      delegate.handleStageSuccess();
+        @Override
+        public void handleSuccess(LoginResponse result) {
+          fxAccount.setSessionToken(result.sessionToken);
+          fxAccount.setKeyFetchToken(result.keyFetchToken);
+          if (Logger.LOG_PERSONAL_INFORMATION) {
+            Logger.pii(LOG_TAG, "Fetched sessionToken : " + Utils.byte2Hex(result.sessionToken));
+            Logger.pii(LOG_TAG, "Fetched keyFetchToken: " + Utils.byte2Hex(result.keyFetchToken));
+          }
+          delegate.handleStageSuccess();
+        }
+      });
     }
   }
 
@@ -228,20 +272,15 @@ public class FxAccountLoginPolicy {
    * Now that we have a server to talk to and a session token, we can use them
    * to check that the account is verified.
    */
-  public class CheckVerifiedLoginStage implements LoginStage {
+  public class EnsureVerificationStage implements LoginStage {
     @Override
     public void execute(final LoginStageDelegate delegate) {
-      if (fxAccount.isVerified()) {
-        Logger.info(LOG_TAG, "Account is already marked verified. Skipping remote status check.");
-        delegate.handleStageSuccess();
-        return;
+      byte[] sessionToken = fxAccount.getSessionToken();
+      if (sessionToken == null) {
+        throw new IllegalArgumentException("sessionToken must not be null");
       }
 
-      String serverURI = fxAccount.getServerURI();
-      byte[] sessionToken = fxAccount.getSessionToken();
-      final FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
-
-      client.status(sessionToken, new RequestDelegate<StatusResponse>() {
+      delegate.client.status(sessionToken, new RequestDelegate<StatusResponse>() {
         @Override
         public void handleError(Exception e) {
           delegate.handleError(new FxAccountLoginException(e));
@@ -271,31 +310,74 @@ public class FxAccountLoginPolicy {
     }
   }
 
-  /**
-   * Now we have a verified account, we can make sure that our local keys are
-   * consistent with the account's keys.
-   */
-  public class EnsureDerivedKeysLoginStage implements LoginStage {
+  public class EnsureKeyFetchTokenStage implements LoginStage {
     @Override
-    public void execute(final LoginStageDelegate delegate) {
-      byte[] kA = fxAccount.getKa();
-      byte[] kB = fxAccount.getKb();
-      if (kA != null && kB != null) {
-        Logger.info(LOG_TAG, "Account already has kA and kB. Skipping key derivation stage.");
+    public void execute(final LoginStageDelegate delegate) throws Exception {
+      String email = fxAccount.getEmail();
+      if (email == null) {
+        throw new IllegalStateException("email must not be null");
+      }
+      String password = fxAccount.getPassword(); // XXX Derivative of password.
+      if (password == null) {
+        throw new IllegalStateException("password must not be null");
+      }
+      boolean verified = fxAccount.isVerified();
+      if (!verified) {
+        throw new IllegalStateException("must be verified");
+      }
+
+      // We might already have a valid keyFetchToken. If so, try it. If it's noo
+      // valid, we'll invalidate it in EnsureKeysStage.
+      if (fxAccount.getKeyFetchToken() != null) {
+        Logger.info(LOG_TAG, "Using existing keyFetchToken.");
         delegate.handleStageSuccess();
         return;
       }
 
+      delegate.client.loginAndGetKeys(email.getBytes("UTF-8"), password.getBytes("UTF-8"), new RequestDelegate<FxAccountClient20.LoginResponse>() {
+        @Override
+        public void handleError(Exception e) {
+          delegate.handleError(new FxAccountLoginException(e));
+        }
+
+        @Override
+        public void handleFailure(int status, HttpResponse response) {
+          if (status != 401) {
+            delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
+            return;
+          }
+          delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected email/password while fetching keyFetchToken."));
+        }
+
+        @Override
+        public void handleSuccess(LoginResponse result) {
+          fxAccount.setKeyFetchToken(result.keyFetchToken);
+          if (Logger.LOG_PERSONAL_INFORMATION) {
+            Logger.pii(LOG_TAG, "Fetched keyFetchToken: " + Utils.byte2Hex(result.keyFetchToken));
+          }
+          delegate.handleStageSuccess();
+        }
+      });
+    }
+  }
+
+  /**
+   * Now we have a verified account, we can make sure that our local keys are
+   * consistent with the account's keys.
+   */
+  public class EnsureKeysStage implements LoginStage {
+    @Override
+    public void execute(final LoginStageDelegate delegate) throws Exception {
       byte[] keyFetchToken = fxAccount.getKeyFetchToken();
       if (keyFetchToken == null) {
-        // XXX this might mean something else?
-        delegate.handleError(new FxAccountLoginBadPasswordException("Account has no key fetch token."));
-        return;
+        throw new IllegalStateException("keyFetchToken must not be null");
       }
 
-      String serverURI = fxAccount.getServerURI();
-      final FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
-      client.keys(keyFetchToken, new RequestDelegate<FxAccountClient10.TwoKeys>() {
+      // Make sure we don't use a keyFetchToken twice. This conveniently
+      // invalidates any invalid keyFetchToken we might try, too.
+      fxAccount.setKeyFetchToken(null);
+
+      delegate.client.keys(keyFetchToken, new RequestDelegate<FxAccountClient10.TwoKeys>() {
         @Override
         public void handleError(Exception e) {
           delegate.handleError(new FxAccountLoginException(e));
@@ -314,39 +396,34 @@ public class FxAccountLoginPolicy {
         public void handleSuccess(TwoKeys result) {
           fxAccount.setKa(result.kA);
           fxAccount.setWrappedKb(result.wrapkB);
+          if (Logger.LOG_PERSONAL_INFORMATION) {
+            Logger.pii(LOG_TAG, "Fetched kA: " + Utils.byte2Hex(result.kA));
+            Logger.pii(LOG_TAG, "And wrapkB: " + Utils.byte2Hex(result.wrapkB));
+            Logger.pii(LOG_TAG, "Giving kB : " + Utils.byte2Hex(fxAccount.getKb()));
+          }
           delegate.handleStageSuccess();
         }
       });
     }
   }
 
-  public class FetchCertificateLoginStage implements LoginStage {
+  public class EnsureCertificateStage implements LoginStage {
     @Override
-    public void execute(final LoginStageDelegate delegate) {
-      BrowserIDKeyPair keyPair;
-      try {
-        keyPair = fxAccount.getAssertionKeyPair();
-        if (keyPair == null) {
-          Logger.info(LOG_TAG, "Account has no key pair.");
-          delegate.handleError(new FxAccountLoginException("Account has no key pair."));
-          return;
-        }
-      } catch (GeneralSecurityException e) {
-        delegate.handleError(new FxAccountLoginException(e));
-        return;
-      }
-
-      final SigningPrivateKey privateKey = keyPair.getPrivate();
-      final VerifyingPublicKey publicKey = keyPair.getPublic();
-
+    public void execute(final LoginStageDelegate delegate) throws Exception{
       byte[] sessionToken = fxAccount.getSessionToken();
-      String serverURI = fxAccount.getServerURI();
-      final FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
+      if (sessionToken == null) {
+        throw new IllegalStateException("keyPair must not be null");
+      }
+      BrowserIDKeyPair keyPair = fxAccount.getAssertionKeyPair();
+      if (keyPair == null) {
+        throw new IllegalStateException("keyPair must not be null");
+      }
+      final VerifyingPublicKey publicKey = keyPair.getPublic();
 
       // TODO Make this duration configurable (that is, part of the policy).
       long certificateDurationInMilliseconds = JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
 
-      client.sign(sessionToken, publicKey.toJSONObject(), certificateDurationInMilliseconds, new RequestDelegate<String>() {
+      delegate.client.sign(sessionToken, publicKey.toJSONObject(), certificateDurationInMilliseconds, new RequestDelegate<String>() {
         @Override
         public void handleError(Exception e) {
           delegate.handleError(new FxAccountLoginException(e));
@@ -363,19 +440,58 @@ public class FxAccountLoginPolicy {
 
         @Override
         public void handleSuccess(String certificate) {
-          try {
-            String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, delegate.getAssertionAudience());
-            if (Logger.LOG_PERSONAL_INFORMATION) {
-              Logger.pii(LOG_TAG, "Generated assertion " + assertion);
-              JSONWebTokenUtils.dumpAssertion(assertion);
-            }
-            delegate.handleLoginSuccess(assertion);
-          } catch (Exception e) {
-            delegate.handleError(new FxAccountLoginException(e));
-            return;
+          fxAccount.setCertificate(certificate);
+          if (Logger.LOG_PERSONAL_INFORMATION) {
+            Logger.pii(LOG_TAG, "Fetched certificate " + certificate);
+            JSONWebTokenUtils.dumpCertificate(certificate);
           }
+          delegate.handleStageSuccess();
         }
       });
     }
+  }
+
+  public class EnsureAssertionStage implements LoginStage {
+    @Override
+    public void execute(final LoginStageDelegate delegate) throws Exception {
+      BrowserIDKeyPair keyPair = fxAccount.getAssertionKeyPair();
+      if (keyPair == null) {
+        throw new IllegalStateException("keyPair must not be null");
+      }
+      String certificate = fxAccount.getCertificate();
+      if (certificate == null) {
+        throw new IllegalStateException("certificate must not be null");
+      }
+      String assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, delegate.audience);
+      fxAccount.setAssertion(assertion);
+      if (Logger.LOG_PERSONAL_INFORMATION) {
+        Logger.pii(LOG_TAG, "Generated assertion " + assertion);
+        JSONWebTokenUtils.dumpAssertion(assertion);
+      }
+      delegate.handleStageSuccess();
+    }
+  }
+
+  public class SuccessStage implements LoginStage {
+    @Override
+    public void execute(final LoginStageDelegate delegate) throws Exception {
+      String assertion = fxAccount.getAssertion();
+      if (assertion == null) {
+        throw new IllegalStateException("assertion must not be null");
+      }
+      delegate.handleLoginSuccess(assertion);
+    }
+  }
+
+  public class FailStage implements LoginStage {
+    @Override
+    public void execute(final LoginStageDelegate delegate) {
+      delegate.handleError(new FxAccountLoginException("FAILURE IS NOT AN OPTION"));
+    }
+  }
+
+  protected FxAccountClient makeFxAccountClient() {
+    String serverURI = fxAccount.getServerURI();
+    return new FxAccountClient20(serverURI, executor);
   }
 }

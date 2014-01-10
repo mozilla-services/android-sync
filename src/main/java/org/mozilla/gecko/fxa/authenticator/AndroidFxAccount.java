@@ -69,6 +69,16 @@ public class AndroidFxAccount implements AbstractFxAccount {
   }
 
   @Override
+  public String getEmail() {
+    return account.name;
+  }
+
+  @Override
+  public String getPassword() {
+    return accountManager.getPassword(account);
+  }
+
+  @Override
   public String getServerURI() {
     return accountManager.getUserData(account, ACCOUNT_KEY_SERVERURI);
   }
@@ -237,7 +247,7 @@ public class AndroidFxAccount implements AbstractFxAccount {
 
     Account account = new Account(email, FxAccountConstants.ACCOUNT_TYPE);
     AccountManager accountManager = AccountManager.get(context);
-    boolean added = accountManager.addAccountExplicitly(account, Utils.byte2Hex(quickStretchedPW), userdata);
+    boolean added = accountManager.addAccountExplicitly(account, password, userdata); // XXX Utils.byte2Hex(quickStretchedPW)
     if (!added) {
       return null;
     }
