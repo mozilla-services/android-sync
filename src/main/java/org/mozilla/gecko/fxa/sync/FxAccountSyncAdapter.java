@@ -136,8 +136,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       final SharedPreferences sharedPrefs = getContext().getSharedPreferences(FxAccountConstants.PREFS_PATH, Context.MODE_PRIVATE); // TODO Ensure preferences are per-Account.
 
       final FxAccountLoginPolicy loginPolicy = new FxAccountLoginPolicy(getContext(), fxAccount, executor);
-      loginPolicy.certificateDurationInMilliseconds = 60 * 1000;
-      loginPolicy.assertionDurationInMilliseconds = 20 * 1000;
+      loginPolicy.certificateDurationInMilliseconds = 20 * 60 * 1000;
+      loginPolicy.assertionDurationInMilliseconds = 15 * 60 * 1000;
+      Logger.info(LOG_TAG, "Asking for certificates to expire after 20 minutes and assertions to expire after 15 minutes.");
 
       loginPolicy.login(authEndpoint, new FxAccountLoginDelegate() {
         @Override
@@ -147,6 +148,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
             @Override
             public void handleSuccess(final TokenServerToken token) {
               FxAccountConstants.pii(LOG_TAG, "Got token! uid is " + token.uid + " and endpoint is " + token.endpoint + ".");
+              sharedPrefs.edit().putLong("tokenFailures", 0).commit();
 
               final BaseGlobalSessionCallback callback = new SessionCallback(latch);
               FxAccountGlobalSession globalSession = null;
@@ -168,7 +170,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
               // consistently rejects a token the first time it sees it
               // before accepting it for the rest of its lifetime.
               long MAX_TOKEN_FAILURES_PER_TOKEN = 2;
-              long tokenFailures = 1 + sharedPrefs.getLong("tokenFailures", MAX_TOKEN_FAILURES_PER_TOKEN);
+              long tokenFailures = 1 + sharedPrefs.getLong("tokenFailures", 0);
               if (tokenFailures > MAX_TOKEN_FAILURES_PER_TOKEN) {
                 fxAccount.setCertificate(null);
                 tokenFailures = 0;
