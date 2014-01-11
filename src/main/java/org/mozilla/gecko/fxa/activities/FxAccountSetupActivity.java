@@ -29,7 +29,9 @@ import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -80,6 +82,19 @@ public class FxAccountSetupActivity extends FragmentActivity {
 
     signUpView = findViewById(R.id.sign_up_view);
     signUpView.setVisibility(View.VISIBLE);
+
+    Spinner yearSpinner = (Spinner) ensureFindViewById(signUpView, R.id.year_spinner, "year spinner");
+    // Create an ArrayAdapter using the string array and a default spinner layout
+    ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item);
+    adapter.add("2014");
+    adapter.add("2013");
+    adapter.add("2012");
+    adapter.add("2011");
+    // Specify the layout to use when the list of choices appears
+    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    // Apply the adapter to the spinner
+    yearSpinner.setAdapter(adapter);
+    // yearSpinner.set
 
     signInView = findViewById(R.id.sign_in_view);
     signInView.setVisibility(View.GONE);

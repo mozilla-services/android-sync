@@ -35,6 +35,7 @@
                         style="@style/FxAccountHeaderItem"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
                         android:layout_marginBottom="10dp"
                         android:text="Firefox Accounts" />
 
@@ -42,8 +43,9 @@
                         style="@style/FxAccountTextItem"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
                         android:layout_marginBottom="10dp"
-                        android:text="Create an account to access Sync" />
+                        android:text="Create an account" />
 
                     <EditText
                         android:id="@+id/email"
@@ -57,18 +59,49 @@
                         <requestFocus />
                     </EditText>
 
-                    <EditText
-                        android:id="@+id/password"
-                        style="@style/FxAccountEditItem"
+                    <LinearLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginBottom="30dp"
-                        android:background="@drawable/fxaccount_textfield_background"
-                        android:ems="10"
-                        android:hint="@string/fxaccount_password_hint"
-                        android:inputType="textPassword" />
+                        android:orientation="horizontal" >
+
+                        <EditText
+                            android:id="@+id/password"
+                            style="@style/FxAccountEditItem"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/fxaccount_textfield_background"
+                            android:ems="10"
+                            android:hint="@string/fxaccount_password_hint"
+                            android:inputType="textPassword" />
+
+                        <Button
+                            android:id="@+id/show_password"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="Show" >
+                        </Button>
+                    </LinearLayout>
+
+                    <TextView
+                        style="@style/FxAccountTextItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="10dp"
+                        android:text="When were you born?" />
+
+                    <Spinner
+                        android:id="@+id/year_spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="30dp" />
 
                     <Button
                         android:id="@+id/sign_up_button"
-                        android:layout_width="wrap_content"
+                        android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginBottom="30dp"
@@ -128,14 +161,31 @@
                         <requestFocus />
                     </EditText>
 
-                    <EditText
-                        android:id="@+id/password"
-                        style="@style/FxAccountEditItem"
+                    <LinearLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginBottom="30dp"
-                        android:background="@drawable/fxaccount_textfield_background"
-                        android:ems="10"
-                        android:hint="@string/fxaccount_password_hint"
-                        android:inputType="textPassword" />
+                        android:orientation="horizontal" >
+
+                        <EditText
+                            android:id="@+id/password"
+                            style="@style/FxAccountEditItem"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/fxaccount_textfield_background"
+                            android:ems="10"
+                            android:hint="@string/fxaccount_password_hint"
+                            android:inputType="textPassword" />
+
+                        <Button
+                            android:id="@+id/show_password"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="Show" >
+                        </Button>
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/forgot_password"
