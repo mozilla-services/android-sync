@@ -23,9 +23,16 @@ public interface BaseGlobalSessionCallback {
 
 
   /**
-   * Called when an HTTP failure indicates that a software upgrade is required.
+   * Called when an HTTP failure indicates that a software upgrade is required,
+   * or the account has been EOLed.
+   *
+   * @param session
+   *          the current session.
+   * @param untilUpgraded
+   *          if this is true, the account will be automatically re-enabled
+   *          after this software has been upgraded.
    */
-  void informUpgradeRequiredResponse(GlobalSession session);
+  void disableAccount(GlobalSession session, boolean untilUpgraded);
 
   void handleAborted(GlobalSession globalSession, String reason);
   void handleError(GlobalSession globalSession, Exception ex);

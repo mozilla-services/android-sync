@@ -109,3 +109,9 @@
 
 <!-- Firefox Account strings -->
 <!ENTITY fxaccount.label '&fxaccountBrand.fullName.label;'>
+
+<!-- End of life indicators. See services/sync/locales/en-US/sync.properties for desktop equivalents. -->
+<!ENTITY sync.notification.soft.eol.title 'Service shutting down'>
+<!ENTITY sync.notification.hard.eol.title 'Service unavailable'>
+<!ENTITY sync.notification.soft.eol.message 'Your &syncBrand.fullName.label; service is shutting down soon. Upgrade &brandShortName; to keep syncing.'>
+<!ENTITY sync.notification.hard.eol.message 'Your &syncBrand.fullName.label; service is no longer available. You need to upgrade &brandShortName; to keep syncing.'>

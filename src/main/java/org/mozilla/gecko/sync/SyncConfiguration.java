@@ -247,6 +247,7 @@ public class SyncConfiguration {
 
   public static final String CLIENTS_COLLECTION_TIMESTAMP = "serverClientsTimestamp";  // When the collection was touched.
   public static final String CLIENT_RECORD_TIMESTAMP = "serverClientRecordTimestamp";  // When our record was touched.
+  public static final String MIGRATION_SENTINEL_CHECK_TIMESTAMP = "migrationSentinelCheckTimestamp";  // When we last looked in meta/credentials.
 
   public static final String PREF_CLUSTER_URL = "clusterURL";
   public static final String PREF_SYNC_ID = "syncID";
@@ -561,7 +562,7 @@ public class SyncConfiguration {
   }
 
   public long getPersistedServerClientRecordTimestamp() {
-    return getPrefs().getLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, 0);
+    return getPrefs().getLong(SyncConfiguration.CLIENT_RECORD_TIMESTAMP, 0L);
   }
 
   public void persistServerClientsTimestamp(long timestamp) {
@@ -569,7 +570,15 @@ public class SyncConfiguration {
   }
 
   public long getPersistedServerClientsTimestamp() {
-    return getPrefs().getLong(SyncConfiguration.CLIENTS_COLLECTION_TIMESTAMP, 0);
+    return getPrefs().getLong(SyncConfiguration.CLIENTS_COLLECTION_TIMESTAMP, 0L);
+  }
+
+  public void persistLastMigrationSentinelCheckTimestamp(long timestamp) {
+    getEditor().putLong(SyncConfiguration.MIGRATION_SENTINEL_CHECK_TIMESTAMP, timestamp).commit();
+  }
+
+  public long getLastMigrationSentinelCheckTimestamp() {
+    return getPrefs().getLong(SyncConfiguration.MIGRATION_SENTINEL_CHECK_TIMESTAMP, 0L);
   }
 
   public void purgeCryptoKeys() {

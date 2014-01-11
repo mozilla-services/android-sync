@@ -36,7 +36,7 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public void informUpgradeRequiredResponse(GlobalSession session) {
+  public void disableAccount(GlobalSession session, boolean untilUpgraded) {
   }
 
   @Override

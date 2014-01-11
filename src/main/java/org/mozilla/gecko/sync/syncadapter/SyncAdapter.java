@@ -557,18 +557,20 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
   }
 
   @Override
-  public void informUpgradeRequiredResponse(final GlobalSession session) {
+  public void disableAccount(final GlobalSession session, final boolean untilUpgraded) {
     final AccountManager manager = AccountManager.get(mContext);
     final Account toDisable      = localAccount;
     if (toDisable == null || manager == null) {
       Logger.warn(LOG_TAG, "Attempting to disable account, but null found.");
       return;
     }
-    // Sync needs to be upgraded. Don't automatically sync anymore.
+
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
-        manager.setUserData(toDisable, Constants.DATA_ENABLE_ON_UPGRADE, "1");
+        if (untilUpgraded) {
+          manager.setUserData(toDisable, Constants.DATA_ENABLE_ON_UPGRADE, "1");
+        }
         SyncAccounts.setSyncAutomatically(toDisable, false);
       }
     });
