@@ -100,3 +100,9 @@
 
   <!-- Firefox Account strings -->
   <string name="fxaccount_label">&fxaccount.label;</string>
+
+  <!-- End of life. -->
+  <string name="sync_notification_soft_eol_title">&sync.notification.soft.eol.title;</string>
+  <string name="sync_notification_hard_eol_title">&sync.notification.hard.eol.title;</string>
+  <string name="sync_notification_soft_eol_message">&sync.notification.soft.eol.message;</string>
+  <string name="sync_notification_hard_eol_message">&sync.notification.hard.eol.message;</string>
