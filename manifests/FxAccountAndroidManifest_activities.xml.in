@@ -19,7 +19,7 @@
             android:icon="@drawable/icon"
             android:label="Setup"
             android:clearTaskOnLaunch="true"
-            android:name="org.mozilla.gecko.fxa.activities.FxAccountSetupActivity"
+            android:name="org.mozilla.gecko.fxa.activities.FxAccountGetStartedActivity"
             android:windowSoftInputMode="adjustResize">
             <!-- Adding a launcher will make this activity appear on the
                  Apps screen, which we only want when testing. -->
@@ -32,7 +32,16 @@
         <activity
             android:theme="@style/FxAccountTheme"
             android:icon="@drawable/icon"
-            android:clearTaskOnLaunch="true"
+            android:name="org.mozilla.gecko.fxa.activities.FxAccountCreateAccountActivity"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:theme="@style/FxAccountTheme"
+            android:icon="@drawable/icon"
             android:name="org.mozilla.gecko.fxa.activities.FxAccountCreateSuccessActivity"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
