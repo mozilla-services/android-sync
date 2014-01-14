@@ -22,25 +22,32 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 import android.accounts.Account;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 /**
  * Activity which displays sign up/sign in screen to the user.
  */
-public class FxAccountSetupActivity extends FragmentActivity {
+public class FxAccountSetupActivity extends Activity {
   protected static final String LOG_TAG = FxAccountSetupActivity.class.getSimpleName();
+
+  protected static final int INDEX_OF_GET_STARTED = 0;
+  protected static final int INDEX_OF_CREATE_ACCOUNT = 1;
+  protected static final int INDEX_OF_SIGN_IN = 2;
+  protected static final int INDEX_OF_CREATE_ACCOUNT_SUCCESS = 3;
+  protected static final int INDEX_OF_SIGN_IN_SUCCESS = 4;
 
   protected View signUpView;
   protected View signInView;
@@ -52,6 +59,7 @@ public class FxAccountSetupActivity extends FragmentActivity {
   protected EditText signInEmailEdit;
   protected EditText signInPasswordEdit;
 
+  protected ViewFlipper viewFlipper;
 
   /**
    * Helper to find view or error if it is missing.
@@ -60,8 +68,13 @@ public class FxAccountSetupActivity extends FragmentActivity {
    * @param description to print in error.
    * @return non-null <code>View</code> instance.
    */
-  public static View ensureFindViewById(View v, int id, String description) {
-    View view = v.findViewById(id);
+  public View ensureFindViewById(View v, int id, String description) {
+    View view;
+    if (v != null) {
+      view = v.findViewById(id);
+    } else {
+      view = findViewById(id);
+    }
     if (view == null) {
       String message = "Could not find view " + description + ".";
       Logger.error(LOG_TAG, message);
@@ -80,66 +93,146 @@ public class FxAccountSetupActivity extends FragmentActivity {
     super.onCreate(icicle);
     setContentView(R.layout.fxaccount_setup);
 
-    signUpView = findViewById(R.id.sign_up_view);
-    signUpView.setVisibility(View.VISIBLE);
+    linkifyTextViews(null, new int[] { R.id.old_firefox, R.id.policy });
 
-    Spinner yearSpinner = (Spinner) ensureFindViewById(signUpView, R.id.year_spinner, "year spinner");
-    // Create an ArrayAdapter using the string array and a default spinner layout
-    ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item);
-    adapter.add("2014");
-    adapter.add("2013");
-    adapter.add("2012");
-    adapter.add("2011");
-    // Specify the layout to use when the list of choices appears
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // Apply the adapter to the spinner
-    yearSpinner.setAdapter(adapter);
-    // yearSpinner.set
+    viewFlipper = (ViewFlipper) ensureFindViewById(null, R.id.viewflipper, "view flipper");
 
-    signInView = findViewById(R.id.sign_in_view);
-    signInView.setVisibility(View.GONE);
+    createViewOnClickListeners();
+    createYearSpinner();
 
-    signUpEmailEdit = (EditText) ensureFindViewById(signUpView, R.id.email, "email");
-    signUpPasswordEdit = (EditText) ensureFindViewById(signUpView, R.id.password, "password");
+    if (icicle != null) {
+      viewFlipper.setDisplayedChild(icicle.getInt("viewflipper", INDEX_OF_GET_STARTED));
+    }
 
-    signInEmailEdit = (EditText) ensureFindViewById(signInView, R.id.email, "email");
-    signInPasswordEdit = (EditText) ensureFindViewById(signInView, R.id.password, "password");
+    //
+    //    signUpView = findViewById(R.id.sign_up_view);
+    //    signUpView.setVisibility(View.VISIBLE);
+    //
+    //    Spinner yearSpinner = (Spinner) ensureFindViewById(signUpView, R.id.year_spinner, "year spinner");
+    //    // Create an ArrayAdapter using the string array and a default spinner layout
+    //    ArrayAdapter<CharSequence> adapter = new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item);
+    //    adapter.add("2014");
+    //    adapter.add("2013");
+    //    adapter.add("2012");
+    //    adapter.add("2011");
+    //    // Specify the layout to use when the list of choices appears
+    //    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    //    // Apply the adapter to the spinner
+    //    yearSpinner.setAdapter(adapter);
+    //    // yearSpinner.set
+    //
+    //    signInView = findViewById(R.id.sign_in_view);
+    //    signInView.setVisibility(View.GONE);
+    //
+    //    signUpEmailEdit = (EditText) ensureFindViewById(signUpView, R.id.email, "email");
+    //    signUpPasswordEdit = (EditText) ensureFindViewById(signUpView, R.id.password, "password");
+    //
+    //    signInEmailEdit = (EditText) ensureFindViewById(signInView, R.id.email, "email");
+    //    signInPasswordEdit = (EditText) ensureFindViewById(signInView, R.id.password, "password");
+    //
+    //    ensureFindViewById(signUpView, R.id.sign_in_instead, "sign in instead button").setOnClickListener(new OnClickListener() {
+    //      @Override
+    //      public void onClick(View arg0) {
+    //        showSignIn();
+    //      }
+    //    });
+    //
+    //    ensureFindViewById(signInView, R.id.sign_up_instead, "sign up instead button").setOnClickListener(new OnClickListener() {
+    //      @Override
+    //      public void onClick(View arg0) {
+    //        showSignUp();
+    //      }
+    //    });
+    //
+    //    ensureFindViewById(signUpView, R.id.sign_up_button, "sign up button").setOnClickListener(new OnClickListener() {
+    //      @Override
+    //      public void onClick(View v) {
+    //        String email = signUpEmailEdit.getText().toString();
+    //        String password = signUpPasswordEdit.getText().toString();
+    //        hideRemoteError();
+    //        signUp(email, password);
+    //      }
+    //    });
+    //
+    //    ensureFindViewById(signInView, R.id.sign_in_button, "sign in button").setOnClickListener(new OnClickListener() {
+    //      @Override
+    //      public void onClick(View v) {
+    //        String email = signInEmailEdit.getText().toString();
+    //        String password = signInPasswordEdit.getText().toString();
+    //        hideRemoteError();
+    //        signIn(email, password);
+    //      }
+    //    });
+    //
+    //    remoteError = (TextView) findViewById(R.id.remote_error);
+  }
 
-    ensureFindViewById(signUpView, R.id.sign_in_instead, "sign in instead button").setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View arg0) {
-        showSignIn();
-      }
-    });
-
-    ensureFindViewById(signInView, R.id.sign_up_instead, "sign up instead button").setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View arg0) {
-        showSignUp();
-      }
-    });
-
-    ensureFindViewById(signUpView, R.id.sign_up_button, "sign up button").setOnClickListener(new OnClickListener() {
+  protected void createViewOnClickListeners() {
+    OnClickListener showCreateAccount = new OnClickListener() {
       @Override
       public void onClick(View v) {
-        String email = signUpEmailEdit.getText().toString();
-        String password = signUpPasswordEdit.getText().toString();
-        hideRemoteError();
-        signUp(email, password);
+        viewFlipper.setDisplayedChild(INDEX_OF_CREATE_ACCOUNT);
       }
-    });
+    };
 
-    ensureFindViewById(signInView, R.id.sign_in_button, "sign in button").setOnClickListener(new OnClickListener() {
+    OnClickListener showSignIn = new OnClickListener() {
       @Override
       public void onClick(View v) {
-        String email = signInEmailEdit.getText().toString();
-        String password = signInPasswordEdit.getText().toString();
-        hideRemoteError();
-        signIn(email, password);
+        viewFlipper.setDisplayedChild(INDEX_OF_SIGN_IN);
+      }
+    };
+
+    final View introView = ensureFindViewById(viewFlipper, R.id.intro_view, "intro view");
+    ensureFindViewById(introView, R.id.get_started_button, "get started button").setOnClickListener(showCreateAccount);
+
+    final View createAccountView = ensureFindViewById(viewFlipper, R.id.create_account_view, "create account view");
+    ensureFindViewById(createAccountView, R.id.sign_in_instead, "sign in instead link").setOnClickListener(showSignIn);
+
+    final View signInView = ensureFindViewById(viewFlipper, R.id.sign_in_view, "sign in view");
+    ensureFindViewById(signInView, R.id.create_account, "create account instead link").setOnClickListener(showCreateAccount);
+  }
+
+  @Override
+  public void onBackPressed() {
+    if (viewFlipper.getDisplayedChild() < 1) {
+      super.onBackPressed();
+      return;
+    }
+    viewFlipper.showPrevious();
+  }
+
+  protected void createYearSpinner() {
+    final View createAccountView = ensureFindViewById(viewFlipper, R.id.create_account_view, "create account view");
+    final EditText yearSpinner = (EditText) ensureFindViewById(createAccountView, R.id.year_spinner, "year of birth button");
+    yearSpinner.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        final String[] years = new String[20];
+        for (int i = 0; i < years.length; i++) {
+          years[i] = Integer.toString(2014 - i);
+        }
+
+        android.content.DialogInterface.OnClickListener listener = new Dialog.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            yearSpinner.setText(years[which]);
+          }
+        };
+
+        AlertDialog dialog = new AlertDialog.Builder(FxAccountSetupActivity.this)
+        .setTitle(R.string.fxaccount_when_were_you_born)
+        .setItems(years, listener)
+        .setIcon(R.drawable.fxaccount_icon)
+        .create();
+
+        dialog.show();
       }
     });
+  }
 
-    remoteError = (TextView) findViewById(R.id.remote_error);
+  @Override
+  public void onSaveInstanceState(Bundle bundle) {
+    bundle.putInt("viewflipper", viewFlipper.getDisplayedChild());
   }
 
   protected void redirectToStatusActivity() {
@@ -159,9 +252,14 @@ public class FxAccountSetupActivity extends FragmentActivity {
     }
   }
 
-  public static void linkifyTextViews(View view, int[] textViews) {
+  public void linkifyTextViews(View view, int[] textViews) {
     for (int id : textViews) {
-      TextView textView = (TextView) view.findViewById(id);
+      TextView textView;
+      if (view != null) {
+        textView = (TextView) view.findViewById(id);
+      } else {
+        textView = (TextView) findViewById(id);
+      }
       if (textView == null) {
         Logger.warn(LOG_TAG, "Could not process links for view with id " + id + ".");
         continue;

@@ -39,12 +39,12 @@ public class FxAccountStatusActivity extends FragmentActivity {
     super.onCreate(icicle);
     setContentView(R.layout.fxaccount_status);
 
-    newUserView = findViewById(R.id.new_user);
-    existingUserView = findViewById(R.id.existing_user);
-
-    connectionStatusUnverifiedView = findViewById(R.id.unverified_view);
-    connectionStatusSignInView = findViewById(R.id.sign_in_view);
-    connectionStatusSyncingView = findViewById(R.id.syncing_view);
+    //    newUserView = findViewById(R.id.);
+    //    existingUserView = findViewById(R.id.existing_user);
+    //
+    //    connectionStatusUnverifiedView = findViewById(R.id.unverified_view);
+    //    connectionStatusSignInView = findViewById(R.id.sign_in_view);
+    //    connectionStatusSyncingView = findViewById(R.id.syncing_view);
   }
 
   @Override

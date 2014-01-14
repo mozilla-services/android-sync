@@ -20,41 +20,6 @@
                 android:layout_height="wrap_content" >
 
                 <LinearLayout
-                    android:id="@+id/new_user"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone" >
-
-                    <TextView
-                        style="@style/FxAccountHeaderItem"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
-                        android:text="Firefox Accounts" >
-                    </TextView>
-
-                    <TextView
-                        style="@style/FxAccountTextItem"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
-                        android:text="Sync your bookmarks, history, and settings to your Firefox Account to access from any Firefox." >
-                    </TextView>
-
-                    <Button
-                        android:id="@+id/get_started_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginBottom="30dp"
-                        android:onClick="onClickGetStarted"
-                        android:paddingLeft="20dp"
-                        android:paddingRight="20dp"
-                        android:text="Get started" />
-                </LinearLayout>
-
-                <LinearLayout
                     android:id="@+id/existing_user"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

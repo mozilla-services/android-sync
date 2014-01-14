@@ -8,11 +8,8 @@
   <solid
       android:color="@android:color/transparent" />
   <stroke
-      android:width="1dip"
-      android:color="#000000" />
-  <padding
-    android:left="8dip"
-    android:top="8dip"
-    android:right="8dip"
-    android:bottom="8dip" />
+      android:width="@dimen/fxaccount_stroke_width"
+      android:color="@color/fxaccount_input_textColor" />
+  <corners
+      android:radius="@dimen/fxaccount_corner_radius" />
 </shape>
