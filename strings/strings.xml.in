@@ -135,3 +135,7 @@
   <string name="fxaccount_description">&fxaccount.description;</string>
   <string name="fxaccount_sign_up">&fxaccount.sign.up;</string>
   <string name="fxaccount_intro_contentDescription">&fxaccount.intro.contentDescription;</string>
+  <string name="fxaccount_offer_resend_confirmation_email">&fxaccount.offer.resend.confirmation.email;</string>
+  <string name="fxaccount_confirmation_description">&fxaccount.confirmation.description;</string>
+  <string name="fxaccount_mail_contentDescription">&fxaccount.mail.contentDescription;</string>
+  <string name="fxaccount_confirmation_email_sent">&fxaccount.confirmation.email.sent;</string>

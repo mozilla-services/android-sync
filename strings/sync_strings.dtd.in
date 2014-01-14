@@ -144,3 +144,7 @@
 <!ENTITY fxaccount.options.title 'Options'>
 <!ENTITY fxaccount.options.configure.title 'Configure your Firefox Account'>
 <!ENTITY fxaccount.intro.contentDescription 'Firefox Accounts introduction graphics'>
+<!ENTITY fxaccount.confirmation.email.sent 'Confirmation email sent!'>
+<!ENTITY fxaccount.mail.contentDescription 'Firefox Accounts envelope graphic'>
+<!ENTITY fxaccount.confirmation.description 'Your confirmation link awaits at:'>
+<!ENTITY fxaccount.offer.resend.confirmation.email 'Don\&apos;t see an email? Resend.'>

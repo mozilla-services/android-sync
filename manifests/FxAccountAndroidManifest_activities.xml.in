@@ -28,3 +28,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:theme="@style/FxAccountTheme"
+            android:icon="@drawable/icon"
+            android:clearTaskOnLaunch="true"
+            android:name="org.mozilla.gecko.fxa.activities.FxAccountCreateSuccessActivity"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>

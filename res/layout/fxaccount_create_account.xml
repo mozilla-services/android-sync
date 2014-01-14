@@ -42,14 +42,14 @@
             android:inputType="none" />
 
         <Button
-            android:id="@+id/get_started_button"
+            android:id="@+id/sign_up_button"
             style="@style/FxAccountButton"
             android:layout_marginBottom="20dp"
             android:layout_marginTop="45dp"
             android:text="@string/fxaccount_sign_up_button_label" />
 
         <TextView
-            android:id="@+id/sign_in_instead"
+            android:id="@+id/sign_in_instead_link"
             style="@style/FxAccountLinkItem"
             android:layout_marginBottom="20dp"
             android:focusable="true"

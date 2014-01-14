@@ -104,6 +104,17 @@ public class FxAccountSetupActivity extends Activity {
       viewFlipper.setDisplayedChild(icicle.getInt("viewflipper", INDEX_OF_GET_STARTED));
     }
 
+    View createAccountView = findViewById(R.id.create_account_view);
+    ensureFindViewById(createAccountView, R.id.sign_up_button, "sign up button").setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Intent intent = new Intent(FxAccountSetupActivity.this, FxAccountCreateSuccessActivity.class);
+        intent.putExtra("email", "test@test.com");
+        startActivity(intent);
+        finish();
+      }
+    });
+
     //
     //    signUpView = findViewById(R.id.sign_up_view);
     //    signUpView.setVisibility(View.VISIBLE);
@@ -186,7 +197,7 @@ public class FxAccountSetupActivity extends Activity {
     ensureFindViewById(introView, R.id.get_started_button, "get started button").setOnClickListener(showCreateAccount);
 
     final View createAccountView = ensureFindViewById(viewFlipper, R.id.create_account_view, "create account view");
-    ensureFindViewById(createAccountView, R.id.sign_in_instead, "sign in instead link").setOnClickListener(showSignIn);
+    ensureFindViewById(createAccountView, R.id.sign_in_instead_link, "sign in instead link").setOnClickListener(showSignIn);
 
     final View signInView = ensureFindViewById(viewFlipper, R.id.sign_in_view, "sign in view");
     ensureFindViewById(signInView, R.id.create_account, "create account instead link").setOnClickListener(showCreateAccount);
