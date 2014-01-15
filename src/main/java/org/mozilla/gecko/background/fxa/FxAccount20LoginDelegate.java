@@ -17,13 +17,11 @@ import org.mozilla.gecko.sync.Utils;
  */
 public class FxAccount20LoginDelegate implements CreateDelegate {
   protected final byte[] emailUTF8;
-  protected final byte[] passwordUTF8;
   protected final byte[] authPW;
 
-  public FxAccount20LoginDelegate(byte[] emailUTF8, byte[] passwordUTF8) throws UnsupportedEncodingException, GeneralSecurityException {
+  public FxAccount20LoginDelegate(byte[] emailUTF8, byte[] quickStretchedPW) throws UnsupportedEncodingException, GeneralSecurityException {
     this.emailUTF8 = emailUTF8;
-    this.passwordUTF8 = passwordUTF8;
-    this.authPW = FxAccountUtils.generateAuthPW(FxAccountUtils.generateQuickStretchedPW(emailUTF8, passwordUTF8));
+    this.authPW = FxAccountUtils.generateAuthPW(quickStretchedPW);
   }
 
   @SuppressWarnings("unchecked")
