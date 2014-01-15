@@ -105,7 +105,7 @@ public class FxAccountSetupActivity extends Activity {
     }
 
     View createAccountView = findViewById(R.id.create_account_view);
-    ensureFindViewById(createAccountView, R.id.sign_up_button, "sign up button").setOnClickListener(new OnClickListener() {
+    ensureFindViewById(createAccountView, R.id.create_account_button, "sign up button").setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
         Intent intent = new Intent(FxAccountSetupActivity.this, FxAccountCreateSuccessActivity.class);
@@ -214,7 +214,7 @@ public class FxAccountSetupActivity extends Activity {
 
   protected void createYearSpinner() {
     final View createAccountView = ensureFindViewById(viewFlipper, R.id.create_account_view, "create account view");
-    final EditText yearSpinner = (EditText) ensureFindViewById(createAccountView, R.id.year_spinner, "year of birth button");
+    final EditText yearSpinner = (EditText) ensureFindViewById(createAccountView, R.id.year_edit, "year of birth button");
     yearSpinner.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {

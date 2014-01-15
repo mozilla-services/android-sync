@@ -15,13 +15,23 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.PopupWindow;
 
 /**
  * Activity which displays sign up/sign in screen to the user.
  */
 public class FxAccountCreateAccountActivity extends FxAccountAbstractActivity {
   protected static final String LOG_TAG = FxAccountCreateAccountActivity.class.getSimpleName();
+
+  protected EditText emailEdit;
+  protected EditText passwordEdit;
+  protected Button showPasswordButton;
+  protected EditText yearEdit;
+  protected Button createAccountButton;
+
+  protected PopupWindow emailPopupWindow;
 
   /**
    * {@inheritDoc}
@@ -35,24 +45,31 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractActivity {
 
     linkifyTextViews(null, new int[] { R.id.policy });
 
-    createYearSpinner();
+    emailEdit = (EditText) ensureFindViewById(null, R.id.email, "email edit");
+    passwordEdit = (EditText) ensureFindViewById(null, R.id.password, "password edit");
+    showPasswordButton = (Button) ensureFindViewById(null, R.id.show_password, "show password button");
+    yearEdit = (EditText) ensureFindViewById(null, R.id.year_edit, "year edit");
+    createAccountButton = (Button) ensureFindViewById(null, R.id.create_account_button, "sign up button");
 
-    View createAccountView = findViewById(R.id.create_account_view);
-    ensureFindViewById(createAccountView, R.id.sign_up_button, "sign up button").setOnClickListener(new OnClickListener() {
+    createAccountButton();
+    createYearEdit();
+
+    // emailEdit.setError("TEST ERROR");
+  }
+
+  protected void createAccountButton() {
+    createAccountButton.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
         Intent intent = new Intent(FxAccountCreateAccountActivity.this, FxAccountCreateSuccessActivity.class);
-        intent.putExtra("email", "test@test.com");
+        intent.putExtra("email", emailEdit.getText().toString());
         startActivity(intent);
-        finish();
       }
     });
   }
 
-  protected void createYearSpinner() {
-    final View createAccountView = ensureFindViewById(null, R.id.create_account_view, "create account view");
-    final EditText yearSpinner = (EditText) ensureFindViewById(createAccountView, R.id.year_spinner, "year of birth button");
-    yearSpinner.setOnClickListener(new OnClickListener() {
+  protected void createYearEdit() {
+    yearEdit.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
         final String[] years = new String[20];
@@ -63,7 +80,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractActivity {
         android.content.DialogInterface.OnClickListener listener = new Dialog.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int which) {
-            yearSpinner.setText(years[which]);
+            yearEdit.setText(years[which]);
           }
         };
 
@@ -86,6 +103,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractActivity {
     super.onResume();
     if (FxAccountAuthenticator.getFirefoxAccounts(this).length > 0) {
       redirectToActivity(FxAccountStatusActivity.class);
+      return;
     }
   }
 }

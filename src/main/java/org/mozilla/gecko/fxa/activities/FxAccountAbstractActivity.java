@@ -22,7 +22,6 @@ public abstract class FxAccountAbstractActivity extends Activity {
     // the soft keyboard not being shown for the started activity. Why, Android, why?
     intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
     startActivity(intent);
-    finish();
   }
 
   /**

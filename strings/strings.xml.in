@@ -104,7 +104,7 @@
   <string name="fxaccount_label">&fxaccount.label;</string>
   <string name="fxaccount_policy">&fxaccount.policy;</string>
   <string name="fxaccount_forgot_password">&fxaccount.forgot.password;</string>
-  <string name="fxaccount_sign_up_button_label">&fxaccount.sign.up.button.label;</string>
+  <string name="fxaccount_create_account_button_label">&fxaccount.create.account.button.label;</string>
   <string name="fxaccount_sign_in_button_label">&fxaccount.sign.in.button.label;</string>
 
   <string name="fxaccount_when_were_you_born">&fxaccount.when.were.you.born;</string>

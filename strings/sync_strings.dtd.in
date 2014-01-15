@@ -114,7 +114,7 @@
          href="http://mozilla.com"&gt;Terms of Service&lt;/a&gt; and &lt;a
          href="http://mozilla.com"&gt;Privacy Policy&lt;/a&gt;.'>
 <!ENTITY fxaccount.forgot.password 'Forgot password?'>
-<!ENTITY fxaccount.sign.up.button.label 'Create Account'>
+<!ENTITY fxaccount.create.account.button.label 'Create Account'>
 <!ENTITY fxaccount.sign.in.button.label 'Sign In'>
 <!ENTITY fxaccount.email.hint 'Email'>
 <!ENTITY fxaccount.password.hint 'Password'>
@@ -127,9 +127,7 @@
 <!ENTITY fxaccount.sign.in 'Sign in'>
 <!ENTITY fxaccount.create.account 'Create an account'>
 
-<!ENTITY fxaccount.old.firefox '&lt;a
-         href="http://mozilla.com"&gt;Using &syncBrand.shortName.label; with
-         an older version of &brandShortName;?&lt;/a&gt;'>
+<!ENTITY fxaccount.old.firefox '&lt;a href="http://mozilla.com"&gt;Using &syncBrand.shortName.label; with an older version of &brandShortName;?&lt;/a&gt;'>
 
 <!ENTITY fxaccount.when.were.you.born 'When were you born?'>
 <!ENTITY fxaccount.year.of.birth 'Year of birth'>

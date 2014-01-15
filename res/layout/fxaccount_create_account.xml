@@ -33,7 +33,7 @@
         <!-- Per http://stackoverflow.com/questions/2359176/android-edittext-onclicklistener, not allowing focus allows us to highjack the click. -->
 
         <EditText
-            android:id="@+id/year_spinner"
+            android:id="@+id/year_edit"
             style="@style/FxAccountEditItem"
             android:layout_marginTop="15dp"
             android:drawableRight="@drawable/fxaccount_ddarrow_inactive"
@@ -41,12 +41,24 @@
             android:hint="@string/fxaccount_year_of_birth"
             android:inputType="none" />
 
+        <TextView
+            android:id="@+id/local_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_margin="5dp"
+            android:background="@drawable/fxaccount_textview_error_background"
+            android:padding="5dp"
+            android:text="Error"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
         <Button
-            android:id="@+id/sign_up_button"
+            android:id="@+id/create_account_button"
             style="@style/FxAccountButton"
             android:layout_marginBottom="20dp"
             android:layout_marginTop="45dp"
-            android:text="@string/fxaccount_sign_up_button_label" />
+            android:text="@string/fxaccount_create_account_button_label" />
 
         <TextView
             android:id="@+id/sign_in_instead_link"
