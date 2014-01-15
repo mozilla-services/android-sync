@@ -30,6 +30,7 @@ import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.setup.Constants;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -139,6 +140,7 @@ public class Utils {
     return Base64.decodeBase64(base64.getBytes("UTF-8"));
   }
 
+  @SuppressLint("DefaultLocale")
   public static byte[] decodeFriendlyBase32(String base32) {
     Base32 converter = new Base32();
     final String translated = base32.replace('8', 'l').replace('9', 'o');
@@ -316,6 +318,7 @@ public class Utils {
    * Takes a URI, extracting URI components.
    * @param scheme the URI scheme on which to match.
    */
+  @SuppressWarnings("deprecation")
   public static Map<String, String> extractURIComponents(String scheme, String uri) {
     if (uri.indexOf(scheme) != 0) {
       throw new IllegalArgumentException("URI scheme does not match: " + scheme);
