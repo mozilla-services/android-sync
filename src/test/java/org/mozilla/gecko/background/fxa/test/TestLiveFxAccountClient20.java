@@ -11,9 +11,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.apache.commons.codec.binary.Base64;
-import org.mozilla.gecko.background.fxa.FxAccountClient;
-import org.mozilla.gecko.background.fxa.FxAccountClient.StatusResponse;
-import org.mozilla.gecko.background.fxa.FxAccountClient.TwoKeys;
+import org.mozilla.gecko.background.fxa.FxAccountClient10;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
@@ -49,7 +49,7 @@ public class TestLiveFxAccountClient20 {
     client = new FxAccountClient20(TEST_SERVERURI, Executors.newSingleThreadExecutor());
   }
 
-  public abstract static class BaseDelegate<T> implements FxAccountClient.RequestDelegate<T> {
+  public abstract static class BaseDelegate<T> implements FxAccountClient10.RequestDelegate<T> {
     protected final WaitHelper waitHelper;
 
     public BaseDelegate(WaitHelper waitHelper) {

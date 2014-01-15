@@ -47,8 +47,8 @@ import ch.boye.httpclientandroidlib.client.ClientProtocolException;
  * <code>AuthDelegate</code> delegates to make it easier to modify the request
  * bodies sent to the /create and /auth endpoints.
  */
-public class FxAccountClient {
-  protected static final String LOG_TAG = FxAccountClient.class.getSimpleName();
+public class FxAccountClient10 {
+  protected static final String LOG_TAG = FxAccountClient10.class.getSimpleName();
 
   protected static final String VERSION_FRAGMENT = "v1/";
 
@@ -61,7 +61,7 @@ public class FxAccountClient {
   protected final String serverURI;
   protected final Executor executor;
 
-  public FxAccountClient(String serverURI, Executor executor) {
+  public FxAccountClient10(String serverURI, Executor executor) {
     if (serverURI == null) {
       throw new IllegalArgumentException("Must provide a server URI.");
     }

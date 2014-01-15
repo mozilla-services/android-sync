@@ -8,7 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 
 import org.json.simple.JSONObject;
-import org.mozilla.gecko.background.fxa.FxAccountClient.CreateDelegate;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.CreateDelegate;
 import org.mozilla.gecko.sync.Utils;
 
 /**
