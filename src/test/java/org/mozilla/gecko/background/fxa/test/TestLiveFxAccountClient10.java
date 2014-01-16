@@ -12,9 +12,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.apache.commons.codec.binary.Base64;
-import org.mozilla.gecko.background.fxa.FxAccountClient;
-import org.mozilla.gecko.background.fxa.FxAccountClient.TwoKeys;
-import org.mozilla.gecko.background.fxa.FxAccountClient.TwoTokens;
+import org.mozilla.gecko.background.fxa.FxAccountClient10;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoTokens;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
@@ -25,7 +25,7 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 @Category(IntegrationTestCategory.class)
-public class TestLiveFxAccountClient {
+public class TestLiveFxAccountClient10 {
   protected static final String TEST_SERVERURI = "http://127.0.0.1:9000/";
   // These tests fail against the live dev server because the accounts created
   // need to be manually verified.
@@ -52,15 +52,15 @@ public class TestLiveFxAccountClient {
       "0000000000000000" +
       "0000000000000179";
 
-  public FxAccountClient client;
+  public FxAccountClient10 client;
 
   @Before
   public void setUp() {
     BaseResource.rewriteLocalhost = false;
-    client = new FxAccountClient(TEST_SERVERURI, Executors.newSingleThreadExecutor());
+    client = new FxAccountClient10(TEST_SERVERURI, Executors.newSingleThreadExecutor());
   }
 
-  public abstract static class BaseDelegate<T> implements FxAccountClient.RequestDelegate<T> {
+  public abstract static class BaseDelegate<T> implements FxAccountClient10.RequestDelegate<T> {
     protected final WaitHelper waitHelper;
 
     public BaseDelegate(WaitHelper waitHelper) {
@@ -174,13 +174,13 @@ public class TestLiveFxAccountClient {
     return authTokens[0];
   }
 
-  protected String certificateSign(final ExtendedJSONObject publicKey, final int duration, final byte[] sessionToken) {
+  protected String certificateSign(final ExtendedJSONObject publicKey, final int durationInMilliseconds, final byte[] sessionToken) {
     final String ret[] =  new String[1];
     final WaitHelper waitHelper = WaitHelper.getTestWaiter();
     waitHelper.performWait(new Runnable() {
       @Override
       public void run() {
-        client.sign(sessionToken, publicKey, duration, new BaseDelegate<String>(waitHelper) {
+        client.sign(sessionToken, publicKey, durationInMilliseconds, new BaseDelegate<String>(waitHelper) {
           @Override
           public void handleSuccess(String cert) {
             ret[0] = cert;

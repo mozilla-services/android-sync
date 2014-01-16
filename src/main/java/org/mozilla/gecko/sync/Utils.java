@@ -350,7 +350,7 @@ public class Utils {
   }
 
   // Because TextUtils.join is not stubbed.
-  public static String toDelimitedString(String delimiter, Collection<String> items) {
+  public static String toDelimitedString(String delimiter, Collection<? extends Object> items) {
     if (items == null || items.size() == 0) {
       return "";
     }
@@ -358,8 +358,8 @@ public class Utils {
     StringBuilder sb = new StringBuilder();
     int i = 0;
     int c = items.size();
-    for (String string : items) {
-      sb.append(string);
+    for (Object object : items) {
+      sb.append(object.toString());
       if (++i < c) {
         sb.append(delimiter);
       }
@@ -367,7 +367,7 @@ public class Utils {
     return sb.toString();
   }
 
-  public static String toCommaSeparatedString(Collection<String> items) {
+  public static String toCommaSeparatedString(Collection<? extends Object> items) {
     return toDelimitedString(", ", items);
   }
 

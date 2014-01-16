@@ -11,11 +11,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.apache.commons.codec.binary.Base64;
-import org.mozilla.gecko.background.fxa.FxAccountClient;
-import org.mozilla.gecko.background.fxa.FxAccountClient.StatusResponse;
-import org.mozilla.gecko.background.fxa.FxAccountClient.TwoKeys;
+import org.mozilla.gecko.background.fxa.FxAccountClient10;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
+import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
@@ -49,7 +50,7 @@ public class TestLiveFxAccountClient20 {
     client = new FxAccountClient20(TEST_SERVERURI, Executors.newSingleThreadExecutor());
   }
 
-  public abstract static class BaseDelegate<T> implements FxAccountClient.RequestDelegate<T> {
+  public abstract static class BaseDelegate<T> implements FxAccountClient10.RequestDelegate<T> {
     protected final WaitHelper waitHelper;
 
     public BaseDelegate(WaitHelper waitHelper) {
@@ -75,7 +76,7 @@ public class TestLiveFxAccountClient20 {
   protected String createAccount(final String email, final String password, final VerificationState preVerified)
       throws Throwable {
     final byte[] emailUTF8 = email.getBytes("UTF-8");
-    final byte[] passwordUTF8 = password.getBytes("UTF-8");
+    final byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(emailUTF8, password.getBytes("UTF-8"));
     final String[] uids = new String[1];
     final WaitHelper waitHelper = WaitHelper.getTestWaiter();
     try {
@@ -83,7 +84,7 @@ public class TestLiveFxAccountClient20 {
         @Override
         public void run() {
           boolean wantVerified = preVerified == VerificationState.PREVERIFIED;
-          client.createAccount(emailUTF8, passwordUTF8, wantVerified, new BaseDelegate<String>(waitHelper) {
+          client.createAccount(emailUTF8, quickStretchedPW, wantVerified, new BaseDelegate<String>(waitHelper) {
             @Override
             public void handleSuccess(String uid) {
               uids[0] = uid;
@@ -137,14 +138,14 @@ public class TestLiveFxAccountClient20 {
 
   protected LoginResponse login(final String email, final String password, final boolean getKeys) throws Throwable {
     final byte[] emailUTF8 = email.getBytes("UTF-8");
-    final byte[] passwordUTF8 = password.getBytes("UTF-8");
+    final byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(emailUTF8, password.getBytes("UTF-8"));
     final LoginResponse[] responses =  new LoginResponse[1];
     final WaitHelper waitHelper = WaitHelper.getTestWaiter();
     try {
       waitHelper.performWait(new Runnable() {
         @Override
         public void run() {
-          client.login(emailUTF8, passwordUTF8, getKeys, new BaseDelegate<LoginResponse>(waitHelper) {
+          client.login(emailUTF8, quickStretchedPW, getKeys, new BaseDelegate<LoginResponse>(waitHelper) {
             @Override
             public void handleSuccess(LoginResponse response) {
               responses[0] = response;

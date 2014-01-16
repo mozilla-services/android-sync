@@ -47,8 +47,8 @@ import ch.boye.httpclientandroidlib.client.ClientProtocolException;
  * <code>AuthDelegate</code> delegates to make it easier to modify the request
  * bodies sent to the /create and /auth endpoints.
  */
-public class FxAccountClient {
-  protected static final String LOG_TAG = FxAccountClient.class.getSimpleName();
+public class FxAccountClient10 {
+  protected static final String LOG_TAG = FxAccountClient10.class.getSimpleName();
 
   protected static final String VERSION_FRAGMENT = "v1/";
 
@@ -61,7 +61,7 @@ public class FxAccountClient {
   protected final String serverURI;
   protected final Executor executor;
 
-  public FxAccountClient(String serverURI, Executor executor) {
+  public FxAccountClient10(String serverURI, Executor executor) {
     if (serverURI == null) {
       throw new IllegalArgumentException("Must provide a server URI.");
     }
@@ -604,10 +604,10 @@ public class FxAccountClient {
   }
 
   @SuppressWarnings("unchecked")
-  public void sign(final byte[] sessionToken, final ExtendedJSONObject publicKey, long durationInSeconds, final RequestDelegate<String> delegate) {
+  public void sign(final byte[] sessionToken, final ExtendedJSONObject publicKey, long durationInMilliseconds, final RequestDelegate<String> delegate) {
     final JSONObject body = new JSONObject();
     body.put("publicKey", publicKey);
-    body.put("duration", durationInSeconds);
+    body.put("duration", durationInMilliseconds);
 
     final byte[] tokenId = new byte[32];
     final byte[] reqHMACKey = new byte[32];
