@@ -8,7 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.concurrent.CountDownLatch;
 
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.background.fxa.FxAccountClient.RequestDelegate;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.InnerRequestDelegate;
