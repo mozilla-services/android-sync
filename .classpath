@@ -15,6 +15,7 @@
 	</classpathentry>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/simpleframework/simple/4.1.21/simple-4.1.21.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/android/support/support-v4/18.0.0/support-v4-18.0.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/util/base64-unstub/1/base64-unstub-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/util/log-unstub/1/log-unstub-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/android/content/sharedpreferences-stub/1/sharedpreferences-stub-1.jar"/>
