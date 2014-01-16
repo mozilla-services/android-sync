@@ -18,6 +18,13 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
+import org.mozilla.gecko.browserid.JSONWebTokenUtils;
+import org.mozilla.gecko.fxa.authenticator.AbstractFxAccount;
+import org.mozilla.gecko.fxa.authenticator.FxAccountLoginDelegate;
+import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException;
+import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginAccountNotVerifiedException;
+import org.mozilla.gecko.fxa.authenticator.FxAccountLoginPolicy;
+import org.mozilla.gecko.fxa.authenticator.TestFxAccountLoginPolicy.MockFxAccount;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Utils;
@@ -29,6 +36,7 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 @Category(IntegrationTestCategory.class)
 public class TestLiveFxAccountClient20 {
   protected static final String TEST_SERVERURI = "http://127.0.0.1:9000/";
+  protected static final String TEST_AUDIENCE = TEST_SERVERURI;
   // These tests fail against the live dev server because the accounts created
   // need to be manually verified.
   // protected static final String TEST_SERVERURI = "https://api-accounts-onepw.dev.lcip.org/";
@@ -246,12 +254,12 @@ public class TestLiveFxAccountClient20 {
     Assert.assertFalse(status.verified);
   }
 
-  protected void doTestCreateAndLogin(final String email, String password, final boolean accountMayExist)
+  protected LoginResponse doTestCreateAndLogin(final String email, String password, final boolean accountMayExist)
       throws Throwable {
-    doTestCreateAndLogin(email, password, accountMayExist, VerificationState.PREVERIFIED);
+    return doTestCreateAndLogin(email, password, accountMayExist, VerificationState.PREVERIFIED);
   }
 
-  protected void doTestCreateAndLogin(final String email, String password, final boolean accountMayExist, VerificationState preVerified)
+  protected LoginResponse doTestCreateAndLogin(final String email, String password, final boolean accountMayExist, VerificationState preVerified)
       throws Throwable {
     try {
       String uid = createAccount(email, password, preVerified);
@@ -295,6 +303,8 @@ public class TestLiveFxAccountClient20 {
       Assert.assertEquals(32, keys.kA.length);
       Assert.assertEquals(32, keys.wrapkB.length);
     }
+
+    return keysResponse;
   }
 
   @Test
@@ -364,5 +374,74 @@ public class TestLiveFxAccountClient20 {
     Assert.assertNotNull(cert.getObject("principal"));
     String email = cert.getObject("principal").getString("email");
     Assert.assertEquals(TEST_SERVERURI.split("//")[1].split("/")[0], email.split("@")[1]);
+  }
+
+  protected String login(final String audience, AbstractFxAccount fxAccount) throws Throwable {
+    final FxAccountLoginPolicy policy = new FxAccountLoginPolicy(null, fxAccount, Executors.newSingleThreadExecutor());
+    try {
+      final String assertions[] = new String[1];
+      WaitHelper.getTestWaiter().performWait(new Runnable() {
+        @Override
+        public void run() {
+          policy.login(audience, new FxAccountLoginDelegate() {
+            @Override
+            public void handleError(FxAccountLoginException e) {
+              WaitHelper.getTestWaiter().performNotify(e);
+            }
+
+            @Override
+            public void handleSuccess(String assertion) {
+              assertions[0] = assertion;
+              WaitHelper.getTestWaiter().performNotify();
+            }
+          });
+        }
+      });
+      return assertions[0];
+    } catch (WaitHelper.InnerError e) {
+      throw e.innerError;
+    }
+  }
+
+  @Test
+  public void testLoginVerified() throws Throwable {
+    long now = System.currentTimeMillis();
+    String email = "" + now + "@example.org";
+    String password = "" + now + "password";
+
+    createAccount(email, password, VerificationState.PREVERIFIED);
+    LoginResponse login = login(email, password, true);
+
+    MockFxAccount fxAccount = new MockFxAccount();
+    fxAccount.serverURI = TEST_SERVERURI;
+    fxAccount.sessionToken = login.sessionToken;
+    fxAccount.keyFetchToken = login.keyFetchToken;
+    String assertion = login(TEST_AUDIENCE, fxAccount);
+
+    Assert.assertTrue(fxAccount.getKa() != null);
+    Assert.assertTrue(fxAccount.getKb() != null);
+
+    JSONWebTokenUtils.dumpAssertion(assertion);
+  }
+
+  @Test
+  public void testLoginUnverified() throws Throwable {
+    long now = System.currentTimeMillis();
+    String email = "" + now + "@example.org";
+    String password = "" + now + "password";
+
+    createAccount(email, password, VerificationState.UNVERIFIED);
+    LoginResponse login = login(email, password, true);
+
+    MockFxAccount fxAccount = new MockFxAccount();
+    fxAccount.serverURI = TEST_SERVERURI;
+    fxAccount.sessionToken = login.sessionToken;
+
+    try {
+      login(TEST_AUDIENCE, fxAccount);
+      Assert.fail();
+    } catch (FxAccountLoginAccountNotVerifiedException e) {
+      // Do nothing.
+    }
   }
 }
