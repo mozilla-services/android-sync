@@ -46,6 +46,11 @@ public class MockFxAccount implements AbstractFxAccount {
   }
 
   @Override
+  public void setQuickStretchedPW(byte[] quickStretchedPW) {
+    this.quickStretchedPW = quickStretchedPW;
+  }
+  
+  @Override
   public String getServerURI() {
     return serverURI;
   }
