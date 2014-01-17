@@ -3,110 +3,25 @@
 
 package org.mozilla.gecko.fxa.authenticator;
 
-import java.security.GeneralSecurityException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
-import org.mozilla.gecko.browserid.RSACryptoImplementation;
+import org.mozilla.gecko.fxa.authenticator.FxAccountLoginPolicy.AccountState;
+import org.mozilla.gecko.sync.Utils;
 
-@Category(IntegrationTestCategory.class)
 public class TestFxAccountLoginPolicy {
-  public static final String TEST_SERVERURI = "https://server.com";
-  public static final String TEST_AUDIENCE = TEST_SERVERURI;
-
-  public static class MockFxAccount implements AbstractFxAccount {
-    public String serverURI = TEST_SERVERURI;
-    public byte[] sessionToken = new byte[32];
-    public byte[] keyFetchToken = new byte[32];
-    public boolean verified = false;
-
-    public byte[] kA = null;
-    public byte[] kB = null;
-
-    public byte[] unwrapKb = new byte[32];
-
-    public BrowserIDKeyPair assertionKeyPair;
-
-    @Override
-    public String getServerURI() {
-      return serverURI;
-    }
-
-    @Override
-    public byte[] getSessionToken() {
-      return sessionToken;
-    }
-
-    @Override
-    public byte[] getKeyFetchToken() {
-      return keyFetchToken;
-    }
-
-    @Override
-    public boolean isVerified() {
-      return verified;
-    }
-
-    @Override
-    public void setVerified() {
-      verified = true;
-    }
-
-    @Override
-    public byte[] getKa() {
-      return kA;
-    }
-
-    @Override
-    public byte[] getKb() {
-      return kB;
-    }
-
-    @Override
-    public void setKa(byte[] kA) {
-      this.kA = kA;
-    }
-
-    @Override
-    public void setWrappedKb(byte[] kB) {
-      this.kB = kB;
-    }
-
-    @Override
-    public BrowserIDKeyPair getAssertionKeyPair() throws GeneralSecurityException {
-      if (assertionKeyPair != null) {
-        return assertionKeyPair;
-      }
-      assertionKeyPair = RSACryptoImplementation.generateKeyPair(512);
-      return assertionKeyPair;
-    }
-
-    @Override
-    public void invalidateSessionToken() {
-      sessionToken = null;
-    }
-
-    @Override
-    public void invalidateKeyFetchToken() {
-      keyFetchToken = null;
-    }
-  }
+  protected static final String TEST_AUDIENCE = "http://testAudience.com";
 
   protected MockFxAccount fxAccount;
-  protected ExecutorService executor;
-  protected FxAccountLoginPolicy policy;
+  protected MockFxAccountClient client;
+  protected MockFxAccountLoginPolicy policy;
 
-  @Before
-  public void setUp() {
-    this.executor = Executors.newSingleThreadExecutor();
-    this.fxAccount = new MockFxAccount();
-    this.policy = new FxAccountLoginPolicy(null, fxAccount, executor);
+  public void setUp(AccountState state) throws Exception {
+    client = new MockFxAccountClient();
+    fxAccount = MockFxAccount.makeAccount(state);
+    client.addUser(fxAccount);
+    policy = new MockFxAccountLoginPolicy(fxAccount, client);
   }
 
   protected String login(final String audience) throws Throwable {
@@ -135,15 +50,160 @@ public class TestFxAccountLoginPolicy {
     }
   }
 
-  @Test
-  public void testUnverified() throws Throwable {
-    fxAccount.verified = false;
-    login(TEST_AUDIENCE);
+  protected String assertLogin() throws Throwable {
+    String assertion = login(TEST_AUDIENCE);
+    Assert.assertNotNull(assertion);
+    return assertion;
+  }
+
+  protected void assertLoginFails(AccountState finalState) throws Throwable {
+    try {
+      login(TEST_AUDIENCE);
+      Assert.fail("Expected login to fail and leave account in state " + finalState);
+    } catch (FxAccountLoginException e) {
+      Assert.assertEquals(finalState, policy.getAccountState(fxAccount));
+    }
   }
 
   @Test
-  public void testVerified() throws Throwable {
-    fxAccount.verified = true;
-    login(TEST_AUDIENCE);
+  public void testStateInvalid() throws Throwable {
+    setUp(AccountState.Invalid);
+    Assert.assertEquals(AccountState.Invalid, policy.getAccountState(fxAccount));
+
+    assertLoginFails(AccountState.Invalid);
+  }
+
+  @Test
+  public void testNeedsSessionToken() throws Throwable {
+    setUp(AccountState.NeedsSessionToken);
+    Assert.assertEquals(AccountState.NeedsSessionToken, policy.getAccountState(fxAccount));
+
+    // Unverified locally, unverified remotely. Login should get the session
+    // token but fail due to verification state.
+    assertLoginFails(AccountState.NeedsVerification);
+    Assert.assertNotNull(fxAccount.sessionToken);
+
+    setUp(AccountState.NeedsSessionToken);
+    Assert.assertEquals(AccountState.NeedsSessionToken, policy.getAccountState(fxAccount));
+
+    // Unverified locally, verified remotely. Login should get the session
+    // token, mark the account verified, and succeed.
+    client.verifyUser(fxAccount);
+    assertLogin();
+    Assert.assertNotNull(fxAccount.sessionToken);
+
+    // Now suppose we invalidate our session token. We should be able to get a
+    // new one, since we're validated.
+    fxAccount.sessionToken = null;
+    assertLogin();
+    Assert.assertNotNull(fxAccount.sessionToken);
+  }
+
+  @Test
+  public void testNeedsSessionTokenPW() throws Throwable {
+    setUp(AccountState.Valid);
+    Assert.assertEquals(AccountState.Valid, policy.getAccountState(fxAccount));
+
+    assertLogin();
+    fxAccount.sessionToken = null;
+    fxAccount.quickStretchedPW = Utils.generateRandomBytes(32);
+
+    assertLoginFails(AccountState.Invalid);
+  }
+
+  @Test
+  public void testNeedsVerification() throws Throwable {
+    setUp(AccountState.NeedsVerification);
+    Assert.assertEquals(AccountState.NeedsVerification, policy.getAccountState(fxAccount));
+
+    // Unverified locally, unverified remotely.  Login should fail and not advance state.
+    assertLoginFails(AccountState.NeedsVerification);
+
+    // Now verify remotely.
+    client.verifyUser(fxAccount);
+
+    // Unverified locally, verified remotely.  Login should succeed and advance state.
+    assertLogin();
+
+    Assert.assertTrue(fxAccount.verified);
+  }
+
+  @Test
+  public void testNeedsKeys() throws Throwable {
+    setUp(AccountState.NeedsKeys);
+    Assert.assertEquals(AccountState.NeedsKeys, policy.getAccountState(fxAccount));
+    assertLogin();
+    Assert.assertNotNull(fxAccount.getKa());
+    Assert.assertNotNull(fxAccount.getKb());
+  }
+
+  @Test
+  public void testNeedsKeysFails() throws Throwable {
+    setUp(AccountState.NeedsKeys);
+    Assert.assertEquals(AccountState.NeedsKeys, policy.getAccountState(fxAccount));
+
+    // If we submit a garbage keyFetchToken, it should be invalidated and we
+    // remain in needs keys.
+    fxAccount.keyFetchToken = Utils.generateRandomBytes(8);
+    assertLoginFails(AccountState.NeedsKeys);
+    Assert.assertEquals(null, fxAccount.keyFetchToken);
+
+    // If we try again, we'll fetch a valid keyFetchToken and succeed.
+    assertLogin();
+  }
+
+  @Test
+  public void testNeedsKeysFailsPW() throws Throwable {
+    setUp(AccountState.NeedsKeys);
+    Assert.assertEquals(AccountState.NeedsKeys, policy.getAccountState(fxAccount));
+
+    // Suppose we don't have a keyFetchToken. If we don't have a valid
+    // credentials, we'll be unable to fetch a keyFetchToken. We should revert
+    // to invalid, requiring user intervention.
+    fxAccount.keyFetchToken = null;
+    fxAccount.quickStretchedPW = Utils.generateRandomBytes(32);
+    assertLoginFails(AccountState.Invalid);
+  }
+
+  @Test
+  public void testNeedsCertificate() throws Throwable {
+    setUp(AccountState.NeedsCertificate);
+    Assert.assertEquals(AccountState.NeedsCertificate, policy.getAccountState(fxAccount));
+    String assertion = assertLogin();
+    Assert.assertEquals(assertion, fxAccount.getAssertion());
+    Assert.assertNotNull(fxAccount.getCertificate());
+  }
+
+  @Test
+  public void testNeedsCertificateFails() throws Throwable {
+    setUp(AccountState.NeedsCertificate);
+    Assert.assertEquals(AccountState.NeedsCertificate, policy.getAccountState(fxAccount));
+    client.clearAllUserTokens();
+    assertLoginFails(AccountState.NeedsSessionToken);
+  }
+
+  @Test
+  public void testNeedsAssertion() throws Throwable {
+    setUp(AccountState.NeedsAssertion);
+    Assert.assertEquals(AccountState.NeedsAssertion, policy.getAccountState(fxAccount));
+    String assertion = assertLogin();
+    Assert.assertEquals(assertion, fxAccount.getAssertion());
+  }
+
+  @Test
+  public void testNeedsAssertionFails() throws Throwable {
+    setUp(AccountState.NeedsAssertion);
+    Assert.assertEquals(AccountState.NeedsAssertion, policy.getAccountState(fxAccount));
+    fxAccount.assertionKeyPair = new BrowserIDKeyPair(null, null); // This will fail to generate a new assertion.
+    // If we fail to generate new assertion, we mark the account permanently invalid.
+    assertLoginFails(AccountState.Invalid);
+  }
+
+  @Test
+  public void testValid() throws Throwable {
+    setUp(AccountState.Valid);
+    Assert.assertEquals(AccountState.Valid, policy.getAccountState(fxAccount));
+    String assertion = assertLogin();
+    Assert.assertNotNull(assertion);
   }
 }

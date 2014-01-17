@@ -24,7 +24,7 @@ import org.mozilla.gecko.fxa.authenticator.FxAccountLoginDelegate;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginAccountNotVerifiedException;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginPolicy;
-import org.mozilla.gecko.fxa.authenticator.TestFxAccountLoginPolicy.MockFxAccount;
+import org.mozilla.gecko.fxa.authenticator.MockFxAccount;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Utils;
