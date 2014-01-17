@@ -16,6 +16,6 @@ public class TestBrowserIDAuthHeaderProvider {
     Header header = new BrowserIDAuthHeaderProvider("assertion").getAuthHeader(null, null, null);
 
     assertEquals("authorization", header.getName().toLowerCase());
-    assertEquals("Browser-ID assertion", header.getValue());
+    assertEquals("BrowserID assertion", header.getValue());
   }
 }
