@@ -30,6 +30,8 @@ public class JSONWebTokenUtils {
   public static final long DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS = 60 * 60 * 1000;
   public static final String DEFAULT_CERTIFICATE_ISSUER = "127.0.0.1";
   public static final String DEFAULT_ASSERTION_ISSUER = "127.0.0.1";
+  public static final long DEFAULT_CERTIFICATE_ISSUED_AT_SKEW = -20 * 1000;
+  public static final long DEFAULT_ASSERTION_ISSUED_AT_SKEW = -10 * 1000;
 
   public static String encode(String payload, SigningPrivateKey privateKey) throws UnsupportedEncodingException, GeneralSecurityException  {
     return encode(payload, privateKey, null);
@@ -106,7 +108,7 @@ public class JSONWebTokenUtils {
 
   public static String createCertificate(VerifyingPublicKey publicKeyToSign, String email, SigningPrivateKey privateKey) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException  {
     String issuer = DEFAULT_CERTIFICATE_ISSUER;
-    long issuedAt = System.currentTimeMillis();
+    long issuedAt = System.currentTimeMillis() + DEFAULT_CERTIFICATE_ISSUED_AT_SKEW;
     long durationInMilliseconds = DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
     return createCertificate(publicKeyToSign, email, issuer, issuedAt, issuedAt + durationInMilliseconds, privateKey);
   }
@@ -122,7 +124,7 @@ public class JSONWebTokenUtils {
 
   public static String createAssertion(SigningPrivateKey privateKeyToSignWith, String certificate, String audience) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException  {
     String issuer = DEFAULT_ASSERTION_ISSUER;
-    long issuedAt = System.currentTimeMillis();
+    long issuedAt = System.currentTimeMillis() + DEFAULT_ASSERTION_ISSUED_AT_SKEW;
     long durationInMilliseconds = DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
     return createAssertion(privateKeyToSignWith, certificate, audience, issuer, issuedAt, durationInMilliseconds);
   }
