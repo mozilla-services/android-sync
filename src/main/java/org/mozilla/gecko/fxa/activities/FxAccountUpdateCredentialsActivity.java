@@ -14,13 +14,12 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountSignInTask;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
-import org.mozilla.gecko.sync.HTTPFailureException;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 import android.accounts.Account;
 import android.app.Activity;
@@ -30,7 +29,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import ch.boye.httpclientandroidlib.HttpResponse;
 
 /**
  * Activity which displays a screen for updating the local password.
@@ -108,8 +106,8 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
     }
 
     @Override
-    public void handleFailure(int status, HttpResponse response) {
-      showRemoteError(new HTTPFailureException(new SyncStorageResponse(response)));
+    public void handleFailure(FxAccountClientRemoteException e) {
+      showRemoteError(e);
     }
 
     @Override

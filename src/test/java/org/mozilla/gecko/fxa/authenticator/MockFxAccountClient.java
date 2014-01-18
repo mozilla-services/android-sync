@@ -13,6 +13,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -91,12 +92,18 @@ public class MockFxAccountClient implements FxAccountClient {
     return httpResponse;
   }
 
+
+  protected <T> void handleAuthFailure(RequestDelegate<T> requestDelegate, String message) {
+    requestDelegate.handleFailure(new FxAccountClientRemoteException(makeHttpResponse(401, message),
+        401, 1, "Bad authorization", message, null));
+  }
+
   @Override
   public void status(byte[] sessionToken, RequestDelegate<StatusResponse> requestDelegate) {
     String email = sessionTokens.get(Utils.byte2Hex(sessionToken));
     User user = users.get(email);
     if (email == null || user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid sessionToken"));
+      handleAuthFailure(requestDelegate, "invalid sessionToken");
       return;
     }
     requestDelegate.handleSuccess(new StatusResponse(email, user.verified));
@@ -111,11 +118,11 @@ public class MockFxAccountClient implements FxAccountClient {
       user = null;
     }
     if (user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid emailUTF8"));
+      handleAuthFailure(requestDelegate, "invalid emailUTF8");
       return;
     }
     if (user.quickStretchedPW == null || !Arrays.equals(user.quickStretchedPW, quickStretchedPW)) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid quickStretchedPW"));
+      handleAuthFailure(requestDelegate, "invalid quickStretchedPW");
       return;
     }
     LoginResponse loginResponse = addLogin(user, Utils.generateRandomBytes(8), Utils.generateRandomBytes(8));
@@ -127,7 +134,7 @@ public class MockFxAccountClient implements FxAccountClient {
     String email = keyFetchTokens.get(Utils.byte2Hex(keyFetchToken));
     User user = users.get(email);
     if (email == null || user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid keyFetchToken"));
+      handleAuthFailure(requestDelegate, "invalid keyFetchToken");
       return;
     }
     requestDelegate.handleSuccess(new TwoKeys(user.kA, user.wrapkB));
@@ -138,7 +145,7 @@ public class MockFxAccountClient implements FxAccountClient {
     String email = sessionTokens.get(Utils.byte2Hex(sessionToken));
     User user = users.get(email);
     if (email == null || user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid sessionToken"));
+      handleAuthFailure(requestDelegate, "invalid sessionToken");
       return;
     }
     try {
