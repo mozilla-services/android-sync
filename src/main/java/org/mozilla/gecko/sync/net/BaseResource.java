@@ -121,8 +121,19 @@ public class BaseResource implements Resource {
     httpResponseObserver = new WeakReference<HttpResponseObserver>(newHttpResponseObserver);
   }
 
+  @Override
   public URI getURI() {
     return this.uri;
+  }
+
+  @Override
+  public String getURIString() {
+    return this.uri.toString();
+  }
+
+  @Override
+  public String getHostname() {
+    return this.getURI().getHost();
   }
 
   /**
