@@ -155,3 +155,15 @@
   <string name="fxaccount_account_create_not_allowed">&fxaccount.account.create.not.allowed;</string>
   <string name="fxaccount_account_create_not_allowed_learn_more">&fxaccount.account.create.not.allowed.learn.more;</string>
   <string name="fxaccount_account_create_not_allowed_description">&fxaccount.account.create.not.allowed.description;</string>
+  <string name="fxaccount_create_account_age_1960s">&fxaccount.create.account.age.1960s;</string>
+  <string name="fxaccount_create_account_age_1970s">&fxaccount.create.account.age.1970s;</string>
+  <string name="fxaccount_create_account_age_1980s">&fxaccount.create.account.age.1980s;</string>
+  <string name="fxaccount_create_account_age_1990s">&fxaccount.create.account.age.1990s;</string>
+  <string name="fxaccount_create_account_age_2000">&fxaccount.create.account.age.2000;</string>
+  <string name="fxaccount_create_account_age_2001">&fxaccount.create.account.age.2001;</string>
+  <string name="fxaccount_create_account_age_2002">&fxaccount.create.account.age.2002;</string>
+  <string name="fxaccount_create_account_age_2003">&fxaccount.create.account.age.2003;</string>
+  <string name="fxaccount_create_account_age_2004">&fxaccount.create.account.age.2004;</string>
+  <string name="fxaccount_create_account_age_2005">&fxaccount.create.account.age.2005;</string>
+  <string name="fxaccount_create_account_age_2006">&fxaccount.create.account.age.2006;</string>
+  <string name="fxaccount_create_account_age_2007">&fxaccount.create.account.age.2007;</string>

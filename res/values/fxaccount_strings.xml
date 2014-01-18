@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<resources>
+  <!-- Note to translators: year ranges are *always* considered old
+       enough to create an account.  Any years that are *not* old
+       enough to create an account must be appear as individual
+       numbers (so that they can be converted to a year and compared
+       to the current year). -->
+    <string-array name="fxaccount_create_account_ages_array">
+        <item>1960s or earlier</item>
+        <item>1970s</item>
+        <item>1980s</item>
+        <item>1990s</item>
+        <item>2000</item>
+        <item>2001</item>
+        <item>2002</item>
+        <item>2003</item>
+        <item>2004</item>
+        <item>2005</item>
+        <item>2006</item>
+        <item>2007</item>
+    </string-array>
+</resources>

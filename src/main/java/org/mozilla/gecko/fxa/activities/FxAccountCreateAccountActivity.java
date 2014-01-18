@@ -40,6 +40,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
   private static final int CHILD_REQUEST_CODE = 2;
 
+  protected String[] yearItems;
   protected EditText yearEdit;
 
   /**
@@ -105,24 +106,21 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   }
 
   protected void createYearEdit() {
+    yearItems = getResources().getStringArray(R.array.fxaccount_create_account_ages_array);
+
     yearEdit.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        final String[] years = new String[20];
-        for (int i = 0; i < years.length; i++) {
-          years[i] = Integer.toString(2014 - i);
-        }
-
         android.content.DialogInterface.OnClickListener listener = new Dialog.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int which) {
-            yearEdit.setText(years[which]);
+            yearEdit.setText(yearItems[which]);
+            updateButtonState();
           }
         };
-
-        AlertDialog dialog = new AlertDialog.Builder(FxAccountCreateAccountActivity.this)
+        final AlertDialog dialog = new AlertDialog.Builder(FxAccountCreateAccountActivity.this)
         .setTitle(R.string.fxaccount_when_were_you_born)
-        .setItems(years, listener)
+        .setItems(yearItems, listener)
         .setIcon(R.drawable.fxaccount_icon)
         .create();
 
