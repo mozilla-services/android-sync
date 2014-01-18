@@ -15,19 +15,16 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.SkewHandler;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.browserid.VerifyingPublicKey;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginAccountNotVerifiedException;
-import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginBadPasswordException;
-import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 import android.content.Context;
-import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class FxAccountLoginPolicy {
   public static final String LOG_TAG = FxAccountLoginPolicy.class.getSimpleName();
@@ -285,21 +282,17 @@ public class FxAccountLoginPolicy {
           delegate.handleError(new FxAccountLoginException(e));
         }
 
-        @Override
-        public void handleFailure(int status, HttpResponse response) {
+        public void handleFailure(final FxAccountClientRemoteException e) {
           if (skewHandler != null) {
-            skewHandler.updateSkew(response, now());
+            skewHandler.updateSkew(e.response, now());
           }
-
-          if (status != 401) {
-            delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
-            return;
+          if (e.isInvalidAuthentication()) {
+            // We just got denied for a sessionToken. That's a problem with
+            // our email or password. Only thing to do is mark the account
+            // invalid and ask for user intervention.
+            fxAccount.setInvalid();
           }
-          // We just got denied for a sessionToken. That's a problem with
-          // our email or password. Only thing to do is mark the account
-          // invalid and ask for user intervention.
-          fxAccount.setInvalid();
-          delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected email/password while fetching sessionToken."));
+          delegate.handleError(new FxAccountLoginException(e));
         }
 
         @Override
@@ -335,18 +328,15 @@ public class FxAccountLoginPolicy {
         }
 
         @Override
-        public void handleFailure(int status, HttpResponse response) {
+        public void handleFailure(FxAccountClientRemoteException e) {
           if (skewHandler != null) {
-            skewHandler.updateSkew(response, now());
+            skewHandler.updateSkew(e.response, now());
           }
-
-          if (status != 401) {
-            delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
-            return;
+          if (e.isInvalidAuthentication()) {
+            // We just got denied due to our sessionToken.  Invalidate it.
+            fxAccount.setSessionToken(null);
           }
-          // We just got denied due to our sessionToken.  Invalidate it.
-          fxAccount.setSessionToken(null);
-          delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected session token while fetching status."));
+          delegate.handleError(new FxAccountLoginException(e));
         }
 
         @Override
@@ -398,20 +388,17 @@ public class FxAccountLoginPolicy {
         }
 
         @Override
-        public void handleFailure(int status, HttpResponse response) {
+        public void handleFailure(FxAccountClientRemoteException e) {
           if (skewHandler != null) {
-            skewHandler.updateSkew(response, now());
+            skewHandler.updateSkew(e.response, now());
           }
-
-          if (status != 401) {
-            delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
-            return;
+          if (e.isInvalidAuthentication()) {
+            // We just got denied for a keyFetchToken. That's a problem with
+            // our email or password. Only thing to do is mark the account
+            // invalid and ask for user intervention.
+            fxAccount.setInvalid();
           }
-          // We just got denied for a keyFetchToken. That's a problem with
-          // our email or password. Only thing to do is mark the account
-          // invalid and ask for user intervention.
-          fxAccount.setInvalid();
-          delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected email/password while fetching keyFetchToken."));
+          delegate.handleError(new FxAccountLoginException(e));
         }
 
         @Override
@@ -449,16 +436,17 @@ public class FxAccountLoginPolicy {
         }
 
         @Override
-        public void handleFailure(int status, HttpResponse response) {
+        public void handleFailure(FxAccountClientRemoteException e) {
           if (skewHandler != null) {
-            skewHandler.updateSkew(response, now());
+            skewHandler.updateSkew(e.response, now());
           }
-
-          if (status != 401) {
-            delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
-            return;
+          if (e.isInvalidAuthentication()) {
+            // Our keyFetchToken was just rejected; we should get a new
+            // keyFetchToken. TODO: Make sure the exception below is fine
+            // enough grained.
+            fxAccount.setKeyFetchToken(null);
           }
-          delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected key token while fetching keys."));
+          delegate.handleError(new FxAccountLoginException(e));
         }
 
         @Override
@@ -481,7 +469,7 @@ public class FxAccountLoginPolicy {
     public void execute(final LoginStageDelegate delegate) throws Exception{
       byte[] sessionToken = fxAccount.getSessionToken();
       if (sessionToken == null) {
-        throw new IllegalStateException("keyPair must not be null");
+        throw new IllegalStateException("sessionToken must not be null");
       }
       BrowserIDKeyPair keyPair = fxAccount.getAssertionKeyPair();
       if (keyPair == null) {
@@ -500,23 +488,20 @@ public class FxAccountLoginPolicy {
         }
 
         @Override
-        public void handleFailure(int status, HttpResponse response) {
+        public void handleFailure(FxAccountClientRemoteException e) {
           if (skewHandler != null) {
-            skewHandler.updateSkew(response, now());
+            skewHandler.updateSkew(e.response, now());
           }
-
-          if (status != 401) {
-            delegate.handleError(new FxAccountLoginException(new HTTPFailureException(new SyncStorageResponse(response))));
-            return;
+          if (e.isInvalidAuthentication()) {
+            // Our sessionToken was just rejected; we should get a new
+            // sessionToken. TODO: Make sure the exception below is fine
+            // enough grained.
+            // Since this is the place we'll see the majority of lifecylcle
+            // auth problems, we should be much more aggressive bumping the
+            // state machine out of this state when we don't get success.
+            fxAccount.setSessionToken(null);
           }
-          // Our sessionToken was just rejected; we should get a new
-          // sessionToken. TODO: Make sure the exception below is fine
-          // enough grained.
-          // Since this is the place we'll see the majority of lifecylcle
-          // auth problems, we should be much more aggressive bumping the
-          // state machine out of this state when we don't get success.
-          fxAccount.setSessionToken(null);
-          delegate.handleError(new FxAccountLoginBadPasswordException("Auth server rejected session token while fetching status."));
+          delegate.handleError(new FxAccountLoginException(e));
         }
 
         @Override

@@ -12,11 +12,10 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountAgeLockoutHelper;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountCreateAccountTask;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
-import org.mozilla.gecko.sync.HTTPFailureException;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.accounts.Account;
@@ -33,7 +32,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import ch.boye.httpclientandroidlib.HttpResponse;
 
 /**
  * Activity which displays create account screen to the user.
@@ -149,8 +147,8 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     }
 
     @Override
-    public void handleFailure(int status, HttpResponse response) {
-      handleError(new HTTPFailureException(new SyncStorageResponse(response)));
+    public void handleFailure(final FxAccountClientRemoteException e) {
+      handleError(e);
     }
 
     @Override
