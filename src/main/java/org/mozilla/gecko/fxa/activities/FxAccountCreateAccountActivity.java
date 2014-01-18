@@ -25,6 +25,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -195,6 +196,12 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     }
   }
 
+  @Override
+  protected boolean isButtonEnabled() {
+    return super.isButtonEnabled() &&
+        (yearEdit.length() > 0);
+  }
+
   protected void createCreateAccountButton() {
     button.setOnClickListener(new OnClickListener() {
       @Override
@@ -204,7 +211,15 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         }
         final String email = emailEdit.getText().toString();
         final String password = passwordEdit.getText().toString();
-        createAccount(email, password);
+        if (ageHelper.passesAgeCheck(yearEdit.getText().toString(), yearItems)) {
+          FxAccountConstants.pii(LOG_TAG, "Passed age check.");
+          createAccount(email, password);
+        } else {
+          FxAccountConstants.pii(LOG_TAG, "Failed age check!");
+          ageHelper.lockOut(SystemClock.elapsedRealtime());
+          setResult(RESULT_CANCELED);
+          redirectToActivity(FxAccountCreateAccountNotAllowedActivity.class);
+        }
       }
     });
   }

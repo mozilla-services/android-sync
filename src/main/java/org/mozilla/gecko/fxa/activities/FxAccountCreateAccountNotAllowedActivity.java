@@ -15,6 +15,10 @@ import android.os.Bundle;
 public class FxAccountCreateAccountNotAllowedActivity extends FxAccountAbstractActivity {
   protected static final String LOG_TAG = FxAccountCreateAccountNotAllowedActivity.class.getSimpleName();
 
+  public FxAccountCreateAccountNotAllowedActivity() {
+    super(CANNOT_RESUME_WHEN_ACCOUNTS_EXIST);
+  }
+
   /**
    * {@inheritDoc}
    */
