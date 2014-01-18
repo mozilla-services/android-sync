@@ -159,3 +159,6 @@
 <!ENTITY fxaccount.status.tabs 'Open tabs'>
 <!ENTITY fxaccount.update.credentials 'Update password'>
 <!ENTITY fxaccount.update.credentials.button.label 'Re-connect'>
+<!ENTITY fxaccount.account.create.not.allowed 'Cannot create account'>
+<!ENTITY fxaccount.account.create.not.allowed.learn.more '&lt;a href="http://mozilla.com"&gt;Learn more&lt;/a&gt;'>
+<!ENTITY fxaccount.account.create.not.allowed.description 'You must meet certain age requirements to create a Firefox Account.'>

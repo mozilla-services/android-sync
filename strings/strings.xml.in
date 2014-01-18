@@ -152,3 +152,6 @@
   <string name="fxaccount_status_tabs">&fxaccount.status.tabs;</string>
   <string name="fxaccount_update_credentials">&fxaccount.update.credentials;</string>
   <string name="fxaccount_update_credentials_button_label">&fxaccount.update.credentials.button.label;</string>
+  <string name="fxaccount_account_create_not_allowed">&fxaccount.account.create.not.allowed;</string>
+  <string name="fxaccount_account_create_not_allowed_learn_more">&fxaccount.account.create.not.allowed.learn.more;</string>
+  <string name="fxaccount_account_create_not_allowed_description">&fxaccount.account.create.not.allowed.description;</string>
