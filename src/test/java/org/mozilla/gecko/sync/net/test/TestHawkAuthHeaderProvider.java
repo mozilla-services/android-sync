@@ -33,7 +33,7 @@ public class TestHawkAuthHeaderProvider {
   protected static class LeakyHawkAuthHeaderProvider extends HawkAuthHeaderProvider {
     public LeakyHawkAuthHeaderProvider(String tokenId, byte[] reqHMACKey) {
       // getAuthHeader takes includePayloadHash as a parameter.
-      super(tokenId, reqHMACKey, false);
+      super(tokenId, reqHMACKey, false, 0L);
     }
 
     // Public for testing.
