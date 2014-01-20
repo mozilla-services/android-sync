@@ -151,6 +151,15 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
       // intent.putExtra(AccountManager.KEY_AUTHTOKEN, accountType);
       setResult(RESULT_OK, intent);
       finish();
+
+      // Show success activity depending on verification status.
+      Intent successIntent = new Intent(FxAccountSignInActivity.this,
+          result.verified ? FxAccountVerifiedAccountActivity.class : FxAccountConfirmAccountActivity.class);
+      successIntent.putExtra("email", email);
+      // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
+      // the soft keyboard not being shown for the started activity. Why, Android, why?
+      successIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+      startActivity(successIntent);
     }
   }
 
