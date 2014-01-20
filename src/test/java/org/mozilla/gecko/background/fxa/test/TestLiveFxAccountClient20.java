@@ -12,6 +12,7 @@ import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.background.fxa.FxAccountClient10;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
@@ -19,6 +20,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AbstractFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginDelegate;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException;
@@ -443,5 +445,33 @@ public class TestLiveFxAccountClient20 {
     } catch (FxAccountLoginAccountNotVerifiedException e) {
       // Do nothing.
     }
+  }
+
+  @Test
+  public void testResendCode() throws Throwable {
+    client = new FxAccountClient20(FxAccountConstants.DEFAULT_IDP_ENDPOINT, Executors.newSingleThreadExecutor());
+    final LoginResponse response = login("testtestz@mockmyid.com", "testtestz", false);
+
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        client.resendCode(response.sessionToken, new RequestDelegate<Void>() {
+          @Override
+          public void handleSuccess(Void result) {
+            WaitHelper.getTestWaiter().performNotify();
+          }
+
+          @Override
+          public void handleFailure(int status, HttpResponse response) {
+            WaitHelper.getTestWaiter().performNotify(new HTTPFailureException(new SyncStorageResponse(response)));
+          }
+
+          @Override
+          public void handleError(Exception e) {
+            WaitHelper.getTestWaiter().performNotify(e);
+          }
+        });
+      }
+    });
   }
 }
