@@ -20,9 +20,12 @@ import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountSignInTask;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
+import org.mozilla.gecko.fxa.login.Engaged;
+import org.mozilla.gecko.fxa.login.Separated;
+import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.fxa.login.State.StateLabel;
 
 import android.accounts.Account;
-import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -36,7 +39,8 @@ import android.widget.TextView;
 public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupActivity {
   protected static final String LOG_TAG = FxAccountUpdateCredentialsActivity.class.getSimpleName();
 
-  protected Account account;
+  protected AndroidFxAccount fxAccount;
+  protected Separated accountState;
 
   public FxAccountUpdateCredentialsActivity() {
     // We want to share code with the other setup activities, but this activity
@@ -78,13 +82,28 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
   public void onResume() {
     super.onResume();
     Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
-    account = accounts[0];
-    if (account == null) {
+    if (accounts.length < 1 || accounts[0] == null) {
+      Logger.warn(LOG_TAG, "No Android accounts.");
       setResult(RESULT_CANCELED);
       finish();
       return;
     }
-    emailEdit.setText(account.name);
+    this.fxAccount = new AndroidFxAccount(this, accounts[0]);
+    if (fxAccount == null) {
+      Logger.warn(LOG_TAG, "Could not get Firefox Account from Android account.");
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
+    State state = fxAccount.getState();
+    if (state.getStateLabel() != StateLabel.Separated) {
+      Logger.warn(LOG_TAG, "Could not get state from Firefox Account.");
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
+    this.accountState = (Separated) state;
+    emailEdit.setText(fxAccount.getAndroidAccount().name);
   }
 
   protected class UpdateCredentialsDelegate implements RequestDelegate<LoginResponse> {
@@ -97,6 +116,7 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
       this.email = email;
       this.password = password;
       this.serverURI = serverURI;
+      // XXX This needs to be calculated lazily.
       this.quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(email.getBytes("UTF-8"), password.getBytes("UTF-8"));
     }
 
@@ -107,22 +127,27 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
 
     @Override
     public void handleFailure(FxAccountClientRemoteException e) {
+      // TODO On isUpgradeRequired, transition to Doghouse state.
       showRemoteError(e);
     }
 
     @Override
     public void handleSuccess(LoginResponse result) {
-      Activity activity = FxAccountUpdateCredentialsActivity.this;
       Logger.info(LOG_TAG, "Got success signing in.");
 
-      if (account == null) {
-        Logger.warn(LOG_TAG, "account must not be null");
+      if (fxAccount == null) {
+        this.handleError(new IllegalStateException("fxAccount must not be null"));
         return;
       }
 
-      AndroidFxAccount fxAccount = new AndroidFxAccount(activity, account);
-      // XXX wasteful, should only do this once.
-      fxAccount.setQuickStretchedPW(quickStretchedPW);
+      byte[] unwrapkB;
+      try {
+        unwrapkB = FxAccountUtils.generateUnwrapBKey(quickStretchedPW);
+      } catch (Exception e) {
+        this.handleError(e);
+        return;
+      }
+      fxAccount.setState(new Engaged(email, result.uid, result.verified, unwrapkB, result.sessionToken, result.keyFetchToken));
 
       // For great debugging.
       if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
