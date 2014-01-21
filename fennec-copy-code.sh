@@ -242,6 +242,7 @@ rsync -a res/values-large-v11/fxaccount_colors.xml $ANDROID/base/resources/value
 rsync -a res/values/fxaccount_styles.xml $ANDROID/base/resources/values/
 rsync -a res/values-v11/fxaccount_styles.xml $ANDROID/base/resources/values-v11/
 rsync -a res/values-large-v11/fxaccount_styles.xml $ANDROID/base/resources/values-large-v11/
+rsync -a res/values/fxaccount_strings.xml $ANDROID/base/resources/values/
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -a strings/strings.xml.in $SERVICES/
 rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
