@@ -50,6 +50,7 @@
         </TextView>
 
         <TextView
+            android:id="@+id/resend_confirmation_email_link"
             style="@style/FxAccountLinkItem"
             android:text="@string/fxaccount_verification_link_not_showing_up_offer_resend" />
 

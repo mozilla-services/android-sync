@@ -4,21 +4,34 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
+import org.mozilla.gecko.background.fxa.FxAccountClient20;
+import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.sync.HTTPFailureException;
+import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.TextView;
+import android.widget.Toast;
+import ch.boye.httpclientandroidlib.HttpResponse;
 
 /**
  * Activity which displays account created successfully screen to the user, and
  * starts them on the email verification path.
  */
-public class FxAccountConfirmAccountActivity extends Activity {
+public class FxAccountConfirmAccountActivity extends Activity implements OnClickListener {
   protected static final String LOG_TAG = FxAccountConfirmAccountActivity.class.getSimpleName();
 
+  protected byte[] sessionToken;
   protected TextView emailText;
 
   /**
@@ -55,7 +68,67 @@ public class FxAccountConfirmAccountActivity extends Activity {
 
     emailText = (TextView) ensureFindViewById(null, R.id.email, "email text");
     if (getIntent() != null && getIntent().getExtras() != null) {
-      emailText.setText(getIntent().getStringExtra("email"));
+      Bundle extras = getIntent().getExtras();
+      emailText.setText(extras.getString("email"));
+      sessionToken = extras.getByteArray("sessionToken");
     }
+
+    View resendLink = ensureFindViewById(null, R.id.resend_confirmation_email_link, "resend confirmation email link");
+    resendLink.setOnClickListener(this);
+  }
+
+  public static class FxAccountResendCodeTask extends FxAccountSetupTask<Void> {
+    protected static final String LOG_TAG = FxAccountResendCodeTask.class.getSimpleName();
+
+    protected final byte[] sessionToken;
+
+    public FxAccountResendCodeTask(Context context, byte[] sessionToken, FxAccountClient20 client, RequestDelegate<Void> delegate) {
+      super(context, false, client, delegate);
+      this.sessionToken = sessionToken;
+    }
+
+    @Override
+    protected InnerRequestDelegate<Void> doInBackground(Void... arg0) {
+      try {
+        client.resendCode(sessionToken, innerDelegate);
+        latch.await();
+        return innerDelegate;
+      } catch (Exception e) {
+        Logger.error(LOG_TAG, "Got exception signing in.", e);
+        delegate.handleError(e);
+      }
+      return null;
+    }
+  }
+
+  protected class ResendCodeDelegate implements RequestDelegate<Void> {
+    @Override
+    public void handleError(Exception e) {
+      Logger.warn(LOG_TAG, "Got exception requesting fresh confirmation link; ignoring.", e);
+      Toast.makeText(getApplicationContext(), R.string.fxaccount_confirm_verification_link_not_sent, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void handleFailure(int status, HttpResponse response) {
+      handleError(new HTTPFailureException(new SyncStorageResponse(response)));
+    }
+
+    @Override
+    public void handleSuccess(Void result) {
+      Toast.makeText(getApplicationContext(), R.string.fxaccount_confirm_verification_link_sent, Toast.LENGTH_SHORT).show();
+    }
+  }
+
+  protected void resendCode(byte[] sessionToken) {
+    String serverURI = FxAccountConstants.DEFAULT_IDP_ENDPOINT;
+    RequestDelegate<Void> delegate = new ResendCodeDelegate();
+    Executor executor = Executors.newSingleThreadExecutor();
+    FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
+    new FxAccountResendCodeTask(this, sessionToken, client, delegate).execute();
+  }
+
+  @Override
+  public void onClick(View v) {
+    resendCode(sessionToken);
   }
 }

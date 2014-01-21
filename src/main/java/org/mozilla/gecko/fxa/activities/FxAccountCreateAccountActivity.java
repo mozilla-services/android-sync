@@ -13,7 +13,7 @@ import org.mozilla.gecko.background.fxa.FxAccountAgeLockoutHelper;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.fxa.FxAccountConstants;
-import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountSignUpTask;
+import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountCreateAccountTask;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
@@ -199,7 +199,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     Executor executor = Executors.newSingleThreadExecutor();
     FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
     try {
-      new FxAccountSignUpTask(this, email, password, client, delegate).execute();
+      new FxAccountCreateAccountTask(this, email, password, client, delegate).execute();
     } catch (Exception e) {
       showRemoteError(e);
     }

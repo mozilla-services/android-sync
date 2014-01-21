@@ -178,3 +178,6 @@
   <string name="fxaccount_confirm_your_account">Confirm your account</string>
   <string name="fxaccount_verification_link_awaits_at">A verification link awaits at:</string>
   <string name="fxaccount_verification_link_not_showing_up_offer_resend">Email not showing up? Send again</string>
+  <!-- TODO: add email address to toast? -->
+  <string name="fxaccount_confirm_verification_link_sent">Sent fresh verification link</string>
+  <string name="fxaccount_confirm_verification_link_not_sent">Couldn\&apos;t send a fresh verification link</string>
