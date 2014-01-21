@@ -9,6 +9,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
@@ -32,6 +33,8 @@ import android.os.Bundle;
  */
 public class AndroidFxAccount implements AbstractFxAccount {
   protected static final String LOG_TAG = AndroidFxAccount.class.getSimpleName();
+
+  public static final int CURRENT_PREFS_VERSION = 1;
 
   public static final int CURRENT_ACCOUNT_VERSION = 2;
   public static final String ACCOUNT_KEY_ACCOUNT_VERSION = "version";
@@ -194,6 +197,31 @@ public class AndroidFxAccount implements AbstractFxAccount {
   @Override
   public String getProfile() {
     return accountManager.getUserData(account, ACCOUNT_KEY_PROFILE);
+  }
+
+  /**
+   * This needs to return a string because of the tortured prefs access in GlobalSession.
+   */
+  public String getSyncPrefsPath(String tokenServerURI) throws GeneralSecurityException, UnsupportedEncodingException {
+    String profile = getProfile();
+    String username = account.name;
+
+    if (profile == null ||
+        username == null) {
+      throw new IllegalStateException("Missing profile or username. Cannot fetch prefs.");
+    }
+
+    final String fxaServerURI = getServerURI();
+    if (fxaServerURI == null) {
+      throw new IllegalStateException("No server URI. Cannot fetch prefs.");
+    }
+
+    final String product = GlobalConstants.BROWSER_INTENT_PACKAGE + ".fxa";
+    final long version = CURRENT_PREFS_VERSION;
+
+    // This is unique for each syncing 'view' of the account.
+    final String serverURLThing = fxaServerURI + "!" + tokenServerURI;
+    return Utils.getPrefsPath(product, username, serverURLThing, profile, version);
   }
 
   @Override

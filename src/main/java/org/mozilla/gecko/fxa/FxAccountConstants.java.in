@@ -14,8 +14,6 @@ public class FxAccountConstants {
   public static final String DEFAULT_IDP_ENDPOINT = "https://api-accounts-onepw.dev.lcip.org";
   public static final String DEFAULT_AUTH_ENDPOINT = "http://auth.oldsync.dev.lcip.org";
 
-  public static final String PREFS_PATH = "fxa.v1";
-
   // For extra debugging.  Not final so it can be changed from Fennec, or from
   // an add-on.
   public static boolean LOG_PERSONAL_INFORMATION = true;
