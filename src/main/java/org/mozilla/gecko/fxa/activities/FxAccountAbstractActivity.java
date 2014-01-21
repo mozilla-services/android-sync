@@ -21,7 +21,6 @@ import android.widget.TextView;
 public abstract class FxAccountAbstractActivity extends Activity {
   private static final String LOG_TAG = FxAccountAbstractActivity.class.getSimpleName();
 
-  protected final FxAccountAgeLockoutHelper ageHelper = new FxAccountAgeLockoutHelper();
   protected final boolean cannotResumeWhenAccountsExist;
   protected final boolean cannotResumeWhenNoAccountsExist;
   protected final boolean cannotResumeWhenLockedOut;
@@ -57,7 +56,7 @@ public abstract class FxAccountAbstractActivity extends Activity {
       }
     }
     if (cannotResumeWhenLockedOut) {
-      if (ageHelper.isLockedOut(SystemClock.elapsedRealtime())) {
+      if (FxAccountAgeLockoutHelper.isLockedOut(SystemClock.elapsedRealtime())) {
         this.setResult(RESULT_CANCELED);
         redirectToActivity(FxAccountCreateAccountNotAllowedActivity.class);
         return;

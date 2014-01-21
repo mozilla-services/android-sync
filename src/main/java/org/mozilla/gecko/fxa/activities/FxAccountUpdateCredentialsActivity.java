@@ -82,6 +82,11 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
     super.onResume();
     Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
     account = accounts[0];
+    if (account == null) {
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
     emailEdit.setText(account.name);
   }
 

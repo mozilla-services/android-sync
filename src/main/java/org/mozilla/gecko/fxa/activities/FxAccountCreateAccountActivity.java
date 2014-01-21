@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountAgeLockoutHelper;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.fxa.FxAccountConstants;
@@ -197,8 +198,8 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   }
 
   @Override
-  protected boolean isButtonEnabled() {
-    return super.isButtonEnabled() &&
+  protected boolean shouldButtonBeEnabled() {
+    return super.shouldButtonBeEnabled() &&
         (yearEdit.length() > 0);
   }
 
@@ -211,12 +212,12 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         }
         final String email = emailEdit.getText().toString();
         final String password = passwordEdit.getText().toString();
-        if (ageHelper.passesAgeCheck(yearEdit.getText().toString(), yearItems)) {
+        if (FxAccountAgeLockoutHelper.passesAgeCheck(yearEdit.getText().toString(), yearItems)) {
           FxAccountConstants.pii(LOG_TAG, "Passed age check.");
           createAccount(email, password);
         } else {
           FxAccountConstants.pii(LOG_TAG, "Failed age check!");
-          ageHelper.lockOut(SystemClock.elapsedRealtime());
+          FxAccountAgeLockoutHelper.lockOut(SystemClock.elapsedRealtime());
           setResult(RESULT_CANCELED);
           redirectToActivity(FxAccountCreateAccountNotAllowedActivity.class);
         }

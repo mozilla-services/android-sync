@@ -111,7 +111,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     }
   }
 
-  protected boolean isButtonEnabled() {
+  protected boolean shouldButtonBeEnabled() {
     final String email = emailEdit.getText().toString();
     final String password = passwordEdit.getText().toString();
 
@@ -123,7 +123,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   }
 
   protected boolean updateButtonState() {
-    boolean enabled = isButtonEnabled();
+    boolean enabled = shouldButtonBeEnabled();
     if (enabled != button.isEnabled()) {
       Logger.debug(LOG_TAG, (enabled ? "En" : "Dis") + "abling button.");
       button.setEnabled(enabled);

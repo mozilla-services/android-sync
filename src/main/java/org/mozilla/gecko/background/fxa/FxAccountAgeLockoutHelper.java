@@ -24,34 +24,39 @@ import org.mozilla.gecko.fxa.FxAccountConstants;
 public class FxAccountAgeLockoutHelper {
   private static final String LOG_TAG = FxAccountAgeLockoutHelper.class.getSimpleName();
 
-  // Protect all access to ELAPSED_REALTIME_OF_LAST_FAILED_AGE_CHECK with LOCK.
-  protected static Object LOCK = new Object();
   protected static long ELAPSED_REALTIME_OF_LAST_FAILED_AGE_CHECK = 0;
 
-  public boolean isLockedOut(long elapsedRealtime) {
-    synchronized (LOCK) {
-      long millsecondsSinceLastFailedAgeCheck = elapsedRealtime - ELAPSED_REALTIME_OF_LAST_FAILED_AGE_CHECK;
-      boolean isLockedOut = millsecondsSinceLastFailedAgeCheck < FxAccountConstants.MINIMUM_TIME_TO_WAIT_AFTER_AGE_CHECK_FAILED_IN_MILLISECONDS;
-      FxAccountConstants.pii(LOG_TAG, "Checking if locked out: it's been " + millsecondsSinceLastFailedAgeCheck + "ms " +
-          "since last lockout, so " + (isLockedOut ? "yes." : "no."));
-      return isLockedOut;
-    }
+  public static synchronized boolean isLockedOut(long elapsedRealtime) {
+    long millsecondsSinceLastFailedAgeCheck = elapsedRealtime - ELAPSED_REALTIME_OF_LAST_FAILED_AGE_CHECK;
+    boolean isLockedOut = millsecondsSinceLastFailedAgeCheck < FxAccountConstants.MINIMUM_TIME_TO_WAIT_AFTER_AGE_CHECK_FAILED_IN_MILLISECONDS;
+    FxAccountConstants.pii(LOG_TAG, "Checking if locked out: it's been " + millsecondsSinceLastFailedAgeCheck + "ms " +
+        "since last lockout, so " + (isLockedOut ? "yes." : "no."));
+    return isLockedOut;
   }
 
-  public void lockOut(long elapsedRealtime) {
-    synchronized (LOCK) {
+  public static synchronized void lockOut(long elapsedRealtime) {
       FxAccountConstants.pii(LOG_TAG, "Locking out at time: " + elapsedRealtime);
       ELAPSED_REALTIME_OF_LAST_FAILED_AGE_CHECK = Math.max(elapsedRealtime, ELAPSED_REALTIME_OF_LAST_FAILED_AGE_CHECK);
-    }
   }
 
-  public boolean passesAgeCheck(int yearOfBirth) {
+  /**
+   * Return true if the age of somebody born in <code>yearOfBirth</code> is
+   * definitely old enough to create an account.
+   * <p>
+   * This errs towards locking out users who might be old enough, but are not
+   * definitely old enough.
+   *
+   * @param yearOfBirth
+   * @return true if somebody born in <code>yearOfBirth</code> is definitely old
+   *         enough.
+   */
+  public static boolean passesAgeCheck(int yearOfBirth) {
     int thisYear = Calendar.getInstance().get(Calendar.YEAR);
-    int age = thisYear - yearOfBirth;
-    boolean oldEnough = age >= FxAccountConstants.MINIMUM_AGE_TO_CREATE_AN_ACCOUNT;
+    int approximateAge = thisYear - yearOfBirth;
+    boolean oldEnough = approximateAge >= FxAccountConstants.MINIMUM_AGE_TO_CREATE_AN_ACCOUNT;
     if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
       FxAccountConstants.pii(LOG_TAG, "Age check " + (oldEnough ? "passes" : "fails") +
-          ": age is " + age + " = " + thisYear + " - " + yearOfBirth);
+          ": age is " + approximateAge + " = " + thisYear + " - " + yearOfBirth);
     }
     return oldEnough;
   }
@@ -59,7 +64,7 @@ public class FxAccountAgeLockoutHelper {
   /**
    * Custom function for UI use only.
    */
-  public boolean passesAgeCheck(String yearText, String[] yearItems) {
+  public static boolean passesAgeCheck(String yearText, String[] yearItems) {
     if (yearText == null) {
       throw new IllegalArgumentException("yearText must not be null");
     }

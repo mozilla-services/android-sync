@@ -160,8 +160,21 @@
 <!ENTITY fxaccount.update.credentials 'Update password'>
 <!ENTITY fxaccount.update.credentials.button.label 'Re-connect'>
 <!ENTITY fxaccount.account.create.not.allowed 'Cannot create account'>
-<!ENTITY fxaccount.account.create.not.allowed.learn.more '&lt;a href="http://mozilla.com"&gt;Learn more&lt;/a&gt;'>
 <!ENTITY fxaccount.account.create.not.allowed.description 'You must meet certain age requirements to create a Firefox Account.'>
+
+<!-- Note to translators:
+
+These strings represent ranges of birth years, used to determine if a
+potential user is old enough to meet legal requirements. A user born
+in 1984 should understand that they should pick the translation of
+"1980s".
+
+Any years that are *not* old enough to create an account must be
+appear as individual numbers, so that they can be converted to a year
+and compared to the current year.  Year ranges (any entry that cannot
+be converted to a number) are *always* considered old enough to create
+an account.  -->
+
 <!ENTITY fxaccount.create.account.age.1960s '1960s or earlier'>
 <!ENTITY fxaccount.create.account.age.1970s '1970s'>
 <!ENTITY fxaccount.create.account.age.1980s '1980s'>

@@ -54,11 +54,10 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
   public void onResume() {
     super.onResume();
 
-    final FxAccountAgeLockoutHelper ageHelper = new FxAccountAgeLockoutHelper();
     Intent intent = null;
-    if (ageHelper.isLockedOut(SystemClock.elapsedRealtime())) {
+    if (FxAccountAgeLockoutHelper.isLockedOut(SystemClock.elapsedRealtime())) {
       intent = new Intent(this, FxAccountCreateAccountNotAllowedActivity.class);
-    } else if (FxAccountAuthenticator.getFirefoxAccounts(this).length > 0) {
+    } else if (FxAccountAuthenticator.firefoxAccountsExist(this)) {
       intent = new Intent(this, FxAccountStatusActivity.class);
     }
     if (intent != null) {
