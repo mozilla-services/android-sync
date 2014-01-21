@@ -41,6 +41,14 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
 
   protected Account account;
 
+  public FxAccountUpdateCredentialsActivity() {
+    // We want to share code with the other setup activities, but this activity
+    // doesn't create a new Android Account, it modifies an existing one. If you
+    // manage to get an account, and somehow be locked out too, we'll let you
+    // update it.
+    super(CANNOT_RESUME_WHEN_NO_ACCOUNTS_EXIST);
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -66,18 +74,19 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
     emailEdit.setEnabled(false);
 
     // Not yet implemented.
-    this.launchActivityOnClick(ensureFindViewById(null, R.id.forgot_password_link, "forgot password link"), null);
+    // this.launchActivityOnClick(ensureFindViewById(null, R.id.forgot_password_link, "forgot password link"), null);
   }
 
   @Override
   public void onResume() {
     super.onResume();
     Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
-    if (accounts.length < 1) {
-      redirectToActivity(FxAccountGetStartedActivity.class);
-      finish();
-    }
     account = accounts[0];
+    if (account == null) {
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
     emailEdit.setText(account.name);
   }
 
