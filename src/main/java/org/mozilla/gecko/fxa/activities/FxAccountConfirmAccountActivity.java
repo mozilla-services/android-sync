@@ -75,6 +75,11 @@ public class FxAccountConfirmAccountActivity extends Activity implements OnClick
 
     View resendLink = ensureFindViewById(null, R.id.resend_confirmation_email_link, "resend confirmation email link");
     resendLink.setOnClickListener(this);
+
+    if (sessionToken == null) {
+      resendLink.setEnabled(false);
+      resendLink.setClickable(false);
+    }
   }
 
   public static class FxAccountResendCodeTask extends FxAccountSetupTask<Void> {
