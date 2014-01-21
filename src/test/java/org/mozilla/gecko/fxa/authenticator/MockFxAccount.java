@@ -13,6 +13,7 @@ import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.FxAccountLoginPolicy.AccountState;
 import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.setup.Constants;
 
 public class MockFxAccount implements AbstractFxAccount {
   public byte[] emailUTF8 = null;
@@ -177,5 +178,10 @@ public class MockFxAccount implements AbstractFxAccount {
   @Override
   public void setInvalid() {
     valid = false;
+  }
+
+  @Override
+  public String getProfile() {
+    return Constants.DEFAULT_PROFILE;
   }
 }

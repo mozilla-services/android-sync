@@ -82,6 +82,11 @@ public class AndroidFxAccount implements AbstractFxAccount {
   }
 
   @Override
+  public String getProfile() {
+    return accountManager.getUserData(account, ACCOUNT_KEY_PROFILE);
+  }
+
+  @Override
   public void setQuickStretchedPW(byte[] quickStretchedPW) {
     accountManager.setPassword(account, quickStretchedPW == null ? null : Utils.byte2Hex(quickStretchedPW));
   }
