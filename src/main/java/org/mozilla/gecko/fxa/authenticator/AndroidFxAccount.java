@@ -335,7 +335,7 @@ public class AndroidFxAccount implements AbstractFxAccount {
     return o;
   }
 
-  public static Account addAndroidAccount(Context context, String email, String password,
+  public static Account addAndroidAccount(Context context, String email, String password, String profile,
       String serverURI, byte[] sessionToken, byte[] keyFetchToken, boolean verified)
           throws UnsupportedEncodingException, GeneralSecurityException {
     if (email == null) {
