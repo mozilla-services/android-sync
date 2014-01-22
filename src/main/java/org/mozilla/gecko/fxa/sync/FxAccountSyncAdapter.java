@@ -158,12 +158,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     final CountDownLatch latch = new CountDownLatch(1);
     final BaseGlobalSessionCallback callback = new SessionCallback(latch, syncResult);
 
-
     try {
-      final String authEndpoint = FxAccountConstants.DEFAULT_AUTH_ENDPOINT;
-      final String tokenServerEndpoint = authEndpoint + (authEndpoint.endsWith("/") ? "" : "/") + "1.0/sync/1.1";
-      final URI tokenServerEndpointURI = new URI(tokenServerEndpoint);
-
       final Context context = getContext();
       final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
 
@@ -171,17 +166,22 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         fxAccount.dump();
       }
 
-      final String prefsPath = fxAccount.getSyncPrefsPath(tokenServerEndpoint);
+      final String prefsPath = fxAccount.getSyncPrefsPath();
 
       // This will be the same chunk of SharedPreferences that GlobalSession/SyncConfiguration will later create.
       final SharedPreferences sharedPrefs = context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
 
+      final String audience = fxAccount.getAudience();
+      final String tokenServerEndpoint = fxAccount.getTokenServerURI();
+      final URI tokenServerEndpointURI = new URI(tokenServerEndpoint);
+
+      // TODO: why doesn't the loginPolicy extract the audience from the account?
       final FxAccountLoginPolicy loginPolicy = new FxAccountLoginPolicy(context, fxAccount, executor);
       loginPolicy.certificateDurationInMilliseconds = 20 * 60 * 1000;
       loginPolicy.assertionDurationInMilliseconds = 15 * 60 * 1000;
       Logger.info(LOG_TAG, "Asking for certificates to expire after 20 minutes and assertions to expire after 15 minutes.");
 
-      loginPolicy.login(authEndpoint, new FxAccountLoginDelegate() {
+      loginPolicy.login(audience, new FxAccountLoginDelegate() {
         @Override
         public void handleSuccess(final String assertion) {
           TokenServerClient tokenServerclient = new TokenServerClient(tokenServerEndpointURI, executor);

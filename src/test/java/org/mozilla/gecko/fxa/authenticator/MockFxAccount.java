@@ -52,7 +52,7 @@ public class MockFxAccount implements AbstractFxAccount {
   }
   
   @Override
-  public String getServerURI() {
+  public String getAccountServerURI() {
     return serverURI;
   }
 
