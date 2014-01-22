@@ -142,6 +142,10 @@ public class AndroidFxAccount implements AbstractFxAccount {
     return o.getByteArrayHex(key);
   }
 
+  protected void updateBundleDataBytes(String key, byte[] value) {
+    updateBundleValue(key, value == null ? null : Utils.byte2Hex(value));
+  }
+
   protected void updateBundleValue(String key, boolean value) {
     ExtendedJSONObject descriptor = unbundle();
     if (descriptor == null) {
@@ -225,12 +229,12 @@ public class AndroidFxAccount implements AbstractFxAccount {
 
   @Override
   public void setSessionToken(byte[] sessionToken) {
-    updateBundleValue(BUNDLE_KEY_SESSION_TOKEN, sessionToken == null ? null : Utils.byte2Hex(sessionToken));
+    updateBundleDataBytes(BUNDLE_KEY_SESSION_TOKEN, sessionToken);
   }
 
   @Override
   public void setKeyFetchToken(byte[] keyFetchToken) {
-    updateBundleValue(BUNDLE_KEY_KEY_FETCH_TOKEN, keyFetchToken == null ? null : Utils.byte2Hex(keyFetchToken));
+    updateBundleDataBytes(BUNDLE_KEY_KEY_FETCH_TOKEN, keyFetchToken);
   }
 
   @Override
