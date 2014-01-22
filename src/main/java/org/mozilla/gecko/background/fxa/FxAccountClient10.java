@@ -538,8 +538,8 @@ public class FxAccountClient10 {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
-          byte[] kA = new byte[32];
-          byte[] wrapkB = new byte[32];
+          byte[] kA = new byte[FxAccountUtils.CRYPTO_KEY_LENGTH_BYTES];
+          byte[] wrapkB = new byte[FxAccountUtils.CRYPTO_KEY_LENGTH_BYTES];
           unbundleBody(body, requestKey, FxAccountUtils.KW("account/keys"), kA, wrapkB);
           delegate.handleSuccess(new TwoKeys(kA, wrapkB));
           return;

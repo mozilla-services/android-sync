@@ -85,7 +85,11 @@ public class TestFxAccountUtils {
         Utils.byte2Hex(quickStretchedPW));
     Assert.assertEquals("247b675ffb4c46310bc87e26d712153abe5e1c90ef00a4784594f97ef54f2375",
         Utils.byte2Hex(FxAccountUtils.generateAuthPW(quickStretchedPW)));
+    byte[] unwrapkB = FxAccountUtils.generateUnwrapBKey(quickStretchedPW);
     Assert.assertEquals("de6a2648b78284fcb9ffa81ba95803309cfba7af583c01a8a1a63e567234dd28",
-        Utils.byte2Hex(FxAccountUtils.generateUnwrapBKey(quickStretchedPW)));
+        Utils.byte2Hex(unwrapkB));
+    byte[] wrapkB = Utils.hex2Byte("7effe354abecbcb234a8dfc2d7644b4ad339b525589738f2d27341bb8622ecd8");
+    Assert.assertEquals("a095c51c1c6e384e8d5777d97e3c487a4fc2128a00ab395a73d57fedf41631f0",
+        Utils.byte2Hex(FxAccountUtils.unwrapkB(unwrapkB, wrapkB)));
   }
 }
