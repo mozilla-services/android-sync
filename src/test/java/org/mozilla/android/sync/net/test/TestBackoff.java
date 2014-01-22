@@ -8,8 +8,11 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.mozilla.gecko.background.testhelpers.MockGlobalSession;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.GlobalSession;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
@@ -32,8 +35,8 @@ public class TestBackoff {
   public void testBackoffCalledIfBackoffHeaderPresent() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+      SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
+      final GlobalSession session = new MockGlobalSession(config, callback);
 
       final HttpResponse response = new BasicHttpResponse(
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
@@ -60,8 +63,8 @@ public class TestBackoff {
   public void testBackoffNotCalledIfBackoffHeaderNotPresent() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+      SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
+      final GlobalSession session = new MockGlobalSession(config, callback);
 
       final HttpResponse response = new BasicHttpResponse(
 	new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
@@ -87,8 +90,8 @@ public class TestBackoff {
   public void testBackoffCalledIfMultipleBackoffHeadersPresent() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+      SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
+      final GlobalSession session = new MockGlobalSession(config, callback);
 
       final HttpResponse response = new BasicHttpResponse(
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));

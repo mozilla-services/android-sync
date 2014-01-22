@@ -32,17 +32,20 @@ import org.mozilla.gecko.background.testhelpers.MockAbstractNonRepositorySyncSta
 import org.mozilla.gecko.background.testhelpers.MockGlobalSession;
 import org.mozilla.gecko.background.testhelpers.MockPrefsGlobalSession;
 import org.mozilla.gecko.background.testhelpers.MockServerSyncStage;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
 import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
@@ -73,7 +76,7 @@ public class TestGlobalSession {
   public void testGetSyncStagesBy() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, NoSuchStageException {
 
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    GlobalSession s = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
+    GlobalSession s = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
                                                  new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
                                                  callback, /* context */ null, null, null);
 
@@ -107,8 +110,8 @@ public class TestGlobalSession {
   public void testBackoffCalledByHandleHTTPError() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
-      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+      SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
+      final GlobalSession session = new MockGlobalSession(config, callback);
 
       final HttpResponse response = new BasicHttpResponse(
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
@@ -138,8 +141,8 @@ public class TestGlobalSession {
   public void testSuccessCalledAfterStages() {
     try {
       final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
-      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback);
+      SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
+      final GlobalSession session = new MockGlobalSession(config, callback);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
@@ -184,9 +187,9 @@ public class TestGlobalSession {
       };
 
       // Session installs fake stage to fetch info/collections.
-      final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
-          new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback)
-      .withStage(Stage.fetchInfoCollections, stage);
+      SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
+      final GlobalSession session = new MockGlobalSession(config, callback)
+                                        .withStage(Stage.fetchInfoCollections, stage);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         public void run() {
@@ -262,8 +265,9 @@ public class TestGlobalSession {
     };
 
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
-    final GlobalSession session = new MockGlobalSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback).withStage(Stage.syncBookmarks, stage);
+    SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
+    final GlobalSession session = new MockGlobalSession(config, callback)
+                                      .withStage(Stage.syncBookmarks, stage);
 
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
@@ -330,7 +334,7 @@ public class TestGlobalSession {
   @Test
   public void testGenerateNewMetaGlobalNonePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
 
     // Verify we fill in all of our known engines when none are persisted.
@@ -350,7 +354,7 @@ public class TestGlobalSession {
   @Test
   public void testGenerateNewMetaGlobalSomePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
 
     // Verify we preserve engines with version 0 if some are persisted.
@@ -378,7 +382,7 @@ public class TestGlobalSession {
   public void testUploadUpdatedMetaGlobal() throws Exception {
     // Set up session with meta/global.
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
-    final GlobalSession session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
+    final GlobalSession session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
         new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
     session.config.metaGlobal = session.generateNewMetaGlobal();
     session.enginesToUpdate.clear();
