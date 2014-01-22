@@ -84,11 +84,11 @@ public class AndroidFxAccount implements AbstractFxAccount {
       return 0;         // Implicit.
     }
 
-    int vv = Integer.parseInt(v, 10);
-    if (vv > CURRENT_ACCOUNT_VERSION) {
-      // Oops.
+    try {
+      return Integer.parseInt(v, 10);
+    } catch (NumberFormatException ex) {
+      return 0;
     }
-    return vv;
   }
 
   protected void persistBundle(ExtendedJSONObject bundle) {
