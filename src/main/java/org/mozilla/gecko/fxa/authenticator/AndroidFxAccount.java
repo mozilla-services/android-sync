@@ -187,6 +187,10 @@ public class AndroidFxAccount implements AbstractFxAccount {
     }
   }
 
+  /**
+   * Note that if the user clears data, an account will be left pointing to a
+   * deleted profile. Such is life.
+   */
   @Override
   public String getProfile() {
     return accountManager.getUserData(account, ACCOUNT_KEY_PROFILE);
