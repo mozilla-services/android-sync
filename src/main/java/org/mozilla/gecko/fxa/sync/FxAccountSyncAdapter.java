@@ -68,16 +68,21 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
   protected static class SessionCallback implements BaseGlobalSessionCallback {
     protected final CountDownLatch latch;
     protected final SyncResult syncResult;
+    protected final AndroidFxAccount fxAccount;
 
-    public SessionCallback(CountDownLatch latch, SyncResult syncResult) {
+    public SessionCallback(CountDownLatch latch, SyncResult syncResult, AndroidFxAccount fxAccount) {
       if (latch == null) {
         throw new IllegalArgumentException("latch must not be null");
       }
       if (syncResult == null) {
         throw new IllegalArgumentException("syncResult must not be null");
       }
+      if (fxAccount == null) {
+        throw new IllegalArgumentException("fxAccount must not be null");
+      }
       this.latch = latch;
       this.syncResult = syncResult;
+      this.fxAccount = fxAccount;
     }
 
     @Override
@@ -134,6 +139,16 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void handleError(GlobalSession globalSession, Exception e) {
+      // This is awful, but we need to propagate bad assertions back up the
+      // chain somehow, and this will do for now.
+      if (e instanceof TokenServerException) {
+        // We should only get here *after* we're locked into the married state.
+        State state = fxAccount.getState();
+        if (state.getStateLabel() == StateLabel.Married) {
+          Married married = (Married) state;
+          fxAccount.setState(married.makeCohabitingState());
+        }
+      }
       setSyncResultSoftError();
       Logger.warn(LOG_TAG, "Sync failed.", e);
       latch.countDown();
@@ -206,17 +221,15 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         " for authority " + authority +
         " with instance " + this + ".");
 
+    final Context context = getContext();
+    final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
+    if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+      fxAccount.dump();
+    }
     final CountDownLatch latch = new CountDownLatch(1);
-    final BaseGlobalSessionCallback callback = new SessionCallback(latch, syncResult);
+    final BaseGlobalSessionCallback callback = new SessionCallback(latch, syncResult, fxAccount);
 
     try {
-      final Context context = getContext();
-      final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
-
-      if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
-        fxAccount.dump();
-      }
-
       State state;
       try {
         state = fxAccount.getState();
@@ -271,7 +284,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
           try {
             if (state.getStateLabel() != StateLabel.Married) {
-              callback.handleError(null, new RuntimeException("bad state: " + state));
+              callback.handleError(null, new RuntimeException("Cannot sync from state: " + state));
               return;
             }
 
