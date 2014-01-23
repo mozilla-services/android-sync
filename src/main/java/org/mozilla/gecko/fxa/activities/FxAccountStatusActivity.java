@@ -10,6 +10,7 @@ import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
+import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
 
 import android.accounts.Account;
@@ -98,6 +99,27 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
         extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         ContentResolver.requestSync(accounts[0], BrowserContract.AUTHORITY, extras);
         // No sense refreshing, since the sync will complete in the future.
+      }
+    });
+
+    findViewById(R.id.debug_forget_certificate_button).setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(FxAccountStatusActivity.this);
+        if (accounts.length < 1) {
+          return;
+        }
+        AndroidFxAccount account = new AndroidFxAccount(FxAccountStatusActivity.this, accounts[0]);
+        State state = account.getState();
+        try {
+          Married married = (Married) state;
+          Logger.info(LOG_TAG, "Moving to Cohabiting state: Forgetting certificate.");
+          account.setState(married.makeCohabitingState());
+          refresh();
+        } catch (ClassCastException e) {
+          Logger.info(LOG_TAG, "Not in Married state; can't forget certificate.");
+          // Ignore.
+        }
       }
     });
 
