@@ -17,23 +17,13 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
-import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.fxa.FxAccountConstants;
-import org.mozilla.gecko.fxa.authenticator.AbstractFxAccount;
-import org.mozilla.gecko.fxa.authenticator.FxAccountLoginDelegate;
-import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException;
-import org.mozilla.gecko.fxa.authenticator.FxAccountLoginException.FxAccountLoginAccountNotVerifiedException;
-import org.mozilla.gecko.fxa.authenticator.FxAccountLoginPolicy;
-import org.mozilla.gecko.fxa.authenticator.MockFxAccount;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
-import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.BaseResource;
-import org.mozilla.gecko.sync.net.SyncStorageResponse;
-
-import ch.boye.httpclientandroidlib.HttpResponse;
 
 @Category(IntegrationTestCategory.class)
 public class TestLiveFxAccountClient20 {
@@ -68,8 +58,8 @@ public class TestLiveFxAccountClient20 {
     }
 
     @Override
-    public void handleFailure(int status, HttpResponse response) {
-      waitHelper.performNotify(new HTTPFailureException(new SyncStorageResponse(response)));
+    public void handleFailure(FxAccountClientRemoteException e) {
+      waitHelper.performNotify(e);
     }
 
     @Override
@@ -235,10 +225,10 @@ public class TestLiveFxAccountClient20 {
     try {
       login(email, "not the right password", false);
       Assert.fail("Expected bad login.");
-    } catch (HTTPFailureException e) {
-      SyncStorageResponse response = e.response;
-      Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
-      Assert.assertEquals(103, response.jsonObjectBody().getLong("errno").intValue());
+    } catch (FxAccountClientRemoteException e) {
+      if (!e.isBadPassword()) {
+        throw e;
+      }
     }
   }
 
@@ -266,21 +256,19 @@ public class TestLiveFxAccountClient20 {
     try {
       String uid = createAccount(email, password, preVerified);
       Assert.assertNotNull(uid);
-    } catch (HTTPFailureException e) {
-      SyncStorageResponse response = e.response;
-      if (accountMayExist) {
-        Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
-      } else {
-        Assert.fail("Expected to create account but got status " + response.getStatusCode() + " with body: " + response.body());
+    } catch (FxAccountClientRemoteException e) {
+      if (!e.isInvalidAuthentication()) {
+        throw e;
       }
     }
 
     try {
       createAccount(email, password, preVerified);
       Assert.fail();
-    } catch (HTTPFailureException e) {
-      SyncStorageResponse response = e.response;
-      Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
+    } catch (FxAccountClientRemoteException e) {
+      if (!e.isInvalidAuthentication()) {
+        throw e;
+      }
     }
 
     LoginResponse loginResponse = login(email, password, false);
@@ -315,9 +303,10 @@ public class TestLiveFxAccountClient20 {
     try {
       uid = createAccount(TEST_EMAIL, TEST_PASSWORD, VerificationState.PREVERIFIED);
       Assert.assertNotNull(uid);
-    } catch (HTTPFailureException e) {
-      SyncStorageResponse response = e.response;
-      Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
+    } catch (FxAccountClientRemoteException e) {
+      if (!e.isAccountAlreadyExists()) {
+        throw e;
+      }
     }
 
     byte[] sessionToken1 = login(TEST_EMAIL, TEST_PASSWORD, false).sessionToken;
@@ -330,17 +319,19 @@ public class TestLiveFxAccountClient20 {
     try {
       sessionDestroy(sessionToken2);
       Assert.fail("Expected second session destroy with token sessionToken2 to fail.");
-    } catch (HTTPFailureException e) {
-      SyncStorageResponse response = e.response;
-      Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 401, response.getStatusCode());
+    } catch (FxAccountClientRemoteException e) {
+      if (!e.isInvalidAuthentication()) {
+        throw e;
+      }
     }
 
     try {
       sessionDestroy(sessionToken1);
       Assert.fail("Expected second session destroy with token sessionToken1 to fail.");
-    } catch (HTTPFailureException e) {
-      SyncStorageResponse response = e.response;
-      Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 401, response.getStatusCode());
+    } catch (FxAccountClientRemoteException e) {
+      if (!e.isInvalidAuthentication()) {
+        throw e;
+      }
     }
   }
 
@@ -350,9 +341,10 @@ public class TestLiveFxAccountClient20 {
     try {
       uid = createAccount(TEST_EMAIL, TEST_PASSWORD, VerificationState.PREVERIFIED);
       Assert.assertNotNull(uid);
-    } catch (HTTPFailureException e) {
-      SyncStorageResponse response = e.response;
-      Assert.assertEquals("Got status " + response.getStatusCode() + " with body: " + response.body(), 400, response.getStatusCode());
+    } catch (FxAccountClientRemoteException e) {
+      if (!e.isAccountAlreadyExists()) {
+        throw e;
+      }
     }
 
     LoginResponse loginResponse = login(TEST_EMAIL, TEST_PASSWORD, false);
@@ -378,75 +370,6 @@ public class TestLiveFxAccountClient20 {
     Assert.assertEquals(TEST_SERVERURI.split("//")[1].split("/")[0], email.split("@")[1]);
   }
 
-  protected String login(final String audience, AbstractFxAccount fxAccount) throws Throwable {
-    final FxAccountLoginPolicy policy = new FxAccountLoginPolicy(null, fxAccount, Executors.newSingleThreadExecutor());
-    try {
-      final String assertions[] = new String[1];
-      WaitHelper.getTestWaiter().performWait(new Runnable() {
-        @Override
-        public void run() {
-          policy.login(audience, new FxAccountLoginDelegate() {
-            @Override
-            public void handleError(FxAccountLoginException e) {
-              WaitHelper.getTestWaiter().performNotify(e);
-            }
-
-            @Override
-            public void handleSuccess(String assertion) {
-              assertions[0] = assertion;
-              WaitHelper.getTestWaiter().performNotify();
-            }
-          });
-        }
-      });
-      return assertions[0];
-    } catch (WaitHelper.InnerError e) {
-      throw e.innerError;
-    }
-  }
-
-  @Test
-  public void testLoginVerified() throws Throwable {
-    long now = System.currentTimeMillis();
-    String email = "" + now + "@example.org";
-    String password = "" + now + "password";
-
-    createAccount(email, password, VerificationState.PREVERIFIED);
-    LoginResponse login = login(email, password, true);
-
-    MockFxAccount fxAccount = new MockFxAccount();
-    fxAccount.serverURI = TEST_SERVERURI;
-    fxAccount.sessionToken = login.sessionToken;
-    fxAccount.keyFetchToken = login.keyFetchToken;
-    String assertion = login(TEST_AUDIENCE, fxAccount);
-
-    Assert.assertTrue(fxAccount.getKa() != null);
-    Assert.assertTrue(fxAccount.getKb() != null);
-
-    JSONWebTokenUtils.dumpAssertion(assertion);
-  }
-
-  @Test
-  public void testLoginUnverified() throws Throwable {
-    long now = System.currentTimeMillis();
-    String email = "" + now + "@example.org";
-    String password = "" + now + "password";
-
-    createAccount(email, password, VerificationState.UNVERIFIED);
-    LoginResponse login = login(email, password, true);
-
-    MockFxAccount fxAccount = new MockFxAccount();
-    fxAccount.serverURI = TEST_SERVERURI;
-    fxAccount.sessionToken = login.sessionToken;
-
-    try {
-      login(TEST_AUDIENCE, fxAccount);
-      Assert.fail();
-    } catch (FxAccountLoginAccountNotVerifiedException e) {
-      // Do nothing.
-    }
-  }
-
   @Test
   public void testResendCode() throws Throwable {
     client = new FxAccountClient20(FxAccountConstants.DEFAULT_IDP_ENDPOINT, Executors.newSingleThreadExecutor());
@@ -462,8 +385,8 @@ public class TestLiveFxAccountClient20 {
           }
 
           @Override
-          public void handleFailure(int status, HttpResponse response) {
-            WaitHelper.getTestWaiter().performNotify(new HTTPFailureException(new SyncStorageResponse(response)));
+          public void handleFailure(FxAccountClientRemoteException e) {
+            WaitHelper.getTestWaiter().performNotify(e);
           }
 
           @Override
