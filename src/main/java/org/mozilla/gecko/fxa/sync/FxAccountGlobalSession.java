@@ -16,11 +16,8 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
-import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.BaseGlobalSessionCallback;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
-import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.stage.CheckPreconditionsStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
@@ -36,19 +33,6 @@ public class FxAccountGlobalSession extends GlobalSession {
       throws SyncConfigurationException, IllegalArgumentException, IOException,
       ParseException, NonObjectJSONException, URISyntaxException {
     super(config, callback, context, extras, clientsDelegate, null);
-    URI uri = new URI(storageEndpoint);
-    this.config.clusterURL = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), "/", null, null);
-    FxAccountConstants.pii(LOG_TAG, "storageEndpoint is " + uri + " and clusterURL is " + config.clusterURL);
-  }
-
-  public FxAccountGlobalSession(String storageEndpoint, String username,
-      AuthHeaderProvider authHeaderProvider, String prefsPath,
-      KeyBundle syncKeyBundle, BaseGlobalSessionCallback callback,
-      Context context, Bundle extras, ClientsDataDelegate clientsDelegate)
-      throws SyncConfigurationException, IllegalArgumentException, IOException,
-      ParseException, NonObjectJSONException, URISyntaxException {
-    super(new SyncConfiguration(username, authHeaderProvider, context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE), syncKeyBundle),
-          callback, context, extras, clientsDelegate, null);
     URI uri = new URI(storageEndpoint);
     this.config.clusterURL = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), "/", null, null);
     FxAccountConstants.pii(LOG_TAG, "storageEndpoint is " + uri + " and clusterURL is " + config.clusterURL);

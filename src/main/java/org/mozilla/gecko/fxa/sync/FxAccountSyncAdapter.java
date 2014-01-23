@@ -182,8 +182,12 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
           final long tokenServerSkew = tokenServerSkewHandler.getSkewInSeconds();
           AuthHeaderProvider authHeaderProvider = new HawkAuthHeaderProvider(token.id, token.key.getBytes("UTF-8"), false, tokenServerSkew);
 
+          final Context context = getContext();
+          SyncConfiguration syncConfig = new SyncConfiguration(token.uid, authHeaderProvider, sharedPrefs, syncKeyBundle);
+
           // EXTRAS
-          globalSession = new FxAccountGlobalSession(token.endpoint, token.uid, authHeaderProvider, prefsPath, syncKeyBundle, callback, getContext(), Bundle.EMPTY, clientsDataDelegate);
+          final Bundle extras = Bundle.EMPTY;
+          globalSession = new FxAccountGlobalSession(token.endpoint, syncConfig, callback, context, extras, clientsDataDelegate);
           globalSession.start();
         } catch (Exception e) {
           callback.handleError(globalSession, e);
