@@ -157,6 +157,13 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
       BaseResource.consumeEntity(response); // We don't need the response at all, and any exception handling shouldn't need the response body.
       localAccountGUIDDownloaded = false;
 
+      if (response.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        // Ugh.
+        Logger.warn(LOG_TAG, "Got 404 -- pretending this is success.");
+        handleRequestSuccess(response);
+        return;
+      }
+
       try {
         Logger.info(LOG_TAG, "Client upload failed. Aborting sync.");
         session.abort(new HTTPFailureException(response), "Client download failed.");
@@ -380,7 +387,11 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
 
   // TODO: Bug 726055 - More considered handling of when to sync.
   protected boolean shouldDownload() {
-    // Ask info/collections whether a download is needed.
+    // You might think we could check info/collections to see if the clients
+    // collection is present and return false accordingly, but returning false
+    // from this method is not yet implemented. In the future, we should make
+    // this method meaningful and ask info/collections whether a download is
+    // needed.
     return true;
   }
 

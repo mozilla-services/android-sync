@@ -38,6 +38,7 @@ import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionStoreDeleg
 import org.mozilla.gecko.sync.repositories.delegates.RepositorySessionWipeDelegate;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
+import ch.boye.httpclientandroidlib.HttpStatus;
 import ch.boye.httpclientandroidlib.entity.ContentProducer;
 import ch.boye.httpclientandroidlib.entity.EntityTemplate;
 
@@ -166,6 +167,12 @@ public class Server11RepositorySession extends RepositorySession {
 
     @Override
     public void handleRequestFailure(SyncStorageResponse response) {
+      if (response.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        // Ugh.
+        Logger.warn(LOG_TAG, "Got 404 -- pretending this is success.");
+        this.handleRequestSuccess(response);
+        return;
+      }
       // TODO: ensure that delegate methods don't get called more than once.
       this.handleRequestError(new HTTPFailureException(response));
     }

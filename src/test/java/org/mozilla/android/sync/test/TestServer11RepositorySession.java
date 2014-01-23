@@ -177,10 +177,20 @@ public class TestServer11RepositorySession {
 
   @Test
   public void testFetchFailure() throws Exception {
-    MockServer server = new MockServer(404, "error");
+    MockServer server = new MockServer(401, "error");
     Exception e = doSynchronize(server);
     assertNotNull(e);
     assertEquals(FetchFailedException.class, e.getClass());
+  }
+
+  @Test
+  public void testFetchNotFound() throws Exception {
+    // 404 on fetch is considered success -- it might just mean the collection
+    // has not been created yet.
+    MockServer server = new MockServer(404, "error");
+    Exception e = doSynchronize(server);
+    assertNotNull(e);
+    assertEquals(StoreFailedException.class, e.getClass());
   }
 
   @Test
