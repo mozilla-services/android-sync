@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-package org.mozilla.gecko.fxa.authenticator;
+package org.mozilla.gecko.fxa.login;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -13,11 +13,15 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.StatusResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
+import org.mozilla.gecko.background.fxa.FxAccountRemoteError;
+import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 
+import ch.boye.httpclientandroidlib.HttpStatus;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
@@ -44,8 +48,8 @@ public class MockFxAccountClient implements FxAccountClient {
       this.quickStretchedPW = quickStretchedPW;
       this.uid = "uid/" + this.email;
       this.verified = false;
-      this.kA = Utils.generateRandomBytes(8);
-      this.wrapkB = Utils.generateRandomBytes(8);
+      this.kA = Utils.generateRandomBytes(FxAccountUtils.CRYPTO_KEY_LENGTH_BYTES);
+      this.wrapkB = Utils.generateRandomBytes(FxAccountUtils.CRYPTO_KEY_LENGTH_BYTES);
     }
   }
 
@@ -61,18 +65,16 @@ public class MockFxAccountClient implements FxAccountClient {
     return new LoginResponse(serverURI, user.uid, user.verified, sessionToken, keyFetchToken);
   }
 
-  public void addUser(MockFxAccount fxAccount) throws UnsupportedEncodingException {
-    String email = new String(fxAccount.emailUTF8, "UTF-8");
-    User user = new User(email, fxAccount.quickStretchedPW);
+  public void addUser(String email, byte[] quickStretchedPW, boolean verified, byte[] sessionToken, byte[] keyFetchToken) {
+    User user = new User(email, quickStretchedPW);
     users.put(email, user);
-    if (fxAccount.verified) {
-      verifyUser(fxAccount);
+    if (verified) {
+      verifyUser(email);
     }
-    addLogin(user, fxAccount.sessionToken, fxAccount.keyFetchToken);
+    addLogin(user, sessionToken, keyFetchToken);
   }
 
-  public void verifyUser(MockFxAccount fxAccount) throws UnsupportedEncodingException {
-    String email = new String(fxAccount.emailUTF8, "UTF-8");
+  public void verifyUser(String email) {
     users.get(email).verified = true;
   }
 
@@ -91,12 +93,17 @@ public class MockFxAccountClient implements FxAccountClient {
     return httpResponse;
   }
 
+  protected <T> void handleFailure(RequestDelegate<T> requestDelegate, int code, int errno, String message) {
+    requestDelegate.handleFailure(new FxAccountClientRemoteException(makeHttpResponse(code, message),
+        code, errno, "Bad authorization", message, null));
+  }
+
   @Override
   public void status(byte[] sessionToken, RequestDelegate<StatusResponse> requestDelegate) {
     String email = sessionTokens.get(Utils.byte2Hex(sessionToken));
     User user = users.get(email);
     if (email == null || user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid sessionToken"));
+      handleFailure(requestDelegate, HttpStatus.SC_UNAUTHORIZED, FxAccountRemoteError.INVALID_AUTHENTICATION_TOKEN, "invalid sessionToken");
       return;
     }
     requestDelegate.handleSuccess(new StatusResponse(email, user.verified));
@@ -111,11 +118,11 @@ public class MockFxAccountClient implements FxAccountClient {
       user = null;
     }
     if (user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid emailUTF8"));
+      handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.ATTEMPT_TO_CREATE_AN_ACCOUNT_THAT_ALREADY_EXISTS, "invalid emailUTF8");
       return;
     }
     if (user.quickStretchedPW == null || !Arrays.equals(user.quickStretchedPW, quickStretchedPW)) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid quickStretchedPW"));
+      handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.INCORRECT_PASSWORD, "invalid quickStretchedPW");
       return;
     }
     LoginResponse loginResponse = addLogin(user, Utils.generateRandomBytes(8), Utils.generateRandomBytes(8));
@@ -127,7 +134,11 @@ public class MockFxAccountClient implements FxAccountClient {
     String email = keyFetchTokens.get(Utils.byte2Hex(keyFetchToken));
     User user = users.get(email);
     if (email == null || user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid keyFetchToken"));
+      handleFailure(requestDelegate, HttpStatus.SC_UNAUTHORIZED, FxAccountRemoteError.INVALID_AUTHENTICATION_TOKEN, "invalid keyFetchToken");
+      return;
+    }
+    if (!user.verified) {
+      handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.ATTEMPT_TO_OPERATE_ON_AN_UNVERIFIED_ACCOUNT, "user is unverified");
       return;
     }
     requestDelegate.handleSuccess(new TwoKeys(user.kA, user.wrapkB));
@@ -138,7 +149,11 @@ public class MockFxAccountClient implements FxAccountClient {
     String email = sessionTokens.get(Utils.byte2Hex(sessionToken));
     User user = users.get(email);
     if (email == null || user == null) {
-      requestDelegate.handleFailure(401, makeHttpResponse(401, "invalid sessionToken"));
+      handleFailure(requestDelegate, HttpStatus.SC_UNAUTHORIZED, FxAccountRemoteError.INVALID_AUTHENTICATION_TOKEN, "invalid sessionToken");
+      return;
+    }
+    if (!user.verified) {
+      handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.ATTEMPT_TO_OPERATE_ON_AN_UNVERIFIED_ACCOUNT, "user is unverified");
       return;
     }
     try {

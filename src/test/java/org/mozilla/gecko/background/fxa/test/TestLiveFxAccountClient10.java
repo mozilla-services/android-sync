@@ -15,14 +15,13 @@ import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.background.fxa.FxAccountClient10;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoKeys;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.TwoTokens;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
-
-import ch.boye.httpclientandroidlib.HttpResponse;
 
 @Category(IntegrationTestCategory.class)
 public class TestLiveFxAccountClient10 {
@@ -68,8 +67,8 @@ public class TestLiveFxAccountClient10 {
     }
 
     @Override
-    public void handleFailure(int status, HttpResponse response) {
-      waitHelper.performNotify(new HTTPFailureException(new SyncStorageResponse(response)));
+    public void handleFailure(FxAccountClientRemoteException e) {
+      waitHelper.performNotify(e);
     }
 
     @Override
