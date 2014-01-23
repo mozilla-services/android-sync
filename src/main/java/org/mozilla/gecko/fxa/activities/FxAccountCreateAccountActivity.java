@@ -33,6 +33,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 /**
@@ -63,7 +64,8 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     passwordEdit = (EditText) ensureFindViewById(null, R.id.password, "password edit");
     showPasswordButton = (Button) ensureFindViewById(null, R.id.show_password, "show password button");
     yearEdit = (EditText) ensureFindViewById(null, R.id.year_edit, "year edit");
-    button = (Button) ensureFindViewById(null, R.id.create_account_button, "create account button");
+    button = (Button) ensureFindViewById(null, R.id.button, "create account button");
+    progressBar = (ProgressBar) ensureFindViewById(null, R.id.progress, "progress bar");
 
     createCreateAccountButton();
     createYearEdit();
@@ -209,7 +211,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     Executor executor = Executors.newSingleThreadExecutor();
     FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
     try {
-      new FxAccountCreateAccountTask(this, email, password, client, delegate).execute();
+      new FxAccountCreateAccountTask(this, this, email, password, client, delegate).execute();
     } catch (Exception e) {
       showRemoteError(e);
     }

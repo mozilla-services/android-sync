@@ -6,6 +6,7 @@ package org.mozilla.gecko.fxa.activities;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.ProgressDisplay;
 
 import android.app.AlertDialog;
 import android.text.Editable;
@@ -18,10 +19,11 @@ import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractActivity {
+abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractActivity implements ProgressDisplay {
   public FxAccountAbstractSetupActivity() {
     super(CANNOT_RESUME_WHEN_ACCOUNTS_EXIST | CANNOT_RESUME_WHEN_LOCKED_OUT);
   }
@@ -39,6 +41,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   protected EditText passwordEdit;
   protected Button showPasswordButton;
   protected Button button;
+  protected ProgressBar progressBar;
 
   protected void createShowPasswordButton() {
     showPasswordButton.setOnClickListener(new OnClickListener() {
@@ -130,5 +133,17 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     }
 
     return enabled;
+  }
+
+  @Override
+  public void showProgress() {
+    progressBar.setVisibility(View.VISIBLE);
+    button.setVisibility(View.INVISIBLE);
+  }
+
+  @Override
+  public void dismissProgress() {
+    progressBar.setVisibility(View.INVISIBLE);
+    button.setVisibility(View.VISIBLE);
   }
 }

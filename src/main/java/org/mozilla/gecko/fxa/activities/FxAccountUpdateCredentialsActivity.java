@@ -31,6 +31,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 /**
@@ -65,6 +66,7 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
     passwordEdit = (EditText) ensureFindViewById(null, R.id.password, "password edit");
     showPasswordButton = (Button) ensureFindViewById(null, R.id.show_password, "show password button");
     button = (Button) ensureFindViewById(null, R.id.button, "update credentials");
+    progressBar = (ProgressBar) ensureFindViewById(null, R.id.progress, "progress bar");
 
     minimumPasswordLength = 1; // Minimal restriction on passwords entered to sign in.
     createButton();
@@ -164,7 +166,7 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
     FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
     try {
       RequestDelegate<LoginResponse> delegate = new UpdateCredentialsDelegate(email, password, serverURI);
-      new FxAccountSignInTask(this, email, password, client, delegate).execute();
+      new FxAccountSignInTask(this, this, email, password, client, delegate).execute();
     } catch (Exception e) {
       showRemoteError(e);
     }

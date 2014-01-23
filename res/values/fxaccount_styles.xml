@@ -103,4 +103,19 @@
         <item name="android:visibility">invisible</item>
     </style>
 
+    <style name="FxAccountProgress">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:background">@drawable/fxaccount_button_background</item>
+        <item name="android:visibility">invisible</item>
+    </style>
+
+    <style name="FxAccountButtonLayout">
+        <item name="android:orientation">vertical</item>
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">20dp</item>
+        <item name="android:layout_marginTop">45dp</item>
+    </style>
+
 </resources>
