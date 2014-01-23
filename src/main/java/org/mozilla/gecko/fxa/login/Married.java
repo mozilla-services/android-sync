@@ -9,11 +9,15 @@ import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.login.FxAccountLoginStateMachine.ExecuteDelegate;
 import org.mozilla.gecko.fxa.login.FxAccountLoginTransition.LogMessage;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -22,6 +26,8 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 
 public class Married extends TokensAndKeysState {
+  private static final String LOG_TAG = Married.class.getSimpleName();
+
   protected final String certificate;
 
   public Married(String email, String uid, byte[] sessionToken, byte[] kA, byte[] kB, BrowserIDKeyPair keyPair, String certificate) {
@@ -44,11 +50,53 @@ public class Married extends TokensAndKeysState {
   }
 
   public String generateAssertion(String audience, String issuer, long issuedAt, long durationInMilliseconds) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException {
-    return JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, audience, issuer, issuedAt, durationInMilliseconds);
+    String assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, audience, issuer, issuedAt, durationInMilliseconds);
+    if (!FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+      return assertion;
+    }
+
+    try {
+      FxAccountConstants.pii(LOG_TAG, "Generated assertion: " + assertion);
+      ExtendedJSONObject a = JSONWebTokenUtils.parseAssertion(assertion);
+      if (a != null) {
+        FxAccountConstants.pii(LOG_TAG, "aHeader   : " + a.getObject("header"));
+        FxAccountConstants.pii(LOG_TAG, "aPayload  : " + a.getObject("payload"));
+        FxAccountConstants.pii(LOG_TAG, "aSignature: " + a.getString("signature"));
+        String certificate = a.getString("certificate");
+        if (certificate != null) {
+          ExtendedJSONObject c = JSONWebTokenUtils.parseCertificate(certificate);
+          FxAccountConstants.pii(LOG_TAG, "cHeader   : " + c.getObject("header"));
+          FxAccountConstants.pii(LOG_TAG, "cPayload  : " + c.getObject("payload"));
+          FxAccountConstants.pii(LOG_TAG, "cSignature: " + c.getString("signature"));
+          // Print the relevant timestamps in sorted order with labels.
+          HashMap<Long, String> map = new HashMap<Long, String>();
+          map.put(a.getObject("payload").getLong("iat"), "aiat");
+          map.put(a.getObject("payload").getLong("exp"), "aexp");
+          map.put(c.getObject("payload").getLong("iat"), "ciat");
+          map.put(c.getObject("payload").getLong("exp"), "cexp");
+          ArrayList<Long> values = new ArrayList<Long>(map.keySet());
+          Collections.sort(values);
+          for (Long value : values) {
+            FxAccountConstants.pii(LOG_TAG, map.get(value) + ": " + value);
+          }
+        } else {
+          FxAccountConstants.pii(LOG_TAG, "Could not parse certificate!");
+        }
+      } else {
+        FxAccountConstants.pii(LOG_TAG, "Could not parse assertion!");
+      }
+    } catch (Exception e) {
+      FxAccountConstants.pii(LOG_TAG, "Got exception dumping assertion debug info.");
+    }
+    return assertion;
   }
 
   public KeyBundle getSyncKeyBundle() throws InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException {
     // TODO Document this choice for deriving from kB.
     return FxAccountUtils.generateSyncKeyBundle(kB);
+  }
+
+  public State makeCohabitingState() {
+    return new Cohabiting(email, uid, sessionToken, kA, kB, keyPair);
   }
 }
