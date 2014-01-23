@@ -1,3 +1,5 @@
+#!/bin/sh
+
 export LC_ALL=C # Ensure consistent sort order across platforms.
 SORT_CMD="sort -f"
 
