@@ -257,7 +257,7 @@ public class TestLiveFxAccountClient20 {
       String uid = createAccount(email, password, preVerified);
       Assert.assertNotNull(uid);
     } catch (FxAccountClientRemoteException e) {
-      if (!e.isInvalidAuthentication()) {
+      if (!e.isAccountAlreadyExists()) {
         throw e;
       }
     }
@@ -266,7 +266,7 @@ public class TestLiveFxAccountClient20 {
       createAccount(email, password, preVerified);
       Assert.fail();
     } catch (FxAccountClientRemoteException e) {
-      if (!e.isInvalidAuthentication()) {
+      if (!e.isAccountAlreadyExists()) {
         throw e;
       }
     }
