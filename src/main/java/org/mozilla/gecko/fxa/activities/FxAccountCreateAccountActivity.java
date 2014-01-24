@@ -59,11 +59,11 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
     linkifyTextViews(null, new int[] { R.id.policy });
 
-    localErrorTextView = (TextView) ensureFindViewById(null, R.id.local_error, "local error text view");
     emailEdit = (EditText) ensureFindViewById(null, R.id.email, "email edit");
     passwordEdit = (EditText) ensureFindViewById(null, R.id.password, "password edit");
     showPasswordButton = (Button) ensureFindViewById(null, R.id.show_password, "show password button");
     yearEdit = (EditText) ensureFindViewById(null, R.id.year_edit, "year edit");
+    remoteErrorTextView = (TextView) ensureFindViewById(null, R.id.remote_error, "remote error text view");
     button = (Button) ensureFindViewById(null, R.id.button, "create account button");
     progressBar = (ProgressBar) ensureFindViewById(null, R.id.progress, "progress bar");
 
@@ -147,12 +147,12 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
     @Override
     public void handleError(Exception e) {
-      showRemoteError(e);
+      showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
     }
 
     @Override
     public void handleFailure(final FxAccountClientRemoteException e) {
-      handleError(e);
+      showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
     }
 
     @Override
@@ -211,9 +211,10 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     Executor executor = Executors.newSingleThreadExecutor();
     FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
     try {
+      hideRemoteError();
       new FxAccountCreateAccountTask(this, this, email, password, client, delegate).execute();
     } catch (Exception e) {
-      showRemoteError(e);
+      showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
     }
   }
 

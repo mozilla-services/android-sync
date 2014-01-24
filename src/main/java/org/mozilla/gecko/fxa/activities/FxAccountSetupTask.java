@@ -70,7 +70,9 @@ abstract class FxAccountSetupTask<T> extends AsyncTask<Void, Void, InnerRequestD
     }
 
     // We are on the UI thread, and need to invoke these callbacks here to allow UI updating.
-    if (innerDelegate.exception != null) {
+    if (innerDelegate.failure != null) {
+      delegate.handleFailure(innerDelegate.failure);
+    } else if (innerDelegate.exception != null) {
       delegate.handleError(innerDelegate.exception);
     } else {
       delegate.handleSuccess(result.response);
@@ -89,6 +91,7 @@ abstract class FxAccountSetupTask<T> extends AsyncTask<Void, Void, InnerRequestD
     protected final CountDownLatch latch;
     public T response = null;
     public Exception exception = null;
+    public FxAccountClientRemoteException failure = null;
 
     protected InnerRequestDelegate(CountDownLatch latch) {
       this.latch = latch;
@@ -104,7 +107,7 @@ abstract class FxAccountSetupTask<T> extends AsyncTask<Void, Void, InnerRequestD
     @Override
     public void handleFailure(FxAccountClientRemoteException e) {
       Logger.warn(LOG_TAG, "Got failure.");
-      this.exception = e;
+      this.failure = e;
       latch.countDown();
     }
 

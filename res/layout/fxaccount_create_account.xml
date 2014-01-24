@@ -49,7 +49,7 @@
             android:inputType="none" />
 
         <TextView
-            android:id="@+id/local_error"
+            android:id="@+id/remote_error"
             style="@style/FxAccountErrorItem" />
 
         <FrameLayout style="@style/FxAccountButtonLayout" >
