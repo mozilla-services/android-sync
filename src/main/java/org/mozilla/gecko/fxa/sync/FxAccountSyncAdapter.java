@@ -72,16 +72,12 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     this.executor = Executors.newSingleThreadExecutor();
   }
 
-  /**
-   * A trivial global session callback that ignores backoff requests, upgrades,
-   * and authorization errors. It simply waits until the sync completes.
-   */
-  protected static class SessionCallback implements BaseGlobalSessionCallback {
+  protected class SyncDelegate {
     protected final CountDownLatch latch;
     protected final SyncResult syncResult;
     protected final AndroidFxAccount fxAccount;
 
-    public SessionCallback(CountDownLatch latch, SyncResult syncResult, AndroidFxAccount fxAccount) {
+    public SyncDelegate(CountDownLatch latch, SyncResult syncResult, AndroidFxAccount fxAccount) {
       if (latch == null) {
         throw new IllegalArgumentException("latch must not be null");
       }
@@ -94,27 +90,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       this.latch = latch;
       this.syncResult = syncResult;
       this.fxAccount = fxAccount;
-    }
-
-    @Override
-    public boolean shouldBackOff() {
-      return false;
-    }
-
-    @Override
-    public void requestBackoff(long backoff) {
-    }
-
-    @Override
-    public void informUpgradeRequiredResponse(GlobalSession session) {
-    }
-
-    @Override
-    public void informUnauthorizedResponse(GlobalSession globalSession, URI oldClusterURL) {
-    }
-
-    @Override
-    public void handleStageCompleted(Stage currentState, GlobalSession globalSession) {
     }
 
     /**
@@ -141,15 +116,15 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       syncResult.stats.numAuthExceptions += 1;
     }
 
-    @Override
-    public void handleSuccess(GlobalSession globalSession) {
-      setSyncResultSuccess();
+    public void handleSuccess() {
       Logger.info(LOG_TAG, "Sync succeeded.");
+      setSyncResultSuccess();
       latch.countDown();
     }
 
-    @Override
-    public void handleError(GlobalSession globalSession, Exception e) {
+    public void handleError(Exception e) {
+      Logger.error(LOG_TAG, "Got exception syncing.", e);
+      setSyncResultSoftError();
       // This is awful, but we need to propagate bad assertions back up the
       // chain somehow, and this will do for now.
       if (e instanceof TokenServerException) {
@@ -160,16 +135,65 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
           fxAccount.setState(married.makeCohabitingState());
         }
       }
-      setSyncResultSoftError();
-      Logger.warn(LOG_TAG, "Sync failed.", e);
       latch.countDown();
+    }
+
+    public void handleCannotSync(State state) {
+      Logger.warn(LOG_TAG, "Cannot sync from state: " + state.getStateLabel());
+      showNotification(state);
+      setSyncResultHardError();
+      latch.countDown();
+    }
+  }
+
+  /**
+   * A trivial global session callback that ignores backoff requests, upgrades,
+   * and authorization errors. It simply waits until the sync completes.
+   */
+  protected static class SessionCallback implements BaseGlobalSessionCallback {
+    protected final SyncDelegate syncDelegate;
+
+    public SessionCallback(SyncDelegate syncDelegate) {
+      this.syncDelegate = syncDelegate;
+    }
+
+    @Override
+    public boolean shouldBackOff() {
+      return false;
+    }
+
+    @Override
+    public void requestBackoff(long backoff) {
+    }
+
+    @Override
+    public void informUpgradeRequiredResponse(GlobalSession session) {
+    }
+
+    @Override
+    public void informUnauthorizedResponse(GlobalSession globalSession, URI oldClusterURL) {
+    }
+
+    @Override
+    public void handleStageCompleted(Stage currentState, GlobalSession globalSession) {
+    }
+
+    @Override
+    public void handleSuccess(GlobalSession globalSession) {
+      Logger.info(LOG_TAG, "Global session succeeded.");
+      syncDelegate.handleSuccess();
+    }
+
+    @Override
+    public void handleError(GlobalSession globalSession, Exception e) {
+      Logger.warn(LOG_TAG, "Global session failed."); // Exception will be dumped by delegate below.
+      syncDelegate.handleError(e);
     }
 
     @Override
     public void handleAborted(GlobalSession globalSession, String reason) {
-      setSyncResultSoftError();
-      Logger.warn(LOG_TAG, "Sync aborted: " + reason);
-      latch.countDown();
+      Logger.warn(LOG_TAG, "Global session aborted: " + reason);
+      syncDelegate.handleError(null);
     }
   };
 
@@ -250,7 +274,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
    * token implementation.
    */
   @Override
-  public void onPerformSync(final Account account, final Bundle extras, final String authority, ContentProviderClient provider, SyncResult syncResult) {
+  public void onPerformSync(final Account account, final Bundle extras, final String authority, ContentProviderClient provider, final SyncResult syncResult) {
     Logger.setThreadLogTag(FxAccountConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
 
@@ -264,15 +288,16 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
       fxAccount.dump();
     }
+
     final CountDownLatch latch = new CountDownLatch(1);
-    final BaseGlobalSessionCallback callback = new SessionCallback(latch, syncResult, fxAccount);
+    final SyncDelegate syncDelegate = new SyncDelegate(latch, syncResult, fxAccount);
 
     try {
       State state;
       try {
         state = fxAccount.getState();
       } catch (Exception e) {
-        callback.handleError(null, e);
+        syncDelegate.handleError(e);
         return;
       }
 
@@ -312,18 +337,17 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
         @Override
         public void handleTransition(Transition transition, State state) {
-          Logger.warn(LOG_TAG, "handleTransition: " + transition + " to " + state);
+          Logger.info(LOG_TAG, "handleTransition: " + transition + " to " + state.getStateLabel());
         }
 
         @Override
         public void handleFinal(State state) {
-          Logger.warn(LOG_TAG, "handleFinal: in " + state);
+          Logger.info(LOG_TAG, "handleFinal: in " + state.getStateLabel());
           fxAccount.setState(state);
 
           try {
             if (state.getStateLabel() != StateLabel.Married) {
-              showNotification(state);
-              callback.handleAborted(null, "Cannot sync from state: " + state);
+              syncDelegate.handleCannotSync(state);
               return;
             }
 
@@ -333,9 +357,10 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
             String assertion = married.generateAssertion(audience, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER,
                 now + skewHandler.getSkewInMillis(),
                 this.getAssertionDurationInMilliseconds());
-            syncWithAssertion(audience, assertion, tokenServerEndpointURI, prefsPath, sharedPrefs, married.getSyncKeyBundle(), callback);
+            final BaseGlobalSessionCallback sessionCallback = new SessionCallback(syncDelegate);
+            syncWithAssertion(audience, assertion, tokenServerEndpointURI, prefsPath, sharedPrefs, married.getSyncKeyBundle(), sessionCallback);
           } catch (Exception e) {
-            callback.handleError(null, e);
+            syncDelegate.handleError(e);
             return;
           }
         }
@@ -344,7 +369,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       latch.await();
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Got error syncing.", e);
-      callback.handleError(null, e);
+      syncDelegate.handleError(e);
     }
 
     Logger.error(LOG_TAG, "Syncing done.");
