@@ -24,6 +24,36 @@ import android.content.SharedPreferences.Editor;
 
 public class SyncConfiguration {
 
+  /**
+   * Override SyncConfiguration to restore the old behavior of clusterURL --
+   * that is, a URL without the protocol version etc.
+   *
+   */
+  public static class Sync11Configuration extends SyncConfiguration {
+    public Sync11Configuration(String username,
+                               AuthHeaderProvider authHeaderProvider,
+                               SharedPreferences prefs) {
+      super(username, authHeaderProvider, prefs);
+    }
+
+    public Sync11Configuration(String username,
+                               AuthHeaderProvider authHeaderProvider,
+                               SharedPreferences prefs,
+                               KeyBundle keyBundle) {
+      super(username, authHeaderProvider, prefs, keyBundle);
+    }
+
+    @Override
+    public String storageURL() {
+      return clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage";
+    }
+
+    @Override
+    protected String infoBaseURL() {
+      return clusterURL + GlobalSession.API_VERSION + "/" + username + "/info/";
+    }
+  }
+
   public class EditorBranch implements Editor {
 
     private String prefix;
@@ -453,8 +483,17 @@ public class SyncConfiguration {
     collectionKeys = k;
   }
 
+  /**
+   * Return path to storage endpoint without trailing slash.
+   *
+   * @return storage endpoint without trailing slash.
+   */
+  public String storageURL() {
+    return clusterURL + "/storage";
+  }
+
   protected String infoBaseURL() {
-    return clusterURL + GlobalSession.API_VERSION + "/" + username + "/info/";
+    return clusterURL + "/info/";
   }
 
   public String infoCollectionsURL() {
@@ -467,15 +506,6 @@ public class SyncConfiguration {
 
   public String metaURL() {
     return storageURL() + "/meta/global";
-  }
-
-  /**
-   * Return path to storage endpoint without trailing slash.
-   *
-   * @return storage endpoint without trailing slash.
-   */
-  public String storageURL() {
-    return clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage";
   }
 
   public URI collectionURI(String collection) throws URISyntaxException {

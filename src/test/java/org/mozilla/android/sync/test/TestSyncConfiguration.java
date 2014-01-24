@@ -22,12 +22,21 @@ public class TestSyncConfiguration implements PrefsSource {
 
   @Test
   public void testURLs() throws Exception {
-    SyncConfiguration config = new SyncConfiguration("username", null, "prefsPath", this);
-    config.clusterURL = new URI("https://db.com/internal/");
-    Assert.assertEquals("https://db.com/internal/1.1/username/info/collections", config.infoCollectionsURL());
-    Assert.assertEquals("https://db.com/internal/1.1/username/info/collection_counts", config.infoCollectionCountsURL());
-    Assert.assertEquals("https://db.com/internal/1.1/username/storage/meta/global", config.metaURL());
-    Assert.assertEquals("https://db.com/internal/1.1/username/storage", config.storageURL());
-    Assert.assertEquals("https://db.com/internal/1.1/username/storage/collection", config.collectionURI("collection").toASCIIString());
+    // N.B., the username isn't used in the cluster path.
+    SyncConfiguration fxaConfig = new SyncConfiguration("username", null, "prefsPath", this);
+    fxaConfig.clusterURL = new URI("http://db1.oldsync.dev.lcip.org/1.1/174");
+    Assert.assertEquals("http://db1.oldsync.dev.lcip.org/1.1/174/info/collections", fxaConfig.infoCollectionsURL());
+    Assert.assertEquals("http://db1.oldsync.dev.lcip.org/1.1/174/info/collection_counts", fxaConfig.infoCollectionCountsURL());
+    Assert.assertEquals("http://db1.oldsync.dev.lcip.org/1.1/174/storage/meta/global", fxaConfig.metaURL());
+    Assert.assertEquals("http://db1.oldsync.dev.lcip.org/1.1/174/storage", fxaConfig.storageURL());
+    Assert.assertEquals("http://db1.oldsync.dev.lcip.org/1.1/174/storage/collection", fxaConfig.collectionURI("collection").toASCIIString());
+
+    SyncConfiguration oldConfig = new SyncConfiguration.Sync11Configuration("username", null, new MockSharedPreferences());
+    oldConfig.clusterURL = new URI("https://db.com/internal/");
+    Assert.assertEquals("https://db.com/internal/1.1/username/info/collections", oldConfig.infoCollectionsURL());
+    Assert.assertEquals("https://db.com/internal/1.1/username/info/collection_counts", oldConfig.infoCollectionCountsURL());
+    Assert.assertEquals("https://db.com/internal/1.1/username/storage/meta/global", oldConfig.metaURL());
+    Assert.assertEquals("https://db.com/internal/1.1/username/storage", oldConfig.storageURL());
+    Assert.assertEquals("https://db.com/internal/1.1/username/storage/collection", oldConfig.collectionURI("collection").toASCIIString());
   }
 }
