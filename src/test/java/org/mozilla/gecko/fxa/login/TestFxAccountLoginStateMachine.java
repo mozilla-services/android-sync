@@ -176,7 +176,7 @@ public class TestFxAccountLoginStateMachine {
     client.addUser(TEST_EMAIL, TEST_QUICK_STRETCHED_PW, true, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN);
     client.sessionTokens.clear();
     Trace trace = trace(new Engaged(TEST_EMAIL, "uid", true, TEST_UNWRAPKB, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN), StateLabel.Married);
-    trace.assertEquals("[Engaged, >LogMessage('keys succeeded'), Cohabiting, >Log(401 [110]: invalid sessionToken), Separated, >PasswordRequired, Separated]");
+    trace.assertEquals("[Engaged, >LogMessage('keys succeeded'), Cohabiting, >Log(<FxAccountClientRemoteException 401 [110]: invalid sessionToken>), Separated, >PasswordRequired, Separated]");
   }
 
   @Test
@@ -184,7 +184,7 @@ public class TestFxAccountLoginStateMachine {
     client.addUser(TEST_EMAIL, TEST_QUICK_STRETCHED_PW, true, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN);
     client.keyFetchTokens.clear();
     Trace trace = trace(new Engaged(TEST_EMAIL, "uid", true, TEST_UNWRAPKB, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN), StateLabel.Married);
-    trace.assertEquals("[Engaged, >Log(401 [110]: invalid keyFetchToken), Separated, >PasswordRequired, Separated]");
+    trace.assertEquals("[Engaged, >Log(<FxAccountClientRemoteException 401 [110]: invalid keyFetchToken>), Separated, >PasswordRequired, Separated]");
   }
 
   @Test
