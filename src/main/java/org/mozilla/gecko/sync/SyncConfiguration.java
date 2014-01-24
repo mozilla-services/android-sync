@@ -30,6 +30,8 @@ public class SyncConfiguration {
    *
    */
   public static class Sync11Configuration extends SyncConfiguration {
+    private static final String API_VERSION = "1.1";
+
     public Sync11Configuration(String username,
                                AuthHeaderProvider authHeaderProvider,
                                SharedPreferences prefs) {
@@ -44,13 +46,18 @@ public class SyncConfiguration {
     }
 
     @Override
+    public String getAPIVersion() {
+      return API_VERSION;
+    }
+
+    @Override
     public String storageURL() {
-      return clusterURL + GlobalSession.API_VERSION + "/" + username + "/storage";
+      return clusterURL + API_VERSION + "/" + username + "/storage";
     }
 
     @Override
     protected String infoBaseURL() {
-      return clusterURL + GlobalSession.API_VERSION + "/" + username + "/info/";
+      return clusterURL + API_VERSION + "/" + username + "/info/";
     }
 
     protected void setAndPersistClusterURL(URI u, SharedPreferences prefs) {
@@ -320,6 +327,8 @@ public class SyncConfiguration {
   public static final String PREF_CLIENT_NAME = "account.clientName";
   public static final String PREF_NUM_CLIENTS = "account.numClients";
 
+  private static final String API_VERSION = "1.5";
+
   /**
    * Create a new SyncConfiguration instance. Pass in a PrefsSource to
    * provide access to preferences.
@@ -338,6 +347,10 @@ public class SyncConfiguration {
   public SyncConfiguration(String username, AuthHeaderProvider authHeaderProvider, SharedPreferences prefs, KeyBundle syncKeyBundle) {
     this(username, authHeaderProvider, prefs);
     this.syncKeyBundle = syncKeyBundle;
+  }
+
+  public String getAPIVersion() {
+    return API_VERSION;
   }
 
   public SharedPreferences getPrefs() {
