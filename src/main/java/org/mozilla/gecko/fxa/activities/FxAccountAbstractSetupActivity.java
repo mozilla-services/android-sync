@@ -8,9 +8,19 @@ import java.io.IOException;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
+import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
+import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.ProgressDisplay;
+import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+import org.mozilla.gecko.fxa.login.Engaged;
+import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.sync.setup.Constants;
 
+import android.accounts.AccountManager;
+import android.content.Intent;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -163,5 +173,76 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   public void dismissProgress() {
     progressBar.setVisibility(View.INVISIBLE);
     button.setVisibility(View.VISIBLE);
+  }
+
+  public Intent makeSuccessIntent(String email, LoginResponse result) {
+    Intent successIntent;
+    if (result.verified) {
+      successIntent = new Intent(this, FxAccountVerifiedAccountActivity.class);
+    } else {
+      successIntent = new Intent(this, FxAccountConfirmAccountActivity.class);
+      successIntent.putExtra("sessionToken", result.sessionToken);
+    }
+    successIntent.putExtra("email", email);
+    // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
+    // the soft keyboard not being shown for the started activity. Why, Android, why?
+    successIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    return successIntent;
+  }
+
+  protected abstract class AddAccountDelegate implements RequestDelegate<LoginResponse> {
+    public final String email;
+    public final String password;
+    public final String serverURI;
+
+    public AddAccountDelegate(String email, String password, String serverURI) {
+      this.email = email;
+      this.password = password;
+      this.serverURI = serverURI;
+    }
+
+    @Override
+    public void handleSuccess(LoginResponse result) {
+      Logger.info(LOG_TAG, "Got success response; adding Android account.");
+
+      // We're on the UI thread, but it's okay to create the account here.
+      AndroidFxAccount fxAccount;
+      try {
+        final String profile = Constants.DEFAULT_PROFILE;
+        final String tokenServerURI = FxAccountConstants.DEFAULT_TOKEN_SERVER_URI;
+        // TODO: This is wasteful.  We should be able to thread these through so they don't get recomputed.
+        byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(email.getBytes("UTF-8"), password.getBytes("UTF-8"));
+        byte[] unwrapkB = FxAccountUtils.generateUnwrapBKey(quickStretchedPW);
+        State state = new Engaged(email, result.uid, result.verified, unwrapkB, result.sessionToken, result.keyFetchToken);
+        fxAccount = AndroidFxAccount.addAndroidAccount(getApplicationContext(), email, password,
+            profile,
+            serverURI,
+            tokenServerURI,
+            state);
+        if (fxAccount == null) {
+          throw new RuntimeException("Could not add Android account.");
+        }
+      } catch (Exception e) {
+        handleError(e);
+        return;
+      }
+
+      // For great debugging.
+      if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+        fxAccount.dump();
+      }
+
+      // The GetStarted activity has called us and needs to return a result to the authenticator.
+      final Intent intent = new Intent();
+      intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, email);
+      intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, FxAccountConstants.ACCOUNT_TYPE);
+      // intent.putExtra(AccountManager.KEY_AUTHTOKEN, accountType);
+      setResult(RESULT_OK, intent);
+
+      // Show success activity depending on verification status.
+      Intent successIntent = makeSuccessIntent(email, result);
+      startActivity(successIntent);
+      finish();
+    }
   }
 }

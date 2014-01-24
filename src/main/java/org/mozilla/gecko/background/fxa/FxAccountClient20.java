@@ -23,16 +23,6 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
     super(serverURI, executor);
   }
 
-  public void createAccount(final byte[] emailUTF8, final byte[] quickStretchedPW, final boolean preVerified,
-      final RequestDelegate<String> delegate) {
-    try {
-      createAccount(new FxAccount20CreateDelegate(emailUTF8, quickStretchedPW, preVerified), delegate);
-    } catch (final Exception e) {
-      invokeHandleError(delegate, e);
-      return;
-    }
-  }
-
   /**
    * Thin container for login response.
    */
@@ -97,6 +87,59 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           LoginResponse loginResponse;
           String uid = body.getString(JSON_KEY_UID);
           boolean verified = body.getBoolean(JSON_KEY_VERIFIED);
+          byte[] sessionToken = Utils.hex2Byte(body.getString(JSON_KEY_SESSIONTOKEN));
+          byte[] keyFetchToken = null;
+          if (getKeys) {
+            keyFetchToken = Utils.hex2Byte(body.getString(JSON_KEY_KEYFETCHTOKEN));
+          }
+          loginResponse = new LoginResponse(serverURI, uid, verified, sessionToken, keyFetchToken);
+
+          delegate.handleSuccess(loginResponse);
+          return;
+        } catch (Exception e) {
+          delegate.handleError(e);
+          return;
+        }
+      }
+    };
+
+    post(resource, body, delegate);
+  }
+
+  public void createAccount(final byte[] emailUTF8, final byte[] quickStretchedPW, final boolean getKeys, final boolean preVerified,
+      final RequestDelegate<LoginResponse> delegate) {
+    BaseResource resource;
+    JSONObject body;
+    final String path = getKeys ? "account/create?keys=true" : "account/create";
+    try {
+      resource = new BaseResource(new URI(serverURI + path));
+      body = new FxAccount20CreateDelegate(emailUTF8, quickStretchedPW, preVerified).getCreateBody();
+    } catch (Exception e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+
+    // This is very similar to login, except verified is not required.
+    resource.delegate = new ResourceDelegate<LoginResponse>(resource, delegate) {
+      @Override
+      public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
+        try {
+          String[] requiredStringFields;
+          if (!getKeys) {
+            requiredStringFields = LOGIN_RESPONSE_REQUIRED_STRING_FIELDS;
+          } else {
+            requiredStringFields = LOGIN_RESPONSE_REQUIRED_STRING_FIELDS_KEYS;
+          }
+
+          body.throwIfFieldsMissingOrMisTyped(requiredStringFields, String.class);
+
+          LoginResponse loginResponse;
+          String uid = body.getString(JSON_KEY_UID);
+          boolean verified = false; // In production, we're definitely not verified immediately upon creation.
+          Boolean tempVerified = body.getBoolean(JSON_KEY_VERIFIED);
+          if (tempVerified != null) {
+            verified = tempVerified.booleanValue();
+          }
           byte[] sessionToken = Utils.hex2Byte(body.getString(JSON_KEY_SESSIONTOKEN));
           byte[] keyFetchToken = null;
           if (getKeys) {

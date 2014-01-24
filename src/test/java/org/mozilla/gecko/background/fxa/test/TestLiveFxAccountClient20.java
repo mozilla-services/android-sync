@@ -73,21 +73,21 @@ public class TestLiveFxAccountClient20 {
     PREVERIFIED,
   }
 
-  protected String createAccount(final String email, final String password, final VerificationState preVerified)
+  protected LoginResponse createAccount(final String email, final String password, final boolean getKeys, final VerificationState preVerified)
       throws Throwable {
     final byte[] emailUTF8 = email.getBytes("UTF-8");
     final byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(emailUTF8, password.getBytes("UTF-8"));
-    final String[] uids = new String[1];
+    final LoginResponse[] responses =  new LoginResponse[1];
     final WaitHelper waitHelper = WaitHelper.getTestWaiter();
     try {
       waitHelper.performWait(new Runnable() {
         @Override
         public void run() {
           boolean wantVerified = preVerified == VerificationState.PREVERIFIED;
-          client.createAccount(emailUTF8, quickStretchedPW, wantVerified, new BaseDelegate<String>(waitHelper) {
+          client.createAccount(emailUTF8, quickStretchedPW, getKeys, wantVerified, new BaseDelegate<LoginResponse>(waitHelper) {
             @Override
-            public void handleSuccess(String uid) {
-              uids[0] = uid;
+            public void handleSuccess(LoginResponse result) {
+              responses[0] = result;
               waitHelper.performNotify();
             }
           });
@@ -96,7 +96,7 @@ public class TestLiveFxAccountClient20 {
     } catch (WaitHelper.InnerError e) {
       throw e.innerError;
     }
-    return uids[0];
+    return responses[0];
   }
 
   protected void sessionDestroy(final byte[] sessionToken) throws Throwable {
@@ -254,8 +254,10 @@ public class TestLiveFxAccountClient20 {
   protected LoginResponse doTestCreateAndLogin(final String email, String password, final boolean accountMayExist, VerificationState preVerified)
       throws Throwable {
     try {
-      String uid = createAccount(email, password, preVerified);
-      Assert.assertNotNull(uid);
+      LoginResponse createResponse = createAccount(email, password, true, preVerified);
+      Assert.assertNotNull(createResponse.uid);
+      Assert.assertNotNull(createResponse.sessionToken);
+      Assert.assertNotNull(createResponse.keyFetchToken);
     } catch (FxAccountClientRemoteException e) {
       if (!e.isAccountAlreadyExists()) {
         throw e;
@@ -263,7 +265,7 @@ public class TestLiveFxAccountClient20 {
     }
 
     try {
-      createAccount(email, password, preVerified);
+      createAccount(email, password, true, preVerified);
       Assert.fail();
     } catch (FxAccountClientRemoteException e) {
       if (!e.isAccountAlreadyExists()) {
@@ -299,10 +301,10 @@ public class TestLiveFxAccountClient20 {
 
   @Test
   public void testSessionDestroy() throws Throwable {
-    String uid = null;
     try {
-      uid = createAccount(TEST_EMAIL, TEST_PASSWORD, VerificationState.PREVERIFIED);
-      Assert.assertNotNull(uid);
+      LoginResponse createResponse = createAccount(TEST_EMAIL, TEST_PASSWORD, false, VerificationState.PREVERIFIED);
+      Assert.assertNotNull(createResponse.uid);
+      Assert.assertNotNull(createResponse.sessionToken);
     } catch (FxAccountClientRemoteException e) {
       if (!e.isAccountAlreadyExists()) {
         throw e;
@@ -337,10 +339,10 @@ public class TestLiveFxAccountClient20 {
 
   @Test
   public void testCertificateSign() throws Throwable {
-    String uid = null;
     try {
-      uid = createAccount(TEST_EMAIL, TEST_PASSWORD, VerificationState.PREVERIFIED);
-      Assert.assertNotNull(uid);
+      LoginResponse createResponse = createAccount(TEST_EMAIL, TEST_PASSWORD, false, VerificationState.PREVERIFIED);
+      Assert.assertNotNull(createResponse.uid);
+      Assert.assertNotNull(createResponse.sessionToken);
     } catch (FxAccountClientRemoteException e) {
       if (!e.isAccountAlreadyExists()) {
         throw e;

@@ -119,13 +119,13 @@ abstract class FxAccountSetupTask<T> extends AsyncTask<Void, Void, InnerRequestD
     }
   }
 
-  public static class FxAccountCreateAccountTask extends FxAccountSetupTask<String> {
+  public static class FxAccountCreateAccountTask extends FxAccountSetupTask<LoginResponse> {
     private static final String LOG_TAG = FxAccountCreateAccountTask.class.getSimpleName();
 
     protected final byte[] emailUTF8;
     protected final byte[] passwordUTF8;
 
-    public FxAccountCreateAccountTask(Context context, ProgressDisplay progressDisplay, String email, String password, FxAccountClient20 client, RequestDelegate<String> delegate) throws UnsupportedEncodingException {
+    public FxAccountCreateAccountTask(Context context, ProgressDisplay progressDisplay, String email, String password, FxAccountClient20 client, RequestDelegate<LoginResponse> delegate) throws UnsupportedEncodingException {
       super(context, progressDisplay, client, delegate);
       this.emailUTF8 = email.getBytes("UTF-8");
       this.passwordUTF8 = password.getBytes("UTF-8");
@@ -146,9 +146,9 @@ abstract class FxAccountSetupTask<T> extends AsyncTask<Void, Void, InnerRequestD
     }
 
     @Override
-    protected InnerRequestDelegate<String> doInBackground(Void... arg0) {
+    protected InnerRequestDelegate<LoginResponse> doInBackground(Void... arg0) {
       try {
-        client.createAccount(emailUTF8, generateQuickStretchedPW(), false, innerDelegate);
+        client.createAccount(emailUTF8, generateQuickStretchedPW(), true, false, innerDelegate);
         latch.await();
         return innerDelegate;
       } catch (Exception e) {
