@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountClient;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
@@ -20,6 +21,7 @@ import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.browserid.verifier.BrowserIDRemoteVerifierClient;
 import org.mozilla.gecko.browserid.verifier.BrowserIDVerifierDelegate;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.activities.FxAccountStatusActivity;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
 import org.mozilla.gecko.fxa.login.FxAccountLoginStateMachine;
@@ -27,6 +29,7 @@ import org.mozilla.gecko.fxa.login.FxAccountLoginStateMachine.LoginStateMachineD
 import org.mozilla.gecko.fxa.login.FxAccountLoginTransition.Transition;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.fxa.login.State.Action;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
@@ -45,15 +48,22 @@ import org.mozilla.gecko.tokenserver.TokenServerException;
 import org.mozilla.gecko.tokenserver.TokenServerToken;
 
 import android.accounts.Account;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.Builder;
 
 public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
   private static final String LOG_TAG = FxAccountSyncAdapter.class.getSimpleName();
+
+  public static final int NOTIFICATION_ID = LOG_TAG.hashCode();
 
   protected final ExecutorService executor;
 
@@ -209,6 +219,29 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     });
   }
 
+  protected void showNotification(State state) {
+    NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
+    Action action = state.getNeededAction();
+    if (action == Action.None) {
+      Logger.info(LOG_TAG, "State " + state.getStateLabel() + " needs no action; cancelling any existing notification.");
+      notificationManager.cancel(NOTIFICATION_ID);
+      return;
+    }
+    Logger.info(LOG_TAG, "State " + state.getStateLabel() + " needs action; offering notification linking to status activity.");
+
+    Intent notificationIntent = new Intent(getContext(), FxAccountStatusActivity.class);
+    PendingIntent pendingIntent = PendingIntent.getActivity(getContext(), 0, notificationIntent, 0);
+
+    Builder builder = new NotificationCompat.Builder(getContext());
+    builder.setContentTitle(getContext().getResources().getString(R.string.fxaccount_sync_could_not_sign_in))
+    .setContentText(state.email)
+    .setSmallIcon(R.drawable.ic_status_logo)
+    .setAutoCancel(true)
+    .setContentIntent(pendingIntent);
+    notificationManager.notify(NOTIFICATION_ID, builder.build());
+  }
+
   /**
    * A trivial Sync implementation that does not cache client keys,
    * certificates, or tokens.
@@ -289,7 +322,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
           try {
             if (state.getStateLabel() != StateLabel.Married) {
-              callback.handleError(null, new RuntimeException("Cannot sync from state: " + state));
+              showNotification(state);
+              callback.handleAborted(null, "Cannot sync from state: " + state);
               return;
             }
 
