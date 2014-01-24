@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.mozilla.gecko.background.testhelpers.DefaultGlobalSessionCallback;
 import org.mozilla.gecko.background.testhelpers.MockPrefsGlobalSession;
 import org.mozilla.gecko.background.testhelpers.MockServerSyncStage;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.CommandProcessor;
 import org.mozilla.gecko.sync.EngineSettings;
@@ -22,12 +23,16 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.MetaGlobalException;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+
+import android.content.SharedPreferences;
 
 /**
  * Test that reset commands properly invoke the reset methods on the correct stage.
@@ -74,11 +79,10 @@ public class TestResetCommands {
     final HashMap<Stage, GlobalSyncStage> stagesToRun = new HashMap<Stage, GlobalSyncStage>();
 
     // Side-effect: modifies global command processor.
-    final GlobalSession session = new MockPrefsGlobalSession(
-        TEST_USERNAME, TEST_PASSWORD, null,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
-        callback, null, null, null) {
-
+    final SharedPreferences prefs = new MockSharedPreferences();
+    final SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), prefs);
+    config.syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
+    final GlobalSession session = new MockPrefsGlobalSession(config, callback, null, null, null) {
       @Override
       public boolean engineIsEnabled(String engineName,
                                      EngineSettings engineSettings)

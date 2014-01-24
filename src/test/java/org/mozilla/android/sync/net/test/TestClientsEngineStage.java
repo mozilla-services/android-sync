@@ -30,6 +30,7 @@ import org.mozilla.gecko.background.testhelpers.CommandHelpers;
 import org.mozilla.gecko.background.testhelpers.MockClientsDataDelegate;
 import org.mozilla.gecko.background.testhelpers.MockClientsDatabaseAccessor;
 import org.mozilla.gecko.background.testhelpers.MockGlobalSession;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CommandProcessor.Command;
@@ -37,6 +38,7 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -44,6 +46,7 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 import org.mozilla.gecko.sync.repositories.NullCursorException;
 import org.mozilla.gecko.sync.repositories.android.ClientsDatabaseAccessor;
@@ -65,8 +68,9 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   private static MockGlobalSessionCallback callback;
   private static GlobalSession initializeSession() throws SyncConfigurationException, IllegalArgumentException, NonObjectJSONException, IOException, ParseException, CryptoException, URISyntaxException {
     callback = new MockGlobalSessionCallback(TEST_SERVER);
-
-    GlobalSession session = new MockClientsGlobalSession(USERNAME, PASSWORD, new KeyBundle(USERNAME, SYNC_KEY), callback);
+    SyncConfiguration config = new SyncConfiguration(USERNAME, new BasicAuthHeaderProvider(USERNAME, PASSWORD), new MockSharedPreferences());
+    config.syncKeyBundle = new KeyBundle(USERNAME, SYNC_KEY);
+    GlobalSession session = new MockClientsGlobalSession(config, callback);
     session.config.setClusterURL(new URI(TEST_SERVER));
     session.config.setCollectionKeys(CollectionKeys.generateCollectionKeys());
     return session;
@@ -167,16 +171,14 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
   public static class MockClientsGlobalSession extends MockGlobalSession {
     private ClientsDataDelegate clientsDataDelegate = new MockClientsDataDelegate();
   
-    public MockClientsGlobalSession(String username,
-                                    String password,
-                                    KeyBundle syncKeyBundle,
+    public MockClientsGlobalSession(SyncConfiguration config,
                                     GlobalSessionCallback callback)
         throws SyncConfigurationException,
                IllegalArgumentException,
                IOException,
                ParseException,
                NonObjectJSONException {
-      super(username, password, syncKeyBundle, callback);
+      super(config, callback);
     }
   
     @Override

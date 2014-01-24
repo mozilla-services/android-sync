@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.gecko.background.testhelpers.MockPrefsGlobalSession;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
@@ -27,10 +28,14 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.MetaGlobal;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
+
+import android.content.SharedPreferences;
 
 @Category(IntegrationTestCategory.class)
 public class TestFreshStart {
@@ -52,11 +57,12 @@ public class TestFreshStart {
 
     keysToUpload = CollectionKeys.generateCollectionKeys();
     keysToUpload.setKeyBundleForCollection("addons", KeyBundle.withRandomKeys());
-    syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
 
     callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
-    session = new MockPrefsGlobalSession(TEST_USERNAME, TEST_PASSWORD, null,
-        syncKeyBundle, callback, null, null, null) {
+    final SharedPreferences prefs = new MockSharedPreferences();
+    final SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), prefs);
+    config.syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
+    final GlobalSession session = new MockPrefsGlobalSession(config, callback, null, null, null) {
       @Override
       public CollectionKeys generateNewCryptoKeys() {
         return keysToUpload;
