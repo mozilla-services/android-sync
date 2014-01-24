@@ -52,6 +52,38 @@ public class SyncConfiguration {
     protected String infoBaseURL() {
       return clusterURL + GlobalSession.API_VERSION + "/" + username + "/info/";
     }
+
+    protected void setAndPersistClusterURL(URI u, SharedPreferences prefs) {
+      boolean shouldPersist = (prefs != null) && (clusterURL == null);
+
+      Logger.trace(LOG_TAG, "Setting cluster URL to " + u.toASCIIString() +
+                            (shouldPersist ? ". Persisting." : ". Not persisting."));
+      clusterURL = u;
+      if (shouldPersist) {
+        Editor edit = prefs.edit();
+        edit.putString(PREF_CLUSTER_URL, clusterURL.toASCIIString());
+        edit.commit();
+      }
+    }
+
+    protected void setClusterURL(URI u, SharedPreferences prefs) {
+      if (u == null) {
+        Logger.warn(LOG_TAG, "Refusing to set cluster URL to null.");
+        return;
+      }
+      URI uri = u.normalize();
+      if (uri.toASCIIString().endsWith("/")) {
+        setAndPersistClusterURL(u, prefs);
+        return;
+      }
+      setAndPersistClusterURL(uri.resolve("/"), prefs);
+      Logger.trace(LOG_TAG, "Set cluster URL to " + clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
+    }
+
+    @Override
+    public void setClusterURL(URI u) {
+      setClusterURL(u, this.getPrefs());
+    }
   }
 
   public class EditorBranch implements Editor {
@@ -547,35 +579,8 @@ public class SyncConfiguration {
     return clusterURL.toASCIIString();
   }
 
-  protected void setAndPersistClusterURL(URI u, SharedPreferences prefs) {
-    boolean shouldPersist = (prefs != null) && (clusterURL == null);
-
-    Logger.trace(LOG_TAG, "Setting cluster URL to " + u.toASCIIString() +
-                          (shouldPersist ? ". Persisting." : ". Not persisting."));
-    clusterURL = u;
-    if (shouldPersist) {
-      Editor edit = prefs.edit();
-      edit.putString(PREF_CLUSTER_URL, clusterURL.toASCIIString());
-      edit.commit();
-    }
-  }
-
-  protected void setClusterURL(URI u, SharedPreferences prefs) {
-    if (u == null) {
-      Logger.warn(LOG_TAG, "Refusing to set cluster URL to null.");
-      return;
-    }
-    URI uri = u.normalize();
-    if (uri.toASCIIString().endsWith("/")) {
-      setAndPersistClusterURL(u, prefs);
-      return;
-    }
-    setAndPersistClusterURL(uri.resolve("/"), prefs);
-    Logger.trace(LOG_TAG, "Set cluster URL to " + clusterURL.toASCIIString() + ", given input " + u.toASCIIString());
-  }
-
   public void setClusterURL(URI u) {
-    setClusterURL(u, this.getPrefs());
+    this.clusterURL = u;
   }
 
   /**
