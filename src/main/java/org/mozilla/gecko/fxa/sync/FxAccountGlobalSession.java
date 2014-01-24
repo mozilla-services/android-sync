@@ -34,9 +34,9 @@ public class FxAccountGlobalSession extends GlobalSession {
       ParseException, NonObjectJSONException, URISyntaxException {
     super(config, callback, context, extras, clientsDelegate, null);
     API_VERSION = "1.5";
-    URI uri = new URI(storageEndpoint);
-    this.config.clusterURL = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), "/", null, null);
-    FxAccountConstants.pii(LOG_TAG, "storageEndpoint is " + uri + " and clusterURL is " + config.clusterURL);
+    URI storageURI = new URI(storageEndpoint);
+    this.config.setClusterURL(storageURI);
+    FxAccountConstants.pii(LOG_TAG, "clusterURL is " + config.getClusterURLString());
   }
 
   @Override
