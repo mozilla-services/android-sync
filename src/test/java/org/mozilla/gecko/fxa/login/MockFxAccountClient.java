@@ -95,7 +95,7 @@ public class MockFxAccountClient implements FxAccountClient {
 
   protected <T> void handleFailure(RequestDelegate<T> requestDelegate, int code, int errno, String message) {
     requestDelegate.handleFailure(new FxAccountClientRemoteException(makeHttpResponse(code, message),
-        code, errno, "Bad authorization", message, null));
+        code, errno, "Bad authorization", message, null, new ExtendedJSONObject()));
   }
 
   @Override

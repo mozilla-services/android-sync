@@ -282,8 +282,9 @@ public class FxAccountClient10 {
     String error;
     String message;
     String info;
+    ExtendedJSONObject body;
     try {
-      ExtendedJSONObject body = new SyncStorageResponse(response).jsonObjectBody();
+      body = new SyncStorageResponse(response).jsonObjectBody();
       body.throwIfFieldsMissingOrMisTyped(requiredErrorStringFields, String.class);
       body.throwIfFieldsMissingOrMisTyped(requiredErrorLongFields, Long.class);
       code = body.getLong(JSON_KEY_CODE).intValue();
@@ -294,7 +295,7 @@ public class FxAccountClient10 {
     } catch (Exception e) {
       throw new FxAccountClientMalformedResponseException(response);
     }
-    throw new FxAccountClientRemoteException(response, code, errno, error, message, info);
+    throw new FxAccountClientRemoteException(response, code, errno, error, message, info, body);
   }
 
   public void createAccount(final String email, final byte[] stretchedPWBytes,

@@ -5,6 +5,7 @@
 package org.mozilla.gecko.background.fxa;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
@@ -34,15 +35,20 @@ public class FxAccountClientException extends Exception {
     public final String error;
     public final String message;
     public final String info;
+    public final ExtendedJSONObject body;
 
-    public FxAccountClientRemoteException(HttpResponse response, long httpStatusCode, long apiErrorNumber, String error, String message, String info) {
+    public FxAccountClientRemoteException(HttpResponse response, long httpStatusCode, long apiErrorNumber, String error, String message, String info, ExtendedJSONObject body) {
       super(new HTTPFailureException(new SyncStorageResponse(response)));
+      if (body == null) {
+        throw new IllegalArgumentException("body must not be null");
+      }
       this.response = response;
       this.httpStatusCode = httpStatusCode;
       this.apiErrorNumber = apiErrorNumber;
       this.error = error;
       this.message = message;
       this.info = info;
+      this.body = body;
     }
 
     @Override
@@ -111,7 +117,7 @@ public class FxAccountClientException extends Exception {
     private static final long serialVersionUID = 2209313149952001098L;
 
     public FxAccountClientMalformedResponseException(HttpResponse response) {
-      super(response, 0, FxAccountRemoteError.UNKNOWN_ERROR, "Response malformed", "Response malformed", "Response malformed");
+      super(response, 0, FxAccountRemoteError.UNKNOWN_ERROR, "Response malformed", "Response malformed", "Response malformed", new ExtendedJSONObject());
     }
   }
 }
