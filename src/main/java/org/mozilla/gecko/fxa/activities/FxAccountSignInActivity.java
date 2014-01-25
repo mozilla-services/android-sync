@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
@@ -113,7 +114,7 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
     };
 
     Executor executor = Executors.newSingleThreadExecutor();
-    FxAccountClient20 client = new FxAccountClient20(serverURI, executor);
+    FxAccountClient client = new FxAccountClient20(serverURI, executor);
     try {
       hideRemoteError();
       new FxAccountSignInTask(this, this, email, password, client, delegate).execute();

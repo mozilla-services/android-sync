@@ -158,4 +158,9 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
 
     post(resource, body, delegate);
   }
+
+  @Override
+  public void createAccountAndGetKeys(byte[] emailUTF8, byte[] quickStretchedPW, RequestDelegate<LoginResponse> delegate) {
+    createAccount(emailUTF8, quickStretchedPW, true, false, delegate);
+  }
 }

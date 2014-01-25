@@ -163,4 +163,20 @@ public class MockFxAccountClient implements FxAccountClient {
       requestDelegate.handleError(e);
     }
   }
+
+  @Override
+  public void resendCode(byte[] sessionToken, RequestDelegate<Void> requestDelegate) {
+    String email = sessionTokens.get(Utils.byte2Hex(sessionToken));
+    User user = users.get(email);
+    if (email == null || user == null) {
+      handleFailure(requestDelegate, HttpStatus.SC_UNAUTHORIZED, FxAccountRemoteError.INVALID_AUTHENTICATION_TOKEN, "invalid sessionToken");
+      return;
+    }
+    requestDelegate.handleSuccess(null);
+  }
+
+  @Override
+  public void createAccountAndGetKeys(byte[] emailUTF8, byte[] quickStretchedPW, RequestDelegate<LoginResponse> delegate) {
+    delegate.handleError(new RuntimeException("Not yet implemented"));
+  }
 }
