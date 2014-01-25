@@ -70,7 +70,14 @@ public class FxAccountClient10 {
   protected static final String[] requiredErrorStringFields = { JSON_KEY_ERROR, JSON_KEY_MESSAGE, JSON_KEY_INFO };
   protected static final String[] requiredErrorLongFields = { JSON_KEY_CODE, JSON_KEY_ERRNO };
 
+  /**
+   * The server's URI.
+   * <p>
+   * We assume throughout that this ends with a trailing slash (and guarantee as
+   * much in the constructor).
+   */
   protected final String serverURI;
+
   protected final Executor executor;
 
   public FxAccountClient10(String serverURI, Executor executor) {
@@ -81,6 +88,9 @@ public class FxAccountClient10 {
       throw new IllegalArgumentException("Must provide a non-null executor.");
     }
     this.serverURI = (serverURI.endsWith("/") ? serverURI : serverURI + "/") + VERSION_FRAGMENT;
+    if (!this.serverURI.endsWith("/")) {
+      throw new IllegalArgumentException("Constructed serverURI must end with a trailing slash: " + this.serverURI);
+    }
     this.executor = executor;
   }
 
