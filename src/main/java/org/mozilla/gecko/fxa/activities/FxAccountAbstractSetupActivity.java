@@ -214,7 +214,8 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
         byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(email.getBytes("UTF-8"), password.getBytes("UTF-8"));
         byte[] unwrapkB = FxAccountUtils.generateUnwrapBKey(quickStretchedPW);
         State state = new Engaged(email, result.uid, result.verified, unwrapkB, result.sessionToken, result.keyFetchToken);
-        fxAccount = AndroidFxAccount.addAndroidAccount(getApplicationContext(), email, password,
+        fxAccount = AndroidFxAccount.addAndroidAccount(getApplicationContext(),
+            email,
             profile,
             serverURI,
             tokenServerURI,
