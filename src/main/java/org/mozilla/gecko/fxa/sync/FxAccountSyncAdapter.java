@@ -72,12 +72,16 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     this.executor = Executors.newSingleThreadExecutor();
   }
 
-  protected class SyncDelegate {
+  protected static class SyncDelegate {
+    protected final Context context;
     protected final CountDownLatch latch;
     protected final SyncResult syncResult;
     protected final AndroidFxAccount fxAccount;
 
-    public SyncDelegate(CountDownLatch latch, SyncResult syncResult, AndroidFxAccount fxAccount) {
+    public SyncDelegate(Context context, CountDownLatch latch, SyncResult syncResult, AndroidFxAccount fxAccount) {
+      if (context == null) {
+        throw new IllegalArgumentException("context must not be null");
+      }
       if (latch == null) {
         throw new IllegalArgumentException("latch must not be null");
       }
@@ -87,6 +91,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       if (fxAccount == null) {
         throw new IllegalArgumentException("fxAccount must not be null");
       }
+      this.context = context;
       this.latch = latch;
       this.syncResult = syncResult;
       this.fxAccount = fxAccount;
@@ -138,10 +143,24 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       latch.countDown();
     }
 
-    public void handleCannotSync(State state) {
-      Logger.warn(LOG_TAG, "Cannot sync from state: " + state.getStateLabel());
-      showNotification(state);
-      setSyncResultHardError();
+    /**
+     * When the login machine terminates, we might not be in the
+     * <code>Married</code> state, and therefore we can't sync. This method
+     * messages as much to the user.
+     * <p>
+     * To avoid stopping us syncing altogether, we set a soft error rather than
+     * a hard error. In future, we would like to set a hard error if we are in,
+     * for example, the <code>Separated</code> state, and then have some user
+     * initiated activity mark the Android account as ready to sync again. This
+     * is tricky, though, so we play it safe for now.
+     *
+     * @param finalState
+     *          that login machine ended in.
+     */
+    public void handleCannotSync(State finalState) {
+      Logger.warn(LOG_TAG, "Cannot sync from state: " + finalState.getStateLabel());
+      showNotification(context, finalState);
+      setSyncResultSoftError();
       latch.countDown();
     }
   }
@@ -243,26 +262,31 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     });
   }
 
-  protected void showNotification(State state) {
-    NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+  protected static void showNotification(Context context, State state) {
+    final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-    Action action = state.getNeededAction();
+    final Action action = state.getNeededAction();
     if (action == Action.None) {
       Logger.info(LOG_TAG, "State " + state.getStateLabel() + " needs no action; cancelling any existing notification.");
       notificationManager.cancel(NOTIFICATION_ID);
       return;
     }
-    Logger.info(LOG_TAG, "State " + state.getStateLabel() + " needs action; offering notification linking to status activity.");
 
-    Intent notificationIntent = new Intent(getContext(), FxAccountStatusActivity.class);
-    PendingIntent pendingIntent = PendingIntent.getActivity(getContext(), 0, notificationIntent, 0);
+    final String title = context.getResources().getString(R.string.fxaccount_sync_sign_in_error_notification_title);
+    final String text = context.getResources().getString(R.string.fxaccount_sync_sign_in_error_notification_text, state.email);
+    Logger.info(LOG_TAG, "State " + state.getStateLabel() + " needs action; offering notification with title: " + title);
+    FxAccountConstants.pii(LOG_TAG, "And text: " + text);
 
-    Builder builder = new NotificationCompat.Builder(getContext());
-    builder.setContentTitle(getContext().getResources().getString(R.string.fxaccount_sync_could_not_sign_in))
-    .setContentText(state.email)
-    .setSmallIcon(R.drawable.ic_status_logo)
-    .setAutoCancel(true)
-    .setContentIntent(pendingIntent);
+    final Intent notificationIntent = new Intent(context, FxAccountStatusActivity.class);
+    final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
+
+    final Builder builder = new NotificationCompat.Builder(context);
+    builder
+      .setContentTitle(title)
+      .setContentText(text)
+      .setSmallIcon(R.drawable.ic_status_logo)
+      .setAutoCancel(true)
+      .setContentIntent(pendingIntent);
     notificationManager.notify(NOTIFICATION_ID, builder.build());
   }
 
@@ -290,7 +314,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     final CountDownLatch latch = new CountDownLatch(1);
-    final SyncDelegate syncDelegate = new SyncDelegate(latch, syncResult, fxAccount);
+    final SyncDelegate syncDelegate = new SyncDelegate(getContext(), latch, syncResult, fxAccount);
 
     try {
       State state;
