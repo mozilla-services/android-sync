@@ -160,7 +160,24 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
   }
 
   @Override
-  public void createAccountAndGetKeys(byte[] emailUTF8, byte[] quickStretchedPW, RequestDelegate<LoginResponse> delegate) {
-    createAccount(emailUTF8, quickStretchedPW, true, false, delegate);
+  public void createAccountAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
+    try {
+      byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(emailUTF8);
+      createAccount(emailUTF8, quickStretchedPW, true, false, delegate);
+    } catch (Exception e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
+  }
+
+  @Override
+  public void loginAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
+    try {
+      byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(emailUTF8);
+      loginAndGetKeys(emailUTF8, quickStretchedPW, delegate);
+    } catch (Exception e) {
+      invokeHandleError(delegate, e);
+      return;
+    }
   }
 }

@@ -15,6 +15,8 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
+import org.mozilla.gecko.background.fxa.PasswordStretcher;
+import org.mozilla.gecko.background.fxa.QuickPasswordStretcher;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountCreateAccountTask;
 
@@ -131,9 +133,10 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
   public void createAccount(String email, String password) {
     String serverURI = FxAccountConstants.DEFAULT_IDP_ENDPOINT;
+    PasswordStretcher passwordStretcher = new QuickPasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.
-    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, password, serverURI) {
+    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI) {
       @Override
       public void handleError(Exception e) {
         showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
@@ -149,7 +152,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     FxAccountClient client = new FxAccountClient20(serverURI, executor);
     try {
       hideRemoteError();
-      new FxAccountCreateAccountTask(this, this, email, password, client, delegate).execute();
+      new FxAccountCreateAccountTask(this, this, email, passwordStretcher, client, delegate).execute();
     } catch (Exception e) {
       showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
     }

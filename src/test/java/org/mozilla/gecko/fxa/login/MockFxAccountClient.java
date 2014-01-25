@@ -16,6 +16,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountRemoteError;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.background.fxa.PasswordStretcher;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -110,7 +111,7 @@ public class MockFxAccountClient implements FxAccountClient {
   }
 
   @Override
-  public void loginAndGetKeys(byte[] emailUTF8, byte[] quickStretchedPW, RequestDelegate<LoginResponse> requestDelegate) {
+  public void loginAndGetKeys(byte[] emailUTF8, final PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> requestDelegate) {
     User user;
     try {
       user = users.get(new String(emailUTF8, "UTF-8"));
@@ -119,6 +120,13 @@ public class MockFxAccountClient implements FxAccountClient {
     }
     if (user == null) {
       handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.ATTEMPT_TO_CREATE_AN_ACCOUNT_THAT_ALREADY_EXISTS, "invalid emailUTF8");
+      return;
+    }
+    byte[] quickStretchedPW;
+    try {
+      quickStretchedPW = passwordStretcher.getQuickStretchedPW(emailUTF8);
+    } catch (Exception e) {
+      handleFailure(requestDelegate, HttpStatus.SC_INTERNAL_SERVER_ERROR, 999, "error stretching password");
       return;
     }
     if (user.quickStretchedPW == null || !Arrays.equals(user.quickStretchedPW, quickStretchedPW)) {
@@ -176,7 +184,7 @@ public class MockFxAccountClient implements FxAccountClient {
   }
 
   @Override
-  public void createAccountAndGetKeys(byte[] emailUTF8, byte[] quickStretchedPW, RequestDelegate<LoginResponse> delegate) {
+  public void createAccountAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
     delegate.handleError(new RuntimeException("Not yet implemented"));
   }
 }

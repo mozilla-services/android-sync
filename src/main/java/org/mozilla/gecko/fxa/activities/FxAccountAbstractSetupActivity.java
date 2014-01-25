@@ -12,6 +12,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.background.fxa.PasswordStretcher;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.ProgressDisplay;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
@@ -192,12 +193,12 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
   protected abstract class AddAccountDelegate implements RequestDelegate<LoginResponse> {
     public final String email;
-    public final String password;
+    public final PasswordStretcher passwordStretcher;
     public final String serverURI;
 
-    public AddAccountDelegate(String email, String password, String serverURI) {
+    public AddAccountDelegate(String email, PasswordStretcher passwordStretcher, String serverURI) {
       this.email = email;
-      this.password = password;
+      this.passwordStretcher = passwordStretcher;
       this.serverURI = serverURI;
     }
 
@@ -210,8 +211,9 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       try {
         final String profile = Constants.DEFAULT_PROFILE;
         final String tokenServerURI = FxAccountConstants.DEFAULT_TOKEN_SERVER_URI;
-        // TODO: This is wasteful.  We should be able to thread these through so they don't get recomputed.
-        byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(email.getBytes("UTF-8"), password.getBytes("UTF-8"));
+        // The passwordStretcher should have seen this email address before, so
+        // we shouldn't be calculating the expensive stretch twice.
+        byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(email.getBytes("UTF-8"));
         byte[] unwrapkB = FxAccountUtils.generateUnwrapBKey(quickStretchedPW);
         State state = new Engaged(email, result.uid, result.verified, unwrapkB, result.sessionToken, result.keyFetchToken);
         fxAccount = AndroidFxAccount.addAndroidAccount(getApplicationContext(),
