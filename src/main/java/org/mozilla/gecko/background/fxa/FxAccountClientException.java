@@ -92,6 +92,10 @@ public class FxAccountClientException extends Exception {
       return apiErrorNumber == FxAccountRemoteError.SERVICE_TEMPORARILY_UNAVAILABLE_DUE_TO_HIGH_LOAD;
     }
 
+    public boolean isBadEmailCase() {
+      return apiErrorNumber == FxAccountRemoteError.INCORRECT_EMAIL_CASE;
+    }
+
     public int getErrorMessageStringResource() {
       if (isUpgradeRequired()) {
         return R.string.fxaccount_remote_error_UPGRADE_REQUIRED;

@@ -8,6 +8,9 @@ import java.net.URI;
 import java.util.concurrent.Executor;
 
 import org.json.simple.JSONObject;
+import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -45,16 +48,6 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
     }
   }
 
-  public void login(final byte[] emailUTF8, final byte[] quickStretchedPW,
-      final RequestDelegate<LoginResponse> delegate) {
-    login(emailUTF8, quickStretchedPW, false, delegate);
-  }
-
-  public void loginAndGetKeys(final byte[] emailUTF8, final byte[] quickStretchedPW,
-      final RequestDelegate<LoginResponse> delegate) {
-    login(emailUTF8, quickStretchedPW, true, delegate);
-  }
-
   // Public for testing only; prefer login and loginAndGetKeys (without boolean parameter).
   public void login(final byte[] emailUTF8, final byte[] quickStretchedPW, final boolean getKeys,
       final RequestDelegate<LoginResponse> delegate) {
@@ -73,15 +66,10 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
-          String[] requiredStringFields;
-          if (!getKeys) {
-            requiredStringFields = LOGIN_RESPONSE_REQUIRED_STRING_FIELDS;
-          } else {
-            requiredStringFields = LOGIN_RESPONSE_REQUIRED_STRING_FIELDS_KEYS;
-          }
-          String[] requiredBooleanFields = LOGIN_RESPONSE_REQUIRED_BOOLEAN_FIELDS;
-
+          final String[] requiredStringFields = getKeys ? LOGIN_RESPONSE_REQUIRED_STRING_FIELDS_KEYS : LOGIN_RESPONSE_REQUIRED_STRING_FIELDS;
           body.throwIfFieldsMissingOrMisTyped(requiredStringFields, String.class);
+
+          final String[] requiredBooleanFields = LOGIN_RESPONSE_REQUIRED_BOOLEAN_FIELDS;
           body.throwIfFieldsMissingOrMisTyped(requiredBooleanFields, Boolean.class);
 
           LoginResponse loginResponse;
@@ -124,13 +112,7 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
-          String[] requiredStringFields;
-          if (!getKeys) {
-            requiredStringFields = LOGIN_RESPONSE_REQUIRED_STRING_FIELDS;
-          } else {
-            requiredStringFields = LOGIN_RESPONSE_REQUIRED_STRING_FIELDS_KEYS;
-          }
-
+          final String[] requiredStringFields = getKeys ? LOGIN_RESPONSE_REQUIRED_STRING_FIELDS_KEYS : LOGIN_RESPONSE_REQUIRED_STRING_FIELDS;
           body.throwIfFieldsMissingOrMisTyped(requiredStringFields, String.class);
 
           LoginResponse loginResponse;
@@ -172,12 +154,77 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
 
   @Override
   public void loginAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
+    login(emailUTF8, passwordStretcher, true, delegate);
+  }
+
+  /**
+   * We want users to be able to enter their email address case-insensitively.
+   * We stretch the password locally using the email address as a salt, to make
+   * dictionary attacks more expensive. This means that a client with a
+   * case-differing email address is unable to produce the correct
+   * authorization, even though it knows the password. In this case, the server
+   * returns the email that the account was created with, so that the client can
+   * re-stretch the password locally with the correct email salt. This version
+   * of <code>login</code> retries at most one time with a server provided email
+   * address.
+   * <p>
+   * Be aware that consumers will not see the initial error response from the
+   * server providing an alternate email (if there is one).
+   *
+   * @param emailUTF8
+   *          user entered email address.
+   * @param stretcher
+   *          delegate to stretch and re-stretch password.
+   * @param getKeys
+   *          true if a <code>keyFetchToken</code> should be returned (in
+   *          addition to the standard <code>sessionToken</code>).
+   * @param delegate
+   *          to invoke callbacks.
+   */
+  public void login(final byte[] emailUTF8, final PasswordStretcher stretcher, final boolean getKeys,
+      final RequestDelegate<LoginResponse> delegate) {
+    byte[] passwordUTF8;
     try {
-      byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(emailUTF8);
-      loginAndGetKeys(emailUTF8, quickStretchedPW, delegate);
+      FxAccountConstants.pii(LOG_TAG, "Trying user provided email: '" + new String(emailUTF8, "UTF-8") + "'" );
+      passwordUTF8 = stretcher.getQuickStretchedPW(emailUTF8);
     } catch (Exception e) {
-      invokeHandleError(delegate, e);
+      delegate.handleError(e);
       return;
     }
+
+    this.login(emailUTF8, passwordUTF8, getKeys, new RequestDelegate<LoginResponse>() {
+      @Override
+      public void handleSuccess(LoginResponse result) {
+        delegate.handleSuccess(result);
+      }
+
+      @Override
+      public void handleError(Exception e) {
+        delegate.handleError(e);
+      }
+
+      @Override
+      public void handleFailure(FxAccountClientRemoteException e) {
+        String alternateEmail = e.body.getString(JSON_KEY_EMAIL);
+        if (!e.isBadEmailCase() || alternateEmail == null) {
+          delegate.handleFailure(e);
+          return;
+        };
+
+        Logger.info(LOG_TAG, "Server returned alternate email; retrying login with provided email.");
+        FxAccountConstants.pii(LOG_TAG, "Trying server provided email: '" + alternateEmail + "'" );
+
+        try {
+          // Nota bene: this is not recursive, since we call the fixed password
+          // signature here, which invokes a non-retrying version.
+          byte[] alternateEmailUTF8 = alternateEmail.getBytes("UTF-8");
+          byte[] quickStretchedPW = stretcher.getQuickStretchedPW(alternateEmailUTF8);
+          login(alternateEmailUTF8, quickStretchedPW, getKeys, delegate);
+        } catch (Exception innerException) {
+          delegate.handleError(innerException);
+          return;
+        }
+      }
+    });
   }
 }
