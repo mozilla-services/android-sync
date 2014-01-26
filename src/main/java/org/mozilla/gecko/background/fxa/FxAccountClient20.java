@@ -30,17 +30,12 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
    * Thin container for login response.
    */
   public static class LoginResponse {
-    public final String serverURI;
     public final String uid;
     public final byte[] sessionToken;
     public final boolean verified;
     public final byte[] keyFetchToken;
 
-    public LoginResponse(String serverURI, String uid, boolean verified, byte[] sessionToken, byte[] keyFetchToken) {
-      // This is pretty awful.
-      this.serverURI = serverURI.endsWith(VERSION_FRAGMENT) ?
-          serverURI.substring(0, serverURI.length() - VERSION_FRAGMENT.length()) :
-          serverURI;
+    public LoginResponse(String uid, boolean verified, byte[] sessionToken, byte[] keyFetchToken) {
       this.uid = uid;
       this.verified = verified;
       this.sessionToken = sessionToken;
@@ -80,7 +75,7 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           if (getKeys) {
             keyFetchToken = Utils.hex2Byte(body.getString(JSON_KEY_KEYFETCHTOKEN));
           }
-          loginResponse = new LoginResponse(serverURI, uid, verified, sessionToken, keyFetchToken);
+          loginResponse = new LoginResponse(uid, verified, sessionToken, keyFetchToken);
 
           delegate.handleSuccess(loginResponse);
           return;
@@ -127,7 +122,7 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           if (getKeys) {
             keyFetchToken = Utils.hex2Byte(body.getString(JSON_KEY_KEYFETCHTOKEN));
           }
-          loginResponse = new LoginResponse(serverURI, uid, verified, sessionToken, keyFetchToken);
+          loginResponse = new LoginResponse(uid, verified, sessionToken, keyFetchToken);
 
           delegate.handleSuccess(loginResponse);
           return;
