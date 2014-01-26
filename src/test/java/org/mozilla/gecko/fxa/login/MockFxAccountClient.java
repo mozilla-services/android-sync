@@ -16,6 +16,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountRemoteError;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.background.fxa.PasswordStretcher;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -62,7 +63,7 @@ public class MockFxAccountClient implements FxAccountClient {
     if (keyFetchToken != null) {
       keyFetchTokens.put(Utils.byte2Hex(keyFetchToken), user.email);
     }
-    return new LoginResponse(serverURI, user.uid, user.verified, sessionToken, keyFetchToken);
+    return new LoginResponse(user.email, user.uid, user.verified, sessionToken, keyFetchToken);
   }
 
   public void addUser(String email, byte[] quickStretchedPW, boolean verified, byte[] sessionToken, byte[] keyFetchToken) {
@@ -95,7 +96,7 @@ public class MockFxAccountClient implements FxAccountClient {
 
   protected <T> void handleFailure(RequestDelegate<T> requestDelegate, int code, int errno, String message) {
     requestDelegate.handleFailure(new FxAccountClientRemoteException(makeHttpResponse(code, message),
-        code, errno, "Bad authorization", message, null));
+        code, errno, "Bad authorization", message, null, new ExtendedJSONObject()));
   }
 
   @Override
@@ -110,7 +111,7 @@ public class MockFxAccountClient implements FxAccountClient {
   }
 
   @Override
-  public void loginAndGetKeys(byte[] emailUTF8, byte[] quickStretchedPW, RequestDelegate<LoginResponse> requestDelegate) {
+  public void loginAndGetKeys(byte[] emailUTF8, final PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> requestDelegate) {
     User user;
     try {
       user = users.get(new String(emailUTF8, "UTF-8"));
@@ -119,6 +120,13 @@ public class MockFxAccountClient implements FxAccountClient {
     }
     if (user == null) {
       handleFailure(requestDelegate, HttpStatus.SC_BAD_REQUEST, FxAccountRemoteError.ATTEMPT_TO_CREATE_AN_ACCOUNT_THAT_ALREADY_EXISTS, "invalid emailUTF8");
+      return;
+    }
+    byte[] quickStretchedPW;
+    try {
+      quickStretchedPW = passwordStretcher.getQuickStretchedPW(emailUTF8);
+    } catch (Exception e) {
+      handleFailure(requestDelegate, HttpStatus.SC_INTERNAL_SERVER_ERROR, 999, "error stretching password");
       return;
     }
     if (user.quickStretchedPW == null || !Arrays.equals(user.quickStretchedPW, quickStretchedPW)) {
@@ -162,5 +170,21 @@ public class MockFxAccountClient implements FxAccountClient {
     } catch (Exception e) {
       requestDelegate.handleError(e);
     }
+  }
+
+  @Override
+  public void resendCode(byte[] sessionToken, RequestDelegate<Void> requestDelegate) {
+    String email = sessionTokens.get(Utils.byte2Hex(sessionToken));
+    User user = users.get(email);
+    if (email == null || user == null) {
+      handleFailure(requestDelegate, HttpStatus.SC_UNAUTHORIZED, FxAccountRemoteError.INVALID_AUTHENTICATION_TOKEN, "invalid sessionToken");
+      return;
+    }
+    requestDelegate.handleSuccess(null);
+  }
+
+  @Override
+  public void createAccountAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
+    delegate.handleError(new RuntimeException("Not yet implemented"));
   }
 }
