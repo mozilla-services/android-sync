@@ -22,7 +22,6 @@ import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.fxa.PasswordStretcher;
 import org.mozilla.gecko.background.fxa.QuickPasswordStretcher;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
-import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -399,8 +398,10 @@ public class TestLiveFxAccountClient20 {
 
   @Test
   public void testResendCode() throws Throwable {
-    client = new FxAccountClient20(FxAccountConstants.DEFAULT_IDP_ENDPOINT, Executors.newSingleThreadExecutor());
-    final LoginResponse response = login("testtestz@mockmyid.com", "testtestz", false);
+    long now = System.currentTimeMillis();
+    final LoginResponse response = createAccount("" + now + "@example.org", "" + now + "password", false, VerificationState.PREVERIFIED);
+    Assert.assertNotNull(response.uid);
+    Assert.assertNotNull(response.sessionToken);
 
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
