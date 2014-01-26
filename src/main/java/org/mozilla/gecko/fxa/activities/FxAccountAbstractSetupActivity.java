@@ -211,9 +211,15 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       try {
         final String profile = Constants.DEFAULT_PROFILE;
         final String tokenServerURI = FxAccountConstants.DEFAULT_TOKEN_SERVER_URI;
+        // It is crucial that we use the email address provided by the server
+        // (rather than whatever the user entered), because the user's keys are
+        // wrapped and salted with the initial email they provided to
+        // /create/account. Of course, we want to pass through what the user
+        // entered locally as much as possible, so we create the Android account
+        // with their entered email address, etc.
         // The passwordStretcher should have seen this email address before, so
         // we shouldn't be calculating the expensive stretch twice.
-        byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(email.getBytes("UTF-8"));
+        byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(result.remoteEmail.getBytes("UTF-8"));
         byte[] unwrapkB = FxAccountUtils.generateUnwrapBKey(quickStretchedPW);
         State state = new Engaged(email, result.uid, result.verified, unwrapkB, result.sessionToken, result.keyFetchToken);
         fxAccount = AndroidFxAccount.addAndroidAccount(getApplicationContext(),

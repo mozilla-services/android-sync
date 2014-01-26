@@ -142,7 +142,12 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
 
       byte[] unwrapkB;
       try {
-        byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(email.getBytes("UTF-8"));
+        // It is crucial that we use the email address provided by the server
+        // (rather than whatever the user entered), because the user's keys are
+        // wrapped and salted with the initial email they provided to
+        // /create/account. Of course, we want to pass through what the user
+        // entered locally as much as possible.
+        byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(result.remoteEmail.getBytes("UTF-8"));
         unwrapkB = FxAccountUtils.generateUnwrapBKey(quickStretchedPW);
       } catch (Exception e) {
         this.handleError(e);
