@@ -143,13 +143,6 @@ public class TestFxAccountLoginStateMachine {
   }
 
   @Test
-  public void testPromised() throws Exception {
-    client.addUser(TEST_EMAIL, TEST_QUICK_STRETCHED_PW, true, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN);
-    Trace trace = trace(new Promised(TEST_EMAIL, "uid", true, TEST_UNWRAPKB, TEST_QUICK_STRETCHED_PW), StateLabel.Married);
-    trace.assertEquals("[Promised, >LogMessage('loginAndGetKeys succeeded'), Engaged, >LogMessage('keys succeeded'), Cohabiting, >LogMessage('sign succeeded'), Married]");
-  }
-
-  @Test
   public void testEnagedUnverified() throws Exception {
     client.addUser(TEST_EMAIL, TEST_QUICK_STRETCHED_PW, false, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN);
     Trace trace = trace(new Engaged(TEST_EMAIL, "uid", true, TEST_UNWRAPKB, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN), StateLabel.Married);
