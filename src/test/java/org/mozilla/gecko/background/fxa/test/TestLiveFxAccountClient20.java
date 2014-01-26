@@ -451,5 +451,8 @@ public class TestLiveFxAccountClient20 {
     // provided email.
     LoginResponse login = login(goodCase, new QuickPasswordStretcher(TEST_PASSWORD), false);
     Assert.assertEquals(createResponse.uid, login.uid);
+    // Observe that the remote email is not the email address we provided.
+    Assert.assertEquals(createResponse.remoteEmail, login.remoteEmail);
+    Assert.assertFalse(goodCase.equals(login.remoteEmail));
   }
 }

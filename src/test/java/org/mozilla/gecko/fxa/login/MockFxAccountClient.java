@@ -63,7 +63,7 @@ public class MockFxAccountClient implements FxAccountClient {
     if (keyFetchToken != null) {
       keyFetchTokens.put(Utils.byte2Hex(keyFetchToken), user.email);
     }
-    return new LoginResponse(user.uid, user.verified, sessionToken, keyFetchToken);
+    return new LoginResponse(user.email, user.uid, user.verified, sessionToken, keyFetchToken);
   }
 
   public void addUser(String email, byte[] quickStretchedPW, boolean verified, byte[] sessionToken, byte[] keyFetchToken) {

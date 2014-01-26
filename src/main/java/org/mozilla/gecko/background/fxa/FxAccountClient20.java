@@ -28,14 +28,20 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
 
   /**
    * Thin container for login response.
+   * <p>
+   * The <code>remoteEmail</code> field is the email address as normalized by the
+   * server, and is <b>not necessarily</b> the email address delivered to the
+   * <code>login</code> or <code>create</code> call.
    */
   public static class LoginResponse {
+    public final String remoteEmail;
     public final String uid;
     public final byte[] sessionToken;
     public final boolean verified;
     public final byte[] keyFetchToken;
 
-    public LoginResponse(String uid, boolean verified, byte[] sessionToken, byte[] keyFetchToken) {
+    public LoginResponse(String remoteEmail, String uid, boolean verified, byte[] sessionToken, byte[] keyFetchToken) {
+      this.remoteEmail = remoteEmail;
       this.uid = uid;
       this.verified = verified;
       this.sessionToken = sessionToken;
@@ -67,7 +73,6 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           final String[] requiredBooleanFields = LOGIN_RESPONSE_REQUIRED_BOOLEAN_FIELDS;
           body.throwIfFieldsMissingOrMisTyped(requiredBooleanFields, Boolean.class);
 
-          LoginResponse loginResponse;
           String uid = body.getString(JSON_KEY_UID);
           boolean verified = body.getBoolean(JSON_KEY_VERIFIED);
           byte[] sessionToken = Utils.hex2Byte(body.getString(JSON_KEY_SESSIONTOKEN));
@@ -75,7 +80,7 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           if (getKeys) {
             keyFetchToken = Utils.hex2Byte(body.getString(JSON_KEY_KEYFETCHTOKEN));
           }
-          loginResponse = new LoginResponse(uid, verified, sessionToken, keyFetchToken);
+          LoginResponse loginResponse = new LoginResponse(new String(emailUTF8, "UTF-8"), uid, verified, sessionToken, keyFetchToken);
 
           delegate.handleSuccess(loginResponse);
           return;
@@ -110,7 +115,6 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           final String[] requiredStringFields = getKeys ? LOGIN_RESPONSE_REQUIRED_STRING_FIELDS_KEYS : LOGIN_RESPONSE_REQUIRED_STRING_FIELDS;
           body.throwIfFieldsMissingOrMisTyped(requiredStringFields, String.class);
 
-          LoginResponse loginResponse;
           String uid = body.getString(JSON_KEY_UID);
           boolean verified = false; // In production, we're definitely not verified immediately upon creation.
           Boolean tempVerified = body.getBoolean(JSON_KEY_VERIFIED);
@@ -122,7 +126,7 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           if (getKeys) {
             keyFetchToken = Utils.hex2Byte(body.getString(JSON_KEY_KEYFETCHTOKEN));
           }
-          loginResponse = new LoginResponse(uid, verified, sessionToken, keyFetchToken);
+          LoginResponse loginResponse = new LoginResponse(new String(emailUTF8, "UTF-8"), uid, verified, sessionToken, keyFetchToken);
 
           delegate.handleSuccess(loginResponse);
           return;
@@ -178,16 +182,16 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
    */
   public void login(final byte[] emailUTF8, final PasswordStretcher stretcher, final boolean getKeys,
       final RequestDelegate<LoginResponse> delegate) {
-    byte[] passwordUTF8;
+    byte[] quickStretchedPW;
     try {
       FxAccountConstants.pii(LOG_TAG, "Trying user provided email: '" + new String(emailUTF8, "UTF-8") + "'" );
-      passwordUTF8 = stretcher.getQuickStretchedPW(emailUTF8);
+      quickStretchedPW = stretcher.getQuickStretchedPW(emailUTF8);
     } catch (Exception e) {
       delegate.handleError(e);
       return;
     }
 
-    this.login(emailUTF8, passwordUTF8, getKeys, new RequestDelegate<LoginResponse>() {
+    this.login(emailUTF8, quickStretchedPW, getKeys, new RequestDelegate<LoginResponse>() {
       @Override
       public void handleSuccess(LoginResponse result) {
         delegate.handleSuccess(result);
@@ -213,8 +217,8 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           // Nota bene: this is not recursive, since we call the fixed password
           // signature here, which invokes a non-retrying version.
           byte[] alternateEmailUTF8 = alternateEmail.getBytes("UTF-8");
-          byte[] quickStretchedPW = stretcher.getQuickStretchedPW(alternateEmailUTF8);
-          login(alternateEmailUTF8, quickStretchedPW, getKeys, delegate);
+          byte[] alternateQuickStretchedPW = stretcher.getQuickStretchedPW(alternateEmailUTF8);
+          login(alternateEmailUTF8, alternateQuickStretchedPW, getKeys, delegate);
         } catch (Exception innerException) {
           delegate.handleError(innerException);
           return;
