@@ -12,8 +12,10 @@ import static org.junit.Assert.assertTrue;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 
 import org.junit.Before;
@@ -147,8 +149,14 @@ public class TestFreshStart {
     }));
   }
 
+  /**
+   * This is the flow that happens on a fresh start when we've already been
+   * syncing. This is the common case in Sync 1.1: we've been node re-allocated
+   * to an empty storage server. We have enabled engines already, and we need to
+   * re-institute them on the fresh server.
+   */
   @Test
-  public void testLiveFreshStart() throws Exception {
+  public void testLiveFreshStartWithEnabledEngineNames() throws Exception {
     session.config.enabledEngineNames = new HashSet<String>();
     session.config.enabledEngineNames.add("bookmarks");
     session.config.enabledEngineNames.add("clients");
@@ -188,5 +196,79 @@ public class TestFreshStart {
     assertTrue(keys.equals(keysToUpload));
     assertTrue(keys.keyBundleForCollectionIsNotDefault("addons"));
     assertFalse(keys.keyBundleForCollectionIsNotDefault("bookmarks"));
+  }
+
+  /**
+   * This is the flow that happens on a fresh start when we've never synced
+   * before, and the user has not made datatype elections before our first sync.
+   * This is the most common initial case in Sync 1.1 + Firefox Accounts: the
+   * user elected not to configure their datatypes and now we're coming to an
+   * empty storage server, and we need to institute the default engine selection
+   * (which is all known engines) on the fresh server.
+   */
+  @Test
+  public void testLiveFreshStartWithoutUserSelectedEngines() throws Exception {
+    session.config.enabledEngineNames = null;
+    session.config.userSelectedEngines = null;
+
+    doFreshStart();
+
+    // Verify that meta and crypto are the only entries in info/collections.
+    ExtendedJSONObject o = TestBasicFetch.realLiveFetch(authHeaderProvider, session.config.infoCollectionsURL()).jsonObject();
+    InfoCollections infoCollections = new InfoCollections(o);
+    assertNotNull(infoCollections.getTimestamp("meta"));
+    assertNotNull(infoCollections.getTimestamp("crypto"));
+    assertEquals(2, o.object.entrySet().size());
+
+    // Verify that meta/global looks okay.
+    o = TestBasicFetch.realLiveFetch(authHeaderProvider, session.config.metaURL()).jsonObject();
+    assertNotNull(o);
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(o));
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    assertEquals(SyncConfiguration.validEngineNames(), mg.getEnabledEngineNames());
+    assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.PASSWORDS_ENGINE_VERSION, mg.getEngines().getObject("passwords").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.TABS_ENGINE_VERSION, mg.getEngines().getObject("tabs").getIntegerSafely("version").intValue());
+  }
+
+  /**
+   * This is the flow that happens on a fresh start when we've never synced
+   * before, and the user has made datatype elections (the user has selected
+   * engines) before our first sync. This is the initial case in Sync 1.1 +
+   * Firefox Accounts: the user elected to configure their datatypes, we've
+   * prompted for datatype elections, and now we're coming to an empty storage
+   * server, and we need to institute the user's selection on the fresh server.
+   */
+  @Test
+  public void testLiveFreshStartWithUserSelectedEngines() throws Exception {
+    session.config.enabledEngineNames = null;
+    session.config.userSelectedEngines = new HashMap<String, Boolean>();
+    session.config.userSelectedEngines.put("bookmarks", true);
+    session.config.userSelectedEngines.put("history", false);
+
+    doFreshStart();
+
+    // Verify that meta and crypto are the only entries in info/collections.
+    ExtendedJSONObject o = TestBasicFetch.realLiveFetch(authHeaderProvider, session.config.infoCollectionsURL()).jsonObject();
+    InfoCollections infoCollections = new InfoCollections(o);
+    assertNotNull(infoCollections.getTimestamp("meta"));
+    assertNotNull(infoCollections.getTimestamp("crypto"));
+    assertEquals(2, o.object.entrySet().size());
+
+    // Verify that meta/global looks okay.
+    o = TestBasicFetch.realLiveFetch(authHeaderProvider, session.config.metaURL()).jsonObject();
+    assertNotNull(o);
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(o));
+    assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
+    Set<String> validEngineNames = SyncConfiguration.validEngineNames();
+    validEngineNames.remove("history");
+    assertEquals(validEngineNames, mg.getEnabledEngineNames());
+    assertEquals(VersionConstants.BOOKMARKS_ENGINE_VERSION, mg.getEngines().getObject("bookmarks").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.CLIENTS_ENGINE_VERSION, mg.getEngines().getObject("clients").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.PASSWORDS_ENGINE_VERSION, mg.getEngines().getObject("passwords").getIntegerSafely("version").intValue());
+    assertEquals(VersionConstants.TABS_ENGINE_VERSION, mg.getEngines().getObject("tabs").getIntegerSafely("version").intValue());
   }
 }
