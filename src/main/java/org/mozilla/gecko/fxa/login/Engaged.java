@@ -80,4 +80,8 @@ public class Engaged extends State {
     }
     return Action.None;
   }
+
+  public byte[] getSessionToken() {
+    return sessionToken;
+  }
 }

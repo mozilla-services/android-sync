@@ -6,7 +6,11 @@ package org.mozilla.gecko.fxa.activities;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
+import org.mozilla.gecko.fxa.login.State;
 
+import android.accounts.Account;
 import android.os.Bundle;
 import android.widget.TextView;
 
@@ -15,6 +19,8 @@ import android.widget.TextView;
  */
 public class FxAccountVerifiedAccountActivity extends FxAccountAbstractActivity {
   private static final String LOG_TAG = FxAccountVerifiedAccountActivity.class.getSimpleName();
+
+  protected AndroidFxAccount fxAccount;
 
   protected TextView emailText;
 
@@ -33,8 +39,32 @@ public class FxAccountVerifiedAccountActivity extends FxAccountAbstractActivity 
     setContentView(R.layout.fxaccount_account_verified);
 
     emailText = (TextView) ensureFindViewById(null, R.id.email, "email text");
-    if (getIntent() != null && getIntent().getExtras() != null) {
-      emailText.setText(getIntent().getStringExtra("email"));
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume();
+    Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
+    if (accounts.length < 1 || accounts[0] == null) {
+      Logger.warn(LOG_TAG, "No Android accounts.");
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
     }
+    this.fxAccount = new AndroidFxAccount(this, accounts[0]);
+    if (fxAccount == null) {
+      Logger.warn(LOG_TAG, "Could not get Firefox Account from Android account.");
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
+    State state = fxAccount.getState();
+    if (!state.verified) {
+      Logger.warn(LOG_TAG, "Firefox Account is not verified; not displaying verified account activity.");
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
+    emailText.setText(fxAccount.getEmail());
   }
 }
