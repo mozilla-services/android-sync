@@ -15,7 +15,6 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
@@ -27,31 +26,13 @@ import android.widget.Toast;
  * Activity which displays account created successfully screen to the user, and
  * starts them on the email verification path.
  */
-public class FxAccountConfirmAccountActivity extends Activity implements OnClickListener {
-  protected static final String LOG_TAG = FxAccountConfirmAccountActivity.class.getSimpleName();
+public class FxAccountConfirmAccountActivity extends FxAccountAbstractActivity implements OnClickListener {
+  private static final String LOG_TAG = FxAccountConfirmAccountActivity.class.getSimpleName();
 
   protected byte[] sessionToken;
 
-  /**
-   * Helper to find view or error if it is missing.
-   *
-   * @param id of view to find.
-   * @param description to print in error.
-   * @return non-null <code>View</code> instance.
-   */
-  public View ensureFindViewById(View v, int id, String description) {
-    View view;
-    if (v != null) {
-      view = v.findViewById(id);
-    } else {
-      view = findViewById(id);
-    }
-    if (view == null) {
-      String message = "Could not find view " + description + ".";
-      Logger.error(LOG_TAG, message);
-      throw new RuntimeException(message);
-    }
-    return view;
+  public FxAccountConfirmAccountActivity() {
+    super(CANNOT_RESUME_WHEN_NO_ACCOUNTS_EXIST);
   }
 
   /**
