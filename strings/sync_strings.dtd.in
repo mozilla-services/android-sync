@@ -131,17 +131,12 @@
 <!ENTITY fxaccount.sign.in 'Sign in'>
 <!ENTITY fxaccount.create.account 'Create an account'>
 
-<!ENTITY fxaccount.link.old.firefox 'https://support.mozilla.org/kb/use-sync-with-an-older-version-of-firefox'>
-<!ENTITY fxaccount.old.firefox 'Using &syncBrand.shortName.label; with an older version of &brandShortName;?'>
-
 <!ENTITY fxaccount.when.were.you.born 'When were you born?'>
 <!ENTITY fxaccount.year.of.birth 'Year of birth'>
 
 <!ENTITY fxaccount.icon.contentDescription 'Firefox Accounts icon'>
 <!ENTITY fxaccount.password.hide 'Hide'>
 <!ENTITY fxaccount.password.show 'Show'>
-<!ENTITY fxaccount.get.started 'Get started'>
-<!ENTITY fxaccount.description 'Sign in to backup and sync all your settings and bookmarks!'>
 <!ENTITY fxaccount.sign.up 'Sign up'>
 
 <!-- Android > Accounts > [Firefox Account] Screen -->
@@ -192,3 +187,9 @@ an account.  -->
 <!ENTITY fxaccount.create.account.age.2005 '2005'>
 <!ENTITY fxaccount.create.account.age.2006 '2006'>
 <!ENTITY fxaccount.create.account.age.2007 '2007'>
+
+<!ENTITY fxaccount_getting_started_welcome_to_sync 'Welcome to &syncBrand.shortName.label;'>
+<!ENTITY fxaccount_getting_started_description 'Sign in to sync your tabs, bookmarks, passwords &amp; more.'>
+<!ENTITY fxaccount_getting_started_get_started 'Get started'>
+<!ENTITY fxaccount_getting_started_link_old_firefox 'https://support.mozilla.org/kb/use-sync-with-an-older-version-of-firefox'>
+<!ENTITY fxaccount_getting_started_old_firefox 'Using an older version of &syncBrand.shortName.label;?'>

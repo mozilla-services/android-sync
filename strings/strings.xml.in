@@ -124,9 +124,6 @@
   <string name="fxaccount_sign_in_instead">&fxaccount.sign.in.instead;</string>
   <string name="fxaccount_sign_up_instead">&fxaccount.sign.up.instead;</string>
 
-  <string name="fxaccount_link_old_firefox">&fxaccount.link.old.firefox;</string>
-  <string name="fxaccount_old_firefox">&fxaccount.old.firefox;</string>
-
   <string name="fxaccount_options_title">&fxaccount.options.title;</string>
   <string name="fxaccount_options_configure_title">&fxaccount.options.configure.title;</string>
 
@@ -137,8 +134,6 @@
   <string name="fxaccount_password_hide">&fxaccount.password.hide;</string>
   <string name="fxaccount_password_show">&fxaccount.password.show;</string>
 
-  <string name="fxaccount_get_started">&fxaccount.get.started;</string>
-  <string name="fxaccount_description">&fxaccount.description;</string>
   <string name="fxaccount_sign_up">&fxaccount.sign.up;</string>
   <string name="fxaccount_intro_contentDescription">&fxaccount.intro.contentDescription;</string>
   <string name="fxaccount_offer_resend_confirmation_email">&fxaccount.offer.resend.confirmation.email;</string>
@@ -208,3 +203,10 @@
   <!-- Note to translators: the format string below will be replaced
        with the Firefox Account's email address. -->
   <string name="fxaccount_sync_sign_in_error_notification_text">Tap to sign in to &formatS;</string>
+
+  <!-- Real strings. -->
+<string name="fxaccount_getting_started_welcome_to_sync">&fxaccount_getting_started_welcome_to_sync;</string>
+<string name="fxaccount_getting_started_description">&fxaccount_getting_started_description;</string>
+<string name="fxaccount_getting_started_get_started">&fxaccount_getting_started_get_started;</string>
+<string name="fxaccount_getting_started_link_old_firefox">&fxaccount_getting_started_link_old_firefox;</string>
+<string name="fxaccount_getting_started_old_firefox">&fxaccount_getting_started_old_firefox;</string>
