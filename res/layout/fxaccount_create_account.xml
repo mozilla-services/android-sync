@@ -31,12 +31,6 @@
             android:layout_marginTop="10dp"
             android:text="@string/fxaccount_password_length_restriction" />
 
-        <TextView
-            style="@style/FxAccountTextItem"
-            android:layout_marginTop="15dp"
-            android:text="@string/fxaccount_when_were_you_born"
-            android:textSize="18sp" />
-
         <!-- Per http://stackoverflow.com/questions/2359176/android-edittext-onclicklistener, not allowing focus allows us to highjack the click. -->
 
         <EditText
@@ -45,7 +39,7 @@
             android:layout_marginTop="15dp"
             android:drawableRight="@drawable/fxaccount_ddarrow_inactive"
             android:focusable="false"
-            android:hint="@string/fxaccount_year_of_birth"
+            android:hint="@string/fxaccount_when_were_you_born"
             android:inputType="none" />
 
         <TextView

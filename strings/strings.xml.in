@@ -108,7 +108,6 @@
   <string name="fxaccount_sign_in_button_label">&fxaccount.sign.in.button.label;</string>
 
   <string name="fxaccount_when_were_you_born">&fxaccount.when.were.you.born;</string>
-  <string name="fxaccount_year_of_birth">&fxaccount.year.of.birth;</string>
 
   <string name="fxaccount_email_hint">&fxaccount.email.hint;</string>
   <string name="fxaccount_password_hint">&fxaccount.password.hint;</string>
