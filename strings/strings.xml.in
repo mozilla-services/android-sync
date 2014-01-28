@@ -210,3 +210,12 @@
 <string name="fxaccount_getting_started_get_started">&fxaccount_getting_started_get_started;</string>
 <string name="fxaccount_getting_started_link_old_firefox">&fxaccount_getting_started_link_old_firefox;</string>
 <string name="fxaccount_getting_started_old_firefox">&fxaccount_getting_started_old_firefox;</string>
+
+<string name="fxaccount_create_account_sub_header">&fxaccount_create_account_sub_header;</string>
+<string name="fxaccount_create_account_password_length_restriction">&fxaccount_create_account_password_length_restriction;</string>
+<string name="fxaccount_create_account_year_of_birth">&fxaccount_create_account_year_of_birth;</string>
+<!-- Localization note: &formatS1; is fxaccount.policy.linktos, &formatS2; is fxaccount.policy.linkprivacy, both hyperlinked. -->
+<string name="fxaccount_create_account_policy_text">&fxaccount_create_account_policy_text;</string>
+<string name="fxaccount_create_account_button">&fxaccount_create_account_button;</string>
+<string name="fxaccount_create_account_choose_what_to_sync">&fxaccount_create_account_choose_what_to_sync;</string>
+<string name="fxaccount_create_account_sign_in_instead">&fxaccount_create_account_sign_in_instead;</string>
