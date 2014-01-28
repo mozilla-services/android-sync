@@ -25,7 +25,6 @@ import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.SyncException;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.SyncConfiguration.Sync11Configuration;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;

@@ -6,6 +6,8 @@ package org.mozilla.gecko.background.fxa;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -138,5 +140,19 @@ public class FxAccountUtils {
       kB[i] = (byte) (wrapkB[i] ^ unwrapkB[i]);
     }
     return kB;
+  }
+
+  /**
+   * Given an endpoint, calculate the corresponding BrowserID audience.
+   * <p>
+   * This is the domain, in web parlance.
+   *
+   * @param serverURI endpoint.
+   * @return BrowserID audience.
+   * @throws URISyntaxException
+   */
+  public static String getAudienceForURL(String serverURI) throws URISyntaxException {
+    URI uri = new URI(serverURI);
+    return new URI(uri.getScheme(), uri.getHost(), null, null).toString();
   }
 }
