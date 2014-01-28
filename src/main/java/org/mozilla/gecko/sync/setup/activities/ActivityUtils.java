@@ -50,6 +50,7 @@ public class ActivityUtils {
   public static void openURLInFennec(final Context context, final String url) {
     final Intent intent = new Intent(Intent.ACTION_VIEW);
     intent.setClassName(GlobalConstants.BROWSER_INTENT_PACKAGE, GlobalConstants.BROWSER_INTENT_CLASS);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     intent.setData(Uri.parse(url));
     context.startActivity(intent);
   }
