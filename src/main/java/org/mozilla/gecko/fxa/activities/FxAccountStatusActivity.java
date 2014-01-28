@@ -4,6 +4,10 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.db.BrowserContract;
@@ -12,26 +16,39 @@ import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.config.activities.SelectEnginesActivity;
 
 import android.accounts.Account;
 import android.content.ContentResolver;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 /**
  * Activity which displays account status.
  */
-public class FxAccountStatusActivity extends FxAccountAbstractActivity {
+public class FxAccountStatusActivity extends FxAccountAbstractActivity implements OnClickListener {
   protected static final String LOG_TAG = FxAccountStatusActivity.class.getSimpleName();
 
+  // Set in onCreate.
   protected ViewFlipper connectionStatusViewFlipper;
   protected View connectionStatusUnverifiedView;
   protected View connectionStatusSignInView;
   protected View connectionStatusSyncingView;
   protected TextView emailTextView;
+
+  protected View chooseWhatToSyncLayout;
+  protected CheckBox bookmarksCheckBox;
+  protected CheckBox historyCheckBox;
+  protected CheckBox passwordsCheckBox;
+  protected CheckBox tabsCheckBox;
+
+  // Set in onResume.
+  protected AndroidFxAccount fxAccount;
 
   public FxAccountStatusActivity() {
     super(CANNOT_RESUME_WHEN_NO_ACCOUNTS_EXIST);
@@ -57,6 +74,16 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
 
     emailTextView = (TextView) findViewById(R.id.email);
 
+    chooseWhatToSyncLayout = ensureFindViewById(null, R.id.choose_what_to_sync_layout, "choose what to sync layout");
+    bookmarksCheckBox = (CheckBox) findViewById(R.id.bookmarks_checkbox);
+    historyCheckBox = (CheckBox) findViewById(R.id.history_checkbox);
+    passwordsCheckBox = (CheckBox) findViewById(R.id.passwords_checkbox);
+    tabsCheckBox = (CheckBox) findViewById(R.id.tabs_checkbox);
+    bookmarksCheckBox.setOnClickListener(this);
+    historyCheckBox.setOnClickListener(this);
+    passwordsCheckBox.setOnClickListener(this);
+    tabsCheckBox.setOnClickListener(this);
+
     if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
       createDebugButtons();
     }
@@ -80,13 +107,7 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
     findViewById(R.id.debug_dump_button).setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        Logger.info(LOG_TAG, "Dumping account details.");
-        Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(FxAccountStatusActivity.this);
-        if (accounts.length < 1) {
-          return;
-        }
-        AndroidFxAccount account = new AndroidFxAccount(FxAccountStatusActivity.this, accounts[0]);
-        account.dump();
+        fxAccount.dump();
       }
     });
 
@@ -94,13 +115,9 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
       @Override
       public void onClick(View v) {
         Logger.info(LOG_TAG, "Syncing.");
-        Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(FxAccountStatusActivity.this);
-        if (accounts.length < 1) {
-          return;
-        }
         final Bundle extras = new Bundle();
         extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-        ContentResolver.requestSync(accounts[0], BrowserContract.AUTHORITY, extras);
+        ContentResolver.requestSync(fxAccount.getAndroidAccount(), BrowserContract.AUTHORITY, extras);
         // No sense refreshing, since the sync will complete in the future.
       }
     });
@@ -108,16 +125,11 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
     findViewById(R.id.debug_forget_certificate_button).setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(FxAccountStatusActivity.this);
-        if (accounts.length < 1) {
-          return;
-        }
-        AndroidFxAccount account = new AndroidFxAccount(FxAccountStatusActivity.this, accounts[0]);
-        State state = account.getState();
+        State state = fxAccount.getState();
         try {
           Married married = (Married) state;
           Logger.info(LOG_TAG, "Moving to Cohabiting state: Forgetting certificate.");
-          account.setState(married.makeCohabitingState());
+          fxAccount.setState(married.makeCohabitingState());
           refresh();
         } catch (ClassCastException e) {
           Logger.info(LOG_TAG, "Not in Married state; can't forget certificate.");
@@ -130,13 +142,8 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
       @Override
       public void onClick(View v) {
         Logger.info(LOG_TAG, "Moving to Separated state: Forgetting password.");
-        Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(FxAccountStatusActivity.this);
-        if (accounts.length < 1) {
-          return;
-        }
-        AndroidFxAccount account = new AndroidFxAccount(FxAccountStatusActivity.this, accounts[0]);
-        State state = account.getState();
-        account.setState(state.makeSeparatedState());
+        State state = fxAccount.getState();
+        fxAccount.setState(state.makeSeparatedState());
         refresh();
       }
     });
@@ -145,13 +152,8 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
       @Override
       public void onClick(View v) {
         Logger.info(LOG_TAG, "Moving to Doghouse state: Requiring upgrade.");
-        Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(FxAccountStatusActivity.this);
-        if (accounts.length < 1) {
-          return;
-        }
-        AndroidFxAccount account = new AndroidFxAccount(FxAccountStatusActivity.this, accounts[0]);
-        State state = account.getState();
-        account.setState(state.makeDoghouseState());
+        State state = fxAccount.getState();
+        fxAccount.setState(state.makeDoghouseState());
         refresh();
       }
     });
@@ -160,34 +162,48 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
   @Override
   public void onResume() {
     super.onResume();
+    Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
+    if (accounts.length < 1 || accounts[0] == null) {
+      Logger.warn(LOG_TAG, "No Android accounts.");
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
+    this.fxAccount = new AndroidFxAccount(this, accounts[0]);
+    if (fxAccount == null) {
+      Logger.warn(LOG_TAG, "Could not get Firefox Account from Android account.");
+      setResult(RESULT_CANCELED);
+      finish();
+      return;
+    }
+
     refresh();
   }
 
   protected void showNeedsUpgrade() {
     connectionStatusViewFlipper.setDisplayedChild(0);
+    chooseWhatToSyncLayout.setVisibility(View.INVISIBLE);
   }
 
   protected void showNeedsPassword() {
     connectionStatusViewFlipper.setDisplayedChild(1);
+    chooseWhatToSyncLayout.setVisibility(View.INVISIBLE);
   }
 
   protected void showNeedsVerification() {
     connectionStatusViewFlipper.setDisplayedChild(2);
+    chooseWhatToSyncLayout.setVisibility(View.INVISIBLE);
   }
 
   protected void showConnected() {
     connectionStatusViewFlipper.setDisplayedChild(3);
+    chooseWhatToSyncLayout.setVisibility(View.VISIBLE);
   }
 
-  protected void refresh(Account account) {
-    if (account == null) {
-      redirectToActivity(FxAccountGetStartedActivity.class);
-      return;
-    }
-    emailTextView.setText(account.name);
+  protected void refresh() {
+    emailTextView.setText(fxAccount.getEmail());
 
     // Interrogate the Firefox Account's state.
-    AndroidFxAccount fxAccount = new AndroidFxAccount(this, account);
     State state = fxAccount.getState();
     switch (state.getNeededAction()) {
     case NeedsUpgrade:
@@ -202,14 +218,47 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
     default:
       showConnected();
     }
-  }
 
-  protected void refresh() {
-    Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
-    if (accounts.length < 1) {
-      refresh(null);
+    try {
+      Set<String> engines = SelectEnginesActivity.getEnginesToSelect(fxAccount.getSyncPrefs());
+      bookmarksCheckBox.setChecked(engines.contains("bookmarks"));
+      historyCheckBox.setChecked(engines.contains("history"));
+      passwordsCheckBox.setChecked(engines.contains("passwords"));
+      tabsCheckBox.setChecked(engines.contains("tabs"));
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception getting engines to select; ignoring.", e);
       return;
     }
-    refresh(accounts[0]);
+  }
+
+  @Override
+  public void onClick(View view) {
+    if (view == bookmarksCheckBox ||
+        view == historyCheckBox ||
+        view == passwordsCheckBox ||
+        view == tabsCheckBox) {
+      saveSelections();
+    }
+  }
+
+  protected void saveSelections() {
+    Map<String, Boolean> engineSelections = new HashMap<String, Boolean>();
+    engineSelections.put("bookmarks", bookmarksCheckBox.isChecked());
+    engineSelections.put("history", historyCheckBox.isChecked());
+    engineSelections.put("passwords", passwordsCheckBox.isChecked());
+    engineSelections.put("tabs", tabsCheckBox.isChecked());
+    Logger.info(LOG_TAG, "Persisting engine selections: " + engineSelections.toString());
+
+    try {
+      // No GlobalSession.config, so store directly to prefs.
+      SyncConfiguration.storeSelectedEnginesToPrefs(fxAccount.getSyncPrefs(), engineSelections);
+      // Request a sync sometime soon.
+      ContentResolver.requestSync(fxAccount.getAndroidAccount(), BrowserContract.AUTHORITY, Bundle.EMPTY);
+      // Request immediate sync.
+      // SyncAdapter.requestImmediateSync(fxAccount.getAndroidAccount(), null);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception persisting selected engines; ignoring.", e);
+      return;
+    }
   }
 }
