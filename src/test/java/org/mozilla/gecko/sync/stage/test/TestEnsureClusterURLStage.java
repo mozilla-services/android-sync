@@ -149,6 +149,7 @@ public class TestEnsureClusterURLStage {
 
     data.startHTTPServer(new MockServer(200, TEST_NEW_CLUSTER_URL));
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         try {
           session.start();
@@ -187,6 +188,7 @@ public class TestEnsureClusterURLStage {
 
     data.startHTTPServer(new MockServer(200, TEST_NEW_CLUSTER_URL));
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         try {
           session.start();
@@ -228,6 +230,7 @@ public class TestEnsureClusterURLStage {
 
     data.startHTTPServer(new MockServer(200, TEST_NEW_CLUSTER_URL));
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         try {
           session.start();
@@ -272,6 +275,7 @@ public class TestEnsureClusterURLStage {
 
     data.startHTTPServer(new MockServer(200, TEST_OLD_CLUSTER_URL));
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         try {
           session.start();

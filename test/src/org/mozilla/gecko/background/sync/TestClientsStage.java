@@ -27,6 +27,7 @@ public class TestClientsStage extends AndroidSyncTestCase {
   private static final String TEST_PASSWORD    = "password";
   private static final String TEST_SYNC_KEY    = "abcdeabcdeabcdeabcdeabcdea";
 
+  @Override
   public void setUp() {
     ClientsDatabaseAccessor db = new ClientsDatabaseAccessor(getApplicationContext());
     db.wipeDB();
