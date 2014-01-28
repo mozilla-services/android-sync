@@ -50,8 +50,8 @@
 
         <TextView
             android:id="@+id/remote_error"
-            android:layout_marginTop="10dp"
-            style="@style/FxAccountErrorItem" />
+            style="@style/FxAccountErrorItem"
+            android:layout_marginTop="10dp" />
 
         <FrameLayout style="@style/FxAccountButtonLayout" >
 
@@ -65,10 +65,19 @@
                 android:text="@string/fxaccount_create_account_button_label" />
         </FrameLayout>
 
+        <CheckBox
+            android:id="@+id/choose_what_to_sync_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_margin="0dp"
+            android:text="@string/fxaccount_choose_what_to_sync" />
+
         <TextView
             android:id="@+id/sign_in_instead_link"
             style="@style/FxAccountLinkItem"
             android:layout_marginBottom="20dp"
+            android:layout_marginTop="10dp"
             android:focusable="true"
             android:text="@string/fxaccount_sign_in_instead" />
 

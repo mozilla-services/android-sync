@@ -203,3 +203,4 @@
   <!-- Note to translators: the format string below will be replaced
        with the Firefox Account's email address. -->
   <string name="fxaccount_sync_sign_in_error_notification_text">Tap to sign in to &formatS;</string>
+  <string name="fxaccount_choose_what_to_sync">Choose what to sync</string>
