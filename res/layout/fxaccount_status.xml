@@ -133,48 +133,6 @@
             style="@style/FxAccountLinkItem"
             android:text="@string/fxaccount_policy_linkprivacy" >
         </TextView>
-
-        <LinearLayout
-            android:id="@+id/debug_buttons"
-            style="@style/FxAccountMiddle"
-            android:visibility="gone" >
-
-            <Button
-                android:id="@+id/debug_refresh_button"
-                style="@style/FxAccountButton"
-                android:layout_marginBottom="10dp"
-                android:text="@string/fxaccount_status_debug_refresh_button_label" />
-
-            <Button
-                android:id="@+id/debug_dump_button"
-                style="@style/FxAccountButton"
-                android:layout_marginBottom="10dp"
-                android:text="@string/fxaccount_status_debug_dump_button_label" />
-
-            <Button
-                android:id="@+id/debug_sync_button"
-                style="@style/FxAccountButton"
-                android:layout_marginBottom="10dp"
-                android:text="@string/fxaccount_status_debug_sync_button_label" />
-
-            <Button
-                android:id="@+id/debug_forget_certificate_button"
-                style="@style/FxAccountButton"
-                android:layout_marginBottom="10dp"
-                android:text="@string/fxaccount_status_debug_forget_certificate_button_label" />
-
-            <Button
-                android:id="@+id/debug_require_password_button"
-                style="@style/FxAccountButton"
-                android:layout_marginBottom="10dp"
-                android:text="@string/fxaccount_status_debug_require_password_button_label" />
-
-            <Button
-                android:id="@+id/debug_require_upgrade_button"
-                style="@style/FxAccountButton"
-                android:layout_marginBottom="10dp"
-                android:text="@string/fxaccount_status_debug_require_upgrade_button_label" />
-        </LinearLayout>
     </LinearLayout>
 
 </ScrollView>

@@ -102,13 +102,6 @@
 
 
   <!-- Temporary Firefox Accounts strings. -->
-  <string name="fxaccount_status_debug_refresh_button_label">Refresh status view</string>
-  <string name="fxaccount_status_debug_dump_button_label">Dump account details</string>
-  <string name="fxaccount_status_debug_sync_button_label">Force sync</string>
-  <string name="fxaccount_status_debug_forget_certificate_button_label">Forget certificate (if applicable)</string>
-  <string name="fxaccount_status_debug_require_password_button_label">Require password re-entry</string>
-  <string name="fxaccount_status_debug_require_upgrade_button_label">Require upgrade</string>
-
   <string name="fxaccount_remote_error_UPGRADE_REQUIRED">You need to upgrade Firefox</string>
   <string name="fxaccount_remote_error_ATTEMPT_TO_CREATE_AN_ACCOUNT_THAT_ALREADY_EXISTS">Account already exists</string>
   <string name="fxaccount_remote_error_ATTEMPT_TO_ACCESS_AN_ACCOUNT_THAT_DOES_NOT_EXIST">Account does not exist</string>
