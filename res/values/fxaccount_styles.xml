@@ -65,6 +65,7 @@
     </style>
 
     <style name="FxAccountEditItem" parent="@android:style/Widget.EditText">
+        <item name="android:textSize">20sp</item>
         <item name="android:padding">@dimen/fxaccount_input_padding</item>
         <item name="android:background">@drawable/fxaccount_textfield_background</item>
         <item name="android:layout_width">match_parent</item>
