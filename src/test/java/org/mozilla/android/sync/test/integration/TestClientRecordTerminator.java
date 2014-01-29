@@ -19,10 +19,12 @@ import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
 import org.mozilla.android.sync.test.integration.TestBasicFetch.LiveDelegate;
 import org.mozilla.gecko.background.testhelpers.MockPrefsGlobalSession;
+import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
+import org.mozilla.gecko.sync.Sync11Configuration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.config.ClientRecordTerminator;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -89,8 +91,11 @@ public class TestClientRecordTerminator {
       assertTrue(a.contains(guid));
     }
 
+    URI cluster = new URI(TEST_CLUSTER_URL);
+    Sync11Configuration configuration = new Sync11Configuration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences());
+    configuration.setClusterURL(cluster);
     for (String guid : KILL) {
-      ClientRecordTerminator.deleteClientRecord(TEST_USERNAME, TEST_CLUSTER_URL, guid, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD));
+      ClientRecordTerminator.deleteClientRecord(configuration, guid);
     }
 
     // Make sure record does not appear in collection guids.
