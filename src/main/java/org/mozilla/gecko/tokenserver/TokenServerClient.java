@@ -206,56 +206,81 @@ public class TokenServerClient {
         result.getString(JSON_KEY_API_ENDPOINT));
   }
 
+  public static class TokenFetchResourceDelegate extends BaseResourceDelegate {
+    private final TokenServerClient         client;
+    private final TokenServerClientDelegate delegate;
+    private final String                    assertion;
+    private final String                    clientState;
+    private final BaseResource              resource;
+    private final boolean                   conditionsAccepted;
+
+    public TokenFetchResourceDelegate(TokenServerClient client,
+                                      BaseResource resource,
+                                      TokenServerClientDelegate delegate,
+                                      String assertion, String clientState,
+                                      boolean conditionsAccepted) {
+      super(resource);
+      this.client = client;
+      this.delegate = delegate;
+      this.assertion = assertion;
+      this.clientState = clientState;
+      this.resource = resource;
+      this.conditionsAccepted = conditionsAccepted;
+    }
+
+    @Override
+    public void handleHttpResponse(HttpResponse response) {
+      SkewHandler skewHandler = SkewHandler.getSkewHandlerForResource(resource);
+      skewHandler.updateSkew(response, System.currentTimeMillis());
+      try {
+        TokenServerToken token = client.processResponse(response);
+        client.invokeHandleSuccess(delegate, token);
+      } catch (TokenServerException e) {
+        client.invokeHandleFailure(delegate, e);
+      }
+    }
+
+    @Override
+    public void handleTransportException(GeneralSecurityException e) {
+      client.invokeHandleError(delegate, e);
+    }
+
+    @Override
+    public void handleHttpProtocolException(ClientProtocolException e) {
+      client.invokeHandleError(delegate, e);
+    }
+
+    @Override
+    public void handleHttpIOException(IOException e) {
+      client.invokeHandleError(delegate, e);
+    }
+
+    @Override
+    public AuthHeaderProvider getAuthHeaderProvider() {
+      return new BrowserIDAuthHeaderProvider(assertion);
+    }
+
+    @Override
+    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+      String host = request.getURI().getHost();
+      request.setHeader(new BasicHeader(HttpHeaders.HOST, host));
+      if (clientState != null) {
+        request.setHeader(new BasicHeader(HEADER_CLIENT_STATE, clientState));
+      }
+      if (conditionsAccepted) {
+        request.addHeader(HEADER_CONDITIONS_ACCEPTED, "1");
+      }
+    }
+  }
+
   public void getTokenFromBrowserIDAssertion(final String assertion,
                                              final boolean conditionsAccepted,
                                              final String clientState,
                                              final TokenServerClientDelegate delegate) {
-    final BaseResource r = new BaseResource(uri);
-
-    r.delegate = new BaseResourceDelegate(r) {
-      @Override
-      public void handleHttpResponse(HttpResponse response) {
-        SkewHandler skewHandler = SkewHandler.getSkewHandlerForResource(r);
-        skewHandler.updateSkew(response, System.currentTimeMillis());
-        try {
-          TokenServerToken token = processResponse(response);
-          invokeHandleSuccess(delegate, token);
-        } catch (TokenServerException e) {
-          invokeHandleFailure(delegate, e);
-        }
-      }
-
-      @Override
-      public void handleTransportException(GeneralSecurityException e) {
-        invokeHandleError(delegate, e);
-      }
-
-      @Override
-      public void handleHttpProtocolException(ClientProtocolException e) {
-        invokeHandleError(delegate, e);
-      }
-
-      @Override
-      public void handleHttpIOException(IOException e) {
-        invokeHandleError(delegate, e);
-      }
-
-      @Override
-      public AuthHeaderProvider getAuthHeaderProvider() {
-        return new BrowserIDAuthHeaderProvider(assertion);
-      }
-
-      @Override
-      public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
-        String host = request.getURI().getHost();
-        request.setHeader(new BasicHeader(HttpHeaders.HOST, host));
-        request.setHeader(new BasicHeader(HEADER_CLIENT_STATE, clientState));
-        if (conditionsAccepted) {
-          request.addHeader(HEADER_CONDITIONS_ACCEPTED, "1");
-        }
-      }
-    };
-
-    r.get();
+    final BaseResource resource = new BaseResource(this.uri);
+    resource.delegate = new TokenFetchResourceDelegate(this, resource, delegate,
+                                                       assertion, clientState,
+                                                       conditionsAccepted);
+    resource.get();
   }
 }
