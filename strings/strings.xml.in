@@ -147,11 +147,7 @@
   <string name="fxaccount_status_tabs">&fxaccount.status.tabs;</string>
   <string name="fxaccount_update_credentials">&fxaccount.update.credentials;</string>
   <string name="fxaccount_update_credentials_button_label">&fxaccount.update.credentials.button.label;</string>
-  <string name="fxaccount_account_create_not_allowed">&fxaccount.account.create.not.allowed;</string>
-  <string name="fxaccount_account_create_not_allowed_description">&fxaccount.account.create.not.allowed.description;</string>
   <!-- Temporary Firefox Accounts strings. -->
-  <string name="fxaccount_link_create_not_allowed">http://www.ftc.gov/news-events/media-resources/protecting-consumer-privacy/kids-privacy-coppa</string>
-  <string name="fxaccount_account_create_not_allowed_learn_more">Learn more</string>
   <string name="fxaccount_sign_in_success">Account verified</string>
   <string name="fxaccount_sign_in_success_description">You are now ready to use Sync!</string>
   <string name="fxaccount_checkbox_contentDescription">Firefox Accounts checkbox graphic</string>
@@ -202,3 +198,8 @@
 <string name="fxaccount_create_account_choose_what_to_sync">&fxaccount_create_account_choose_what_to_sync;</string>
 <string name="fxaccount_create_account_sign_in_instead">&fxaccount_create_account_sign_in_instead;</string>
 <string name="fxaccount_create_account_1950_or_earlier">&fxaccount_create_account_1950_or_earlier;</string>
+
+<string name="fxaccount_account_create_not_allowed">&fxaccount_account_create_not_allowed;</string>
+<string name="fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements">&fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements;</string>
+<string name="fxaccount_link_create_not_allowed">&fxaccount_link_create_not_allowed;</string>
+<string name="fxaccount_account_create_not_allowed_learn_more">&fxaccount_account_create_not_allowed_learn_more;</string>
