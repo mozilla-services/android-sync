@@ -4,7 +4,6 @@
 package org.mozilla.gecko.tokenserver.test;
 
 import java.net.URI;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executors;
 
 import org.junit.After;
@@ -13,11 +12,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
+import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.tokenserver.TokenServerClient;
 import org.mozilla.gecko.tokenserver.TokenServerClientDelegate;
@@ -29,17 +30,16 @@ import org.mozilla.gecko.tokenserver.TokenServerToken;
 public class TestLiveTokenServerClient {
   public static final String TEST_USERNAME = "test";
 
-  public static final String TEST_REMOTE_SERVER_URL = "https://token.dev.lcip.org";
-  public static final String TEST_REMOTE_AUDIENCE = "https://token.dev.lcip.org"; // Audience accepted by the token server.
-  public static final String TEST_REMOTE_URL = TEST_REMOTE_SERVER_URL + "/1.0/sync/1.5";
-  public static final String TEST_ENDPOINT = "https://sync1.dev.lcip.org/1.5/";
+  public static final String TEST_REMOTE_URL = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
+  public static String TEST_REMOTE_AUDIENCE;
 
   protected final MockMyIDTokenFactory mockMyIDTokenFactory;
   protected final BrowserIDKeyPair keyPair;
 
   protected TokenServerClient client;
 
-  public TestLiveTokenServerClient() throws NoSuchAlgorithmException {
+  public TestLiveTokenServerClient() throws Exception {
+    TEST_REMOTE_AUDIENCE = FxAccountUtils.getAudienceForURL(TEST_REMOTE_URL);
     this.mockMyIDTokenFactory = new MockMyIDTokenFactory();
     this.keyPair = RSACryptoImplementation.generateKeyPair(1024);
   }
@@ -133,7 +133,6 @@ public class TestLiveTokenServerClient {
               Assert.assertNotNull(token.id);
               Assert.assertNotNull(token.key);
               Assert.assertNotNull(Long.valueOf(token.uid));
-              Assert.assertEquals(TEST_ENDPOINT + token.uid, token.endpoint);
               WaitHelper.getTestWaiter().performNotify();
             } catch (Throwable t) {
               WaitHelper.getTestWaiter().performNotify(t);
