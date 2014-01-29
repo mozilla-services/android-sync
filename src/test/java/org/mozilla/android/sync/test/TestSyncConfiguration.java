@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.PrefsSource;
+import org.mozilla.gecko.sync.Sync11Configuration;
 import org.mozilla.gecko.sync.SyncConfiguration;
 
 import android.content.SharedPreferences;
@@ -31,7 +32,7 @@ public class TestSyncConfiguration implements PrefsSource {
     Assert.assertEquals("http://db1.oldsync.dev.lcip.org/1.1/174/storage", fxaConfig.storageURL());
     Assert.assertEquals("http://db1.oldsync.dev.lcip.org/1.1/174/storage/collection", fxaConfig.collectionURI("collection").toASCIIString());
 
-    SyncConfiguration oldConfig = new SyncConfiguration.Sync11Configuration("username", null, new MockSharedPreferences());
+    SyncConfiguration oldConfig = new Sync11Configuration("username", null, new MockSharedPreferences());
     oldConfig.clusterURL = new URI("https://db.com/internal/");
     Assert.assertEquals("https://db.com/internal/1.1/username/info/collections", oldConfig.infoCollectionsURL());
     Assert.assertEquals("https://db.com/internal/1.1/username/info/collection_counts", oldConfig.infoCollectionCountsURL());

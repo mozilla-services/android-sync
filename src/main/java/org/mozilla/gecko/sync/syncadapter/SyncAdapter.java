@@ -19,13 +19,13 @@ import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
 import org.mozilla.gecko.sync.SharedPreferencesNodeAssignmentCallback;
+import org.mozilla.gecko.sync.Sync11Configuration;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.SyncException;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
-import org.mozilla.gecko.sync.SyncConfiguration.Sync11Configuration;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -528,7 +528,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
 
     final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(username, password);
     final SharedPreferences prefs = getContext().getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
-    final SyncConfiguration config = new SyncConfiguration.Sync11Configuration(username, authHeaderProvider, prefs, keyBundle);
+    final SyncConfiguration config = new Sync11Configuration(username, authHeaderProvider, prefs, keyBundle);
     GlobalSession globalSession = new GlobalSession(config, this, this.mContext, extras, clientsDataDelegate, nodeAssignmentDelegate);
 
     globalSession.start();

@@ -24,8 +24,7 @@ import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.NonObjectJSONException;
-import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.SyncConfiguration.Sync11Configuration;
+import org.mozilla.gecko.sync.Sync11Configuration;
 import org.mozilla.gecko.sync.SyncConfigurationException;
 import org.mozilla.gecko.sync.config.ClientRecordTerminator;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -93,7 +92,7 @@ public class TestClientRecordTerminator {
     }
 
     URI cluster = new URI(TEST_CLUSTER_URL);
-    Sync11Configuration configuration = new SyncConfiguration.Sync11Configuration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences());
+    Sync11Configuration configuration = new Sync11Configuration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences());
     configuration.setClusterURL(cluster);
     for (String guid : KILL) {
       ClientRecordTerminator.deleteClientRecord(configuration, guid);
