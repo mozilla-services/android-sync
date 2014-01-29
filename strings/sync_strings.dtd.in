@@ -140,8 +140,6 @@
 <!ENTITY fxaccount.status.history 'History'>
 <!ENTITY fxaccount.status.passwords 'Passwords'>
 <!ENTITY fxaccount.status.tabs 'Open tabs'>
-<!ENTITY fxaccount.update.credentials 'Update password'>
-<!ENTITY fxaccount.update.credentials.button.label 'Re-connect'>
 
 <!ENTITY fxaccount_getting_started_welcome_to_sync 'Welcome to &syncBrand.shortName.label;'>
 <!ENTITY fxaccount_getting_started_description 'Sign in to sync your tabs, bookmarks, passwords &amp; more.'>
@@ -158,6 +156,7 @@
 <!ENTITY fxaccount_create_account_choose_what_to_sync 'Choose what to sync'>
 <!ENTITY fxaccount_create_account_sign_in_instead 'Already have an account? Sign in'>
 <!ENTITY fxaccount_create_account_1950_or_earlier '1950 or earlier'>
+<!ENTITY fxaccount_create_account_unknown_error 'Could not create account'>
 
 <!ENTITY fxaccount_account_create_not_allowed 'Cannot create account'>
 <!ENTITY fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements 'You must meet certain age requirements to create an account.'>
@@ -175,3 +174,8 @@
 <!ENTITY fxaccount_sign_in_button_label 'Sign in'>
 <!ENTITY fxaccount_sign_in_forgot_password 'Forgot password?'>
 <!ENTITY fxaccount_sign_in_create_account_instead 'Create an account'>
+<!ENTITY fxaccount_sign_in_unknown_error 'Could not sign in'>
+
+<!ENTITY fxaccount_update_credentials_sub_header 'Sign in to continue'>
+<!ENTITY fxaccount_update_credentials_button_label 'Sign in'>
+<!ENTITY fxaccount_update_credentials_unknown_error 'Could not sign in'>

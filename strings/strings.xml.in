@@ -131,8 +131,6 @@
   <string name="fxaccount_status_history">&fxaccount.status.history;</string>
   <string name="fxaccount_status_passwords">&fxaccount.status.passwords;</string>
   <string name="fxaccount_status_tabs">&fxaccount.status.tabs;</string>
-  <string name="fxaccount_update_credentials">&fxaccount.update.credentials;</string>
-  <string name="fxaccount_update_credentials_button_label">&fxaccount.update.credentials.button.label;</string>
   <!-- Temporary Firefox Accounts strings. -->
   <string name="fxaccount_sign_in_success">Account verified</string>
   <string name="fxaccount_sign_in_success_description">You are now ready to use Sync!</string>
@@ -146,9 +144,7 @@
   <string name="fxaccount_status_debug_forget_certificate_button_label">Forget certificate (if applicable)</string>
   <string name="fxaccount_status_debug_require_password_button_label">Require password re-entry</string>
   <string name="fxaccount_status_debug_require_upgrade_button_label">Require upgrade</string>
-  <string name="fxaccount_create_account_unknown_error">Could not create account</string>
-  <string name="fxaccount_sign_in_unknown_error">Could not sign in</string>
-  <string name="fxaccount_update_credentials_unknown_error">Could not update password</string>
+
   <string name="fxaccount_remote_error_UPGRADE_REQUIRED">You need to upgrade Firefox</string>
   <string name="fxaccount_remote_error_ATTEMPT_TO_CREATE_AN_ACCOUNT_THAT_ALREADY_EXISTS">Account already exists</string>
   <string name="fxaccount_remote_error_ATTEMPT_TO_ACCESS_AN_ACCOUNT_THAT_DOES_NOT_EXIST">Account does not exist</string>
@@ -179,6 +175,7 @@
 <string name="fxaccount_create_account_choose_what_to_sync">&fxaccount_create_account_choose_what_to_sync;</string>
 <string name="fxaccount_create_account_sign_in_instead">&fxaccount_create_account_sign_in_instead;</string>
 <string name="fxaccount_create_account_1950_or_earlier">&fxaccount_create_account_1950_or_earlier;</string>
+<string name="fxaccount_create_account_unknown_error">&fxaccount_create_account_unknown_error;</string>
 
 <string name="fxaccount_account_create_not_allowed">&fxaccount_account_create_not_allowed;</string>
 <string name="fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements">&fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements;</string>
@@ -196,3 +193,8 @@
 <string name="fxaccount_sign_in_button_label">&fxaccount_sign_in_button_label;</string>
 <string name="fxaccount_sign_in_forgot_password">&fxaccount_sign_in_forgot_password;</string>
 <string name="fxaccount_sign_in_create_account_instead">&fxaccount_sign_in_create_account_instead;</string>
+<string name="fxaccount_sign_in_unknown_error">&fxaccount_sign_in_unknown_error;</string>
+
+<string name="fxaccount_update_credentials_sub_header">&fxaccount_update_credentials_sub_header;</string>
+<string name="fxaccount_update_credentials_button_label">&fxaccount_update_credentials_button_label;</string>
+<string name="fxaccount_update_credentials_unknown_error">&fxaccount_update_credentials_unknown_error;</string>
