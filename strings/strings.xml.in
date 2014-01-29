@@ -106,23 +106,12 @@
   <string name="fxaccount_link_pn">&fxaccount.link.pn;</string>
   <string name="fxaccount_policy_linktos">&fxaccount.policy.linktos;</string>
   <string name="fxaccount_policy_linkprivacy">&fxaccount.policy.linkprivacy;</string>
-  <string name="fxaccount_forgot_password">&fxaccount.forgot.password;</string>
-  <string name="fxaccount_sign_in_button_label">&fxaccount.sign.in.button.label;</string>
 
   <string name="fxaccount_email_hint">&fxaccount.email.hint;</string>
   <string name="fxaccount_password_hint">&fxaccount.password.hint;</string>
-  <string name="fxaccount_password2_hint">&fxaccount.password2.hint;</string>
-
-  <string name="fxaccount_bad_email">&fxaccount.bad.email;</string>
-  <string name="fxaccount_bad_passwords">&fxaccount.bad.passwords;</string>
-
-  <string name="fxaccount_sign_up_instead">&fxaccount.sign.up.instead;</string>
 
   <string name="fxaccount_options_title">&fxaccount.options.title;</string>
   <string name="fxaccount_options_configure_title">&fxaccount.options.configure.title;</string>
-
-  <string name="fxaccount_sign_in">&fxaccount.sign.in;</string>
-  <string name="fxaccount_create_account">&fxaccount.create.account;</string>
 
   <string name="fxaccount_icon_contentDescription">&fxaccount.icon.contentDescription;</string>
   <string name="fxaccount_password_hide">&fxaccount.password.hide;</string>
@@ -202,3 +191,8 @@
 <string name="fxaccount_confirm_account_resend_email">&fxaccount_confirm_account_resend_email;</string>
 <string name="fxaccount_confirm_account_verification_link_sent">&fxaccount_confirm_account_verification_link_sent;</string>
 <string name="fxaccount_confirm_account_verification_link_not_sent">&fxaccount_confirm_account_verification_link_not_sent;</string>
+
+<string name="fxaccount_sign_in_sub_header">&fxaccount_sign_in_sub_header;</string>
+<string name="fxaccount_sign_in_button_label">&fxaccount_sign_in_button_label;</string>
+<string name="fxaccount_sign_in_forgot_password">&fxaccount_sign_in_forgot_password;</string>
+<string name="fxaccount_sign_in_create_account_instead">&fxaccount_sign_in_create_account_instead;</string>

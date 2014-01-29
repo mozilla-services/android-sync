@@ -51,8 +51,7 @@
 
         <TextView
             android:id="@+id/remote_error"
-            style="@style/FxAccountErrorItem"
-            android:layout_marginTop="10dp" />
+            style="@style/FxAccountErrorItem" />
 
         <FrameLayout style="@style/FxAccountButtonLayout" >
 

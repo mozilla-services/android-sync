@@ -115,17 +115,8 @@
 <!ENTITY fxaccount.policy.linktos 'Terms of Service'>
 <!ENTITY fxaccount.policy.linkprivacy 'Privacy Notice'>
 
-<!ENTITY fxaccount.forgot.password 'Forgot password?'>
-<!ENTITY fxaccount.sign.in.button.label 'Sign In'>
 <!ENTITY fxaccount.email.hint 'Email'>
 <!ENTITY fxaccount.password.hint 'Password'>
-<!ENTITY fxaccount.password2.hint 'Confirm password'>
-<!ENTITY fxaccount.bad.email 'We need a real email address.'>
-<!ENTITY fxaccount.bad.passwords 'Your passwords must match.'>
-<!ENTITY fxaccount.sign.up.instead 'Don\&apos;t have an account? Sign up instead.'>
-
-<!ENTITY fxaccount.sign.in 'Sign in'>
-<!ENTITY fxaccount.create.account 'Create an account'>
 
 <!ENTITY fxaccount.icon.contentDescription 'Firefox Accounts icon'>
 <!ENTITY fxaccount.password.hide 'Hide'>
@@ -179,3 +170,8 @@
 <!ENTITY fxaccount_confirm_account_resend_email 'Resend email'>
 <!ENTITY fxaccount_confirm_account_verification_link_sent 'Sent fresh verification link'>
 <!ENTITY fxaccount_confirm_account_verification_link_not_sent 'Couldn\&apos;t send a fresh verification link'>
+
+<!ENTITY fxaccount_sign_in_sub_header 'Sign in'>
+<!ENTITY fxaccount_sign_in_button_label 'Sign in'>
+<!ENTITY fxaccount_sign_in_forgot_password 'Forgot password?'>
+<!ENTITY fxaccount_sign_in_create_account_instead 'Create an account'>
