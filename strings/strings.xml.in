@@ -149,18 +149,6 @@
   <string name="fxaccount_update_credentials_button_label">&fxaccount.update.credentials.button.label;</string>
   <string name="fxaccount_account_create_not_allowed">&fxaccount.account.create.not.allowed;</string>
   <string name="fxaccount_account_create_not_allowed_description">&fxaccount.account.create.not.allowed.description;</string>
-  <string name="fxaccount_create_account_age_1960s">&fxaccount.create.account.age.1960s;</string>
-  <string name="fxaccount_create_account_age_1970s">&fxaccount.create.account.age.1970s;</string>
-  <string name="fxaccount_create_account_age_1980s">&fxaccount.create.account.age.1980s;</string>
-  <string name="fxaccount_create_account_age_1990s">&fxaccount.create.account.age.1990s;</string>
-  <string name="fxaccount_create_account_age_2000">&fxaccount.create.account.age.2000;</string>
-  <string name="fxaccount_create_account_age_2001">&fxaccount.create.account.age.2001;</string>
-  <string name="fxaccount_create_account_age_2002">&fxaccount.create.account.age.2002;</string>
-  <string name="fxaccount_create_account_age_2003">&fxaccount.create.account.age.2003;</string>
-  <string name="fxaccount_create_account_age_2004">&fxaccount.create.account.age.2004;</string>
-  <string name="fxaccount_create_account_age_2005">&fxaccount.create.account.age.2005;</string>
-  <string name="fxaccount_create_account_age_2006">&fxaccount.create.account.age.2006;</string>
-  <string name="fxaccount_create_account_age_2007">&fxaccount.create.account.age.2007;</string>
   <!-- Temporary Firefox Accounts strings. -->
   <string name="fxaccount_link_create_not_allowed">http://www.ftc.gov/news-events/media-resources/protecting-consumer-privacy/kids-privacy-coppa</string>
   <string name="fxaccount_account_create_not_allowed_learn_more">Learn more</string>
@@ -213,3 +201,4 @@
 <string name="fxaccount_create_account_button">&fxaccount_create_account_button;</string>
 <string name="fxaccount_create_account_choose_what_to_sync">&fxaccount_create_account_choose_what_to_sync;</string>
 <string name="fxaccount_create_account_sign_in_instead">&fxaccount_create_account_sign_in_instead;</string>
+<string name="fxaccount_create_account_1950_or_earlier">&fxaccount_create_account_1950_or_earlier;</string>
