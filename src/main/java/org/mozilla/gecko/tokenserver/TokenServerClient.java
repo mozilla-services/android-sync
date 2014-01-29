@@ -29,6 +29,7 @@ import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerMalformedRe
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerMalformedResponseException;
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerUnknownServiceException;
 
+import ch.boye.httpclientandroidlib.HttpHeaders;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -56,6 +57,9 @@ public class TokenServerClient {
   public static final String JSON_KEY_ID = "id";
   public static final String JSON_KEY_KEY = "key";
   public static final String JSON_KEY_UID = "uid";
+
+  public static final String HEADER_CONDITIONS_ACCEPTED = "X-Conditions-Accepted";
+  public static final String HEADER_CLIENT_STATE = "X-Client-State";
 
   protected final Executor executor;
   protected final URI uri;
@@ -202,8 +206,10 @@ public class TokenServerClient {
         result.getString(JSON_KEY_API_ENDPOINT));
   }
 
-  public void getTokenFromBrowserIDAssertion(final String assertion, final boolean conditionsAccepted,
-      final TokenServerClientDelegate delegate) {
+  public void getTokenFromBrowserIDAssertion(final String assertion,
+                                             final boolean conditionsAccepted,
+                                             final String clientState,
+                                             final TokenServerClientDelegate delegate) {
     final BaseResource r = new BaseResource(uri);
 
     r.delegate = new BaseResourceDelegate(r) {
@@ -242,10 +248,10 @@ public class TokenServerClient {
       @Override
       public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
         String host = request.getURI().getHost();
-        request.setHeader(new BasicHeader("Host", host));
-
+        request.setHeader(new BasicHeader(HttpHeaders.HOST, host));
+        request.setHeader(new BasicHeader(HEADER_CLIENT_STATE, clientState));
         if (conditionsAccepted) {
-          request.addHeader("X-Conditions-Accepted", "1");
+          request.addHeader(HEADER_CONDITIONS_ACCEPTED, "1");
         }
       }
     };

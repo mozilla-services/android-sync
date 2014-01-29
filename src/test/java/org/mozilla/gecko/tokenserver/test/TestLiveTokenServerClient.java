@@ -58,10 +58,11 @@ public class TestLiveTokenServerClient {
   @Test
   public void testRemoteSuccess() throws Exception {
     final String assertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_REMOTE_AUDIENCE);
+    final String mockClientState = "abcdefabcdefabcdefabcdefabcdefab";
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
-        client.getTokenFromBrowserIDAssertion(assertion, true, new TokenServerClientDelegate() {
+        client.getTokenFromBrowserIDAssertion(assertion, true, mockClientState, new TokenServerClientDelegate() {
           @Override
           public void handleSuccess(TokenServerToken token) {
             try {
@@ -94,10 +95,11 @@ public class TestLiveTokenServerClient {
     final String badAssertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_REMOTE_AUDIENCE,
         0, 1,
         System.currentTimeMillis(), JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
+    final String mockClientState = "abcdefabcdefabcdefabcdefabcdefab";
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
-        client.getTokenFromBrowserIDAssertion(badAssertion, false, new TokenServerClientDelegate() {
+        client.getTokenFromBrowserIDAssertion(badAssertion, false, mockClientState, new TokenServerClientDelegate() {
           @Override
           public void handleSuccess(TokenServerToken token) {
             WaitHelper.getTestWaiter().performNotify(new RuntimeException("Expected failure due to expired assertion."));
