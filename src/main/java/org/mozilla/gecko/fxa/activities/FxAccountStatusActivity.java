@@ -27,10 +27,10 @@ import android.widget.ViewFlipper;
 public class FxAccountStatusActivity extends FxAccountAbstractActivity {
   protected static final String LOG_TAG = FxAccountStatusActivity.class.getSimpleName();
 
+  protected TextView syncStatusTextView;
   protected ViewFlipper connectionStatusViewFlipper;
   protected View connectionStatusUnverifiedView;
   protected View connectionStatusSignInView;
-  protected View connectionStatusSyncingView;
   protected TextView emailTextView;
 
   public FxAccountStatusActivity() {
@@ -48,10 +48,10 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
     super.onCreate(icicle);
     setContentView(R.layout.fxaccount_status);
 
+    syncStatusTextView = (TextView) ensureFindViewById(null, R.id.sync_status_text, "sync status text");
     connectionStatusViewFlipper = (ViewFlipper) ensureFindViewById(null, R.id.connection_status_view, "connection status frame layout");
-    connectionStatusUnverifiedView = ensureFindViewById(null, R.id.unverified_view, "unverified vie w");
+    connectionStatusUnverifiedView = ensureFindViewById(null, R.id.unverified_view, "unverified view");
     connectionStatusSignInView = ensureFindViewById(null, R.id.sign_in_view, "sign in view");
-    connectionStatusSyncingView = ensureFindViewById(null, R.id.syncing_view, "syncing view");
 
     launchActivityOnClick(connectionStatusSignInView, FxAccountUpdateCredentialsActivity.class);
 
@@ -164,19 +164,26 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity {
   }
 
   protected void showNeedsUpgrade() {
+    syncStatusTextView.setText(R.string.fxaccount_status_sync);
+    connectionStatusViewFlipper.setVisibility(View.VISIBLE);
     connectionStatusViewFlipper.setDisplayedChild(0);
   }
 
   protected void showNeedsPassword() {
+    syncStatusTextView.setText(R.string.fxaccount_status_sync);
+    connectionStatusViewFlipper.setVisibility(View.VISIBLE);
     connectionStatusViewFlipper.setDisplayedChild(1);
   }
 
   protected void showNeedsVerification() {
+    syncStatusTextView.setText(R.string.fxaccount_status_sync);
+    connectionStatusViewFlipper.setVisibility(View.VISIBLE);
     connectionStatusViewFlipper.setDisplayedChild(2);
   }
 
   protected void showConnected() {
-    connectionStatusViewFlipper.setDisplayedChild(3);
+    syncStatusTextView.setText(R.string.fxaccount_status_sync_enabled);
+    connectionStatusViewFlipper.setVisibility(View.GONE);
   }
 
   protected void refresh(Account account) {

@@ -108,8 +108,6 @@
 <!ENTITY sync.text.tab.not.sent.label 'There was a problem sending your tab.'>
 
 <!-- Firefox Account strings -->
-<!ENTITY firefox.accounts 'Firefox Accounts'>
-<!ENTITY fxaccount.label '&fxaccountBrand.fullName.label;'>
 <!ENTITY fxaccount.link.tos 'https://accounts.firefox.com/legal/terms'>
 <!ENTITY fxaccount.link.pn 'https://accounts.firefox.com/legal/privacy'>
 <!ENTITY fxaccount.policy.linktos 'Terms of Service'>
@@ -118,26 +116,16 @@
 <!ENTITY fxaccount.email.hint 'Email'>
 <!ENTITY fxaccount.password.hint 'Password'>
 
-
 <!ENTITY fxaccount.password.hide 'Hide'>
 <!ENTITY fxaccount.password.show 'Show'>
-<!ENTITY fxaccount.sign.up 'Sign up'>
 
 <!-- Android > Accounts > [Firefox Account] Screen -->
 <!ENTITY fxaccount.options.title 'Options'>
 <!ENTITY fxaccount.options.configure.title 'Configure your Firefox Account'>
 
-<!ENTITY fxaccount.confirmation.email.sent 'Confirmation email sent!'>
-<!ENTITY fxaccount.password.length.restriction 'Must be at least 8 characters.'>
-<!ENTITY fxaccount.change.password 'Change password'>
-<!ENTITY fxaccount.status.needs.verification 'Your account needs to be verified. Tap here to verify and start syncing.'>
-<!ENTITY fxaccount.status.needs.credentials 'Your account details are out of date. Tap here to sign in again and resume syncing.'>
-<!ENTITY fxaccount.status.syncing 'Firefox is syncing...'>
-<!ENTITY fxaccount.status.sync 'Sync' >
-<!ENTITY fxaccount.status.bookmarks 'Bookmarks'>
-<!ENTITY fxaccount.status.history 'History'>
-<!ENTITY fxaccount.status.passwords 'Passwords'>
-<!ENTITY fxaccount.status.tabs 'Open tabs'>
+<!ENTITY firefox_accounts 'Firefox Accounts'>
+<!ENTITY firefox_account 'Firefox Account'>
+<!ENTITY fxaccount_label '&fxaccountBrand.fullName.label;'>
 
 <!ENTITY fxaccount_checkbox_contentDescription 'Firefox Accounts checkbox graphic'>
 <!ENTITY fxaccount_icon_contentDescription 'Firefox Accounts icon'>
@@ -185,3 +173,14 @@
 <!ENTITY fxaccount_update_credentials_sub_header 'Sign in to continue'>
 <!ENTITY fxaccount_update_credentials_button_label 'Sign in'>
 <!ENTITY fxaccount_update_credentials_unknown_error 'Could not sign in'>
+
+<!ENTITY fxaccount_status_sync 'Sync'>
+<!ENTITY fxaccount_status_sync_enabled 'Sync: enabled'>
+<!ENTITY fxaccount_status_needs_verification 'Your account needs to be verified. Tap to verify.'>
+<!ENTITY fxaccount_status_needs_credentials 'Cannot connect. Tap to sign in.'>
+<!ENTITY fxaccount_status_needs_upgrade 'You need to upgrade &brandShortName; to sign in.'>
+<!ENTITY fxaccount_status_bookmarks 'Bookmarks'>
+<!ENTITY fxaccount_status_history 'History'>
+<!ENTITY fxaccount_status_passwords 'Passwords'>
+<!ENTITY fxaccount_status_tabs 'Open tabs'>
+<!ENTITY fxaccount_status_legal 'Legal' >
