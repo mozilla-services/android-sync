@@ -115,24 +115,17 @@
 <!ENTITY fxaccount.policy.linktos 'Terms of Service'>
 <!ENTITY fxaccount.policy.linkprivacy 'Privacy Notice'>
 
-<!-- Localization note: &formatS1; is fxaccount.policy.linktos, &formatS2; is fxaccount.policy.linkprivacy, both hyperlinked. -->
-<!ENTITY fxaccount.policy.text 'By proceeding you agree with the &formatS1; and &formatS2;.'>
 <!ENTITY fxaccount.forgot.password 'Forgot password?'>
-<!ENTITY fxaccount.create.account.button.label 'Create Account'>
 <!ENTITY fxaccount.sign.in.button.label 'Sign In'>
 <!ENTITY fxaccount.email.hint 'Email'>
 <!ENTITY fxaccount.password.hint 'Password'>
 <!ENTITY fxaccount.password2.hint 'Confirm password'>
 <!ENTITY fxaccount.bad.email 'We need a real email address.'>
 <!ENTITY fxaccount.bad.passwords 'Your passwords must match.'>
-<!ENTITY fxaccount.sign.in.instead 'Already have an account? Sign in!'>
 <!ENTITY fxaccount.sign.up.instead 'Don\&apos;t have an account? Sign up instead.'>
 
 <!ENTITY fxaccount.sign.in 'Sign in'>
 <!ENTITY fxaccount.create.account 'Create an account'>
-
-<!ENTITY fxaccount.when.were.you.born 'When were you born?'>
-<!ENTITY fxaccount.year.of.birth 'Year of birth'>
 
 <!ENTITY fxaccount.icon.contentDescription 'Firefox Accounts icon'>
 <!ENTITY fxaccount.password.hide 'Hide'>
