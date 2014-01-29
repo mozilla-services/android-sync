@@ -98,15 +98,6 @@
   <string name="sync_text_tab_sent">&sync.text.tab.sent.label;</string>
   <string name="sync_text_tab_not_sent">&sync.text.tab.not.sent.label;</string>
 
-  <!-- Firefox Account strings -->
-
-
-  <!-- Temporary Firefox Accounts strings. -->
-  <string name="fxaccount_sync_sign_in_error_notification_title">&syncBrand.fullName.label; sign in error</string>
-  <!-- Note to translators: the format string below will be replaced
-       with the Firefox Account's email address. -->
-  <string name="fxaccount_sync_sign_in_error_notification_text">Tap to sign in to &formatS;</string>
-
 <!-- Firefox Account strings. -->
 <string name="firefox_accounts">&firefox_accounts;</string>
 <string name="firefox_account">&firefox_account;</string>
@@ -192,3 +183,8 @@
 <string name="fxaccount_remote_error_SERVICE_TEMPORARILY_UNAVAILABLE_TO_DUE_HIGH_LOAD">&fxaccount_remote_error_SERVICE_TEMPORARILY_UNAVAILABLE_TO_DUE_HIGH_LOAD;</string>
 <string name="fxaccount_remote_error_UNKNOWN_ERROR">&fxaccount_remote_error_UNKNOWN_ERROR;</string>
 <string name="fxaccount_remote_error_COULD_NOT_CONNECT">&fxaccount_remote_error_COULD_NOT_CONNECT;</string>
+
+<string name="fxaccount_sync_sign_in_error_notification_title">&fxaccount_sync_sign_in_error_notification_title;</string>
+<!-- Note to translators: the format string below will be replaced
+     with the Firefox Account's email address. -->
+<string name="fxaccount_sync_sign_in_error_notification_text">&fxaccount_sync_sign_in_error_notification_text;</string>

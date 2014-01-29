@@ -173,14 +173,14 @@
 <!ENTITY fxaccount_sign_in_unknown_error 'Could not sign in'>
 
 <!ENTITY fxaccount_account_verified_sub_header 'Account verified'>
-<!ENTITY fxaccount_account_verified_description 'You are now ready to use Sync.'>
+<!ENTITY fxaccount_account_verified_description 'You are now ready to use &syncBrand.shortName.label;.'>
 
 <!ENTITY fxaccount_update_credentials_sub_header 'Sign in to continue'>
 <!ENTITY fxaccount_update_credentials_button_label 'Sign in'>
 <!ENTITY fxaccount_update_credentials_unknown_error 'Could not sign in'>
 
-<!ENTITY fxaccount_status_sync 'Sync'>
-<!ENTITY fxaccount_status_sync_enabled 'Sync: enabled'>
+<!ENTITY fxaccount_status_sync '&syncBrand.shortName.label;'>
+<!ENTITY fxaccount_status_sync_enabled '&syncBrand.shortName.label;: enabled'>
 <!ENTITY fxaccount_status_needs_verification 'Your account needs to be verified. Tap to verify.'>
 <!ENTITY fxaccount_status_needs_credentials 'Cannot connect. Tap to sign in.'>
 <!ENTITY fxaccount_status_needs_upgrade 'You need to upgrade &brandShortName; to sign in.'>
@@ -199,8 +199,8 @@
      Account] Screen. The link takes the user to the Firefox Account
      status activity, which lets them manage their Firefox
      Account. -->
-<!ENTITY fxaccount_options_title 'Options'>
-<!ENTITY fxaccount_options_configure_title 'Configure your Firefox Account'>
+<!ENTITY fxaccount_options_title '&syncBrand.shortName.label; Options'>
+<!ENTITY fxaccount_options_configure_title 'Configure &syncBrand.shortName.label;'>
 
 <!-- Localization note: these error messages are shown after a request
      has been made to the remote server, and an error of some type has
@@ -214,3 +214,8 @@
 <!ENTITY fxaccount_remote_error_SERVICE_TEMPORARILY_UNAVAILABLE_TO_DUE_HIGH_LOAD 'Server busy, try again soon'>
 <!ENTITY fxaccount_remote_error_UNKNOWN_ERROR 'There was a problem'>
 <!ENTITY fxaccount_remote_error_COULD_NOT_CONNECT 'Cannot connect to network'>
+
+<!ENTITY fxaccount_sync_sign_in_error_notification_title '&syncBrand.fullName.label; is not connected'>
+<!-- Note to translators: the format string below will be replaced
+     with the Firefox Account's email address. -->
+<!ENTITY fxaccount_sync_sign_in_error_notification_text 'Tap to sign in to &formatS;'>
