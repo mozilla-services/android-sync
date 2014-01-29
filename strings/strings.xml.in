@@ -113,13 +113,11 @@
   <string name="fxaccount_options_title">&fxaccount.options.title;</string>
   <string name="fxaccount_options_configure_title">&fxaccount.options.configure.title;</string>
 
-  <string name="fxaccount_icon_contentDescription">&fxaccount.icon.contentDescription;</string>
+
   <string name="fxaccount_password_hide">&fxaccount.password.hide;</string>
   <string name="fxaccount_password_show">&fxaccount.password.show;</string>
 
   <string name="fxaccount_sign_up">&fxaccount.sign.up;</string>
-  <string name="fxaccount_intro_contentDescription">&fxaccount.intro.contentDescription;</string>
-  <string name="fxaccount_mail_contentDescription">&fxaccount.mail.contentDescription;</string>
   <string name="fxaccount_password_length_restriction">&fxaccount.password.length.restriction;</string>
   <string name="fxaccount_change_password">&fxaccount.change.password;</string>
   <string name="fxaccount_status_needs_upgrade">You need to upgrade Firefox to log in to this account.</string>
@@ -131,12 +129,10 @@
   <string name="fxaccount_status_history">&fxaccount.status.history;</string>
   <string name="fxaccount_status_passwords">&fxaccount.status.passwords;</string>
   <string name="fxaccount_status_tabs">&fxaccount.status.tabs;</string>
+
   <!-- Temporary Firefox Accounts strings. -->
   <string name="fxaccount_sign_in_success">Account verified</string>
   <string name="fxaccount_sign_in_success_description">You are now ready to use Sync!</string>
-  <string name="fxaccount_checkbox_contentDescription">Firefox Accounts checkbox graphic</string>
-  <string name="fxaccount_account_verified">Account verified</string>
-  <string name="fxaccount_account_verified_description">You are now ready to use Sync!</string>
 
   <string name="fxaccount_status_debug_refresh_button_label">Refresh status view</string>
   <string name="fxaccount_status_debug_dump_button_label">Dump account details</string>
@@ -159,7 +155,12 @@
        with the Firefox Account's email address. -->
   <string name="fxaccount_sync_sign_in_error_notification_text">Tap to sign in to &formatS;</string>
 
-  <!-- Real strings. -->
+<!-- Real strings. -->
+<string name="fxaccount_checkbox_contentDescription">&fxaccount_checkbox_contentDescription;</string>
+<string name="fxaccount_icon_contentDescription">&fxaccount_icon_contentDescription;</string>
+<string name="fxaccount_intro_contentDescription">&fxaccount_intro_contentDescription;</string>
+<string name="fxaccount_mail_contentDescription">&fxaccount_mail_contentDescription;</string>
+
 <string name="fxaccount_getting_started_welcome_to_sync">&fxaccount_getting_started_welcome_to_sync;</string>
 <string name="fxaccount_getting_started_description">&fxaccount_getting_started_description;</string>
 <string name="fxaccount_getting_started_get_started">&fxaccount_getting_started_get_started;</string>
@@ -194,6 +195,9 @@
 <string name="fxaccount_sign_in_forgot_password">&fxaccount_sign_in_forgot_password;</string>
 <string name="fxaccount_sign_in_create_account_instead">&fxaccount_sign_in_create_account_instead;</string>
 <string name="fxaccount_sign_in_unknown_error">&fxaccount_sign_in_unknown_error;</string>
+
+<string name="fxaccount_account_verified_sub_header">&fxaccount_account_verified_sub_header;</string>
+<string name="fxaccount_account_verified_description">&fxaccount_account_verified_description;</string>
 
 <string name="fxaccount_update_credentials_sub_header">&fxaccount_update_credentials_sub_header;</string>
 <string name="fxaccount_update_credentials_button_label">&fxaccount_update_credentials_button_label;</string>
