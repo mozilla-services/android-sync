@@ -183,7 +183,7 @@ public class TestEnsureClusterURLStage {
     .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
-    assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
+    assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURLString());
 
     data.startHTTPServer(new MockServer(200, TEST_NEW_CLUSTER_URL));
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
@@ -224,7 +224,7 @@ public class TestEnsureClusterURLStage {
     .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
-    assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
+    assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURLString());
 
     data.startHTTPServer(new MockServer(200, TEST_NEW_CLUSTER_URL));
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
@@ -268,7 +268,7 @@ public class TestEnsureClusterURLStage {
     .withStage(Stage.ensureClusterURL, new EnsureClusterURLStage(callback));
 
     session.config.setClusterURL(new URI(TEST_OLD_CLUSTER_URL));
-    assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURL().toASCIIString());
+    assertEquals(TEST_OLD_CLUSTER_URL, session.config.getClusterURLString());
 
     data.startHTTPServer(new MockServer(200, TEST_OLD_CLUSTER_URL));
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
