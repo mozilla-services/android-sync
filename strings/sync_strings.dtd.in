@@ -153,7 +153,6 @@
 <!ENTITY fxaccount.confirmation.description 'Your confirmation link awaits at:'>
 <!ENTITY fxaccount.offer.resend.confirmation.email 'Don\&apos;t see an email? Resend.'>
 <!ENTITY fxaccount.password.length.restriction 'Must be at least 8 characters.'>
-<!ENTITY fxaccount.change.password 'Change password'>
 <!ENTITY fxaccount.status.needs.verification 'Your account needs to be verified. Tap here to verify and start syncing.'>
 <!ENTITY fxaccount.status.needs.credentials 'Your account details are out of date. Tap here to sign in again and resume syncing.'>
 <!ENTITY fxaccount.status.syncing 'Firefox is syncing...'>

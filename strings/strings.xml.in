@@ -146,7 +146,6 @@
   <string name="fxaccount_mail_contentDescription">&fxaccount.mail.contentDescription;</string>
   <string name="fxaccount_confirmation_email_sent">&fxaccount.confirmation.email.sent;</string>
   <string name="fxaccount_password_length_restriction">&fxaccount.password.length.restriction;</string>
-  <string name="fxaccount_change_password">&fxaccount.change.password;</string>
   <string name="fxaccount_status_needs_upgrade">You need to upgrade Firefox to log in to this account.</string>
   <string name="fxaccount_status_needs_verification">&fxaccount.status.needs.verification;</string>
   <string name="fxaccount_status_needs_credentials">&fxaccount.status.needs.credentials;</string>
