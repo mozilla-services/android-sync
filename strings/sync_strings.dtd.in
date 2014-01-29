@@ -108,29 +108,34 @@
 <!ENTITY sync.text.tab.not.sent.label 'There was a problem sending your tab.'>
 
 <!-- Firefox Account strings -->
-<!ENTITY fxaccount.link.tos 'https://accounts.firefox.com/legal/terms'>
-<!ENTITY fxaccount.link.pn 'https://accounts.firefox.com/legal/privacy'>
-<!ENTITY fxaccount.policy.linktos 'Terms of Service'>
-<!ENTITY fxaccount.policy.linkprivacy 'Privacy Notice'>
 
-<!ENTITY fxaccount.email.hint 'Email'>
-<!ENTITY fxaccount.password.hint 'Password'>
-
-<!ENTITY fxaccount.password.hide 'Hide'>
-<!ENTITY fxaccount.password.show 'Show'>
-
-<!-- Android > Accounts > [Firefox Account] Screen -->
-<!ENTITY fxaccount.options.title 'Options'>
-<!ENTITY fxaccount.options.configure.title 'Configure your Firefox Account'>
-
+<!-- Localization note: this is the brand title, shown at the top of most screens. -->
 <!ENTITY firefox_accounts 'Firefox Accounts'>
-<!ENTITY firefox_account 'Firefox Account'>
-<!ENTITY fxaccount_label '&fxaccountBrand.fullName.label;'>
 
+<!-- Localization note: this refers to a single Firefox Account, shown
+     at the top of the account status activity. That activity allows
+     to configure the current Firefox Account. -->
+<!ENTITY firefox_account 'Firefox Account'>
+
+<!-- Localization note: these describe icons and graphics, and are
+     consumed by assistive devices. -->
 <!ENTITY fxaccount_checkbox_contentDescription 'Firefox Accounts checkbox graphic'>
 <!ENTITY fxaccount_icon_contentDescription 'Firefox Accounts icon'>
 <!ENTITY fxaccount_intro_contentDescription 'Firefox Accounts introduction graphics'>
 <!ENTITY fxaccount_mail_contentDescription 'Firefox Accounts envelope graphic'>
+
+<!-- Localization note: these are shown in all screens that query the
+     user for an email address and password. Hide and show are button
+     labels. -->
+<!ENTITY fxaccount_email_hint 'Email'>
+<!ENTITY fxaccount_password_hint 'Password'>
+<!ENTITY fxaccount_password_hide 'Hide'>
+<!ENTITY fxaccount_password_show 'Show'>
+
+<!ENTITY fxaccount_link_tos 'https://accounts.firefox.com/legal/terms'>
+<!ENTITY fxaccount_link_pn 'https://accounts.firefox.com/legal/privacy'>
+<!ENTITY fxaccount_policy_linktos 'Terms of Service'>
+<!ENTITY fxaccount_policy_linkprivacy 'Privacy Notice'>
 
 <!ENTITY fxaccount_getting_started_welcome_to_sync 'Welcome to &syncBrand.shortName.label;'>
 <!ENTITY fxaccount_getting_started_description 'Sign in to sync your tabs, bookmarks, passwords &amp; more.'>
@@ -141,7 +146,7 @@
 <!ENTITY fxaccount_create_account_sub_header 'Create an account'>
 <!ENTITY fxaccount_create_account_password_length_restriction 'Must be at least 8 characters'>
 <!ENTITY fxaccount_create_account_year_of_birth 'Year of birth'>
-<!-- Localization note: &formatS1; is fxaccount.policy.linktos, &formatS2; is fxaccount.policy.linkprivacy, both hyperlinked. -->
+<!-- Localization note: &formatS1; is fxaccount_policy_linktos, &formatS2; is fxaccount_policy_linkprivacy, both hyperlinked. -->
 <!ENTITY fxaccount_create_account_policy_text 'By proceeding, I agree to the &formatS1; and &formatS2; of Firefox online services.'>
 <!ENTITY fxaccount_create_account_button 'Next'>
 <!ENTITY fxaccount_create_account_choose_what_to_sync 'Choose what to sync'>
@@ -184,3 +189,15 @@
 <!ENTITY fxaccount_status_passwords 'Passwords'>
 <!ENTITY fxaccount_status_tabs 'Open tabs'>
 <!ENTITY fxaccount_status_legal 'Legal' >
+
+<!-- Localization note: this is the name shown by the Android system
+     itself for a Firefox Account. It should be singular. -->
+<!ENTITY fxaccount_label '&fxaccountBrand.fullName.label;'>
+
+<!-- Localization note: these are shown by the Android system itself,
+     when the user navigates to the Android > Accounts > [Firefox
+     Account] Screen. The link takes the user to the Firefox Account
+     status activity, which lets them manage their Firefox
+     Account. -->
+<!ENTITY fxaccount_options_title 'Options'>
+<!ENTITY fxaccount_options_configure_title 'Configure your Firefox Account'>
