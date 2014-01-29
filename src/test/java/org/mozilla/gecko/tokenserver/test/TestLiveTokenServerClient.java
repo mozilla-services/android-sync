@@ -58,7 +58,7 @@ public class TestLiveTokenServerClient {
   @Test
   public void testRemoteSuccess() throws Exception {
     final String assertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_REMOTE_AUDIENCE);
-    final String mockClientState = "abcdefabcdefabcdefabcdefabcdefab";
+    final String mockClientState = null;
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
