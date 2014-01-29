@@ -130,10 +130,7 @@
 
   <string name="fxaccount_sign_up">&fxaccount.sign.up;</string>
   <string name="fxaccount_intro_contentDescription">&fxaccount.intro.contentDescription;</string>
-  <string name="fxaccount_offer_resend_confirmation_email">&fxaccount.offer.resend.confirmation.email;</string>
-  <string name="fxaccount_confirmation_description">&fxaccount.confirmation.description;</string>
   <string name="fxaccount_mail_contentDescription">&fxaccount.mail.contentDescription;</string>
-  <string name="fxaccount_confirmation_email_sent">&fxaccount.confirmation.email.sent;</string>
   <string name="fxaccount_password_length_restriction">&fxaccount.password.length.restriction;</string>
   <string name="fxaccount_change_password">&fxaccount.change.password;</string>
   <string name="fxaccount_status_needs_upgrade">You need to upgrade Firefox to log in to this account.</string>
@@ -153,12 +150,7 @@
   <string name="fxaccount_checkbox_contentDescription">Firefox Accounts checkbox graphic</string>
   <string name="fxaccount_account_verified">Account verified</string>
   <string name="fxaccount_account_verified_description">You are now ready to use Sync!</string>
-  <string name="fxaccount_confirm_your_account">Confirm your account</string>
-  <string name="fxaccount_verification_link_awaits_at">A verification link awaits at:</string>
-  <string name="fxaccount_verification_link_not_showing_up_offer_resend">Email not showing up? Send again</string>
-  <!-- TODO: add email address to toast? -->
-  <string name="fxaccount_confirm_verification_link_sent">Sent fresh verification link</string>
-  <string name="fxaccount_confirm_verification_link_not_sent">Couldn\&apos;t send a fresh verification link</string>
+
   <string name="fxaccount_status_debug_refresh_button_label">Refresh status view</string>
   <string name="fxaccount_status_debug_dump_button_label">Dump account details</string>
   <string name="fxaccount_status_debug_sync_button_label">Force sync</string>
@@ -203,3 +195,10 @@
 <string name="fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements">&fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements;</string>
 <string name="fxaccount_link_create_not_allowed">&fxaccount_link_create_not_allowed;</string>
 <string name="fxaccount_account_create_not_allowed_learn_more">&fxaccount_account_create_not_allowed_learn_more;</string>
+
+<string name="fxaccount_confirm_account_header">&fxaccount_confirm_account_header;</string>
+<!-- Localization note: &formatS; is the Firefox Account's email address. -->
+<string name="fxaccount_confirm_account_verification_link">&fxaccount_confirm_account_verification_link;</string>
+<string name="fxaccount_confirm_account_resend_email">&fxaccount_confirm_account_resend_email;</string>
+<string name="fxaccount_confirm_account_verification_link_sent">&fxaccount_confirm_account_verification_link_sent;</string>
+<string name="fxaccount_confirm_account_verification_link_not_sent">&fxaccount_confirm_account_verification_link_not_sent;</string>

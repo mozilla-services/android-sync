@@ -137,9 +137,8 @@
 <!ENTITY fxaccount.options.configure.title 'Configure your Firefox Account'>
 <!ENTITY fxaccount.intro.contentDescription 'Firefox Accounts introduction graphics'>
 <!ENTITY fxaccount.confirmation.email.sent 'Confirmation email sent!'>
+
 <!ENTITY fxaccount.mail.contentDescription 'Firefox Accounts envelope graphic'>
-<!ENTITY fxaccount.confirmation.description 'Your confirmation link awaits at:'>
-<!ENTITY fxaccount.offer.resend.confirmation.email 'Don\&apos;t see an email? Resend.'>
 <!ENTITY fxaccount.password.length.restriction 'Must be at least 8 characters.'>
 <!ENTITY fxaccount.change.password 'Change password'>
 <!ENTITY fxaccount.status.needs.verification 'Your account needs to be verified. Tap here to verify and start syncing.'>
@@ -173,3 +172,10 @@
 <!ENTITY fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements 'You must meet certain age requirements to create an account.'>
 <!ENTITY fxaccount_link_create_not_allowed 'http://www.ftc.gov/news-events/media-resources/protecting-consumer-privacy/kids-privacy-coppa'>
 <!ENTITY fxaccount_account_create_not_allowed_learn_more 'Learn more'>
+
+<!ENTITY fxaccount_confirm_account_header 'Confirm your account'>
+<!-- Localization note: &formatS; is the Firefox Account's email address. -->
+<!ENTITY fxaccount_confirm_account_verification_link 'A verification link has been sent to &formatS;'>
+<!ENTITY fxaccount_confirm_account_resend_email 'Resend email'>
+<!ENTITY fxaccount_confirm_account_verification_link_sent 'Sent fresh verification link'>
+<!ENTITY fxaccount_confirm_account_verification_link_not_sent 'Couldn\&apos;t send a fresh verification link'>
