@@ -139,4 +139,11 @@ public class FxAccountUtils {
     }
     return kB;
   }
+
+  public static String computeClientState(byte[] kB) throws NoSuchAlgorithmException {
+    byte[] sha256 = Utils.sha256(kB);
+    byte[] truncated = new byte[16];
+    System.arraycopy(sha256, 0, truncated, 0, 16);
+    return Utils.byte2Hex(truncated);    // Already lowercase.
+  }
 }
