@@ -92,4 +92,13 @@ public class TestFxAccountUtils {
     Assert.assertEquals("a095c51c1c6e384e8d5777d97e3c487a4fc2128a00ab395a73d57fedf41631f0",
         Utils.byte2Hex(FxAccountUtils.unwrapkB(unwrapkB, wrapkB)));
   }
+
+  @Test
+  public void testClientState() throws Exception {
+    final String hexKB = "fd5c747806c07ce0b9d69dcfea144663e630b65ec4963596a22f24910d7dd15d";
+    final byte[] byteKB = Utils.hex2Byte(hexKB);
+    final String clientState = FxAccountUtils.computeClientState(byteKB);
+    final String expected = "6ae94683571c7a7c54dab4700aa3995f";
+    Assert.assertEquals(expected, clientState);
+  }
 }
