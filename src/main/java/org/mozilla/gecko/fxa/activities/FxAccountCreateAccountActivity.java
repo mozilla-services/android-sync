@@ -157,12 +157,12 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     });
   }
 
-  public void createAccount(String email, String password) {
+  public void createAccount(String email, String password, Map<String, Boolean> engines) {
     String serverURI = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
     PasswordStretcher passwordStretcher = new QuickPasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.
-    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI) {
+    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI, engines) {
       @Override
       public void handleError(Exception e) {
         showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
@@ -199,9 +199,13 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         }
         final String email = emailEdit.getText().toString();
         final String password = passwordEdit.getText().toString();
+        // Only include selected engines if the user currently has the option checked.
+        final Map<String, Boolean> engines = chooseCheckBox.isChecked()
+            ? selectedEngines
+            : null;
         if (FxAccountAgeLockoutHelper.passesAgeCheck(yearEdit.getText().toString(), yearItems)) {
           FxAccountConstants.pii(LOG_TAG, "Passed age check.");
-          createAccount(email, password);
+          createAccount(email, password, engines);
         } else {
           FxAccountConstants.pii(LOG_TAG, "Failed age check!");
           FxAccountAgeLockoutHelper.lockOut(SystemClock.elapsedRealtime());
