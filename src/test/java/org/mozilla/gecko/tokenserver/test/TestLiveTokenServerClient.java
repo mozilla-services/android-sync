@@ -75,7 +75,7 @@ public class TestLiveTokenServerClient {
     Assert.assertFalse(endpointOne.equals(endpointTwo));
     boolean failed = false;
     try {
-      String fail = getEndpoint(assertion, stateOne);
+      getEndpoint(assertion, stateOne);
       failed = false;
     } catch (Throwable e) {
       // Don't bother unpacking the exception, but we expect this to consistently fail due to invalid-client-state.
