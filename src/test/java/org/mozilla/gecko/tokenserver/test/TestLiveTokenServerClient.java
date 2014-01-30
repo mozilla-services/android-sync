@@ -56,7 +56,7 @@ public class TestLiveTokenServerClient {
   }
 
   // Randomized username to avoid server state messing with our flow.
-  protected String getTestUsername() {
+  protected static String getTestUsername() {
     return TEST_USERNAME + System.currentTimeMillis();
   }
 
@@ -72,7 +72,7 @@ public class TestLiveTokenServerClient {
     Assert.assertNotNull(endpointOne);
     Assert.assertNotNull(endpointTwo);
     Assert.assertEquals(endpointTwo, getEndpoint(assertion, stateTwo));
-    Assert.assertNotEquals(endpointOne, endpointTwo);
+    Assert.assertFalse(endpointOne.equals(endpointTwo));
     boolean failed = false;
     try {
       String fail = getEndpoint(assertion, stateOne);
