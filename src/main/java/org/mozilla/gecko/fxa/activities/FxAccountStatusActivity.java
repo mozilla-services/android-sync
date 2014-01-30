@@ -89,6 +89,14 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity implement
 
     launchActivityOnClick(connectionStatusSignInView, FxAccountUpdateCredentialsActivity.class);
 
+    connectionStatusUnverifiedView.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        FxAccountConfirmAccountActivity.resendCode(getApplicationContext(), fxAccount);
+        launchActivity(FxAccountConfirmAccountActivity.class);
+      }
+    });
+
     emailTextView = (TextView) findViewById(R.id.email);
 
     bookmarksCheckBox = (CheckBox) findViewById(R.id.bookmarks_checkbox);
