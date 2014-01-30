@@ -22,9 +22,9 @@ import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.FxAccountSignInTask;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
 import org.mozilla.gecko.fxa.login.Engaged;
-import org.mozilla.gecko.fxa.login.Separated;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
+import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
 import android.accounts.Account;
 import android.os.Bundle;
@@ -42,7 +42,6 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
   protected static final String LOG_TAG = FxAccountUpdateCredentialsActivity.class.getSimpleName();
 
   protected AndroidFxAccount fxAccount;
-  protected Separated accountState;
 
   public FxAccountUpdateCredentialsActivity() {
     // We want to share code with the other setup activities, but this activity
@@ -77,8 +76,8 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
 
     emailEdit.setEnabled(false);
 
-    // Not yet implemented.
-    // this.launchActivityOnClick(ensureFindViewById(null, R.id.forgot_password_link, "forgot password link"), null);
+    TextView view = (TextView) findViewById(R.id.forgot_password_link);
+    ActivityUtils.linkTextView(view, R.string.fxaccount_sign_in_forgot_password, R.string.fxaccount_link_forgot_password);
   }
 
   @Override
@@ -100,13 +99,12 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
     }
     State state = fxAccount.getState();
     if (state.getStateLabel() != StateLabel.Separated) {
-      Logger.warn(LOG_TAG, "Could not get state from Firefox Account.");
+      Logger.warn(LOG_TAG, "Cannot update credentials from Firefox Account in state: " + state.getStateLabel());
       setResult(RESULT_CANCELED);
       finish();
       return;
     }
-    this.accountState = (Separated) state;
-    emailEdit.setText(fxAccount.getAndroidAccount().name);
+    emailEdit.setText(fxAccount.getEmail());
   }
 
   protected class UpdateCredentialsDelegate implements RequestDelegate<LoginResponse> {
@@ -165,7 +163,7 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
   }
 
   public void updateCredentials(String email, String password) {
-    String serverURI = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
+    String serverURI = fxAccount.getAccountServerURI();
     Executor executor = Executors.newSingleThreadExecutor();
     FxAccountClient client = new FxAccountClient20(serverURI, executor);
     PasswordStretcher passwordStretcher = new QuickPasswordStretcher(password);
