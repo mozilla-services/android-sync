@@ -17,10 +17,10 @@ import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.sync.SyncConfiguration;
-import org.mozilla.gecko.sync.config.activities.SelectEnginesActivity;
 
 import android.accounts.Account;
 import android.content.ContentResolver;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -196,12 +196,40 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity implement
       showConnected();
     }
 
+    updateSelectedEngines();
+  }
+
+  protected void updateSelectedEngines() {
     try {
-      Set<String> engines = SelectEnginesActivity.getEnginesToSelect(fxAccount.getSyncPrefs());
-      bookmarksCheckBox.setChecked(engines.contains("bookmarks"));
-      historyCheckBox.setChecked(engines.contains("history"));
-      passwordsCheckBox.setChecked(engines.contains("passwords"));
-      tabsCheckBox.setChecked(engines.contains("tabs"));
+      SharedPreferences syncPrefs = fxAccount.getSyncPrefs();
+      Map<String, Boolean> engines = SyncConfiguration.getUserSelectedEngines(syncPrefs);
+      if (engines != null) {
+        bookmarksCheckBox.setChecked(engines.containsKey("bookmarks") && engines.get("bookmarks"));
+        historyCheckBox.setChecked(engines.containsKey("history") && engines.get("history"));
+        passwordsCheckBox.setChecked(engines.containsKey("passwords") && engines.get("passwords"));
+        tabsCheckBox.setChecked(engines.containsKey("tabs") && engines.get("tabs"));
+        return;
+      }
+
+      // We don't have user specified preferences.  Perhaps we have seen a meta/global?
+      Set<String> enabledNames = SyncConfiguration.getEnabledEngineNames(syncPrefs);
+      if (enabledNames != null) {
+        bookmarksCheckBox.setChecked(enabledNames.contains("bookmarks"));
+        historyCheckBox.setChecked(enabledNames.contains("history"));
+        passwordsCheckBox.setChecked(enabledNames.contains("passwords"));
+        tabsCheckBox.setChecked(enabledNames.contains("tabs"));
+        return;
+      }
+
+      // Okay, we don't have userSelectedEngines or enabledEngines. That means
+      // the user hasn't specified to begin with, we haven't specified here, and
+      // we haven't already seen, Sync engines. We don't know our state, so
+      // let's check everything (the default) and disable everything.
+      bookmarksCheckBox.setChecked(true);
+      historyCheckBox.setChecked(true);
+      passwordsCheckBox.setChecked(true);
+      tabsCheckBox.setChecked(true);
+      setCheckboxesEnabled(false);
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception getting engines to select; ignoring.", e);
       return;
