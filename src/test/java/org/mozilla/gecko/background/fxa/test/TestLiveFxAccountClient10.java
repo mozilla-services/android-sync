@@ -25,7 +25,7 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 @Category(IntegrationTestCategory.class)
 public class TestLiveFxAccountClient10 {
-  protected static final String TEST_SERVERURI = "http://127.0.0.1:9000/";
+  protected static final String TEST_SERVERURI = "http://127.0.0.1:9000/v1";
   // These tests fail against the live dev server because the accounts created
   // need to be manually verified.
   // protected static final String TEST_SERVERURI = "https://api-accounts.dev.lcip.org/";
