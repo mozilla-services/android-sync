@@ -29,10 +29,10 @@ import org.mozilla.gecko.tokenserver.TokenServerToken;
 public class TestLiveTokenServerClient {
   public static final String TEST_USERNAME = "test";
 
-  public static final String TEST_REMOTE_SERVER_URL = "http://auth.oldsync.dev.lcip.org";
-  public static final String TEST_REMOTE_AUDIENCE = "http://auth.oldsync.dev.lcip.org"; // Audience accepted by the token server.
-  public static final String TEST_REMOTE_URL = TEST_REMOTE_SERVER_URL + "/1.0/sync/1.1";
-  public static final String TEST_ENDPOINT = "http://db1.oldsync.dev.lcip.org/1.1/";
+  public static final String TEST_REMOTE_SERVER_URL = "https://token.dev.lcip.org";
+  public static final String TEST_REMOTE_AUDIENCE = "https://token.dev.lcip.org"; // Audience accepted by the token server.
+  public static final String TEST_REMOTE_URL = TEST_REMOTE_SERVER_URL + "/1.0/sync/1.5";
+  public static final String TEST_ENDPOINT = "https://sync1.dev.lcip.org/1.5/";
 
   protected final MockMyIDTokenFactory mockMyIDTokenFactory;
   protected final BrowserIDKeyPair keyPair;
