@@ -577,6 +577,9 @@ public class Utils {
    * stringifies as "es_ES".
    *
    * This method approximates the Java 7 method <code>Locale#toLanguageTag()</code>.
+   * <p>
+   * <b>Warning:</b> all consumers of this method will need to be audited when
+   * we have active locale switching.
    *
    * @return a locale string suitable for passing to Gecko.
    */
