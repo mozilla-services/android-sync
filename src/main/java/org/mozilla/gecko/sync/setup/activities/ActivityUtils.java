@@ -93,6 +93,15 @@ public class ActivityUtils {
     linkifyTextView(view, false);
   }
 
+  /**
+   * Replace the contents of a plain text view with the provided text wrapped in a link.
+   * TODO: escape the URL!
+   */
+  public static void linkTextView(TextView view, String text, String url) {
+    view.setText("<a href=\"" + url + "\">" + text + "</a>");
+    linkifyTextView(view, false);
+  }
+
   public static void linkifyTextView(TextView textView, boolean underlining) {
     if (textView == null) {
       Logger.warn(LOG_TAG, "Could not process links for view.");
