@@ -1538,6 +1538,9 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
           "       LIMIT " + numToPrune + ")",
           null);
       db.setTransactionSuccessful();
+
+      // Clear environment cache, because some of their IDs are now invalid.
+      this.envs.clear();
     } finally {
       db.endTransaction();
     }
