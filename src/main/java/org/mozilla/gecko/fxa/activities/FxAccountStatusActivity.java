@@ -22,6 +22,7 @@ import org.mozilla.gecko.sync.config.activities.SelectEnginesActivity;
 import android.accounts.Account;
 import android.content.ContentResolver;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -34,7 +35,15 @@ import android.widget.ViewFlipper;
  * Activity which displays account status.
  */
 public class FxAccountStatusActivity extends FxAccountAbstractActivity implements OnClickListener {
-  protected static final String LOG_TAG = FxAccountStatusActivity.class.getSimpleName();
+  private static final String LOG_TAG = FxAccountStatusActivity.class.getSimpleName();
+
+  // When a checkbox is toggled, wait 5 seconds (for other checkbox actions)
+  // before trying to sync. Should we quit the activity before the sync request
+  // happens, that's okay: the runnable will run if the UI thread is still
+  // around to service it, and since we're not updating any UI, we'll just
+  // schedule the sync as usual. See also comment below about garbage
+  // collection.
+  private static final long DELAY_IN_MILLISECONDS_BEFORE_REQUESTING_SYNC = 5 * 1000;
 
   // Set in onCreate.
   protected TextView syncStatusTextView;
@@ -48,8 +57,15 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity implement
   protected CheckBox passwordsCheckBox;
   protected CheckBox tabsCheckBox;
 
+  // Used to post delayed sync requests.
+  protected Handler handler;
+
   // Set in onResume.
   protected AndroidFxAccount fxAccount;
+  // Member variable so that re-posting pushes back the already posted instance.
+  // This Runnable references the fxAccount above, so it is not specific a
+  // single account. (That is, it does not capture a single account instance.)
+  protected Runnable requestSyncRunnable;
 
   public FxAccountStatusActivity() {
     super(CANNOT_RESUME_WHEN_NO_ACCOUNTS_EXIST);
@@ -83,6 +99,23 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity implement
     historyCheckBox.setOnClickListener(this);
     passwordsCheckBox.setOnClickListener(this);
     tabsCheckBox.setOnClickListener(this);
+
+    handler = new Handler(); // Attached to current (UI) thread.
+    // Runnable is not specific to one Firefox Account. This runnable will keep
+    // a reference to this activity alive, but we expect posted runnables to be
+    // serviced very quickly, so this is not an issue.
+    requestSyncRunnable = new Runnable() {
+      @Override
+      public void run() {
+        if (fxAccount == null) {
+          return;
+        }
+        Logger.info(LOG_TAG, "Requesting a sync sometime soon.");
+        // Request a sync, but not necessarily an immediate sync.
+        ContentResolver.requestSync(fxAccount.getAndroidAccount(), BrowserContract.AUTHORITY, Bundle.EMPTY);
+        // SyncAdapter.requestImmediateSync(fxAccount.getAndroidAccount(), null);
+      }
+    };
 
     if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
       createDebugButtons();
@@ -183,16 +216,21 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity implement
     Logger.info(LOG_TAG, "Persisting engine selections: " + engineSelections.toString());
 
     try {
-      // No GlobalSession.config, so store directly to prefs.
+      // No GlobalSession.config, so store directly to prefs. We'd like to do
+      // this on a background thread to avoid IO on the main thread and strict
+      // mode warnings, but all in good time.
       SyncConfiguration.storeSelectedEnginesToPrefs(fxAccount.getSyncPrefs(), engineSelections);
-      // Request a sync sometime soon.
-      ContentResolver.requestSync(fxAccount.getAndroidAccount(), BrowserContract.AUTHORITY, Bundle.EMPTY);
-      // Request immediate sync.
-      // SyncAdapter.requestImmediateSync(fxAccount.getAndroidAccount(), null);
+      requestDelayedSync();
     } catch (Exception e) {
       Logger.warn(LOG_TAG, "Got exception persisting selected engines; ignoring.", e);
       return;
     }
+  }
+
+  protected void requestDelayedSync() {
+    Logger.info(LOG_TAG, "Posting a delayed request for a sync sometime soon.");
+    handler.removeCallbacks(requestSyncRunnable);
+    handler.postDelayed(requestSyncRunnable, DELAY_IN_MILLISECONDS_BEFORE_REQUESTING_SYNC);
   }
 
   protected void createDebugButtons() {
