@@ -5,6 +5,7 @@
 package org.mozilla.gecko.fxa.activities;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -18,6 +19,7 @@ import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.ProgressDisplay;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.setup.Constants;
 
 import android.accounts.AccountManager;
@@ -200,11 +202,29 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     public final String email;
     public final PasswordStretcher passwordStretcher;
     public final String serverURI;
+    public final Map<String, Boolean> selectedEngines;
 
     public AddAccountDelegate(String email, PasswordStretcher passwordStretcher, String serverURI) {
+      this(email, passwordStretcher, serverURI, null);
+    }
+
+    public AddAccountDelegate(String email, PasswordStretcher passwordStretcher, String serverURI, Map<String, Boolean> selectedEngines) {
+      if (email == null) {
+        throw new IllegalArgumentException("email must not be null");
+      }
+      if (passwordStretcher == null) {
+        throw new IllegalArgumentException("passwordStretcher must not be null");
+      }
+      if (serverURI == null) {
+        throw new IllegalArgumentException("serverURI must not be null");
+      }
       this.email = email;
       this.passwordStretcher = passwordStretcher;
       this.serverURI = serverURI;
+      // selectedEngines can be null, which means don't write
+      // userSelectedEngines to prefs. This makes any created meta/global record
+      // have the default set of engines to sync.
+      this.selectedEngines = selectedEngines;
     }
 
     @Override
@@ -235,6 +255,11 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
             state);
         if (fxAccount == null) {
           throw new RuntimeException("Could not add Android account.");
+        }
+
+        if (selectedEngines != null) {
+          Logger.info(LOG_TAG, "User has selected engines; storing to prefs.");
+          SyncConfiguration.storeSelectedEnginesToPrefs(fxAccount.getSyncPrefs(), selectedEngines);
         }
       } catch (Exception e) {
         handleError(e);
