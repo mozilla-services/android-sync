@@ -43,6 +43,10 @@ public class PrunePolicyDatabaseStorage implements PrunePolicyStorage {
 
   public void pruneEnvironments(final int count) {
     getStorage().pruneEnvironments(count);
+
+    // Re-populate the environment cache.
+    this.currentEnvironmentID = -1;
+    getCurrentEnvironmentID();
   }
 
   /**
