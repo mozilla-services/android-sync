@@ -5,7 +5,9 @@
 package org.mozilla.gecko.fxa.activities;
 
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -32,7 +34,9 @@ import android.os.SystemClock;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -46,6 +50,9 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
   protected String[] yearItems;
   protected EditText yearEdit;
+  protected CheckBox chooseCheckBox;
+
+  protected Map<String, Boolean> selectedEngines;
 
   /**
    * {@inheritDoc}
@@ -73,12 +80,15 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     remoteErrorTextView = (TextView) ensureFindViewById(null, R.id.remote_error, "remote error text view");
     button = (Button) ensureFindViewById(null, R.id.button, "create account button");
     progressBar = (ProgressBar) ensureFindViewById(null, R.id.progress, "progress bar");
+    chooseCheckBox = (CheckBox) ensureFindViewById(null, R.id.choose_what_to_sync_checkbox, "choose what to sync check box");
+    selectedEngines = new HashMap<String, Boolean>();
 
     createCreateAccountButton();
     createYearEdit();
     addListeners();
     updateButtonState();
     createShowPasswordButton();
+    createChooseCheckBox();
 
     View signInInsteadLink = ensureFindViewById(null, R.id.sign_in_instead_link, "sign in instead link");
     signInInsteadLink.setOnClickListener(new OnClickListener() {
@@ -147,12 +157,12 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     });
   }
 
-  public void createAccount(String email, String password) {
+  public void createAccount(String email, String password, Map<String, Boolean> engines) {
     String serverURI = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
     PasswordStretcher passwordStretcher = new QuickPasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.
-    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI) {
+    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI, engines) {
       @Override
       public void handleError(Exception e) {
         showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
@@ -189,15 +199,101 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         }
         final String email = emailEdit.getText().toString();
         final String password = passwordEdit.getText().toString();
+        // Only include selected engines if the user currently has the option checked.
+        final Map<String, Boolean> engines = chooseCheckBox.isChecked()
+            ? selectedEngines
+            : null;
         if (FxAccountAgeLockoutHelper.passesAgeCheck(yearEdit.getText().toString(), yearItems)) {
           FxAccountConstants.pii(LOG_TAG, "Passed age check.");
-          createAccount(email, password);
+          createAccount(email, password, engines);
         } else {
           FxAccountConstants.pii(LOG_TAG, "Failed age check!");
           FxAccountAgeLockoutHelper.lockOut(SystemClock.elapsedRealtime());
           setResult(RESULT_CANCELED);
           redirectToActivity(FxAccountCreateAccountNotAllowedActivity.class);
         }
+      }
+    });
+  }
+
+  /**
+   * The "Choose what to sync" checkbox pops up a multi-choice dialog when it is
+   * unchecked. It toggles to unchecked from checked.
+   */
+  protected void createChooseCheckBox() {
+    final int NUMBER_OF_ENGINES = 4;
+    final String items[] = new String[NUMBER_OF_ENGINES];
+    final boolean checkedItems[] = new boolean[NUMBER_OF_ENGINES];
+    items[0] = getResources().getString(R.string.fxaccount_status_bookmarks);
+    items[1] = getResources().getString(R.string.fxaccount_status_history);
+    items[2] = getResources().getString(R.string.fxaccount_status_tabs);
+    items[3] = getResources().getString(R.string.fxaccount_status_passwords);
+    // Default to everything checked.
+    for (int i = 0; i < NUMBER_OF_ENGINES; i++) {
+      checkedItems[i] = true;
+    }
+
+    final DialogInterface.OnClickListener clickListener = new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        if (which != DialogInterface.BUTTON_POSITIVE) {
+          Logger.debug(LOG_TAG, "onClick: not button positive, unchecking.");
+          chooseCheckBox.setChecked(false);
+          return;
+        }
+        // We only check the box on success.
+        Logger.debug(LOG_TAG, "onClick: button positive, checking.");
+        chooseCheckBox.setChecked(true);
+        // And then remember for future use.
+        ListView selectionsList = ((AlertDialog) dialog).getListView();
+        for (int i = 0; i < NUMBER_OF_ENGINES; i++) {
+          checkedItems[i] = selectionsList.isItemChecked(i);
+        }
+        selectedEngines.put("bookmarks", checkedItems[0]);
+        selectedEngines.put("history", checkedItems[1]);
+        selectedEngines.put("tabs", checkedItems[2]);
+        selectedEngines.put("passwords", checkedItems[3]);
+        FxAccountConstants.pii(LOG_TAG, "Updating selectedEngines: " + selectedEngines.toString());
+      }
+    };
+
+    final DialogInterface.OnMultiChoiceClickListener multiChoiceClickListener = new DialogInterface.OnMultiChoiceClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+        // Display multi-selection clicks in UI.
+        ListView selectionsList = ((AlertDialog) dialog).getListView();
+        selectionsList.setItemChecked(which, isChecked);
+      }
+    };
+
+    final AlertDialog dialog = new AlertDialog.Builder(this)
+        .setTitle(R.string.fxaccount_create_account_choose_what_to_sync)
+        .setIcon(R.drawable.icon)
+        .setMultiChoiceItems(items, checkedItems, multiChoiceClickListener)
+        .setPositiveButton(android.R.string.ok, clickListener)
+        .setNegativeButton(android.R.string.cancel, clickListener)
+        .create();
+
+    dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+      @Override
+      public void onCancel(DialogInterface dialog) {
+        Logger.debug(LOG_TAG, "onCancel: unchecking.");
+        chooseCheckBox.setChecked(false);
+      }
+    });
+
+    chooseCheckBox.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        // There appears to be no way to stop Android interpreting the click
+        // first. So, if the user clicked on an unchecked box, it's checked by
+        // the time we get here.
+        if (!chooseCheckBox.isChecked()) {
+          Logger.debug(LOG_TAG, "onClick: was checked, not showing dialog.");
+          return;
+        }
+        Logger.debug(LOG_TAG, "onClick: was unchecked, showing dialog.");
+        dialog.show();
       }
     });
   }
