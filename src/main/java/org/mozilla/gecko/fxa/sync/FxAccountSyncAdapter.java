@@ -219,7 +219,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
   protected void syncWithAssertion(final String audience,
                                    final String assertion,
                                    URI tokenServerEndpointURI,
-                                   final String prefsPath,
                                    final SharedPreferences sharedPrefs,
                                    final KeyBundle syncKeyBundle,
                                    final String clientState,
@@ -310,7 +309,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     Logger.resetLogging();
 
     Logger.info(LOG_TAG, "Syncing FxAccount" +
-        " account named " + account.name +
+        " account named like " + Utils.obfuscateEmail(account.name) +
         " for authority " + authority +
         " with instance " + this + ".");
 
@@ -332,10 +331,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         return;
       }
 
-      final String prefsPath = fxAccount.getSyncPrefsPath();
-
       // This will be the same chunk of SharedPreferences that GlobalSession/SyncConfiguration will later create.
-      final SharedPreferences sharedPrefs = context.getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
+      final SharedPreferences sharedPrefs = fxAccount.getSyncPrefs();
 
       final String audience = fxAccount.getAudience();
       final String authServerEndpoint = fxAccount.getAccountServerURI();
@@ -389,7 +386,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
                 now + skewHandler.getSkewInMillis(),
                 this.getAssertionDurationInMilliseconds());
             final BaseGlobalSessionCallback sessionCallback = new SessionCallback(syncDelegate);
-            syncWithAssertion(audience, assertion, tokenServerEndpointURI, prefsPath, sharedPrefs, married.getSyncKeyBundle(), married.getClientState(), sessionCallback);
+            syncWithAssertion(audience, assertion, tokenServerEndpointURI, sharedPrefs, married.getSyncKeyBundle(), married.getClientState(), sessionCallback);
           } catch (Exception e) {
             syncDelegate.handleError(e);
             return;
