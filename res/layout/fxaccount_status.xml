@@ -96,14 +96,14 @@
             android:text="@string/fxaccount_status_history" />
 
         <CheckBox
-            android:id="@+id/passwords_checkbox"
-            style="@style/FxAccountCheckBox"
-            android:text="@string/fxaccount_status_passwords" />
-
-        <CheckBox
             android:id="@+id/tabs_checkbox"
             style="@style/FxAccountCheckBox"
             android:text="@string/fxaccount_status_tabs" />
+
+        <CheckBox
+            android:id="@+id/passwords_checkbox"
+            style="@style/FxAccountCheckBox"
+            android:text="@string/fxaccount_status_passwords" />
 
         <TextView
             style="@style/FxAccountHeaderItem"
