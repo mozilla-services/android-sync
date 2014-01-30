@@ -143,27 +143,38 @@ public class FxAccountStatusActivity extends FxAccountAbstractActivity implement
     refresh();
   }
 
+  protected void setCheckboxesEnabled(boolean enabled) {
+    bookmarksCheckBox.setEnabled(enabled);
+    historyCheckBox.setEnabled(enabled);
+    passwordsCheckBox.setEnabled(enabled);
+    tabsCheckBox.setEnabled(enabled);
+  }
+
   protected void showNeedsUpgrade() {
     syncStatusTextView.setText(R.string.fxaccount_status_sync);
     connectionStatusViewFlipper.setVisibility(View.VISIBLE);
     connectionStatusViewFlipper.setDisplayedChild(0);
+    setCheckboxesEnabled(false);
   }
 
   protected void showNeedsPassword() {
     syncStatusTextView.setText(R.string.fxaccount_status_sync);
     connectionStatusViewFlipper.setVisibility(View.VISIBLE);
     connectionStatusViewFlipper.setDisplayedChild(1);
+    setCheckboxesEnabled(false);
   }
 
   protected void showNeedsVerification() {
     syncStatusTextView.setText(R.string.fxaccount_status_sync);
     connectionStatusViewFlipper.setVisibility(View.VISIBLE);
     connectionStatusViewFlipper.setDisplayedChild(2);
+    setCheckboxesEnabled(false);
   }
 
   protected void showConnected() {
     syncStatusTextView.setText(R.string.fxaccount_status_sync_enabled);
     connectionStatusViewFlipper.setVisibility(View.GONE);
+    setCheckboxesEnabled(true);
   }
 
   protected void refresh() {
