@@ -9,14 +9,21 @@ import static org.junit.Assert.fail;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.Executors;
+
+import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.common.log.writers.StringLogWriter;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BrowserIDAuthHeaderProvider;
 import org.mozilla.gecko.tokenserver.TokenServerClient;
+import org.mozilla.gecko.tokenserver.TokenServerClientDelegate;
 import org.mozilla.gecko.tokenserver.TokenServerException;
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerConditionsRequiredException;
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerInvalidCredentialsException;
@@ -27,6 +34,8 @@ import org.mozilla.gecko.tokenserver.TokenServerToken;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
+import ch.boye.httpclientandroidlib.client.methods.HttpGet;
+import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
@@ -169,5 +178,49 @@ public class TestTokenServerClient {
     token = new ExtendedJSONObject(TEST_TOKEN_RESPONSE);
     token.put("uid", "NON NUMERIC");
     expectProcessResponseFailure(token, TokenServerMalformedResponseException.class);
+  }
+
+  private class MockBaseResource extends BaseResource {
+    public MockBaseResource(String uri) throws URISyntaxException {
+      super(uri);
+      this.request = new HttpGet(this.uri);
+    }
+
+    public HttpRequestBase prepareHeadersAndReturn() throws Exception {
+      super.prepareClient();
+      return request;
+    }
+  }
+
+  @Test
+  public void testClientStateHeader() throws Exception {
+    String assertion = "assertion";
+    String clientState = "abcdef";
+    MockBaseResource resource = new MockBaseResource("http://unused.local/");
+
+    TokenServerClientDelegate delegate = new TokenServerClientDelegate() {
+      @Override
+      public void handleSuccess(TokenServerToken token) {
+      }
+
+      @Override
+      public void handleFailure(TokenServerException e) {
+      }
+
+      @Override
+      public void handleError(Exception e) {
+      }
+    };
+
+    resource.delegate = new TokenServerClient.TokenFetchResourceDelegate(client, resource, delegate, assertion, clientState , true) {
+      @Override
+      public AuthHeaderProvider getAuthHeaderProvider() {
+        return null;
+      }
+    };
+
+    HttpRequestBase request = resource.prepareHeadersAndReturn();
+    Assert.assertEquals("abcdef", request.getFirstHeader("X-Client-State").getValue());
+    Assert.assertEquals("1", request.getFirstHeader("X-Conditions-Accepted").getValue());
   }
 }
