@@ -55,9 +55,73 @@ public class TestLiveTokenServerClient {
     BaseResource.rewriteLocalhost = true;
   }
 
+  // Randomized username to avoid server state messing with our flow.
+  protected String getTestUsername() {
+    return TEST_USERNAME + System.currentTimeMillis();
+  }
+
+  @Test
+  public void testTokenServerAllocationConsistency() throws Exception {
+    final String stateOne = "abcdefabcdefabcdefabcdefabcdefab";
+    final String stateTwo = "ddddefabcdefabcdefabcdefabcdefab";
+
+    final String assertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, getTestUsername(), TEST_REMOTE_AUDIENCE);
+
+    String endpointOne = getEndpoint(assertion, stateOne);
+    String endpointTwo = getEndpoint(assertion, stateTwo);
+    Assert.assertNotNull(endpointOne);
+    Assert.assertNotNull(endpointTwo);
+    Assert.assertEquals(endpointTwo, getEndpoint(assertion, stateTwo));
+    Assert.assertNotEquals(endpointOne, endpointTwo);
+    boolean failed = false;
+    try {
+      String fail = getEndpoint(assertion, stateOne);
+      failed = false;
+    } catch (Throwable e) {
+      // Don't bother unpacking the exception, but we expect this to consistently fail due to invalid-client-state.
+      failed = true;
+    }
+    Assert.assertTrue(failed);
+  }
+
+  private abstract class StringReturningRunnable implements Runnable {
+    public String returnValue = null;
+  }
+
+  private String getEndpoint(final String assertion, final String state) {
+    StringReturningRunnable runnable = new StringReturningRunnable() {
+      @Override
+      public void run() {
+        client.getTokenFromBrowserIDAssertion(assertion, true, state, new TokenServerClientDelegate() {
+          @Override
+          public void handleSuccess(TokenServerToken token) {
+            try {
+              returnValue = token.endpoint;
+              WaitHelper.getTestWaiter().performNotify();
+            } catch (Throwable t) {
+              WaitHelper.getTestWaiter().performNotify(t);
+            }
+          }
+
+          @Override
+          public void handleFailure(TokenServerException e) {
+            WaitHelper.getTestWaiter().performNotify(e);
+          }
+
+          @Override
+          public void handleError(Exception e) {
+            WaitHelper.getTestWaiter().performNotify(e);
+          }
+        });
+      }
+    };
+    WaitHelper.getTestWaiter().performWait(runnable);
+    return runnable.returnValue;
+  }
+
   @Test
   public void testRemoteSuccess() throws Exception {
-    final String assertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_REMOTE_AUDIENCE);
+    final String assertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, getTestUsername(), TEST_REMOTE_AUDIENCE);
     final String mockClientState = null;
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
@@ -92,7 +156,7 @@ public class TestLiveTokenServerClient {
 
   @Test
   public void testRemoteFailure() throws Exception {
-    final String badAssertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_REMOTE_AUDIENCE,
+    final String badAssertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, getTestUsername(), TEST_REMOTE_AUDIENCE,
         0, 1,
         System.currentTimeMillis(), JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
     final String mockClientState = "abcdefabcdefabcdefabcdefabcdefab";
