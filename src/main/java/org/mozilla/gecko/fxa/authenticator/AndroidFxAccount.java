@@ -22,6 +22,7 @@ import org.mozilla.gecko.sync.Utils;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 /**
@@ -239,6 +240,10 @@ public class AndroidFxAccount {
     return Utils.getPrefsPath(product, username, serverURLThing, profile, version);
   }
 
+  public SharedPreferences getSyncPrefs() throws UnsupportedEncodingException, GeneralSecurityException {
+    return context.getSharedPreferences(getSyncPrefsPath(), Utils.SHARED_PREFERENCES_MODE);
+  }
+
   /**
    * Extract a JSON dictionary of the string values associated to this account.
    * <p>
@@ -315,7 +320,7 @@ public class AndroidFxAccount {
   }
 
   public void clearSyncPrefs() throws UnsupportedEncodingException, GeneralSecurityException {
-    context.getSharedPreferences(getSyncPrefsPath(), Utils.SHARED_PREFERENCES_MODE).edit().clear().commit();
+    getSyncPrefs().edit().clear().commit();
   }
 
   public void enableSyncing() {
@@ -365,5 +370,17 @@ public class AndroidFxAccount {
     for (String key : list) {
       FxAccountConstants.pii(LOG_TAG, key + ": " + o.get(key));
     }
+  }
+
+  /**
+   * Return the Firefox Account's local email address.
+   * <p>
+   * It is important to note that this is the local email address, and not
+   * necessarily the normalized remote email address that the server expects.
+   *
+   * @return local email address.
+   */
+  public String getEmail() {
+    return account.name;
   }
 }

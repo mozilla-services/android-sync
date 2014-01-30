@@ -64,6 +64,7 @@ public class TestFxAccountLoginStateMachine {
       Assert.assertArrayEquals(string.split(", "), toString().split(", "));
     }
 
+    @Override
     public String toString() {
       final LinkedList<State> states = new LinkedList<State>(this.states);
       final LinkedList<Transition> transitions = new LinkedList<Transition>(this.transitions);
@@ -147,6 +148,13 @@ public class TestFxAccountLoginStateMachine {
     client.addUser(TEST_EMAIL, TEST_QUICK_STRETCHED_PW, false, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN);
     Trace trace = trace(new Engaged(TEST_EMAIL, "uid", true, TEST_UNWRAPKB, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN), StateLabel.Married);
     trace.assertEquals("[Engaged, >AccountNeedsVerification, Engaged]");
+  }
+
+  @Test
+  public void testEngagedTransitionToAccountVerified() throws Exception {
+    client.addUser(TEST_EMAIL, TEST_QUICK_STRETCHED_PW, true, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN);
+    Trace trace = trace(new Engaged(TEST_EMAIL, "uid", false, TEST_UNWRAPKB, TEST_SESSION_TOKEN, TEST_KEY_FETCH_TOKEN), StateLabel.Married);
+    trace.assertEquals("[Engaged, >AccountVerified, Cohabiting, >LogMessage('sign succeeded'), Married]");
   }
 
   @Test
