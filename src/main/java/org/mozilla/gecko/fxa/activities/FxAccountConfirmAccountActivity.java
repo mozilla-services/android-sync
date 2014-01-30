@@ -40,7 +40,6 @@ public class FxAccountConfirmAccountActivity extends FxAccountAbstractActivity i
 
   // Set in onResume.
   protected AndroidFxAccount fxAccount;
-  protected byte[] sessionToken;
 
   public FxAccountConfirmAccountActivity() {
     super(CANNOT_RESUME_WHEN_NO_ACCOUNTS_EXIST);
@@ -90,8 +89,7 @@ public class FxAccountConfirmAccountActivity extends FxAccountAbstractActivity i
     final String text = getResources().getString(R.string.fxaccount_confirm_account_verification_link, email);
     verificationLinkTextView.setText(text);
 
-    sessionToken = ((Engaged) state).getSessionToken();
-    boolean resendLinkShouldBeEnabled = sessionToken != null;
+    boolean resendLinkShouldBeEnabled = ((Engaged) state).getSessionToken() != null;
     resendLink.setEnabled(resendLinkShouldBeEnabled);
     resendLink.setClickable(resendLinkShouldBeEnabled);
   }
@@ -120,11 +118,17 @@ public class FxAccountConfirmAccountActivity extends FxAccountAbstractActivity i
     }
   }
 
-  protected class ResendCodeDelegate implements RequestDelegate<Void> {
+  protected static class ResendCodeDelegate implements RequestDelegate<Void> {
+    public final Context context;
+
+    public ResendCodeDelegate(Context context) {
+      this.context = context;
+    }
+
     @Override
     public void handleError(Exception e) {
       Logger.warn(LOG_TAG, "Got exception requesting fresh confirmation link; ignoring.", e);
-      Toast.makeText(getApplicationContext(), R.string.fxaccount_confirm_account_verification_link_not_sent, Toast.LENGTH_LONG).show();
+      Toast.makeText(context, R.string.fxaccount_confirm_account_verification_link_not_sent, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -134,19 +138,32 @@ public class FxAccountConfirmAccountActivity extends FxAccountAbstractActivity i
 
     @Override
     public void handleSuccess(Void result) {
-      Toast.makeText(getApplicationContext(), R.string.fxaccount_confirm_account_verification_link_sent, Toast.LENGTH_SHORT).show();
+      Toast.makeText(context, R.string.fxaccount_confirm_account_verification_link_sent, Toast.LENGTH_SHORT).show();
     }
   }
 
-  protected void resendCode(byte[] sessionToken) {
-    RequestDelegate<Void> delegate = new ResendCodeDelegate();
+  public static void resendCode(Context context, AndroidFxAccount fxAccount) {
+    RequestDelegate<Void> delegate = new ResendCodeDelegate(context);
+
+    byte[] sessionToken;
+    try {
+      sessionToken = ((Engaged) fxAccount.getState()).getSessionToken();
+    } catch (Exception e) {
+      delegate.handleError(e);
+      return;
+    }
+    if (sessionToken == null) {
+      delegate.handleError(new IllegalStateException("sessionToken should not be null"));
+      return;
+    }
+
     Executor executor = Executors.newSingleThreadExecutor();
     FxAccountClient client = new FxAccountClient20(fxAccount.getAccountServerURI(), executor);
-    new FxAccountResendCodeTask(this, sessionToken, client, delegate).execute();
+    new FxAccountResendCodeTask(context, sessionToken, client, delegate).execute();
   }
 
   @Override
   public void onClick(View v) {
-    resendCode(sessionToken);
+    resendCode(this, fxAccount);
   }
 }
