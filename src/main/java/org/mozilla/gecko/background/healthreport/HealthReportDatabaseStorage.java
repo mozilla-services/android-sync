@@ -1530,7 +1530,6 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
       db.delete("measurements", null, null);
 
       // Clear measurements and fields cache, because some of their IDs are now invalid.
-      // TODO: Probably don't want to do these db reads in the transaction.
       invalidateFieldsCache(); // Let it repopulate on its own.
       populateMeasurementVersionsCache(db); // Performed at Storage init so repopulate now.
 
