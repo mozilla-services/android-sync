@@ -132,6 +132,11 @@
 <!ENTITY fxaccount_password_hide 'Hide'>
 <!ENTITY fxaccount_password_show 'Show'>
 
+<!-- Localization note: these are shown in screens after the user has
+     created or signed in to an account, and take the user back to
+     Firefox. -->
+<!ENTITY fxaccount_back_to_browsing 'Back to browsing'>
+
 <!ENTITY fxaccount_policy_linktos 'Terms of Service'>
 <!ENTITY fxaccount_policy_linkprivacy 'Privacy Notice'>
 

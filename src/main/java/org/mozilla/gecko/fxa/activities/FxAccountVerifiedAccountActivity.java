@@ -8,8 +8,11 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
 import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
 
 /**
  * Activity which displays "Account verified" success screen.
@@ -51,5 +54,13 @@ public class FxAccountVerifiedAccountActivity extends FxAccountAbstractActivity 
       finish();
       return;
     }
+
+    View backToBrowsingButton = ensureFindViewById(null, R.id.button, "back to browsing button");
+    backToBrowsingButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        ActivityUtils.openURLInFennec(v.getContext(), null);
+      }
+    });
   }
 }

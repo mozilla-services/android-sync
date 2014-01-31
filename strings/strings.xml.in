@@ -120,6 +120,8 @@
 <string name="fxaccount_password_hide">&fxaccount_password_hide;</string>
 <string name="fxaccount_password_show">&fxaccount_password_show;</string>
 
+<string name="fxaccount_back_to_browsing">&fxaccount_back_to_browsing;</string>
+
 <string name="fxaccount_policy_linktos">&fxaccount_policy_linktos;</string>
 <string name="fxaccount_policy_linkprivacy">&fxaccount_policy_linkprivacy;</string>
 
