@@ -99,7 +99,6 @@
   <string name="sync_text_tab_not_sent">&sync.text.tab.not.sent.label;</string>
 
 <!-- Firefox Account strings. -->
-<string name="firefox_accounts">&firefox_accounts;</string>
 <string name="firefox_account">&firefox_account;</string>
 
 <!-- Firefox Account links. -->

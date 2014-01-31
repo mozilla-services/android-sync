@@ -109,9 +109,6 @@
 
 <!-- Firefox Account strings -->
 
-<!-- Localization note: this is the brand title, shown at the top of most screens. -->
-<!ENTITY firefox_accounts 'Firefox Accounts'>
-
 <!-- Localization note: this refers to a single Firefox Account, shown
      at the top of the account status activity. That activity allows
      to configure the current Firefox Account. -->
