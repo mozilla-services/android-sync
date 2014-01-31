@@ -127,14 +127,24 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     this.finish();
   }
 
-  protected void createYearEdit() {
+  /**
+   * Return years to display in picker.
+   *
+   * @return 1990 or earlier, 1991, 1992, up to five years before current year.
+   *         (So, if it is currently 2014, up to 2009.)
+   */
+  protected String[] getYearItems() {
     int year = Calendar.getInstance().get(Calendar.YEAR);
     LinkedList<String> years = new LinkedList<String>();
-    for (int i = year - 5; i >= 1951; i--) {
+    years.add(getResources().getString(R.string.fxaccount_create_account_1990_or_earlier));
+    for (int i = 1991; i <= year - 5; i++) {
       years.add(Integer.toString(i));
     }
-    years.add(getResources().getString(R.string.fxaccount_create_account_1950_or_earlier));
-    yearItems = years.toArray(new String[0]);
+    return years.toArray(new String[0]);
+  }
+
+  protected void createYearEdit() {
+    yearItems = getYearItems();
 
     yearEdit.setOnClickListener(new OnClickListener() {
       @Override
