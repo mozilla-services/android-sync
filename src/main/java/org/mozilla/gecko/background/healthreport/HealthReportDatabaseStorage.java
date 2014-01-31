@@ -1540,7 +1540,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
 
   /**
    * Prunes the given number of least-recently used environments. Note that orphaned environments
-   * are not removed.
+   * are not removed and the environment cache is cleared.
    */
   public void pruneEnvironments(final int numToPrune) {
     final SQLiteDatabase db = this.helper.getWritableDatabase();
