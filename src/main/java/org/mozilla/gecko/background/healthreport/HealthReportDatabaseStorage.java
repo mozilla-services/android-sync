@@ -855,6 +855,12 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   private HashMap<String, Field> fields = new HashMap<String, Field>();
   private boolean fieldsCacheUpdated = false;
 
+  private void invalidateFieldsCache() {
+    synchronized (this.fields) {
+      fieldsCacheUpdated = true;
+    }
+  }
+
   private String getFieldKey(String mName, int mVersion, String fieldName) {
     return mVersion + "." + mName + "/" + fieldName;
   }
@@ -1014,9 +1020,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
     notifyMeasurementVersionUpdated(measurement, version);
 
     // Let's be easy for now.
-    synchronized (fields) {
-      fieldsCacheUpdated = false;
-    }
+    invalidateFieldsCache();
   }
 
   /**
