@@ -167,8 +167,8 @@
 <!-- Localization note: &formatS; is the Firefox Account's email address. -->
 <!ENTITY fxaccount_confirm_account_verification_link 'A verification link has been sent to &formatS;'>
 <!ENTITY fxaccount_confirm_account_resend_email 'Resend email'>
-<!ENTITY fxaccount_confirm_account_verification_link_sent 'Sent fresh verification link'>
-<!ENTITY fxaccount_confirm_account_verification_link_not_sent 'Couldn\&apos;t send a fresh verification link'>
+<!ENTITY fxaccount_confirm_account_verification_link_sent2 'Verification email sent'>
+<!ENTITY fxaccount_confirm_account_verification_link_not_sent2 'Couldn\&apos;t send verification email'>
 
 <!ENTITY fxaccount_sign_in_sub_header 'Sign in'>
 <!ENTITY fxaccount_sign_in_button_label 'Sign in'>
@@ -185,7 +185,7 @@
 
 <!ENTITY fxaccount_status_sync '&syncBrand.shortName.label;'>
 <!ENTITY fxaccount_status_sync_enabled '&syncBrand.shortName.label;: enabled'>
-<!ENTITY fxaccount_status_needs_verification 'Your account needs to be verified. Tap to verify.'>
+<!ENTITY fxaccount_status_needs_verification2 'Your account needs to be verified. Tap to resend verification email.'>
 <!ENTITY fxaccount_status_needs_credentials 'Cannot connect. Tap to sign in.'>
 <!ENTITY fxaccount_status_needs_upgrade 'You need to upgrade &brandShortName; to sign in.'>
 <!ENTITY fxaccount_status_bookmarks 'Bookmarks'>
@@ -219,7 +219,7 @@
 <!ENTITY fxaccount_remote_error_UNKNOWN_ERROR 'There was a problem'>
 <!ENTITY fxaccount_remote_error_COULD_NOT_CONNECT 'Cannot connect to network'>
 
-<!ENTITY fxaccount_sync_sign_in_error_notification_title '&syncBrand.fullName.label; is not connected'>
+<!ENTITY fxaccount_sync_sign_in_error_notification_title2 '&syncBrand.shortName.label; is not connected'>
 <!-- Note to translators: the format string below will be replaced
      with the Firefox Account's email address. -->
-<!ENTITY fxaccount_sync_sign_in_error_notification_text 'Tap to sign in to &formatS;'>
+<!ENTITY fxaccount_sync_sign_in_error_notification_text2 'Tap to sign in as &formatS;'>

@@ -148,8 +148,8 @@
 <string name="fxaccount_confirm_account_header">&fxaccount_confirm_account_header;</string>
 <string name="fxaccount_confirm_account_verification_link">&fxaccount_confirm_account_verification_link;</string>
 <string name="fxaccount_confirm_account_resend_email">&fxaccount_confirm_account_resend_email;</string>
-<string name="fxaccount_confirm_account_verification_link_sent">&fxaccount_confirm_account_verification_link_sent;</string>
-<string name="fxaccount_confirm_account_verification_link_not_sent">&fxaccount_confirm_account_verification_link_not_sent;</string>
+<string name="fxaccount_confirm_account_verification_link_sent">&fxaccount_confirm_account_verification_link_sent2;</string>
+<string name="fxaccount_confirm_account_verification_link_not_sent">&fxaccount_confirm_account_verification_link_not_sent2;</string>
 
 <string name="fxaccount_sign_in_sub_header">&fxaccount_sign_in_sub_header;</string>
 <string name="fxaccount_sign_in_button_label">&fxaccount_sign_in_button_label;</string>
@@ -166,7 +166,7 @@
 
 <string name="fxaccount_status_sync">&fxaccount_status_sync;</string>
 <string name="fxaccount_status_sync_enabled">&fxaccount_status_sync_enabled;</string>
-<string name="fxaccount_status_needs_verification">&fxaccount_status_needs_verification;</string>
+<string name="fxaccount_status_needs_verification">&fxaccount_status_needs_verification2;</string>
 <string name="fxaccount_status_needs_credentials">&fxaccount_status_needs_credentials;</string>
 <string name="fxaccount_status_needs_upgrade">&fxaccount_status_needs_upgrade;</string>
 <string name="fxaccount_status_bookmarks">&fxaccount_status_bookmarks;</string>
@@ -190,5 +190,5 @@
 <string name="fxaccount_remote_error_UNKNOWN_ERROR">&fxaccount_remote_error_UNKNOWN_ERROR;</string>
 <string name="fxaccount_remote_error_COULD_NOT_CONNECT">&fxaccount_remote_error_COULD_NOT_CONNECT;</string>
 
-<string name="fxaccount_sync_sign_in_error_notification_title">&fxaccount_sync_sign_in_error_notification_title;</string>
-<string name="fxaccount_sync_sign_in_error_notification_text">&fxaccount_sync_sign_in_error_notification_text;</string>
+<string name="fxaccount_sync_sign_in_error_notification_title">&fxaccount_sync_sign_in_error_notification_title2;</string>
+<string name="fxaccount_sync_sign_in_error_notification_text">&fxaccount_sync_sign_in_error_notification_text2;</string>
