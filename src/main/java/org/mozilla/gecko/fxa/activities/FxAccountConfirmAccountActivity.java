@@ -14,12 +14,10 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
-import org.mozilla.gecko.fxa.authenticator.FxAccountAuthenticator;
 import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 
-import android.accounts.Account;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
@@ -63,16 +61,9 @@ public class FxAccountConfirmAccountActivity extends FxAccountAbstractActivity i
   @Override
   public void onResume() {
     super.onResume();
-    Account accounts[] = FxAccountAuthenticator.getFirefoxAccounts(this);
-    if (accounts.length < 1 || accounts[0] == null) {
-      Logger.warn(LOG_TAG, "No Android accounts.");
-      setResult(RESULT_CANCELED);
-      finish();
-      return;
-    }
-    this.fxAccount = new AndroidFxAccount(this, accounts[0]);
+    this.fxAccount = getAndroidFxAccount();
     if (fxAccount == null) {
-      Logger.warn(LOG_TAG, "Could not get Firefox Account from Android account.");
+      Logger.warn(LOG_TAG, "Could not get Firefox Account.");
       setResult(RESULT_CANCELED);
       finish();
       return;
