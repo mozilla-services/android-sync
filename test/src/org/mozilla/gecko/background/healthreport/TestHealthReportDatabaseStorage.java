@@ -565,7 +565,10 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
         new PrepopulatedMockHealthReportDatabaseStorage(context, fakeProfileDirectory, 2);
     final SQLiteDatabase db = storage.getDB();
     assertEquals(5, DBHelpers.getRowCount(db, "environments"));
+    assertEquals(5, storage.getEnvironmentCache().size());
+
     storage.pruneEnvironments(1);
+    assertEquals(0, storage.getEnvironmentCache().size());
     assertTrue(!getEnvAppVersions(db).contains("v3"));
     storage.pruneEnvironments(2);
     assertTrue(!getEnvAppVersions(db).contains("v2"));

@@ -552,7 +552,9 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
   // store differently stable kinds of data, hence type difference.
   // Note that we don't pre-populate the environment cache. We'll typically only
   // handle one per session.
-  private final ConcurrentHashMap<String, Integer> envs = new ConcurrentHashMap<String, Integer>();
+  //
+  // protected for testing purposes only.
+  protected final ConcurrentHashMap<String, Integer> envs = new ConcurrentHashMap<String, Integer>();
 
   /**
    * An {@link Environment} that knows how to persist to and from our database.
