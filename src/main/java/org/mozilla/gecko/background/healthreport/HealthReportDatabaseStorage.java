@@ -1152,10 +1152,16 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
 
     final SQLiteDatabase db = this.helper.getWritableDatabase();
     putValue(v, value);
-    try {
-      db.insertOrThrow(table, null, v);
-    } catch (SQLiteConstraintException e) {
-      throw new IllegalStateException("Event did not reference existing an environment or field.", e);
+
+    // Using SQLiteDatabase.insertOrThrow throws SQLiteConstraintException we cannot catch for
+    // unknown reasons (bug 961526 comment 13). We believe these are thrown because we attempt to
+    // record events using environment IDs removed from the database by the prune service. We
+    // invalidate the currentEnvironment ID after pruning, preventing further propagation,
+    // however, any event recording waiting for the prune service to complete on the background
+    // thread may carry an invalid ID: we expect an insertion failure and drop these events here.
+    final long res = db.insert(table, null, v);
+    if (res == -1) {
+      Logger.error(LOG_TAG, "Unable to record daily discrete event. Ignoring.");
     }
   }
 
