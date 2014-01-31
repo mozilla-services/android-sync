@@ -91,16 +91,13 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
       return;
     }
 
+    this.setResult(requestCode, data);
     if (data != null) {
       this.setAccountAuthenticatorResult(data.getExtras());
-    }
 
-    this.setResult(requestCode, data);
-
-    // We want to drop ourselves off the back stack if the user successfully
-    // created or signed in to an account. We can easily determine this by
-    // checking for the presence of response data.
-    if (data != null) {
+      // We want to drop ourselves off the back stack if the user successfully
+      // created or signed in to an account. We can easily determine this by
+      // checking for the presence of response data.
       this.finish();
     }
   }
