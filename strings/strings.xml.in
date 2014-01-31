@@ -128,7 +128,7 @@
 <string name="fxaccount_getting_started_get_started">&fxaccount_getting_started_get_started;</string>
 <string name="fxaccount_getting_started_old_firefox">&fxaccount_getting_started_old_firefox;</string>
 
-<string name="fxaccount_create_account_sub_header">&fxaccount_create_account_sub_header;</string>
+<string name="fxaccount_create_account_header">&fxaccount_create_account_header;</string>
 <string name="fxaccount_create_account_password_length_restriction">&fxaccount_create_account_password_length_restriction;</string>
 <string name="fxaccount_create_account_year_of_birth">&fxaccount_create_account_year_of_birth;</string>
 
@@ -158,7 +158,7 @@
 <string name="fxaccount_account_verified_sub_header">&fxaccount_account_verified_sub_header;</string>
 <string name="fxaccount_account_verified_description">&fxaccount_account_verified_description;</string>
 
-<string name="fxaccount_update_credentials_sub_header">&fxaccount_update_credentials_sub_header;</string>
+<string name="fxaccount_update_credentials_header">&fxaccount_update_credentials_header;</string>
 <string name="fxaccount_update_credentials_button_label">&fxaccount_update_credentials_button_label;</string>
 <string name="fxaccount_update_credentials_unknown_error">&fxaccount_update_credentials_unknown_error;</string>
 
