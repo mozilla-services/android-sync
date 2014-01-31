@@ -14,7 +14,7 @@
         <LinearLayout style="@style/FxAccountSpacer" />
 
         <TextView
-            style="@style/FxAccountSubHeaderItem"
+            style="@style/FxAccountHeaderItem"
             android:text="@string/fxaccount_confirm_account_header" >
         </TextView>
 

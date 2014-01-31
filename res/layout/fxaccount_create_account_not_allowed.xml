@@ -16,7 +16,7 @@
         <LinearLayout style="@style/FxAccountSpacer" />
 
         <TextView
-            style="@style/FxAccountSubHeaderItem"
+            style="@style/FxAccountHeaderItem"
             android:text="@string/fxaccount_account_create_not_allowed" >
         </TextView>
 

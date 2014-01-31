@@ -12,7 +12,7 @@
     <LinearLayout style="@style/FxAccountMiddle" >
 
         <TextView
-            style="@style/FxAccountSubHeaderItem"
+            style="@style/FxAccountHeaderItem"
             android:text="@string/fxaccount_account_verified_sub_header" >
         </TextView>
 
