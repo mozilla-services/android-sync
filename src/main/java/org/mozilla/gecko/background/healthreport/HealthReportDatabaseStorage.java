@@ -857,7 +857,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
 
   private void invalidateFieldsCache() {
     synchronized (this.fields) {
-      fieldsCacheUpdated = true;
+      fieldsCacheUpdated = false;
     }
   }
 
