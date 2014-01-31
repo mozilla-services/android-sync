@@ -327,10 +327,6 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
       fail("Should throw - event_integer(env) references environments(id), which is given as a non-existent value.");
     } catch (IllegalStateException e) { }
     try {
-      storage.recordDailyDiscrete(nonExistentEnvID, storage.getToday(), discreteFieldID, "iu");
-      fail("Should throw - event_textual(env) references environments(id), which is given as a non-existent value.");
-    } catch (IllegalStateException e) { }
-    try {
       storage.recordDailyLast(nonExistentEnvID, storage.getToday(), discreteFieldID, "iu");
       fail("Should throw - event_textual(env) references environments(id), which is given as a non-existent value.");
     } catch (IllegalStateException e) { }
@@ -340,13 +336,29 @@ public class TestHealthReportDatabaseStorage extends FakeProfileTestCase {
       fail("Should throw - event_integer(field) references fields(id), which is given as a non-existent value.");
     } catch (IllegalStateException e) { }
     try {
-      storage.recordDailyDiscrete(envID, storage.getToday(), nonExistentFieldID, "iu");
-      fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
-    } catch (IllegalStateException e) { }
-    try {
       storage.recordDailyLast(envID, storage.getToday(), nonExistentFieldID, "iu");
       fail("Should throw - event_textual(field) references fields(id), which is given as a non-existent value.");
     } catch (IllegalStateException e) { }
+
+    // Test dropped events due to constraint violations that do not throw (see bug 961526).
+    final String eventValue = "a value not in the database";
+    assertFalse(isEventInDB(db, eventValue)); // Better safe than sorry.
+
+    storage.recordDailyDiscrete(nonExistentEnvID, storage.getToday(), discreteFieldID, eventValue);
+    assertFalse(isEventInDB(db, eventValue));
+
+    storage.recordDailyDiscrete(envID, storage.getToday(), nonExistentFieldID, "iu");
+    assertFalse(isEventInDB(db, eventValue));
+  }
+
+  private static boolean isEventInDB(final SQLiteDatabase db, final String value) {
+    final Cursor c = db.query("events_textual", new String[] {"value"}, "value = ?",
+        new String[] {value}, null, null, null);
+    try {
+      return c.getCount() > 0;
+    } finally {
+      c.close();
+    }
   }
 
   // Largely taken from testDeleteEnvAndEventsBefore and testDeleteOrphanedAddons.
