@@ -98,7 +98,9 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     signInInsteadLink.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        FxAccountCreateAccountActivity.this.doSigninInstead(null);
+        final String email = emailEdit.getText().toString();
+        final String password = passwordEdit.getText().toString();
+        doSigninInstead(email, password);
       }
     });
 
@@ -110,15 +112,14 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     }
   }
 
-  protected void doSigninInstead(final String optionalEmail) {
+  protected void doSigninInstead(final String email, final String password) {
     Intent intent = new Intent(this, FxAccountSignInActivity.class);
-    if (optionalEmail == null) {
-      // Use the text box contents.
-      intent.putExtra("email", emailEdit.getText().toString());
-    } else {
-      intent.putExtra("email", optionalEmail);
+    if (email != null) {
+      intent.putExtra("email", email);
     }
-    intent.putExtra("password", passwordEdit.getText().toString());
+    if (password != null) {
+      intent.putExtra("password", password);
+    }
     // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
     // the soft keyboard not being shown for the started activity. Why, Android, why?
     intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
@@ -145,7 +146,12 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
       @Override
       public void onClick(View widget) {
         // Pass through the email address that already existed.
-        FxAccountCreateAccountActivity.this.doSigninInstead(e.body.getString("email"));
+        String email = e.body.getString("email");
+        if (email == null) {
+            email = emailEdit.getText().toString();
+        }
+        final String password = passwordEdit.getText().toString();
+        doSigninInstead(email, password);
       }
     }, clickableStart, clickableEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     remoteErrorTextView.setMovementMethod(LinkMovementMethod.getInstance());
