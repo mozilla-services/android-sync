@@ -151,7 +151,7 @@
 <!ENTITY fxaccount_create_account_button 'Next'>
 <!ENTITY fxaccount_create_account_choose_what_to_sync 'Choose what to sync'>
 <!ENTITY fxaccount_create_account_sign_in_instead 'Already have an account? Sign in'>
-<!ENTITY fxaccount_create_account_1950_or_earlier '1950 or earlier'>
+<!ENTITY fxaccount_create_account_1990_or_earlier '1990 or earlier'>
 <!ENTITY fxaccount_create_account_unknown_error 'Could not create account'>
 
 <!ENTITY fxaccount_account_create_not_allowed 'Cannot create account'>
