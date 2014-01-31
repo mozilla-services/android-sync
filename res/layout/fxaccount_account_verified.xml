@@ -27,10 +27,14 @@
 
         <TextView
             style="@style/FxAccountTextItem"
-            android:layout_marginBottom="15dp"
+            android:layout_marginBottom="40dp"
             android:text="@string/fxaccount_account_verified_description"
-            android:textSize="18sp" >
-        </TextView>
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/button"
+            style="@style/FxAccountButton"
+            android:text="@string/fxaccount_back_to_browsing" />
 
         <LinearLayout style="@style/FxAccountSpacer" />
 
