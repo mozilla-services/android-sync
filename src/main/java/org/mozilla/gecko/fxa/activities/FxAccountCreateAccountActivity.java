@@ -94,13 +94,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     signInInsteadLink.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        Intent intent = new Intent(FxAccountCreateAccountActivity.this, FxAccountSignInActivity.class);
-        intent.putExtra("email", emailEdit.getText().toString());
-        intent.putExtra("password", passwordEdit.getText().toString());
-        // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
-        // the soft keyboard not being shown for the started activity. Why, Android, why?
-        intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        startActivityForResult(intent, CHILD_REQUEST_CODE);
+        FxAccountCreateAccountActivity.this.doSigninInstead(null);
       }
     });
 
@@ -110,6 +104,21 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
       emailEdit.setText(bundle.getString("email"));
       passwordEdit.setText(bundle.getString("password"));
     }
+  }
+
+  protected void doSigninInstead(final String optionalEmail) {
+    Intent intent = new Intent(this, FxAccountSignInActivity.class);
+    if (optionalEmail == null) {
+      // Use the text box contents.
+      intent.putExtra("email", emailEdit.getText().toString());
+    } else {
+      intent.putExtra("email", optionalEmail);
+    }
+    intent.putExtra("password", passwordEdit.getText().toString());
+    // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
+    // the soft keyboard not being shown for the started activity. Why, Android, why?
+    intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    startActivityForResult(intent, CHILD_REQUEST_CODE);
   }
 
   /**
