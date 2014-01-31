@@ -18,7 +18,7 @@
 
         <TextView
             style="@style/FxAccountHeaderItem"
-            android:text="@string/fxaccount_create_account_sub_header" />
+            android:text="@string/fxaccount_create_account_header" />
 
         <include layout="@layout/fxaccount_email_password_view" />
 

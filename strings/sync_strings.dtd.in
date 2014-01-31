@@ -140,7 +140,10 @@
 <!ENTITY fxaccount_getting_started_get_started 'Get started'>
 <!ENTITY fxaccount_getting_started_old_firefox 'Using an older version of &syncBrand.shortName.label;?'>
 
-<!ENTITY fxaccount_create_account_sub_header 'Create an account'>
+<!-- Localization note: the Firefox below should not change with the
+     particular version of Firefox installed (Release, Beta, Aurora,
+     etc).  The account remains a "Firefox" account. -->
+<!ENTITY fxaccount_create_account_header 'Create a Firefox account'>
 <!ENTITY fxaccount_create_account_password_length_restriction 'Must be at least 8 characters'>
 <!ENTITY fxaccount_create_account_year_of_birth 'Year of birth'>
 <!-- Localization note: &formatS1; is fxaccount_policy_linktos, &formatS2; is fxaccount_policy_linkprivacy, both hyperlinked. -->
@@ -171,7 +174,7 @@
 <!ENTITY fxaccount_account_verified_sub_header 'Account verified'>
 <!ENTITY fxaccount_account_verified_description 'You are now ready to use &syncBrand.shortName.label;.'>
 
-<!ENTITY fxaccount_update_credentials_sub_header 'Sign in to continue'>
+<!ENTITY fxaccount_update_credentials_header 'Sign in'>
 <!ENTITY fxaccount_update_credentials_button_label 'Sign in'>
 <!ENTITY fxaccount_update_credentials_unknown_error 'Could not sign in'>
 
