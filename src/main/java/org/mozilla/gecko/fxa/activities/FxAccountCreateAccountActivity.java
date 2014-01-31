@@ -31,6 +31,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.text.Spannable;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -119,6 +123,33 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     // the soft keyboard not being shown for the started activity. Why, Android, why?
     intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
     startActivityForResult(intent, CHILD_REQUEST_CODE);
+  }
+
+  @Override
+  protected void showClientRemoteException(final FxAccountClientRemoteException e) {
+    if (!e.isAccountAlreadyExists()) {
+      super.showClientRemoteException(e);
+      return;
+    }
+
+    // This horrible bit of special-casing is because we want this error message to
+    // contain a clickable, extra chunk of text, but we don't want to pollute
+    // the exception class with Android specifics.
+    final String clickablePart = getString(R.string.fxaccount_sign_in_button_label);
+    final String message = getString(e.getErrorMessageStringResource(), clickablePart);
+    final int clickableStart = message.lastIndexOf(clickablePart);
+    final int clickableEnd = clickableStart + clickablePart.length();
+
+    final Spannable span = Spannable.Factory.getInstance().newSpannable(message);
+    span.setSpan(new ClickableSpan() {
+      @Override
+      public void onClick(View widget) {
+        // Pass through the email address that already existed.
+        FxAccountCreateAccountActivity.this.doSigninInstead(e.body.getString("email"));
+      }
+    }, clickableStart, clickableEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    remoteErrorTextView.setMovementMethod(LinkMovementMethod.getInstance());
+    remoteErrorTextView.setText(span);
   }
 
   /**
