@@ -85,15 +85,24 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
    */
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    Logger.debug(LOG_TAG, "onActivityResult: " + requestCode);
+    Logger.debug(LOG_TAG, "onActivityResult: " + requestCode + ", " + resultCode);
     if (requestCode != CHILD_REQUEST_CODE) {
       super.onActivityResult(requestCode, resultCode, data);
       return;
     }
+
     if (data != null) {
       this.setAccountAuthenticatorResult(data.getExtras());
     }
+
     this.setResult(requestCode, data);
+
+    // We want to drop ourselves off the back stack if the user successfully
+    // created or signed in to an account. We can easily determine this by
+    // checking for the presence of response data.
+    if (data != null) {
+      this.finish();
+    }
   }
 
   protected void linkifyOldFirefoxLink() {
