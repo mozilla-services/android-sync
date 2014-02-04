@@ -538,7 +538,7 @@ public class HealthReportDatabaseStorage implements HealthReportStorage {
         this.fieldID = integerQuery("named_fields", "field_id",
                                     "measurement_name = ? AND measurement_version = ? AND field_name = ?",
                                     new String[] {measurementName, measurementVersion, fieldName},
-                                    -1);
+                                    UNKNOWN_TYPE_OR_FIELD_ID);
         if (this.fieldID == UNKNOWN_TYPE_OR_FIELD_ID) {
           throw new IllegalStateException("No field with name " + fieldName +
                                           " (" + measurementName + ", " + measurementVersion + ")");
