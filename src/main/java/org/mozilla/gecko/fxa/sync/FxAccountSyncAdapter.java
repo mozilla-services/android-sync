@@ -335,7 +335,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         return;
       }
 
-      // This will be the same chunk of SharedPreferences that GlobalSession/SyncConfiguration will later create.
+      // This will be the same chunk of SharedPreferences that we pass through to GlobalSession/SyncConfiguration.
       final SharedPreferences sharedPrefs = fxAccount.getSyncPrefs();
 
       final String audience = fxAccount.getAudience();
