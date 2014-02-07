@@ -111,16 +111,15 @@ public class TokenServerClient {
     });
   }
 
-  public TokenServerToken processResponse(HttpResponse response)
+  public TokenServerToken processResponse(SyncResponse res)
       throws TokenServerException {
-    SyncResponse res = new SyncResponse(response);
     int statusCode = res.getStatusCode();
 
     Logger.debug(LOG_TAG, "Got token response with status code " + statusCode + ".");
 
     // Responses should *always* be JSON, even in the case of 4xx and 5xx
     // errors. If we don't see JSON, the server is likely very unhappy.
-    String contentType = response.getEntity().getContentType().getValue();
+    String contentType = res.httpResponse().getEntity().getContentType().getValue();
     if (!contentType.equals("application/json") && !contentType.startsWith("application/json;")) {
       Logger.warn(LOG_TAG, "Got non-JSON response with Content-Type " +
           contentType + ". Misconfigured server?");
@@ -239,10 +238,25 @@ public class TokenServerClient {
 
     @Override
     public void handleHttpResponse(HttpResponse response) {
+      // Skew.
       SkewHandler skewHandler = SkewHandler.getSkewHandlerForResource(resource);
       skewHandler.updateSkew(response, System.currentTimeMillis());
+
+      // Backoff.
+      SyncResponse res = new SyncResponse(response);
+      int backoffInSeconds = res.backoffInSeconds();
+      this.delegate.handleBackoff(backoffInSeconds);
+
+      // Retry-After.
+      if (res.getStatusCode() == 503) {
+        int retryAfterInSeconds = res.retryAfterInSeconds();
+        if (retryAfterInSeconds > -1) {
+          client.invokeHandleBackoff(delegate, retryAfterInSeconds);
+        }
+      }
+
       try {
-        TokenServerToken token = client.processResponse(response);
+        TokenServerToken token = client.processResponse(res);
         client.invokeHandleSuccess(delegate, token);
       } catch (TokenServerException e) {
         client.invokeHandleFailure(delegate, e);
