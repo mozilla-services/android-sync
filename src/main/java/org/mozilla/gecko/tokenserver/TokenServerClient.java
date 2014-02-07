@@ -93,6 +93,15 @@ public class TokenServerClient {
     });
   }
 
+  protected void invokeHandleBackoff(final TokenServerClientDelegate delegate, final int backoffSeconds) {
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        delegate.handleBackoff(backoffSeconds);
+      }
+    });
+  }
+
   protected void invokeHandleError(final TokenServerClientDelegate delegate, final Exception e) {
     executor.execute(new Runnable() {
       @Override

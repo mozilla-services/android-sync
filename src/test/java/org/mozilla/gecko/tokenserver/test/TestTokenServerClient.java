@@ -209,6 +209,10 @@ public class TestTokenServerClient {
       @Override
       public void handleError(Exception e) {
       }
+
+      @Override
+      public void handleBackoff(int backoffSeconds) {
+      }
     };
 
     resource.delegate = new TokenServerClient.TokenFetchResourceDelegate(client, resource, delegate, assertion, clientState , true) {

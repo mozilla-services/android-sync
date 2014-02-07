@@ -89,6 +89,10 @@ public class TestFreshStart {
           public void handleError(Exception e) {
             WaitHelper.getTestWaiter().performNotify(e);
           }
+
+          @Override
+          public void handleBackoff(int backoffSeconds) {
+          }
         });
       }
     });
