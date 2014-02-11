@@ -94,6 +94,19 @@ public class TokenServerClient {
     });
   }
 
+  /**
+   * Notify the delegate that some kind of backoff header (X-Backoff,
+   * X-Weave-Backoff, Retry-After) was received and should be acted upon.
+   *
+   * This method is non-terminal, and will be followed by a separate
+   * <code>invoke*</code> call.
+   *
+   * @param delegate
+   *          the delegate to inform.
+   * @param backoffSeconds
+   *          the number of seconds for which the system should wait before
+   *          making another token server request to this server.
+   */
   protected void notifyBackoff(final TokenServerClientDelegate delegate, final int backoffSeconds) {
     executor.execute(new Runnable() {
       @Override
