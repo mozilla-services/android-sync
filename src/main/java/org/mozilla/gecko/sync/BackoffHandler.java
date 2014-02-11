@@ -7,14 +7,14 @@ package org.mozilla.gecko.sync;
 import android.os.Bundle;
 
 public interface BackoffHandler {
-  public abstract long getEarliestNextRequest();
-  public abstract void setEarliestNextRequest(long next);
-  public abstract void extendEarliestNextRequest(long next);
+  public long getEarliestNextRequest();
+  public void setEarliestNextRequest(long next);
+  public void extendEarliestNextRequest(long next);
 
   /**
    * Return the number of milliseconds until we're allowed to sync again,
    * or 0 if now is fine.
    */
-  public abstract long delayMilliseconds();
-  public abstract boolean shouldSync(Bundle extras);
+  public long delayMilliseconds();
+  public boolean shouldSync(Bundle extras);
 }
