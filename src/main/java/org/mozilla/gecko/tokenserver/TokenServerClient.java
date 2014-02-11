@@ -94,7 +94,7 @@ public class TokenServerClient {
     });
   }
 
-  protected void invokeHandleBackoff(final TokenServerClientDelegate delegate, final int backoffSeconds) {
+  protected void notifyBackoff(final TokenServerClientDelegate delegate, final int backoffSeconds) {
     executor.execute(new Runnable() {
       @Override
       public void run() {
@@ -248,16 +248,16 @@ public class TokenServerClient {
       SkewHandler skewHandler = SkewHandler.getSkewHandlerForResource(resource);
       skewHandler.updateSkew(response, System.currentTimeMillis());
 
-      // Backoff.
+      // Backoff. (Regardless of whether this was an error response.)
       SyncResponse res = new SyncResponse(response);
       int backoffInSeconds = res.backoffInSeconds();
-      this.delegate.handleBackoff(backoffInSeconds);
+      client.notifyBackoff(delegate, backoffInSeconds);
 
-      // Retry-After.
+      // Retry-After. (Only for error responses. The error will be handled elsewhere.)
       if (res.getStatusCode() == 503) {
         int retryAfterInSeconds = res.retryAfterInSeconds();
         if (retryAfterInSeconds > -1) {
-          client.invokeHandleBackoff(delegate, retryAfterInSeconds);
+          client.notifyBackoff(delegate, retryAfterInSeconds);
         }
       }
 
