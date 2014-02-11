@@ -21,6 +21,7 @@ import org.mozilla.gecko.background.common.log.writers.StringLogWriter;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.tokenserver.TokenServerClient;
 import org.mozilla.gecko.tokenserver.TokenServerClientDelegate;
 import org.mozilla.gecko.tokenserver.TokenServerException;
@@ -75,7 +76,7 @@ public class TestTokenServerClient {
     stringEntity.setContentType(contentType);
     response.setEntity(stringEntity);
 
-    return client.processResponse(response);
+    return client.processResponse(new SyncResponse(response));
   }
 
   @SuppressWarnings("rawtypes")
@@ -208,6 +209,10 @@ public class TestTokenServerClient {
 
       @Override
       public void handleError(Exception e) {
+      }
+
+      @Override
+      public void handleBackoff(int backoffSeconds) {
       }
     };
 

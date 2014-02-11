@@ -112,6 +112,10 @@ public class TestLiveTokenServerClient {
           public void handleError(Exception e) {
             WaitHelper.getTestWaiter().performNotify(e);
           }
+
+          @Override
+          public void handleBackoff(int backoffSeconds) {
+          }
         });
       }
     };
@@ -148,6 +152,10 @@ public class TestLiveTokenServerClient {
           public void handleError(Exception e) {
             WaitHelper.getTestWaiter().performNotify(e);
           }
+
+          @Override
+          public void handleBackoff(int backoffSeconds) {
+          }
         });
       }
     });
@@ -181,6 +189,10 @@ public class TestLiveTokenServerClient {
           @Override
           public void handleError(Exception e) {
             WaitHelper.getTestWaiter().performNotify(e);
+          }
+
+          @Override
+          public void handleBackoff(int backoffSeconds) {
           }
         });
       }
