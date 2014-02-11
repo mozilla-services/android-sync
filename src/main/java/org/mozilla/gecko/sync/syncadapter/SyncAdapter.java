@@ -203,7 +203,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
   }
 
   @Override
-  public boolean shouldBackOff() {
+  public boolean shouldBackOffStorage() {
     if (thisSyncIsForced) {
       /*
        * If the user asks us to sync, we should sync regardless. This path is
