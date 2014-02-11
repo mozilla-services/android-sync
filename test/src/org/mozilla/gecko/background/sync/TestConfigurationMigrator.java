@@ -11,6 +11,7 @@ import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.PrefsBackoffHandler;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.ConfigurationMigrator;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
@@ -244,7 +245,7 @@ public class TestConfigurationMigrator extends AndroidSyncTestCase {
 
     // Some global stuff.
     assertEquals(false, newPrefs.getBoolean(SyncConfiguration.PREF_CLUSTER_URL_IS_STALE, true));
-    assertEquals(1340402318649L, newPrefs.getLong(PrefsBackoffHandler.PREF_EARLIEST_NEXT + PrefsBackoffHandler.PREF_SUFFIX_DEFAULT, 111));
+    assertEquals(1340402318649L, newPrefs.getLong(PrefsBackoffHandler.PREF_EARLIEST_NEXT + SyncConstants.BACKOFF_PREF_SUFFIX_11, 111));
     // Some per-Sync account stuff.
     assertEquals("{\"timestamp\":1340402003370}", newPrefs.getString("bookmarks.remote", null));
     assertEquals("{\"timestamp\":1340402008397}", newPrefs.getString("bookmarks.local", null));

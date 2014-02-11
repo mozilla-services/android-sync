@@ -15,7 +15,6 @@ public class PrefsBackoffHandler implements BackoffHandler {
   private static final String LOG_TAG = "BackoffHandler";
 
   public static final String PREF_EARLIEST_NEXT = "earliestnext";
-  public static final String PREF_SUFFIX_DEFAULT = "sync";
 
   private final SharedPreferences prefs;
   private final String prefSuffix;
@@ -27,11 +26,7 @@ public class PrefsBackoffHandler implements BackoffHandler {
     }
     this.prefs = prefs;
     this.prefSuffix = prefSuffix;
-    this.prefEarliest = PREF_EARLIEST_NEXT + prefSuffix;
-  }
-
-  public PrefsBackoffHandler(final SharedPreferences prefs) {
-    this(prefs, PREF_SUFFIX_DEFAULT);
+    this.prefEarliest = PREF_EARLIEST_NEXT + "." + prefSuffix;
   }
 
   @Override

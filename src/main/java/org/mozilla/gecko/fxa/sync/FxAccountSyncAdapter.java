@@ -280,7 +280,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         // We back off on a per-host basis. When we have an endpoint URI from a token, we
         // can check on the backoff status for that host.
         // If we're supposed to be backing off, we abort the not-yet-started session.
-        final BackoffHandler storageBackoffHandler = new PrefsBackoffHandler(sharedPrefs, ".storage");
+        final BackoffHandler storageBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "sync.storage");
         callback.setBackoffHandler(storageBackoffHandler);
 
         String lastStorageHost = sharedPrefs.getString(PREF_BACKOFF_STORAGE_HOST, null);
@@ -410,7 +410,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       final SharedPreferences sharedPrefs = fxAccount.getSyncPrefs();
 
       // Check for a backoff right here.
-      final BackoffHandler schedulerBackoffHandler = new PrefsBackoffHandler(sharedPrefs, ".scheduler");
+      final BackoffHandler schedulerBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "scheduler");
       if (!schedulerBackoffHandler.shouldSync(extras)) {
         Logger.info(LOG_TAG, "Not syncing (scheduler).");
         syncDelegate.postponeSync(schedulerBackoffHandler.delayMilliseconds());
@@ -488,7 +488,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
              * That logic lives in the TokenServerClientDelegate elsewhere in this file.
              */
 
-            final BackoffHandler tokenBackoffHandler = new PrefsBackoffHandler(sharedPrefs, ".token");
+            final BackoffHandler tokenBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "token");
             if (!tokenBackoffHandler.shouldSync(extras)) {
               Logger.info(LOG_TAG, "Not syncing (token server).");
               syncDelegate.postponeSync(tokenBackoffHandler.delayMilliseconds());
