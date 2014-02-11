@@ -49,6 +49,20 @@ public class SyncResponse {
     return this.getStatusCode() == 200;
   }
 
+  /**
+   * Fetch the content type of the HTTP response body.
+   *
+   * @return a <code>Header</code> instance, or <code>null</code> if there was
+   *         no body or no valid Content-Type.
+   */
+  public Header getContentType() {
+    HttpEntity entity = this.response.getEntity();
+    if (entity == null) {
+      return null;
+    }
+    return entity.getContentType();
+  }
+
   private String body = null;
   public String body() throws IllegalStateException, IOException {
     if (body != null) {

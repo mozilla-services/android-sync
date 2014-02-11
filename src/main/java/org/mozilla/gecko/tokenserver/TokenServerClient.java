@@ -29,6 +29,7 @@ import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerMalformedRe
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerMalformedResponseException;
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerUnknownServiceException;
 
+import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpHeaders;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -111,16 +112,21 @@ public class TokenServerClient {
     });
   }
 
-  public TokenServerToken processResponse(SyncResponse res)
-      throws TokenServerException {
+  public TokenServerToken processResponse(SyncResponse res) throws TokenServerException {
     int statusCode = res.getStatusCode();
 
     Logger.debug(LOG_TAG, "Got token response with status code " + statusCode + ".");
 
     // Responses should *always* be JSON, even in the case of 4xx and 5xx
     // errors. If we don't see JSON, the server is likely very unhappy.
-    String contentType = res.httpResponse().getEntity().getContentType().getValue();
-    if (!contentType.equals("application/json") && !contentType.startsWith("application/json;")) {
+    final Header contentType = res.getContentType();
+    if (contentType == null) {
+      throw new TokenServerMalformedResponseException(null, "Non-JSON response Content-Type.");
+    }
+
+    final String type = contentType.getValue();
+    if (!type.equals("application/json") &&
+        !type.startsWith("application/json;")) {
       Logger.warn(LOG_TAG, "Got non-JSON response with Content-Type " +
           contentType + ". Misconfigured server?");
       throw new TokenServerMalformedResponseException(null, "Non-JSON response Content-Type.");
