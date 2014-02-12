@@ -55,6 +55,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -254,6 +255,30 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     }
   };
 
+  /**
+   * Return true if the provided {@link BackoffHandler} isn't reporting that we're in
+   * a backoff state, or the provided {@link Bundle} contains flags that indicate
+   * we should force a sync.
+   */
+  private boolean shouldPerformSync(final BackoffHandler backoffHandler, final String kind, final Bundle extras) {
+    final long delay = backoffHandler.delayMilliseconds();
+    if (delay <= 0) {
+      return true;
+    }
+
+    if (extras == null) {
+      return false;
+    }
+
+    final boolean forced = extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false);
+    if (forced) {
+      Logger.info(LOG_TAG, "Forced sync (" + kind + "): overruling remaining backoff of " + delay + "ms.");
+    } else {
+      Logger.info(LOG_TAG, "Not syncing (" + kind + "): must wait another " + delay + "ms.");
+    }
+    return forced;
+  }
+
   protected void syncWithAssertion(final String audience,
                                    final String assertion,
                                    final URI tokenServerEndpointURI,
@@ -286,7 +311,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         String lastStorageHost = sharedPrefs.getString(PREF_BACKOFF_STORAGE_HOST, null);
         if (lastStorageHost != null &&
             lastStorageHost.equalsIgnoreCase(storageHostname) &&
-            !storageBackoffHandler.shouldSync(extras)) {
+            !shouldPerformSync(storageBackoffHandler, "storage", extras)) {
           Logger.info(LOG_TAG, "Not syncing: storage server requested backoff.");
           callback.handleAborted(null, "Storage backoff");
           return;
@@ -411,7 +436,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
       // Check for a backoff right here.
       final BackoffHandler schedulerBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "scheduler");
-      if (!schedulerBackoffHandler.shouldSync(extras)) {
+      if (!shouldPerformSync(schedulerBackoffHandler, "scheduler", extras)) {
         Logger.info(LOG_TAG, "Not syncing (scheduler).");
         syncDelegate.postponeSync(schedulerBackoffHandler.delayMilliseconds());
         return;
@@ -454,6 +479,10 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
           Logger.info(LOG_TAG, "handleTransition: " + transition + " to " + state.getStateLabel());
         }
 
+        private boolean shouldRequestToken(final BackoffHandler tokenBackoffHandler, final Bundle extras) {
+          return shouldPerformSync(tokenBackoffHandler, "token", extras);
+        }
+
         @Override
         public void handleFinal(State state) {
           Logger.info(LOG_TAG, "handleFinal: in " + state.getStateLabel());
@@ -489,7 +518,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
              */
 
             final BackoffHandler tokenBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "token");
-            if (!tokenBackoffHandler.shouldSync(extras)) {
+            if (!shouldRequestToken(tokenBackoffHandler, extras)) {
               Logger.info(LOG_TAG, "Not syncing (token server).");
               syncDelegate.postponeSync(tokenBackoffHandler.delayMilliseconds());
               return;

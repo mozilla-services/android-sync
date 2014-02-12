@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.sync;
 
-import android.os.Bundle;
 
 public interface BackoffHandler {
   public long getEarliestNextRequest();
@@ -16,5 +15,4 @@ public interface BackoffHandler {
    * or 0 if now is fine.
    */
   public long delayMilliseconds();
-  public boolean shouldSync(Bundle extras);
 }

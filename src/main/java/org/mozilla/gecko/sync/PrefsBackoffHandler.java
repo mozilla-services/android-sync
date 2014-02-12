@@ -64,30 +64,4 @@ public class PrefsBackoffHandler implements BackoffHandler {
     long now = System.currentTimeMillis();
     return Math.max(0, earliestNextRequest - now);
   }
-
-  /**
-   * Return true if either we're not in a backoff state, or the supplied
-   * extras indicate that this is a forced sync.
-   * @param extras a bundle, as supplied to <code>onPerformSync</code>.
-   * @return true if the caller is OK to sync.
-   */
-  @Override
-  public boolean shouldSync(final Bundle extras) {
-    final long delay = delayMilliseconds();
-    if (delay <= 0) {
-      return true;
-    }
-
-    if (extras == null) {
-      return false;
-    }
-
-    final boolean forced = extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false);
-    if (forced) {
-      Logger.info(LOG_TAG, "Forced sync (" + prefSuffix + "): overruling remaining backoff of " + delay + "ms.");
-    } else {
-      Logger.info(LOG_TAG, "Not syncing (" + prefSuffix + "): must wait another " + delay + "ms.");
-    }
-    return forced;
-  }
 }

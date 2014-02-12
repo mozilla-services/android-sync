@@ -350,18 +350,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
               ", has client guid " + clientsDataDelegate.getAccountGUID() +
               ", and has " + clientsDataDelegate.getClientsCount() + " clients.");
 
-          boolean shouldSync = backoffHandler.shouldSync(extras);
+          final boolean thisSyncIsForced = (extras != null) && (extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false));
+          final long delayMillis = backoffHandler.delayMilliseconds();
+          boolean shouldSync = thisSyncIsForced || (delayMillis <= 0L);
           if (!shouldSync) {
-            long remainingSeconds = backoffHandler.delayMilliseconds() / 1000;
+            long remainingSeconds = delayMillis / 1000;
             syncResult.delayUntil = remainingSeconds + BACKOFF_PAD_SECONDS;
             setNextSync.set(false);
             self.notifyMonitor();
             return;
           }
-
-          // We continue to do this assignment even after introducing BackoffHandler,
-          // because it's used to schedule the next sync. Sorry.
-          thisSyncIsForced = (extras != null) && (extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false));
 
           final String prefsPath = Utils.getPrefsPath(product, username, serverURL, profile, version);
           self.performSync(account, extras, authority, provider, syncResult,
