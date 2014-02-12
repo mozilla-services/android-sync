@@ -10,6 +10,7 @@ import static org.junit.Assert.fail;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import junit.framework.Assert;
@@ -18,11 +19,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.common.log.writers.StringLogWriter;
+import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.SyncResponse;
 import org.mozilla.gecko.tokenserver.TokenServerClient;
+import org.mozilla.gecko.tokenserver.TokenServerClient.TokenFetchResourceDelegate;
 import org.mozilla.gecko.tokenserver.TokenServerClientDelegate;
 import org.mozilla.gecko.tokenserver.TokenServerException;
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerConditionsRequiredException;
@@ -32,11 +35,13 @@ import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerMalformedRe
 import org.mozilla.gecko.tokenserver.TokenServerException.TokenServerUnknownServiceException;
 import org.mozilla.gecko.tokenserver.TokenServerToken;
 
+import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
+import ch.boye.httpclientandroidlib.message.BasicHeader;
 import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
 import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 
@@ -226,5 +231,90 @@ public class TestTokenServerClient {
     HttpRequestBase request = resource.prepareHeadersAndReturn();
     Assert.assertEquals("abcdef", request.getFirstHeader("X-Client-State").getValue());
     Assert.assertEquals("1", request.getFirstHeader("X-Conditions-Accepted").getValue());
+  }
+
+  public static class MockTokenServerClient extends TokenServerClient {
+    public MockTokenServerClient(URI uri, Executor executor) {
+      super(uri, executor);
+    }
+  }
+
+  public static final class MockTokenServerClientDelegate implements
+      TokenServerClientDelegate {
+    public volatile boolean backoffCalled;
+    public volatile boolean succeeded;
+    public volatile int backoff;
+
+    @Override
+    public void handleSuccess(TokenServerToken token) {
+      succeeded = true;
+      WaitHelper.getTestWaiter().performNotify();
+    }
+
+    @Override
+    public void handleFailure(TokenServerException e) {
+      succeeded = false;
+      WaitHelper.getTestWaiter().performNotify();
+    }
+
+    @Override
+    public void handleError(Exception e) {
+      succeeded = false;
+      WaitHelper.getTestWaiter().performNotify(e);
+    }
+
+    @Override
+    public void handleBackoff(int backoffSeconds) {
+      backoffCalled = true;
+      backoff = backoffSeconds;
+    }
+  }
+
+  private void expectDelegateCalls(URI uri, MockTokenServerClient client, int code, Header header, String body, boolean succeeded, long backoff, boolean expectBackoff) throws UnsupportedEncodingException {
+    final BaseResource resource = new BaseResource(uri);
+    final String assertion = "someassertion";
+    final String clientState = "abcdefabcdefabcdefabcdefabcdefab";
+    final boolean conditionsAccepted = true;
+
+    MockTokenServerClientDelegate delegate = new MockTokenServerClientDelegate();
+
+    final TokenFetchResourceDelegate tokenFetchResourceDelegate = new TokenServerClient.TokenFetchResourceDelegate(client, resource, delegate, assertion, clientState, conditionsAccepted);
+
+    final BasicStatusLine statusline = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), code, "Whatever");
+    final HttpResponse response = new BasicHttpResponse(statusline);
+    response.setHeader(header);
+    if (body != null) {
+      final StringEntity entity = new StringEntity(body);
+      entity.setContentType("application/json");
+      response.setEntity(entity);
+    }
+
+    WaitHelper.getTestWaiter().performWait(new Runnable() {
+      @Override
+      public void run() {
+        tokenFetchResourceDelegate.handleHttpResponse(response);
+      }
+    });
+
+    assertEquals(expectBackoff, delegate.backoffCalled);
+    assertEquals(backoff, delegate.backoff);
+    assertEquals(succeeded, delegate.succeeded);
+  }
+
+  @Test
+  public void testBackoffHandling() throws URISyntaxException, UnsupportedEncodingException {
+    final URI uri = new URI("http://unused.com");
+    final MockTokenServerClient client = new MockTokenServerClient(uri, Executors.newSingleThreadExecutor());
+
+    // Even the 200 code here is false because the body is malformed.
+    expectDelegateCalls(uri, client, 200, new BasicHeader("x-backoff", "13"), "baaaa", false, 13, true);
+    expectDelegateCalls(uri, client, 400, new BasicHeader("X-Weave-Backoff", "15"), null, false, 15, true);
+    expectDelegateCalls(uri, client, 503, new BasicHeader("retry-after", "3"), null, false, 3, true);
+
+    // Retry-After is only processed on 503.
+    expectDelegateCalls(uri, client, 200, new BasicHeader("retry-after", "13"), null, false, 0, false);
+
+    // Now let's try one with a valid body.
+    expectDelegateCalls(uri, client, 200, new BasicHeader("X-Backoff", "1234"), TEST_TOKEN_RESPONSE, true, 1234, true);
   }
 }
