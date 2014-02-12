@@ -176,14 +176,21 @@ public class SyncResponse {
   }
 
   /**
-   * @return A number of milliseconds, or -1 if neither the 'Retry-After',
-   *         'X-Backoff', or 'X-Weave-Backoff' header were present.
+   * Extract a number of seconds, or -1 if none of the specified headers were present.
+   *
+   * @param includeRetryAfter
+   *          if <code>true</code>, the Retry-After header is excluded. This is
+   *          useful for processing non-error responses where a Retry-After
+   *          header would be unexpected.
+   * @return the maximum of the three possible backoff headers, in seconds.
    */
-  public long totalBackoffInMilliseconds() {
+  public int totalBackoffInSeconds(boolean includeRetryAfter) {
     int retryAfterInSeconds = -1;
-    try {
-      retryAfterInSeconds = retryAfterInSeconds();
-    } catch (NumberFormatException e) {
+    if (includeRetryAfter) {
+      try {
+        retryAfterInSeconds = retryAfterInSeconds();
+      } catch (NumberFormatException e) {
+      }
     }
 
     int weaveBackoffInSeconds = -1;
@@ -198,7 +205,20 @@ public class SyncResponse {
     } catch (NumberFormatException e) {
     }
 
-    long totalBackoff = (long) Math.max(retryAfterInSeconds, Math.max(backoffInSeconds, weaveBackoffInSeconds));
+    int totalBackoff = Math.max(retryAfterInSeconds, Math.max(backoffInSeconds, weaveBackoffInSeconds));
+    if (totalBackoff < 0) {
+      return -1;
+    } else {
+      return totalBackoff;
+    }
+  }
+
+  /**
+   * @return A number of milliseconds, or -1 if neither the 'Retry-After',
+   *         'X-Backoff', or 'X-Weave-Backoff' header were present.
+   */
+  public long totalBackoffInMilliseconds() {
+    long totalBackoff = totalBackoffInSeconds(true);
     if (totalBackoff < 0) {
       return -1;
     } else {
