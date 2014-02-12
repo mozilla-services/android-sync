@@ -261,17 +261,13 @@ public class TokenServerClient {
       SkewHandler skewHandler = SkewHandler.getSkewHandlerForResource(resource);
       skewHandler.updateSkew(response, System.currentTimeMillis());
 
-      // Backoff. (Regardless of whether this was an error response.)
+      // Extract backoff regardless of whether this was an error response, and
+      // Retry-After for 503 responses. The error will be handled elsewhere.)
       SyncResponse res = new SyncResponse(response);
-      int backoffInSeconds = res.backoffInSeconds();
-      client.notifyBackoff(delegate, backoffInSeconds);
-
-      // Retry-After. (Only for error responses. The error will be handled elsewhere.)
-      if (res.getStatusCode() == 503) {
-        int retryAfterInSeconds = res.retryAfterInSeconds();
-        if (retryAfterInSeconds > -1) {
-          client.notifyBackoff(delegate, retryAfterInSeconds);
-        }
+      final boolean includeRetryAfter = res.getStatusCode() == 503;
+      int backoffInSeconds = res.totalBackoffInSeconds(includeRetryAfter);
+      if (backoffInSeconds > -1) {
+        client.notifyBackoff(delegate, backoffInSeconds);
       }
 
       try {
