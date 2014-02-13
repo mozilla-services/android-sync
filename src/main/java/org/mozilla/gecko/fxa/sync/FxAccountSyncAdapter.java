@@ -232,8 +232,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
       // Get the number of clients, so we can schedule the sync interval accordingly.
       try {
-        int clientsCount = globalSession.getClientsDelegate().getClientsCount();
-        this.schedulePolicy.onSuccessfulSync(clientsCount);
+        int otherClientsCount = globalSession.getClientsDelegate().getClientsCount();
+        Logger.debug(LOG_TAG, "" + otherClientsCount + " other client(s).");
+        this.schedulePolicy.onSuccessfulSync(otherClientsCount);
       } finally {
         // Continue with the usual success flow.
         syncDelegate.handleSuccess();

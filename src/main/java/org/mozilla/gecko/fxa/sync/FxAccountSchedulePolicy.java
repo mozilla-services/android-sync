@@ -88,11 +88,11 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
   }
 
   @Override
-  public void onSuccessfulSync(int clientsCount) {
+  public void onSuccessfulSync(int otherClientsCount) {
     // This undoes the change made in observeBackoffMillis -- once we hit backoff we'll
     // periodically sync at the backoff duration, but as soon as we succeed we'll switch
     // into the client-count-dependent interval.
-    long interval = (clientsCount > 1) ? POLL_INTERVAL_MULTI_DEVICE_SEC : POLL_INTERVAL_SINGLE_DEVICE_SEC;
+    long interval = (otherClientsCount > 0) ? POLL_INTERVAL_MULTI_DEVICE_SEC : POLL_INTERVAL_SINGLE_DEVICE_SEC;
     requestPeriodicSync(interval);
   }
 

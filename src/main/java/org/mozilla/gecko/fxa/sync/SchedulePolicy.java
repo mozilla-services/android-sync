@@ -8,7 +8,10 @@ import org.mozilla.gecko.fxa.login.State.Action;
 import org.mozilla.gecko.sync.BackoffHandler;
 
 public interface SchedulePolicy {
-  public abstract void onSuccessfulSync(int clientsCount);
+  /**
+   * Call this with the number of other clients syncing to the account.
+   */
+  public abstract void onSuccessfulSync(int otherClientsCount);
   public abstract void onHandleFinal(Action needed);
   public abstract void onUpgradeRequired();
   public abstract void onUnauthorized();
