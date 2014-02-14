@@ -29,5 +29,14 @@ public interface SchedulePolicy {
    * @param backoffHandler the backoff handler to configure.
    */
   public abstract void configureBackoffMillisBeforeSyncing(BackoffHandler backoffHandler);
-  public abstract void configureBackoffMillisOnBackoff(BackoffHandler backoffHandler, long backoffMillis);
+
+  /**
+   * We received an explicit backoff instruction, typically from a server.
+   *
+   * @param onlyExtend
+   *          if <code>true</code>, the backoff handler will be asked to update
+   *          its backoff only if the provided value is greater than the current
+   *          backoff.
+   */
+  public abstract void configureBackoffMillisOnBackoff(BackoffHandler backoffHandler, long backoffMillis, boolean onlyExtend);
 }

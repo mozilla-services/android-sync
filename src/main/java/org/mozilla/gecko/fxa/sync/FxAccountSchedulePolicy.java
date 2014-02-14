@@ -128,8 +128,12 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
   }
 
   @Override
-  public void configureBackoffMillisOnBackoff(BackoffHandler backoffHandler, long backoffMillis) {
-    backoffHandler.extendEarliestNextRequest(delay(backoffMillis));
+  public void configureBackoffMillisOnBackoff(BackoffHandler backoffHandler, long backoffMillis, boolean onlyExtend) {
+    if (onlyExtend) {
+      backoffHandler.extendEarliestNextRequest(delay(backoffMillis));
+    } else {
+      backoffHandler.setEarliestNextRequest(delay(backoffMillis));
+    }
 
     // Yes, we might be part-way through the interval, in which case the backoff
     // code will do its job. But we certainly don't want to reduce the interval

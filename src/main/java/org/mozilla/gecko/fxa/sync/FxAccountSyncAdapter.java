@@ -209,7 +209,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void requestBackoff(long backoffMillis) {
-      schedulePolicy.configureBackoffMillisOnBackoff(storageBackoffHandler, backoffMillis);
+      final boolean onlyExtend = true;      // Because we trust what the storage server says.
+      schedulePolicy.configureBackoffMillisOnBackoff(storageBackoffHandler, backoffMillis, onlyExtend);
     }
 
     @Override
