@@ -442,8 +442,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     final CountDownLatch latch = new CountDownLatch(1);
-    final SyncDelegate syncDelegate = new SyncDelegate(getContext(), latch, syncResult, fxAccount);
-    final SchedulePolicy schedulePolicy = new FxAccountSchedulePolicy(getContext(), fxAccount);
+    final SyncDelegate syncDelegate = new SyncDelegate(context, latch, syncResult, fxAccount);
 
     try {
       final State state;
@@ -464,6 +463,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         syncDelegate.postponeSync(schedulerBackoffHandler.delayMilliseconds());
         return;
       }
+
+      final SchedulePolicy schedulePolicy = new FxAccountSchedulePolicy(context, fxAccount);
 
       // Set a small scheduled 'backoff' to rate-limit the next sync.
       schedulePolicy.configureBackoffMillisBeforeSyncing(schedulerBackoffHandler);
