@@ -107,7 +107,7 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public boolean shouldBackOff() {
+  public boolean shouldBackOffStorage() {
     return false;
   }
 
