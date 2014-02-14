@@ -318,12 +318,17 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         callback.setBackoffHandler(storageBackoffHandler);
 
         String lastStorageHost = sharedPrefs.getString(PREF_BACKOFF_STORAGE_HOST, null);
-        if (lastStorageHost != null &&
-            lastStorageHost.equalsIgnoreCase(storageHostname) &&
-            !shouldPerformSync(storageBackoffHandler, "storage", extras)) {
-          Logger.info(LOG_TAG, "Not syncing: storage server requested backoff.");
-          callback.handleAborted(null, "Storage backoff");
-          return;
+        final boolean storageHostIsUnchanged = lastStorageHost != null &&
+                                               lastStorageHost.equalsIgnoreCase(storageHostname);
+        if (storageHostIsUnchanged) {
+          Logger.debug(LOG_TAG, "Storage host is unchanged.");
+          if (!shouldPerformSync(storageBackoffHandler, "storage", extras)) {
+            Logger.info(LOG_TAG, "Not syncing: storage server requested backoff.");
+            callback.handleAborted(null, "Storage backoff");
+            return;
+          }
+        } else {
+          Logger.debug(LOG_TAG, "Received new storage host.");
         }
 
         // Invalidate the previous backoff, because our storage host has changed,
