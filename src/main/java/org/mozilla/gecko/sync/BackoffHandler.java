@@ -7,7 +7,23 @@ package org.mozilla.gecko.sync;
 
 public interface BackoffHandler {
   public long getEarliestNextRequest();
+
+  /**
+   * Provide a timestamp in millis before which we shouldn't sync again.
+   * Overrides any existing value.
+   *
+   * @param next
+   *          a timestamp in milliseconds.
+   */
   public void setEarliestNextRequest(long next);
+
+  /**
+   * Provide a timestamp in millis before which we shouldn't sync again. Only
+   * change our persisted value if it's later than the existing time.
+   *
+   * @param next
+   *          a timestamp in milliseconds.
+   */
   public void extendEarliestNextRequest(long next);
 
   /**

@@ -541,6 +541,10 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
              * That logic lives in the TokenServerClientDelegate elsewhere in this file.
              */
 
+            // Strictly speaking this backoff check could be done prior to walking through
+            // the login state machine, allowing us to short-circuit sooner.
+            // We don't expect many token server backoffs, and most users will be sitting
+            // in the Married state, so instead we simply do this here, once.
             final BackoffHandler tokenBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "token");
             if (!shouldRequestToken(tokenBackoffHandler, extras)) {
               Logger.info(LOG_TAG, "Not syncing (token server).");
