@@ -290,9 +290,16 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
                                    final SessionCallback callback,
                                    final Bundle extras) {
     final TokenServerClientDelegate delegate = new TokenServerClientDelegate() {
+      private boolean didReceiveBackoff = false;
+
       @Override
       public void handleSuccess(final TokenServerToken token) {
         FxAccountConstants.pii(LOG_TAG, "Got token! uid is " + token.uid + " and endpoint is " + token.endpoint + ".");
+
+        if (!didReceiveBackoff) {
+          // We must be OK to touch this token server.
+          tokenBackoffHandler.setEarliestNextRequest(0L);
+        }
 
         final URI storageServerURI;
         try {
@@ -360,7 +367,16 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       @Override
       public void handleBackoff(int backoffSeconds) {
         // This is the token server telling us to back off.
-        tokenBackoffHandler.extendEarliestNextRequest(backoffSeconds * 1000);
+        Logger.info(LOG_TAG, "Token server requesting backoff of " + backoffSeconds + "s. Backoff handler: " + tokenBackoffHandler);
+        didReceiveBackoff = true;
+
+        // If we've already stored a backoff, overrule it: we only use the server
+        // value for token server scheduling.
+        tokenBackoffHandler.setEarliestNextRequest(delay(backoffSeconds * 1000));
+      }
+
+      private long delay(long delay) {
+        return System.currentTimeMillis() + delay;
       }
     };
 
