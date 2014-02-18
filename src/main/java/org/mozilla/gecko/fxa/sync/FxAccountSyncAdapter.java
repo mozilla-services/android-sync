@@ -7,15 +7,19 @@ package org.mozilla.gecko.fxa.sync;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.json.simple.JSONObject;
+import org.mozilla.background.telemetry.JSONBackgroundTelemetryRecorder;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountClient;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.SkewHandler;
+import org.mozilla.gecko.background.telemetry.SyncTelemetry;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
@@ -197,10 +201,12 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     protected final SyncDelegate syncDelegate;
     protected final SchedulePolicy schedulePolicy;
     protected volatile BackoffHandler storageBackoffHandler;
+    protected final JSONBackgroundTelemetryRecorder telemetryRecorder;
 
-    public SessionCallback(SyncDelegate syncDelegate, SchedulePolicy schedulePolicy) {
+    public SessionCallback(SyncDelegate syncDelegate, SchedulePolicy schedulePolicy, JSONBackgroundTelemetryRecorder telemetryRecorder) {
       this.syncDelegate = syncDelegate;
       this.schedulePolicy = schedulePolicy;
+      this.telemetryRecorder = telemetryRecorder;
     }
 
     public void setBackoffHandler(BackoffHandler backoffHandler) {
@@ -230,6 +236,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void informStarted(GlobalSession globalSession) {
+      // No way out but through: start recording telemetry events.
+      SyncTelemetry.setTelemetryRecorder(telemetryRecorder);
     }
 
     @Override
@@ -239,6 +247,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void handleSuccess(GlobalSession globalSession) {
       Logger.info(LOG_TAG, "Global session succeeded.");
+      SyncTelemetry.setTelemetryRecorder(null);
+      dumpMeasurements(telemetryRecorder);
 
       // Get the number of clients, so we can schedule the sync interval accordingly.
       try {
@@ -254,6 +264,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void handleError(GlobalSession globalSession, Exception e) {
       Logger.warn(LOG_TAG, "Global session failed."); // Exception will be dumped by delegate below.
+      SyncTelemetry.setTelemetryRecorder(null);
+      dumpMeasurements(telemetryRecorder);
+
       syncDelegate.handleError(e);
       // TODO: should we reduce the periodic sync interval?
     }
@@ -261,6 +274,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void handleAborted(GlobalSession globalSession, String reason) {
       Logger.warn(LOG_TAG, "Global session aborted: " + reason);
+      SyncTelemetry.setTelemetryRecorder(null);
+      dumpMeasurements(telemetryRecorder);
+
       syncDelegate.handleError(null);
       // TODO: should we reduce the periodic sync interval?
     }
@@ -288,6 +304,14 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       Logger.info(LOG_TAG, "Not syncing (" + kind + "): must wait another " + delay + "ms.");
     }
     return forced;
+  }
+
+  public static void dumpMeasurements(JSONBackgroundTelemetryRecorder telemetryRecorder) {
+    List<JSONObject> measurements = telemetryRecorder.getMeasurements();
+    Logger.info(LOG_TAG, "Dumping " + measurements.size() + " measurements.");
+    for (JSONObject measurement : measurements) {
+      Logger.info(LOG_TAG, "Measurement: " + measurement.toJSONString());
+    }
   }
 
   protected void syncWithAssertion(final String audience,
@@ -568,7 +592,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
               return;
             }
 
-            final SessionCallback sessionCallback = new SessionCallback(syncDelegate, schedulePolicy);
+            final JSONBackgroundTelemetryRecorder recorder = new JSONBackgroundTelemetryRecorder();
+
+            final SessionCallback sessionCallback = new SessionCallback(syncDelegate, schedulePolicy, recorder);
             final KeyBundle syncKeyBundle = married.getSyncKeyBundle();
             final String clientState = married.getClientState();
             syncWithAssertion(audience, assertion, tokenServerEndpointURI, tokenBackoffHandler, sharedPrefs, syncKeyBundle, clientState, sessionCallback, extras);
