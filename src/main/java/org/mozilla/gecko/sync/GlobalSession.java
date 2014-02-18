@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.telemetry.SyncTelemetry;
 import org.mozilla.gecko.sync.crypto.CryptoException;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.BaseGlobalSessionCallback;
@@ -308,6 +309,8 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     }
     installAsHttpResponseObserver(); // Uninstalled by completeSync or abort.
     this.callback.informStarted(this);
+    SyncTelemetry.startSyncSession("sync", System.currentTimeMillis());
+    SyncTelemetry.sendSyncEvent("syncStart");
     this.advance();
   }
 
@@ -335,6 +338,8 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
   public void completeSync() {
     cleanUp();
     this.currentState = GlobalSyncStage.Stage.idle;
+    SyncTelemetry.sendSyncEvent("syncSuccess");
+    SyncTelemetry.stopSyncSession("sync", "success", System.currentTimeMillis());
     this.callback.handleSuccess(this);
   }
 
@@ -468,6 +473,8 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
         this.uploadUpdatedMetaGlobal(); // Only logs errors; does not call abort.
       }
     }
+    SyncTelemetry.sendSyncEvent("syncError");
+    SyncTelemetry.stopSyncSession("sync", reason, System.currentTimeMillis());
     this.callback.handleError(this, e);
   }
 

@@ -11,7 +11,9 @@ import java.util.concurrent.ExecutorService;
 
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.telemetry.SyncTelemetry;
 import org.mozilla.gecko.sync.EngineSettings;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.HTTPFailureException;
 import org.mozilla.gecko.sync.MetaGlobalException;
@@ -478,6 +480,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     Logger.debug(LOG_TAG, "Starting execute for " + name);
 
     stageStartTimestamp = System.currentTimeMillis();
+    SyncTelemetry.startSyncSession(getEngineName(), stageStartTimestamp);
 
     try {
       if (!this.isEnabled()) {
@@ -597,6 +600,13 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     Logger.info(LOG_TAG, "Stage " + getEngineName() +
         " received " + inboundCount + " and sent " + outboundCount +
         " records in " + getStageDurationString() + ".");
+
+    ExtendedJSONObject extras = new ExtendedJSONObject();
+    extras.put("inbound", inboundCount);
+    extras.put("outbound", outboundCount);
+    SyncTelemetry.sendSyncEvent("synchronized", getEngineName(), extras.toJSONString());
+    SyncTelemetry.stopSyncSession(getEngineName(), "synchronized", stageCompleteTimestamp);
+
     Logger.info(LOG_TAG, "Advancing session.");
     session.advance();
   }
@@ -612,6 +622,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
   public void onSynchronizeFailed(Synchronizer synchronizer,
                                   Exception lastException, String reason) {
     stageCompleteTimestamp = System.currentTimeMillis();
+    SyncTelemetry.stopSyncSession(getEngineName(), reason, stageCompleteTimestamp);
     Logger.warn(LOG_TAG, "Synchronize failed: " + reason, lastException);
 
     // This failure could be due to a 503 or a 401 and it could have headers.
