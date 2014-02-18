@@ -258,7 +258,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
       return;
     }
 
-    this.callback.handleStageCompleted(this.currentState, this);
+    this.callback.informStageCompleted(this.currentState, this);
     Stage next = nextStage(this.currentState);
     GlobalSyncStage nextStage;
     try {
@@ -307,6 +307,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
       throw new AlreadySyncingException(this.currentState);
     }
     installAsHttpResponseObserver(); // Uninstalled by completeSync or abort.
+    this.callback.informStarted(this);
     this.advance();
   }
 

@@ -535,7 +535,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
   }
 
   @Override
-  public void handleStageCompleted(Stage currentState,
+  public void informStarted(GlobalSession globalSession) {
+    Logger.trace(LOG_TAG, "GlobalSession started.");
+  }
+
+  @Override
+  public void informStageCompleted(Stage currentState,
                                    GlobalSession globalSession) {
     Logger.trace(LOG_TAG, "Stage completed: " + currentState);
   }

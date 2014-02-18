@@ -21,16 +21,25 @@ public interface BaseGlobalSessionCallback {
    */
   void informUnauthorizedResponse(GlobalSession globalSession, URI oldClusterURL);
 
-
   /**
    * Called when an HTTP failure indicates that a software upgrade is required.
    */
   void informUpgradeRequiredResponse(GlobalSession session);
 
+  /**
+   * Called when a session is started.
+   */
+  void informStarted(GlobalSession session);
+
+  /**
+   * Called once for each stage after it has executed and before the next stage
+   * is executed.
+   */
+  void informStageCompleted(Stage currentState, GlobalSession globalSession);
+
+  void handleSuccess(GlobalSession globalSession);
   void handleAborted(GlobalSession globalSession, String reason);
   void handleError(GlobalSession globalSession, Exception ex);
-  void handleSuccess(GlobalSession globalSession);
-  void handleStageCompleted(Stage currentState, GlobalSession globalSession);
 
   /**
    * Called when a {@link GlobalSession} wants to know if it should continue

@@ -40,6 +40,10 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
+  public void informStarted(GlobalSession globalSession) {
+  }
+
+  @Override
   public void handleAborted(GlobalSession globalSession, String reason) {
   }
 
@@ -52,7 +56,7 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public void handleStageCompleted(Stage currentState,
+  public void informStageCompleted(Stage currentState,
                                    GlobalSession globalSession) {
   }
 

@@ -118,6 +118,7 @@ public class TestGlobalSession {
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+        @Override
         public void run() {
           session.handleHTTPError(new SyncStorageResponse(response), "Illegal method/protocol");
         }
@@ -145,6 +146,7 @@ public class TestGlobalSession {
       final GlobalSession session = new MockGlobalSession(config, callback);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+        @Override
         public void run() {
           try {
             session.start();
@@ -192,6 +194,7 @@ public class TestGlobalSession {
                                         .withStage(Stage.fetchInfoCollections, stage);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+        @Override
         public void run() {
           try {
             session.start();
@@ -271,6 +274,7 @@ public class TestGlobalSession {
 
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         try {
           session.start();
@@ -430,5 +434,12 @@ public class TestGlobalSession {
   public void testStageAdvance() {
     assertEquals(GlobalSession.nextStage(Stage.idle), Stage.checkPreconditions);
     assertEquals(GlobalSession.nextStage(Stage.completed), Stage.idle);
+  }
+
+  @Test
+  public void testInformStartedCalled() throws Exception {
+    MockGlobalSessionCallback callback = doTestSuccess(false, false);
+
+    assertTrue(callback.calledInformStarted);
   }
 }

@@ -48,6 +48,7 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   public URI calledInformNodeAssignedOldClusterURL = null;
   public URI calledInformNodeAssignedNewClusterURL = null;
   public URI calledInformUnauthorizedResponseClusterURL = null;
+  public boolean calledInformStarted = false;
   public long weaveBackoff = -1;
 
   @Override
@@ -71,7 +72,12 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public void handleStageCompleted(Stage currentState,
+  public void informStarted(GlobalSession globalSession) {
+    this.calledInformStarted = true;
+  }
+
+  @Override
+  public void informStageCompleted(Stage currentState,
            GlobalSession globalSession) {
     stageCounter--;
   }

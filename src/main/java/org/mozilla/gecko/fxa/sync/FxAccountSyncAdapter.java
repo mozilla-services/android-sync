@@ -229,7 +229,11 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     @Override
-    public void handleStageCompleted(Stage currentState, GlobalSession globalSession) {
+    public void informStarted(GlobalSession globalSession) {
+    }
+
+    @Override
+    public void informStageCompleted(Stage currentState, GlobalSession globalSession) {
     }
 
     @Override
