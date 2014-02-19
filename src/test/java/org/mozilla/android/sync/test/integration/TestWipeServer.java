@@ -58,14 +58,15 @@ public class TestWipeServer {
     final SharedPreferences prefs = new MockSharedPreferences();
     final SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), prefs);
     config.syncKeyBundle = syncKeyBundle;
-    final GlobalSession session = new MockPrefsGlobalSession(config, callback, null, null, null);
+    session = new MockPrefsGlobalSession(config, callback, null, null, null);
     session.config.clusterURL = new URI(TEST_CLUSTER_URL);
   }
 
   @Test
   public void testWipeEngineOnServer() throws Exception {
     final String COLLECTION = "forms";
-    final String COLLECTION_URL = session.config.collectionURI(COLLECTION).toString();
+    final SyncConfiguration config = session.config;
+    final String COLLECTION_URL = config.collectionURI(COLLECTION).toString();
     final String RECORD_URL = COLLECTION_URL + "/testGuid";
 
     // Put record.

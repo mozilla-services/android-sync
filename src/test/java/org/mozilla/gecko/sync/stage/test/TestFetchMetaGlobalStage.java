@@ -9,8 +9,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
@@ -173,6 +176,13 @@ public class TestFetchMetaGlobalStage {
     assertTrue(calledRequiresUpgrade);
   }
 
+  @SuppressWarnings("unchecked")
+  private JSONArray getTestDeclinedArray() {
+    final JSONArray declined = new JSONArray();
+    declined.add("foobar");
+    return declined;
+  }
+
   /**
    * Verify that a fetched meta/global with remote syncID == local syncID does
    * not reset.
@@ -187,6 +197,9 @@ public class TestFetchMetaGlobalStage {
     mg.setSyncID(TEST_SYNC_ID);
     mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
+    // Set declined engines in the server object.
+    mg.setDeclined(getTestDeclinedArray());
+
     MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
     doSession(server);
 
@@ -196,6 +209,9 @@ public class TestFetchMetaGlobalStage {
     assertEquals(TEST_SYNC_ID, session.config.metaGlobal.getSyncID());
     assertEquals(TEST_STORAGE_VERSION, session.config.metaGlobal.getStorageVersion().longValue());
     assertEquals(TEST_SYNC_ID, session.config.syncID);
+
+    // Declined engines propagate from the server meta/global.
+    assertEquals("foobar", session.config.metaGlobal.getDeclinedEngineNames().iterator().next());
   }
 
   /**
@@ -212,6 +228,9 @@ public class TestFetchMetaGlobalStage {
     mg.setSyncID(TEST_SYNC_ID);
     mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
+    // Set declined engines in the server object.
+    mg.setDeclined(getTestDeclinedArray());
+
     MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
     doSession(server);
 
@@ -221,6 +240,37 @@ public class TestFetchMetaGlobalStage {
     assertEquals(TEST_SYNC_ID, session.config.metaGlobal.getSyncID());
     assertEquals(TEST_STORAGE_VERSION, session.config.metaGlobal.getStorageVersion().longValue());
     assertEquals(TEST_SYNC_ID, session.config.syncID);
+
+    // Declined engines propagate from the server meta/global.
+    assertEquals("foobar", session.config.metaGlobal.getDeclinedEngineNames().iterator().next());
+  }
+
+  /**
+   * Verify that a fetched meta/global does not merge declined engines.
+   * TODO: eventually it should!
+   */
+  @Test
+  public void testFetchSuccessWithDifferentSyncIDMergesDeclined() throws Exception {
+    session.config.syncID = "NOT TEST SYNC ID";
+
+    // Fake the local declined engine names.
+    session.config.declinedEngineNames = new HashSet<String>();
+    session.config.declinedEngineNames.add("baznoo");
+
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setSyncID(TEST_SYNC_ID);
+    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
+
+    // Set declined engines in the server object.
+    mg.setDeclined(getTestDeclinedArray());
+
+    MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
+    doSession(server);
+
+    // Declined engines propagate from the server meta/global, and are merged.
+    final Set<String> newDeclined = session.config.metaGlobal.getDeclinedEngineNames();
+    assertTrue(newDeclined.contains("foobar"));   // Remote.
+    assertTrue(!newDeclined.contains("baznoo"));  // Local is lost.
   }
 
   @Test

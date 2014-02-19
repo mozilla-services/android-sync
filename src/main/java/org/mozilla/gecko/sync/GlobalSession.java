@@ -651,6 +651,18 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
             Utils.toCommaSeparatedString(config.enabledEngineNames) + "' from meta/global.");
       }
     }
+
+    // Persist declined.
+    config.declinedEngineNames = global.getDeclinedEngineNames();
+    if (config.declinedEngineNames == null) {
+      Logger.debug(LOG_TAG, "meta/global reported no declined engine names.");
+    } else {
+      if (Logger.shouldLogVerbose(LOG_TAG)) {
+        Logger.trace(LOG_TAG, "Persisting declined engine names '" +
+            Utils.toCommaSeparatedString(config.declinedEngineNames) + "' from meta/global.");
+      }
+    }
+
     config.persistToPrefs();
     advance();
   }
@@ -899,6 +911,36 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
 
   public void resetStagesByName(Collection<String> names) {
     resetStages(this.getSyncStagesByName(names));
+  }
+
+  /**
+   * Engines to explicitly mark as declined in a fresh meta/global record.
+   * <p>
+   * Returns an empty set if the user hasn't elected to customize data types,
+   * or a set of engines that the user un-checked during customization.
+   * <p>
+   * Engines that Android Sync doesn't recognize are <b>not</b> included in
+   * the returned set.
+   *
+   * @return set of engine names, or null if we don't know which engines are
+   *         enabled.
+   */
+  protected Set<String> declinedEngineNames() {
+    if (config.enabledEngineNames == null) {
+      return null;
+    }
+
+    // These are the default set of engine names.
+    final Set<String> validEngineNames = SyncConfiguration.validEngineNames();
+
+    final HashSet<String> disabled = new HashSet<String>();
+    for (String engineName : validEngineNames) {
+      if (config.userSelectedEngines.containsKey(engineName) &&
+          !config.userSelectedEngines.get(engineName)) {
+        disabled.add(engineName);
+      }
+    }
+    return disabled;
   }
 
   /**

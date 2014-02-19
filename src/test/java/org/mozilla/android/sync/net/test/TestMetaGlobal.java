@@ -40,7 +40,38 @@ public class TestMetaGlobal {
   public static final String META_URL  = TEST_SERVER + "/1.1/c6o7dvmr2c4ud2fyv6woz2u4zi22bcyd/storage/meta/global";
   private HTTPServerTestHelper data    = new HTTPServerTestHelper();
 
-  public static final String TEST_META_GLOBAL_RESPONSE = "{\"id\":\"global\",\"payload\":\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\",\\\"storageVersion\\\":5,\\\"engines\\\":{\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"},\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"},\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"},\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"},\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"},\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"},\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\",\"username\":\"5817483\",\"modified\":1.32046073744E9}";
+
+  public static final String TEST_DECLINED_META_GLOBAL_RESPONSE =
+          "{\"id\":\"global\"," +
+          "\"payload\":" +
+          "\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\"," +
+          "\\\"declined\\\":[\\\"bookmarks\\\"]," +
+          "\\\"storageVersion\\\":5," +
+          "\\\"engines\\\":{" +
+          "\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"}," +
+          "\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"}," +
+          "\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"}," +
+          "\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"}," +
+          "\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"}," +
+          "\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\"," +
+          "\"username\":\"5817483\"," +
+          "\"modified\":1.32046073744E9}";
+
+  public static final String TEST_META_GLOBAL_RESPONSE =
+          "{\"id\":\"global\"," +
+          "\"payload\":" +
+          "\"{\\\"syncID\\\":\\\"zPSQTm7WBVWB\\\"," +
+          "\\\"storageVersion\\\":5," +
+          "\\\"engines\\\":{" +
+          "\\\"clients\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"fDg0MS5bDtV7\\\"}," +
+          "\\\"bookmarks\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"NNaQr6_F-9dm\\\"}," +
+          "\\\"forms\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"GXF29AFprnvc\\\"}," +
+          "\\\"history\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"av75g4vm-_rp\\\"}," +
+          "\\\"passwords\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"LT_ACGpuKZ6a\\\"}," +
+          "\\\"prefs\\\":{\\\"version\\\":2,\\\"syncID\\\":\\\"-3nsksP9wSAs\\\"}," +
+          "\\\"tabs\\\":{\\\"version\\\":1,\\\"syncID\\\":\\\"W4H5lOMChkYA\\\"}}}\"," +
+          "\"username\":\"5817483\"," +
+          "\"modified\":1.32046073744E9}";
   public static final String TEST_META_GLOBAL_NO_PAYLOAD_RESPONSE = "{\"id\":\"global\"," +
       "\"username\":\"5817483\",\"modified\":1.32046073744E9}";
   public static final String TEST_META_GLOBAL_MALFORMED_PAYLOAD_RESPONSE = "{\"id\":\"global\"," +
@@ -228,6 +259,36 @@ public class TestMetaGlobal {
     }
     assertEquals(expected, actual);
   }
+
+  @SuppressWarnings("static-method")
+  @Test
+  public void testGetEmptyDeclinedEngineNames() throws Exception {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_META_GLOBAL_RESPONSE));
+    assertEquals(0, mg.getDeclinedEngineNames().size());
+  }
+
+  @SuppressWarnings("static-method")
+  @Test
+  public void testGetDeclinedEngineNames() throws Exception {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_DECLINED_META_GLOBAL_RESPONSE));
+    assertEquals(1, mg.getDeclinedEngineNames().size());
+    assertEquals("bookmarks", mg.getDeclinedEngineNames().iterator().next());
+  }
+
+  @SuppressWarnings("static-method")
+  @Test
+  public void testRoundtripDeclinedEngineNames() throws Exception {
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setFromRecord(CryptoRecord.fromJSONRecord(TEST_DECLINED_META_GLOBAL_RESPONSE));
+    assertEquals("bookmarks", mg.getDeclinedEngineNames().iterator().next());
+    assertEquals("bookmarks", mg.asCryptoRecord().payload.getArray("declined").get(0));
+    MetaGlobal again = new MetaGlobal(null, null);
+    again.setFromRecord(mg.asCryptoRecord());
+    assertEquals("bookmarks", again.getDeclinedEngineNames().iterator().next());
+  }
+
 
   public MockMetaGlobalFetchDelegate doUpload(final MetaGlobal global) {
     final MockMetaGlobalFetchDelegate delegate = new MockMetaGlobalFetchDelegate();
