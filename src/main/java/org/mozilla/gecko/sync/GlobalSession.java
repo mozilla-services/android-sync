@@ -651,6 +651,18 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
             Utils.toCommaSeparatedString(config.enabledEngineNames) + "' from meta/global.");
       }
     }
+
+    // Persist declined.
+    config.declinedEngineNames = global.getDeclinedEngineNames();
+    if (config.declinedEngineNames == null) {
+      Logger.debug(LOG_TAG, "meta/global reported no declined engine names.");
+    } else {
+      if (Logger.shouldLogVerbose(LOG_TAG)) {
+        Logger.trace(LOG_TAG, "Persisting declined engine names '" +
+            Utils.toCommaSeparatedString(config.declinedEngineNames) + "' from meta/global.");
+      }
+    }
+
     config.persistToPrefs();
     advance();
   }

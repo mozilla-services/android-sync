@@ -9,8 +9,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,6 +73,13 @@ public class TestFetchMetaGlobalStage {
   private boolean calledWipeServer = false;
   private boolean calledUploadKeys = false;
   private boolean calledResetAllStages = false;
+
+  private static void assertSameContents(JSONArray expected, Set<String> actual) {
+    assertEquals(expected.size(), actual.size());
+    for (Object o : expected) {
+      assertTrue(actual.contains(o));
+    }
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -173,6 +183,13 @@ public class TestFetchMetaGlobalStage {
     assertTrue(calledRequiresUpgrade);
   }
 
+  @SuppressWarnings("unchecked")
+  private JSONArray makeTestDeclinedArray() {
+    final JSONArray declined = new JSONArray();
+    declined.add("foobar");
+    return declined;
+  }
+
   /**
    * Verify that a fetched meta/global with remote syncID == local syncID does
    * not reset.
@@ -187,6 +204,10 @@ public class TestFetchMetaGlobalStage {
     mg.setSyncID(TEST_SYNC_ID);
     mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
+    // Set declined engines in the server object.
+    final JSONArray testingDeclinedEngines = makeTestDeclinedArray();
+    mg.setDeclinedEngineNames(testingDeclinedEngines);
+
     MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
     doSession(server);
 
@@ -196,6 +217,10 @@ public class TestFetchMetaGlobalStage {
     assertEquals(TEST_SYNC_ID, session.config.metaGlobal.getSyncID());
     assertEquals(TEST_STORAGE_VERSION, session.config.metaGlobal.getStorageVersion().longValue());
     assertEquals(TEST_SYNC_ID, session.config.syncID);
+
+    // Declined engines propagate from the server meta/global.
+    final Set<String> actual = session.config.metaGlobal.getDeclinedEngineNames();
+    assertSameContents(testingDeclinedEngines, actual);
   }
 
   /**
@@ -212,6 +237,10 @@ public class TestFetchMetaGlobalStage {
     mg.setSyncID(TEST_SYNC_ID);
     mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
 
+    // Set declined engines in the server object.
+    final JSONArray testingDeclinedEngines = makeTestDeclinedArray();
+    mg.setDeclinedEngineNames(testingDeclinedEngines);
+
     MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
     doSession(server);
 
@@ -221,6 +250,41 @@ public class TestFetchMetaGlobalStage {
     assertEquals(TEST_SYNC_ID, session.config.metaGlobal.getSyncID());
     assertEquals(TEST_STORAGE_VERSION, session.config.metaGlobal.getStorageVersion().longValue());
     assertEquals(TEST_SYNC_ID, session.config.syncID);
+
+    // Declined engines propagate from the server meta/global.
+    final Set<String> actual = session.config.metaGlobal.getDeclinedEngineNames();
+    assertSameContents(testingDeclinedEngines, actual);
+  }
+
+  /**
+   * Verify that a fetched meta/global does not merge declined engines.
+   * TODO: eventually it should!
+   */
+  @Test
+  public void testFetchSuccessWithDifferentSyncIDMergesDeclined() throws Exception {
+    session.config.syncID = "NOT TEST SYNC ID";
+
+    // Fake the local declined engine names.
+    session.config.declinedEngineNames = new HashSet<String>();
+    session.config.declinedEngineNames.add("baznoo");
+
+    MetaGlobal mg = new MetaGlobal(null, null);
+    mg.setSyncID(TEST_SYNC_ID);
+    mg.setStorageVersion(Long.valueOf(TEST_STORAGE_VERSION));
+
+    // Set declined engines in the server object.
+    final JSONArray testingDeclinedEngines = makeTestDeclinedArray();
+    mg.setDeclinedEngineNames(testingDeclinedEngines);
+
+    MockServer server = new MockServer(200, mg.asCryptoRecord().toJSONString());
+    doSession(server);
+
+    // Declined engines propagate from the server meta/global, and are NOT merged.
+    final Set<String> expected = new HashSet(testingDeclinedEngines);
+    // expected.add("baznoo");   // Not until we merge. Local is lost.
+
+    final Set<String> newDeclined = session.config.metaGlobal.getDeclinedEngineNames();
+    assertEquals(expected, newDeclined);
   }
 
   @Test
