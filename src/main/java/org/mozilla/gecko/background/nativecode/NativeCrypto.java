@@ -4,8 +4,11 @@
 
 package org.mozilla.gecko.background.nativecode;
 
+import org.mozilla.gecko.mozglue.RobocopTarget;
+
 import java.security.GeneralSecurityException;
 
+@RobocopTarget
 public class NativeCrypto {
   static {
     System.loadLibrary("mozglue");
