@@ -3,7 +3,7 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
         Base application styles. This could be overridden in other res/values-XXX/themes.xml.
@@ -17,6 +17,8 @@
     <style name="Widget.BaseEditText" parent="android:style/Widget.EditText"/>
 
     <style name="Widget.BaseListView" parent="android:style/Widget.ListView"/>
+
+    <style name="Widget.BaseGridView" parent="android:style/Widget.GridView"/>
 
     <style name="Widget.BaseTextView" parent="android:style/Widget.TextView"/>
 
@@ -42,10 +44,6 @@
         <item name="android:textAppearance">@style/TextAppearance.Widget.TextView</item>
     </style>
 
-    <style name="Widget.TextView.SpinnerItem">
-        <item name="android:textAppearance">@style/TextAppearance.Widget.TextView</item>
-    </style>
-
     <style name="Widget.ListView" parent="Widget.BaseListView">
         <item name="android:divider">#D1D5DA</item>
         <item name="android:dividerHeight">1dp</item>
@@ -54,7 +52,6 @@
 
     <style name="Widget.ExpandableListView" parent="Widget.ListView">
         <item name="android:groupIndicator">@android:color/transparent</item>
-        <item name="android:childDivider">#D1D5DA</item>
     </style>
 
     <style name="Widget.ListItem">
@@ -88,7 +85,7 @@
         <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
         <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
         <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
-        <item name="android:textColorLink">?android:attr/textColorLinkInverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
     </style>
 
     <style name="TextAppearance.Large">
@@ -99,7 +96,7 @@
         <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
         <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
         <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
-        <item name="android:textColorLink">?android:attr/textColorLinkInverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
     </style>
 
     <style name="TextAppearance.Medium">
@@ -110,7 +107,7 @@
         <item name="android:textColor">?android:attr/textColorPrimaryInverse</item>
         <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
         <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
-        <item name="android:textColorLink">?android:attr/textColorLinkInverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
     </style>
 
     <style name="TextAppearance.Small">
@@ -122,8 +119,10 @@
         <item name="android:textColor">?android:attr/textColorSecondaryInverse</item>
         <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
         <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
-        <item name="android:textColorLink">?android:attr/textColorLinkInverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
     </style>
+
+    <style name="TextAppearance.EmptyMessage" parent="TextAppearance.Large"/>
 
     <style name="TextAppearance.Micro">
         <item name="android:textSize">12sp</item>
@@ -134,7 +133,7 @@
         <item name="android:textColor">?android:attr/textColorTertiaryInverse</item>
         <item name="android:textColorHint">?android:attr/textColorHintInverse</item>
         <item name="android:textColorHighlight">@color/text_color_highlight_inverse</item>
-        <item name="android:textColorLink">?android:attr/textColorLinkInverse</item>
+        <item name="android:textColorLink">?android:attr/textColorLink</item>
     </style>
 
     <style name="TextAppearance.Widget" />
