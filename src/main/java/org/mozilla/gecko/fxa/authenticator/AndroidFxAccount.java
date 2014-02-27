@@ -12,6 +12,7 @@ import java.util.Collections;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
@@ -21,6 +22,7 @@ import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -324,11 +326,16 @@ public class AndroidFxAccount {
   }
 
   public void enableSyncing() {
-    FxAccountAuthenticator.enableSyncing(context, account);
+    for (String authority : new String[] { BrowserContract.AUTHORITY }) {
+      ContentResolver.setSyncAutomatically(account, authority, true);
+      ContentResolver.setIsSyncable(account, authority, 1);
+    }
   }
 
   public void disableSyncing() {
-    FxAccountAuthenticator.disableSyncing(context, account);
+    for (String authority : new String[] { BrowserContract.AUTHORITY }) {
+      ContentResolver.setSyncAutomatically(account, authority, false);
+    }
   }
 
   public synchronized void setState(State state) {
