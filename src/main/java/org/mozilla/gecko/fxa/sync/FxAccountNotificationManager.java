@@ -8,6 +8,7 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountStatusActivity;
+import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.Action;
 
@@ -38,17 +39,18 @@ public class FxAccountNotificationManager {
   }
 
   /**
-   * Show or hide notifications reflecting the state of a Firefox Account.
+   * Reflect new Firefox Account state to the notification manager: show or hide
+   * notifications reflecting the state of a Firefox Account.
    *
    * @param context
    *          Android context.
-   * @param state
-   *          FirefoxAccount state to reflect to the Android notification
-   *          manager.
+   * @param fxAccount
+   *          Firefox Account to reflect to the notification manager.
    */
-  protected void showNotification(Context context, State state) {
+  protected void update(Context context, AndroidFxAccount fxAccount) {
     final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
+    final State state = fxAccount.getState();
     final Action action = state.getNeededAction();
     if (action == Action.None) {
       Logger.info(LOG_TAG, "State " + state.getStateLabel() + " needs no action; cancelling any existing notification.");
