@@ -143,6 +143,7 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractSetupAc
         return;
       }
       fxAccount.setState(new Engaged(email, result.uid, result.verified, unwrapkB, result.sessionToken, result.keyFetchToken));
+      fxAccount.requestSyncNow();
 
       // For great debugging.
       if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
