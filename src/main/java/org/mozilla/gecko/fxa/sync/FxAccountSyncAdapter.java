@@ -171,7 +171,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
      */
     public void handleCannotSync(State finalState) {
       Logger.warn(LOG_TAG, "Cannot sync from state: " + finalState.getStateLabel());
-      notificationManager.showNotification(context, finalState);
       setSyncResultSoftError();
       latch.countDown();
     }
@@ -496,6 +495,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
           Logger.info(LOG_TAG, "handleFinal: in " + state.getStateLabel());
           fxAccount.setState(state);
           schedulePolicy.onHandleFinal(state.getNeededAction());
+          notificationManager.update(context, fxAccount);
           try {
             if (state.getStateLabel() != StateLabel.Married) {
               syncDelegate.handleCannotSync(state);
