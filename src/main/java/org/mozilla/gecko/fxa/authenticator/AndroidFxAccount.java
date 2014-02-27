@@ -8,7 +8,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -57,6 +59,9 @@ public class AndroidFxAccount {
   public static final String BUNDLE_KEY_BUNDLE_VERSION = "version";
   public static final String BUNDLE_KEY_STATE_LABEL = "stateLabel";
   public static final String BUNDLE_KEY_STATE = "state";
+
+  protected static final List<String> ANDROID_AUTHORITIES = Collections.unmodifiableList(Arrays.asList(
+      new String[] { BrowserContract.AUTHORITY }));
 
   protected final Context context;
   protected final AccountManager accountManager;
@@ -380,6 +385,10 @@ public class AndroidFxAccount {
     getSyncPrefs().edit().clear().commit();
   }
 
+  public static Iterable<String> getAndroidAuthorities() {
+    return ANDROID_AUTHORITIES;
+  }
+
   /**
    * Return true if the underlying Android account is currently set to sync automatically.
    * <p>
@@ -391,7 +400,7 @@ public class AndroidFxAccount {
    */
   public boolean isSyncing() {
     boolean isSyncEnabled = true;
-    for (String authority : new String[] { BrowserContract.AUTHORITY }) {
+    for (String authority : getAndroidAuthorities()) {
       isSyncEnabled &= ContentResolver.getSyncAutomatically(account, authority);
     }
     return isSyncEnabled;
@@ -399,7 +408,7 @@ public class AndroidFxAccount {
 
   public void enableSyncing() {
     Logger.info(LOG_TAG, "Enabling sync for account named like " + getObfuscatedEmail());
-    for (String authority : new String[] { BrowserContract.AUTHORITY }) {
+    for (String authority : getAndroidAuthorities()) {
       ContentResolver.setSyncAutomatically(account, authority, true);
       ContentResolver.setIsSyncable(account, authority, 1);
     }
@@ -407,7 +416,7 @@ public class AndroidFxAccount {
 
   public void disableSyncing() {
     Logger.info(LOG_TAG, "Disabling sync for account named like " + getObfuscatedEmail());
-    for (String authority : new String[] { BrowserContract.AUTHORITY }) {
+    for (String authority : getAndroidAuthorities()) {
       ContentResolver.setSyncAutomatically(account, authority, false);
     }
   }
@@ -415,7 +424,7 @@ public class AndroidFxAccount {
   public void requestSync(Bundle extras) {
     Logger.info(LOG_TAG, "Requesting sync for account named like " + getObfuscatedEmail() +
         (extras.isEmpty() ? "." : "; has extras."));
-    for (String authority : new String[] { BrowserContract.AUTHORITY }) {
+    for (String authority : getAndroidAuthorities()) {
       ContentResolver.requestSync(account, authority, extras);
     }
   }
