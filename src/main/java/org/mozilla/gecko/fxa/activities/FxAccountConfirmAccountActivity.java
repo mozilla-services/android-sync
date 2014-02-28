@@ -84,12 +84,16 @@ public class FxAccountConfirmAccountActivity extends FxAccountAbstractActivity i
     FxAccountSyncStatusHelper.getInstance().startObserving(syncStatusDelegate);
 
     refresh();
+
+    fxAccount.requestSyncNow();
   }
 
   @Override
   public void onPause() {
     super.onPause();
     FxAccountSyncStatusHelper.getInstance().stopObserving(syncStatusDelegate);
+
+    fxAccount.requestSyncNow();
   }
 
   protected class SyncStatusDelegate implements FxAccountSyncStatusHelper.Delegate {
