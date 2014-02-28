@@ -16,6 +16,7 @@ import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
 import org.mozilla.gecko.sync.SyncConfiguration;
 
 import android.content.ContentResolver;
@@ -70,6 +71,8 @@ public class FxAccountStatusFragment extends PreferenceFragment implements OnPre
   // This Runnable references the fxAccount above, but it is not specific to a
   // single account. (That is, it does not capture a single account instance.)
   protected Runnable requestSyncRunnable;
+
+  protected final SyncStatusDelegate syncStatusDelegate = new SyncStatusDelegate();
 
   protected Preference ensureFindPreference(String key) {
     Preference preference = findPreference(key);
@@ -237,6 +240,38 @@ public class FxAccountStatusFragment extends PreferenceFragment implements OnPre
     setCheckboxesEnabled(true);
   }
 
+  protected class SyncStatusDelegate implements FxAccountSyncStatusHelper.Delegate {
+    protected final Runnable refreshRunnable = new Runnable() {
+      @Override
+      public void run() {
+        refresh();
+      }
+    };
+
+    @Override
+    public AndroidFxAccount getAccount() {
+      return fxAccount;
+    }
+
+    @Override
+    public void handleSyncStarted() {
+      if (fxAccount == null) {
+        return;
+      }
+      Logger.info(LOG_TAG, "Got sync started message; refreshing.");
+      getActivity().runOnUiThread(refreshRunnable);
+    }
+
+    @Override
+    public void handleSyncFinished() {
+      if (fxAccount == null) {
+        return;
+      }
+      Logger.info(LOG_TAG, "Got sync finished message; refreshing.");
+      getActivity().runOnUiThread(refreshRunnable);
+    }
+  }
+
   /**
    * Notify the fragment that a new AndroidFxAccount instance is current.
    * <p>
@@ -259,7 +294,21 @@ public class FxAccountStatusFragment extends PreferenceFragment implements OnPre
     // serviced very quickly, so this is not an issue.
     requestSyncRunnable = new RequestSyncRunnable();
 
+    // We would very much like register these status observers in bookended
+    // onResume/onPause calls, but because the Fragment gets onResume during the
+    // Activity's super.onResume, it hasn't yet been told its Firefox Account.
+    // So we register the observer here (and remove it in onPause), and open
+    // ourselves to the possibility that we don't have properly paired
+    // register/unregister calls.
+    FxAccountSyncStatusHelper.getInstance().startObserving(syncStatusDelegate);
+
     refresh();
+  }
+
+  @Override
+  public void onPause() {
+    super.onPause();
+    FxAccountSyncStatusHelper.getInstance().stopObserving(syncStatusDelegate);
   }
 
   protected void refresh() {
