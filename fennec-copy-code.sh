@@ -105,8 +105,6 @@ rsync -C \
   -a $FXASOURCEDIR $ANDROID/base/
 
 rsync -C \
-  --exclude 'AppConstants.java' \
-  --exclude 'SysInfo.java' \
   --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
