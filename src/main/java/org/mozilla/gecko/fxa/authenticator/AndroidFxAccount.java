@@ -424,6 +424,19 @@ public class AndroidFxAccount {
   }
 
   /**
+   * Is a sync currently in progress?
+   *
+   * @return true if Android is currently syncing the underlying Android Account.
+   */
+  public boolean isCurrentlySyncing() {
+    boolean active = false;
+    for (String authority : AndroidFxAccount.getAndroidAuthorities()) {
+      active |= ContentResolver.isSyncActive(account, authority);
+    }
+    return active;
+  }
+
+  /**
    * Request a sync.  See {@link FirefoxAccounts#requestSync(Account, EnumSet, String[], String[])}.
    */
   public void requestSync() {
