@@ -10,12 +10,14 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
@@ -421,12 +423,31 @@ public class AndroidFxAccount {
     }
   }
 
-  public void requestSync(Bundle extras) {
-    Logger.info(LOG_TAG, "Requesting sync for account named like " + getObfuscatedEmail() +
-        (extras.isEmpty() ? "." : "; has extras."));
-    for (String authority : getAndroidAuthorities()) {
-      ContentResolver.requestSync(account, authority, extras);
-    }
+  /**
+   * Request a sync.  See {@link FirefoxAccounts#requestSync(Account, EnumSet, String[], String[])}.
+   */
+  public void requestSync() {
+    requestSync(FirefoxAccounts.SOON, null, null);
+  }
+
+  /**
+   * Request a sync.  See {@link FirefoxAccounts#requestSync(Account, EnumSet, String[], String[])}.
+   *
+   * @param syncHints to pass to sync.
+   */
+  public void requestSync(EnumSet<FirefoxAccounts.SyncHint> syncHints) {
+    requestSync(syncHints, null, null);
+  }
+
+  /**
+   * Request a sync.  See {@link FirefoxAccounts#requestSync(Account, EnumSet, String[], String[])}.
+   *
+   * @param syncHints to pass to sync.
+   * @param stagesToSync stage names to sync.
+   * @param stagesToSkip stage names to skip.
+   */
+  public void requestSync(EnumSet<FirefoxAccounts.SyncHint> syncHints, String[] stagesToSync, String[] stagesToSkip) {
+    FirefoxAccounts.requestSync(getAndroidAccount(), syncHints, stagesToSync, stagesToSkip);
   }
 
   public synchronized void setState(State state) {
