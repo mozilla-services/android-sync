@@ -64,7 +64,10 @@ import android.os.SystemClock;
 public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
   private static final String LOG_TAG = FxAccountSyncAdapter.class.getSimpleName();
 
-  public static final int NOTIFICATION_ID = LOG_TAG.hashCode();
+  public static final String SYNC_EXTRAS_RESPECT_LOCAL_RATE_LIMIT = "respect_local_rate_limit";
+  public static final String SYNC_EXTRAS_RESPECT_REMOTE_SERVER_BACKOFF = "respect_remote_server_backoff";
+
+  protected static final int NOTIFICATION_ID = LOG_TAG.hashCode();
 
   // Tracks the last seen storage hostname for backoff purposes.
   private static final String PREF_BACKOFF_STORAGE_HOST = "backoffStorageHost";
@@ -480,7 +483,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       // If this sync was triggered by user action, this will be true.
       final boolean isImmediate = (extras != null) &&
                                   (extras.getBoolean(ContentResolver.SYNC_EXTRAS_UPLOAD, false) ||
-                                   extras.getBoolean(ContentResolver.SYNC_EXTRAS_FORCE, false));
+                                   extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false));
 
       // If it's not an immediate sync, it must be either periodic or tickled.
       // Check our background rate limiter.
