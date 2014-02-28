@@ -11,14 +11,12 @@ import java.util.Set;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.preferences.PreferenceFragment;
-import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.sync.SyncConfiguration;
 
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -387,9 +385,7 @@ public class FxAccountStatusFragment extends PreferenceFragment implements OnPre
         return;
       }
       Logger.info(LOG_TAG, "Requesting a sync sometime soon.");
-      // Request a sync, but not necessarily an immediate sync.
-      ContentResolver.requestSync(fxAccount.getAndroidAccount(), BrowserContract.AUTHORITY, Bundle.EMPTY);
-      // SyncAdapter.requestImmediateSync(fxAccount.getAndroidAccount(), null);
+      fxAccount.requestSync(Bundle.EMPTY);
     }
   }
 
@@ -406,10 +402,8 @@ public class FxAccountStatusFragment extends PreferenceFragment implements OnPre
       } else if ("debug_dump".equals(key)) {
         fxAccount.dump();
       } else if ("debug_force_sync".equals(key)) {
-        Logger.info(LOG_TAG, "Syncing.");
-        final Bundle extras = new Bundle();
-        extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-        fxAccount.requestSync(extras);
+        Logger.info(LOG_TAG, "Force syncing.");
+        fxAccount.requestSyncNow();
         // No sense refreshing, since the sync will complete in the future.
       } else if ("debug_forget_certificate".equals(key)) {
         State state = fxAccount.getState();

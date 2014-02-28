@@ -358,6 +358,12 @@ public class AndroidFxAccount {
     }
   }
 
+  public void requestSyncNow() {
+    final Bundle extras = new Bundle();
+    extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+    requestSync(extras);
+  }
+
   public synchronized void setState(State state) {
     if (state == null) {
       throw new IllegalArgumentException("state must not be null");
