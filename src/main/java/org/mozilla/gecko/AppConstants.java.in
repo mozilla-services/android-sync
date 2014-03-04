@@ -6,6 +6,7 @@
 
 package org.mozilla.gecko;
 
+import org.mozilla.gecko.mozglue.RobocopTarget;
 /**
  * A collection of constants that pertain to the build and runtime state of the
  * application. Typically these are sourced from build-time definitions (see
@@ -15,6 +16,7 @@ package org.mozilla.gecko;
  * See also SysInfo.java, which includes some of the values available from
  * nsSystemInfo inside Gecko.
  */
+@RobocopTarget
 public class AppConstants {
     public static final String ANDROID_PACKAGE_NAME = "@ANDROID_PACKAGE_NAME@";
     public static final String BROWSER_INTENT_CLASS = ANDROID_PACKAGE_NAME + ".App";
@@ -132,6 +134,22 @@ public class AppConstants {
 
     public static final boolean MOZ_ANDROID_BEAM =
 #ifdef MOZ_ANDROID_BEAM
+    true;
+#else
+    false;
+#endif
+
+    public static final boolean MOZ_ANDROID_SYNTHAPKS =
+#ifdef MOZ_ANDROID_SYNTHAPKS
+    true;
+#else
+    false;
+#endif
+
+    // See this wiki page for more details about channel specific build defines:
+    // https://wiki.mozilla.org/Platform/Channel-specific_build_defines
+    public static final boolean RELEASE_BUILD =
+#ifdef RELEASE_BUILD
     true;
 #else
     false;
