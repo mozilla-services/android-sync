@@ -77,6 +77,8 @@ SOURCEFILES=$(find \
   -and -not -name 'AppConstants.java' \
   -and -not -name 'FxAccountConstants.java' \
   -and -not -name 'SysInfo.java' \
+  -and -not -name 'HardwareUtils.java' \
+  -and -not -name 'RobocopTarget.java' \
   -and -not -name 'SyncConstants.java' \
   -and -not -path '*testhelpers*' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
@@ -84,6 +86,8 @@ SOURCEFILES=$(find \
 rsync -C \
   --exclude 'AppConstants.java' \
   --exclude 'SysInfo.java' \
+  --exclude 'HardwareUtils.java' \
+  --exclude 'RobocopTarget.java' \
   --exclude 'GlobalConstants.java' \
   --exclude 'AnnouncementsConstants.java' \
   --exclude 'HealthReportConstants.java' \
