@@ -181,4 +181,23 @@ public class PasswordRecord extends Record {
         + "timePasswordChanged: " + this.timePasswordChanged + ", "
         + "timesUsed: " + this.timesUsed;
   }
+
+  /**
+   * A PasswordRecord is considered valid if it abides by the database
+   * constraints of the PasswordsProvider (moz_logins).
+   *
+   * See toolkit/components/passwordmgr/storage-mozStorage.js for the
+   * definitions.
+   */
+    public boolean isValid() {
+        if (this.deleted) {
+            return true;
+        }
+
+        return this.hostname != null &&
+               this.encryptedUsername != null &&
+               this.encryptedPassword != null &&
+               this.usernameField != null &&
+               this.passwordField != null;
+  }
 }
