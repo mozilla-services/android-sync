@@ -16,21 +16,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.helpers.MockGlobalSessionCallback;
-import org.mozilla.gecko.background.fxa.FxAccountUtils;
-import org.mozilla.gecko.background.fxa.SkewHandler;
 import org.mozilla.gecko.background.testhelpers.MockPrefsGlobalSession;
 import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
-import org.mozilla.gecko.browserid.BrowserIDKeyPair;
-import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
-import org.mozilla.gecko.browserid.RSACryptoImplementation;
-import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.sync.CollectionKeys;
 import org.mozilla.gecko.sync.CryptoRecord;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -40,18 +33,12 @@ import org.mozilla.gecko.sync.MetaGlobal;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.FreshStartDelegate;
-import org.mozilla.gecko.sync.net.AuthHeaderProvider;
-import org.mozilla.gecko.sync.net.HawkAuthHeaderProvider;
 import org.mozilla.gecko.sync.repositories.domain.VersionConstants;
-import org.mozilla.gecko.tokenserver.TokenServerClient;
-import org.mozilla.gecko.tokenserver.TokenServerClientDelegate;
-import org.mozilla.gecko.tokenserver.TokenServerException;
-import org.mozilla.gecko.tokenserver.TokenServerToken;
 
 import android.content.SharedPreferences;
 
 @Category(IntegrationTestCategory.class)
-public class TestFreshStart {
+public class TestFreshStart extends TestWithTokenHelper {
   // TODO: switch this to use a local server, with appropriate setup.
   static final String TEST_USERNAME     = "6gnkjphdltbntwnrgvu46ey6mu7ncjdl";
   static final String TEST_SYNC_KEY     = "fuyx96ea8rkfazvjdfuqumupye"; // Weave.Identity.syncKey
@@ -59,59 +46,16 @@ public class TestFreshStart {
   private CollectionKeys keysToUpload;
   private MockGlobalSessionCallback callback;
   private GlobalSession session;
-  private AuthHeaderProvider authHeaderProvider;
-  private TokenServerToken token;
 
-  protected TokenServerToken getToken() throws Exception {
-    String TEST_MOCKMYID_USERNAME = "test";
-    String TEST_TOKEN_SERVER_URL = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
-    String TEST_AUDIENCE = FxAccountUtils.getAudienceForURL(TEST_TOKEN_SERVER_URL);
-    BrowserIDKeyPair keyPair = RSACryptoImplementation.generateKeyPair(1024);
-    final String assertion = new MockMyIDTokenFactory().createMockMyIDAssertion(keyPair, TEST_MOCKMYID_USERNAME, TEST_AUDIENCE);
-    final TokenServerClient tokenServerClient = new TokenServerClient(new URI(TEST_TOKEN_SERVER_URL), Executors.newSingleThreadExecutor());
-    final TokenServerToken[] tokens = new TokenServerToken[1];
-    WaitHelper.getTestWaiter().performWait(new Runnable() {
-      @Override
-      public void run() {
-        tokenServerClient.getTokenFromBrowserIDAssertion(assertion, true, null, new TokenServerClientDelegate() {
-          @Override
-          public void handleSuccess(TokenServerToken token) {
-            tokens[0] = token;
-            WaitHelper.getTestWaiter().performNotify();
-          }
-
-          @Override
-          public void handleFailure(TokenServerException e) {
-            WaitHelper.getTestWaiter().performNotify(e);
-          }
-
-          @Override
-          public void handleError(Exception e) {
-            WaitHelper.getTestWaiter().performNotify(e);
-          }
-
-          @Override
-          public void handleBackoff(int backoffSeconds) {
-          }
-
-          @Override
-          public String getUserAgent() {
-            return null;
-          }
-        });
-      }
-    });
-    return tokens[0];
+  @Override
+  protected String getMockMyIDUserName() {
+    return TestFreshStart.class.getSimpleName();
   }
 
+  @Override
   @Before
   public void setUp() throws Exception {
-    if (token == null) {
-      token = getToken();
-    }
-    final SkewHandler tokenServerSkewHandler = SkewHandler.getSkewHandlerFromEndpointString(token.endpoint);
-    final long tokenServerSkew = tokenServerSkewHandler.getSkewInSeconds();
-    authHeaderProvider = new HawkAuthHeaderProvider(token.id, token.key.getBytes("UTF-8"), false, tokenServerSkew);
+    super.setUp();
 
     keysToUpload = CollectionKeys.generateCollectionKeys();
     keysToUpload.setKeyBundleForCollection("addons", KeyBundle.withRandomKeys());

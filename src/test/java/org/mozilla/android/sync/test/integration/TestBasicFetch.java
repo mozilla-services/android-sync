@@ -65,7 +65,7 @@ public class TestBasicFetch {
     public void handleRequestFailure(SyncStorageResponse response) {
       BaseResource.consumeEntity(response);
       try {
-        WaitHelper.getTestWaiter().performNotify(new RuntimeException(response.body()));
+        WaitHelper.getTestWaiter().performNotify(new RuntimeException("Got response with status code " + response.getStatusCode() + " and body: " + response.body()));
       } catch (Exception e) {
         WaitHelper.getTestWaiter().performNotify(e);
       }
