@@ -141,6 +141,7 @@ public class TestLiveTokenServerClient {
               Assert.assertNotNull(token.id);
               Assert.assertNotNull(token.key);
               Assert.assertNotNull(Long.valueOf(token.uid));
+              Assert.assertTrue(token.durationInSeconds > 0);
               WaitHelper.getTestWaiter().performNotify();
             } catch (Throwable t) {
               WaitHelper.getTestWaiter().performNotify(t);

@@ -9,11 +9,13 @@ public class TokenServerToken {
   public final String key;
   public final String uid;
   public final String endpoint;
+  public final long durationInSeconds;
 
-  public TokenServerToken(String id, String key, String uid, String endpoint) {
+  public TokenServerToken(String id, String key, String uid, String endpoint, long durationInSeconds) {
     this.id = id;
     this.key = key;
     this.uid = uid;
     this.endpoint = endpoint;
+    this.durationInSeconds = durationInSeconds;
   }
 }

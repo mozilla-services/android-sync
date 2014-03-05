@@ -221,7 +221,7 @@ public class TokenServerClient {
 
     try {
       result.throwIfFieldsMissingOrMisTyped(new String[] { JSON_KEY_ID, JSON_KEY_KEY, JSON_KEY_API_ENDPOINT }, String.class);
-      result.throwIfFieldsMissingOrMisTyped(new String[] { JSON_KEY_UID }, Long.class);
+      result.throwIfFieldsMissingOrMisTyped(new String[] { JSON_KEY_UID, JSON_KEY_DURATION }, Long.class);
     } catch (BadRequiredFieldJSONException e ) {
       throw new TokenServerMalformedResponseException(null, e);
     }
@@ -231,7 +231,8 @@ public class TokenServerClient {
     return new TokenServerToken(result.getString(JSON_KEY_ID),
         result.getString(JSON_KEY_KEY),
         result.get(JSON_KEY_UID).toString(),
-        result.getString(JSON_KEY_API_ENDPOINT));
+        result.getString(JSON_KEY_API_ENDPOINT),
+        result.getLong(JSON_KEY_DURATION).longValue());
   }
 
   public static class TokenFetchResourceDelegate extends BaseResourceDelegate {
