@@ -26,7 +26,6 @@ import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 import android.accounts.AccountManager;
 import android.content.Intent;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.text.method.SingleLineTransformationMethod;

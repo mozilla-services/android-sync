@@ -30,6 +30,7 @@ import ch.boye.httpclientandroidlib.client.AuthCache;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
+import ch.boye.httpclientandroidlib.client.methods.HttpHead;
 import ch.boye.httpclientandroidlib.client.methods.HttpPost;
 import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
@@ -317,6 +318,11 @@ public class BaseResource implements Resource {
     this.go(new HttpGet(this.uri));
   }
 
+  public void head() {
+    Logger.debug(LOG_TAG, "HTTP HEAD " + this.uri.toASCIIString());
+    this.go(new HttpHead(this.uri));
+  }
+
   /**
    * Perform an HTTP GET as with {@link BaseResource#get()}, returning only
    * after callbacks have been invoked.
@@ -325,6 +331,16 @@ public class BaseResource implements Resource {
     // Until we use the asynchronous Apache HttpClient, we can simply call
     // through.
     this.get();
+  }
+
+  /**
+   * Perform an HTTP HEAD as with {@link BaseResource#head()}, returning only
+   * after callbacks have been invoked.
+   */
+  public void headBlocking() {
+    // Until we use the asynchronous Apache HttpClient, we can simply call
+    // through.
+    this.head();
   }
 
   @Override

@@ -4,8 +4,10 @@
 
 package org.mozilla.gecko.fxa.sync;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +42,8 @@ import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.delegates.BaseGlobalSessionCallback;
 import org.mozilla.gecko.sync.delegates.ClientsDataDelegate;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BaseResource;
+import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.HawkAuthHeaderProvider;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.tokenserver.TokenServerClient;
@@ -56,6 +60,8 @@ import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.os.Bundle;
 import android.os.SystemClock;
+import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
   private static final String LOG_TAG = FxAccountSyncAdapter.class.getSimpleName();
@@ -504,8 +510,16 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
             final Married married = (Married) state;
             SkewHandler skewHandler = SkewHandler.getSkewHandlerFromEndpointString(tokenServerEndpoint);
+            long skew = skewHandler.getSkewInMillis();
+            if (skew == 0) {
+              // Colour me skeptical. We burn an HTTP HEAD request to save a
+              // failed sync, to prevent red-herring log spew, and to get
+              // closer to the goal state that every timestamp error is a
+              // real issue.
+              skew = getSkewFromHeadBlocking(tokenServerEndpoint);
+            }
             final long now = System.currentTimeMillis();
-            final long issuedAtMillis = now + skewHandler.getSkewInMillis();
+            final long issuedAtMillis = now + skew;
             final long assertionDurationMillis = this.getAssertionDurationInMilliseconds();
             final String assertion = married.generateAssertion(audience, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, issuedAtMillis, assertionDurationMillis);
 
@@ -555,6 +569,36 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
     Logger.info(LOG_TAG, "Syncing done.");
     lastSyncRealtimeMillis = SystemClock.elapsedRealtime();
+  }
+
+  protected long getSkewFromHeadBlocking(String tokenServerEndpoint) throws URISyntaxException {
+    final BaseResource resource = new BaseResource(tokenServerEndpoint);
+    final SkewHandler skewHandler = SkewHandler.getSkewHandlerForResource(resource);
+    final BaseResourceDelegate delegate = new BaseResourceDelegate(resource) {
+      @Override
+      public void handleHttpResponse(HttpResponse response) {
+        // Skew.
+        skewHandler.updateSkew(response, System.currentTimeMillis());
+      }
+
+      @Override
+      public void handleTransportException(GeneralSecurityException e) {
+        // Ignore.
+      }
+
+      @Override
+      public void handleHttpProtocolException(ClientProtocolException e) {
+        // Ignore.
+      }
+
+      @Override
+      public void handleHttpIOException(IOException e) {
+        // Ignore.
+      }
+    };
+    resource.delegate = delegate;
+    resource.headBlocking();
+    return skewHandler.getSkewInMillis();
   }
 
   protected void debugAssertion(String audience, String assertion) {
