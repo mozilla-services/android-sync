@@ -41,6 +41,7 @@ public class AndroidFxAccount {
 
   public static final int CURRENT_PREFS_VERSION = 1;
 
+  // When updating the account, do not forget to update AccountPickler.
   public static final int CURRENT_ACCOUNT_VERSION = 3;
   public static final String ACCOUNT_KEY_ACCOUNT_VERSION = "version";
   public static final String ACCOUNT_KEY_PROFILE = "profile";
@@ -82,6 +83,18 @@ public class AndroidFxAccount {
     this.accountManager = AccountManager.get(this.context);
   }
 
+  /**
+   * Persist the Firefox account to disk as a JSON object. Note that this is a wrapper around
+   * {@link AccountPickler#pickle}, and is identical to calling it directly.
+   * <p>
+   * Note that pickling is different from bundling, which involves operations on a
+   * {@link android.os.Bundle Bundle} object of miscellaenous data associated with the account.
+   * See {@link #persistBundle} and {@link #unbundle} for more.
+   */
+  public void pickle(final String filename) {
+    AccountPickler.pickle(this, filename);
+  }
+
   public Account getAndroidAccount() {
     return this.account;
   }
@@ -99,10 +112,16 @@ public class AndroidFxAccount {
     }
   }
 
+  /**
+   * Saves the given data to the {@link android.os.Bundle Bundle} associated with the account.
+   */
   protected void persistBundle(ExtendedJSONObject bundle) {
     accountManager.setUserData(account, ACCOUNT_KEY_DESCRIPTOR, bundle.toJSONString());
   }
 
+  /**
+   * Retrieves the {@link android.os.Bundle Bundle} object associated with the account.
+   */
   protected ExtendedJSONObject unbundle() {
     final int version = getAccountVersion();
     if (version < CURRENT_ACCOUNT_VERSION) {
@@ -275,6 +294,22 @@ public class AndroidFxAccount {
       String tokenServerURI,
       State state)
           throws UnsupportedEncodingException, GeneralSecurityException, URISyntaxException {
+    return addAndroidAccount(context, email, profile, idpServerURI, tokenServerURI, state,
+        CURRENT_ACCOUNT_VERSION, true, false, null);
+  }
+
+  public static AndroidFxAccount addAndroidAccount(
+      Context context,
+      String email,
+      String profile,
+      String idpServerURI,
+      String tokenServerURI,
+      State state,
+      final int accountVersion,
+      final boolean syncEnabled,
+      final boolean fromPickle,
+      ExtendedJSONObject bundle)
+          throws UnsupportedEncodingException, GeneralSecurityException, URISyntaxException {
     if (email == null) {
       throw new IllegalArgumentException("email must not be null");
     }
@@ -288,6 +323,12 @@ public class AndroidFxAccount {
       throw new IllegalArgumentException("state must not be null");
     }
 
+    // TODO: Add migration code.
+    if (accountVersion != CURRENT_ACCOUNT_VERSION) {
+      throw new IllegalStateException("Could not create account of version " + accountVersion +
+          ". Current version is " + CURRENT_ACCOUNT_VERSION + ".");
+    }
+
     // Android has internal restrictions that require all values in this
     // bundle to be strings. *sigh*
     Bundle userdata = new Bundle();
@@ -297,13 +338,15 @@ public class AndroidFxAccount {
     userdata.putString(ACCOUNT_KEY_AUDIENCE, FxAccountUtils.getAudienceForURL(tokenServerURI));
     userdata.putString(ACCOUNT_KEY_PROFILE, profile);
 
-    ExtendedJSONObject descriptor = new ExtendedJSONObject();
+    if (bundle == null) {
+      bundle = new ExtendedJSONObject();
+      // TODO: How to upgrade?
+      bundle.put(BUNDLE_KEY_BUNDLE_VERSION, CURRENT_BUNDLE_VERSION);
+    }
+    bundle.put(BUNDLE_KEY_STATE_LABEL, state.getStateLabel().name());
+    bundle.put(BUNDLE_KEY_STATE, state.toJSONObject().toJSONString());
 
-    descriptor.put(BUNDLE_KEY_STATE_LABEL, state.getStateLabel().name());
-    descriptor.put(BUNDLE_KEY_STATE, state.toJSONObject().toJSONString());
-
-    descriptor.put(BUNDLE_KEY_BUNDLE_VERSION, CURRENT_BUNDLE_VERSION);
-    userdata.putString(ACCOUNT_KEY_DESCRIPTOR, descriptor.toJSONString());
+    userdata.putString(ACCOUNT_KEY_DESCRIPTOR, bundle.toJSONString());
 
     Account account = new Account(email, FxAccountConstants.ACCOUNT_TYPE);
     AccountManager accountManager = AccountManager.get(context);
@@ -316,14 +359,35 @@ public class AndroidFxAccount {
     }
 
     AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
-    fxAccount.clearSyncPrefs();
-    fxAccount.enableSyncing();
+
+    if (!fromPickle) {
+      fxAccount.clearSyncPrefs();
+    }
+
+    if (syncEnabled) {
+      fxAccount.enableSyncing();
+    } else {
+      fxAccount.disableSyncing();
+    }
 
     return fxAccount;
   }
 
   public void clearSyncPrefs() throws UnsupportedEncodingException, GeneralSecurityException {
     getSyncPrefs().edit().clear().commit();
+  }
+
+  public boolean isSyncingEnabled() {
+    // TODO: Authority will be static in PR 426.
+    final int result = ContentResolver.getIsSyncable(account, BrowserContract.AUTHORITY);
+    if (result > 0) {
+      return true;
+    } else if (result == 0) {
+      return false;
+    } else {
+      // This should not happen.
+      throw new IllegalStateException("Sync enabled state unknown.");
+    }
   }
 
   public void enableSyncing() {
