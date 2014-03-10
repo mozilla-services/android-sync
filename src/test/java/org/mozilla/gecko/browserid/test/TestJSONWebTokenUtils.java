@@ -134,4 +134,15 @@ public class TestJSONWebTokenUtils {
     Assert.assertEquals(expectedAssertionParts[0], assertionParts[0]);
     Assert.assertEquals(expectedAssertionParts[1], assertionParts[1]);
   }
+
+  @Test
+  public void testGetPayloadString() throws Exception {
+    String s;
+    s = JSONWebTokenUtils.getPayloadString("{}", "audience", "issuer", 1L, 2L);
+    Assert.assertEquals("{\"aud\":\"audience\",\"exp\":2,\"iat\":1,\"iss\":\"issuer\"}", s);
+
+    // Make sure we don't include null issuedAt.
+    s = JSONWebTokenUtils.getPayloadString("{}", "audience", "issuer", null, 3L);
+    Assert.assertEquals("{\"aud\":\"audience\",\"exp\":3,\"iss\":\"issuer\"}", s);
+  }
 }

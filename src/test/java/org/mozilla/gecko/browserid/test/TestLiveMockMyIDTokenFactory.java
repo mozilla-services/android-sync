@@ -101,6 +101,15 @@ public class TestLiveMockMyIDTokenFactory {
   }
 
   @Test
+  public void testAssertionWithoutIssuedAt() throws Exception {
+    long ciat = System.currentTimeMillis();
+    long cexp = ciat + JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
+    String assertion = mockMyIdTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_AUDIENCE,
+        ciat, cexp, null, JSONWebTokenUtils.DEFAULT_FUTURE_EXPIRES_AT_IN_MILLISECONDS);
+    assertVerifySuccess(TEST_AUDIENCE, assertion);
+  }
+
+  @Test
   public void testAssertionExpired() throws Exception {
     long ciat = System.currentTimeMillis();
     long cexp = ciat + 1;
