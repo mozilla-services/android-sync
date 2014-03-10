@@ -11,13 +11,13 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
+import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.DSACryptoImplementation;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
-import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
+import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.browserid.SigningPrivateKey;
 import org.mozilla.gecko.browserid.VerifyingPublicKey;
-import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.browserid.verifier.BrowserIDRemoteVerifierClient;
 import org.mozilla.gecko.browserid.verifier.BrowserIDVerifierDelegate;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -124,7 +124,8 @@ public class TestLiveMockMyIDTokenFactory {
   public void testCertificateExpired() throws Exception {
     long iat = System.currentTimeMillis();
     long dur = 1;
-    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, iat, dur);
+    long exp = iat + dur;
+    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, iat, exp);
     String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion has expired");
   }
@@ -133,7 +134,8 @@ public class TestLiveMockMyIDTokenFactory {
   public void testCertificateFromFuture() throws Exception {
     long iat = 2 * System.currentTimeMillis();
     long dur = 60 * 1000 * 1000;
-    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, iat, dur);
+    long exp = iat + dur;
+    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, iat, exp);
     String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion issued later than verification date");
   }

@@ -40,18 +40,17 @@ public class MockMyIDTokenFactory {
    *          sign username@mockmyid.com
    * @param issuedAt
    *          timestamp for certificate, in milliseconds since the epoch.
-   * @param durationInMilliseconds
-   *          lifespan of certificate, in milliseconds.
+   * @param expiresAt
+   *          expiration timestamp for certificate, in milliseconds since the epoch.
    * @return encoded certificate string.
    * @throws Exception
    */
   public String createMockMyIDCertificate(final VerifyingPublicKey publicKeyToSign, String username,
-      final long issuedAt, final long durationInMilliseconds)
+      final long issuedAt, final long expiresAt)
           throws Exception {
     if (!username.endsWith("@mockmyid.com")) {
       username = username + "@mockmyid.com";
     }
-    long expiresAt = issuedAt + durationInMilliseconds;
     SigningPrivateKey mockMyIdPrivateKey = getMockMyIDPrivateKey();
     return JSONWebTokenUtils.createCertificate(publicKeyToSign, username, "mockmyid.com", issuedAt, expiresAt, mockMyIdPrivateKey);
   }
@@ -69,8 +68,10 @@ public class MockMyIDTokenFactory {
    */
   public String createMockMyIDCertificate(final VerifyingPublicKey publicKeyToSign, final String username)
       throws Exception {
-    return createMockMyIDCertificate(publicKeyToSign, username,
-        System.currentTimeMillis(), JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS );
+    long iat = System.currentTimeMillis();
+    long dur = JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
+    long exp = iat + dur;
+    return createMockMyIDCertificate(publicKeyToSign, username, iat, exp);
   }
 
   /**
@@ -97,8 +98,9 @@ public class MockMyIDTokenFactory {
       long certificateIssuedAt, long certificateDurationInMilliseconds,
       long assertionIssuedAt, long assertionDurationInMilliseconds)
           throws Exception {
+    long certificateExpiresAt = certificateIssuedAt + certificateDurationInMilliseconds;
     String certificate = createMockMyIDCertificate(keyPair.getPublic(), username,
-        certificateIssuedAt, certificateDurationInMilliseconds);
+        certificateIssuedAt, certificateExpiresAt);
     long expiresAt = assertionIssuedAt + assertionDurationInMilliseconds;
     return JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, audience,
         JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, assertionIssuedAt, expiresAt);
