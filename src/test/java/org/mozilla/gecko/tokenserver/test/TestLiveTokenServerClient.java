@@ -15,7 +15,6 @@ import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
-import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.fxa.FxAccountConstants;
@@ -164,8 +163,7 @@ public class TestLiveTokenServerClient {
   @Test
   public void testRemoteFailure() throws Exception {
     final String badAssertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, getTestUsername(), TEST_REMOTE_AUDIENCE,
-        0, 1,
-        System.currentTimeMillis(), JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
+        0, 1, 2, 3);
     final String mockClientState = "abcdefabcdefabcdefabcdefabcdefab";
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
