@@ -9,7 +9,9 @@ import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.TreeMap;
 
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.apache.commons.codec.binary.StringUtils;
@@ -70,8 +72,9 @@ public class JSONWebTokenUtils {
     return payload;
   }
 
-  protected static String getPayloadString(String payloadString, String issuer,
-      long issuedAt, String audience, long expiresAt) throws NonObjectJSONException,
+  @SuppressWarnings("unchecked")
+  protected static String getPayloadString(String payloadString, String audience, String issuer,
+      long issuedAt, long expiresAt) throws NonObjectJSONException,
       IOException, ParseException {
     ExtendedJSONObject payload;
     if (payloadString != null) {
@@ -79,13 +82,14 @@ public class JSONWebTokenUtils {
     } else {
       payload = new ExtendedJSONObject();
     }
-    payload.put("iss", issuer);
-    payload.put("iat", issuedAt);
     if (audience != null) {
       payload.put("aud", audience);
     }
+    payload.put("iss", issuer);
+    payload.put("iat", issuedAt);
     payload.put("exp", expiresAt);
-    return payload.toJSONString();
+    // TreeMap so that keys are sorted. A small attempt to keep output stable over time.
+    return JSONObject.toJSONString(new TreeMap<Object, Object>(payload.object));
   }
 
   protected static String getCertificatePayloadString(VerifyingPublicKey publicKeyToSign, String email) throws NonObjectJSONException, IOException, ParseException  {
@@ -100,7 +104,7 @@ public class JSONWebTokenUtils {
   public static String createCertificate(VerifyingPublicKey publicKeyToSign, String email,
       String issuer, long issuedAt, long expiresAt, SigningPrivateKey privateKey) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException  {
     String certificatePayloadString = getCertificatePayloadString(publicKeyToSign, email);
-    String payloadString = getPayloadString(certificatePayloadString, issuer, issuedAt, null, expiresAt);
+    String payloadString = getPayloadString(certificatePayloadString, null, issuer, issuedAt, expiresAt);
     return JSONWebTokenUtils.encode(payloadString, privateKey);
   }
 
@@ -115,7 +119,7 @@ public class JSONWebTokenUtils {
       String issuer, long issuedAt, long durationInMilliseconds) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException  {
     long expiresAt = issuedAt + durationInMilliseconds;
     String emptyAssertionPayloadString = "{}";
-    String payloadString = getPayloadString(emptyAssertionPayloadString, issuer, issuedAt, audience, expiresAt);
+    String payloadString = getPayloadString(emptyAssertionPayloadString, audience, issuer, issuedAt, expiresAt);
     String signature = JSONWebTokenUtils.encode(payloadString, privateKeyToSignWith);
     return certificate + "~" + signature;
   }
