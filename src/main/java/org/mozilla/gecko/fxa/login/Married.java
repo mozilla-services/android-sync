@@ -57,7 +57,8 @@ public class Married extends TokensAndKeysState {
   }
 
   public String generateAssertion(String audience, String issuer, long issuedAt, long durationInMilliseconds) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException {
-    String assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, audience, issuer, issuedAt, durationInMilliseconds);
+    long expiresAt = issuedAt + durationInMilliseconds;
+    String assertion = JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, audience, issuer, issuedAt, expiresAt);
     if (!FxAccountConstants.LOG_PERSONAL_INFORMATION) {
       return assertion;
     }
