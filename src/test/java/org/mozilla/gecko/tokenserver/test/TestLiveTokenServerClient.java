@@ -30,7 +30,7 @@ import org.mozilla.gecko.tokenserver.TokenServerToken;
 public class TestLiveTokenServerClient {
   public static final String TEST_USERNAME = "test";
 
-  public static final String TEST_REMOTE_URL = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
+  public static final String TEST_REMOTE_URL = FxAccountConstants.STAGE_TOKEN_SERVER_ENDPOINT;
   public static String TEST_REMOTE_AUDIENCE;
 
   protected final MockMyIDTokenFactory mockMyIDTokenFactory;
