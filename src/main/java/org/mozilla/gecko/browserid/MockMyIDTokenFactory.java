@@ -99,8 +99,9 @@ public class MockMyIDTokenFactory {
           throws Exception {
     String certificate = createMockMyIDCertificate(keyPair.getPublic(), username,
         certificateIssuedAt, certificateDurationInMilliseconds);
+    long expiresAt = assertionIssuedAt + assertionDurationInMilliseconds;
     return JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, audience,
-        JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, assertionIssuedAt, assertionDurationInMilliseconds);
+        JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, assertionIssuedAt, expiresAt);
   }
 
   /**

@@ -75,7 +75,7 @@ public class TestJSONWebTokenUtils {
     SigningPrivateKey privateKeyToSignWith = RSACryptoImplementation.createPrivateKey(n, d);
 
     String certificate = JSONWebTokenUtils.createCertificate(publicKeyToSign, "test@mockmyid.com", "mockmyid.com", iat, exp, mockMyIdPrivateKey);
-    String assertion = JSONWebTokenUtils.createAssertion(privateKeyToSignWith, certificate, TEST_AUDIENCE, TEST_ASSERTION_ISSUER, iat, dur);
+    String assertion = JSONWebTokenUtils.createAssertion(privateKeyToSignWith, certificate, TEST_AUDIENCE, TEST_ASSERTION_ISSUER, iat, exp);
     String payload = JSONWebTokenUtils.decode(certificate, mockMyIdPublicKey);
 
     String EXPECTED_PAYLOAD = "{\"exp\":1352999409210,\"iat\":1352995809210,\"iss\":\"mockmyid.com\",\"principal\":{\"email\":\"test@mockmyid.com\"},\"public-key\":{\"e\":\"65537\",\"n\":\"20332459213245328760269530796942625317006933400814022542511832260333163206808672913301254872114045771215470352093046136365629411384688395020388553744886954869033696089099714200452682590914843971683468562019706059388121176435204818734091361033445697933682779095713376909412972373727850278295874361806633955236862180792787906413536305117030045164276955491725646610368132167655556353974515423042221261732084368978523747789654468953860772774078384556028728800902433401131226904244661160767916883680495122225202542023841606998867411022088440946301191503335932960267228470933599974787151449279465703844493353175088719018221\",\"algorithm\":\"RS\"}}";
@@ -115,7 +115,7 @@ public class TestJSONWebTokenUtils {
     SigningPrivateKey privateKeyToSignWith = DSACryptoImplementation.createPrivateKey(x, p, q, g);
 
     String certificate = JSONWebTokenUtils.createCertificate(publicKeyToSign, "test@mockmyid.com", "mockmyid.com", iat, exp, mockMyIdPrivateKey);
-    String assertion = JSONWebTokenUtils.createAssertion(privateKeyToSignWith, certificate, TEST_AUDIENCE, TEST_ASSERTION_ISSUER, iat, dur);
+    String assertion = JSONWebTokenUtils.createAssertion(privateKeyToSignWith, certificate, TEST_AUDIENCE, TEST_ASSERTION_ISSUER, iat, exp);
     String payload = JSONWebTokenUtils.decode(certificate, mockMyIdPublicKey);
 
     String EXPECTED_PAYLOAD = "{\"exp\":1380073962995,\"iat\":1380070362995,\"iss\":\"mockmyid.com\",\"principal\":{\"email\":\"test@mockmyid.com\"},\"public-key\":{\"g\":\"f7e1a085d69b3ddecbbcab5c36b857b97994afbbfa3aea82f9574c0b3d0782675159578ebad4594fe67107108180b449167123e84c281613b7cf09328cc8a6e13c167a8b547c8d28e0a3ae1e2bb3a675916ea37f0bfa213562f1fb627a01243bcca4f1bea8519089a883dfe15ae59f06928b665e807b552564014c3bfecf492a\",\"q\":\"9760508f15230bccb292b982a2eb840bf0581cf5\",\"p\":\"fd7f53811d75122952df4a9c2eece4e7f611b7523cef4400c31e3f80b6512669455d402251fb593d8d58fabfc5f5ba30f6cb9b556cd7813b801d346ff26660b76b9950a5a49f9fe8047b1022c24fbba9d7feb7c61bf83b57e7c6a8a6150f04fb83f6d3c51ec3023554135a169132f675f3ae2b61d72aeff22203199dd14801c7\",\"y\":\"ea809be508bc94485553efac8ef2a8debdcdb3545ce433e8bd5889ec9d0880a13b2a8af35451161e58229d1e2be69e74a7251465a394913e8e64b0c33fde39a637b6047d7370178cf4404c0a7b4c2ed31d9cfe03ab79dbcc64667e6e7bc244eb1c127c28d725db94aff29b858bdb636f1307bdf48b3c91f387c2ab588086b6c8\",\"algorithm\":\"DS\"}}";

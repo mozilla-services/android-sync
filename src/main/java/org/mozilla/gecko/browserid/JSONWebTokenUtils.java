@@ -116,8 +116,7 @@ public class JSONWebTokenUtils {
   }
 
   public static String createAssertion(SigningPrivateKey privateKeyToSignWith, String certificate, String audience,
-      String issuer, long issuedAt, long durationInMilliseconds) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException  {
-    long expiresAt = issuedAt + durationInMilliseconds;
+      String issuer, long issuedAt, long expiresAt) throws NonObjectJSONException, IOException, ParseException, GeneralSecurityException  {
     String emptyAssertionPayloadString = "{}";
     String payloadString = getPayloadString(emptyAssertionPayloadString, audience, issuer, issuedAt, expiresAt);
     String signature = JSONWebTokenUtils.encode(payloadString, privateKeyToSignWith);
@@ -128,7 +127,8 @@ public class JSONWebTokenUtils {
     String issuer = DEFAULT_ASSERTION_ISSUER;
     long issuedAt = System.currentTimeMillis();
     long durationInMilliseconds = DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
-    return createAssertion(privateKeyToSignWith, certificate, audience, issuer, issuedAt, durationInMilliseconds);
+    long expiresAt = issuedAt + durationInMilliseconds;
+    return createAssertion(privateKeyToSignWith, certificate, audience, issuer, issuedAt, expiresAt);
   }
 
   /**
