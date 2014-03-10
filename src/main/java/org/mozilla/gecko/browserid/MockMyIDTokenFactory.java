@@ -68,10 +68,9 @@ public class MockMyIDTokenFactory {
    */
   public String createMockMyIDCertificate(final VerifyingPublicKey publicKeyToSign, final String username)
       throws Exception {
-    long iat = System.currentTimeMillis();
-    long dur = JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
-    long exp = iat + dur;
-    return createMockMyIDCertificate(publicKeyToSign, username, iat, exp);
+    long ciat = System.currentTimeMillis();
+    long cexp = ciat + JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
+    return createMockMyIDCertificate(publicKeyToSign, username, ciat, cexp);
   }
 
   /**
@@ -85,25 +84,23 @@ public class MockMyIDTokenFactory {
    *          sign username@mockmyid.com.
    * @param certificateIssuedAt
    *          timestamp for certificate, in milliseconds since the epoch.
-   * @param certificateDurationInMilliseconds
-   *          lifespan of certificate, in milliseconds.
+   * @param certificateExpiresAt
+   *          expiration timestamp for certificate, in milliseconds since the epoch.
    * @param assertionIssuedAt
    *          timestamp for assertion, in milliseconds since the epoch.
-   * @param assertionDurationInMilliseconds
-   *          lifespan of assertion, in milliseconds.
+   * @param assertionExpiresAt
+   *          expiration timestamp for assertion, in milliseconds since the epoch.
    * @return encoded assertion string.
    * @throws Exception
    */
   public String createMockMyIDAssertion(BrowserIDKeyPair keyPair, String username, String audience,
-      long certificateIssuedAt, long certificateDurationInMilliseconds,
-      long assertionIssuedAt, long assertionDurationInMilliseconds)
+      long certificateIssuedAt, long certificateExpiresAt,
+      long assertionIssuedAt, long assertionExpiresAt)
           throws Exception {
-    long certificateExpiresAt = certificateIssuedAt + certificateDurationInMilliseconds;
     String certificate = createMockMyIDCertificate(keyPair.getPublic(), username,
         certificateIssuedAt, certificateExpiresAt);
-    long expiresAt = assertionIssuedAt + assertionDurationInMilliseconds;
     return JSONWebTokenUtils.createAssertion(keyPair.getPrivate(), certificate, audience,
-        JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, assertionIssuedAt, expiresAt);
+        JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, assertionIssuedAt, assertionExpiresAt);
   }
 
   /**
@@ -120,9 +117,11 @@ public class MockMyIDTokenFactory {
    */
   public String createMockMyIDAssertion(BrowserIDKeyPair keyPair, String username, String audience)
       throws Exception {
-    long now = System.currentTimeMillis();
+    long ciat = System.currentTimeMillis();
+    long cexp = ciat + JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
+    long aiat = ciat + 1;
+    long aexp = aiat + JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
     return createMockMyIDAssertion(keyPair, username, audience,
-        now, JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS,
-        now + 1, JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
+        ciat, cexp, aiat, aexp);
   }
 }
