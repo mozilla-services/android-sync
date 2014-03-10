@@ -126,8 +126,10 @@ public class TestLiveMockMyIDTokenFactory {
   public void testCertificateExpired() throws Exception {
     long ciat = System.currentTimeMillis() - 2;
     long cexp = ciat + 1;
+    long aiat = System.currentTimeMillis();
+    long aexp = aiat + JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
     String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, ciat, cexp);
-    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE);
+    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, aiat, aexp);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion has expired");
   }
 
@@ -135,8 +137,10 @@ public class TestLiveMockMyIDTokenFactory {
   public void testCertificateFromFuture() throws Exception {
     long ciat = 2 * System.currentTimeMillis();
     long cexp = ciat + JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
+    long aiat = System.currentTimeMillis();
+    long aexp = aiat + JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
     String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, ciat, cexp);
-    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE);
+    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, aiat, aexp);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion issued later than verification date");
   }
 }
