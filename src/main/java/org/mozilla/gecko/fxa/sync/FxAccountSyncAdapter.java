@@ -503,11 +503,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
             }
 
             final Married married = (Married) state;
-            SkewHandler skewHandler = SkewHandler.getSkewHandlerFromEndpointString(tokenServerEndpoint);
-            final long now = System.currentTimeMillis();
-            final long issuedAtMillis = now + skewHandler.getSkewInMillis();
-            final long assertionDurationMillis = this.getAssertionDurationInMilliseconds();
-            final String assertion = married.generateAssertion(audience, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, issuedAtMillis, assertionDurationMillis);
+            final String assertion = married.generateAssertion(audience, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER);
 
             /*
              * At this point we're in the correct state to sync, and we're ready to fetch
