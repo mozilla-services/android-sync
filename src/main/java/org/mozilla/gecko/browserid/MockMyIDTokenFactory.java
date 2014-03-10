@@ -87,7 +87,8 @@ public class MockMyIDTokenFactory {
    * @param certificateExpiresAt
    *          expiration timestamp for certificate, in milliseconds since the epoch.
    * @param assertionIssuedAt
-   *          timestamp for assertion, in milliseconds since the epoch.
+   *          timestamp for assertion, in milliseconds since the epoch; if null,
+   *          no timestamp is included.
    * @param assertionExpiresAt
    *          expiration timestamp for assertion, in milliseconds since the epoch.
    * @return encoded assertion string.
@@ -95,7 +96,7 @@ public class MockMyIDTokenFactory {
    */
   public String createMockMyIDAssertion(BrowserIDKeyPair keyPair, String username, String audience,
       long certificateIssuedAt, long certificateExpiresAt,
-      long assertionIssuedAt, long assertionExpiresAt)
+      Long assertionIssuedAt, long assertionExpiresAt)
           throws Exception {
     String certificate = createMockMyIDCertificate(keyPair.getPublic(), username,
         certificateIssuedAt, certificateExpiresAt);

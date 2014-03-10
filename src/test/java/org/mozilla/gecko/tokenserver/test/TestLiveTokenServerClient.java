@@ -163,7 +163,7 @@ public class TestLiveTokenServerClient {
   @Test
   public void testRemoteFailure() throws Exception {
     final String badAssertion = mockMyIDTokenFactory.createMockMyIDAssertion(keyPair, getTestUsername(), TEST_REMOTE_AUDIENCE,
-        0, 1, 2, 3);
+        0L, 1L, 2L, 3L);
     final String mockClientState = "abcdefabcdefabcdefabcdefabcdefab";
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
