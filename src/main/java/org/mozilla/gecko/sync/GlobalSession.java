@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.crypto.CryptoException;
@@ -911,6 +912,27 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
 
   public void resetStagesByName(Collection<String> names) {
     resetStages(this.getSyncStagesByName(names));
+  }
+
+  /**
+   * Engines to explicitly mark as declined in a fresh meta/global record.
+   * <p>
+   * Returns an empty array if the user hasn't elected to customize data types,
+   * or an array of engines that the user un-checked during customization.
+   * <p>
+   * Engines that Android Sync doesn't recognize are <b>not</b> included in
+   * the returned array.
+   *
+   * @return JSONArray of engine names.
+   */
+  @SuppressWarnings("unchecked")
+  protected JSONArray declinedEngineNames() {
+    final JSONArray declined = new JSONArray();
+    for (String engine : config.declinedEngineNames) {
+      declined.add(engine);
+    };
+
+    return declined;
   }
 
   /**
