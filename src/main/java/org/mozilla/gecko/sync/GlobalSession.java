@@ -375,6 +375,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
   }
 
   public void updateMetaGlobalInPlace() {
+    config.metaGlobal.declined = this.declinedEngineNames();
     ExtendedJSONObject engines = config.metaGlobal.getEngines();
     for (Entry<String, EngineSettings> pair : enginesToUpdate.entrySet()) {
       if (pair.getValue() == null) {
@@ -943,7 +944,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
    * Engines that Android Sync doesn't recognize are <b>not</b> included in
    * the returned array.
    *
-   * @return JSONArray of engine names.
+   * @return a new JSONArray of engine names.
    */
   @SuppressWarnings("unchecked")
   protected JSONArray declinedEngineNames() {
@@ -1036,6 +1037,10 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     metaGlobal.setSyncID(newSyncID);
     metaGlobal.setStorageVersion(STORAGE_VERSION);
     metaGlobal.setEngines(engines);
+
+    // We assume that the config's declined engines have been updated
+    // according to the user's selections.
+    metaGlobal.setDeclinedEngineNames(this.declinedEngineNames());
 
     return metaGlobal;
   }
