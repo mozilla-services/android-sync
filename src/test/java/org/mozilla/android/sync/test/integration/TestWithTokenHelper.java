@@ -40,7 +40,7 @@ public abstract class TestWithTokenHelper {
   }
 
   public static TokenServerToken getTokenBlocking(String mockMyIdUsername) throws Exception {
-    String TEST_TOKEN_SERVER_URL = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
+    String TEST_TOKEN_SERVER_URL = FxAccountConstants.STAGE_TOKEN_SERVER_ENDPOINT;
     String TEST_AUDIENCE = FxAccountUtils.getAudienceForURL(TEST_TOKEN_SERVER_URL);
     BrowserIDKeyPair keyPair = RSACryptoImplementation.generateKeyPair(1024);
     final String assertion = new MockMyIDTokenFactory().createMockMyIDAssertion(keyPair, mockMyIdUsername, TEST_AUDIENCE);
