@@ -654,9 +654,29 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     }
 
     // Persist declined.
-    config.declinedEngineNames = global.getDeclinedEngineNames();
-    if (config.declinedEngineNames == null) {
-      Logger.debug(LOG_TAG, "meta/global reported no declined engine names.");
+    // Our declined engines at any point are:
+    // Whatever they were remotely, plus whatever they were locally, less any
+    // engines that were just enabled locally or remotely.
+    // If remote just 'won', our recently enabled list just got cleared.
+    final HashSet<String> allDeclined = new HashSet<String>();
+
+    final Set<String> newRemoteDeclined = global.getDeclinedEngineNames();
+    final Set<String> oldLocalDeclined = config.declinedEngineNames;
+
+    allDeclined.addAll(newRemoteDeclined);
+    allDeclined.addAll(oldLocalDeclined);
+
+    if (config.userSelectedEngines != null) {
+      for (Entry<String, Boolean> selection : config.userSelectedEngines.entrySet()) {
+        if (selection.getValue()) {
+          allDeclined.remove(selection.getKey());
+        }
+      }
+    }
+
+    config.declinedEngineNames = allDeclined;
+    if (config.declinedEngineNames.isEmpty()) {
+      Logger.debug(LOG_TAG, "meta/global reported no declined engine names, and we have none declined locally.");
     } else {
       if (Logger.shouldLogVerbose(LOG_TAG)) {
         Logger.trace(LOG_TAG, "Persisting declined engine names '" +
