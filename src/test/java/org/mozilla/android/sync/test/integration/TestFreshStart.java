@@ -124,6 +124,7 @@ public class TestFreshStart extends TestWithTokenHelper {
     // Verify that meta/global looks okay.
     o = TestBasicFetch.realLiveFetch(authHeaderProvider, session.config.metaURL()).jsonObject();
     assertNotNull(o);
+    System.out.println("o: " + o.toJSONString());
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(o));
     assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
@@ -208,6 +209,7 @@ public class TestFreshStart extends TestWithTokenHelper {
     // Verify that meta/global looks okay.
     o = TestBasicFetch.realLiveFetch(authHeaderProvider, session.config.metaURL()).jsonObject();
     assertNotNull(o);
+    System.out.println("o: " + o.toJSONString());
     MetaGlobal mg = new MetaGlobal(null, null);
     mg.setFromRecord(CryptoRecord.fromJSONRecord(o));
     assertEquals(Long.valueOf(GlobalSession.STORAGE_VERSION), mg.getStorageVersion());
