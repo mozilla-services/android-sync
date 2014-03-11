@@ -11,13 +11,13 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
+import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.DSACryptoImplementation;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
-import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
+import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.browserid.SigningPrivateKey;
 import org.mozilla.gecko.browserid.VerifyingPublicKey;
-import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.browserid.verifier.BrowserIDRemoteVerifierClient;
 import org.mozilla.gecko.browserid.verifier.BrowserIDVerifierDelegate;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -101,40 +101,55 @@ public class TestLiveMockMyIDTokenFactory {
   }
 
   @Test
-  public void testAssertionExpired() throws Exception {
-    long iat = System.currentTimeMillis();
-    long dur = 1;
+  public void testAssertionWithoutIssuedAt() throws Exception {
+    long ciat = System.currentTimeMillis();
+    long cexp = ciat + JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
     String assertion = mockMyIdTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_AUDIENCE,
-        iat, dur,
-        System.currentTimeMillis(), JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
+        ciat, cexp, null, JSONWebTokenUtils.DEFAULT_FUTURE_EXPIRES_AT_IN_MILLISECONDS);
+    assertVerifySuccess(TEST_AUDIENCE, assertion);
+  }
+
+  @Test
+  public void testAssertionExpired() throws Exception {
+    long ciat = System.currentTimeMillis();
+    long cexp = ciat + 1;
+    long aiat = cexp + 1;
+    long aexp = aiat + JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
+    String assertion = mockMyIdTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_AUDIENCE,
+        ciat, cexp, aiat, aexp);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion has expired");
   }
 
   @Test
   public void testAssertionFromFuture() throws Exception {
-    long iat = 2 * System.currentTimeMillis();
-    long dur = 60 * 1000 * 1000;
+    long ciat = 2 * System.currentTimeMillis();
+    long cexp = ciat + 60 * 1000 * 1000;
+    long aiat = System.currentTimeMillis();
+    long aexp = aiat + JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
     String assertion = mockMyIdTokenFactory.createMockMyIDAssertion(keyPair, TEST_USERNAME, TEST_AUDIENCE,
-        iat, dur,
-        System.currentTimeMillis(), JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS);
+        ciat, cexp, aiat, aexp);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion issued later than verification date");
   }
 
   @Test
   public void testCertificateExpired() throws Exception {
-    long iat = System.currentTimeMillis();
-    long dur = 1;
-    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, iat, dur);
-    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE);
+    long ciat = System.currentTimeMillis() - 2;
+    long cexp = ciat + 1;
+    long aiat = System.currentTimeMillis();
+    long aexp = aiat + JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
+    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, ciat, cexp);
+    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, aiat, aexp);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion has expired");
   }
 
   @Test
   public void testCertificateFromFuture() throws Exception {
-    long iat = 2 * System.currentTimeMillis();
-    long dur = 60 * 1000 * 1000;
-    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, iat, dur);
-    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE);
+    long ciat = 2 * System.currentTimeMillis();
+    long cexp = ciat + JSONWebTokenUtils.DEFAULT_CERTIFICATE_DURATION_IN_MILLISECONDS;
+    long aiat = System.currentTimeMillis();
+    long aexp = aiat + JSONWebTokenUtils.DEFAULT_ASSERTION_DURATION_IN_MILLISECONDS;
+    String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(publicKey, TEST_USERNAME, ciat, cexp);
+    String assertion = JSONWebTokenUtils.createAssertion(privateKey, certificate, TEST_AUDIENCE, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER, aiat, aexp);
     assertVerifyFailure(TEST_AUDIENCE, assertion, "assertion issued later than verification date");
   }
 }

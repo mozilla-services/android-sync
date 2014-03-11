@@ -165,7 +165,10 @@ public class MockFxAccountClient implements FxAccountClient {
       return;
     }
     try {
-      String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(RSACryptoImplementation.createPublicKey(publicKey), "test", System.currentTimeMillis(), certificateDurationInMilliseconds);
+      final long iat = System.currentTimeMillis();
+      final long dur = certificateDurationInMilliseconds;
+      final long exp = iat + dur;
+      String certificate = mockMyIdTokenFactory.createMockMyIDCertificate(RSACryptoImplementation.createPublicKey(publicKey), "test", iat, exp);
       requestDelegate.handleSuccess(certificate);
     } catch (Exception e) {
       requestDelegate.handleError(e);
