@@ -14,13 +14,13 @@ import junit.framework.TestCase;
 import org.mozilla.gecko.background.nativecode.NativeCrypto;
 import org.mozilla.gecko.sync.Utils;
 
-/**
+/*
  * Tests the Java wrapper over native implementations of crypto code. Test vectors from:
  *   * PBKDF2SHA256:
  *     - <https://github.com/ircmaxell/PHP-PasswordLib/blob/master/test/Data/Vectors/pbkdf2-draft-josefsson-sha256.test-vectors>
-       - <https://gitorious.org/scrypt/nettle-scrypt/blobs/37c0d5288e991604fe33dba2f1724986a8dddf56/testsuite/pbkdf2-test.c>
-     * SHA-1:
-       - <http://oauth.googlecode.com/svn/code/c/liboauth/src/sha1.c>
+ *     - <https://gitorious.org/scrypt/nettle-scrypt/blobs/37c0d5288e991604fe33dba2f1724986a8dddf56/testsuite/pbkdf2-test.c>
+ *   * SHA-1:
+ *     - <http://oauth.googlecode.com/svn/code/c/liboauth/src/sha1.c>
  */
 public class TestNativeCrypto extends TestCase {
 
