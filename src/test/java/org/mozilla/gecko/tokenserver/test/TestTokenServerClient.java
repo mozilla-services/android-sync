@@ -219,6 +219,11 @@ public class TestTokenServerClient {
       @Override
       public void handleBackoff(int backoffSeconds) {
       }
+
+      @Override
+      public String getUserAgent() {
+        return null;
+      }
     };
 
     resource.delegate = new TokenServerClient.TokenFetchResourceDelegate(client, resource, delegate, assertion, clientState , true) {
@@ -244,6 +249,11 @@ public class TestTokenServerClient {
     public volatile boolean backoffCalled;
     public volatile boolean succeeded;
     public volatile int backoff;
+
+    @Override
+    public String getUserAgent() {
+      return null;
+    }
 
     @Override
     public void handleSuccess(TokenServerToken token) {

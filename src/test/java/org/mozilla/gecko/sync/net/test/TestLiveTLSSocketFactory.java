@@ -31,6 +31,11 @@ public class TestLiveTLSSocketFactory {
     final BaseResource r = new BaseResource(uri);
     r.delegate = new BaseResourceDelegate(r) {
       @Override
+      public String getUserAgent() {
+        return null;
+      }
+
+      @Override
       public void handleHttpResponse(HttpResponse response) {
         try {
           final SyncResponse res = new SyncResponse(response);
