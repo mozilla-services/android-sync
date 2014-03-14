@@ -115,6 +115,11 @@ public class TestLiveTokenServerClient {
           @Override
           public void handleBackoff(int backoffSeconds) {
           }
+
+          @Override
+          public String getUserAgent() {
+            return null;
+          }
         });
       }
     };
@@ -155,6 +160,11 @@ public class TestLiveTokenServerClient {
           @Override
           public void handleBackoff(int backoffSeconds) {
           }
+
+          @Override
+          public String getUserAgent() {
+            return null;
+          }
         });
       }
     });
@@ -191,6 +201,11 @@ public class TestLiveTokenServerClient {
 
           @Override
           public void handleBackoff(int backoffSeconds) {
+          }
+
+          @Override
+          public String getUserAgent() {
+            return null;
           }
         });
       }

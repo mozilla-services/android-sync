@@ -173,5 +173,10 @@ public class TestLiveHawkAuth {
     public void handleHttpIOException(IOException e) {
       WaitHelper.getTestWaiter().performNotify(e);
     }
+
+    @Override
+    public String getUserAgent() {
+      return null;
+    }
   }
 }
