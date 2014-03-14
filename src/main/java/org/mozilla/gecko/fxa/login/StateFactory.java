@@ -30,6 +30,10 @@ public class StateFactory {
     if (version == null || version.intValue() != 1) {
       throw new IllegalStateException("version must be 1");
     }
+    return fromJSONObjectV1(stateLabel, o);
+  }
+
+  protected static State fromJSONObjectV1(StateLabel stateLabel, ExtendedJSONObject o) throws InvalidKeySpecException, NoSuchAlgorithmException, NonObjectJSONException {
     switch (stateLabel) {
     case Engaged:
       return new Engaged(
