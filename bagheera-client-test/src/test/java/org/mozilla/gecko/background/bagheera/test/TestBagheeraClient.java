@@ -243,6 +243,11 @@ public class TestBagheeraClient {
       BagheeraRequestDelegate {
     public ArrayList<Integer> statuses = new ArrayList<Integer>();
 
+    @Override
+    public String getUserAgent() {
+      return null;
+    }
+
     public void clear() {
       statuses.clear();
     }

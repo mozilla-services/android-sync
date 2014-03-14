@@ -93,6 +93,11 @@ public class TestFreshStart {
           @Override
           public void handleBackoff(int backoffSeconds) {
           }
+
+          @Override
+          public String getUserAgent() {
+            return null;
+          }
         });
       }
     });

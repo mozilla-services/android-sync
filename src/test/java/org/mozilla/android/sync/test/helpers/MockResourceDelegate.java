@@ -36,6 +36,11 @@ public class MockResourceDelegate implements ResourceDelegate {
   }
 
   @Override
+  public String getUserAgent() {
+    return null;
+  }
+
+  @Override
   public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
   }
 
