@@ -4,6 +4,11 @@
 
 package org.mozilla.gecko.fxa;
 
+import java.io.File;
+
+import org.mozilla.gecko.fxa.authenticator.AccountPickler;
+import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
@@ -13,13 +18,31 @@ import android.content.Context;
  */
 public class FirefoxAccounts {
   /**
-   * Return true if at least one Firefox account exists.
+   * Return true if at least one Firefox account exists. If no accounts exist in the
+   * AccountManager, one may be created via a pickled Firefox account, if available, and true
+   * will be returned.
+   * <p>
+   * Do not call this method from the main thread.
    *
    * @param context Android context.
    * @return true if at least one Firefox account exists.
    */
   public static boolean firefoxAccountsExist(final Context context) {
-    return getFirefoxAccounts(context).length > 0;
+    if (getFirefoxAccounts(context).length > 0) {
+      return true;
+    }
+
+    final File file = context.getFileStreamPath(FxAccountConstants.ACCOUNT_PICKLE_FILENAME);
+    if (!file.exists()) {
+      return false;
+    }
+
+    // There is a small race window here: if the user creates a new Sync account
+    // between our checks, this could erroneously report that no Sync accounts
+    // exist.
+    final AndroidFxAccount account =
+        AccountPickler.unpickle(context, FxAccountConstants.ACCOUNT_PICKLE_FILENAME);
+    return (account != null);
   }
 
   /**
