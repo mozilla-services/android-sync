@@ -4,9 +4,9 @@
 package org.mozilla.gecko.background.fxa.authenticator;
 
 import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
-import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.login.Separated;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.background.sync.TestSyncAccounts;
@@ -46,6 +46,10 @@ public class TestAccountPickler extends AndroidSyncTestCase {
     TestSyncAccounts.deleteAccount(test, accountManager, account);
   }
 
+  private boolean accountsExist() {
+    return AccountManager.get(context).getAccountsByType(FxAccountConstants.ACCOUNT_TYPE).length > 0;
+  }
+
   public void testPickleAndUnpickle() throws Exception {
     final String email = "iu@fakedomain.io";
     final State state = new Separated(email, "uid", false); // State choice is arbitrary.
@@ -53,7 +57,7 @@ public class TestAccountPickler extends AndroidSyncTestCase {
     final AndroidFxAccount inputAccount = AndroidFxAccount.addAndroidAccount(context, email,
         "profile", "serverURI", "tokenServerURI", state);
     assertNotNull(inputAccount);
-    assertTrue(FirefoxAccounts.firefoxAccountsExist(context)); // Sanity check.
+    assertTrue(accountsExist()); // Sanity check.
     this.account = inputAccount.getAndroidAccount(); // To remove in tearDown() if we throw.
 
     // Sync is enabled by default so we do a more thorough test by disabling it.
@@ -63,7 +67,7 @@ public class TestAccountPickler extends AndroidSyncTestCase {
 
     // unpickle adds an account to the AccountManager so delete it first.
     deleteAccount(this, this.accountManager, inputAccount.getAndroidAccount());
-    assertFalse(FirefoxAccounts.firefoxAccountsExist(context));
+    assertFalse(accountsExist());
 
     final AndroidFxAccount unpickledAccount =
         AccountPickler.unpickle(context, PICKLE_FILENAME);
