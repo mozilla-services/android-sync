@@ -10,6 +10,7 @@ import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Separated;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.background.sync.TestSyncAccounts;
+import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -50,16 +51,20 @@ public class TestAccountPickler extends AndroidSyncTestCase {
     return AccountManager.get(context).getAccountsByType(FxAccountConstants.ACCOUNT_TYPE).length > 0;
   }
 
-  public void testPickleAndUnpickle() throws Exception {
+  public AndroidFxAccount addDummyAccount() throws Exception {
     final String email = "iu@fakedomain.io";
     final State state = new Separated(email, "uid", false); // State choice is arbitrary.
     // Assuming adding and creating accounts actually works...
-    final AndroidFxAccount inputAccount = AndroidFxAccount.addAndroidAccount(context, email,
+    final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context, email,
         "profile", "serverURI", "tokenServerURI", state);
-    assertNotNull(inputAccount);
+    assertNotNull(account);
     assertTrue(accountsExist()); // Sanity check.
-    this.account = inputAccount.getAndroidAccount(); // To remove in tearDown() if we throw.
+    this.account = account.getAndroidAccount(); // To remove in tearDown() if we throw.
+    return account;
+  }
 
+  public void testPickleAndUnpickle() throws Exception {
+    final AndroidFxAccount inputAccount = addDummyAccount();
     // Sync is enabled by default so we do a more thorough test by disabling it.
     inputAccount.disableSyncing();
 
@@ -74,6 +79,19 @@ public class TestAccountPickler extends AndroidSyncTestCase {
     assertNotNull(unpickledAccount);
     this.account = unpickledAccount.getAndroidAccount(); // To remove in tearDown().
     assertAccountsEquals(inputAccount, unpickledAccount);
+  }
+
+  public void testDeletePickle() throws Exception {
+    final AndroidFxAccount account = addDummyAccount();
+    AccountPickler.pickle(account, PICKLE_FILENAME);
+
+    final String s = Utils.readFile(context, PICKLE_FILENAME);
+    assertNotNull(s);
+    assertTrue(s.length() > 0);
+
+    AccountPickler.deletePickle(context, PICKLE_FILENAME);
+    org.mozilla.gecko.background.sync.TestAccountPickler.assertFileNotPresent(
+        context, PICKLE_FILENAME);
   }
 
   private void assertAccountsEquals(final AndroidFxAccount expected,
