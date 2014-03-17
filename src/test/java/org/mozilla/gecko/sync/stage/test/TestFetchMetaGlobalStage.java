@@ -159,6 +159,7 @@ public class TestFetchMetaGlobalStage {
   protected void doSession(MockServer server) {
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         try {
           session.start();
@@ -260,6 +261,7 @@ public class TestFetchMetaGlobalStage {
    * Verify that a fetched meta/global does not merge declined engines.
    * TODO: eventually it should!
    */
+  @SuppressWarnings("unchecked")
   @Test
   public void testFetchSuccessWithDifferentSyncIDMergesDeclined() throws Exception {
     session.config.syncID = "NOT TEST SYNC ID";
@@ -280,7 +282,7 @@ public class TestFetchMetaGlobalStage {
     doSession(server);
 
     // Declined engines propagate from the server meta/global, and are NOT merged.
-    final Set<String> expected = new HashSet(testingDeclinedEngines);
+    final Set<String> expected = new HashSet<String>(testingDeclinedEngines);
     // expected.add("baznoo");   // Not until we merge. Local is lost.
 
     final Set<String> newDeclined = session.config.metaGlobal.getDeclinedEngineNames();
@@ -337,6 +339,7 @@ public class TestFetchMetaGlobalStage {
   protected void doFreshStart(MockServer server) {
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         session.freshStart();
       }
@@ -351,6 +354,7 @@ public class TestFetchMetaGlobalStage {
     final MetaGlobal uploadedMg = new MetaGlobal(null, null);
 
     MockServer server = new MockServer() {
+      @Override
       public void handle(Request request, Response response) {
         if (request.getMethod().equals("PUT")) {
           try {

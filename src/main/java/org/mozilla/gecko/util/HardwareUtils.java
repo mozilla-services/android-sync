@@ -15,9 +15,6 @@ import android.view.ViewConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public final class HardwareUtils {
     private static final String LOGTAG = "GeckoHardwareUtils";
 
