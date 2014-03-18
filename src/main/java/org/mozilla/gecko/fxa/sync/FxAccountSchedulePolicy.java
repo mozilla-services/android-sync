@@ -37,7 +37,7 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
   // If we're in some kind of error state, there's no point trying often.
   // This is not the same as a server-imposed backoff, which will be
   // reflected dynamically.
-  public static final long POLL_INTERVAL_ERROR_STATE = 24 * 60 * 60;        // 24 hours.
+  public static final long POLL_INTERVAL_ERROR_STATE_SEC = 24 * 60 * 60;    // 24 hours.
 
   // If we're the only device, just sync once or twice a day in case that
   // changes.
@@ -113,7 +113,7 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
     switch (needed) {
     case NeedsPassword:
     case NeedsUpgrade:
-      requestPeriodicSync(POLL_INTERVAL_ERROR_STATE);
+      requestPeriodicSync(POLL_INTERVAL_ERROR_STATE_SEC);
       break;
     case NeedsVerification:
       requestPeriodicSync(POLL_INTERVAL_PENDING_VERIFICATION);
@@ -129,14 +129,14 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
   public void onUpgradeRequired() {
     // TODO: this shouldn't occur in FxA, but when we upgrade we
     // need to reduce the interval again.
-    requestPeriodicSync(POLL_INTERVAL_ERROR_STATE);
+    requestPeriodicSync(POLL_INTERVAL_ERROR_STATE_SEC);
   }
 
   @Override
   public void onUnauthorized() {
     // TODO: this shouldn't occur in FxA, but when we fix our credentials
     // we need to reduce the interval again.
-    requestPeriodicSync(POLL_INTERVAL_ERROR_STATE);
+    requestPeriodicSync(POLL_INTERVAL_ERROR_STATE_SEC);
   }
 
   @Override
