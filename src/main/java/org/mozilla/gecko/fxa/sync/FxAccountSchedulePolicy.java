@@ -39,17 +39,18 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
   // reflected dynamically.
   public static final long POLL_INTERVAL_ERROR_STATE = 24 * 60 * 60;        // 24 hours.
 
-  // If we're the only device, just sync a few times a day in case that
+  // If we're the only device, just sync once or twice a day in case that
   // changes.
-  public static final long POLL_INTERVAL_SINGLE_DEVICE_SEC = 8 * 60 * 60;   // 8 hours.
+  public static final long POLL_INTERVAL_SINGLE_DEVICE_SEC = 18 * 60 * 60;  // 18 hours.
 
   // And if we know there are other devices, let's sync often enough that
-  // we'll likely be caught up (even if not completely) by the time you
-  // next use this device.
-  public static final long POLL_INTERVAL_MULTI_DEVICE_SEC = 30 * 60;        // 30 minutes.
+  // we'll be more likely to be caught up (even if not completely) by the
+  // time you next use this device. This is also achieved via Android's
+  // network tickles.
+  public static final long POLL_INTERVAL_MULTI_DEVICE_SEC = 12 * 60 * 60;   // 12 hours.
 
   // Never sync more frequently than this, unless forced.
-  public static final long POLL_INTERVAL_MINIMUM_SEC = 45;                  // 45 seconds.
+  public static final long POLL_INTERVAL_MINIMUM_SEC = 90;                  // 90 seconds.
 
   // This is used solely as an optimization for backoff handling, so it's not
   // persisted.
