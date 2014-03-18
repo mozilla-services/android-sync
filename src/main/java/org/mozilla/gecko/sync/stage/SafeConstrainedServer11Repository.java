@@ -50,6 +50,8 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
   }
 
   public class CountCheckingServer11RepositorySession extends Server11RepositorySession {
+    private static final String LOG_TAG = "CountCheckingServer11RepositorySession";
+
     /**
      * The session will report no data available if this is a first sync
      * and the server has more data available than this limit.
@@ -64,7 +66,12 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
     @Override
     public boolean shouldSkip() {
       // If this is a first sync, verify that we aren't going to blow through our limit.
-      if (this.lastSyncTimestamp <= 0) {
+      if (lastSyncTimestamp > 0) {
+        Logger.info(LOG_TAG, "Collection " + collection + " has already had a first sync: " +
+            "timestamp is " + lastSyncTimestamp  + "; " +
+            "ignoring any updated counts and syncing as usual.");
+      } else {
+        Logger.info(LOG_TAG, "Collection " + collection + " is starting a first sync; checking counts.");
 
         final InfoCounts counts;
         try {
@@ -77,6 +84,7 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
 
         Integer c = counts.getCount(collection);
         if (c == null) {
+          Logger.info(LOG_TAG, "Fetched counts does not include collection " + collection + "; syncing as usual.");
           return false;
         }
 
