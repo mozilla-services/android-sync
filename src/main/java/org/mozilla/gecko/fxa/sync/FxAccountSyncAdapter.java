@@ -190,6 +190,15 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       setSyncResultSoftError();
       latch.countDown();
     }
+
+    /**
+     * Simply don't sync, without setting any error flags.
+     * This is the appropriate behavior when a routine backoff has not yet
+     * been met.
+     */
+    public void rejectSync() {
+      latch.countDown();
+    }
   }
 
   protected static class SessionCallback implements BaseGlobalSessionCallback {
@@ -443,19 +452,35 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
       // This will be the same chunk of SharedPreferences that we pass through to GlobalSession/SyncConfiguration.
       final SharedPreferences sharedPrefs = fxAccount.getSyncPrefs();
+      final BackoffHandler backgroundBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "background");
 
-      // Check for a backoff right here.
+      // If this sync was triggered by user action, this will be true.
+      final boolean isImmediate = (extras != null) &&
+                                  (extras.getBoolean(ContentResolver.SYNC_EXTRAS_UPLOAD, false) ||
+                                   extras.getBoolean(ContentResolver.SYNC_EXTRAS_FORCE, false));
+
+      // If it's not an immediate sync, it must be either periodic or tickled.
+      // Check our background rate limiter.
+      if (!isImmediate) {
+        if (!shouldPerformSync(backgroundBackoffHandler, "background", extras)) {
+          syncDelegate.rejectSync();
+          return;
+        }
+      }
+
+      // Regardless, let's make sure we're not syncing too often.
       final BackoffHandler schedulerBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "scheduler");
+
       if (!shouldPerformSync(schedulerBackoffHandler, "scheduler", extras)) {
-        Logger.info(LOG_TAG, "Not syncing (scheduler).");
         syncDelegate.postponeSync(schedulerBackoffHandler.delayMilliseconds());
         return;
       }
 
       final SchedulePolicy schedulePolicy = new FxAccountSchedulePolicy(context, fxAccount);
 
-      // Set a small scheduled 'backoff' to rate-limit the next sync.
-      schedulePolicy.configureBackoffMillisBeforeSyncing(schedulerBackoffHandler);
+      // Set a small scheduled 'backoff' to rate-limit the next sync,
+      // and extend the background delay even further into the future.
+      schedulePolicy.configureBackoffMillisBeforeSyncing(schedulerBackoffHandler, backgroundBackoffHandler);
 
       final String audience = fxAccount.getAudience();
       final String authServerEndpoint = fxAccount.getAccountServerURI();
