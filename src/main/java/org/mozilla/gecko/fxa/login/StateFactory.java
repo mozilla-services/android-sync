@@ -7,6 +7,7 @@ package org.mozilla.gecko.fxa.login;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
+import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -14,6 +15,16 @@ import org.mozilla.gecko.sync.NonObjectJSONException;
 import org.mozilla.gecko.sync.Utils;
 
 public class StateFactory {
+  private static final int KEY_PAIR_SIZE_IN_BITS_V1 = 1024;
+
+  public static BrowserIDKeyPair generateKeyPair() throws NoSuchAlgorithmException {
+    return RSACryptoImplementation.generateKeyPair(KEY_PAIR_SIZE_IN_BITS_V1);
+  }
+
+  protected static BrowserIDKeyPair keyPairFromJSONObjectV1(ExtendedJSONObject o) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    return RSACryptoImplementation.fromJSONObject(o);
+  }
+
   public static State fromJSONObject(StateLabel stateLabel, ExtendedJSONObject o) throws InvalidKeySpecException, NoSuchAlgorithmException, NonObjectJSONException {
     Long version = o.getLong("version");
     if (version == null || version.intValue() != 1) {
@@ -35,7 +46,7 @@ public class StateFactory {
           Utils.hex2Byte(o.getString("sessionToken")),
           Utils.hex2Byte(o.getString("kA")),
           Utils.hex2Byte(o.getString("kB")),
-          RSACryptoImplementation.fromJSONObject(o.getObject("keyPair")));
+          keyPairFromJSONObjectV1(o.getObject("keyPair")));
     case Married:
       return new Married(
           o.getString("email"),
@@ -43,7 +54,7 @@ public class StateFactory {
           Utils.hex2Byte(o.getString("sessionToken")),
           Utils.hex2Byte(o.getString("kA")),
           Utils.hex2Byte(o.getString("kB")),
-          RSACryptoImplementation.fromJSONObject(o.getObject("keyPair")),
+          keyPairFromJSONObjectV1(o.getObject("keyPair")),
           o.getString("certificate"));
     case Separated:
       return new Separated(
