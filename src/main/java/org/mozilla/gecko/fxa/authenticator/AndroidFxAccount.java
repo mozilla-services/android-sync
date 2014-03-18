@@ -25,6 +25,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -466,5 +467,23 @@ public class AndroidFxAccount {
    */
   public String getEmail() {
     return account.name;
+  }
+
+  /**
+   * Create an intent announcing that a Firefox account will be deleted.
+   *
+   * @param context
+   *          Android context.
+   * @param account
+   *          Android account being removed.
+   * @return <code>Intent</code> to broadcast.
+   */
+  public static Intent makeDeletedAccountIntent(final Context context, final Account account) {
+    final Intent intent = new Intent(FxAccountConstants.ACCOUNT_DELETED_ACTION);
+
+    intent.putExtra(FxAccountConstants.ACCOUNT_DELETED_INTENT_VERSION_KEY,
+        Long.valueOf(FxAccountConstants.ACCOUNT_DELETED_INTENT_VERSION));
+    intent.putExtra(FxAccountConstants.ACCOUNT_DELETED_INTENT_ACCOUNT_KEY, account.name);
+    return intent;
   }
 }
