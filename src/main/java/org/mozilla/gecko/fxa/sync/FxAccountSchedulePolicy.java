@@ -50,7 +50,8 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
   public static final long POLL_INTERVAL_MULTI_DEVICE_SEC = 12 * 60 * 60;   // 12 hours.
 
   // Never sync more frequently than this, unless forced.
-  public static final long POLL_INTERVAL_MINIMUM_SEC = 90;                  // 90 seconds.
+  // This is to avoid overly-frequent syncs during active browsing.
+  public static final long SYNC_INTERVAL_MINIMUM_SEC = 90;                  // 90 seconds.
 
   // This is used solely as an optimization for backoff handling, so it's not
   // persisted.
@@ -150,6 +151,6 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
 
   @Override
   public void configureBackoffMillisBeforeSyncing(BackoffHandler backoffHandler) {
-    backoffHandler.setEarliestNextRequest(delay(POLL_INTERVAL_MINIMUM_SEC * 1000));
+    backoffHandler.setEarliestNextRequest(delay(SYNC_INTERVAL_MINIMUM_SEC * 1000));
   }
 }
