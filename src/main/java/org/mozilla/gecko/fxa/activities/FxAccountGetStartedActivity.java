@@ -20,8 +20,6 @@ import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 import android.accounts.AccountAuthenticatorActivity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.SystemClock;
 import android.view.View;
 import android.view.View.OnClickListener;
