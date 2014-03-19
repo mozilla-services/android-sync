@@ -48,13 +48,13 @@ public class TestAccountPickler extends AndroidSyncTestCase {
   }
 
   private boolean accountsExist() {
+    // Note that we don't use FirefoxAccounts.firefoxAccountsExist because it unpickles.
     return AccountManager.get(context).getAccountsByType(FxAccountConstants.ACCOUNT_TYPE).length > 0;
   }
 
   public AndroidFxAccount addDummyAccount() throws Exception {
     final String email = "iu@fakedomain.io";
     final State state = new Separated(email, "uid", false); // State choice is arbitrary.
-    // Assuming adding and creating accounts actually works...
     final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context, email,
         "profile", "serverURI", "tokenServerURI", state);
     assertNotNull(account);

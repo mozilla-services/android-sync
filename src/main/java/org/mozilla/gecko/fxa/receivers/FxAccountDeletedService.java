@@ -12,6 +12,14 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 
+/**
+ * A background service to clean up after a Firefox Account is deleted.
+ * <p>
+ * Note that we specifically handle deleting the pickle file using a Service and a
+ * BroadcastReceiver, rather than a background thread, to allow channels sharing a Firefox account
+ * to delete their respective pickle files (since, if one remains, the account will be restored
+ * when that channel is used).
+ */
 public class FxAccountDeletedService extends IntentService {
   public static final String LOG_TAG = "FxAccountDeletedService";
 

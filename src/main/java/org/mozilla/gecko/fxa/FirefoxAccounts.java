@@ -37,8 +37,8 @@ public class FirefoxAccounts {
       return false;
     }
 
-    // There is a small race window here: if the user creates a new Sync account
-    // between our checks, this could erroneously report that no Sync accounts
+    // There is a small race window here: if the user creates a new Firefox account
+    // between our checks, this could erroneously report that no Firefox accounts
     // exist.
     final AndroidFxAccount account =
         AccountPickler.unpickle(context, FxAccountConstants.ACCOUNT_PICKLE_FILENAME);

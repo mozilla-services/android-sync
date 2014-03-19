@@ -20,17 +20,13 @@ import org.mozilla.gecko.sync.Utils;
 
 import android.content.Context;
 
-// TODO: Reword this comment, or point a finger at sync's AccountPickler.
 /**
- * Bug 768102: Android deletes Account objects when the Authenticator that owns
- * the Account disappears. This happens when an App is installed to the SD card
- * and the SD card is un-mounted or the device is rebooted.
+ * Android deletes Account objects when the Authenticator that owns the Account
+ * disappears. This happens when an App is installed to the SD card and the SD
+ * card is un-mounted or the device is rebooted.
  * <p>
- * Bug 769745: Work around this by pickling the current Sync account data every
- * sync.
- * <p>
- * Bug 735842: Work around this by un-pickling when we check if Sync accounts
- * exist (called from Fennec).
+ * We work around this by pickling the current Firefox account data every sync
+ * and unpickling when we check if Firefox accounts exist (called from Fennec).
  * <p>
  * Android just doesn't support installing Apps that define long-lived Services
  * and/or own Account types onto the SD card. The documentation says not to do
@@ -52,6 +48,8 @@ import android.content.Context;
  * available to the system again. At which time, you can restart your Service.
  * <p>
  * Problem: <a href="http://code.google.com/p/android/issues/detail?id=8485">that intent doesn't work</a>!
+ * <p>
+ * See bug 768102 for more information in the context of Sync.
  */
 public class AccountPickler {
   public static final String LOG_TAG = "AccountPickler";

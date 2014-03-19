@@ -106,7 +106,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
    * It is preferable to receive Android's LOGIN_ACCOUNTS_CHANGED_ACTION broadcast
    * than to create our own hacky broadcast here, but that doesn't include enough
    * information about which Accounts changed to correctly identify whether a Sync
-   * account has been removed (when some Firefox versions are installed on the SD
+   * account has been removed (when some Firefox channels are installed on the SD
    * card). We can work around this by storing additional state but it's both messy
    * and expensive because the broadcast is noisy.
    * <p>
@@ -129,7 +129,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
       return result;
     }
 
-    // Broadcast a message to all Firefox versions sharing this Android
+    // Broadcast a message to all Firefox channels sharing this Android
     // Account type telling that this Firefox account has been deleted.
     //
     // Broadcast intents protected with permissions are secure, so it's okay
