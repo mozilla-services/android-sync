@@ -7,9 +7,11 @@ package org.mozilla.gecko.fxa.login;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.DSACryptoImplementation;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.NonObjectJSONException;
@@ -26,6 +28,8 @@ import org.mozilla.gecko.sync.Utils;
  * Married states, the associated keypairs are always DSA key pairs.
  */
 public class StateFactory {
+  private static final String LOG_TAG = StateFactory.class.getSimpleName();
+
   private static final int KEY_PAIR_SIZE_IN_BITS_V1 = 1024;
 
   public static BrowserIDKeyPair generateKeyPair() throws NoSuchAlgorithmException {
@@ -130,12 +134,26 @@ public class StateFactory {
     }
   }
 
+  protected static void logMigration(State from, State to) {
+    if (!FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+      return;
+    }
+    try {
+      FxAccountConstants.pii(LOG_TAG, "V1 persisted state is: " + from.toJSONObject().toJSONString());
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Error producing JSON representation of V1 state.", e);
+    }
+    FxAccountConstants.pii(LOG_TAG, "Generated new V2 state: " + to.toJSONObject().toJSONString());
+  }
+
   protected static State migrateV1toV2(StateLabel stateLabel, State state) throws NoSuchAlgorithmException {
     if (state == null) {
       // This should never happen, but let's be careful.
       Logger.error(LOG_TAG, "Got null state in migrateV1toV2; returning null.");
       return state;
     }
+
+    Logger.info(LOG_TAG, "Migrating V1 persisted State to V2; stateLabel: " + stateLabel);
 
     // In V1, we use an RSA keyPair. In V2, we use a DSA keyPair. Only
     // Cohabiting and Married states have a persisted keyPair at all; all
@@ -145,7 +163,9 @@ public class StateFactory {
       // In the Cohabiting state, we can just generate a new key pair and move on.
       final Cohabiting cohabiting = (Cohabiting) state;
       final BrowserIDKeyPair keyPair = generateKeyPair();
-      return new Cohabiting(cohabiting.email, cohabiting.uid, cohabiting.sessionToken, cohabiting.kA, cohabiting.kB, keyPair);
+      final State migrated = new Cohabiting(cohabiting.email, cohabiting.uid, cohabiting.sessionToken, cohabiting.kA, cohabiting.kB, keyPair);
+      logMigration(cohabiting, migrated);
+      return migrated;
     }
     case Married: {
       // In the Married state, we cannot only change the key pair: the stored
@@ -154,7 +174,9 @@ public class StateFactory {
       // advance back to Married.
       final Married married = (Married) state;
       final BrowserIDKeyPair keyPair = generateKeyPair();
-      return new Cohabiting(married.email, married.uid, married.sessionToken, married.kA, married.kB, keyPair);
+      final State migrated = new Cohabiting(married.email, married.uid, married.sessionToken, married.kA, married.kB, keyPair);
+      logMigration(married, migrated);
+      return migrated;
     }
     default:
       // Otherwise, V1 and V2 states are identical.
