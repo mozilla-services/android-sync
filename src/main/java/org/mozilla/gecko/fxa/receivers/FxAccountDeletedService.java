@@ -21,7 +21,7 @@ import android.content.Intent;
  * when that channel is used).
  */
 public class FxAccountDeletedService extends IntentService {
-  public static final String LOG_TAG = "FxAccountDeletedService";
+  public static final String LOG_TAG = FxAccountDeletedService.class.getSimpleName();
 
   public FxAccountDeletedService() {
     super(LOG_TAG);

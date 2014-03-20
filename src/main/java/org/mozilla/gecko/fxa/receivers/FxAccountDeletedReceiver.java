@@ -11,7 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 
 public class FxAccountDeletedReceiver extends BroadcastReceiver {
-  public static final String LOG_TAG = "FxAccountDeletedReceiver";
+  public static final String LOG_TAG = FxAccountDeletedReceiver.class.getSimpleName();
 
   /**
    * This receiver can be killed as soon as it returns, but we have things to do

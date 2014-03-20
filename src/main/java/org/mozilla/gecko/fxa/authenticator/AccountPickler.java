@@ -52,7 +52,7 @@ import android.content.Context;
  * See bug 768102 for more information in the context of Sync.
  */
 public class AccountPickler {
-  public static final String LOG_TAG = "AccountPickler";
+  public static final String LOG_TAG = AccountPickler.class.getSimpleName();
 
   public static final long PICKLE_VERSION = 1;
 
