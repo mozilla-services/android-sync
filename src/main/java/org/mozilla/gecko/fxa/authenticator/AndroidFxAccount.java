@@ -115,6 +115,8 @@ public class AndroidFxAccount {
 
   /**
    * Saves the given data to the {@link android.os.Bundle Bundle} associated with the account.
+   *
+   * @param bundle Data to save
    */
   protected void persistBundle(ExtendedJSONObject bundle) {
     accountManager.setUserData(account, ACCOUNT_KEY_DESCRIPTOR, bundle.toJSONString());
@@ -122,6 +124,8 @@ public class AndroidFxAccount {
 
   /**
    * Retrieves the {@link android.os.Bundle Bundle} object associated with the account.
+   *
+   * @return The data associated with the account
    */
   protected ExtendedJSONObject unbundle() {
     final int version = getAccountVersion();
