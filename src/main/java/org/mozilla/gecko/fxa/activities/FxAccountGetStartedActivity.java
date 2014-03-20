@@ -5,7 +5,6 @@
 package org.mozilla.gecko.fxa.activities;
 
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
@@ -13,7 +12,6 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountAgeLockoutHelper;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
-import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
@@ -65,46 +63,21 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
   public void onResume() {
     super.onResume();
 
-    // To avoid a StrictMode violation for disk access, we call this from a background thread.
-    final FxAccountGetStartedActivity that = this;
-    // Atomic is not necessary, but it makes a good `final boolean` wrapper.
-    final AtomicBoolean isFinished = new AtomicBoolean(false);
-    ThreadPool.run(new Runnable() {
-      @Override
-      public void run() {
-        Intent intent = null;
-        if (FxAccountAgeLockoutHelper.isLockedOut(SystemClock.elapsedRealtime())) {
-          intent = new Intent(that, FxAccountCreateAccountNotAllowedActivity.class);
-        } else if (FirefoxAccounts.firefoxAccountsExist(that)) {
-          intent = new Intent(that, FxAccountStatusActivity.class);
-        }
+    Intent intent = null;
+    if (FxAccountAgeLockoutHelper.isLockedOut(SystemClock.elapsedRealtime())) {
+      intent = new Intent(this, FxAccountCreateAccountNotAllowedActivity.class);
+    } else if (FirefoxAccounts.firefoxAccountsExist(this)) {
+      intent = new Intent(this, FxAccountStatusActivity.class);
+    }
 
-        if (intent != null) {
-          that.setAccountAuthenticatorResult(null);
-          setResult(RESULT_CANCELED);
-          // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
-          // the soft keyboard not being shown for the started activity. Why, Android, why?
-          intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-          that.startActivity(intent);
-          that.finish();
-        }
-
-        // Notify the waiting main thread that we're finished.
-        synchronized (that) {
-          isFinished.set(true);
-          that.notify();
-        }
-      }
-    });
-
-    // We may end this activity in favor of the status activity; we run this synchronously so,
-    // in that case, we don't briefly see this activity before the status activity is shown.
-    synchronized (that) {
-      while (!isFinished.get()) {
-        try {
-          that.wait();
-        } catch (InterruptedException e) { /* We don't interrupt: we don't care. */ }
-      }
+    if (intent != null) {
+      this.setAccountAuthenticatorResult(null);
+      setResult(RESULT_CANCELED);
+      // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
+      // the soft keyboard not being shown for the started activity. Why, Android, why?
+      intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+      this.startActivity(intent);
+      this.finish();
     }
   }
 

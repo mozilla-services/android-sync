@@ -52,7 +52,7 @@ import android.content.Context;
  * See bug 768102 for more information in the context of Sync.
  */
 public class AccountPickler {
-  public static final String LOG_TAG = "AccountPickler";
+  public static final String LOG_TAG = AccountPickler.class.getSimpleName();
 
   public static final long PICKLE_VERSION = 1;
 
@@ -167,7 +167,6 @@ public class AccountPickler {
 
     final AndroidFxAccount account;
     try {
-      // TODO: Not the same context as when it was created. Okay?
       account = AndroidFxAccount.addAndroidAccount(context, params.email, params.profile,
           params.idpServerURI, params.tokenServerURI, params.state, params.accountVersion,
           params.isSyncingEnabled, true, params.bundle);
