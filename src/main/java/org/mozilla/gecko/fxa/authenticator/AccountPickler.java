@@ -167,7 +167,6 @@ public class AccountPickler {
 
     final AndroidFxAccount account;
     try {
-      // TODO: Not the same context as when it was created. Okay?
       account = AndroidFxAccount.addAndroidAccount(context, params.email, params.profile,
           params.idpServerURI, params.tokenServerURI, params.state, params.accountVersion,
           params.isSyncingEnabled, true, params.bundle);
