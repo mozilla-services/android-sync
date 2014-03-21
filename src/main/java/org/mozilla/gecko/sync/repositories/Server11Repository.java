@@ -32,12 +32,20 @@ public class Server11Repository extends Repository {
    *
    * @param collection name.
    * @param storageURL full URL to storage endpoint.
-   * @param authHeaderProvider to use in requests.
+   * @param authHeaderProvider to use in requests; may be null.
+   * @param infoCollections instance; must not be null.
    * @throws URISyntaxException
-   * @param infoCollections
-   *        <code>InfoCollections</code> instance, or null.
    */
   public Server11Repository(String collection, String storageURL, AuthHeaderProvider authHeaderProvider, InfoCollections infoCollections) throws URISyntaxException {
+    if (collection == null) {
+      throw new IllegalArgumentException("collection must not be null");
+    }
+    if (storageURL == null) {
+      throw new IllegalArgumentException("storageURL must not be null");
+    }
+    if (infoCollections == null) {
+      throw new IllegalArgumentException("infoCollections must not be null");
+    }
     this.collection = collection;
     this.collectionURI = new URI(storageURL + (storageURL.endsWith("/") ? collection : "/" + collection));
     this.authHeaderProvider = authHeaderProvider;
@@ -109,10 +117,6 @@ public class Server11Repository extends Repository {
   }
 
   public boolean updateNeeded(long lastSyncTimestamp) {
-    if (infoCollections == null) {
-      return true;
-    }
-
     return infoCollections.updateNeeded(collection, lastSyncTimestamp);
   }
 }

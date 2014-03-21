@@ -42,6 +42,9 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
                                            JSONRecordFetcher countFetcher)
     throws URISyntaxException {
     super(collection, storageURL, authHeaderProvider, infoCollections, limit, sort);
+    if (countFetcher == null) {
+      throw new IllegalArgumentException("countFetcher must not be null");
+    }
     this.countFetcher = countFetcher;
   }
 

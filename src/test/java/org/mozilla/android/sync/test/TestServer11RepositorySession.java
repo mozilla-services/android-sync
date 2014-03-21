@@ -19,6 +19,7 @@ import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
 import org.mozilla.gecko.background.testhelpers.MockRecord;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
+import org.mozilla.gecko.sync.InfoCollections;
 import org.mozilla.gecko.sync.JSONRecordFetcher;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
@@ -77,6 +78,7 @@ public class TestServer11RepositorySession {
   static final String SYNC_KEY          = "eh7ppnb82iwr5kt3z3uyi5vr44";
 
   public final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD);
+  protected final InfoCollections infoCollections = new InfoCollections();
 
   // Few-second timeout so that our longer operations don't time out and cause spurious error-handling results.
   private static final int SHORT_TIMEOUT = 10000;
@@ -153,7 +155,7 @@ public class TestServer11RepositorySession {
     final String COLLECTION = "test";
 
     final TrackingWBORepository local = getLocal(100);
-    final Server11Repository remote = new Server11Repository(COLLECTION, getCollectionURL(COLLECTION), authHeaderProvider, null);
+    final Server11Repository remote = new Server11Repository(COLLECTION, getCollectionURL(COLLECTION), authHeaderProvider, infoCollections);
     KeyBundle collectionKey = new KeyBundle(TEST_USERNAME, SYNC_KEY);
     Crypto5MiddlewareRepository cryptoRepo = new Crypto5MiddlewareRepository(remote, collectionKey);
     cryptoRepo.recordFactory = new BookmarkRecordFactory();
@@ -229,7 +231,7 @@ public class TestServer11RepositorySession {
     final SafeConstrainedServer11Repository remote = new SafeConstrainedServer11Repository(collection,
         getCollectionURL(collection),
         getAuthHeaderProvider(),
-        null,
+        infoCollections,
         5000, "sortindex", countsFetcher);
 
     data.startHTTPServer(server);
