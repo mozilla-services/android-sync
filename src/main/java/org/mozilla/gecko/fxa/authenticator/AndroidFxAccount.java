@@ -326,6 +326,14 @@ public class AndroidFxAccount {
     getSyncPrefs().edit().clear().commit();
   }
 
+  public boolean isSyncing() {
+    boolean isSyncEnabled = true;
+    for (String authority : new String[] { BrowserContract.AUTHORITY }) {
+      isSyncEnabled &= ContentResolver.getSyncAutomatically(account, authority);
+    }
+    return isSyncEnabled;
+  }
+
   public void enableSyncing() {
     Logger.info(LOG_TAG, "Disabling sync for account named like " + Utils.obfuscateEmail(getEmail()));
     for (String authority : new String[] { BrowserContract.AUTHORITY }) {
