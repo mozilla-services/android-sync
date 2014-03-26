@@ -20,22 +20,6 @@ import android.content.Context;
  */
 public class FirefoxAccounts {
   /**
-   * Container used to encapsulate an {@link android.accounts.Account Account}. Used to
-   * return a value from an asynchronous operation. Note that this container is not
-   * synchronized.
-   */
-  private static class AccountContainer {
-    private Account account;
-
-    public AccountContainer() {
-      account = null;
-    }
-
-    public Account getAccount() { return account; }
-    public void setAccount(final Account account) { this.account = account; }
-  }
-
-  /**
    * Returns true if a FirefoxAccount exists, false otherwise.
    *
    * @param context Android context.
@@ -68,14 +52,14 @@ public class FirefoxAccounts {
     // To avoid a StrictMode violation for disk access, we call this from a background thread.
     // We do this every time, so the caller doesn't have to care.
     final CountDownLatch latch = new CountDownLatch(1);
-    final AccountContainer accountContainer = new AccountContainer();
+    final Account[] accounts = new Account[1];
     ThreadPool.run(new Runnable() {
       @Override
       public void run() {
         try {
           final File file = context.getFileStreamPath(FxAccountConstants.ACCOUNT_PICKLE_FILENAME);
           if (!file.exists()) {
-            accountContainer.setAccount(null);
+            accounts[0] = null;
             return;
           }
 
@@ -84,7 +68,7 @@ public class FirefoxAccounts {
           // exist.
           final AndroidFxAccount fxAccount =
               AccountPickler.unpickle(context, FxAccountConstants.ACCOUNT_PICKLE_FILENAME);
-          accountContainer.setAccount(fxAccount.getAndroidAccount());
+          accounts[0] = fxAccount.getAndroidAccount();
         } finally {
           latch.countDown();
         }
@@ -97,7 +81,7 @@ public class FirefoxAccounts {
       throw new IllegalStateException("Thread unexpectedly interrupted", e);
     }
 
-    return accountContainer.getAccount();
+    return accounts[0];
   }
 
   /**
