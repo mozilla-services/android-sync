@@ -10,6 +10,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.fxa.FirefoxAccounts;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -33,6 +35,7 @@ public class FxAccountUpgradeReceiver extends BroadcastReceiver {
    */
   protected List<Runnable> onUpgradeRunnables(Context context) {
     List<Runnable> runnables = new LinkedList<Runnable>();
+    runnables.add(new MaybeUnpickleRunnable(context));
     return runnables;
   }
 
@@ -56,6 +59,24 @@ public class FxAccountUpgradeReceiver extends BroadcastReceiver {
           }
         }
       });
+    }
+  }
+
+  /**
+   * A Runnable that tries to unpickle any pickled Firefox Accounts.
+   */
+  protected static class MaybeUnpickleRunnable implements Runnable {
+    protected final Context context;
+
+    public MaybeUnpickleRunnable(Context context) {
+      this.context = context;
+    }
+
+    @Override
+    public void run() {
+      // Querying the accounts will unpickle any pickled Firefox Account.
+      Logger.info(LOG_TAG, "Trying to unpickle any pickled Firefox Account.");
+      FirefoxAccounts.getFirefoxAccounts(context);
     }
   }
 }
