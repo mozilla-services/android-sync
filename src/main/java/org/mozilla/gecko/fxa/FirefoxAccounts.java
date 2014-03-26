@@ -80,7 +80,7 @@ public class FirefoxAccounts {
     });
 
     try {
-      latch.await(); // the background thread.
+      latch.await(); // Wait for the background thread to return.
     } catch (InterruptedException e) {
       throw new IllegalStateException("Thread unexpectedly interrupted", e);
     }
