@@ -7,6 +7,7 @@ package org.mozilla.gecko.fxa;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -19,6 +20,8 @@ import android.content.Context;
  * Simple public accessors for Firefox account objects.
  */
 public class FirefoxAccounts {
+  private static final String LOG_TAG = FirefoxAccounts.class.getSimpleName();
+
   /**
    * Returns true if a FirefoxAccount exists, false otherwise.
    *
@@ -82,7 +85,9 @@ public class FirefoxAccounts {
     try {
       latch.await(); // Wait for the background thread to return.
     } catch (InterruptedException e) {
-      throw new IllegalStateException("Thread unexpectedly interrupted", e);
+      Logger.warn(LOG_TAG,
+          "Foreground thread unexpectedly interrupted while getting pickled account", e);
+      return null;
     }
 
     return accounts[0];
