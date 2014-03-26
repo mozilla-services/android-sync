@@ -30,9 +30,13 @@ public class FirefoxAccounts {
   }
 
   /**
-   * Return Firefox accounts. If no accounts exist in the AccountManager,
-   * one may be created via a pickled FirefoxAccount, if available, and that
-   * account will be added to the AccountManager and returned.
+   * Return Firefox accounts.
+   * <p>
+   * If no accounts exist in the AccountManager, one may be created
+   * via a pickled FirefoxAccount, if available, and that account
+   * will be added to the AccountManager and returned.
+   * <p>
+   * Note that this can be called from any thread.
    *
    * @param context Android context.
    * @return Firefox account objects.
