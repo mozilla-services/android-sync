@@ -82,7 +82,7 @@ public class TestResetCommands {
     final SharedPreferences prefs = new MockSharedPreferences();
     final SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), prefs);
     config.syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
-    final GlobalSession session = new MockPrefsGlobalSession(config, callback, null, null, null) {
+    final GlobalSession session = new MockPrefsGlobalSession(config, callback, null, null) {
       @Override
       public boolean isEngineRemotelyEnabled(String engineName,
                                      EngineSettings engineSettings)

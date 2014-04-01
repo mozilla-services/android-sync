@@ -507,8 +507,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
     Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
     config.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
 
-    GlobalSession globalSession = new GlobalSession(config, this, this.mContext, extras, clientsDataDelegate, nodeAssignmentDelegate);
-
+    GlobalSession globalSession = new GlobalSession(config, this, this.mContext, clientsDataDelegate, nodeAssignmentDelegate);
     globalSession.start();
   }
 

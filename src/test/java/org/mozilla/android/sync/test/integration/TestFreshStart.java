@@ -120,7 +120,7 @@ public class TestFreshStart {
     final SharedPreferences prefs = new MockSharedPreferences();
     final SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, authHeaderProvider, prefs);
     config.syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
-    session = new MockPrefsGlobalSession(config, callback, null, null, null) {
+    session = new MockPrefsGlobalSession(config, callback, null, null) {
       @Override
       public CollectionKeys generateNewCryptoKeys() {
         return keysToUpload;

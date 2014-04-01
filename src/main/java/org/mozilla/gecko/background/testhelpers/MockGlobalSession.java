@@ -27,7 +27,7 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
 
   public MockGlobalSession(SyncConfiguration config, GlobalSessionCallback callback)
           throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
-    super(config, callback, null, null, null);
+    super(config, callback, null, null);
   }
 
   @Override

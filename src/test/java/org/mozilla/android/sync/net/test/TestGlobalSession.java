@@ -78,7 +78,7 @@ public class TestGlobalSession {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     GlobalSession s = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
                                                  new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY),
-                                                 callback, /* context */ null, null, null);
+                                                 callback, /* context */ null, null);
 
     assertTrue(s.getSyncStageByName(Stage.syncBookmarks) instanceof AndroidBrowserBookmarksServerSyncStage);
 
@@ -118,6 +118,7 @@ public class TestGlobalSession {
       response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+        @Override
         public void run() {
           session.handleHTTPError(new SyncStorageResponse(response), "Illegal method/protocol");
         }
@@ -145,6 +146,7 @@ public class TestGlobalSession {
       final GlobalSession session = new MockGlobalSession(config, callback);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+        @Override
         public void run() {
           try {
             session.start();
@@ -192,6 +194,7 @@ public class TestGlobalSession {
                                         .withStage(Stage.fetchInfoCollections, stage);
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+        @Override
         public void run() {
           try {
             session.start();
@@ -271,6 +274,7 @@ public class TestGlobalSession {
 
     data.startHTTPServer(server);
     WaitHelper.getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
+      @Override
       public void run() {
         try {
           session.start();
@@ -335,7 +339,7 @@ public class TestGlobalSession {
   public void testGenerateNewMetaGlobalNonePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null);
 
     // Verify we fill in all of our known engines when none are persisted.
     session.config.enabledEngineNames = null;
@@ -355,7 +359,7 @@ public class TestGlobalSession {
   public void testGenerateNewMetaGlobalSomePersisted() throws Exception {
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null);
 
     // Verify we preserve engines with version 0 if some are persisted.
     session.config.enabledEngineNames = new HashSet<String>();
@@ -383,7 +387,7 @@ public class TestGlobalSession {
     // Set up session with meta/global.
     final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     final GlobalSession session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
-        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null, null);
+        new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY), callback, null, null);
     session.config.metaGlobal = session.generateNewMetaGlobal();
     session.enginesToUpdate.clear();
 
