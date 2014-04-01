@@ -58,7 +58,7 @@ public class TestWipeServer {
     final SharedPreferences prefs = new MockSharedPreferences();
     final SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), prefs);
     config.syncKeyBundle = syncKeyBundle;
-    session = new MockPrefsGlobalSession(config, callback, null, null, null);
+    session = new MockPrefsGlobalSession(config, callback, null, null);
     session.config.clusterURL = new URI(TEST_CLUSTER_URL);
   }
 
