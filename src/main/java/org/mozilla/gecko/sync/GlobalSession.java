@@ -111,8 +111,6 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
       throw new IllegalArgumentException("Must provide a callback to GlobalSession constructor.");
     }
 
-    Logger.debug(LOG_TAG, "GlobalSession initialized with bundle " + extras);
-
     this.callback        = callback;
     this.context         = context;
     this.clientsDelegate = clientsDelegate;
@@ -122,8 +120,10 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     registerCommands();
     prepareStages();
 
-    Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
-    config.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
+    if (config.stagesToSync == null) {
+      Logger.info(LOG_TAG, "No stages to sync specified; defaulting to all valid engine names.");
+      config.stagesToSync = Collections.unmodifiableCollection(SyncConfiguration.validEngineNames());
+    }
 
     // TODO: data-driven plan for the sync, referring to prepareStages.
   }
