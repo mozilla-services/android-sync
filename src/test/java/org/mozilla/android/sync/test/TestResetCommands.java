@@ -84,7 +84,7 @@ public class TestResetCommands {
     config.syncKeyBundle = new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY);
     final GlobalSession session = new MockPrefsGlobalSession(config, callback, null, null, null) {
       @Override
-      public boolean engineIsEnabled(String engineName,
+      public boolean isEngineRemotelyEnabled(String engineName,
                                      EngineSettings engineSettings)
         throws MetaGlobalException {
         return true;
