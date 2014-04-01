@@ -96,7 +96,11 @@ public class TestUserAgentHeaders {
       }
     });
 
+    // Verify that we're getting the value from the correct place.
     Assert.assertEquals(SyncConstants.USER_AGENT, userAgentServer.lastUserAgent);
+    // And that the value is correct. This is fragile, but better than breaking
+    // our header and not discovering until too late.
+    Assert.assertEquals("Firefox AndroidSync 1.24.0a1.0 (FxSync)", userAgentServer.lastUserAgent);
   }
 
   @Test
@@ -124,6 +128,10 @@ public class TestUserAgentHeaders {
       }
     });
 
+    // Verify that we're getting the value from the correct place.
     Assert.assertEquals(FxAccountConstants.USER_AGENT, userAgentServer.lastUserAgent);
+    // And that the value is correct. This is fragile, but better than breaking
+    // our header and not discovering until too late.
+    Assert.assertEquals("Firefox-Android-FxAccounts/24.0a1 (FxSync)", userAgentServer.lastUserAgent);
   }
 }
