@@ -77,7 +77,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     // We can be disabled by the server's meta/global record, or malformed in the server's meta/global record,
     // or by the user manually in Sync Settings.
     // We catch the subclasses of MetaGlobalException to trigger various resets and wipes in execute().
-    boolean enabledInMetaGlobal = session.engineIsEnabled(this.getEngineName(), engineSettings);
+    boolean enabledInMetaGlobal = session.isEngineRemotelyEnabled(this.getEngineName(), engineSettings);
 
     // Check for manual changes to engines by the user.
     checkAndUpdateUserSelectedEngines(enabledInMetaGlobal);

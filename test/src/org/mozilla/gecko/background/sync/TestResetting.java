@@ -165,7 +165,7 @@ public class TestResetting extends AndroidSyncTestCase {
     config.syncKeyBundle = keyBundle;
     return new GlobalSession(config, callback, getApplicationContext(), null, null, callback) {
       @Override
-      public boolean engineIsEnabled(String engineName,
+      public boolean isEngineRemotelyEnabled(String engineName,
                                      EngineSettings engineSettings)
         throws MetaGlobalException {
         return true;

@@ -1070,7 +1070,7 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
    *
    * @throws MetaGlobalException
    */
-  public boolean engineIsEnabled(String engineName, EngineSettings engineSettings) throws MetaGlobalException {
+  public boolean isEngineRemotelyEnabled(String engineName, EngineSettings engineSettings) throws MetaGlobalException {
     if (this.config.metaGlobal == null) {
       throw new MetaGlobalNotSetException();
     }

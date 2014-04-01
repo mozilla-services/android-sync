@@ -31,7 +31,7 @@ public class MockGlobalSession extends MockPrefsGlobalSession {
   }
 
   @Override
-  public boolean engineIsEnabled(String engine, EngineSettings engineSettings) {
+  public boolean isEngineRemotelyEnabled(String engine, EngineSettings engineSettings) {
     return false;
   }
 
