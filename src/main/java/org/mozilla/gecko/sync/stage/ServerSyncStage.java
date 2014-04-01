@@ -89,10 +89,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     }
 
     // We can also be disabled just for this sync.
-    if (session.config.stagesToSync == null) {
-      return true;
-    }
-    boolean enabledThisSync = session.config.stagesToSync.contains(this.getEngineName()); // For ServerSyncStage, stage name == engine name.
+    boolean enabledThisSync = session.isEngineLocallyEnabled(this.getEngineName()); // For ServerSyncStage, stage name == engine name.
     if (!enabledThisSync) {
       Logger.debug(LOG_TAG, "Stage " + this.getEngineName() + " disabled just for this sync.");
     }

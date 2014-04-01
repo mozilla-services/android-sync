@@ -1059,6 +1059,9 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
    * If meta/global is missing or malformed, throws a MetaGlobalException.
    * Otherwise, returns true if there is an entry for this engine in the
    * meta/global "engines" object.
+   * <p>
+   * This is a global/permanent setting, not a local/temporary setting. For the
+   * latter, see {@link GlobalSession#isEngineLocallyEnabled(String)}.
    *
    * @param engineName the name to check (e.g., "bookmarks").
    * @param engineSettings
@@ -1094,6 +1097,25 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
     }
 
     return true;
+  }
+
+
+  /**
+   * Return true if the named stage should be synced this session.
+   * <p>
+   * This is a local/temporary setting, in contrast to the meta/global record,
+   * which is a global/permanent setting. For the latter, see
+   * {@link GlobalSession#isEngineRemotelyEnabled(String, EngineSettings)}.
+   *
+   * @param stageName
+   *          to query.
+   * @return true if named stage is enabled for this sync.
+   */
+  public boolean isEngineLocallyEnabled(String stageName) {
+    if (config.stagesToSync == null) {
+      return true;
+    }
+    return config.stagesToSync.contains(stageName);
   }
 
   public ClientsDataDelegate getClientsDelegate() {
