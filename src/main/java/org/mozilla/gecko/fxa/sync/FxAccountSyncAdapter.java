@@ -7,6 +7,7 @@ package org.mozilla.gecko.fxa.sync;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -370,6 +371,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
           final Context context = getContext();
           final SyncConfiguration syncConfig = new SyncConfiguration(token.uid, authHeaderProvider, sharedPrefs, syncKeyBundle);
+
+          Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
+          syncConfig.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
 
           globalSession = new FxAccountGlobalSession(token.endpoint, syncConfig, callback, context, extras, clientsDataDelegate);
           globalSession.start();
