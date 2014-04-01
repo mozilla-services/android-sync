@@ -59,7 +59,7 @@ public class TestClientRecordTerminator {
 
     callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
     session = MockPrefsGlobalSession.getSession(TEST_USERNAME, TEST_PASSWORD,
-        syncKeyBundle, callback, null, null, null);
+        syncKeyBundle, callback, null, null);
     session.config.clusterURL = new URI(TEST_CLUSTER_URL);
   }
 
