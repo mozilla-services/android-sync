@@ -58,7 +58,6 @@ import org.mozilla.gecko.sync.stage.UploadMetaGlobalStage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import ch.boye.httpclientandroidlib.HttpResponse;
 
 public class GlobalSession implements PrefsSource, HttpResponseObserver {
@@ -103,7 +102,6 @@ public class GlobalSession implements PrefsSource, HttpResponseObserver {
   public GlobalSession(SyncConfiguration config,
                        BaseGlobalSessionCallback callback,
                        Context context,
-                       Bundle extras,
                        ClientsDataDelegate clientsDelegate, NodeAssignmentCallback nodeAssignmentCallback)
     throws SyncConfigurationException, IllegalArgumentException, IOException, ParseException, NonObjectJSONException {
 
