@@ -82,11 +82,6 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
     this.skewSeconds = skewSeconds;
   }
 
-  public HawkAuthHeaderProvider(String id, byte[] key, boolean includePayloadHash) {
-    this(id, key, includePayloadHash, 0L);
-  }
-
-
   /**
    * @return the current time in milliseconds.
    */
