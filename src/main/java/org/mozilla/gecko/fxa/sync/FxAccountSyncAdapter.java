@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +23,7 @@ import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.browserid.verifier.BrowserIDRemoteVerifierClient;
 import org.mozilla.gecko.browserid.verifier.BrowserIDVerifierDelegate;
+import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
@@ -426,6 +428,14 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     Logger.setThreadLogTag(FxAccountConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
 
+    Logger.info(LOG_TAG, "Syncing FxAccount" +
+        " account named like " + Utils.obfuscateEmail(account.name) +
+        " for authority " + authority +
+        " with instance " + this + ".");
+
+    final EnumSet<FirefoxAccounts.SyncHint> syncHints = FirefoxAccounts.getHintsToSyncFromBundle(extras);
+    FirefoxAccounts.logSyncHints(syncHints);
+
     // This applies even to forced syncs, but only on success.
     if (this.lastSyncRealtimeMillis > 0L &&
         (this.lastSyncRealtimeMillis + MINIMUM_SYNC_DELAY_MILLIS) > SystemClock.elapsedRealtime()) {
@@ -433,11 +443,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
                            ": minimum interval not met.");
       return;
     }
-
-    Logger.info(LOG_TAG, "Syncing FxAccount" +
-        " account named like " + Utils.obfuscateEmail(account.name) +
-        " for authority " + authority +
-        " with instance " + this + ".");
 
     final Context context = getContext();
     final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
