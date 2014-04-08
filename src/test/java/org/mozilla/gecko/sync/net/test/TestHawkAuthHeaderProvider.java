@@ -124,6 +124,11 @@ public class TestHawkAuthHeaderProvider {
     String expected = "Hawk id=\"dh37fgj492je\", ts=\"1353832234\", nonce=\"j4h3g2\", ext=\"some-app-ext-data\", mac=\"6R4rV5iE+NPoym+WwjeHzjAGXUtLNIxmo1vpMofpLAE=\"";
     assertEquals("Authorization", header.getName());
     assertEquals(expected, header.getValue());
+
+    // For a non-POST, non-PUT request, a request to include the payload verification hash is silently ignored.
+    header = provider.getAuthHeader(req, null, null, 1353832234L, "j4h3g2", "some-app-ext-data", true);
+    assertEquals("Authorization", header.getName());
+    assertEquals(expected, header.getValue());
   }
 
   @Test
