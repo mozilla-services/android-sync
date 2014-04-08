@@ -176,32 +176,34 @@ public class FxAccountClient10 {
 
     protected final byte[] tokenId;
     protected final byte[] reqHMACKey;
-    protected final boolean payload;
     protected final SkewHandler skewHandler;
 
     /**
      * Create a delegate for an un-authenticated resource.
      */
     public ResourceDelegate(final Resource resource, final RequestDelegate<T> delegate) {
-      this(resource, delegate, null, null, false);
+      this(resource, delegate, null, null);
     }
 
     /**
      * Create a delegate for a Hawk-authenticated resource.
+     * <p>
+     * Every Hawk request that includes an entity (POST and PUT) will include
+     * the payload verification hash.
      */
-    public ResourceDelegate(final Resource resource, final RequestDelegate<T> delegate, final byte[] tokenId, final byte[] reqHMACKey, final boolean authenticatePayload) {
+    public ResourceDelegate(final Resource resource, final RequestDelegate<T> delegate, final byte[] tokenId, final byte[] reqHMACKey) {
       super(resource);
       this.delegate = delegate;
       this.reqHMACKey = reqHMACKey;
       this.tokenId = tokenId;
-      this.payload = authenticatePayload;
       this.skewHandler = SkewHandler.getSkewHandlerForResource(resource);
     }
 
     @Override
     public AuthHeaderProvider getAuthHeaderProvider() {
       if (tokenId != null && reqHMACKey != null) {
-        return new HawkAuthHeaderProvider(Utils.byte2Hex(tokenId), reqHMACKey, payload, skewHandler.getSkewInSeconds());
+        // We always include the payload verification hash for FxA Hawk-authenticated requests.
+        return new HawkAuthHeaderProvider(Utils.byte2Hex(tokenId), reqHMACKey, true, skewHandler.getSkewInSeconds());
       }
       return super.getAuthHeaderProvider();
     }
@@ -483,7 +485,7 @@ public class FxAccountClient10 {
       return;
     }
 
-    resource.delegate = new ResourceDelegate<TwoTokens>(resource, delegate, tokenId, reqHMACKey, false) {
+    resource.delegate = new ResourceDelegate<TwoTokens>(resource, delegate, tokenId, reqHMACKey) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
@@ -519,7 +521,7 @@ public class FxAccountClient10 {
       return;
     }
 
-    resource.delegate = new ResourceDelegate<Void>(resource, delegate, tokenId, reqHMACKey, false) {
+    resource.delegate = new ResourceDelegate<Void>(resource, delegate, tokenId, reqHMACKey) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         delegate.handleSuccess(null);
@@ -608,7 +610,7 @@ public class FxAccountClient10 {
       return;
     }
 
-    resource.delegate = new ResourceDelegate<TwoKeys>(resource, delegate, tokenId, reqHMACKey, false) {
+    resource.delegate = new ResourceDelegate<TwoKeys>(resource, delegate, tokenId, reqHMACKey) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
@@ -670,7 +672,7 @@ public class FxAccountClient10 {
       return;
     }
 
-    resource.delegate = new ResourceDelegate<StatusResponse>(resource, delegate, tokenId, reqHMACKey, false) {
+    resource.delegate = new ResourceDelegate<StatusResponse>(resource, delegate, tokenId, reqHMACKey) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
@@ -712,7 +714,7 @@ public class FxAccountClient10 {
       return;
     }
 
-    resource.delegate = new ResourceDelegate<String>(resource, delegate, tokenId, reqHMACKey, true) {
+    resource.delegate = new ResourceDelegate<String>(resource, delegate, tokenId, reqHMACKey) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         String cert = body.getString("cert");
@@ -753,7 +755,7 @@ public class FxAccountClient10 {
       return;
     }
 
-    resource.delegate = new ResourceDelegate<Void>(resource, delegate, tokenId, reqHMACKey, false) {
+    resource.delegate = new ResourceDelegate<Void>(resource, delegate, tokenId, reqHMACKey) {
       @Override
       public void handleSuccess(int status, HttpResponse response, ExtendedJSONObject body) {
         try {
