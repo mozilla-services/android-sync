@@ -211,15 +211,15 @@ public class Utils {
 
   protected static byte[] sha1(final String utf8)
       throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    final byte[] bytes = utf8.getBytes("UTF-8");
     try {
-      return NativeCrypto.sha1(utf8.getBytes("UTF-8"));
-    } catch (final UnsupportedEncodingException e) {
-      // If we call these methods, we should propagate their errors.
-      throw e;
-    } catch (final Throwable t) {
-      // Important to catch Throwable's; we expressly want to catch UnsatisfiedLinkError instances.
+      return NativeCrypto.sha1(bytes);
+    } catch (final LinkageError e) {
+      // This will throw UnsatisifiedLinkError (missing mozglue) the first time it is called, and
+      // ClassNotDefFoundError, for the uninitialized NativeCrypto class, each subsequent time this
+      // is called; LinkageError is their common ancestor.
       Logger.warn(LOG_TAG, "Got throwable stretching password using native sha1 implementation; " +
-          "ignoring and using Java implementation.", t);
+          "ignoring and using Java implementation.", e);
       final MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
       return sha1.digest(utf8.getBytes("UTF-8"));
     }
