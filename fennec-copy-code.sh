@@ -80,6 +80,8 @@ SOURCEFILES=$(find \
   -and -not -name 'HardwareUtils.java' \
   -and -not -name 'RobocopTarget.java' \
   -and -not -name 'SyncConstants.java' \
+  -and -not -name 'BrowserLocaleManager.java' \
+  -and -not -name 'LocaleManager.java' \
   -and -not -path '*testhelpers*' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
 
@@ -91,6 +93,8 @@ rsync -C \
   --exclude 'GlobalConstants.java' \
   --exclude 'AnnouncementsConstants.java' \
   --exclude 'HealthReportConstants.java' \
+  --exclude 'BrowserLocaleManager.java' \
+  --exclude 'LocaleManager.java' \
   --exclude '*.in' \
   --exclude '*testhelper*' \
   -a $BACKGROUNDSOURCEDIR $ANDROID/base/
