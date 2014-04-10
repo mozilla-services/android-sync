@@ -15,6 +15,7 @@ mkdir -p src/main/java/org/mozilla/gecko/mozglue
 mkdir -p src/main/java/org/mozilla/gecko/util
 
 cp $ANDROID/base/AppConstants.java.in src/main/java/org/mozilla/gecko/
+cp $ANDROID/base/LocaleManager.java src/main/java/org/mozilla/gecko/
 cp $ANDROID/base/util/HardwareUtils.java src/main/java/org/mozilla/gecko/util/
 cp $ANDROID/base/mozglue/RobocopTarget.java src/main/java/org/mozilla/gecko/mozglue/
 cp $ANDROID/base/SysInfo.java.in src/main/java/org/mozilla/gecko/
