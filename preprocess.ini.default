@@ -81,6 +81,9 @@ MOZ_BUILD_TIMESTAMP = %(TIMESTAMP)s
 ANDROID_CPU_ARCH = armeabi-v7a
 ANDROID_TARGET_SDK = 16
 
+# Pretend to be release so that Send Tab works.
+RELEASE_BUILD=1
+
 # Fennec needs these.
 CPU_ARCH = arm
 GRE_MILESTONE = 24.0a1
