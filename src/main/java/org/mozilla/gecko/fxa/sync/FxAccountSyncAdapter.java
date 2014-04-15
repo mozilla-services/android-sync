@@ -372,8 +372,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
           Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
           syncConfig.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
+          syncConfig.setClusterURL(storageServerURI);
 
-          globalSession = new FxAccountGlobalSession(token.endpoint, syncConfig, callback, context, clientsDataDelegate);
+          globalSession = new FxAccountGlobalSession(syncConfig, callback, context, clientsDataDelegate);
           globalSession.start();
         } catch (Exception e) {
           callback.handleError(globalSession, e);
