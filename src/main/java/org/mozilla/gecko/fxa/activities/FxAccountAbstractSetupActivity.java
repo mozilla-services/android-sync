@@ -35,6 +35,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -54,7 +55,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
   protected int minimumPasswordLength = 8;
 
-  protected EditText emailEdit;
+  protected AutoCompleteTextView emailEdit;
   protected EditText passwordEdit;
   protected Button showPasswordButton;
   protected TextView remoteErrorTextView;
