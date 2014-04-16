@@ -238,6 +238,7 @@ rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-xhdpi 
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-hdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-mdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-ldpi $ANDROID/base/resources/
+rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-v12 $ANDROID/base/resources/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 
 # We use shell globbing to update all fxaccount and sync owned values.
