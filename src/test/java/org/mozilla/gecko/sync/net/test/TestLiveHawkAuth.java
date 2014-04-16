@@ -44,7 +44,7 @@ public class TestLiveHawkAuth {
     final BaseResource resource = new BaseResource("http://localhost:8000/", false);
 
     // Basic GET.
-    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, false));
+    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, false, 0L));
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
@@ -53,7 +53,7 @@ public class TestLiveHawkAuth {
     });
 
     // PUT with payload verification.
-    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, true));
+    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, true, 0L));
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
@@ -70,7 +70,7 @@ public class TestLiveHawkAuth {
     for (int i = 0; i < 16000; i++) {
       sb.append(Integer.valueOf(i % 100).toString());
     }
-    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, true));
+    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, true, 0L));
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
@@ -83,7 +83,7 @@ public class TestLiveHawkAuth {
     });
 
     // PUT without payload verification.
-    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, false));
+    resource.delegate = new TestBaseResourceDelegate(resource, new HawkAuthHeaderProvider(id, key, false, 0L));
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
@@ -96,7 +96,7 @@ public class TestLiveHawkAuth {
     });
 
     // PUT with *bad* payload verification.
-    HawkAuthHeaderProvider provider = new HawkAuthHeaderProvider(id, key, true) {
+    HawkAuthHeaderProvider provider = new HawkAuthHeaderProvider(id, key, true, 0L) {
       @Override
       public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client) throws GeneralSecurityException {
         Header header = super.getAuthHeader(request, context, client);
