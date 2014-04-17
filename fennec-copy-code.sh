@@ -239,19 +239,14 @@ rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-hdpi $
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-mdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-ldpi $ANDROID/base/resources/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
-rsync -a res/values/sync_styles.xml $ANDROID/base/resources/values/
-rsync -a res/values-v11/sync_styles.xml $ANDROID/base/resources/values-v11/
-rsync -a res/values-large-v11/sync_styles.xml $ANDROID/base/resources/values-large-v11/
-rsync -a res/values/fxaccount_dimens.xml $ANDROID/base/resources/values/
-rsync -a res/values-v11/fxaccount_dimens.xml $ANDROID/base/resources/values-v11/
-rsync -a res/values-large-v11/fxaccount_dimens.xml $ANDROID/base/resources/values-large-v11/
-rsync -a res/values/fxaccount_colors.xml $ANDROID/base/resources/values/
-rsync -a res/values-v11/fxaccount_colors.xml $ANDROID/base/resources/values-v11/
-rsync -a res/values-large-v11/fxaccount_colors.xml $ANDROID/base/resources/values-large-v11/
-rsync -a res/values/fxaccount_styles.xml $ANDROID/base/resources/values/
-rsync -a res/values-v11/fxaccount_styles.xml $ANDROID/base/resources/values-v11/
-rsync -a res/values-large-v11/fxaccount_styles.xml $ANDROID/base/resources/values-large-v11/
-rsync -a res/values/fxaccount_strings.xml $ANDROID/base/resources/values/
+
+# We use shell globbing to update all fxaccount and sync owned values.
+rm -f $ANDROID/base/resources/values*/{fxaccount_,sync_}*
+for f in res/values*/{fxaccount_,sync_}*; do
+    g=$(echo $f | sed "s,^res/,$ANDROID/base/resources/,")
+    rsync --archive $f $g
+done
+
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -a strings/strings.xml.in $SERVICES/
 rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
