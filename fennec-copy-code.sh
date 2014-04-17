@@ -85,7 +85,7 @@ SOURCEFILES=$(find \
   -and -not -path '*testhelpers*' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
 
-rsync -C \
+rsync --archive --cvs-exclude --delete \
   --exclude 'AppConstants.java' \
   --exclude 'SysInfo.java' \
   --exclude 'HardwareUtils.java' \
@@ -97,27 +97,27 @@ rsync -C \
   --exclude 'LocaleManager.java' \
   --exclude '*.in' \
   --exclude '*testhelper*' \
-  -a $BACKGROUNDSOURCEDIR $ANDROID/base/
+  $BACKGROUNDSOURCEDIR $ANDROID/base/
 
-rsync -C \
+rsync --archive --cvs-exclude --delete \
   --exclude '*.in' \
-  -a $BROWSERIDSOURCEDIR $ANDROID/base/
+  $BROWSERIDSOURCEDIR $ANDROID/base/
 
-rsync -C \
+rsync --archive --cvs-exclude --delete \
   --exclude 'FxAccountConstants.java' \
   --exclude '*.in' \
-  -a $FXASOURCEDIR $ANDROID/base/
+  $FXASOURCEDIR $ANDROID/base/
 
-rsync -C \
+rsync --archive --cvs-exclude --delete \
   --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
   --exclude '*testhelper*' \
-  -a $SYNCSOURCEDIR $ANDROID/base/
+  $SYNCSOURCEDIR $ANDROID/base/
 
-rsync -C \
+rsync --archive --cvs-exclude --delete \
   --exclude '*.in' \
-  -a $TOKENSERVERSOURCEDIR $ANDROID/base/
+  $TOKENSERVERSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
 
