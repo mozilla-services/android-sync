@@ -42,6 +42,7 @@ public class BrowserContract {
     public static final String PARAM_INSERT_IF_NEEDED = "insert_if_needed";
     public static final String PARAM_INCREMENT_VISITS = "increment_visits";
     public static final String PARAM_EXPIRE_PRIORITY = "priority";
+    public static final String PARAM_DATASET_ID = "dataset_id";
 
     static public enum ExpirePriority {
         NORMAL,
@@ -346,6 +347,9 @@ public class BrowserContract {
         public static final String IMAGE_URL = "image_url";
         public static final String CREATED = "created";
         public static final String FILTER = "filter";
+
+        public static final String[] DEFAULT_PROJECTION =
+            new String[] { _ID, DATASET_ID, URL, TITLE, DESCRIPTION, IMAGE_URL, FILTER };
     }
 
     /*
