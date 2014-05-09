@@ -67,6 +67,12 @@ public class TestEnvironmentBuilder extends FakeProfileTestCase {
     assertEquals(EnvironmentBuilder.getCurrentEnvironment(cache, configProvider).getHash(),
                  environment.getHash());
 
+    // v3 sanity.
+    assertEquals(configProvider.hasHardwareKeyboard(), environment.hasHardwareKeyboard);
+    assertEquals(configProvider.getScreenXInMM(), environment.screenXInMM);
+    assertTrue(1 < environment.screenXInMM);
+    assertTrue(2000 > environment.screenXInMM);
+
     cache.beginInitialization();
     cache.setBlocklistEnabled(false);
     cache.completeInitialization();

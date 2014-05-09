@@ -6,6 +6,7 @@ package org.mozilla.gecko.background.healthreport;
 
 import org.mozilla.gecko.background.healthreport.Environment.UIType;
 import org.mozilla.gecko.background.healthreport.EnvironmentBuilder.ConfigurationProvider;
+import org.mozilla.gecko.sync.jpake.stage.GetRequestStage.GetStepTimerTask;
 import org.mozilla.gecko.util.HardwareUtils;
 
 import android.content.Context;
@@ -37,9 +38,11 @@ public class AndroidConfigurationProvider implements ConfigurationProvider {
     if (HardwareUtils.isLargeTablet()) {
       return UIType.LARGE_TABLET;
     }
+
     if (HardwareUtils.isSmallTablet()) {
       return UIType.SMALL_TABLET;
     }
+
     return UIType.DEFAULT;
   }
 
@@ -53,14 +56,20 @@ public class AndroidConfigurationProvider implements ConfigurationProvider {
     return configuration.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
   }
 
+  /**
+   * Calculate screen horizontal width, in millimeters.
+   * This is approximate, will be wrong on some devices, and
+   * most likely doesn't include screen area that the app doesn't own.
+   * http://stackoverflow.com/questions/2193457/is-there-a-way-to-determine-android-physical-screen-height-in-cm-or-inches
+   */
   @Override
   public int getScreenXInMM() {
-    // This is approximate, will be wrong on some devices, and
-    // most likely doesn't include screen that the app doesn't own.
-    // http://stackoverflow.com/questions/2193457/is-there-a-way-to-determine-android-physical-screen-height-in-cm-or-inches
     return Math.round((displayMetrics.widthPixels / displayMetrics.xdpi) * MILLIMETERS_PER_INCH);
   }
 
+  /**
+   * @see #getScreenXInMM() for caveats.
+   */
   @Override
   public int getScreenYInMM() {
     return Math.round((displayMetrics.heightPixels / displayMetrics.ydpi) * MILLIMETERS_PER_INCH);

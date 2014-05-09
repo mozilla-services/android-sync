@@ -25,37 +25,29 @@ public abstract class Environment extends EnvironmentV2 {
 
   public static enum UIType {
     // Corresponds to the typical phone interface.
-    DEFAULT {
-      public String toString() {
-        return "default";
-      }
-    },
+    DEFAULT("default"),
 
     // Corresponds to a device for which Fennec is displaying the large tablet UI.
-    LARGE_TABLET {
-      public String toString() {
-        return "largetablet";
-      }
-    },
+    LARGE_TABLET("largetablet"),
 
     // Corresponds to a device for which Fennec is displaying the small tablet UI.
-    SMALL_TABLET {
-      public String toString() {
-        return "smalltablet";
-      }
-    },;
+    SMALL_TABLET("smalltablet");
 
-    public static UIType fromLabel(String label) {
-      if ("smalltablet".equals(label)) {
-        return SMALL_TABLET;
-      }
+    private final String label;
 
-      if ("largetablet".equals(label)) {
-        return LARGE_TABLET;
-      }
+    private UIType(final String label) {
+      this.label = label;
+    }
 
-      if ("default".equals(label)) {
-        return DEFAULT;
+    public String toString() {
+      return this.label;
+    }
+
+    public static UIType fromLabel(final String label) {
+      for (UIType type : UIType.values()) {
+        if (type.label.equals(label)) {
+          return type;
+        }
       }
 
       throw new IllegalArgumentException("Bad enum value: " + label);
