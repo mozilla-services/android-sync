@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import org.mozilla.gecko.background.healthreport.Environment;
+import org.mozilla.gecko.background.healthreport.Environment.UIType;
+import org.mozilla.gecko.background.healthreport.EnvironmentBuilder.ConfigurationProvider;
 import org.mozilla.gecko.background.healthreport.HealthReportStorage;
 import org.mozilla.gecko.background.healthreport.ProfileInformationCache;
 import org.mozilla.gecko.background.healthreport.test.HealthReportStorageStub;
@@ -15,7 +17,40 @@ import org.mozilla.gecko.background.healthreport.upload.AndroidSubmissionClient;
 public class MockAndroidSubmissionClient extends AndroidSubmissionClient {
   public MockAndroidSubmissionClient(final Context context, final SharedPreferences prefs,
       final String profilePath) {
-    super(context, prefs, profilePath);
+    super(context, prefs, profilePath, new MockConfigurationProvider());
+  }
+
+  public static class MockConfigurationProvider implements ConfigurationProvider {
+    @Override
+    public boolean hasHardwareKeyboard() {
+      return false;
+    }
+
+    @Override
+    public UIType getUIType() {
+      return UIType.DEFAULT;
+    }
+
+    @Override
+    public int getUIModeType() {
+      return 0;
+    }
+
+    @Override
+    public int getScreenLayoutSize() {
+      return 0;
+    }
+
+    @Override
+    public int getScreenXInMM() {
+      return 100;
+    }
+
+    @Override
+    public int getScreenYInMM() {
+      return 140;
+    }
+
   }
 
   public class MockSubmissionsTracker extends SubmissionsTracker {
