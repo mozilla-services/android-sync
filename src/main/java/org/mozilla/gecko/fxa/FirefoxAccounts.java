@@ -14,6 +14,7 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncAdapter;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
 import org.mozilla.gecko.sync.ThreadPool;
@@ -154,6 +155,26 @@ public class FirefoxAccounts {
       return accounts[0];
     }
     return null;
+  }
+
+  /**
+   * @return
+   *     the {@link State} instance associated with the current account, or <code>null</code> if
+   *     no accounts exist.
+   */
+  public static State getFirefoxAccountState(final Context context) {
+    final Account account = getFirefoxAccount(context);
+    if (account == null) {
+      return null;
+    }
+
+    final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
+    try {
+      return fxAccount.getState();
+    } catch (final Exception ex) {
+      Logger.warn(LOG_TAG, "Could not get FX account state.", ex);
+      return null;
+    }
   }
 
   protected static void putHintsToSync(final Bundle extras, EnumSet<SyncHint> syncHints) {
