@@ -177,6 +177,18 @@ public class FirefoxAccounts {
     }
   }
 
+  /*
+   * @param context Android context
+   * @return the email address associated with the configured Firefox account if one exists; null otherwise.
+   */
+  public static String getFirefoxAccountEmail(final Context context) {
+    final Account account = getFirefoxAccount(context);
+    if (account == null) {
+      return null;
+    }
+    return account.name;
+  }
+
   protected static void putHintsToSync(final Bundle extras, EnumSet<SyncHint> syncHints) {
     // stagesToSync and stagesToSkip are allowed to be null.
     if (syncHints == null) {
