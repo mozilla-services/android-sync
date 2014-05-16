@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.fxa.activities.FxAccountConfirmAccountActivity;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.State;
@@ -307,5 +308,20 @@ public class FirefoxAccounts {
     final String OS = AppConstants.OS_TARGET;
     final String LOCALE = Utils.getLanguageTag(locale);
     return res.getString(R.string.fxaccount_link_old_firefox, VERSION, OS, LOCALE);
+  }
+
+  /**
+   * @param context Android context.
+   * @return true if an account exists, false otherwise.
+   */
+  public static boolean resendVerificationEmail(final Context context) {
+    final Account account = getFirefoxAccount(context);
+    if (account == null) {
+      return false;
+    }
+
+    final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
+    FxAccountConfirmAccountActivity.resendCode(context, fxAccount);
+    return true;
   }
 }
