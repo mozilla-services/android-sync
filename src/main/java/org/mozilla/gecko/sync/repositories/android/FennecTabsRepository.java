@@ -337,4 +337,47 @@ public class FennecTabsRepository extends Repository {
 
     return record;
   }
+
+  /**
+   * Deletes the entire Client database and non-local tabs.
+   */
+  public static void deleteSyncDevice(Context context) {
+    final String nonLocalClientSelection = BrowserContract.Tabs.CLIENT_GUID + " IS NOT NULL";
+    final String LOG_TAG = "FennecTabsRepository";
+
+    ContentProviderClient clientsProvider = context.getContentResolver()
+            .acquireContentProviderClient(BrowserContractHelpers.CLIENTS_CONTENT_URI);
+    if (clientsProvider == null) {
+        Logger.warn(LOG_TAG, "Unable to create ContentProvidersClient");
+        return;
+    }
+
+    ContentProviderClient tabsProvider = context.getContentResolver()
+            .acquireContentProviderClient(BrowserContractHelpers.TABS_CONTENT_URI);
+    if (tabsProvider == null) {
+        Logger.warn("FennecTabsRepository", "Unable to create ContentProvidersClient");
+        try {
+          clientsProvider.release();
+        } catch (Exception e) {}
+        return;
+    }
+
+    try {
+      Logger.debug(LOG_TAG, "Clearing tabs entry for non-local client");
+      tabsProvider.delete(BrowserContractHelpers.TABS_CONTENT_URI, nonLocalClientSelection, null);
+      Logger.debug(LOG_TAG, "Clearing clients entry for non-local client");
+      clientsProvider.delete(BrowserContractHelpers.CLIENTS_CONTENT_URI, nonLocalClientSelection, null);
+    } catch(RemoteException e) {
+      Logger.warn(LOG_TAG, "Error while deleting", e);
+      return;
+    } finally {
+      try {
+        clientsProvider.release();
+      } catch (Exception e) {}
+
+      try {
+        tabsProvider.release();
+      } catch (Exception e) {}
+    }
+  }
 }
