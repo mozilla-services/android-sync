@@ -14,6 +14,7 @@ import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.config.AccountPickler;
 import org.mozilla.gecko.sync.config.ClientRecordTerminator;
 import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
+import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.SyncAccounts.SyncAccountParameters;
 
@@ -52,6 +53,9 @@ public class SyncAccountDeletedService extends IntentService {
     Logger.info(LOG_TAG, "Sync account named " + accountName + " being removed; " +
         "deleting saved pickle file '" + Constants.ACCOUNT_PICKLE_FILENAME + "'.");
     deletePickle(context);
+
+    // Delete client database and non-local tabs.
+    FennecTabsRepository.deleteSyncDevice(context);
 
     SyncAccountParameters params;
     try {
