@@ -54,4 +54,23 @@ public class BrowserLocaleManager implements LocaleManager {
     @Override
     public void updateConfiguration(Context context, Locale locale) {
     }
+
+    @Override
+    public Locale getCurrentLocale(Context context) {
+      Logger.info(LOG_TAG, "Stub: getCurrentLocale.");
+      return Locale.getDefault();
+    }
+
+    @Override
+    public void resetToSystemLocale(Context context) {
+      Logger.info(LOG_TAG, "Stub: resetToSystemLocale.");
+    }
+
+    @Override
+    public Locale onSystemConfigurationChange(Context context,
+                                              Resources resources,
+                                              Configuration configuration,
+                                              Locale currentActivityLocale) {
+      return null;
+    }
 }
