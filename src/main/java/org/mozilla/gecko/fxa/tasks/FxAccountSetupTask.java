@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-package org.mozilla.gecko.fxa.activities;
+package org.mozilla.gecko.fxa.tasks;
 
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.CountDownLatch;
@@ -13,7 +13,7 @@ import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.PasswordStretcher;
-import org.mozilla.gecko.fxa.activities.FxAccountSetupTask.InnerRequestDelegate;
+import org.mozilla.gecko.fxa.tasks.FxAccountSetupTask.InnerRequestDelegate;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -27,7 +27,7 @@ import android.os.AsyncTask;
  * We really want to avoid making a threading mistake that brings down the whole
  * process.
  */
-abstract class FxAccountSetupTask<T> extends AsyncTask<Void, Void, InnerRequestDelegate<T>> {
+public abstract class FxAccountSetupTask<T> extends AsyncTask<Void, Void, InnerRequestDelegate<T>> {
   private static final String LOG_TAG = FxAccountSetupTask.class.getSimpleName();
 
   public interface ProgressDisplay {

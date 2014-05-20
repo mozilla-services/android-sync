@@ -19,6 +19,7 @@ import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.Action;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
+import org.mozilla.gecko.fxa.tasks.FxAccountSetupTask;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
 import android.accounts.Account;
