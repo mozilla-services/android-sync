@@ -12,12 +12,12 @@ import java.util.concurrent.CountDownLatch;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
-import org.mozilla.gecko.fxa.activities.FxAccountConfirmAccountActivity;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncAdapter;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
+import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 
@@ -311,7 +311,14 @@ public class FirefoxAccounts {
   }
 
   /**
-   * @param context Android context.
+   * Resends the account verification email, and displays an appropriate
+   * toast on both send success and failure. Note that because the underlying implementation
+   * uses {@link AsyncTask}, the provided context must be UI-capable, and this
+   * method called from the UI thread (see
+   * {@link org.mozilla.gecko.fxa.tasks.FxAccountCodeResender#resendCode(Context, AndroidFxAccount)}
+   * for more).
+   *
+   * @param context a UI-capable Android context.
    * @return true if an account exists, false otherwise.
    */
   public static boolean resendVerificationEmail(final Context context) {
@@ -321,7 +328,7 @@ public class FirefoxAccounts {
     }
 
     final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
-    FxAccountConfirmAccountActivity.resendCode(context, fxAccount);
+    FxAccountCodeResender.resendCode(context, fxAccount);
     return true;
   }
 }
