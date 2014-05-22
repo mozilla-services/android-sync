@@ -77,7 +77,7 @@
         <artifactId>android-maven-plugin</artifactId>
         <configuration>
           <sdk>
-            <platform>16</platform>
+            <platform>17</platform>
           </sdk>
           <androidManifestFile>${project.basedir}/../test/AndroidManifest.xml</androidManifestFile>
           <resourceDirectory>${project.basedir}/../test/res</resourceDirectory>
