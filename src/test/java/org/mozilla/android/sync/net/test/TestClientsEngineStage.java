@@ -170,7 +170,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
 
   public static class MockClientsGlobalSession extends MockGlobalSession {
     private ClientsDataDelegate clientsDataDelegate = new MockClientsDataDelegate();
-  
+
     public MockClientsGlobalSession(SyncConfiguration config,
                                     GlobalSessionCallback callback)
         throws SyncConfigurationException,
@@ -180,7 +180,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
                NonObjectJSONException {
       super(config, callback);
     }
-  
+
     @Override
     public ClientsDataDelegate getClientsDelegate() {
       return clientsDataDelegate;
@@ -779,5 +779,19 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertEquals(4, recordToUpload.commands.size());
     assertEquals(expectedGUID, recordToUpload.guid);
     assertEquals("12a1", recordToUpload.version);
+  }
+
+  @Test
+  public void testLastModifiedTimestamp() throws NullCursorException {
+    // If we uploaded a record a moment ago, we shouldn't upload another.
+    final long now = System.currentTimeMillis() - 1;
+    session.config.persistServerClientRecordTimestamp(now);
+    assertEquals(now, session.config.getPersistedServerClientRecordTimestamp());
+    assertFalse(shouldUploadLocalRecord);
+    assertFalse(shouldUpload());
+
+    // But if we change our client data, we should upload.
+    session.getClientsDelegate().setClientName("new name");
+    assertTrue(shouldUpload());
   }
 }
