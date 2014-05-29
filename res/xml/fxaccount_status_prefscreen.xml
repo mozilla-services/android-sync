@@ -12,6 +12,15 @@
             android:title="@string/fxaccount_email_hint" />
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="device_name_category"
+        android:title="@string/fxaccount_status_device_name" >
+        <EditTextPreference
+            android:singleLine="true"
+            android:key="device_name"
+            android:persistent="false"
+            android:title="" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="sync_category"
         android:title="@string/fxaccount_status_sync" >
         <Preference
