@@ -74,6 +74,13 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name="org.mozilla.gecko.background.common.receivers.BackgroundServicesGeckoPrefsReceiver">
+            <intent-filter>
+                <action android:name="@ANDROID_PACKAGE_NAME@.background.gecko.prefs"/>
+            </intent-filter>
+        </receiver>
+
         <activity
             android:theme="@style/SyncTheme"
             android:excludeFromRecents="true"
