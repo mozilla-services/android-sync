@@ -187,4 +187,16 @@ public class FxAccountUtils {
     URI uri = new URI(serverURI);
     return new URI(uri.getScheme(), uri.getHost(), null, null).toString();
   }
+
+  public static boolean isValidServerEndpoint(String serverEndpoint) {
+      try {
+        final URI uri = new URI(serverEndpoint);
+        if (!"https".equals(uri.getScheme())) {
+          return false;
+        }
+      } catch (URISyntaxException e) {
+        return false;
+      }
+      return true;
+  }
 }

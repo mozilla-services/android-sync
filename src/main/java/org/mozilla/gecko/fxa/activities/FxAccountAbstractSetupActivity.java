@@ -6,12 +6,14 @@ package org.mozilla.gecko.fxa.activities;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.common.receivers.BackgroundServicesGeckoPrefsReceiver;
 import org.mozilla.gecko.background.fxa.FxAccountClient10.RequestDelegate;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
@@ -24,6 +26,7 @@ import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.tasks.FxAccountSetupTask.ProgressDisplay;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
@@ -31,6 +34,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -44,6 +48,7 @@ import android.view.View.OnFocusChangeListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -68,6 +73,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   protected TextView remoteErrorTextView;
   protected Button button;
   protected ProgressBar progressBar;
+  protected CheckBox whereCheckBox;
 
   protected void createShowPasswordButton() {
     showPasswordButton.setOnClickListener(new OnClickListener() {
@@ -262,7 +268,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       AndroidFxAccount fxAccount;
       try {
         final String profile = Constants.DEFAULT_PROFILE;
-        final String tokenServerURI = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
+        final String tokenServerURI = getTokenServerEndpoint();
         // It is crucial that we use the email address provided by the server
         // (rather than whatever the user entered), because the user's keys are
         // wrapped and salted with the initial email they provided to
@@ -369,5 +375,58 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       }
     };
     task.execute();
+
+    // Getting Shared Preferences hits the disk as well.
+    final AsyncTask<Void, Void, Map<String, String>> asyncTask = new AsyncTask<Void, Void, Map<String, String>>() {
+      @Override
+      protected Map<String, String> doInBackground(Void... params) {
+        final SharedPreferences sharedPrefs = getSharedPreferences(BackgroundServicesGeckoPrefsReceiver.DEFAULT_PROFILE_SHARED_PREFS, Utils.SHARED_PREFERENCES_MODE);
+        final Map<String, String> result = new HashMap<String, String>();
+        for (String k : new String[] { BackgroundServicesGeckoPrefsReceiver.PREF_AUTH_SERVER_ENDPOINT, BackgroundServicesGeckoPrefsReceiver.PREF_TOKEN_SERVER_ENDPOINT }) {
+          final String v = sharedPrefs.getString(k, null);
+          result.put(k, v);
+        }
+        return result;
+      }
+
+      @Override
+      public void onPostExecute(Map<String, String> result) {
+        persistedAuthServerEndpoint = result.get(BackgroundServicesGeckoPrefsReceiver.PREF_AUTH_SERVER_ENDPOINT);
+        persistedTokenServerEndpoint = result.get(BackgroundServicesGeckoPrefsReceiver.PREF_TOKEN_SERVER_ENDPOINT);
+
+        boolean hasCustomServer = false;
+        hasCustomServer |= !FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(getAuthServerEndpoint());
+        hasCustomServer |= !FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(getTokenServerEndpoint());
+
+        if (!hasCustomServer) {
+          return;
+        }
+
+        // Watch out, we got a bad ass over here.
+        whereCheckBox.setVisibility(View.VISIBLE);
+      }
+    };
+    asyncTask.execute();
+  }
+
+  protected String persistedAuthServerEndpoint;
+  protected String persistedTokenServerEndpoint;
+
+  public String validateEndpoint(String serverEndpoint, String defaultEndpoint) {
+    if (serverEndpoint == null) {
+      return defaultEndpoint;
+    }
+    if (!FxAccountUtils.isValidServerEndpoint(serverEndpoint)) {
+      return defaultEndpoint;
+    }
+    return serverEndpoint;
+  }
+
+  public String getAuthServerEndpoint() {
+    return validateEndpoint(persistedAuthServerEndpoint, FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT);
+  }
+
+  public String getTokenServerEndpoint() {
+    return validateEndpoint(persistedTokenServerEndpoint, FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT);
   }
 }

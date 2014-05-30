@@ -75,6 +75,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     button = (Button) ensureFindViewById(null, R.id.button, "create account button");
     progressBar = (ProgressBar) ensureFindViewById(null, R.id.progress, "progress bar");
     chooseCheckBox = (CheckBox) ensureFindViewById(null, R.id.choose_what_to_sync_checkbox, "choose what to sync check box");
+    whereCheckBox = (CheckBox) ensureFindViewById(null, R.id.choose_where_to_sync_checkbox, "choose where to sync check box");
     selectedEngines = new HashMap<String, Boolean>();
 
     createCreateAccountButton();
@@ -205,7 +206,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   }
 
   public void createAccount(String email, String password, Map<String, Boolean> engines) {
-    String serverURI = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
+    String serverURI = getAuthServerEndpoint();
     PasswordStretcher passwordStretcher = makePasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.

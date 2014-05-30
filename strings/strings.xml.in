@@ -142,6 +142,7 @@
 <string name="fxaccount_create_account_sign_in_instead">&fxaccount_create_account_sign_in_instead;</string>
 <string name="fxaccount_create_account_1990_or_earlier">&fxaccount_create_account_1990_or_earlier;</string>
 <string name="fxaccount_create_account_unknown_error">&fxaccount_create_account_unknown_error;</string>
+<string name="fxaccount_create_account_choose_where_to_sync">&fxaccount_create_account_choose_where_to_sync;</string>
 
 <string name="fxaccount_account_create_not_allowed">&fxaccount_account_create_not_allowed;</string>
 <string name="fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements">&fxaccount_account_create_not_allowed_you_must_meet_certain_age_requirements;</string>

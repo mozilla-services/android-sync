@@ -15,7 +15,6 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.PasswordStretcher;
-import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.tasks.FxAccountSignInTask;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
@@ -25,6 +24,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -53,6 +53,7 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
     remoteErrorTextView = (TextView) ensureFindViewById(null, R.id.remote_error, "remote error text view");
     button = (Button) ensureFindViewById(null, R.id.button, "sign in button");
     progressBar = (ProgressBar) ensureFindViewById(null, R.id.progress, "progress bar");
+    whereCheckBox = (CheckBox) ensureFindViewById(null, R.id.choose_where_to_sync_checkbox, "choose where to sync check box");
 
     minimumPasswordLength = 1; // Minimal restriction on passwords entered to sign in.
     createSignInButton();
@@ -102,7 +103,7 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
   }
 
   public void signIn(String email, String password) {
-    String serverURI = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
+    String serverURI = getAuthServerEndpoint();
     PasswordStretcher passwordStretcher = makePasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.
