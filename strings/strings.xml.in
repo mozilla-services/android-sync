@@ -185,6 +185,7 @@
 <string name="fxaccount_status_legal">&fxaccount_status_legal;</string>
 <string name="fxaccount_status_linktos">&fxaccount_status_linktos;</string>
 <string name="fxaccount_status_linkprivacy">&fxaccount_status_linkprivacy;</string>
+<string name="fxaccount_status_token_server">&fxaccount_status_token_server;</string>
 
 <string name="fxaccount_label">&fxaccount_account_type_label;</string>
 

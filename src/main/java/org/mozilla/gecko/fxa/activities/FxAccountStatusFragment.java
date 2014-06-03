@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -72,6 +74,7 @@ public class FxAccountStatusFragment
   protected CheckBoxPreference passwordsPreference;
 
   protected EditTextPreference deviceNamePreference;
+  protected EditTextPreference tokenServerPreference;
 
   protected volatile AndroidFxAccount fxAccount;
   // The contract is: when fxAccount is non-null, then clientsDataDelegate is
@@ -137,6 +140,9 @@ public class FxAccountStatusFragment
 
     deviceNamePreference = (EditTextPreference) ensureFindPreference("device_name");
     deviceNamePreference.setOnPreferenceChangeListener(this);
+
+    tokenServerPreference = (EditTextPreference) ensureFindPreference("token_server");
+    tokenServerPreference.setOnPreferenceChangeListener(this);
   }
 
   /**
@@ -368,6 +374,8 @@ public class FxAccountStatusFragment
 
     emailPreference.setTitle(fxAccount.getEmail());
 
+    hideTokenServerIfNeeded();
+
     try {
       // There are error states determined by Android, not the login state
       // machine, and we have a chance to present these states here.  We handle
@@ -415,6 +423,21 @@ public class FxAccountStatusFragment
     final String clientName = clientsDataDelegate.getClientName();
     deviceNamePreference.setSummary(clientName);
     deviceNamePreference.setText(clientName);
+  }
+
+  protected void hideTokenServerIfNeeded() {
+    final String tokenServerUrl = fxAccount.getTokenServerURI();
+    final boolean tokenServerIsDefault = false;
+        // FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(tokenServerUrl);
+
+    if (tokenServerIsDefault) {
+      final PreferenceScreen screen = (PreferenceScreen) ensureFindPreference("status_screen");
+      syncCategory.removePreference(tokenServerPreference);
+      return;
+    }
+
+    tokenServerPreference.setSummary(tokenServerUrl);
+    tokenServerPreference.setText(tokenServerUrl);
   }
 
   /**
@@ -625,6 +648,22 @@ public class FxAccountStatusFragment
       final long now = System.currentTimeMillis();
       clientsDataDelegate.setClientName(newClientName, now);
       requestDelayedSync(); // Try to update our remote client record.
+      hardRefresh(); // Updates the value displayed to the user, among other things.
+      return true;
+    }
+
+    if (preference == tokenServerPreference) {
+      String newTokenServer = (String) newValue;
+      try {
+        final URI uri = new URI(newTokenServer);
+        if (!"https".equals(uri.getScheme())) {
+          // XXX localize.
+          throw new URISyntaxException(newTokenServer, "Token server scheme must be https!");
+        }
+      } catch (URISyntaxException e) {
+        // XXX what?
+        return false;
+      }
       hardRefresh(); // Updates the value displayed to the user, among other things.
       return true;
     }

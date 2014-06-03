@@ -32,7 +32,9 @@ import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -428,5 +430,70 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
   public String getTokenServerEndpoint() {
     return validateEndpoint(persistedTokenServerEndpoint, FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT);
+  }
+
+  /**
+   * The "Choose where to sync" checkbox pops up a multi-choice dialog when it is
+   * unchecked. It toggles to unchecked from checked.
+   */
+  protected void createWhereCheckBox() {
+    final View view = getLayoutInflater().inflate(R.layout.fxaccount_choose_where_to_sync_dialog_view, null);
+    final EditText authServerEditText = (EditText) ensureFindViewById(view, R.id.auth_server_endpoint, "auth server edit text");
+    final EditText tokenServerEditText = (EditText) ensureFindViewById(view, R.id.token_server_endpoint, "token server edit text");
+
+    final DialogInterface.OnClickListener clickListener = new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        if (which != DialogInterface.BUTTON_POSITIVE) {
+          Logger.debug(LOG_TAG, "onClick: not button positive, unchecking.");
+          whereCheckBox.setChecked(false);
+          return;
+        }
+        // We only check the box on success.
+        Logger.debug(LOG_TAG, "onClick: button positive, checking.");
+        whereCheckBox.setChecked(true);
+        // And then remember for future use.
+
+        persistedAuthServerEndpoint = authServerEditText.getText().toString();
+        persistedTokenServerEndpoint = tokenServerEditText.getText().toString();
+        Logger.warn(LOG_TAG, "authServer: " + persistedAuthServerEndpoint);
+        Logger.warn(LOG_TAG, "tokenServer: " + persistedTokenServerEndpoint);
+      }
+    };
+
+    final AlertDialog dialog = new AlertDialog.Builder(this)
+        .setTitle(R.string.fxaccount_create_account_choose_where_to_sync)
+        .setIcon(R.drawable.icon)
+        .setView(view)
+        .setPositiveButton(android.R.string.ok, clickListener)
+        .setNegativeButton(android.R.string.cancel, clickListener)
+        .create();
+
+    dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+      @Override
+      public void onCancel(DialogInterface dialog) {
+        Logger.debug(LOG_TAG, "onCancel: unchecking.");
+        whereCheckBox.setChecked(false);
+      }
+    });
+
+    whereCheckBox.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        // There appears to be no way to stop Android interpreting the click
+        // first. So, if the user clicked on an unchecked box, it's checked by
+        // the time we get here.
+        if (!whereCheckBox.isChecked()) {
+          Logger.debug(LOG_TAG, "onClick: was checked, not showing dialog.");
+          return;
+        }
+        Logger.debug(LOG_TAG, "onClick: was unchecked, showing dialog.");
+
+        authServerEditText.setText(persistedAuthServerEndpoint);
+        tokenServerEditText.setText(persistedTokenServerEndpoint);
+
+        dialog.show();
+      }
+    });
   }
 }

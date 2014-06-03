@@ -72,6 +72,12 @@
             android:key="device_name"
             android:persistent="false"
             android:title="@string/fxaccount_status_device_name" />
+
+        <EditTextPreference
+            android:inputType="textUri"
+            android:key="token_server"
+            android:persistent="false"
+            android:title="@string/fxaccount_status_token_server" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="legal_category"

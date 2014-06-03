@@ -85,6 +85,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     createShowPasswordButton();
     linkifyPolicy();
     createChooseCheckBox();
+    createWhereCheckBox();
 
     View signInInsteadLink = ensureFindViewById(null, R.id.sign_in_instead_link, "sign in instead link");
     signInInsteadLink.setOnClickListener(new OnClickListener() {
