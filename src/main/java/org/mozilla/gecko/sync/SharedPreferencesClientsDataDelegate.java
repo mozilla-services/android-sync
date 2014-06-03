@@ -36,17 +36,17 @@ public class SharedPreferencesClientsDataDelegate implements ClientsDataDelegate
    * @param clientName to change to.
    */
   @Override
-  public synchronized void setClientName(String clientName) {
+  public synchronized void setClientName(String clientName, long now) {
     sharedPreferences
       .edit()
       .putString(SyncConfiguration.PREF_CLIENT_NAME, clientName)
-      .putLong(SyncConfiguration.PREF_CLIENT_DATA_TIMESTAMP, System.currentTimeMillis())
+      .putLong(SyncConfiguration.PREF_CLIENT_DATA_TIMESTAMP, now)
       .commit();
   }
 
   @Override
   public String getDefaultClientName() {
-    // XXX localize this string!
+    // Bug 1019719: localize this string!
     return GlobalConstants.MOZ_APP_DISPLAYNAME + " on " + android.os.Build.MODEL;
   }
 
@@ -55,7 +55,8 @@ public class SharedPreferencesClientsDataDelegate implements ClientsDataDelegate
     String clientName = sharedPreferences.getString(SyncConfiguration.PREF_CLIENT_NAME, null);
     if (clientName == null) {
       clientName = getDefaultClientName();
-      setClientName(clientName);
+      long now = System.currentTimeMillis();
+      setClientName(clientName, now);
     }
     return clientName;
   }

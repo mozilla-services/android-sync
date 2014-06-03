@@ -791,7 +791,7 @@ public class TestClientsEngineStage extends MockSyncClientsEngineStage {
     assertFalse(shouldUpload());
 
     // But if we change our client data, we should upload.
-    session.getClientsDelegate().setClientName("new name");
+    session.getClientsDelegate().setClientName("new name", System.currentTimeMillis());
     assertTrue(shouldUpload());
   }
 }

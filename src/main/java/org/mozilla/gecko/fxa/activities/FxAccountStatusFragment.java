@@ -622,7 +622,8 @@ public class FxAccountStatusFragment
       if (TextUtils.isEmpty(newClientName)) {
         newClientName = clientsDataDelegate.getDefaultClientName();
       }
-      clientsDataDelegate.setClientName(newClientName);
+      final long now = System.currentTimeMillis();
+      clientsDataDelegate.setClientName(newClientName, now);
       requestDelayedSync(); // Try to update our remote client record.
       hardRefresh(); // Updates the value displayed to the user, among other things.
       return true;

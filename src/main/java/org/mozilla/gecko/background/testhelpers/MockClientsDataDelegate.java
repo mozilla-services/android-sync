@@ -26,15 +26,15 @@ public class MockClientsDataDelegate implements ClientsDataDelegate {
   }
 
   @Override
-  public synchronized void setClientName(String clientName) {
+  public synchronized void setClientName(String clientName, long now) {
     this.clientName = clientName;
-    this.clientDataTimestamp = System.currentTimeMillis();
+    this.clientDataTimestamp = now;
   }
 
   @Override
   public synchronized String getClientName() {
     if (clientName == null) {
-      setClientName(getDefaultClientName());
+      setClientName(getDefaultClientName(), System.currentTimeMillis());
     }
     return clientName;
   }

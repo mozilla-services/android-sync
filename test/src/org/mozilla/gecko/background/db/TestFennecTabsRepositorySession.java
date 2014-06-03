@@ -210,7 +210,7 @@ public class TestFennecTabsRepositorySession extends AndroidSyncTestCase {
 
     // No tabs are modified after this, but our client name has changed, so
     // again we get a record.
-    clientsDataDelegate.setClientName("new client name");
+    clientsDataDelegate.setClientName("new client name", System.currentTimeMillis());
     performWait(fetchSinceRunnable(session, now, new Record[] { tabsRecord }));
 
     session.abort();
