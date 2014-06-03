@@ -3,8 +3,7 @@
 
 package org.mozilla.gecko.background.fxa.authenticator;
 
-import org.mozilla.gecko.background.helpers.AndroidSyncTestCase;
-import org.mozilla.gecko.background.sync.TestSyncAccounts;
+import org.mozilla.gecko.background.sync.AndroidSyncTestCaseWithAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
@@ -14,19 +13,28 @@ import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.test.InstrumentationTestCase;
 import android.test.RenamingDelegatingContext;
 
-public class TestAccountPickler extends AndroidSyncTestCase {
+public class TestAccountPickler extends AndroidSyncTestCaseWithAccounts {
   private final static String FILENAME_PREFIX = "TestAccountPickler-";
   private final static String PICKLE_FILENAME = "pickle";
 
+  private final static String TEST_ACCOUNTTYPE = FxAccountConstants.ACCOUNT_TYPE;
+
+  // Test account names must start with TEST_USERNAME in order to be recognized
+  // as test accounts and deleted in tearDown.
+  public static final String TEST_USERNAME   = "testFirefoxAccount@mozilla.com";
+
   public Account account;
   public RenamingDelegatingContext context;
-  public AccountManager accountManager;
+
+  public TestAccountPickler() {
+    super(TEST_ACCOUNTTYPE, TEST_USERNAME);
+  }
 
   @Override
   public void setUp() {
+    super.setUp();
     this.account = null;
     // Randomize the filename prefix in case we don't clean up correctly.
     this.context = new RenamingDelegatingContext(getApplicationContext(), FILENAME_PREFIX +
@@ -36,44 +44,31 @@ public class TestAccountPickler extends AndroidSyncTestCase {
 
   @Override
   public void tearDown() {
-    if (this.account != null) {
-      deleteAccount(this, this.accountManager, this.account);
-      this.account = null;
-    }
+    super.tearDown();
     this.context.deleteFile(PICKLE_FILENAME);
   }
 
-  public static void deleteAccount(final InstrumentationTestCase test,
-      final AccountManager accountManager, final Account account) {
-    TestSyncAccounts.deleteAccount(test, accountManager, account);
-  }
-
-  private boolean accountsExist() {
-    // Note that we don't use FirefoxAccounts.firefoxAccountsExist because it unpickles.
-    return AccountManager.get(context).getAccountsByType(FxAccountConstants.ACCOUNT_TYPE).length > 0;
-  }
-
-  public AndroidFxAccount addDummyAccount() throws Exception {
-    final String email = "iu@fakedomain.io";
-    final State state = new Separated(email, "uid", false); // State choice is arbitrary.
-    final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context, email,
+  public AndroidFxAccount addTestAccount() throws Exception {
+    final State state = new Separated(TEST_USERNAME, "uid", false); // State choice is arbitrary.
+    final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context, TEST_USERNAME,
         "profile", "serverURI", "tokenServerURI", state);
     assertNotNull(account);
-    assertTrue(accountsExist()); // Sanity check.
+    assertNotNull(account.getProfile());
+    assertTrue(testAccountsExist()); // Sanity check.
     this.account = account.getAndroidAccount(); // To remove in tearDown() if we throw.
     return account;
   }
 
   public void testPickleAndUnpickle() throws Exception {
-    final AndroidFxAccount inputAccount = addDummyAccount();
+    final AndroidFxAccount inputAccount = addTestAccount();
     // Sync is enabled by default so we do a more thorough test by disabling it.
     inputAccount.disableSyncing();
 
     AccountPickler.pickle(inputAccount, PICKLE_FILENAME);
 
     // unpickle adds an account to the AccountManager so delete it first.
-    deleteAccount(this, this.accountManager, inputAccount.getAndroidAccount());
-    assertFalse(accountsExist());
+    deleteTestAccounts();
+    assertFalse(testAccountsExist());
 
     final AndroidFxAccount unpickledAccount =
         AccountPickler.unpickle(context, PICKLE_FILENAME);
@@ -83,7 +78,7 @@ public class TestAccountPickler extends AndroidSyncTestCase {
   }
 
   public void testDeletePickle() throws Exception {
-    final AndroidFxAccount account = addDummyAccount();
+    final AndroidFxAccount account = addTestAccount();
     AccountPickler.pickle(account, PICKLE_FILENAME);
 
     final String s = Utils.readFile(context, PICKLE_FILENAME);
@@ -91,8 +86,7 @@ public class TestAccountPickler extends AndroidSyncTestCase {
     assertTrue(s.length() > 0);
 
     AccountPickler.deletePickle(context, PICKLE_FILENAME);
-    org.mozilla.gecko.background.sync.TestAccountPickler.assertFileNotPresent(
-        context, PICKLE_FILENAME);
+    assertFileNotPresent(context, PICKLE_FILENAME);
   }
 
   private void assertAccountsEquals(final AndroidFxAccount expected,
