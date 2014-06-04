@@ -347,6 +347,17 @@ public class FxAccountStatusFragment
     FxAccountSyncStatusHelper.getInstance().stopObserving(syncStatusDelegate);
   }
 
+  protected void hardRefresh() {
+    // This is the only way to guarantee that the EditText dialogs created by
+    // EditTextPreferences are re-created. This works around the issue described
+    // at http://androiddev.orkitra.com/?p=112079.
+    final PreferenceScreen statusScreen = (PreferenceScreen) ensureFindPreference("status_screen");
+    statusScreen.removeAll();
+    addPreferences();
+
+    refresh();
+  }
+
   protected void refresh() {
     // refresh is called from our onResume, which can happen before the owning
     // Activity tells us about an account (via our public
@@ -613,7 +624,7 @@ public class FxAccountStatusFragment
       }
       clientsDataDelegate.setClientName(newClientName);
       requestDelayedSync(); // Try to update our remote client record.
-      refresh(); // Updates the value displayed to the user, among other things.
+      hardRefresh(); // Updates the value displayed to the user, among other things.
       return true;
     }
 
