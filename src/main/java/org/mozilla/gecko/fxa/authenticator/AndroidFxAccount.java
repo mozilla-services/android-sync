@@ -371,6 +371,15 @@ public class AndroidFxAccount {
       return null;
     }
 
+    // Try to work around an intermittent issue described at
+    // http://stackoverflow.com/a/11698139.  What happens is that tests that
+    // delete and re-create the same account frequently will find the account
+    // missing all or some of the userdata bundle, possibly due to an Android
+    // AccountManager caching bug.
+    for (String key : userdata.keySet()) {
+      accountManager.setUserData(account, key, userdata.getString(key));
+    }
+
     AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
 
     if (!fromPickle) {
