@@ -323,6 +323,9 @@ public class AndroidFxAccount {
     if (email == null) {
       throw new IllegalArgumentException("email must not be null");
     }
+    if (profile == null) {
+      throw new IllegalArgumentException("profile must not be null");
+    }
     if (idpServerURI == null) {
       throw new IllegalArgumentException("idpServerURI must not be null");
     }
