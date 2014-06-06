@@ -1,3 +1,5 @@
+#!/bin/sh
+
 SOURCEDIR=$1
 if [ -z "$SOURCEDIR" ]; then
   echo "No source directory specified."
