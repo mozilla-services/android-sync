@@ -67,10 +67,15 @@ public class BrowserLocaleManager implements LocaleManager {
     }
 
     @Override
-    public Locale onSystemConfigurationChange(Context context,
+    public Locale onSystemConfigurationChanged(Context context,
                                               Resources resources,
                                               Configuration configuration,
                                               Locale currentActivityLocale) {
       return null;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return false;
     }
 }
