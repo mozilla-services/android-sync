@@ -32,6 +32,7 @@ import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
@@ -50,6 +51,10 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
 abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractActivity implements ProgressDisplay {
+  public static final String EXTRA_EMAIL = "email";
+  public static final String EXTRA_PASSWORD = "password";
+  public static final String EXTRA_PASSWORD_SHOWN = "password_shown";
+
   public FxAccountAbstractSetupActivity() {
     super(CANNOT_RESUME_WHEN_ACCOUNTS_EXIST | CANNOT_RESUME_WHEN_LOCKED_OUT);
   }
@@ -71,29 +76,32 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
   protected void createShowPasswordButton() {
     showPasswordButton.setOnClickListener(new OnClickListener() {
-      @SuppressWarnings("deprecation")
       @Override
       public void onClick(View v) {
         boolean isShown = passwordEdit.getTransformationMethod() instanceof SingleLineTransformationMethod;
-
-        // Changing input type loses position in edit text; let's try to maintain it.
-        int start = passwordEdit.getSelectionStart();
-        int stop = passwordEdit.getSelectionEnd();
-
-        if (isShown) {
-          passwordEdit.setTransformationMethod(PasswordTransformationMethod.getInstance());
-          showPasswordButton.setText(R.string.fxaccount_password_show);
-          showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_show_background));
-          showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_show_textcolor));
-        } else {
-          passwordEdit.setTransformationMethod(SingleLineTransformationMethod.getInstance());
-          showPasswordButton.setText(R.string.fxaccount_password_hide);
-          showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_hide_background));
-          showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_hide_textcolor));
-        }
-        passwordEdit.setSelection(start, stop);
+        setPasswordButtonShown(!isShown);
       }
     });
+  }
+
+  @SuppressWarnings("deprecation")
+  protected void setPasswordButtonShown(boolean shouldShow) {
+    // Changing input type loses position in edit text; let's try to maintain it.
+    int start = passwordEdit.getSelectionStart();
+    int stop = passwordEdit.getSelectionEnd();
+
+    if (!shouldShow) {
+      passwordEdit.setTransformationMethod(PasswordTransformationMethod.getInstance());
+      showPasswordButton.setText(R.string.fxaccount_password_show);
+      showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_show_background));
+      showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_show_textcolor));
+    } else {
+      passwordEdit.setTransformationMethod(SingleLineTransformationMethod.getInstance());
+      showPasswordButton.setText(R.string.fxaccount_password_hide);
+      showPasswordButton.setBackgroundDrawable(getResources().getDrawable(R.drawable.fxaccount_password_button_hide_background));
+      showPasswordButton.setTextColor(getResources().getColor(R.color.fxaccount_password_hide_textcolor));
+    }
+    passwordEdit.setSelection(start, stop);
   }
 
   protected void linkifyPolicy() {
@@ -357,6 +365,21 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   }
 
   @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+  }
+
+  protected void updateFromIntentExtras() {
+    // Only set email/password in onCreate; we don't want to overwrite edited values onResume.
+    if (getIntent() != null && getIntent().getExtras() != null) {
+      Bundle bundle = getIntent().getExtras();
+      emailEdit.setText(bundle.getString(EXTRA_EMAIL));
+      passwordEdit.setText(bundle.getString(EXTRA_PASSWORD));
+      setPasswordButtonShown(bundle.getBoolean(EXTRA_PASSWORD_SHOWN, false));
+    }
+  }
+
+  @Override
   public void onResume() {
     super.onResume();
 
@@ -369,5 +392,40 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       }
     };
     task.execute();
+  }
+
+  protected Bundle makeExtrasBundle(String email, String password) {
+    final Bundle bundle = new Bundle();
+
+    // Pass through any extras that we were started with.
+    if (getIntent() != null && getIntent().getExtras() != null) {
+      bundle.putAll(getIntent().getExtras());
+    }
+
+    // Overwrite with current settings.
+    if (email == null) {
+      email = emailEdit.getText().toString();
+    }
+    if (password == null) {
+      password = passwordEdit.getText().toString();
+    }
+    bundle.putString(EXTRA_EMAIL, email);
+    bundle.putString(EXTRA_PASSWORD, password);
+
+    boolean isPasswordShown = passwordEdit.getTransformationMethod() instanceof SingleLineTransformationMethod;
+    bundle.putBoolean(EXTRA_PASSWORD_SHOWN, isPasswordShown);
+
+    return bundle;
+  }
+
+  protected void startActivityInstead(Class<?> cls, int requestCode, Bundle extras) {
+    Intent intent = new Intent(this, cls);
+    if (extras != null) {
+      intent.putExtras(extras);
+    }
+    // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
+    // the soft keyboard not being shown for the started activity. Why, Android, why?
+    intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    startActivityForResult(intent, requestCode);
   }
 }
