@@ -54,6 +54,10 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
         // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
         // the soft keyboard not being shown for the started activity. Why, Android, why?
         intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        final Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            intent.putExtras(extras);
+        }
         startActivityForResult(intent, CHILD_REQUEST_CODE);
       }
     });
