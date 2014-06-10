@@ -23,6 +23,7 @@ import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.tasks.FxAccountSetupTask.ProgressDisplay;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
@@ -54,6 +55,11 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   public static final String EXTRA_EMAIL = "email";
   public static final String EXTRA_PASSWORD = "password";
   public static final String EXTRA_PASSWORD_SHOWN = "password_shown";
+  public static final String EXTRA_EXTRAS = "extras";
+
+  public static final String JSON_KEY_AUTH = "auth";
+  public static final String JSON_KEY_SERVICES = "services";
+  public static final String JSON_KEY_SYNC = "sync";
 
   public FxAccountAbstractSetupActivity() {
     super(CANNOT_RESUME_WHEN_ACCOUNTS_EXIST | CANNOT_RESUME_WHEN_LOCKED_OUT);
@@ -73,6 +79,17 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   protected TextView remoteErrorTextView;
   protected Button button;
   protected ProgressBar progressBar;
+
+  private String authServerEndpoint;
+  private String syncServerEndpoint;
+
+  protected String getAuthServerEndpoint() {
+    return authServerEndpoint;
+  }
+
+  protected String getTokenServerEndpoint() {
+    return syncServerEndpoint;
+  }
 
   protected void createShowPasswordButton() {
     showPasswordButton.setOnClickListener(new OnClickListener() {
@@ -270,7 +287,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       AndroidFxAccount fxAccount;
       try {
         final String profile = Constants.DEFAULT_PROFILE;
-        final String tokenServerURI = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
+        final String tokenServerURI = getTokenServerEndpoint();
         // It is crucial that we use the email address provided by the server
         // (rather than whatever the user entered), because the user's keys are
         // wrapped and salted with the initial email they provided to
@@ -377,6 +394,14 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       passwordEdit.setText(bundle.getString(EXTRA_PASSWORD));
       setPasswordButtonShown(bundle.getBoolean(EXTRA_PASSWORD_SHOWN, false));
     }
+
+    // This sets defaults as well as extracting from extras, so it's not conditional.
+    updateServersFromIntentExtras();
+
+    if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+      FxAccountConstants.pii(LOG_TAG, "Using auth server: " + authServerEndpoint);
+      FxAccountConstants.pii(LOG_TAG, "Using sync server: " + syncServerEndpoint);
+    }
   }
 
   @Override
@@ -427,5 +452,37 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     // the soft keyboard not being shown for the started activity. Why, Android, why?
     intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
     startActivityForResult(intent, requestCode);
+  }
+
+  protected void updateServersFromIntentExtras() {
+    // Start with defaults.
+    this.authServerEndpoint = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
+    this.syncServerEndpoint = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
+
+    final String extrasString = getIntent().getStringExtra(EXTRA_EXTRAS);
+
+    if (extrasString == null) {
+      return;
+    }
+
+    final ExtendedJSONObject extras;
+    final ExtendedJSONObject services;
+    try {
+      extras = new ExtendedJSONObject(extrasString);
+      services = extras.getObject(JSON_KEY_SERVICES);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception parsing extras; ignoring and using default servers.");
+      return;
+    }
+
+    String authServer = extras.getString(JSON_KEY_AUTH);
+    String syncServer = services == null ? null : services.getString(JSON_KEY_SYNC);
+
+    if (authServer != null) {
+      this.authServerEndpoint = authServer;
+    }
+    if (syncServer != null) {
+      this.syncServerEndpoint = syncServer;
+    }
   }
 }
