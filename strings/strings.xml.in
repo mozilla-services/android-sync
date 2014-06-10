@@ -117,6 +117,9 @@
      contentDescription text, and it should not be translated. -->
 <string name="fxaccount_empty_contentDescription"></string>
 
+<string name="fxaccount_custom_server_account_title">&fxaccount_custom_server_account_title;</string>
+<string name="fxaccount_custom_server_sync_title">&fxaccount_custom_server_sync_title;</string>
+
 <string name="fxaccount_email_hint">&fxaccount_email_hint;</string>
 <string name="fxaccount_password_hint">&fxaccount_password_hint;</string>
 <string name="fxaccount_password_hide">&fxaccount_password_hide;</string>
