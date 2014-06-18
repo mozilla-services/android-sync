@@ -54,9 +54,6 @@ public class SyncAccountDeletedService extends IntentService {
         "deleting saved pickle file '" + Constants.ACCOUNT_PICKLE_FILENAME + "'.");
     deletePickle(context);
 
-    // Delete client database and non-local tabs.
-    FennecTabsRepository.deleteSyncDevice(context);
-
     SyncAccountParameters params;
     try {
       String payload = intent.getStringExtra(Constants.JSON_KEY_PAYLOAD);
@@ -75,6 +72,10 @@ public class SyncAccountDeletedService extends IntentService {
     Logger.info(LOG_TAG, "Account named " + accountName + " being removed; " +
         "deleting client record from server.");
     deleteClientRecord(context, accountName, params.password, params.serverURL);
+
+    // Delete client database and non-local tabs.
+    Logger.info(LOG_TAG, "Deleting the entire clients database and the non-local tabs");
+    FennecTabsRepository.wipeClientDatabaseAndRemoteTabs(context);
   }
 
   public static void deletePickle(final Context context) {
