@@ -55,6 +55,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   public static final String EXTRA_EMAIL = "email";
   public static final String EXTRA_PASSWORD = "password";
   public static final String EXTRA_PASSWORD_SHOWN = "password_shown";
+  public static final String EXTRA_YEAR = "year";
   public static final String EXTRA_EXTRAS = "extras";
 
   public static final String JSON_KEY_AUTH = "auth";
@@ -396,7 +397,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     }
 
     // This sets defaults as well as extracting from extras, so it's not conditional.
-    updateServersFromIntentExtras();
+    updateServersFromIntentExtras(getIntent());
 
     if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
       FxAccountConstants.pii(LOG_TAG, "Using auth server: " + authServerEndpoint);
@@ -454,12 +455,17 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     startActivityForResult(intent, requestCode);
   }
 
-  protected void updateServersFromIntentExtras() {
+  protected void updateServersFromIntentExtras(Intent intent) {
     // Start with defaults.
     this.authServerEndpoint = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
     this.syncServerEndpoint = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
 
-    final String extrasString = getIntent().getStringExtra(EXTRA_EXTRAS);
+    if (intent == null) {
+      Logger.warn(LOG_TAG, "Intent is null; ignoring and using default servers.");
+      return;
+    }
+
+    final String extrasString = intent.getStringExtra(EXTRA_EXTRAS);
 
     if (extrasString == null) {
       return;
@@ -483,6 +489,16 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     }
     if (syncServer != null) {
       this.syncServerEndpoint = syncServer;
+    }
+
+    if (FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(syncServerEndpoint) &&
+        !FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(authServerEndpoint)) {
+      // We really don't want to hard-code assumptions about server
+      // configurations into client code in such a way that if and when the
+      // situation is relaxed, the client code stops valid usage. Instead, we
+      // warn. This configuration should present itself as an auth exception at
+      // Sync time.
+      Logger.warn(LOG_TAG, "Mozilla's Sync token servers only works with Mozilla's auth servers. Sync will likely be mis-configured.");
     }
   }
 }

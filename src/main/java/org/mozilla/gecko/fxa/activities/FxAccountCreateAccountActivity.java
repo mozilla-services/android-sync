@@ -101,8 +101,17 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   protected Bundle makeExtrasBundle(String email, String password) {
     final Bundle extras = super.makeExtrasBundle(email, password);
     final String year = yearEdit.getText().toString();
-    extras.putString("year", year);
+    extras.putString(EXTRA_YEAR, year);
     return extras;
+  }
+
+  @Override
+  protected void updateFromIntentExtras() {
+    super.updateFromIntentExtras();
+
+    if (getIntent() != null) {
+      yearEdit.setText(getIntent().getStringExtra(EXTRA_YEAR));
+    }
   }
 
   @Override

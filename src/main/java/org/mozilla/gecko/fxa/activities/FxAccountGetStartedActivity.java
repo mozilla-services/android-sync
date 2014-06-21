@@ -50,7 +50,10 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
     button.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        final Bundle extras = getIntent().getExtras();
+        Bundle extras = null; // startFlow accepts null.
+        if (getIntent() != null) {
+          extras = getIntent().getExtras();
+        }
         startFlow(extras);
       }
     });
@@ -92,7 +95,10 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
     // past go and collect 200 dollars. If we ever get back here (for example,
     // if the user hits the back button), forget that we had extras entirely, so
     // that we don't enter a loop.
-    final Bundle extras = getIntent().getExtras();
+    Bundle extras = null;
+    if (getIntent() != null) {
+      extras = getIntent().getExtras();
+    }
     if (extras != null && extras.containsKey(FxAccountAbstractSetupActivity.EXTRA_EXTRAS)) {
       getIntent().replaceExtras(Bundle.EMPTY);
       startFlow((Bundle) extras.clone());
