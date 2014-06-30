@@ -153,29 +153,6 @@ rsync -C -a "$HTTPLIB/" "$ANDROID/thirdparty/ch/boye/httpclientandroidlib/"
 rsync -C -a "$JSONLIB/" "$ANDROID/thirdparty/org/json/simple/"
 cp external/json-simple-1.1/LICENSE.txt $ANDROID/thirdparty/org/json/simple/
 
-# Write a list of files to a Makefile variable.
-# turn
-# VAR:=1.java 2.java
-# into
-# VAR:=\
-#   1.java \
-#   2.java \
-#   $(NULL)
-function dump_mkfile_variable {
-    output_file=$MKFILE
-    variable_name=$1
-    shift
-
-    echo "$variable_name := \\" >> $output_file
-    for var in "$@" ; do
-        for f in $var ; do
-            echo "  $f \\" >> $output_file
-        done
-    done
-    echo "  \$(NULL)" >> $output_file
-    echo "" >> $output_file
-}
-
 # Write a list of files to a mozbuild variable.
 # turn
 # VAR:=1.java 2.java
@@ -213,17 +190,11 @@ dump_mozbuild_variable $MOZBUILDFILE "sync_java_files =" "$SOURCEFILES"
 echo >> $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_generated_java_files =" $(echo "$PREPROCESS_FILES" | sed "s,^,org/mozilla/gecko/,")
 
-# Creating Makefile for Mozilla.
-MKFILE=$ANDROID/tests/background/junit3/android-services-files.mk
-echo "Creating background tests makefile for including in the Mozilla build system at $MKFILE"
-cat tools/makefile_mpl.txt > $MKFILE
-echo "# $WARNING" >> $MKFILE
-dump_mkfile_variable "BACKGROUND_TESTS_JAVA_FILES" "$BACKGROUND_TESTS_JAVA_FILES"
-
 # Creating moz.build for Mozilla.
-MOZBUILDFILE=$ANDROID/tests/background/junit3/android-services.mozbuild
+MOZBUILDFILE=$ANDROID/tests/background/junit3/background_junit3_sources.mozbuild
 echo "Creating background tests moz.build file for including in the Mozilla build system at $MOZBUILDFILE"
 cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
+dump_mozbuild_variable $MOZBUILDFILE "background_junit3_sources =" "$BACKGROUND_TESTS_JAVA_FILES"
 
 # Finished creating Makefile for Mozilla.
 
