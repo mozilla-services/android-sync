@@ -339,45 +339,35 @@ public class FennecTabsRepository extends Repository {
   }
 
   /**
-   * Deletes the entire Client database and non-local tabs.
+   * Deletes all non-local clients and remote tabs.
+   *
+   * This function doesn't delete non-local clients due to bug in TabsProvider. Refer Bug 1025128.
+   *
+   * Upon remote tabs deletion, the clients without tabs are not shown in UI.
    */
-  public static void wipeClientDatabaseAndRemoteTabs(Context context) {
+  public static void deleteNonLocalClientsAndTabs(Context context) {
     final String LOG_TAG = "FennecTabsRepository";
     final String nonLocalTabsSelection = BrowserContract.Tabs.CLIENT_GUID + " IS NOT NULL";
-
-    ContentProviderClient clientsProvider = context.getContentResolver()
-            .acquireContentProviderClient(BrowserContractHelpers.CLIENTS_CONTENT_URI);
-    if (clientsProvider == null) {
-        Logger.warn(LOG_TAG, "Unable to create ContentProvidersClient");
-        return;
-    }
 
     ContentProviderClient tabsProvider = context.getContentResolver()
             .acquireContentProviderClient(BrowserContractHelpers.TABS_CONTENT_URI);
     if (tabsProvider == null) {
-        Logger.warn(LOG_TAG, "Unable to create ContentProvidersClient");
-        try {
-          clientsProvider.release();
-        } catch (Exception e) {}
+        Logger.warn(LOG_TAG, "Unable to create tabsProvider!");
         return;
     }
 
     try {
-      Logger.debug(LOG_TAG, "Clearing non-local tab entries");
-      tabsProvider.delete(BrowserContractHelpers.TABS_CONTENT_URI, nonLocalClientSelection, null);
-      Logger.debug(LOG_TAG, "Clearing entire clients database");
-      clientsProvider.delete(BrowserContractHelpers.CLIENTS_CONTENT_URI, null, null);
-    } catch(RemoteException e) {
+      Logger.info(LOG_TAG, "Clearing all non-local tabs.");
+      tabsProvider.delete(BrowserContractHelpers.TABS_CONTENT_URI, nonLocalTabsSelection, null);
+    } catch (RemoteException e) {
       Logger.warn(LOG_TAG, "Error while deleting", e);
       return;
     } finally {
       try {
-        clientsProvider.release();
-      } catch (Exception e) {}
-
-      try {
         tabsProvider.release();
-      } catch (Exception e) {}
+      } catch (Exception e) {
+        Logger.warn(LOG_TAG, "Got exception releasing tabsProvider!", e);
+      }
     }
   }
 }
