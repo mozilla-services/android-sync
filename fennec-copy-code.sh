@@ -70,7 +70,6 @@ SOURCEFILES=$(find \
   "$SYNCSOURCEDIR" \
   "$TOKENSERVERSOURCEDIR" \
   -name '*.java' \
-  -and -not -name 'AnnouncementsConstants.java' \
   -and -not -name 'HealthReportConstants.java' \
   -and -not -name 'GlobalConstants.java' \
   -and -not -name 'BrowserContract.java' \
@@ -91,7 +90,6 @@ rsync --archive --cvs-exclude --delete \
   --exclude 'HardwareUtils.java' \
   --exclude 'RobocopTarget.java' \
   --exclude 'GlobalConstants.java' \
-  --exclude 'AnnouncementsConstants.java' \
   --exclude 'HealthReportConstants.java' \
   --exclude 'BrowserLocaleManager.java' \
   --exclude 'LocaleManager.java' \
