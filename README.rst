@@ -6,8 +6,11 @@ This repository is the development home for the background services
 that ship with Firefox for Android.  These include, or will include:
 
 * Android Sync;
-* Product Announcements;
 * Android Firefox Health Report components.
+
+and formerly included:
+
+* Product Announcements.
 
 .. contents:: :local:
 
@@ -131,7 +134,6 @@ development, or an ARMv6 emulator running ::
 Finally, build and run the Android Services test suite: ::
 
   archo:android-sync ncalexan$ ./preprocess.py && mvn clean integration-test
-  src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java
   src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
   src/main/java/org/mozilla/gecko/sync/SyncConstants.java
   src/main/java/org/mozilla/gecko/db/BrowserContract.java
@@ -332,7 +334,6 @@ and then it should run all the tests and report success: ::
 
   vagrant@precise32:~$ cd /vagrant
   vagrant@precise32:/vagrant$ ./preprocess.py && mvn clean test
-  src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java
   src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
   src/main/java/org/mozilla/gecko/sync/SyncConstants.java
   src/main/java/org/mozilla/gecko/db/BrowserContract.java

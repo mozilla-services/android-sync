@@ -74,7 +74,6 @@ development, or an ARMv6 emulator running ::
 Finally, build and run the Android Services test suite: ::
 
   archo:android-sync ncalexan$ ./preprocess.py && mvn clean integration-test
-  src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java
   src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
   src/main/java/org/mozilla/gecko/sync/SyncConstants.java
   src/main/java/org/mozilla/gecko/db/BrowserContract.java
