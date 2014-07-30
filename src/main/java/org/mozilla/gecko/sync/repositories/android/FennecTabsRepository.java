@@ -36,8 +36,6 @@ public class FennecTabsRepository extends Repository {
   private static final String LOG_TAG = "FennecTabsRepository";
 
   protected final ClientsDataDelegate clientsDataDelegate;
-  protected final String localClientName;
-  protected final String localClientGuid;
 
   public FennecTabsRepository(ClientsDataDelegate clientsDataDelegate) {
     this.clientsDataDelegate = clientsDataDelegate;
