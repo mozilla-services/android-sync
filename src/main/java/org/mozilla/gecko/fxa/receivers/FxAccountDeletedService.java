@@ -55,7 +55,7 @@ public class FxAccountDeletedService extends IntentService {
     deletePickle(context);
 
     // Delete client database and non-local tabs.
-    Logger.info(LOG_TAG, "Deleting the entire clients database and the non-local tabs");
+    Logger.info(LOG_TAG, "Deleting the entire clients database and non-local tabs");
     FennecTabsRepository.deleteNonLocalClientsAndTabs(context);
   }
 
