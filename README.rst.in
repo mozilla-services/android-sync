@@ -6,8 +6,11 @@ This repository is the development home for the background services
 that ship with Firefox for Android.  These include, or will include:
 
 * Android Sync;
-* Product Announcements;
 * Android Firefox Health Report components.
+
+and formerly included:
+
+* Product Announcements.
 
 .. contents:: :local:
 
