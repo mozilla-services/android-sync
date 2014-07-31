@@ -10,12 +10,9 @@
               android:targetSdkVersion="14" />
 
     <!--
-       Note that we do not include the Announcements manifest
-       fragments here: the received intents call into Fennec, so
-       there's minimal point right now.  We don't include the Health
-       Report Upload fragments either: not only do the intents call
-       back into Fennec, the Health Report Content Provider needs to
-       run in the Fennec process.
+       Note that we do not include the Health Report Upload fragments either:
+       not only do the intents call back into Fennec, the Health Report Content
+       Provider needs to run in the Fennec process.
       -->
 
 #include manifests/SyncAndroidManifest_permissions.xml.in

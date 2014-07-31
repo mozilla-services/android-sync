@@ -96,7 +96,6 @@ def main():
     dot_ins = [
         "src/main/java/org/mozilla/gecko/AppConstants.java.in",
         "src/main/java/org/mozilla/gecko/SysInfo.java.in",
-        "src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java.in",
         "src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java.in",
         "src/main/java/org/mozilla/gecko/background/healthreport/HealthReportConstants.java.in",
         "src/main/java/org/mozilla/gecko/fxa/FxAccountConstants.java.in",
