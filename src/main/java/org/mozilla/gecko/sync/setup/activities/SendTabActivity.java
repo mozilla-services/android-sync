@@ -146,8 +146,7 @@ public class SendTabActivity extends LocaleAwareActivity {
 
     enableSend(false);
 
-    // will enableSend if appropriate.
-    updateClientList();
+    // Sending will be enabled in onResume, if appropriate.
   }
 
   protected static SendTabData getSendTabData(Intent intent) throws IllegalArgumentException {
@@ -184,14 +183,14 @@ public class SendTabActivity extends LocaleAwareActivity {
    * Ensure that the view's list of clients is backed by a recently populated
    * array adapter.
    */
-  protected synchronized void updateClientList() {
+  protected synchronized void updateClientList(final TabSender tabSender, final ClientRecordArrayAdapter arrayAdapter) {
     // Fetching the client list hits the clients database, so we spin this onto
     // a background task.
     new AsyncTask<Void, Void, Collection<ClientRecord>>() {
 
       @Override
       protected Collection<ClientRecord> doInBackground(Void... params) {
-        return getOtherClients();
+        return getOtherClients(tabSender);
       }
 
       @Override
@@ -234,6 +233,9 @@ public class SendTabActivity extends LocaleAwareActivity {
       }
 
       this.tabSender = new FxAccountTabSender(applicationContext, fxAccount);
+
+      // will enableSend if appropriate.
+      updateClientList(tabSender, this.arrayAdapter);
 
       Logger.info(LOG_TAG, "Allowing tab send for Firefox Account.");
       registerDisplayURICommand();
@@ -360,18 +362,18 @@ public class SendTabActivity extends LocaleAwareActivity {
   /**
    * @return a collection of client records, excluding our own.
    */
-  protected Collection<ClientRecord> getOtherClients() {
+  protected Collection<ClientRecord> getOtherClients(final TabSender tabSender) {
+    if (tabSender == null) {
+      Logger.warn(LOG_TAG, "No tab sender when fetching other client IDs.");
+      return new ArrayList<ClientRecord>(0);
+    }
+
     final Map<String, ClientRecord> all = getAllClients();
     if (all == null) {
       return new ArrayList<ClientRecord>(0);
     }
 
-    if (this.tabSender == null) {
-      Logger.warn(LOG_TAG, "No tab sender when fetching other client IDs.");
-      return new ArrayList<ClientRecord>(0);
-    }
-
-    final String ourGUID = this.tabSender.getAccountGUID();
+    final String ourGUID = tabSender.getAccountGUID();
     if (ourGUID == null) {
       return all.values();
     }
