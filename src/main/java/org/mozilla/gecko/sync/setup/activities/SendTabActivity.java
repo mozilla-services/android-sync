@@ -183,14 +183,14 @@ public class SendTabActivity extends LocaleAwareActivity {
    * Ensure that the view's list of clients is backed by a recently populated
    * array adapter.
    */
-  protected synchronized void updateClientList(final TabSender tabSender, final ClientRecordArrayAdapter arrayAdapter) {
+  protected synchronized void updateClientList(final TabSender sender, final ClientRecordArrayAdapter adapter) {
     // Fetching the client list hits the clients database, so we spin this onto
     // a background task.
     new AsyncTask<Void, Void, Collection<ClientRecord>>() {
 
       @Override
       protected Collection<ClientRecord> doInBackground(Void... params) {
-        return getOtherClients(tabSender);
+        return getOtherClients(sender);
       }
 
       @Override
@@ -198,12 +198,12 @@ public class SendTabActivity extends LocaleAwareActivity {
         // We're allowed to update the UI from here.
 
         Logger.debug(LOG_TAG, "Got " + clientArray.size() + " clients.");
-        arrayAdapter.setClientRecordList(clientArray);
+        adapter.setClientRecordList(clientArray);
         if (clientArray.size() == 1) {
-          arrayAdapter.checkItem(0, true);
+          adapter.checkItem(0, true);
         }
 
-        enableSend(arrayAdapter.getNumCheckedGUIDs() > 0);
+        enableSend(adapter.getNumCheckedGUIDs() > 0);
       }
     }.execute();
   }
@@ -245,6 +245,9 @@ public class SendTabActivity extends LocaleAwareActivity {
     final Account[] syncAccounts = accountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
     if (syncAccounts.length > 0) {
       this.tabSender = new Sync11TabSender(applicationContext, syncAccounts[0], accountManager);
+
+      // will enableSend if appropriate.
+      updateClientList(tabSender, this.arrayAdapter);
 
       Logger.info(LOG_TAG, "Allowing tab send for Sync account.");
       registerDisplayURICommand();
@@ -362,8 +365,8 @@ public class SendTabActivity extends LocaleAwareActivity {
   /**
    * @return a collection of client records, excluding our own.
    */
-  protected Collection<ClientRecord> getOtherClients(final TabSender tabSender) {
-    if (tabSender == null) {
+  protected Collection<ClientRecord> getOtherClients(final TabSender sender) {
+    if (sender == null) {
       Logger.warn(LOG_TAG, "No tab sender when fetching other client IDs.");
       return new ArrayList<ClientRecord>(0);
     }
@@ -373,7 +376,7 @@ public class SendTabActivity extends LocaleAwareActivity {
       return new ArrayList<ClientRecord>(0);
     }
 
-    final String ourGUID = tabSender.getAccountGUID();
+    final String ourGUID = sender.getAccountGUID();
     if (ourGUID == null) {
       return all.values();
     }
