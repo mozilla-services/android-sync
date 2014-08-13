@@ -101,4 +101,28 @@ public class TestFxAccountUtils {
     final String expected = "6ae94683571c7a7c54dab4700aa3995f";
     Assert.assertEquals(expected, clientState);
   }
+
+  @Test
+  public void testGetAudienceForURL() throws Exception {
+    // Sub-domains and path components.
+    Assert.assertEquals("http://sub.test.com", FxAccountUtils.getAudienceForURL("http://sub.test.com"));
+    Assert.assertEquals("http://test.com", FxAccountUtils.getAudienceForURL("http://test.com/"));
+    Assert.assertEquals("http://test.com", FxAccountUtils.getAudienceForURL("http://test.com/path/component"));
+    Assert.assertEquals("http://test.com", FxAccountUtils.getAudienceForURL("http://test.com/path/component/"));
+
+    // No port and default port.
+    Assert.assertEquals("http://test.com", FxAccountUtils.getAudienceForURL("http://test.com"));
+    Assert.assertEquals("http://test.com:80", FxAccountUtils.getAudienceForURL("http://test.com:80"));
+
+    Assert.assertEquals("https://test.com", FxAccountUtils.getAudienceForURL("https://test.com"));
+    Assert.assertEquals("https://test.com:443", FxAccountUtils.getAudienceForURL("https://test.com:443"));
+
+    // Ports that are the default ports for a different scheme.
+    Assert.assertEquals("https://test.com:80", FxAccountUtils.getAudienceForURL("https://test.com:80"));
+    Assert.assertEquals("http://test.com:443", FxAccountUtils.getAudienceForURL("http://test.com:443"));
+
+    // Arbitrary ports.
+    Assert.assertEquals("http://test.com:8080", FxAccountUtils.getAudienceForURL("http://test.com:8080"));
+    Assert.assertEquals("https://test.com:4430", FxAccountUtils.getAudienceForURL("https://test.com:4430"));
+  }
 }
