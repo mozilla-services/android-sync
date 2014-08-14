@@ -17,7 +17,7 @@ fi
 
 SERVICES=$DESTDIR/mobile/android/services
 if [ -d $SERVICES ]; then
-  echo "Services directory already exists. Updating."
+  echo "Services directory already exists."
 else
   echo "No Services directory. Creating directory structure."
   mkdir -p $SERVICES
