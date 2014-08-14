@@ -12,7 +12,7 @@
 <!ENTITY formatD "&#037;d">
 
 <!-- Sync strings. -->
-#include sync_strings.dtd.in
+#include sync_strings.dtd
 
 <!-- Fennec strings. -->
 #include android_strings.dtd

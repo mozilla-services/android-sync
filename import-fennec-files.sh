@@ -27,6 +27,6 @@ cp $ANDROID/base/locales/en-US/android_strings.dtd strings/
 # Infrequently Fennec touches Android services strings.  Uncomment
 # these lines to pull in Fennec's versions.
 # cp $ANDROID/services/strings.xml.in strings/strings.xml.in 
-# cp $ANDROID/base/locales/en-US/sync_strings.dtd strings/sync_strings.dtd.in
+# cp $ANDROID/base/locales/en-US/sync_strings.dtd strings/sync_strings.dtd
 
 ./preprocess.py

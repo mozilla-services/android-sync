@@ -219,6 +219,6 @@ done
 
 rsync -a res/xml/*.xml $ANDROID/base/resources/xml/
 rsync -a strings/strings.xml.in $SERVICES/
-rsync -a strings/sync_strings.dtd.in $ANDROID/base/locales/en-US/sync_strings.dtd
+rsync -a strings/sync_strings.dtd $ANDROID/base/locales/en-US/sync_strings.dtd
 
 echo "Done."
