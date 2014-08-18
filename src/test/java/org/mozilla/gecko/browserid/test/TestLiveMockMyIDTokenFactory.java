@@ -51,6 +51,10 @@ public class TestLiveMockMyIDTokenFactory {
   }
 
   protected void assertVerifySuccess(final String audience, final String assertion) {
+    assertVerifySuccess(client, audience, assertion);
+  }
+
+  public static void assertVerifySuccess(final BrowserIDVerifierClient client, final String audience, final String assertion) {
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {

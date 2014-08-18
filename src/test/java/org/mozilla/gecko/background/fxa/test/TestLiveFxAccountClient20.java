@@ -82,7 +82,11 @@ public class TestLiveFxAccountClient20 {
     PREVERIFIED,
   }
 
-  protected LoginResponse createAccount(final String email, final String password, final boolean getKeys, final VerificationState preVerified)
+  protected LoginResponse createAccount(final String email, final String password, final boolean getKeys, final VerificationState preVerified) throws Throwable {
+    return createAccount(client, email, password, getKeys, preVerified);
+  }
+
+  public static LoginResponse createAccount(final FxAccountClient20 client, final String email, final String password, final boolean getKeys, final VerificationState preVerified)
       throws Throwable {
     final byte[] emailUTF8 = email.getBytes("UTF-8");
     final byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(emailUTF8, password.getBytes("UTF-8"));
@@ -146,6 +150,10 @@ public class TestLiveFxAccountClient20 {
   }
 
   protected LoginResponse login(final String email, final String password, final boolean getKeys) throws Throwable {
+    return login(client, email, password, getKeys);
+  }
+
+  public static LoginResponse login(final FxAccountClient20 client, final String email, final String password, final boolean getKeys) throws Throwable {
     final byte[] emailUTF8 = email.getBytes("UTF-8");
     final byte[] quickStretchedPW = FxAccountUtils.generateQuickStretchedPW(emailUTF8, password.getBytes("UTF-8"));
     final LoginResponse[] responses =  new LoginResponse[1];
@@ -193,6 +201,10 @@ public class TestLiveFxAccountClient20 {
   }
 
   protected String certificateSign(final ExtendedJSONObject publicKey, final int duration, final byte[] sessionToken) {
+    return certificateSign(client, publicKey, duration, sessionToken);
+  }
+
+  public static String certificateSign(final FxAccountClient20 client, final ExtendedJSONObject publicKey, final int duration, final byte[] sessionToken) {
     final String ret[] =  new String[1];
     final WaitHelper waitHelper = WaitHelper.getTestWaiter();
     waitHelper.performWait(new Runnable() {
