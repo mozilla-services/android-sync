@@ -52,7 +52,7 @@ public class TestAccountLoader extends AndroidSyncTestCaseWithAccounts {
   // Test account names must start with TEST_USERNAME in order to be recognized
   // as test accounts and deleted in tearDown.
   private static final String TEST_USERNAME = "testAccount@mozilla.com";
-  private static final String TEST_ACCOUNTTYPE = SyncConstants.ACCOUNTTYPE_SYNC; // FxAccountConstants.ACCOUNT_TYPE;
+  private static final String TEST_ACCOUNTTYPE = FxAccountConstants.ACCOUNT_TYPE;
 
   private static final String TEST_SYNCKEY = "testSyncKey";
   private static final String TEST_SYNCPASSWORD = "testSyncPassword";
@@ -69,7 +69,7 @@ public class TestAccountLoader extends AndroidSyncTestCaseWithAccounts {
     // Force class loading of AsyncTask on the main thread so that it's handlers are tied to
     // the main thread and responses from the worker thread get delivered on the main thread.
     // The tests are run on another thread, allowing them to block waiting on a response from
-    // the code running on the main thread. The main thread can't block since the AysncTask
+    // the code running on the main thread. The main thread can't block since the AsyncTask
     // results come in via the event loop.
     new AsyncTask<Void, Void, Void>() {
       @Override
@@ -147,12 +147,18 @@ public class TestAccountLoader extends AndroidSyncTestCaseWithAccounts {
     final boolean syncAccountsExist = SyncAccounts.syncAccountsExist(context);
     final boolean firefoxAccountsExist = FirefoxAccounts.firefoxAccountsExist(context);
 
-    if (syncAccountsExist || firefoxAccountsExist) {
-      assertNotNull(getLoaderResultSynchronously(loader));
+    if (firefoxAccountsExist) {
+      assertFirefoxAccount(getLoaderResultSynchronously(loader));
       return;
     }
 
-    // This account will not get cleaned up in tearDown, so we must be careful.
+    if (syncAccountsExist) {
+      assertSyncAccount(getLoaderResultSynchronously(loader));
+      return;
+    }
+
+    // This account will not get cleaned up in tearDown -- it's a Sync account,
+    // not a Firefox account -- so we must be careful.
     Account syncAccount = null;
     try {
       final SyncAccountParameters syncAccountParameters =

@@ -44,14 +44,14 @@ public class AccountLoader extends AsyncTaskLoader<Account> {
   @Override
   public Account loadInBackground() {
     final Context context = getContext();
-    Account account = FirefoxAccounts.getFirefoxAccount(context);
-    if (account == null) {
-      final Account[] accounts = SyncAccounts.syncAccounts(context);
-      if (accounts != null && accounts.length > 0) {
-        account = accounts[0];
+    Account foundAccount = FirefoxAccounts.getFirefoxAccount(context);
+    if (foundAccount == null) {
+      final Account[] syncAccounts = SyncAccounts.syncAccounts(context);
+      if (syncAccounts != null && syncAccounts.length > 0) {
+        foundAccount = syncAccounts[0];
       }
     }
-    return account;
+    return foundAccount;
   }
 
   // Deliver the results to the registered listener.
@@ -116,8 +116,10 @@ public class AccountLoader extends AsyncTaskLoader<Account> {
 
   @Override
   protected void onReset() {
-    // Ensure the loader has been stopped.
-    onStopLoading();
+    // Ensure the loader has been stopped.  In CursorLoader and the template
+    // this code follows (see the class comment), this is onStopLoading, which
+    // appears to not set the started flag (see Loader itself).
+    stopLoading();
 
     // At this point we can release the resources associated with 'mData'.
     if (account != null) {
@@ -127,7 +129,6 @@ public class AccountLoader extends AsyncTaskLoader<Account> {
 
     // The Loader is being reset, so we should stop monitoring for changes.
     if (broadcastReceiver != null) {
-      // TODO: unregister the observer
       final BroadcastReceiver observer = broadcastReceiver;
       broadcastReceiver = null;
       unregisterObserver(observer);
@@ -155,6 +156,9 @@ public class AccountLoader extends AsyncTaskLoader<Account> {
     final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
+        // Must be called on the main thread of the process. We register the
+        // broadcast receiver with a null Handler (see registerObserver), which
+        // ensures we're on the main thread when we receive this intent.
         onContentChanged();
       }
     };
@@ -167,7 +171,11 @@ public class AccountLoader extends AsyncTaskLoader<Account> {
     intentFilter.addAction(AccountManager.LOGIN_ACCOUNTS_CHANGED_ACTION);
     // Firefox Account internal state changed.
     intentFilter.addAction(FxAccountConstants.ACCOUNT_STATE_CHANGED_ACTION);
-    getContext().registerReceiver(observer, intentFilter, FxAccountConstants.PER_ACCOUNT_TYPE_PERMISSION, new Handler());
+
+    // null means: "the main thread of the process will be used." We must call
+    // onContentChanged on the main thread of the process; this ensures we do.
+    final Handler handler = null;
+    getContext().registerReceiver(observer, intentFilter, FxAccountConstants.PER_ACCOUNT_TYPE_PERMISSION, handler);
   }
 
   protected void unregisterObserver(BroadcastReceiver observer) {
