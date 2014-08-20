@@ -208,3 +208,8 @@
 
 <string name="fxaccount_sync_sign_in_error_notification_title">&fxaccount_sync_sign_in_error_notification_title2;</string>
 <string name="fxaccount_sync_sign_in_error_notification_text">&fxaccount_sync_sign_in_error_notification_text2;</string>
+
+<!-- Remove Account -->
+<string name="fxaccount_remove_account_dialog_title">&fxaccount_remove_account_dialog_title;</string>
+<string name="fxaccount_remove_account_dialog_message">&fxaccount_remove_account_dialog_message;</string>
+<string name="fxaccount_remove_account_menu_item">&fxaccount_remove_account_menu_item;</string>

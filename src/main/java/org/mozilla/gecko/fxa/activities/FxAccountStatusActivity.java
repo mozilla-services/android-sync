@@ -4,17 +4,29 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.activities.LocaleAware.LocaleAwareFragmentActivity;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 
 /**
@@ -93,6 +105,58 @@ public class FxAccountStatusActivity extends LocaleAwareFragmentActivity {
     return new AndroidFxAccount(this, account);
   }
 
+
+  /**
+   * Helper function to maybe remove the given Android account.
+   */
+  public void maybeDeleteAndroidAccount(final Account account) {
+    if (account == null) {
+      Logger.warn(LOG_TAG, "Trying to delete null account; ignoring request.");
+      return;
+    }
+
+    final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
+      @Override
+      public void run(AccountManagerFuture<Boolean> future) {
+        Logger.info(LOG_TAG, "Account " + Utils.obfuscateEmail(account.name) + " removed.");
+        finish();
+      }
+    };
+
+    /*
+     * Get the best dialog icon from the theme on v11+.
+     * See http://stackoverflow.com/questions/14910536/android-dialog-theme-makes-icon-too-light/14910945#14910945.
+     */
+    final int icon;
+    if (AppConstants.Versions.feature11Plus) {
+      final TypedValue typedValue = new TypedValue();
+      getTheme().resolveAttribute(android.R.attr.alertDialogIcon, typedValue, true);
+      icon = typedValue.resourceId;
+    } else {
+      icon = android.R.drawable.ic_dialog_alert;
+    }
+
+    final AlertDialog dialog = new AlertDialog.Builder(this)
+      .setTitle(R.string.fxaccount_remove_account_dialog_title)
+      .setIcon(icon)
+      .setMessage(R.string.fxaccount_remove_account_dialog_message)
+      .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          AccountManager.get(FxAccountStatusActivity.this).removeAccount(account, callback, null);
+        }
+      })
+      .setNegativeButton(android.R.string.cancel, new Dialog.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          dialog.cancel();
+        }
+      })
+      .create();
+
+    dialog.show();
+  }
+
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     int itemId = item.getItemId();
@@ -100,7 +164,17 @@ public class FxAccountStatusActivity extends LocaleAwareFragmentActivity {
     case android.R.id.home:
       finish();
       return true;
+    case R.id.remove_account:
+      maybeDeleteAndroidAccount(FirefoxAccounts.getFirefoxAccount(this));
+      return true;
     }
     return super.onOptionsItemSelected(item);
   }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    final MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.fxaccount_status_menu, menu);
+    return super.onCreateOptionsMenu(menu);
+  };
 }
