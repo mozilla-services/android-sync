@@ -23,8 +23,14 @@ import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
 import org.mozilla.gecko.sync.SyncConfiguration;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -682,6 +688,7 @@ public class FxAccountStatusFragment
     }
   }
 
+<<<<<<< HEAD
   @Override
   public boolean onPreferenceChange(Preference preference, Object newValue) {
     if (preference == deviceNamePreference) {
@@ -698,5 +705,38 @@ public class FxAccountStatusFragment
 
     // For everything else, accept the change.
     return true;
+  }
+
+  /**
+   * Helper function to removes the synced account.
+   */
+  public void deleteAccount(final Account account) {
+    final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
+      @Override
+      public void run(AccountManagerFuture<Boolean> future) {
+        Logger.info(LOG_TAG, "Account removed");
+        getActivity().finish();
+      }
+    };
+
+    final AlertDialog dialog = new AlertDialog.Builder(getActivity())
+    .setTitle(R.string.fxaccount_remove_account_dialog_title)
+    .setIcon(R.drawable.icon)
+    .setMessage(R.string.fxaccount_remove_account_dialog_message)
+    .setPositiveButton(R.string.fxaccount_remove_account_dialog_positive, new Dialog.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        AccountManager.get(getActivity()).removeAccount(account, callback, null);
+      }
+    })
+    .setNegativeButton(R.string.fxaccount_remove_account_dialog_negative, new Dialog.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        dialog.cancel();
+      }
+    })
+    .create();
+
+    dialog.show();
   }
 }

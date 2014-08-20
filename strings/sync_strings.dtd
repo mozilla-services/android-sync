@@ -207,6 +207,13 @@
 <!ENTITY fxaccount_status_linktos 'Terms of Service'>
 <!ENTITY fxaccount_status_linkprivacy 'Privacy Notice'>
 
+<!ENTITY fxaccount_remove_account_dialog_title 'Remove Firefox Account?'>
+<!ENTITY fxaccount_remove_account_dialog_message 'If you remove the account, the data stored on this device will be lost. However, you may continue accessing data from your other synced devices.'>
+<!ENTITY fxaccount_remove_account_dialog_positive 'Remove'>
+<!ENTITY fxaccount_remove_account_dialog_negative 'Cancel'>
+
+<!ENTITY fxaccount_remove_account_menu_item 'Remove Account'>
+
 <!-- Localization note: this is the name shown by the Android system
      itself for a Firefox Account. Don't localize this. -->
 <!ENTITY fxaccount_account_type_label 'Firefox'>

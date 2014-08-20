@@ -4,6 +4,7 @@
 
 package org.mozilla.gecko.fxa.activities;
 
+import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
@@ -15,6 +16,8 @@ import android.app.ActionBar;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 
 /**
@@ -100,7 +103,16 @@ public class FxAccountStatusActivity extends LocaleAwareFragmentActivity {
     case android.R.id.home:
       finish();
       return true;
+    case R.id.remove_account:
+      statusFragment.deleteAccount(FirefoxAccounts.getFirefoxAccount(this));
     }
     return super.onOptionsItemSelected(item);
   }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.sync_status_menu, menu);
+    return super.onCreateOptionsMenu(menu);
+  };
 }
