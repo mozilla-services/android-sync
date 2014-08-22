@@ -65,6 +65,13 @@
       <scope>provided</scope>
       <type>jar</type>
     </dependency>
+
+    <dependency>
+      <groupId>com.android.support</groupId>
+      <artifactId>support-v4</artifactId>
+      <version>18.0.0</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
