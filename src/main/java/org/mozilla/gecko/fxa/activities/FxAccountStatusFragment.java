@@ -709,7 +709,7 @@ public class FxAccountStatusFragment
   }
 
   /**
-   * Helper function to removes the synced account.
+   * Helper function to remove the given Android account.
    */
   public void deleteAccount(final Account account) {
     if (account == null) {
