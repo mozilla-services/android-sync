@@ -17,6 +17,7 @@ import org.mozilla.gecko.background.bagheera.BagheeraClient;
 import org.mozilla.gecko.background.bagheera.BagheeraRequestDelegate;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.SkewHandler;
 import org.mozilla.gecko.background.healthreport.AndroidConfigurationProvider;
 import org.mozilla.gecko.background.healthreport.Environment;
 import org.mozilla.gecko.background.healthreport.EnvironmentBuilder;
@@ -40,6 +41,9 @@ public class AndroidSubmissionClient implements SubmissionClient {
 
   private static final String MEASUREMENT_NAME_SUBMISSIONS = "org.mozilla.healthreport.submissions";
   private static final int MEASUREMENT_VERSION_SUBMISSIONS = 1;
+
+  private static final String MEASUREMENT_NAME_SKEW = "org.mozilla.skew";
+  private static final int MEASUREMENT_VERSION_SKEW = 1;
 
   protected final Context context;
   protected final SharedPreferences sharedPreferences;
@@ -267,6 +271,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
     storage.beginInitialization();
     try {
       initializeSubmissionsProvider(storage);
+      initializeSkewProvider(storage);
       storage.finishInitialization();
     } catch (Exception e) {
       // TODO: Bug 910898 - Store error in SharedPrefs so we can increment next time with storage.
@@ -313,6 +318,44 @@ public class AndroidSubmissionClient implements SubmissionClient {
     public int getID(HealthReportStorage storage) {
       final Field field = storage.getField(MEASUREMENT_NAME_SUBMISSIONS,
                                            MEASUREMENT_VERSION_SUBMISSIONS,
+                                           name);
+      return field.getID();
+    }
+  }
+
+  private void initializeSkewProvider(HealthReportDatabaseStorage storage) {
+    storage.ensureMeasurementInitialized(
+        MEASUREMENT_NAME_SKEW,
+        MEASUREMENT_VERSION_SKEW,
+        new MeasurementFields() {
+          @Override
+          public Iterable<FieldSpec> getFields() {
+            final ArrayList<FieldSpec> out = new ArrayList<FieldSpec>();
+            for (SubmissionsFieldName fieldName : SubmissionsFieldName.values()) {
+              FieldSpec spec = new FieldSpec(fieldName.getName(), Field.TYPE_INTEGER_COUNTER);
+              out.add(spec);
+            }
+            return out;
+          }
+        });
+  }
+
+  public static enum SkewFieldName {
+    IN_SECONDS("inSeconds");
+
+    private final String name;
+
+    SkewFieldName(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public int getID(HealthReportStorage storage) {
+      final Field field = storage.getField(MEASUREMENT_NAME_SKEW,
+                                           MEASUREMENT_VERSION_SKEW,
                                            name);
       return field.getID();
     }
@@ -396,6 +439,51 @@ public class AndroidSubmissionClient implements SubmissionClient {
       }
     }
 
+    protected int getCappedSkewInSeconds(final String serverURI, final long now, final HttpResponse response) {
+      if (response == null) {
+        Logger.warn(LOG_TAG, "Cannot get skew in seconds: null response. Ignoring.");
+        return Integer.MAX_VALUE;
+      }
+      final SkewHandler skewHandler;
+      try {
+        skewHandler = SkewHandler.getSkewHandlerFromEndpointString(serverURI);
+      } catch (URISyntaxException e) {
+        Logger.warn(LOG_TAG, "Cannot get skew in seconds. Ignoring.", e);
+        return Integer.MAX_VALUE;
+      }
+
+      final long skewInSeconds;
+      if (skewHandler.updateSkew(response, now)) {
+        skewInSeconds = skewHandler.getSkewInSeconds();
+      } else {
+        // We could be missing the Date: header, or it could be malformed. Record a wacky skew.
+        skewInSeconds = Long.MAX_VALUE;
+      }
+      if (skewInSeconds < Integer.MIN_VALUE) {
+        Logger.warn(LOG_TAG, "Cannot get skew in seconds: value too small: " + skewInSeconds + ". Capping to Integer range.");
+        return Integer.MIN_VALUE;
+      } else if (skewInSeconds > Integer.MAX_VALUE) {
+        Logger.warn(LOG_TAG, "Cannot get skew in seconds: value too large: " + skewInSeconds + ". Capping to Integer range.");
+        return Integer.MAX_VALUE;
+      } else {
+        return (int) skewInSeconds;
+      }
+    }
+
+    /**
+     * Calculate local clock skew based on the Date: header of the given response
+     * and write it to the Health Report.
+     *
+     * @param response
+     *          to base local clock skew on.
+     */
+    protected void setLastSkew(final HttpResponse response) {
+      final long now = System.currentTimeMillis();
+      final int cappedSkewInSeconds = getCappedSkewInSeconds(getDocumentServerURI(), now, response);
+      Logger.debug(LOG_TAG, "Setting last clock skew to " + cappedSkewInSeconds + "s.");
+      storage.recordDailyLast(envID, day, SkewFieldName.IN_SECONDS.getID(storage), cappedSkewInSeconds);
+    }
+
     public TrackingGenerator getGenerator() {
       return new TrackingGenerator();
     }
@@ -447,12 +535,24 @@ public class AndroidSubmissionClient implements SubmissionClient {
       public void handleSuccess(int status, String namespace, String id, HttpResponse response) {
         super.handleSuccess(status, namespace, id, response);
         incrementUploadSuccessCount();
+        // We update our skew after every server response, without regard to the
+        // HTTP method or the success of the HTTP request. The difference
+        // between remote and local includes the time for the response to reach
+        // us, but Bagheera responses are small and should not depend on the
+        // HTTP method.
+        setLastSkew(response);
       }
 
       @Override
       public void handleFailure(int status, String namespace, HttpResponse response) {
         super.handleFailure(status, namespace, response);
         incrementUploadServerFailureCount();
+        // We update our skew after every server response, without regard to the
+        // HTTP method or the success of the HTTP request. The difference
+        // between remote and local includes the time for the response to reach
+        // us, but Bagheera responses are small and should not depend on the
+        // HTTP method.
+        setLastSkew(response);
       }
 
       @Override
