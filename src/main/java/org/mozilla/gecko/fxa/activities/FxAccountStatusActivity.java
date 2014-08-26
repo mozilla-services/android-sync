@@ -105,13 +105,14 @@ public class FxAccountStatusActivity extends LocaleAwareFragmentActivity {
       return true;
     case R.id.remove_account:
       statusFragment.deleteAccount(FirefoxAccounts.getFirefoxAccount(this));
+      return true;
     }
     return super.onOptionsItemSelected(item);
   }
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    MenuInflater inflater = getMenuInflater();
+    final MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.sync_status_menu, menu);
     return super.onCreateOptionsMenu(menu);
   };

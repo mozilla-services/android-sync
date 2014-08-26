@@ -208,9 +208,7 @@
 <!ENTITY fxaccount_status_linkprivacy 'Privacy Notice'>
 
 <!ENTITY fxaccount_remove_account_dialog_title 'Remove Firefox Account?'>
-<!ENTITY fxaccount_remove_account_dialog_message 'If you remove the account, the data stored on this device will be lost. However, you may continue accessing data from your other synced devices.'>
-<!ENTITY fxaccount_remove_account_dialog_positive 'Remove'>
-<!ENTITY fxaccount_remove_account_dialog_negative 'Cancel'>
+<!ENTITY fxaccount_remove_account_dialog_message '&brandShortName; will stop syncing with your account, but won’t delete any of your browsing data on this device.'>
 
 <!ENTITY fxaccount_remove_account_menu_item 'Remove Account'>
 

@@ -21,6 +21,7 @@ import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -711,10 +712,15 @@ public class FxAccountStatusFragment
    * Helper function to removes the synced account.
    */
   public void deleteAccount(final Account account) {
+    if (account == null) {
+      Logger.warn(LOG_TAG, "The account has been deleted from Android settings.");
+      return;
+    }
+
     final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
       @Override
       public void run(AccountManagerFuture<Boolean> future) {
-        Logger.info(LOG_TAG, "Account removed");
+        Logger.info(LOG_TAG, "Account" + Utils.obfuscateEmail(account.name) + "removed");
         getActivity().finish();
       }
     };
@@ -723,13 +729,13 @@ public class FxAccountStatusFragment
     .setTitle(R.string.fxaccount_remove_account_dialog_title)
     .setIcon(R.drawable.icon)
     .setMessage(R.string.fxaccount_remove_account_dialog_message)
-    .setPositiveButton(R.string.fxaccount_remove_account_dialog_positive, new Dialog.OnClickListener() {
+    .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         AccountManager.get(getActivity()).removeAccount(account, callback, null);
       }
     })
-    .setNegativeButton(R.string.fxaccount_remove_account_dialog_negative, new Dialog.OnClickListener() {
+    .setNegativeButton(android.R.string.cancel, new Dialog.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int which) {
         dialog.cancel();
