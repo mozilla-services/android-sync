@@ -104,20 +104,15 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
    * present in our JUnit 4 tests.
    */
   protected URI getCreateAccountURI(final boolean getKeys, final String service) throws UnsupportedEncodingException, URISyntaxException {
+    if (service == null) {
+      throw new IllegalArgumentException("service must not be null");
+    }
     final StringBuilder sb = new StringBuilder(serverURI); // serverURI always has a trailing slash.
-    sb.append("account/create");
-    if (getKeys || service != null) {
-      // Be very careful that query parameters are encoded correctly!
-      sb.append("?");
-      if (getKeys) {
-        sb.append("keys=true");
-      }
-      if (service != null) {
-        if (getKeys) {
-          sb.append("&");
-        }
-        sb.append("service=" + URLEncoder.encode(service, "UTF-8"));
-      }
+    sb.append("account/create?service=");
+    // Be very careful that query parameters are encoded correctly!
+    sb.append(URLEncoder.encode(service, "UTF-8"));
+    if (getKeys) {
+      sb.append("&keys=true");
     }
     return new URI(sb.toString());
   }
