@@ -28,7 +28,7 @@ package ch.boye.httpclientandroidlib.impl.auth;
 
 import java.nio.charset.Charset;
 
-import ch.boye.httpclientandroidlib.androidextra.Base64;
+import org.mozilla.apache.commons.codec.binary.Base64;
 import ch.boye.httpclientandroidlib.Consts;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpRequest;
@@ -162,8 +162,8 @@ public class BasicScheme extends RFC2617Scheme {
         tmp.append(":");
         tmp.append((credentials.getPassword() == null) ? "null" : credentials.getPassword());
 
-        final byte[] base64password = Base64.encode(
-                EncodingUtils.getBytes(tmp.toString(), getCredentialsCharset(request)), Base64.NO_WRAP);
+        final byte[] base64password = Base64.encodeBase64(
+                EncodingUtils.getBytes(tmp.toString(), getCredentialsCharset(request)));
 
         final CharArrayBuffer buffer = new CharArrayBuffer(32);
         if (isProxy()) {
@@ -201,8 +201,8 @@ public class BasicScheme extends RFC2617Scheme {
         tmp.append(":");
         tmp.append((credentials.getPassword() == null) ? "null" : credentials.getPassword());
 
-        final byte[] base64password = Base64.encode(
-                EncodingUtils.getBytes(tmp.toString(), charset), Base64.NO_WRAP);
+        final byte[] base64password = Base64.encodeBase64(
+                EncodingUtils.getBytes(tmp.toString(), charset));
 
         final CharArrayBuffer buffer = new CharArrayBuffer(32);
         if (proxy) {
