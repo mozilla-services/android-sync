@@ -21,6 +21,7 @@ import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.util.HardwareUtils;
 
 import android.accounts.Account;
 import android.content.ContentResolver;
@@ -112,6 +113,13 @@ public class FxAccountStatusFragment
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    // We need to do this before we can query the hardware menu button state.
+    // We're guaranteed to have an activity at this point (onAttach is called
+    // before onCreate). It's okay to call this multiple times (with different
+    // contexts).
+    HardwareUtils.init(getActivity());
+
     addPreferences();
   }
 
@@ -158,6 +166,10 @@ public class FxAccountStatusFragment
     syncServerPreference = ensureFindPreference("sync_server");
     morePreference = ensureFindPreference("more");
     morePreference.setOnPreferenceClickListener(this);
+
+    if (HardwareUtils.hasMenuButton()) {
+      syncCategory.removePreference(morePreference);
+    }
   }
 
   /**
