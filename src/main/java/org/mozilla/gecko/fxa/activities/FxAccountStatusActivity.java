@@ -18,6 +18,7 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -28,6 +29,7 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 /**
  * Activity which displays account status.
@@ -115,10 +117,16 @@ public class FxAccountStatusActivity extends LocaleAwareFragmentActivity {
       return;
     }
 
+    final String accountName = account.name;
     final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
       @Override
       public void run(AccountManagerFuture<Boolean> future) {
-        Logger.info(LOG_TAG, "Account " + Utils.obfuscateEmail(account.name) + " removed.");
+        if (accountName != null) {
+          final Activity activity = FxAccountStatusActivity.this;
+          Logger.info(LOG_TAG, "Account " + Utils.obfuscateEmail(accountName) + " removed.");
+          final String text = activity.getResources().getString(R.string.fxaccount_remove_account_toast, accountName);
+          Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
+        }
         finish();
       }
     };
