@@ -84,6 +84,7 @@ public class FxAccountStatusFragment
 
   protected EditTextPreference deviceNamePreference;
   protected Preference syncServerPreference;
+  protected Preference morePreference;
 
   protected volatile AndroidFxAccount fxAccount;
   // The contract is: when fxAccount is non-null, then clientsDataDelegate is
@@ -155,6 +156,8 @@ public class FxAccountStatusFragment
     deviceNamePreference.setOnPreferenceChangeListener(this);
 
     syncServerPreference = ensureFindPreference("sync_server");
+    morePreference = ensureFindPreference("more");
+    morePreference.setOnPreferenceClickListener(this);
   }
 
   /**
@@ -206,6 +209,11 @@ public class FxAccountStatusFragment
         preference == passwordsPreference ||
         preference == tabsPreference) {
       saveEngineSelections();
+      return true;
+    }
+
+    if (preference == morePreference) {
+      getActivity().openOptionsMenu();
       return true;
     }
 
