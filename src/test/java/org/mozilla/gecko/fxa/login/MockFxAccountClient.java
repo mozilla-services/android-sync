@@ -86,11 +86,7 @@ public class MockFxAccountClient implements FxAccountClient {
 
   protected BasicHttpResponse makeHttpResponse(int statusCode, String body) {
     BasicHttpResponse httpResponse = new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), statusCode, body);
-    try {
-      httpResponse.setEntity(new StringEntity(body, "UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      // Whatever.
-    }
+    httpResponse.setEntity(new StringEntity(body, "UTF-8"));
     return httpResponse;
   }
 
