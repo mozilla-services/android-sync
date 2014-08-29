@@ -21,12 +21,20 @@ import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.CheckBoxPreference;
@@ -37,6 +45,7 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.TextUtils;
+import android.util.TypedValue;
 
 /**
  * A fragment that displays the status of an AndroidFxAccount.
@@ -698,5 +707,54 @@ public class FxAccountStatusFragment
 
     // For everything else, accept the change.
     return true;
+  }
+
+  /**
+   * Helper function to remove the given Android account.
+   */
+  public void deleteAccount(final Account account) {
+    if (account == null) {
+      Logger.warn(LOG_TAG, "The account has been deleted from Android settings.");
+      return;
+    }
+
+    final AccountManagerCallback<Boolean> callback = new AccountManagerCallback<Boolean>() {
+      @Override
+      public void run(AccountManagerFuture<Boolean> future) {
+        Logger.info(LOG_TAG, "Account" + Utils.obfuscateEmail(account.name) + "removed");
+        getActivity().finish();
+      }
+    };
+
+    int icon = android.R.drawable.ic_dialog_alert;
+    /*
+     * Find the correct the dialog icon with respect to the theme for android device >= API level 11.
+     * Reference : http://stackoverflow.com/questions/14910536/android-dialog-theme-makes-icon-too-light/14910945#14910945 
+     */
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+      final TypedValue typedValue = new TypedValue();
+      getActivity().getTheme().resolveAttribute(android.R.attr.alertDialogIcon, typedValue, true);
+      icon = typedValue.resourceId;
+    }
+
+    final AlertDialog dialog = new AlertDialog.Builder(getActivity())
+    .setTitle(R.string.fxaccount_remove_account_dialog_title)
+    .setIcon(icon)
+    .setMessage(R.string.fxaccount_remove_account_dialog_message)
+    .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        AccountManager.get(getActivity()).removeAccount(account, callback, null);
+      }
+    })
+    .setNegativeButton(android.R.string.cancel, new Dialog.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int which) {
+        dialog.cancel();
+      }
+    })
+    .create();
+
+    dialog.show();
   }
 }
