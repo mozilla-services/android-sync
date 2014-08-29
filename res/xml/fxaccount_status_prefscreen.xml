@@ -84,6 +84,12 @@
             android:persistent="false"
             android:title="@string/fxaccount_status_sync_server" />
 
+		<Preference
+            android:editable="false"
+            android:key="more"
+            android:persistent="false"
+            android:title="@string/fxaccount_status_more" />
+
     </PreferenceCategory>
     <PreferenceCategory
         android:key="legal_category"
