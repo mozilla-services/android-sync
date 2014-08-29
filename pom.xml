@@ -93,6 +93,9 @@
               <verbose>true</verbose>
             </zipalign>
             <undeployBeforeDeploy>false</undeployBeforeDeploy>
+            <aaptExtraArgs>
+              <aaptExtraArg>--non-constant-id</aaptExtraArg>
+            </aaptExtraArgs>
           </configuration>
         </plugin>
 

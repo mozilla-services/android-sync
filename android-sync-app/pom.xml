@@ -150,6 +150,9 @@
           <androidManifestFile>${project.basedir}/../AndroidManifest.xml</androidManifestFile>
           <resourceDirectory>${project.basedir}/../res</resourceDirectory>
           <nativeLibrariesDirectory>${project.basedir}/../libs</nativeLibrariesDirectory>
+          <aaptExtraArgs>
+            <aaptExtraArg>--non-constant-id</aaptExtraArg>
+          </aaptExtraArgs>
         </configuration>
         <extensions>true</extensions>
       </plugin>

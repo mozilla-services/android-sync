@@ -107,6 +107,9 @@
                 </packages>
             -->
           </test>
+          <aaptExtraArgs>
+            <aaptExtraArg>--non-constant-id</aaptExtraArg>
+          </aaptExtraArgs>
         </configuration>
         <extensions>true</extensions>
       </plugin>
