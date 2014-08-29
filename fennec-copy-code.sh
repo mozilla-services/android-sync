@@ -211,8 +211,8 @@ rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-v12 $A
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 
 # We use shell globbing to update all fxaccount and sync owned values.
-rm -f $ANDROID/base/resources/values*/{fxaccount_,sync_}*
-for f in res/values*/{fxaccount_,sync_}*; do
+rm -f $ANDROID/base/resources/{menu*,values*}/{fxaccount_,sync_}*
+for f in res/{menu*,values*}/{fxaccount_,sync_}*; do
     g=$(echo $f | sed "s,^res/,$ANDROID/base/resources/,")
     rsync --archive $f $g
 done
