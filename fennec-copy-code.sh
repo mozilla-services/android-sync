@@ -205,6 +205,7 @@ echo $WARNING > $ANDROID/thirdparty/ch/boye/httpclientandroidlib/README.txt
 echo "Copying resources..."
 # I'm guessing these go here.
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable $ANDROID/base/resources/
+rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-xxhdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-xhdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-hdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-mdpi $ANDROID/base/resources/
