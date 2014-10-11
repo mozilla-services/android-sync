@@ -86,9 +86,9 @@ public class PreferenceManagerCompat {
 						new Class<?>[] { onPreferenceTreeClickListener.getType() },
 						new InvocationHandler() {
 					@Override
-          public Object invoke(Object proxy, Method method, Object[] args) {
+                    public Object invoke(Object proxy, Method method, Object[] args) {
 						if (method.getName().equals("onPreferenceTreeClick")) {
-							return Boolean.valueOf(listener.onPreferenceTreeClick((PreferenceScreen) args[0], (Preference) args[1]));
+							return listener.onPreferenceTreeClick((PreferenceScreen) args[0], (Preference) args[1]);
 						} else {
 							return null;
 						}
