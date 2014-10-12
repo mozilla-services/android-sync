@@ -182,7 +182,7 @@
 <!ENTITY pref_char_encoding_off "Don\'t show menu">
 <!ENTITY pref_clear_private_data2 "Clear now">
 <!ENTITY pref_clear_private_data_category "Clear private data">
-<!ENTITY pref_clear_on_exit_title "Always clear when quitting">
+<!ENTITY pref_clear_on_exit_title2 "Clear on exit">
 <!ENTITY pref_clear_on_exit_summary2 "&brandShortName; will automatically clear your data whenever you select \u0022Quit\u0022 from the main menu">
 <!ENTITY pref_clear_on_exit_dialog_title "Select which data to clear">
 <!ENTITY pref_plugins "Plugins">
@@ -266,8 +266,7 @@ size. -->
      (crashReporterSection.label) in en-US/chrome/browser/preferences/advanced.dtd.-->
 <!ENTITY datareporting_crashreporter_title_short "Crash Reporter">
 <!ENTITY datareporting_wifi_title2 "&vendorShortName; Location Service">
-<!ENTITY datareporting_wifi_geolocation_summary "Receives Wi-Fi and cellular location data when running in the background and shares it with &vendorShortName; to improve our geolocation service">
-
+<!ENTITY datareporting_wifi_geolocation_summary2 "Shares approximate Wi-Fi and cellular location of your device with &vendorShortName; to improve our geolocation service">
 <!-- Localization note (pref_update_autodownload2) : This should mention downloading
      specifically, since the pref only prevents automatic downloads and not the
      actual notification that an update is available. -->
@@ -437,6 +436,10 @@ size. -->
 <!ENTITY private_browsing_title "Private Browsing">
 <!ENTITY private_tabs_panel_empty_desc "Your private tabs will show up here. While we don\'t keep any of your browsing history or cookies, bookmarks and files that you download will still be saved on your device.">
 <!ENTITY private_tabs_panel_learn_more "Want to learn more?">
+
+<!ENTITY remote_tabs_panel_moved_title "Where did my tabs go?">
+<!ENTITY remote_tabs_panel_moved_desc "We\'ve moved your tabs from other devices into a panel on your home page that can be easily accessed every time you open a new tab.">
+<!ENTITY remote_tabs_panel_moved_link "Take me to my new panel.">
 
 <!ENTITY pin_site_dialog_hint "Enter a search keyword">
 
