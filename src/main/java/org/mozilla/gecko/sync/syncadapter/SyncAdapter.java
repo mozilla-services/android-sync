@@ -63,7 +63,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
   public  static final int     MULTI_DEVICE_INTERVAL_MILLISECONDS = 5 * 60 * 1000;         // 5 minutes.
   public  static final int     SINGLE_DEVICE_INTERVAL_MILLISECONDS = 24 * 60 * 60 * 1000;  // 24 hours.
 
-  private final Context        mContext;
+  final Context        mContext;
 
   protected long syncStartTimestamp;
 
@@ -511,7 +511,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
     globalSession.start();
   }
 
-  private void notifyMonitor() {
+  void notifyMonitor() {
     synchronized (syncMonitor) {
       Logger.trace(LOG_TAG, "Notifying sync monitor.");
       syncMonitor.notifyAll();

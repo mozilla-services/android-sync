@@ -52,8 +52,8 @@ public class FennecTabsRepository extends Repository {
   public class FennecTabsRepositorySession extends RepositorySession {
     protected static final String LOG_TAG = "FennecTabsSession";
 
-    private final ContentProviderClient tabsProvider;
-    private final ContentProviderClient clientsProvider;
+    final ContentProviderClient tabsProvider;
+    final ContentProviderClient clientsProvider;
 
     protected final RepoUtils.QueryHelper tabsHelper;
 

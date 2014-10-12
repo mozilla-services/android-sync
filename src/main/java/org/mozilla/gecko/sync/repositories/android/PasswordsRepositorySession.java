@@ -51,11 +51,11 @@ public class PasswordsRepositorySession extends
   private static final String LOG_TAG = "PasswordsRepoSession";
   private static final String COLLECTION = "passwords";
 
-  private final RepoUtils.QueryHelper passwordsHelper;
-  private final RepoUtils.QueryHelper deletedPasswordsHelper;
-  private final ContentProviderClient passwordsProvider;
+  final RepoUtils.QueryHelper passwordsHelper;
+  final RepoUtils.QueryHelper deletedPasswordsHelper;
+  final ContentProviderClient passwordsProvider;
 
-  private final Context context;
+  final Context context;
 
   public PasswordsRepositorySession(Repository repository, Context context) {
     super(repository);
@@ -65,8 +65,8 @@ public class PasswordsRepositorySession extends
     this.passwordsProvider      = context.getContentResolver().acquireContentProviderClient(BrowserContract.PASSWORDS_AUTHORITY_URI);
   }
 
-  private static final String[] GUID_COLS = new String[] { Passwords.GUID };
-  private static final String[] DELETED_GUID_COLS = new String[] { DeletedColumns.GUID };
+  static final String[] GUID_COLS = new String[] { Passwords.GUID };
+  static final String[] DELETED_GUID_COLS = new String[] { DeletedColumns.GUID };
 
   private static final String WHERE_GUID_IS = Passwords.GUID + " = ?";
   private static final String WHERE_DELETED_GUID_IS = DeletedPasswords.GUID + " = ?";
@@ -490,11 +490,11 @@ public class PasswordsRepositorySession extends
     toRecord.timesUsed    = fromRecord.timesUsed;
   }
 
-  private static String[] getAllColumns() {
+  static String[] getAllColumns() {
     return BrowserContractHelpers.PasswordColumns;
   }
 
-  private static String[] getAllDeletedColumns() {
+  static String[] getAllDeletedColumns() {
     return BrowserContractHelpers.DeletedColumns;
   }
 
@@ -504,7 +504,7 @@ public class PasswordsRepositorySession extends
    * @param timestamp
    * @return String DB query string for dates to fetch.
    */
-  private static String dateModifiedWhereDeleted(long timestamp) {
+  static String dateModifiedWhereDeleted(long timestamp) {
     return DeletedColumns.TIME_DELETED + " >= " + Long.toString(timestamp);
   }
 
@@ -514,7 +514,7 @@ public class PasswordsRepositorySession extends
    * @param timestamp
    * @return String DB query string for dates to fetch.
    */
-  private static String dateModifiedWhere(long timestamp) {
+  static String dateModifiedWhere(long timestamp) {
     return Passwords.TIME_PASSWORD_CHANGED + " >= " + Long.toString(timestamp);
   }
 
@@ -531,7 +531,7 @@ public class PasswordsRepositorySession extends
    * @param delegate
    *        FetchRecordsDelegate to process records.
    */
-  private static boolean fetchAndCloseCursorDeleted(final Cursor cursor,
+  static boolean fetchAndCloseCursorDeleted(final Cursor cursor,
                                                     final boolean deleted,
                                                     final RecordFilter filter,
                                                     final RepositorySessionFetchRecordsDelegate delegate) {
@@ -562,7 +562,7 @@ public class PasswordsRepositorySession extends
     return true;
   }
 
-  private PasswordRecord retrieveByGUID(String guid) throws NullCursorException, RemoteException {
+  PasswordRecord retrieveByGUID(String guid) throws NullCursorException, RemoteException {
     final String[] guidArg = new String[] { guid };
 
     // Check data table.
@@ -595,7 +595,7 @@ public class PasswordsRepositorySession extends
     Passwords.USERNAME_FIELD  + " = ? AND " +
     Passwords.PASSWORD_FIELD  + " = ?";
 
-  private PasswordRecord findExistingRecord(PasswordRecord record) throws NullCursorException, RemoteException {
+  PasswordRecord findExistingRecord(PasswordRecord record) throws NullCursorException, RemoteException {
     PasswordRecord foundRecord = null;
     Cursor cursor = null;
     // Only check the data table.
@@ -633,7 +633,7 @@ public class PasswordsRepositorySession extends
     return null;
   }
 
-  private void storeRecordDeletion(Record record) {
+  void storeRecordDeletion(Record record) {
     try {
       deleteGUID(record.guid);
     } catch (RemoteException e) {

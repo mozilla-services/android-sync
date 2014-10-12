@@ -115,7 +115,7 @@ public class SendTabActivity extends LocaleAwareActivity {
   private ClientRecordArrayAdapter arrayAdapter;
 
   private TabSender tabSender;
-  private SendTabData sendTabData;
+  SendTabData sendTabData;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {

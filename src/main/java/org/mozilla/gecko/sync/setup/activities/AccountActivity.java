@@ -41,20 +41,20 @@ public class AccountActivity extends AccountAuthenticatorActivity {
   private final static String LOG_TAG = "AccountActivity";
 
   private AccountManager      mAccountManager;
-  private Context             mContext;
+  Context             mContext;
   private String              username;
   private String              password;
   private String              key;
   private String              server = SyncConstants.DEFAULT_AUTH_SERVER;
 
   // UI elements.
-  private EditText            serverInput;
-  private EditText            usernameInput;
+  EditText            serverInput;
+  EditText            usernameInput;
   private EditText            passwordInput;
   private EditText            synckeyInput;
   private CheckBox            serverCheckbox;
-  private Button              connectButton;
-  private Button              cancelButton;
+  Button              connectButton;
+  Button              cancelButton;
   private ProgressDialog      progressDialog;
 
   private AccountAuthenticator accountAuthenticator;
@@ -219,7 +219,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     };
   }
 
-  private boolean validateInputs() {
+  boolean validateInputs() {
     if (usernameInput.length() == 0 ||
         passwordInput.length() == 0 ||
         synckeyInput.length() == 0  ||
@@ -291,7 +291,7 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     }
   }
 
-  private void displayFailure(final AuthenticationResult result) {
+  void displayFailure(final AuthenticationResult result) {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {
@@ -336,12 +336,12 @@ public class AccountActivity extends AccountAuthenticatorActivity {
     finish();
   }
 
-  private void activateView(View view, boolean toActivate) {
+  void activateView(View view, boolean toActivate) {
     view.setEnabled(toActivate);
     view.setClickable(toActivate);
   }
 
-  private void clearErrors() {
+  void clearErrors() {
     runOnUiThread(new Runnable() {
       @Override
       public void run() {

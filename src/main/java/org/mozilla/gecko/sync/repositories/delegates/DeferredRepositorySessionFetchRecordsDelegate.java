@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutorService;
 import org.mozilla.gecko.sync.repositories.domain.Record;
 
 public class DeferredRepositorySessionFetchRecordsDelegate implements RepositorySessionFetchRecordsDelegate {
-  private final RepositorySessionFetchRecordsDelegate inner;
+  final RepositorySessionFetchRecordsDelegate inner;
   private final ExecutorService executor;
   public DeferredRepositorySessionFetchRecordsDelegate(final RepositorySessionFetchRecordsDelegate inner, final ExecutorService executor) {
     this.inner = inner;

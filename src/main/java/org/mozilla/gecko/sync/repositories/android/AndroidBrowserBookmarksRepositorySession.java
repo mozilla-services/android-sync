@@ -908,7 +908,7 @@ public class AndroidBrowserBookmarksRepositorySession extends AndroidBrowserRepo
   }
 
   @SuppressWarnings("unchecked")
-  private void finishUp() {
+  void finishUp() {
     try {
       flushQueues();
       Logger.debug(LOG_TAG, "Have " + parentToChildArray.size() + " folders whose children might need repositioning.");
