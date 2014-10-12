@@ -170,7 +170,7 @@ public class AndroidFxAccount {
     if (b == null) {
       return def;
     }
-    return b.booleanValue();
+    return b;
   }
 
   protected byte[] getBundleDataBytes(String key) {
