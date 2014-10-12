@@ -93,13 +93,16 @@ def main():
         for k in sorted(defines.keys()):
             print("%s = %s" % (k, defines[k])) 
 
-    dot_ins = [
+    java_dot_ins = [
         "src/main/java/org/mozilla/gecko/AppConstants.java.in",
         "src/main/java/org/mozilla/gecko/SysInfo.java.in",
         "src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java.in",
         "src/main/java/org/mozilla/gecko/background/healthreport/HealthReportConstants.java.in",
         "src/main/java/org/mozilla/gecko/fxa/FxAccountConstants.java.in",
         "src/main/java/org/mozilla/gecko/sync/SyncConstants.java.in",
+        ]
+
+    other_dot_ins = [
         "AndroidManifest.xml.in",
         "test/AndroidManifest.xml.in",
         "README.rst.in",
@@ -109,7 +112,18 @@ def main():
         "strings/strings.xml.template":    "res/values/strings.xml",
         }
 
-    for input_filename in dot_ins:
+    for input_filename in java_dot_ins:
+        if not input_filename.endswith('.in'):
+            raise Exception("filename %s should end in .in" % input_filename)
+        output_filename = input_filename[:-3]
+        preprocess(input_filename, output_filename, defines, True, "//#")
+        if cmdargs.verbose:
+            print("Preprocessing %s to %s" % (input_filename, output_filename))
+        else:
+            if cmdargs.print_files:
+                print("%s" % output_filename)
+
+    for input_filename in other_dot_ins:
         if not input_filename.endswith('.in'):
             raise Exception("filename %s should end in .in" % input_filename)
         output_filename = input_filename[:-3]

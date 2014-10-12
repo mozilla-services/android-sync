@@ -13,7 +13,7 @@ from util import FileAvoidWrite
 
 import os
 
-def preprocess(input_filename, output_filename, defines, makedirs=True):
+def preprocess(input_filename, output_filename, defines, makedirs=True, marker="#"):
     '''
     Preprocess `input_filename` into `output_filename`, substituting
     definitions from `defines`.
@@ -24,7 +24,7 @@ def preprocess(input_filename, output_filename, defines, makedirs=True):
     pp = Preprocessor()
     pp.context.update(defines)
     pp.setLineEndings("lf")
-    pp.setMarker("#")
+    pp.setMarker(marker)
     pp.do_filter("substitution")
 
     # make sure we can actually write to output directory
