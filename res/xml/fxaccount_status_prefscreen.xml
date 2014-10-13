@@ -15,6 +15,14 @@
             android:key="auth_server"
             android:persistent="false"
             android:title="@string/fxaccount_status_auth_server" />
+        <Preference
+            android:editable="false"
+            android:key="sync_now"
+            android:defaultValue=""
+            android:persistent="true"
+            android:title="Sync now"
+            android:summary=""
+            android:icon="@drawable/tabs_synced" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="sync_category"

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.TabsAccessor;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.preferences.PreferenceFragment;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
@@ -86,6 +87,7 @@ public class FxAccountStatusFragment
   protected EditTextPreference deviceNamePreference;
   protected Preference syncServerPreference;
   protected Preference morePreference;
+  protected Preference syncNowPreference;
 
   protected volatile AndroidFxAccount fxAccount;
   // The contract is: when fxAccount is non-null, then clientsDataDelegate is
@@ -167,6 +169,11 @@ public class FxAccountStatusFragment
     morePreference = ensureFindPreference("more");
     morePreference.setOnPreferenceClickListener(this);
 
+    syncNowPreference = ensureFindPreference("sync_now");
+    syncNowPreference.setEnabled(true);
+    syncNowPreference.setOnPreferenceClickListener(this);
+    syncNowPreference.setOnPreferenceChangeListener(this);
+
     if (HardwareUtils.hasMenuButton()) {
       syncCategory.removePreference(morePreference);
     }
@@ -226,6 +233,14 @@ public class FxAccountStatusFragment
 
     if (preference == morePreference) {
       getActivity().openOptionsMenu();
+      return true;
+    }
+
+    if (preference == syncNowPreference) {
+        if (FirefoxAccounts.firefoxAccountsExist(getActivity())) {
+          FirefoxAccounts.addSyncStatusListener(syncStatusDelegate);
+          FirefoxAccounts.requestSync(fxAccount.getAndroidAccount(), FirefoxAccounts.FORCE, null, null);
+        }
       return true;
     }
 
@@ -470,6 +485,23 @@ public class FxAccountStatusFragment
     final String clientName = clientsDataDelegate.getClientName();
     deviceNamePreference.setSummary(clientName);
     deviceNamePreference.setText(clientName);
+
+    updateSyncNowStates();
+  }
+
+  private void updateSyncNowStates() {
+    if(fxAccount.isCurrentlySyncing()) {
+      // Currently syncing, show animated icon.
+      syncNowPreference.setIcon(R.drawable.tabs_synced_animated);
+      syncNowPreference.setEnabled(false);
+    } else {
+      // Sync has stopped, reset the icon and update the summary.
+      syncNowPreference.setIcon(R.drawable.tabs_synced);
+      syncNowPreference.setEnabled(true);
+      long now = System.currentTimeMillis();
+      long lastModified = clientsDataDelegate.getLastModifiedTimestamp();
+      syncNowPreference.setSummary(TabsAccessor.getLastSyncedString(getActivity(), now, lastModified));
+    }
   }
 
   protected void updateAuthServerPreference() {
