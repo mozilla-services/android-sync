@@ -175,6 +175,7 @@ public class FxAccountStatusFragment
     syncNowPreference = ensureFindPreference("sync_now");
     syncNowPreference.setEnabled(true);
     syncNowPreference.setOnPreferenceClickListener(this);
+    syncNowPreference.setOnPreferenceChangeListener(this);
 
     if (HardwareUtils.hasMenuButton()) {
       syncCategory.removePreference(morePreference);
