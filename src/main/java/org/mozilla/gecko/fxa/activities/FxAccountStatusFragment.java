@@ -25,10 +25,12 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.util.HardwareUtils;
 
 import android.accounts.Account;
+import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.CheckBoxPreference;
@@ -494,15 +496,20 @@ public class FxAccountStatusFragment
     return getActivity().getResources().getString(R.string.fxaccount_status_last_synced, relativeTimeSpanString);  
   }
 
+  @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+  protected void maybeSetSyncNowIcon(final int id) {
+    syncNowPreference.setIcon(id);
+  }
+  
   private void updateSyncNowStates() {
     if (fxAccount.isCurrentlySyncing()) {
       // Currently syncing, show animated icon.
-      syncNowPreference.setIcon(R.drawable.sync_now_animated);
+      maybeSetSyncNowIcon(R.drawable.sync_now_animated);
       syncNowPreference.setTitle(R.string.fxaccount_status_syncing);
       syncNowPreference.setSummary("");
     } else {
       // Sync has stopped, reset the icon and update the summary.
-      syncNowPreference.setIcon(R.drawable.sync_now);
+      maybeSetSyncNowIcon(R.drawable.sync_now);
       // Disable sync now iff it is bad state
       boolean isInGoodState = fxAccount.getState().getNeededAction() == Action.None;
       syncNowPreference.setEnabled(isInGoodState);
