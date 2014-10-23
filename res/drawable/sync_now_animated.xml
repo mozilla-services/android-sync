@@ -5,40 +5,40 @@
          frame-by-frame rotation animation without adding lots of small
          resources. The inner drawables rotate the master drawable. -->
     <item
-        android:drawable="@drawable/tabs_synced"
+        android:drawable="@drawable/sync_now"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_030"
+        android:drawable="@drawable/sync_now_030"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_060"
+        android:drawable="@drawable/sync_now_060"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_090"
+        android:drawable="@drawable/sync_now_090"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_120"
+        android:drawable="@drawable/sync_now_120"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_150"
+        android:drawable="@drawable/sync_now_150"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_180"
+        android:drawable="@drawable/sync_now_180"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_210"
+        android:drawable="@drawable/sync_now_210"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_240"
+        android:drawable="@drawable/sync_now_240"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_270"
+        android:drawable="@drawable/sync_now_270"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_300"
+        android:drawable="@drawable/sync_now_300"
         android:duration="100"/>
     <item
-        android:drawable="@drawable/tabs_synced_330"
+        android:drawable="@drawable/sync_now_330"
         android:duration="100"/>
 
 </animation-list>
