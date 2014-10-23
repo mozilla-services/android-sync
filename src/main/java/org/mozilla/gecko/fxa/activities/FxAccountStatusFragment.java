@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.TabsAccessor;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.preferences.PreferenceFragment;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
@@ -17,6 +16,7 @@ import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
+import org.mozilla.gecko.fxa.login.State.Action;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
 import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -39,6 +39,7 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 
 /**
  * A fragment that displays the status of an AndroidFxAccount.
@@ -172,7 +173,6 @@ public class FxAccountStatusFragment
     syncNowPreference = ensureFindPreference("sync_now");
     syncNowPreference.setEnabled(true);
     syncNowPreference.setOnPreferenceClickListener(this);
-    syncNowPreference.setOnPreferenceChangeListener(this);
 
     if (HardwareUtils.hasMenuButton()) {
       syncCategory.removePreference(morePreference);
@@ -237,10 +237,9 @@ public class FxAccountStatusFragment
     }
 
     if (preference == syncNowPreference) {
-        if (FirefoxAccounts.firefoxAccountsExist(getActivity())) {
-          FirefoxAccounts.addSyncStatusListener(syncStatusDelegate);
-          FirefoxAccounts.requestSync(fxAccount.getAndroidAccount(), FirefoxAccounts.FORCE, null, null);
-        }
+      if (fxAccount != null) {
+        FirefoxAccounts.requestSync(fxAccount.getAndroidAccount(), FirefoxAccounts.FORCE, null, null);
+      }
       return true;
     }
 
@@ -489,18 +488,27 @@ public class FxAccountStatusFragment
     updateSyncNowStates();
   }
 
+  // This is a helper function similar to TabsAccessor.getLastSyncedString() to calculate relative "Last synced" time span.
+  private String getLastSyncedString(long startTime) {
+    final CharSequence relativeTimeSpanString = DateUtils.getRelativeTimeSpanString(startTime);
+    return getActivity().getResources().getString(R.string.fxaccount_status_last_synced, relativeTimeSpanString);  
+  }
+
   private void updateSyncNowStates() {
-    if(fxAccount.isCurrentlySyncing()) {
+    if (fxAccount.isCurrentlySyncing()) {
       // Currently syncing, show animated icon.
-      syncNowPreference.setIcon(R.drawable.tabs_synced_animated);
-      syncNowPreference.setEnabled(false);
+      syncNowPreference.setIcon(R.drawable.sync_now_animated);
+      syncNowPreference.setTitle(R.string.fxaccount_status_syncing);
+      syncNowPreference.setSummary("");
     } else {
       // Sync has stopped, reset the icon and update the summary.
-      syncNowPreference.setIcon(R.drawable.tabs_synced);
-      syncNowPreference.setEnabled(true);
-      long now = System.currentTimeMillis();
+      syncNowPreference.setIcon(R.drawable.sync_now);
+      // Disable sync now iff it is bad state
+      boolean isInGoodState = fxAccount.getState().getNeededAction() == Action.None;
+      syncNowPreference.setEnabled(isInGoodState);
+      syncNowPreference.setTitle(R.string.fxaccount_status_sync_now);
       long lastModified = clientsDataDelegate.getLastModifiedTimestamp();
-      syncNowPreference.setSummary(TabsAccessor.getLastSyncedString(getActivity(), now, lastModified));
+      syncNowPreference.setSummary(getLastSyncedString(lastModified));
     }
   }
 
