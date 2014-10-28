@@ -5,6 +5,7 @@
 package org.mozilla.gecko.fxa.activities;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.tasks.FxAccountSetupTask.ProgressDisplay;
+import org.mozilla.gecko.fxa.tasks.FxAccountUnlockCodeResender;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
@@ -171,8 +173,18 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     final Spannable span = Utils.interpolateClickableSpan(this, messageId, clickableId, new ClickableSpan() {
       @Override
       public void onClick(View widget) {
-        // To be implemented in the next commit.
-        Logger.warn(LOG_TAG, "Temporary until we do the right thing.");
+        // It would be best to capture the email address sent to the server
+        // and use it here, but this will do for now. If the user modifies
+        // the email address entered, the error text is hidden, so sending a
+        // changed email address would be the result of an unusual race.
+        final String email = emailEdit.getText().toString();
+        byte[] emailUTF8 = null;
+        try {
+          emailUTF8 = email.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+          // It's okay, we'll fail in the code resender.
+        }
+        FxAccountUnlockCodeResender.resendUnlockCode(FxAccountAbstractSetupActivity.this, getAuthServerEndpoint(), emailUTF8);
       }
     });
     remoteErrorTextView.setMovementMethod(LinkMovementMethod.getInstance());
