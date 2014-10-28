@@ -171,6 +171,9 @@
 <!ENTITY fxaccount_confirm_account_verification_link_sent2 'Verification email sent'>
 <!ENTITY fxaccount_confirm_account_verification_link_not_sent2 'Couldn\&apos;t send verification email'>
 <!ENTITY fxaccount_resend_unlock_code_button_label 'Resend unlock email'>
+<!ENTITY fxaccount_unlock_code_sent 'Account unlock email sent'>
+<!ENTITY fxaccount_unlock_code_not_sent 'Couldn\&apos;t send account unlock email'>
+
 <!ENTITY fxaccount_sign_in_sub_header 'Sign in'>
 <!ENTITY fxaccount_sign_in_button_label 'Sign in'>
 <!ENTITY fxaccount_sign_in_forgot_password 'Forgot password?'>
