@@ -498,9 +498,11 @@ public class FxAccountStatusFragment
 
   @TargetApi(Build.VERSION_CODES.HONEYCOMB)
   protected void maybeSetSyncNowIcon(final int id) {
-    syncNowPreference.setIcon(id);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+      syncNowPreference.setIcon(id);
+    }
   }
-  
+
   private void updateSyncNowStates() {
     if (fxAccount.isCurrentlySyncing()) {
       // Currently syncing, show animated icon.
