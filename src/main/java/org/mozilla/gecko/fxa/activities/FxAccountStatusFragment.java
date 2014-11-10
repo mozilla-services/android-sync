@@ -16,7 +16,6 @@ import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
-import org.mozilla.gecko.fxa.login.State.Action;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
 import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -25,12 +24,10 @@ import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.util.HardwareUtils;
 
 import android.accounts.Account;
-import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.CheckBoxPreference;
@@ -266,6 +263,7 @@ public class FxAccountStatusFragment
     passwordsPreference.setEnabled(enabled);
     // Since we can't sync, we can't update our remote client record.
     deviceNamePreference.setEnabled(enabled);
+    syncNowPreference.setEnabled(enabled);
   }
 
   /**
@@ -491,22 +489,22 @@ public class FxAccountStatusFragment
   }
 
   // This is a helper function similar to TabsAccessor.getLastSyncedString() to calculate relative "Last synced" time span.
-  private String getLastSyncedString(long startTime) {
+  private String getLastSyncedString(final long startTime) {
     final CharSequence relativeTimeSpanString = DateUtils.getRelativeTimeSpanString(startTime);
     return getActivity().getResources().getString(R.string.fxaccount_status_last_synced, relativeTimeSpanString);  
   }
 
+  private void updateSyncNowText(final int id, final String summary) {
+    syncNowPreference.setTitle(id);
+    syncNowPreference.setSummary(summary);
+  }
+
   private void updateSyncNowStates() {
     if (fxAccount.isCurrentlySyncing()) {
-      syncNowPreference.setTitle(R.string.fxaccount_status_syncing);
-      syncNowPreference.setSummary("");
+      updateSyncNowText(R.string.fxaccount_status_syncing, "");
     } else {
-      // Disable sync now iff it is bad state
-      boolean isInGoodState = fxAccount.getState().getNeededAction() == Action.None;
-      syncNowPreference.setEnabled(isInGoodState);
-      syncNowPreference.setTitle(R.string.fxaccount_status_sync_now);
       long lastModified = clientsDataDelegate.getLastModifiedTimestamp();
-      syncNowPreference.setSummary(getLastSyncedString(lastModified));
+      updateSyncNowText(R.string.fxaccount_status_sync_now, getLastSyncedString(lastModified));
     }
   }
 
