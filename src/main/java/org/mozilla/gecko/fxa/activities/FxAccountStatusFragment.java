@@ -496,22 +496,11 @@ public class FxAccountStatusFragment
     return getActivity().getResources().getString(R.string.fxaccount_status_last_synced, relativeTimeSpanString);  
   }
 
-  @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-  protected void maybeSetSyncNowIcon(final int id) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-      syncNowPreference.setIcon(id);
-    }
-  }
-
   private void updateSyncNowStates() {
     if (fxAccount.isCurrentlySyncing()) {
-      // Currently syncing, show animated icon.
-      maybeSetSyncNowIcon(R.drawable.sync_now_animated);
       syncNowPreference.setTitle(R.string.fxaccount_status_syncing);
       syncNowPreference.setSummary("");
     } else {
-      // Sync has stopped, reset the icon and update the summary.
-      maybeSetSyncNowIcon(R.drawable.sync_now);
       // Disable sync now iff it is bad state
       boolean isInGoodState = fxAccount.getState().getNeededAction() == Action.None;
       syncNowPreference.setEnabled(isInGoodState);
