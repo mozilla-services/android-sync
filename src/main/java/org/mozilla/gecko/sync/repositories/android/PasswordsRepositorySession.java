@@ -274,7 +274,7 @@ public class PasswordsRepositorySession extends
           // Indicates a serious problem.
           delegate.onRecordStoreFailed(e, record.guid);
           return;
-
+        }
 
         long lastLocalRetrieval  = 0;      // lastSyncTimestamp?
         long lastRemoteRetrieval = 0;      // TODO: adjust for clock skew.
