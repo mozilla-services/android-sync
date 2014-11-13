@@ -111,6 +111,7 @@ public class FxAccountSchedulePolicy implements SchedulePolicy {
     // into the client-count-dependent interval.
     long interval = (otherClientsCount > 0) ? POLL_INTERVAL_MULTI_DEVICE_SEC : POLL_INTERVAL_SINGLE_DEVICE_SEC;
     requestPeriodicSync(interval);
+    this.account.setLastSyncedTimestamp(System.currentTimeMillis());
   }
 
   @Override
