@@ -95,6 +95,18 @@ public class RepoUtils {
     }
   }
 
+  /**
+   * This method exists because the behavior of cur.getString() is undefined
+   * when the value is null.
+   */
+  public static String getOptStringFromCursor(Cursor cur, String colId) {
+    int col = cur.getColumnIndex(colId);
+    if (cur.isNull(col)) {
+      return null;
+    }
+    return cur.getString(col);
+  }
+
   public static String getStringFromCursor(Cursor cur, String colId) {
     // TODO: getColumnIndexOrThrow?
     // TODO: don't look up columns by name!
