@@ -127,11 +127,11 @@ public class ClientsDatabaseAccessor {
     record.type = clientType;
 
     // Optional fields. These will either be null or strings.
-    record.formfactor = RepoUtils.getOptStringFromCursor(cur, ClientsDatabase.COL_FORMFACTOR);
-    record.os = RepoUtils.getOptStringFromCursor(cur, ClientsDatabase.COL_OS);
-    record.device = RepoUtils.getOptStringFromCursor(cur, ClientsDatabase.COL_DEVICE);
-    record.appPackage = RepoUtils.getOptStringFromCursor(cur, ClientsDatabase.COL_APP_PACKAGE);
-    record.application = RepoUtils.getOptStringFromCursor(cur, ClientsDatabase.COL_APPLICATION);
+    record.formfactor = RepoUtils.optStringFromCursor(cur, ClientsDatabase.COL_FORMFACTOR);
+    record.os = RepoUtils.optStringFromCursor(cur, ClientsDatabase.COL_OS);
+    record.device = RepoUtils.optStringFromCursor(cur, ClientsDatabase.COL_DEVICE);
+    record.appPackage = RepoUtils.optStringFromCursor(cur, ClientsDatabase.COL_APP_PACKAGE);
+    record.application = RepoUtils.optStringFromCursor(cur, ClientsDatabase.COL_APPLICATION);
 
     return record;
   }

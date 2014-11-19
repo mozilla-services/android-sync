@@ -96,18 +96,23 @@ public class RepoUtils {
   }
 
   /**
-   * This method exists because the behavior of cur.getString() is undefined
-   * when the value is null.
+   * This method exists because the behavior of <code>cur.getString()</code> is undefined
+   * when the value in the database is <code>NULL</code>.
+   * This method will return <code>null</code> in that case.
    */
-  public static String getOptStringFromCursor(Cursor cur, String colId) {
-    int col = cur.getColumnIndex(colId);
+  public static String optStringFromCursor(final Cursor cur, final String colId) {
+    final int col = cur.getColumnIndex(colId);
     if (cur.isNull(col)) {
       return null;
     }
     return cur.getString(col);
   }
 
-  public static String getStringFromCursor(Cursor cur, String colId) {
+  /**
+   * The behavior of this method when the value in the database is <code>NULL</code> is
+   * determined by the implementation of the {@link Cursor}.
+   */
+  public static String getStringFromCursor(final Cursor cur, final String colId) {
     // TODO: getColumnIndexOrThrow?
     // TODO: don't look up columns by name!
     return cur.getString(cur.getColumnIndex(colId));
