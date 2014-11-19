@@ -42,6 +42,9 @@ public class ClientRecord extends Record {
   public JSONArray protocols;
 
   // Optional fields.
+  // See <https://github.com/mozilla-services/docs/blob/master/source/sync/objectformats.rst#user-content-clients>
+  // for full formats.
+  // If a value isn't known, the field is omitted.
   public String formfactor;          // "phone", "largetablet", "smalltablet", "desktop", "laptop", "tv".
   public String os;                  // One of "Android", "Darwin", "WINNT", "Linux", "iOS", "Firefox OS".
   public String application;         // Display name, E.g., "Firefox Beta"
