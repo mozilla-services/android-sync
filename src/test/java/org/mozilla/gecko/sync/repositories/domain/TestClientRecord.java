@@ -22,6 +22,11 @@ public class TestClientRecord {
     assertEquals(false, record.deleted);
     assertEquals("Default Name", record.name);
     assertEquals(ClientRecord.CLIENT_TYPE, record.type);
+    assertTrue(null == record.os);
+    assertTrue(null == record.device);
+    assertTrue(null == record.application);
+    assertTrue(null == record.appPackage);
+    assertTrue(null == record.formfactor);
   }
 
   @Test
