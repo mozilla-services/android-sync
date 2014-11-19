@@ -24,6 +24,7 @@ public class SharedPreferencesClientsDataDelegate implements ClientsDataDelegate
     this.sharedPreferences = sharedPreferences;
     this.context = context;
 
+    // It's safe to init this multiple times.
     HardwareUtils.init(context);
   }
 
