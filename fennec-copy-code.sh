@@ -188,7 +188,7 @@ dump_mozbuild_variable $MOZBUILDFILE "sync_thirdparty_java_files =" "$HTTPLIBFIL
 echo >> $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_java_files =" "$SOURCEFILES"
 echo >> $MOZBUILDFILE
-dump_mozbuild_variable $MOZBUILDFILE "sync_generated_java_files =" $(echo "$PREPROCESS_FILES" | sed "s,^,org/mozilla/gecko/,")
+dump_mozbuild_variable $MOZBUILDFILE "sync_generated_java_files =" "$PREPROCESS_FILES"
 
 # Creating moz.build for Mozilla.
 MOZBUILDFILE=$ANDROID/tests/background/junit3/background_junit3_sources.mozbuild
