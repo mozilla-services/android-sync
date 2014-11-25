@@ -184,6 +184,10 @@
 <!ENTITY fxaccount_update_credentials_button_label 'Sign in'>
 <!ENTITY fxaccount_update_credentials_unknown_error 'Could not sign in'>
 
+<!ENTITY fxaccount_finish_migrating_header 'Sign in to finish upgrading'>
+<!ENTITY fxaccount_finish_migrating_button_label 'Finish upgrading'>
+<!ENTITY fxaccount_finish_migrating_description 'Upgrading can transfer a lot of data. It\&apos;s best to be on a WiFi network.'>
+
 <!ENTITY fxaccount_status_header2 'Firefox Account'>
 <!ENTITY fxaccount_status_signed_in_as 'Signed in as'>
 <!ENTITY fxaccount_status_auth_server 'Account server'>
