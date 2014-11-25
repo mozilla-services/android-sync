@@ -14,6 +14,30 @@ import org.mozilla.gecko.sync.Utils;
 
 public class TestStateFactory {
   @Test
+  public void testGetStateV3() throws Exception {
+    MigratedFromSync11 migrated = new MigratedFromSync11("email", "uid", true, "password");
+
+    // For the current version, we expect to read back what we wrote.
+    ExtendedJSONObject o;
+    State state;
+
+    o = migrated.toJSONObject();
+    Assert.assertEquals(3, o.getLong("version").intValue());
+    state = StateFactory.fromJSONObject(migrated.stateLabel, o);
+    Assert.assertEquals(StateLabel.MigratedFromSync11, state.stateLabel);
+    Assert.assertEquals(o, state.toJSONObject());
+
+    // Null passwords are OK.
+    MigratedFromSync11 migratedNullPassword = new MigratedFromSync11("email", "uid", true, null);
+
+    o = migratedNullPassword.toJSONObject();
+    Assert.assertEquals(3, o.getLong("version").intValue());
+    state = StateFactory.fromJSONObject(migratedNullPassword.stateLabel, o);
+    Assert.assertEquals(StateLabel.MigratedFromSync11, state.stateLabel);
+    Assert.assertEquals(o, state.toJSONObject());
+  }
+
+  @Test
   public void testGetStateV2() throws Exception {
     byte[] sessionToken = Utils.generateRandomBytes(32);
     byte[] kA = Utils.generateRandomBytes(32);
@@ -28,13 +52,13 @@ public class TestStateFactory {
     State state;
 
     o = married.toJSONObject();
-    Assert.assertEquals(2, o.getLong("version").intValue());
+    Assert.assertEquals(3, o.getLong("version").intValue());
     state = StateFactory.fromJSONObject(married.stateLabel, o);
     Assert.assertEquals(StateLabel.Married, state.stateLabel);
     Assert.assertEquals(o, state.toJSONObject());
 
     o = cohabiting.toJSONObject();
-    Assert.assertEquals(2, o.getLong("version").intValue());
+    Assert.assertEquals(3, o.getLong("version").intValue());
     state = StateFactory.fromJSONObject(cohabiting.stateLabel, o);
     Assert.assertEquals(StateLabel.Cohabiting, state.stateLabel);
     Assert.assertEquals(o, state.toJSONObject());
