@@ -703,6 +703,11 @@ public class FxAccountStatusFragment
         State state = fxAccount.getState();
         fxAccount.setState(state.makeDoghouseState());
         refresh();
+      } else if ("debug_migrated_from_sync11".equals(key)) {
+        Logger.info(LOG_TAG, "Moving to MigratedFromSync11 state: Requiring password.");
+        State state = fxAccount.getState();
+        fxAccount.setState(state.makeMigratedFromSync11State(null));
+        refresh();
       } else {
         return false;
       }
@@ -729,7 +734,8 @@ public class FxAccountStatusFragment
         "debug_force_sync",
         "debug_forget_certificate",
         "debug_require_password",
-        "debug_require_upgrade" };
+        "debug_require_upgrade",
+        "debug_migrated_from_sync11" };
     for (String debugKey : debugKeys) {
       final Preference button = ensureFindPreference(debugKey);
       button.setTitle(debugKey); // Not very friendly, but this is for debugging only!
