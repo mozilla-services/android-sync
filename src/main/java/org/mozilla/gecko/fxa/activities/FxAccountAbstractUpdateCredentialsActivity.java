@@ -23,6 +23,7 @@ import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.tasks.FxAccountSignInTask;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -142,6 +143,12 @@ public abstract class FxAccountAbstractUpdateCredentialsActivity extends FxAccou
       }
 
       setResult(RESULT_OK);
+
+      // Maybe show success activity.
+      final Intent successIntent = makeSuccessIntent(email, result);
+      if (successIntent != null) {
+        startActivity(successIntent);
+      }
       finish();
     }
   }

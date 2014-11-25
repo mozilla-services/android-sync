@@ -6,8 +6,11 @@ package org.mozilla.gecko.fxa.activities;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
+
+import android.content.Intent;
 
 /**
  * Activity which displays a screen for inputting the password and finishing
@@ -38,5 +41,14 @@ public class FxAccountFinishMigratingActivity extends FxAccountAbstractUpdateCre
       return;
     }
     emailEdit.setText(fxAccount.getEmail());
+  }
+
+  @Override
+  public Intent makeSuccessIntent(String email, LoginResponse result) {
+    final Intent successIntent = new Intent(this, FxAccountMigrationFinishedActivity.class);
+    // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
+    // the soft keyboard not being shown for the started activity. Why, Android, why?
+    successIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    return successIntent;
   }
 }

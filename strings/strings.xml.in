@@ -170,6 +170,9 @@
 <string name="fxaccount_account_verified_sub_header">&fxaccount_account_verified_sub_header;</string>
 <string name="fxaccount_account_verified_description">&fxaccount_account_verified_description2;</string>
 
+<string name="fxaccount_migration_finished_header">&fxaccount_migration_finished_header;</string>
+<string name="fxaccount_migration_finished_description">&fxaccount_account_verified_description2;</string>
+
 <string name="fxaccount_update_credentials_header">&fxaccount_update_credentials_header;</string>
 <string name="fxaccount_update_credentials_button_label">&fxaccount_update_credentials_button_label;</string>
 <string name="fxaccount_update_credentials_unknown_error">&fxaccount_update_credentials_unknown_error;</string>

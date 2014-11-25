@@ -6,8 +6,11 @@ package org.mozilla.gecko.fxa.activities;
 
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
+
+import android.content.Intent;
 
 /**
  * Activity which displays a screen for updating the local password.
@@ -37,5 +40,13 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractUpdateC
       return;
     }
     emailEdit.setText(fxAccount.getEmail());
+  }
+
+  @Override
+  public Intent makeSuccessIntent(String email, LoginResponse result) {
+    // We don't show anything after updating credentials. The updating Activity
+    // sets its result to OK and the user is returned to the previous task,
+    // which is often the Status Activity.
+    return null;
   }
 }
