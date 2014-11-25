@@ -208,9 +208,7 @@ public class FxAccountStatusFragment
     }
 
     if (preference == needsFinishMigratingPreference) {
-      // XXX needs to launch correct Activity, with appropriate extras.
-      // Intent intent = new Intent(getActivity(), FxAccountFinishMigratingActivity.class);
-      Intent intent = new Intent(getActivity(), FxAccountUpdateCredentialsActivity.class);
+      final Intent intent = new Intent(getActivity(), FxAccountFinishMigratingActivity.class);
       final Bundle extras = getExtrasForAccount();
       if (extras != null) {
         intent.putExtras(extras);

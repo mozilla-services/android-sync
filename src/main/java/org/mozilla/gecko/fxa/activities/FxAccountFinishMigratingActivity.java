@@ -10,13 +10,14 @@ import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 
 /**
- * Activity which displays a screen for updating the local password.
+ * Activity which displays a screen for inputting the password and finishing
+ * migrating to Firefox Accounts / Sync 1.5.
  */
-public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractUpdateCredentialsActivity {
-  protected static final String LOG_TAG = FxAccountUpdateCredentialsActivity.class.getSimpleName();
+public class FxAccountFinishMigratingActivity extends FxAccountAbstractUpdateCredentialsActivity {
+  protected static final String LOG_TAG = FxAccountFinishMigratingActivity.class.getSimpleName();
 
-  public FxAccountUpdateCredentialsActivity() {
-    super(R.layout.fxaccount_update_credentials);
+  public FxAccountFinishMigratingActivity() {
+    super(R.layout.fxaccount_finish_migrating);
   }
 
   @Override
@@ -30,8 +31,8 @@ public class FxAccountUpdateCredentialsActivity extends FxAccountAbstractUpdateC
       return;
     }
     final State state = fxAccount.getState();
-    if (state.getStateLabel() != StateLabel.Separated) {
-      Logger.warn(LOG_TAG, "Cannot update credentials from Firefox Account in state: " + state.getStateLabel());
+    if (state.getStateLabel() != StateLabel.MigratedFromSync11) {
+      Logger.warn(LOG_TAG, "Cannot finish migrating from Firefox Account in state: " + state.getStateLabel());
       setResult(RESULT_CANCELED);
       finish();
       return;

@@ -8,6 +8,7 @@ import org.mozilla.gecko.BrowserLocaleManager;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.fxa.activities.FxAccountFinishMigratingActivity;
 import org.mozilla.gecko.fxa.activities.FxAccountStatusActivity;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.State;
@@ -73,8 +74,7 @@ public class FxAccountNotificationManager {
     if (action == Action.NeedsFinishMigrating) {
       title = context.getResources().getString(R.string.fxaccount_sync_finish_migrating_notification_title);
       text = context.getResources().getString(R.string.fxaccount_sync_finish_migrating_notification_text, state.email);
-      // Need to launch the correct Activity, with username/password as appropriate.
-      notificationIntent = new Intent(context, FxAccountStatusActivity.class);
+      notificationIntent = new Intent(context, FxAccountFinishMigratingActivity.class);
     } else {
       title = context.getResources().getString(R.string.fxaccount_sync_sign_in_error_notification_title);
       text = context.getResources().getString(R.string.fxaccount_sync_sign_in_error_notification_text, state.email);
