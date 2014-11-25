@@ -180,6 +180,8 @@
 <!ENTITY fxaccount_account_verified_sub_header 'Account verified'>
 <!ENTITY fxaccount_account_verified_description2 'Your data will begin syncing momentarily.'>
 
+<!ENTITY fxaccount_migration_finished_header 'Upgrade finished'>
+
 <!ENTITY fxaccount_update_credentials_header 'Sign in'>
 <!ENTITY fxaccount_update_credentials_button_label 'Sign in'>
 <!ENTITY fxaccount_update_credentials_unknown_error 'Could not sign in'>
