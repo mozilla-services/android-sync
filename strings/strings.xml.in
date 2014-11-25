@@ -224,3 +224,6 @@
 <string name="fxaccount_remove_account_dialog_message">&fxaccount_remove_account_dialog_message;</string>
 <string name="fxaccount_remove_account_toast">&fxaccount_remove_account_toast;</string>
 <string name="fxaccount_remove_account_menu_item">&fxaccount_remove_account_menu_item;</string>
+
+<string name="fxaccount_sync_finish_migrating_notification_title">&fxaccount_sync_finish_migrating_notification_title;</string>
+<string name="fxaccount_sync_finish_migrating_notification_text">&fxaccount_sync_finish_migrating_notification_text;</string>
