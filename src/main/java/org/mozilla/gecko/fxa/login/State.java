@@ -24,6 +24,7 @@ public abstract class State {
     NeedsUpgrade,
     NeedsPassword,
     NeedsVerification,
+    NeedsFinishMigrating,
     None,
   }
 

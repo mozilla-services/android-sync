@@ -23,6 +23,6 @@ public class MigratedFromSync11 extends State {
 
   @Override
   public Action getNeededAction() {
-    return Action.NeedsPassword;
+    return Action.NeedsFinishMigrating;
   }
 }
