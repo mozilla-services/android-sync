@@ -78,4 +78,9 @@ public class BrowserLocaleManager implements LocaleManager {
     public boolean isEnabled() {
       return false;
     }
+
+    @Override
+    public String getFallbackLocaleTag() {
+      return "en-US";
+    }
 }

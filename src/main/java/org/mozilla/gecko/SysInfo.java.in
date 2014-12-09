@@ -39,7 +39,7 @@ public final class SysInfo {
     // these.
     private static volatile int cpuCount = -1;
 
-    private static volatile int sTotalRAM = -1;
+    private static volatile int totalRAM = -1;
 
     /**
      * Get the number of cores on the device.
@@ -141,8 +141,8 @@ public final class SysInfo {
      * @return 0 if a problem occurred, or memory size in MB.
      */
     public static int getMemSize() {
-        if (sTotalRAM >= 0) {
-            return sTotalRAM;
+        if (totalRAM >= 0) {
+            return totalRAM;
         }
 
         // This is the string "MemTotal" that we're searching for in the buffer.
@@ -156,9 +156,9 @@ public final class SysInfo {
                 for (int i = 0; i < length; i++) {
                     if (matchMemText(buffer, i, length, MEMTOTAL)) {
                         i += 8;
-                        sTotalRAM = extractMemValue(buffer, i, length) / 1024;
-                        Log.d(LOG_TAG, "System memory: " + sTotalRAM + "MB.");
-                        return sTotalRAM;
+                        totalRAM = extractMemValue(buffer, i, length) / 1024;
+                        Log.d(LOG_TAG, "System memory: " + totalRAM + "MB.");
+                        return totalRAM;
                     }
                 }
             } finally {
@@ -166,11 +166,11 @@ public final class SysInfo {
             }
 
             Log.w(LOG_TAG, "Did not find MemTotal line in /proc/meminfo.");
-            return sTotalRAM = 0;
+            return totalRAM = 0;
         } catch (FileNotFoundException f) {
-            return sTotalRAM = 0;
+            return totalRAM = 0;
         } catch (IOException e) {
-            return sTotalRAM = 0;
+            return totalRAM = 0;
         }
     }
 
