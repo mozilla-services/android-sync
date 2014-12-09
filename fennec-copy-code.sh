@@ -80,7 +80,7 @@ SOURCEFILES=$(find \
   -and -not -name 'RobocopTarget.java' \
   -and -not -name 'SyncConstants.java' \
   -and -not -name 'BrowserLocaleManager.java' \
-  -and -not -name 'LocaleAware.java' \
+  -and -not -name 'Locales.java' \
   -and -not -name 'LocaleManager.java' \
   -and -not -path '*testhelpers*' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
@@ -93,7 +93,7 @@ rsync --archive --cvs-exclude --delete \
   --exclude 'GlobalConstants.java' \
   --exclude 'HealthReportConstants.java' \
   --exclude 'BrowserLocaleManager.java' \
-  --exclude 'LocaleAware.java' \
+  --exclude 'Locales.java' \
   --exclude 'LocaleManager.java' \
   --exclude '*.in' \
   --exclude '*testhelper*' \
