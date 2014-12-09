@@ -148,7 +148,7 @@ public class HealthReportProvider extends ContentProvider {
       Object object = values.get("value");
       if (object instanceof Integer ||
           object instanceof Long) {
-        storage.recordDailyDiscrete(env, day, field.getID(), ((Integer) object).intValue());
+        storage.recordDailyDiscrete(env, day, field.getID(), ((Number) object).intValue());
       } else if (object instanceof String) {
         storage.recordDailyDiscrete(env, day, field.getID(), (String) object);
       } else {
@@ -189,7 +189,7 @@ public class HealthReportProvider extends ContentProvider {
       Object object = values.get("value");
       if (object instanceof Integer ||
           object instanceof Long) {
-        storage.recordDailyLast(env, day, field.getID(), (Integer) object);
+        storage.recordDailyLast(env, day, field.getID(), ((Number) object).intValue());
       } else if (object instanceof String) {
         storage.recordDailyLast(env, day, field.getID(), (String) object);
       } else {

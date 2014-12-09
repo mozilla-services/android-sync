@@ -382,8 +382,8 @@ public class BookmarkRecord extends Record {
   private boolean jsonArrayStringsEqual(JSONArray a, JSONArray b) {
     // Check for nulls
     if (a == b) return true;
-    if (a == null && b != null) return false;
-    if (a != null && b == null) return false;
+    if (a == null) return false;
+    if (b == null) return false;
     return RepoUtils.stringsEqual(a.toJSONString(), b.toJSONString());
   }
 

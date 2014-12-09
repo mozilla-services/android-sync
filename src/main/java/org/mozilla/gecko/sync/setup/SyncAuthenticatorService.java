@@ -221,8 +221,7 @@ public class SyncAuthenticatorService extends Service {
         throws NetworkErrorException {
       Bundle result = super.getAccountRemovalAllowed(response, account);
 
-      if (result == null ||
-          !result.containsKey(AccountManager.KEY_BOOLEAN_RESULT) ||
+      if (!result.containsKey(AccountManager.KEY_BOOLEAN_RESULT) ||
           result.containsKey(AccountManager.KEY_INTENT)) {
         return result;
       }

@@ -461,9 +461,9 @@ public class FormHistoryRepositorySession extends
     synchronized (recordsBufferMonitor) {
       if (recordsBuffer.size() > 0) {
         final ContentValues[] outgoing = recordsBuffer.toArray(new ContentValues[recordsBuffer.size()]);
-        recordsBuffer = new ArrayList<ContentValues>();
+        recordsBuffer = new ArrayList<>();
 
-        if (outgoing == null || outgoing.length == 0) {
+        if (outgoing.length == 0) {
           Logger.debug(LOG_TAG, "No form history items to insert; returning immediately.");
           return;
         }
@@ -617,10 +617,6 @@ public class FormHistoryRepositorySession extends
             }
 
             Logger.trace(LOG_TAG, "Remote is older, local is not deleted. Ignoring.");
-            if (!locallyModified) {
-              Logger.warn(LOG_TAG, "Inconsistency: old remote record is deleted, but local record not modified!");
-              // Ensure that this is tracked for upload.
-            }
             return;
           }
           // End deletion logic.
@@ -672,14 +668,9 @@ public class FormHistoryRepositorySession extends
           }
 
           Logger.trace(LOG_TAG, "Remote is older, local is not deleted. Ignoring.");
-          if (!locallyModified) {
-            Logger.warn(LOG_TAG, "Inconsistency: old remote record is not deleted, but local record not modified!");
-          }
-          return;
         } catch (Exception e) {
           Logger.error(LOG_TAG, "Store failed for " + record.guid, e);
           delegate.onRecordStoreFailed(e, record.guid);
-          return;
         }
       }
     };

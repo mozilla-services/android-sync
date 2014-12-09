@@ -256,10 +256,15 @@ public class RepoUtils {
 
   public static boolean stringsEqual(String a, String b) {
     // Check for nulls
-    if (a == b) return true;
-    if (a == null && b != null) return false;
-    if (a != null && b == null) return false;
-    
+    if (a == b) {
+        return true;
+    }
+
+    // Since a != b, if either is null the other is not, so...
+    if (a == null || b == null) {
+        return false;
+    }
+
     return a.equals(b);
   }
 

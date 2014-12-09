@@ -137,9 +137,6 @@ public class FennecTabsRepository extends Repository {
       if (tabsProvider == null) {
         throw new IllegalArgumentException("tabsProvider was null.");
       }
-      if (tabsHelper == null) {
-        throw new IllegalArgumentException("tabsHelper was null.");
-      }
 
       final String positionAscending = BrowserContract.Tabs.POSITION + " ASC";
 

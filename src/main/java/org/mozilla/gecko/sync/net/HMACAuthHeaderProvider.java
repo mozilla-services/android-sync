@@ -166,9 +166,7 @@ public class HMACAuthHeaderProvider implements AuthHeaderProvider {
                "nonce=\""  + nonce           + "\", " +
                "mac=\""    + macString       + "\"";
 
-    if (extra != null) {
-      h += ", ext=\"" + extra + "\"";
-    }
+    h += ", ext=\"" + extra + "\"";
 
     Header header = new BasicHeader("Authorization", h);
 
