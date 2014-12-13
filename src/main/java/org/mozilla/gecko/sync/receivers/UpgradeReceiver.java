@@ -4,9 +4,9 @@
 
 package org.mozilla.gecko.sync.receivers;
 
-import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.sync.CredentialException;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
@@ -27,6 +27,13 @@ public class UpgradeReceiver extends BroadcastReceiver {
   @Override
   public void onReceive(final Context context, Intent intent) {
     Logger.debug(LOG_TAG, "Broadcast received.");
+
+    // This unpickles any pickled accounts.
+    if (!SyncAccounts.syncAccountsExist(context)) {
+      Logger.info(LOG_TAG, "No Sync Accounts found; not upgrading anything.");
+      return;
+    }
+
     // Should filter for specific MY_PACKAGE_REPLACED intent, but Android does
     // not expose it.
     ThreadPool.run(new Runnable() {
