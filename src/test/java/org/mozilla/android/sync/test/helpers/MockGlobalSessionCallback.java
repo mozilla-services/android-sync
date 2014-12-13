@@ -44,6 +44,7 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   public boolean calledInformNodeAssigned = false;
   public boolean calledInformUnauthorizedResponse = false;
   public boolean calledInformUpgradeRequiredResponse = false;
+  public boolean calledInformMigrated = false;
   public URI calledInformNodeAuthenticationFailedClusterURL = null;
   public URI calledInformNodeAssignedOldClusterURL = null;
   public URI calledInformNodeAssignedNewClusterURL = null;
@@ -104,6 +105,11 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   @Override
   public void informUpgradeRequiredResponse(GlobalSession session) {
     this.calledInformUpgradeRequiredResponse = true;
+  }
+
+  @Override
+  public void informMigrated(GlobalSession session) {
+    this.calledInformMigrated = true;
   }
 
   @Override
