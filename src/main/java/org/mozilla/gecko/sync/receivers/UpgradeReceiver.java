@@ -47,6 +47,14 @@ public class UpgradeReceiver extends BroadcastReceiver {
             SyncAccounts.setSyncAutomatically(a, true);
             accountManager.setUserData(a, Constants.DATA_ENABLE_ON_UPGRADE, "0");
           }
+
+          // If we are both set to enable after upgrade, and to be removed: we
+          // enable after upgrade first and then we try to remove. If removal
+          // fails, since we enabled sync, we'll try again the next time we
+          // sync, until we (eventually) remove the account.
+          if ("1".equals(accountManager.getUserData(a, Constants.DATA_SHOULD_BE_REMOVED))) {
+            accountManager.removeAccount(a, null, null);
+          }
         }
       }
     });
