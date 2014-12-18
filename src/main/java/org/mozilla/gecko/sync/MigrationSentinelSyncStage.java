@@ -192,6 +192,7 @@ public class MigrationSentinelSyncStage extends AbstractNonRepositorySyncStage {
 
           @Override
           public void handleRequestFailure(SyncStorageResponse response) {
+            setTimestamp(response.normalizedWeaveTimestamp());
             if (response.getStatusCode() == 404) {
               // Great!
               onCompletedUneventfully();
