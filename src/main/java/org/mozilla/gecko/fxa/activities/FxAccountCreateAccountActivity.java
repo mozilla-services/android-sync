@@ -246,7 +246,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         final Map<String, Boolean> engines = chooseCheckBox.isChecked()
             ? selectedEngines
             : null;
-        if (FxAccountAgeLockoutHelper.passesAgeCheck(yearEdit.getText().toString(), yearItems)) {
+        if (FxAccountAgeLockoutHelper.passesAgeCheck(1, 0, yearEdit.getText().toString(), yearItems)) {
           FxAccountUtils.pii(LOG_TAG, "Passed age check.");
           createAccount(email, password, engines);
         } else {

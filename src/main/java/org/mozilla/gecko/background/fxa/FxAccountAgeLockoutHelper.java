@@ -46,31 +46,40 @@ public class FxAccountAgeLockoutHelper {
   }
 
   /**
-   * Return true if the age of somebody born in <code>yearOfBirth</code> is
+   * Return true if the age of somebody born in <code>yearOfBirth/monthIndex/dayOfBirth</code> is
    * definitely old enough to create an account.
-   * <p>
-   * This errs towards locking out users who might be old enough, but are not
-   * definitely old enough.
    *
    * @param yearOfBirth
-   * @return true if somebody born in <code>yearOfBirth</code> is definitely old
+   * @param monthIndex, zero based month index
+   * @param dayOfBirth
+   * @return true if somebody born in <code>yearOfBirth/monthIndex/dayOfBirth</code> is definitely old
    *         enough.
    */
-  public static boolean passesAgeCheck(int yearOfBirth) {
-    int thisYear = Calendar.getInstance().get(Calendar.YEAR);
+  public static boolean passesAgeCheck(int yearOfBirth, Integer monthIndex, Integer dayOfBirth) {
+	Calendar cal = Calendar.getInstance();
+	int thisYear = cal.get(Calendar.YEAR);
+	int thisMonth = cal.get(Calendar.MONTH);
+	int thisDate = cal.get(Calendar.DATE);
     int approximateAge = thisYear - yearOfBirth;
+
+    // Adjust age to account for month and day.
+    if ((thisMonth < monthIndex) || ((thisMonth == monthIndex) && (thisDate < dayOfBirth))) {
+      approximateAge--;
+    }
+
     boolean oldEnough = approximateAge >= FxAccountConstants.MINIMUM_AGE_TO_CREATE_AN_ACCOUNT;
     if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
       FxAccountUtils.pii(LOG_TAG, "Age check " + (oldEnough ? "passes" : "fails") +
           ": age is " + approximateAge + " = " + thisYear + " - " + yearOfBirth);
     }
+
     return oldEnough;
   }
 
   /**
    * Custom function for UI use only.
    */
-  public static boolean passesAgeCheck(String yearText, String[] yearItems) {
+  public static boolean passesAgeCheck(int dayOfBirth, int monthIndex, String yearText, String[] yearItems) {
     if (yearText == null) {
       throw new IllegalArgumentException("yearText must not be null");
     }
@@ -91,6 +100,7 @@ public class FxAccountAgeLockoutHelper {
       FxAccountUtils.pii(LOG_TAG, "Passed age check: year text was found in item list but was not a number.");
       return true;
     }
-    return passesAgeCheck(yearOfBirth);
+
+    return passesAgeCheck(yearOfBirth, monthIndex, dayOfBirth);
   }
 }
