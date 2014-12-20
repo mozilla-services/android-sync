@@ -79,7 +79,7 @@ public class FxAccountAgeLockoutHelper {
   /**
    * Custom function for UI use only.
    */
-  public static boolean passesAgeCheck(int dayOfBirth, int monthIndex, String yearText, String[] yearItems) {
+  public static boolean passesAgeCheck(Integer dayOfBirth, Integer monthIndex, String yearText, String[] yearItems) {
     if (yearText == null) {
       throw new IllegalArgumentException("yearText must not be null");
     }
