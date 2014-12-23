@@ -197,7 +197,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
           @Override
           public void onClick(DialogInterface dialog, int which) {
             yearEdit.setText(yearItems[which]);
-            mayBeEnableMonthAndDayButtons();
+            maybeEnableMonthAndDayButtons();
             updateButtonState();
           }
         };
@@ -217,16 +217,19 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     monthDaycombo.setVisibility(View.GONE);
     dayEdit.setEnabled(false);
 
-     // Populate month names.
-     Map<String, Integer> monthNamesMap = Calendar.getInstance().getDisplayNames(Calendar.MONTH, Calendar.SHORT, Locale.getDefault());
-     monthItems = new String[monthNamesMap.size()];
-     for (Map.Entry<String, Integer> entry : monthNamesMap.entrySet()) {
-       monthItems[entry.getValue()] = entry.getKey();
-     }
-     createMonthEdit();
+    // Populate month names.
+    final Calendar calendar = Calendar.getInstance();
+    final Map<String, Integer> monthNamesMap = calendar.getDisplayNames(Calendar.MONTH, Calendar.SHORT, Locale.getDefault());
+    monthItems = new String[monthNamesMap.size()];
+    for (Map.Entry<String, Integer> entry : monthNamesMap.entrySet()) {
+      monthItems[entry.getValue()] = entry.getKey();
+    }
+    createMonthEdit();
   }
 
   protected void createMonthEdit() {
+    monthEdit.setText("");
+    monthEdit.setTag(null);
     monthEdit.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -251,6 +254,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
   protected void createDayEdit(final int monthIndex) {
     dayEdit.setText("");
+    dayEdit.setTag(null);
     dayEdit.setEnabled(true);
 
     String yearText = yearEdit.getText().toString();
@@ -266,7 +270,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     Calendar c = Calendar.getInstance();
     c.set(birthYear, monthIndex, 1);
     LinkedList<String> days = new LinkedList<String>();
-    for (int i = 1; i <= c.getActualMaximum(Calendar.DATE); i++) {
+    for (int i = c.getActualMinimum(Calendar.DAY_OF_MONTH); i <= c.getActualMaximum(Calendar.DAY_OF_MONTH); i++) {
       days.add(Integer.toString(i));
     }
     dayItems = days.toArray(new String[days.size()]);
@@ -292,19 +296,19 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     });
   }
 
-  private void mayBeEnableMonthAndDayButtons() {
-    if (FxAccountAgeLockoutHelper.passesAgeCheck(1, 0, yearEdit.getText().toString(), getYearItems())) {
-      // Reset month and day to default values.
-      monthEdit.setTag(0);
-      dayEdit.setTag(1);
+  private void maybeEnableMonthAndDayButtons() {
+    // Check if the age check passes on 31st December of the selected year.
+    if (FxAccountAgeLockoutHelper.passesAgeCheck(31, 11, yearEdit.getText().toString(), getYearItems())) {
+      monthEdit.setTag(11);
+      dayEdit.setTag(31);
       return;
     }
 
     // Show Month and date field.
     yearEdit.setVisibility(View.GONE);
     monthDaycombo.setVisibility(View.VISIBLE);
-    monthEdit.setText("");
-    dayEdit.setText("");
+    monthEdit.setTag(null);
+    dayEdit.setTag(null);
   }
 
   public void createAccount(String email, String password, Map<String, Boolean> engines) {
@@ -338,8 +342,8 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   protected boolean shouldButtonBeEnabled() {
     return super.shouldButtonBeEnabled() &&
         (yearEdit.length() > 0) &&
-        (monthEdit.length() > 0) &&
-        (dayEdit.length() > 0);
+        (monthEdit.getTag() != null) &&
+        (dayEdit.getTag() != null);
   }
 
   protected void createCreateAccountButton() {
@@ -355,7 +359,15 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         final Map<String, Boolean> engines = chooseCheckBox.isChecked()
             ? selectedEngines
             : null;
-        if (FxAccountAgeLockoutHelper.passesAgeCheck((Integer) dayEdit.getTag(),(Integer) monthEdit.getTag(),
+        if (dayEdit.getTag() == null) {
+          throw new IllegalArgumentException("dayEdit getTag must not be null");
+        }        
+        if (monthEdit.getTag() == null) {
+          throw new IllegalArgumentException("monthEdit getTag must not be null");
+        }
+        int dayOfBirth = (Integer) dayEdit.getTag();
+        int zeroBasedMonthOfBirth = (Integer) monthEdit.getTag();
+        if (FxAccountAgeLockoutHelper.passesAgeCheck(dayOfBirth, zeroBasedMonthOfBirth,
             yearEdit.getText().toString(), yearItems)) {
           FxAccountUtils.pii(LOG_TAG, "Passed age check.");
           createAccount(email, password, engines);

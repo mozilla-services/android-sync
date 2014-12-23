@@ -46,24 +46,26 @@ public class FxAccountAgeLockoutHelper {
   }
 
   /**
-   * Return true if the age of somebody born in <code>yearOfBirth/monthIndex/dayOfBirth</code> is
+   * Return true if the age of somebody born in <code>yearOfBirth/zeroBasedMonthOfBirth/dayOfBirth</code> is
    * definitely old enough to create an account.
    *
-   * @param yearOfBirth
-   * @param monthIndex, zero based month index
    * @param dayOfBirth
+   * @param zeroBasedMonthOfBirth
+   * @param yearOfBirth
    * @return true if somebody born in <code>yearOfBirth/monthIndex/dayOfBirth</code> is definitely old
    *         enough.
    */
-  public static boolean passesAgeCheck(int yearOfBirth, Integer monthIndex, Integer dayOfBirth) {
-	Calendar cal = Calendar.getInstance();
-	int thisYear = cal.get(Calendar.YEAR);
-	int thisMonth = cal.get(Calendar.MONTH);
-	int thisDate = cal.get(Calendar.DATE);
+  public static boolean passesAgeCheck(final int dayOfBirth, final int zeroBasedMonthOfBirth, final int yearOfBirth) {
+    final Calendar cal = Calendar.getInstance();
+    final int thisYear = cal.get(Calendar.YEAR);
+    // Get current zero based month index.
+    final int thisMonth = cal.get(Calendar.MONTH);
+    // Get current one based day of the month.
+    final int thisDate = cal.get(Calendar.DAY_OF_MONTH);
     int approximateAge = thisYear - yearOfBirth;
 
     // Adjust age to account for month and day.
-    if ((thisMonth < monthIndex) || ((thisMonth == monthIndex) && (thisDate < dayOfBirth))) {
+    if ((thisMonth < zeroBasedMonthOfBirth) || ((thisMonth == zeroBasedMonthOfBirth) && (thisDate < dayOfBirth))) {
       approximateAge--;
     }
 
@@ -79,7 +81,7 @@ public class FxAccountAgeLockoutHelper {
   /**
    * Custom function for UI use only.
    */
-  public static boolean passesAgeCheck(Integer dayOfBirth, Integer monthIndex, String yearText, String[] yearItems) {
+  public static boolean passesAgeCheck(int dayOfBirth, int monthIndex, String yearText, String[] yearItems) {
     if (yearText == null) {
       throw new IllegalArgumentException("yearText must not be null");
     }
@@ -101,6 +103,6 @@ public class FxAccountAgeLockoutHelper {
       return true;
     }
 
-    return passesAgeCheck(yearOfBirth, monthIndex, dayOfBirth);
+    return passesAgeCheck(dayOfBirth, monthIndex, yearOfBirth);
   }
 }
