@@ -4,6 +4,7 @@
 package org.mozilla.gecko.background.healthreport;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.json.JSONException;
@@ -11,6 +12,21 @@ import org.json.JSONObject;
 import org.mozilla.gecko.background.helpers.FakeProfileTestCase;
 
 public class TestProfileInformationCache extends FakeProfileTestCase {
+
+  public final void testEmptyFile() throws Exception {
+    final File emptyFile = File.createTempFile("empty", "pic", this.fakeProfileDirectory);
+    final FileOutputStream s = new FileOutputStream(emptyFile);
+    try {
+        s.write(new byte[0]);
+    } finally {
+        s.close();
+    }
+
+    final MockProfileInformationCache cache = new MockProfileInformationCache(emptyFile);
+
+    // Should not throw.
+    assertNull(cache.readJSON());
+  }
 
   public final void testInitState() throws IOException {
     MockProfileInformationCache cache = new MockProfileInformationCache(this.fakeProfileDirectory.getAbsolutePath());
