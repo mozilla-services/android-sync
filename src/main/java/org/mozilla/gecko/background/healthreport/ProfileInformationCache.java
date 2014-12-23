@@ -114,6 +114,7 @@ public class ProfileInformationCache implements ProfileInformationProvider {
    */
   private boolean fromJSON(JSONObject object) throws JSONException {
     if (object == null) {
+      Logger.debug(LOG_TAG, "Can't load restore PIC from null JSON object.");
       return false;
     }
 
