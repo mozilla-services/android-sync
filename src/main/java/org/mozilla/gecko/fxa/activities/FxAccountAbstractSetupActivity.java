@@ -565,4 +565,8 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     ensureFindViewById(null, R.id.account_server_layout, "account server layout").setVisibility(visibility);
     ensureFindViewById(null, R.id.sync_server_layout, "sync server layout").setVisibility(visibility);
   }
+
+  protected Map<String, String> getQueryParameters() {
+    return null;
+  }
 }

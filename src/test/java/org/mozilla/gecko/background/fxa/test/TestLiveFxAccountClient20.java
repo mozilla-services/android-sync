@@ -3,6 +3,8 @@
 
 package org.mozilla.gecko.background.fxa.test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 import org.junit.Assert;
@@ -42,6 +44,12 @@ public class TestLiveFxAccountClient20 {
 
   protected static final String TEST_EMAIL_TURKISH = "Atatürk@turkish.abcçdefgğhıijklmnoöprsştuüvyz.org";
   protected static final String TEST_PASSWORD_TURKISH = "İIiı";
+
+  protected static final Map<String, String> TEST_QUERY_PARAMETERS;
+  static {
+    TEST_QUERY_PARAMETERS = new HashMap<>();
+    TEST_QUERY_PARAMETERS.put("service", "test");
+  }
 
   public FxAccountClient20 client;
 
@@ -85,7 +93,7 @@ public class TestLiveFxAccountClient20 {
         @Override
         public void run() {
           boolean wantVerified = preVerified == VerificationState.PREVERIFIED;
-          client.createAccount(emailUTF8, quickStretchedPW, getKeys, wantVerified, "test", new BaseDelegate<LoginResponse>(waitHelper) {
+          client.createAccount(emailUTF8, quickStretchedPW, getKeys, wantVerified, TEST_QUERY_PARAMETERS, new BaseDelegate<LoginResponse>(waitHelper) {
             @Override
             public void handleSuccess(LoginResponse result) {
               responses[0] = result;
@@ -146,7 +154,7 @@ public class TestLiveFxAccountClient20 {
       waitHelper.performWait(new Runnable() {
         @Override
         public void run() {
-          client.login(emailUTF8, quickStretchedPW, getKeys, new BaseDelegate<LoginResponse>(waitHelper) {
+          client.login(emailUTF8, quickStretchedPW, getKeys, TEST_QUERY_PARAMETERS, new BaseDelegate<LoginResponse>(waitHelper) {
             @Override
             public void handleSuccess(LoginResponse response) {
               responses[0] = response;
@@ -169,7 +177,7 @@ public class TestLiveFxAccountClient20 {
       waitHelper.performWait(new Runnable() {
         @Override
         public void run() {
-          client.login(emailUTF8, passwordStretcher, getKeys, new BaseDelegate<LoginResponse>(waitHelper) {
+          client.login(emailUTF8, passwordStretcher, getKeys, TEST_QUERY_PARAMETERS, new BaseDelegate<LoginResponse>(waitHelper) {
             @Override
             public void handleSuccess(LoginResponse response) {
               responses[0] = response;
