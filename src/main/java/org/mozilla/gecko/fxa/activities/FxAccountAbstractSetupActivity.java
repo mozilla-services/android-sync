@@ -7,6 +7,7 @@ package org.mozilla.gecko.fxa.activities;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -567,6 +568,8 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   }
 
   protected Map<String, String> getQueryParameters() {
-    return null;
+    final Map<String, String> queryParameters = new HashMap<>();
+    queryParameters.put("service", "sync");
+    return queryParameters;
   }
 }
