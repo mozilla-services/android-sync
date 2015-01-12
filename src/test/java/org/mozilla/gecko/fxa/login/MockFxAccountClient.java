@@ -107,7 +107,7 @@ public class MockFxAccountClient implements FxAccountClient {
   }
 
   @Override
-  public void loginAndGetKeys(byte[] emailUTF8, final PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> requestDelegate) {
+  public void loginAndGetKeys(byte[] emailUTF8, final PasswordStretcher passwordStretcher, final Map<String, String> queryParameters, RequestDelegate<LoginResponse> requestDelegate) {
     User user;
     try {
       user = users.get(new String(emailUTF8, "UTF-8"));
@@ -198,7 +198,7 @@ public class MockFxAccountClient implements FxAccountClient {
   }
 
   @Override
-  public void createAccountAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
+  public void createAccountAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, final Map<String, String> queryParameters, RequestDelegate<LoginResponse> delegate) {
     delegate.handleError(new RuntimeException("Not yet implemented"));
   }
 }

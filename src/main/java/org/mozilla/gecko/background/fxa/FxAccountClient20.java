@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.background.fxa;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 import org.json.simple.JSONObject;
@@ -49,16 +51,20 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
 
   // Public for testing only; prefer login and loginAndGetKeys (without boolean parameter).
   public void login(final byte[] emailUTF8, final byte[] quickStretchedPW, final boolean getKeys,
+      final Map<String, String> queryParameters,
       final RequestDelegate<LoginResponse> delegate) {
-    BaseResource resource;
-    JSONObject body;
-    final String path = "account/login";
+    final BaseResource resource;
+    final JSONObject body;
     try {
-      if (getKeys) {
-        resource = getBaseResource(path, "keys", "true");
-      } else {
-        resource = getBaseResource(path);
+      final String path = "account/login";
+      final Map<String, String> modifiedParameters = new HashMap<>();
+      if (queryParameters != null) {
+        modifiedParameters.putAll(queryParameters);
       }
+      if (getKeys) {
+        modifiedParameters.put("keys", "true");
+      }
+      resource = getBaseResource(path, modifiedParameters);
       body = new FxAccount20LoginDelegate(emailUTF8, quickStretchedPW).getCreateBody();
     } catch (Exception e) {
       invokeHandleError(delegate, e);
@@ -99,17 +105,20 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
   public void createAccount(final byte[] emailUTF8, final byte[] quickStretchedPW,
       final boolean getKeys,
       final boolean preVerified,
-      final String service,
+      final Map<String, String> queryParameters,
       final RequestDelegate<LoginResponse> delegate) {
     final BaseResource resource;
     final JSONObject body;
     try {
       final String path = "account/create";
-      if (getKeys) {
-        resource = getBaseResource(path, "service", service, "keys", "true");
-      } else {
-        resource = getBaseResource(path, "service", service);
+      final Map<String, String> modifiedParameters = new HashMap<>();
+      if (queryParameters != null) {
+        modifiedParameters.putAll(queryParameters);
       }
+      if (getKeys) {
+        modifiedParameters.put("keys", "true");
+      }
+      resource = getBaseResource(path, modifiedParameters);
       body = new FxAccount20CreateDelegate(emailUTF8, quickStretchedPW, preVerified).getCreateBody();
     } catch (Exception e) {
       invokeHandleError(delegate, e);
@@ -148,18 +157,18 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
   }
 
   @Override
-  public void createAccountAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
+  public void createAccountAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, final Map<String, String> queryParameters, RequestDelegate<LoginResponse> delegate) {
     try {
       byte[] quickStretchedPW = passwordStretcher.getQuickStretchedPW(emailUTF8);
-      createAccount(emailUTF8, quickStretchedPW, true, false, "sync", delegate);
+      createAccount(emailUTF8, quickStretchedPW, true, false, queryParameters, delegate);
     } catch (Exception e) {
       invokeHandleError(delegate, e);
     }
   }
 
   @Override
-  public void loginAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, RequestDelegate<LoginResponse> delegate) {
-    login(emailUTF8, passwordStretcher, true, delegate);
+  public void loginAndGetKeys(byte[] emailUTF8, PasswordStretcher passwordStretcher, final Map<String, String> queryParameters, RequestDelegate<LoginResponse> delegate) {
+    login(emailUTF8, passwordStretcher, true, queryParameters, delegate);
   }
 
   /**
@@ -183,10 +192,12 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
    * @param getKeys
    *          true if a <code>keyFetchToken</code> should be returned (in
    *          addition to the standard <code>sessionToken</code>).
+   * @param queryParameters
    * @param delegate
    *          to invoke callbacks.
    */
   public void login(final byte[] emailUTF8, final PasswordStretcher stretcher, final boolean getKeys,
+      final Map<String, String> queryParameters,
       final RequestDelegate<LoginResponse> delegate) {
     byte[] quickStretchedPW;
     try {
@@ -197,7 +208,7 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
       return;
     }
 
-    this.login(emailUTF8, quickStretchedPW, getKeys, new RequestDelegate<LoginResponse>() {
+    this.login(emailUTF8, quickStretchedPW, getKeys, queryParameters, new RequestDelegate<LoginResponse>() {
       @Override
       public void handleSuccess(LoginResponse result) {
         delegate.handleSuccess(result);
@@ -224,7 +235,7 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
           // signature here, which invokes a non-retrying version.
           byte[] alternateEmailUTF8 = alternateEmail.getBytes("UTF-8");
           byte[] alternateQuickStretchedPW = stretcher.getQuickStretchedPW(alternateEmailUTF8);
-          login(alternateEmailUTF8, alternateQuickStretchedPW, getKeys, delegate);
+          login(alternateEmailUTF8, alternateQuickStretchedPW, getKeys, queryParameters, delegate);
         } catch (Exception innerException) {
           delegate.handleError(innerException);
           return;

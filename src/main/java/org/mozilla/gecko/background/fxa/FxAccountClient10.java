@@ -14,6 +14,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 
 import javax.crypto.Mac;
@@ -97,6 +99,19 @@ public class FxAccountClient10 {
       throw new IllegalArgumentException("Constructed serverURI must end with a trailing slash: " + this.serverURI);
     }
     this.executor = executor;
+  }
+
+  protected BaseResource getBaseResource(String path, Map<String, String> queryParameters) throws UnsupportedEncodingException, URISyntaxException {
+    if (queryParameters == null || queryParameters.isEmpty()) {
+      return getBaseResource(path);
+    }
+    final String[] array = new String[2 * queryParameters.size()];
+    int i = 0;
+    for (Entry<String, String> entry : queryParameters.entrySet()) {
+      array[i++] = entry.getKey();
+      array[i++] = entry.getValue();
+    }
+    return getBaseResource(path, array);
   }
 
   /**
