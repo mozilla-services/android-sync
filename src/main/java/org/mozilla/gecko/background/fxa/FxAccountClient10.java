@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -71,7 +72,6 @@ public class FxAccountClient10 {
   public static final String JSON_KEY_CODE = "code";
   public static final String JSON_KEY_ERRNO = "errno";
 
-
   protected static final String[] requiredErrorStringFields = { JSON_KEY_ERROR, JSON_KEY_MESSAGE, JSON_KEY_INFO };
   protected static final String[] requiredErrorLongFields = { JSON_KEY_CODE, JSON_KEY_ERRNO };
 
@@ -97,6 +97,35 @@ public class FxAccountClient10 {
       throw new IllegalArgumentException("Constructed serverURI must end with a trailing slash: " + this.serverURI);
     }
     this.executor = executor;
+  }
+
+  /**
+   * Create <code>BaseResource</code>, encoding query parameters carefully.
+   * <p>
+   * This is equivalent to <code>android.net.Uri.Builder</code>, which is not
+   * present in our JUnit 4 tests.
+   *
+   * @param path fragment.
+   * @param queryParameters list of key/value query parameter pairs.  Must be even length!
+   * @return <code>BaseResource<instance>
+   * @throws URISyntaxException
+   * @throws UnsupportedEncodingException
+   */
+  protected BaseResource getBaseResource(String path, String... queryParameters) throws URISyntaxException, UnsupportedEncodingException {
+    final StringBuilder sb = new StringBuilder(serverURI);
+    sb.append(path);
+    if (queryParameters != null) {
+      int i = 0;
+      while (i < queryParameters.length) {
+        sb.append(i > 0 ? "&" : "?");
+        final String key = queryParameters[i++];
+        final String val = queryParameters[i++];
+        sb.append(URLEncoder.encode(key, "UTF-8"));
+        sb.append("=");
+        sb.append(URLEncoder.encode(val, "UTF-8"));
+      }
+    }
+    return new BaseResource(new URI(sb.toString()));
   }
 
   /**
@@ -353,8 +382,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "account/create"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("account/create");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -384,8 +413,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "auth/start"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("auth/start");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -416,8 +445,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "auth/finish"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("auth/finish");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -480,8 +509,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "session/create"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("session/create");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -516,8 +545,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "session/destroy"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("session/destroy");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -605,8 +634,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "account/keys"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("account/keys");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -667,8 +696,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "recovery_email/status"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("recovery_email/status");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -709,8 +738,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "certificate/sign"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("certificate/sign");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -750,8 +779,8 @@ public class FxAccountClient10 {
 
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "recovery_email/resend_code"));
-    } catch (URISyntaxException e) {
+      resource = getBaseResource("recovery_email/resend_code");
+    } catch (URISyntaxException | UnsupportedEncodingException e) {
       invokeHandleError(delegate, e);
       return;
     }
@@ -788,7 +817,7 @@ public class FxAccountClient10 {
     final BaseResource resource;
     final JSONObject body = new JSONObject();
     try {
-      resource = new BaseResource(new URI(serverURI + "account/unlock/resend_code"));
+      resource = getBaseResource("account/unlock/resend_code");
       body.put("email", new String(emailUTF8, "UTF-8"));
     } catch (URISyntaxException e) {
       invokeHandleError(delegate, e);
