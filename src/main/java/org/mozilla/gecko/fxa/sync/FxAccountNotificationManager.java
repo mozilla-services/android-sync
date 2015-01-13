@@ -44,6 +44,17 @@ public class FxAccountNotificationManager {
   }
 
   /**
+   * Remove all Firefox Account related notifications from the notification manager.
+   *
+   * @param context
+   *          Android context.
+   */
+  public void clear(Context context) {
+    final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    notificationManager.cancel(notificationId);
+  }
+
+  /**
    * Reflect new Firefox Account state to the notification manager: show or hide
    * notifications reflecting the state of a Firefox Account.
    *
