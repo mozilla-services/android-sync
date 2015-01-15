@@ -7,12 +7,14 @@ package org.mozilla.gecko.fxa.sync;
 import org.mozilla.gecko.BrowserLocaleManager;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.background.common.telemetry.TelemetryWrapper;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.fxa.activities.FxAccountFinishMigratingActivity;
 import org.mozilla.gecko.fxa.activities.FxAccountStatusActivity;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.Action;
+import org.mozilla.gecko.sync.telemetry.TelemetryContract;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -83,6 +85,8 @@ public class FxAccountNotificationManager {
     final String text;
     final Intent notificationIntent;
     if (action == Action.NeedsFinishMigrating) {
+      TelemetryWrapper.addToHistogram(TelemetryContract.SYNC11_MIGRATION_NOTIFICATIONS_OFFERED, 1);
+
       title = context.getResources().getString(R.string.fxaccount_sync_finish_migrating_notification_title);
       text = context.getResources().getString(R.string.fxaccount_sync_finish_migrating_notification_text, state.email);
       notificationIntent = new Intent(context, FxAccountFinishMigratingActivity.class);
