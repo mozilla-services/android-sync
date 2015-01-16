@@ -46,6 +46,18 @@ public class FxAccountAgeLockoutHelper {
   }
 
   /**
+   * Return true if the yearText is magic year.
+   *
+   * @param yearOfBirth
+   * @return true if <code>yearOfBirth</code> is the magic year.
+   */
+  public static boolean isMagicYear(int yearOfBirth) {
+    final Calendar cal = Calendar.getInstance();
+    final int thisYear = cal.get(Calendar.YEAR);
+    return (thisYear - yearOfBirth) == FxAccountConstants.MINIMUM_AGE_TO_CREATE_AN_ACCOUNT;
+  }
+
+  /**
    * Return true if the age of somebody born in <code>yearOfBirth/zeroBasedMonthOfBirth/dayOfBirth</code> is
    * definitely old enough to create an account.
    *
@@ -64,8 +76,8 @@ public class FxAccountAgeLockoutHelper {
     final int thisDate = cal.get(Calendar.DAY_OF_MONTH);
     int approximateAge = thisYear - yearOfBirth;
 
-    // Adjust age to account for month and day.
-    if ((thisMonth < zeroBasedMonthOfBirth) || ((thisMonth == zeroBasedMonthOfBirth) && (thisDate < dayOfBirth))) {
+    // Adjust age to account for month and day in case yearOfBirth is magic year.
+    if (isMagicYear(yearOfBirth) && ((thisMonth < zeroBasedMonthOfBirth) || ((thisMonth == zeroBasedMonthOfBirth) && (thisDate < dayOfBirth)))) {
       approximateAge--;
     }
 

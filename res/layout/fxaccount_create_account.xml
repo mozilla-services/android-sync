@@ -54,6 +54,7 @@
                 android:drawableRight="@drawable/fxaccount_ddarrow_inactive"
                 android:focusable="false"
                 android:layout_weight="0.5"
+                android:maxLength="3"
                 android:hint="@string/fxaccount_create_account_month_of_birth"
                 android:inputType="none" />
 

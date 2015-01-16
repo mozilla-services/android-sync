@@ -122,6 +122,10 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
     if (getIntent() != null) {
       yearEdit.setText(getIntent().getStringExtra(EXTRA_YEAR));
+      monthEdit.setText("");
+      dayEdit.setText("");
+      maybeEnableMonthAndDayButtons();
+      updateButtonState();
     }
   }
 
@@ -219,7 +223,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
     // Populate month names.
     final Calendar calendar = Calendar.getInstance();
-    final Map<String, Integer> monthNamesMap = calendar.getDisplayNames(Calendar.MONTH, Calendar.SHORT, Locale.getDefault());
+    final Map<String, Integer> monthNamesMap = calendar.getDisplayNames(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
     monthItems = new String[monthNamesMap.size()];
     for (Map.Entry<String, Integer> entry : monthNamesMap.entrySet()) {
       monthItems[entry.getValue()] = entry.getKey();
@@ -297,8 +301,15 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   }
 
   private void maybeEnableMonthAndDayButtons() {
-    // Check if the age check passes on 31st December of the selected year.
-    if (FxAccountAgeLockoutHelper.passesAgeCheck(31, 11, yearEdit.getText().toString(), getYearItems())) {
+    Integer yearOfBirth = null;
+    try {
+      yearOfBirth = Integer.valueOf(yearEdit.getText().toString(), 10);
+    } catch (NumberFormatException e) {
+      Logger.debug(LOG_TAG, "year text not a number.");
+    }
+
+    // Check if the selected year is a magic year.
+    if (yearOfBirth == null || !FxAccountAgeLockoutHelper.isMagicYear(yearOfBirth)) {
       monthEdit.setTag(11);
       dayEdit.setTag(31);
       return;

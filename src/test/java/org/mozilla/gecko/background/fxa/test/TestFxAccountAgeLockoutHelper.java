@@ -53,4 +53,20 @@ public class TestFxAccountAgeLockoutHelper {
     Assert.assertFalse("Minimum age fails by a month",
         FxAccountAgeLockoutHelper.passesAgeCheck(birthDate, birthMonthIndex, birthYear));
   }
+
+  @Test
+  public void testIsMagicYear() {
+    final Calendar today = Calendar.getInstance();
+    int magicYear = today.get(Calendar.YEAR) - FxAccountConstants.MINIMUM_AGE_TO_CREATE_AN_ACCOUNT;
+    Assert.assertTrue("Passes magic year check : year is magic year",
+        FxAccountAgeLockoutHelper.isMagicYear(magicYear));
+
+    int beforeMagicYear = today.get(Calendar.YEAR) - FxAccountConstants.MINIMUM_AGE_TO_CREATE_AN_ACCOUNT - 1;
+    Assert.assertFalse("Fails magic year check : year before magic year",
+        FxAccountAgeLockoutHelper.isMagicYear(beforeMagicYear));
+
+    int afterMagicYear = today.get(Calendar.YEAR) - FxAccountConstants.MINIMUM_AGE_TO_CREATE_AN_ACCOUNT + 1;
+    Assert.assertFalse("Fails magic year : year after magic year",
+        FxAccountAgeLockoutHelper.isMagicYear(afterMagicYear));
+  }
 }
