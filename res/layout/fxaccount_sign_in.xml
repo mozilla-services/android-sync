@@ -70,7 +70,8 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:text="@string/fxaccount_create_account_policy_text"
-            android:textColorLink="@color/fxaccount_linkified_textColorLinkSubdued" />
+            android:textColorLink="@color/fxaccount_linkified_textColorLinkSubdued"
+            android:textSize="12sp" />
 
         <LinearLayout style="@style/FxAccountSpacer" />
 

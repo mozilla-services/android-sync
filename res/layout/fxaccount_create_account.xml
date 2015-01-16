@@ -28,7 +28,8 @@
             style="@style/FxAccountTextItem"
             android:layout_marginTop="10dp"
             android:text="@string/fxaccount_create_account_password_length_restriction"
-            android:textColor="@color/fxaccount_textColorSubdued" />
+            android:textColor="@color/fxaccount_textColorSubdued"
+            android:textSize="12sp" />
 
         <!-- Per http://stackoverflow.com/questions/2359176/android-edittext-onclicklistener, not allowing focus allows us to highjack the click. -->
 
@@ -48,7 +49,8 @@
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:text="@string/fxaccount_create_account_policy_text"
-            android:textColorLink="@color/fxaccount_linkified_textColorLinkSubdued" />
+            android:textColorLink="@color/fxaccount_linkified_textColorLinkSubdued"
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/remote_error"
@@ -80,7 +82,6 @@
             android:id="@+id/sign_in_instead_link"
             style="@style/FxAccountLinkItem"
             android:layout_marginBottom="20dp"
-            android:layout_marginTop="20dp"
             android:focusable="true"
             android:text="@string/fxaccount_create_account_sign_in_instead" />
 
