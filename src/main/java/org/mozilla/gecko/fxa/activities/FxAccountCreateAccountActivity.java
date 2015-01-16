@@ -121,6 +121,10 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
     if (getIntent() != null) {
       yearEdit.setText(getIntent().getStringExtra(EXTRA_YEAR));
+      monthEdit.setText("");
+      dayEdit.setText("");
+      maybeEnableMonthAndDayButtons();
+      updateButtonState();
     }
   }
 
@@ -296,10 +300,17 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   }
 
   private void maybeEnableMonthAndDayButtons() {
-    // Check if the age check passes on 31st December of the selected year.
-    // year/Dec/31 is the latest birthday in the selected year, corresponding to
-    // the youngest person.
-    if (FxAccountAgeLockoutHelper.passesAgeCheck(31, 11, yearEdit.getText().toString(), getYearItems())) {
+    Integer yearOfBirth = null;
+    try {
+      yearOfBirth = Integer.valueOf(yearEdit.getText().toString(), 10);
+    } catch (NumberFormatException e) {
+      Logger.debug(LOG_TAG, "Year text is not a number; assuming year is a range and that user is old enough.");
+    }
+
+    // Check if the selected year is the magic year.
+    if (yearOfBirth == null || !FxAccountAgeLockoutHelper.isMagicYear(yearOfBirth)) {
+      // Year/Dec/31 is the latest birthday in the selected year, corresponding
+      // to the youngest person.
       monthEdit.setTag(Integer.valueOf(11));
       dayEdit.setTag(Integer.valueOf(31));
       return;
