@@ -33,7 +33,7 @@
     </style>
 
     <style name="FxAccountHeaderItem" parent="@style/FxAccountTextItem">
-        <item name="android:textSize">28sp</item>
+        <item name="android:textSize">24sp</item>
         <item name="android:layout_marginBottom">20dp</item>
     </style>
 
@@ -42,7 +42,7 @@
         <item name="android:layout_width">fill_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:gravity">center_horizontal</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:layout_marginBottom">10dp</item>
     </style>
 
@@ -55,7 +55,7 @@
     <style name="FxAccountButton" parent="@android:style/Widget.Button">
         <item name="android:background">@drawable/fxaccount_button_background</item>
         <item name="android:textColor">@drawable/fxaccount_button_color</item>
-        <item name="android:textSize">24sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:padding">20dp</item>
         <item name="android:layout_width">fill_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -63,7 +63,7 @@
     </style>
 
     <style name="FxAccountEditItem" parent="@android:style/Widget.EditText">
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:paddingLeft">@dimen/fxaccount_input_padding_horizontal</item>
         <item name="android:paddingRight">@dimen/fxaccount_input_padding_horizontal</item>
         <item name="android:paddingTop">@dimen/fxaccount_input_padding_vertical</item>
@@ -105,7 +105,7 @@
         <item name="android:text">Error</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:textColorLink">@android:color/white</item>
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:visibility">invisible</item>
     </style>
 
@@ -137,7 +137,7 @@
         <item name="android:paddingLeft">@dimen/fxaccount_show_password_padding_horizontal</item>
         <item name="android:paddingRight">@dimen/fxaccount_show_password_padding_horizontal</item>
         <item name="android:textColor">@color/fxaccount_input_textColor</item>
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">16sp</item>
     </style>
 
 </resources>
