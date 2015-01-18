@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -109,24 +108,62 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   }
 
   @Override
+  protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    super.onRestoreInstanceState(savedInstanceState);
+    updateMonthAndDayFromBundle(savedInstanceState);
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    updateBundleWithMonthAndDay(outState);
+  }
+
+  @Override
   protected Bundle makeExtrasBundle(String email, String password) {
     final Bundle extras = super.makeExtrasBundle(email, password);
-    final String year = yearEdit.getText().toString();
-    extras.putString(EXTRA_YEAR, year);
+    extras.putString(EXTRA_YEAR, yearEdit.getText().toString());
+    updateBundleWithMonthAndDay(extras);
     return extras;
   }
 
   @Override
   protected void updateFromIntentExtras() {
     super.updateFromIntentExtras();
-
     if (getIntent() != null) {
       yearEdit.setText(getIntent().getStringExtra(EXTRA_YEAR));
+      updateMonthAndDayFromBundle(getIntent().getExtras() != null? getIntent().getExtras(): new Bundle());
+    }
+  }
+
+  private void updateBundleWithMonthAndDay(final Bundle bundle) {
+    if (monthEdit.getTag() != null) {
+      bundle.putInt(EXTRA_MONTH, (Integer) monthEdit.getTag());
+    }
+    if (dayEdit.getTag() != null) {
+      bundle.putInt(EXTRA_DAY, (Integer) dayEdit.getTag());
+	}
+  }
+
+  private void updateMonthAndDayFromBundle(final Bundle extras) {
+    final Integer zeroBasedMonthIndex = (Integer) extras.get(EXTRA_MONTH);
+    final Integer oneBasedDayIndex = (Integer) extras.get(EXTRA_DAY);
+    maybeEnableMonthAndDayButtons();
+
+    if (zeroBasedMonthIndex != null) {
+      monthEdit.setText(monthItems[zeroBasedMonthIndex]);
+      monthEdit.setTag(zeroBasedMonthIndex);
+      createDayEdit(zeroBasedMonthIndex);
+
+      if (oneBasedDayIndex != null && dayItems != null) {
+        dayEdit.setText(dayItems[oneBasedDayIndex - 1]);
+        dayEdit.setTag(oneBasedDayIndex);
+      }
+    } else {
       monthEdit.setText("");
       dayEdit.setText("");
-      maybeEnableMonthAndDayButtons();
-      updateButtonState();
     }
+    updateButtonState();
   }
 
   @Override
@@ -286,7 +323,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 	      @Override
           public void onClick(DialogInterface dialog, int which) {
             dayEdit.setText(dayItems[which]);
-            dayEdit.setTag(which);
+            dayEdit.setTag(which + 1);
             updateButtonState();
           }
         };
