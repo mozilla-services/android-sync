@@ -20,7 +20,7 @@ cp $ANDROID/base/AppConstants.java.in src/main/java/org/mozilla/gecko/
 cp $ANDROID/base/LocaleManager.java src/main/java/org/mozilla/gecko/
 cp $ANDROID/base/util/HardwareUtils.java src/main/java/org/mozilla/gecko/util/
 cp $ANDROID/base/mozglue/RobocopTarget.java src/main/java/org/mozilla/gecko/mozglue/
-cp $ANDROID/base/SysInfo.java.in src/main/java/org/mozilla/gecko/
+cp $ANDROID/base/SysInfo.java src/main/java/org/mozilla/gecko/
 cp $ANDROID/base/db/BrowserContract.java src/main/java/org/mozilla/gecko/db/
 cp $ANDROID/base/locales/en-US/android_strings.dtd strings/
 

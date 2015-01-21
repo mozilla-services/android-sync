@@ -1,11 +1,10 @@
-//#filter substitution
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.fxa;
 
-import org.mozilla.gecko.background.common.GlobalConstants;
+import org.mozilla.gecko.AppConstants;
 
 public class FxAccountConstants {
   public static final String GLOBAL_LOG_TAG = "FxAccounts";
@@ -23,7 +22,7 @@ public class FxAccountConstants {
   // You must wait 15 minutes after failing an age check before trying to create a different account.
   public static final long MINIMUM_TIME_TO_WAIT_AFTER_AGE_CHECK_FAILED_IN_MILLISECONDS = 15 * 60 * 1000;
 
-  public static final String USER_AGENT = "Firefox-Android-FxAccounts/" + GlobalConstants.MOZ_APP_VERSION + " (" + GlobalConstants.MOZ_APP_DISPLAYNAME + ")";
+  public static final String USER_AGENT = "Firefox-Android-FxAccounts/" + AppConstants.MOZ_APP_VERSION + " (" + AppConstants.MOZ_APP_DISPLAYNAME + ")";
 
   public static final String ACCOUNT_PICKLE_FILENAME = "fxa.account.json";
 
