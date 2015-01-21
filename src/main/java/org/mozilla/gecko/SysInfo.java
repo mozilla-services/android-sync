@@ -1,4 +1,3 @@
-//#filter substitution
 /* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +13,6 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 import java.util.regex.Pattern;
 
@@ -226,25 +222,11 @@ public final class SysInfo {
     }
 
     /**
-     * @return the architecture string, excluding ABI.
-     */
-    public static String getArch() {
-        return "@CPU_ARCH@";   // "arm"
-    }
-
-    /**
      * @return the Android architecture string, including ABI.
      */
     public static String getArchABI() {
         // Android likes to include the ABI, too ("armeabiv7"), so we
         // differ to add value.
         return android.os.Build.CPU_ABI;
-    }
-
-    /**
-     * @return the default system locale, such as "en-US"
-     */
-    public static String getLocale() {
-        return java.util.Locale.getDefault().toString().replace('_', '-');
     }
 }
