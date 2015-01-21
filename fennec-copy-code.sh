@@ -70,15 +70,10 @@ SOURCEFILES=$(find \
   "$SYNCSOURCEDIR" \
   "$TOKENSERVERSOURCEDIR" \
   -name '*.java' \
-  -and -not -name 'HealthReportConstants.java' \
-  -and -not -name 'GlobalConstants.java' \
-  -and -not -name 'BrowserContract.java' \
   -and -not -name 'AppConstants.java' \
-  -and -not -name 'FxAccountConstants.java' \
   -and -not -name 'SysInfo.java' \
   -and -not -name 'HardwareUtils.java' \
   -and -not -name 'RobocopTarget.java' \
-  -and -not -name 'SyncConstants.java' \
   -and -not -name 'BrowserLocaleManager.java' \
   -and -not -name 'Locales.java' \
   -and -not -name 'LocaleManager.java' \
@@ -90,8 +85,6 @@ rsync --archive --cvs-exclude --delete \
   --exclude 'SysInfo.java' \
   --exclude 'HardwareUtils.java' \
   --exclude 'RobocopTarget.java' \
-  --exclude 'GlobalConstants.java' \
-  --exclude 'HealthReportConstants.java' \
   --exclude 'BrowserLocaleManager.java' \
   --exclude 'Locales.java' \
   --exclude 'LocaleManager.java' \
@@ -104,12 +97,10 @@ rsync --archive --cvs-exclude --delete \
   $BROWSERIDSOURCEDIR $ANDROID/base/
 
 rsync --archive --cvs-exclude --delete \
-  --exclude 'FxAccountConstants.java' \
   --exclude '*.in' \
   $FXASOURCEDIR $ANDROID/base/
 
 rsync --archive --cvs-exclude --delete \
-  --exclude 'SyncConstants.java' \
   --exclude 'BrowserContract.java' \
   --exclude '*.in' \
   --exclude '*testhelper*' \
@@ -187,8 +178,6 @@ cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_thirdparty_java_files =" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
 echo >> $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_java_files =" "$SOURCEFILES"
-echo >> $MOZBUILDFILE
-dump_mozbuild_variable $MOZBUILDFILE "sync_generated_java_files =" "$PREPROCESS_FILES"
 
 # Creating moz.build for Mozilla.
 MOZBUILDFILE=$ANDROID/tests/background/junit3/background_junit3_sources.mozbuild

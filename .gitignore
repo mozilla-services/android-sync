@@ -2,12 +2,6 @@ obj
 AndroidManifest.xml
 R.java
 src/main/java/org/mozilla/gecko/AppConstants.java
-src/main/java/org/mozilla/gecko/SysInfo.java
-src/main/java/org/mozilla/gecko/background/announcements/AnnouncementsConstants.java
-src/main/java/org/mozilla/gecko/background/common/GlobalConstants.java
-src/main/java/org/mozilla/gecko/background/healthreport/HealthReportConstants.java
-src/main/java/org/mozilla/gecko/fxa/FxAccountConstants.java
-src/main/java/org/mozilla/gecko/sync/SyncConstants.java
 res/values/strings.xml
 .DS_Store
 .metadata
