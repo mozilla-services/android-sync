@@ -505,8 +505,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
 
     final KeyBundle keyBundle = new KeyBundle(username, syncKey);
 
-    if (keyBundle == null ||
-        keyBundle.getEncryptionKey() == null ||
+    if (keyBundle.getEncryptionKey() == null ||
         keyBundle.getHMACKey() == null) {
       throw new SyncConfigurationException();
     }
