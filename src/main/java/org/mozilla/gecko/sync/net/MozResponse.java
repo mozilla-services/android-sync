@@ -110,10 +110,23 @@ public class MozResponse {
     response = res;
   }
 
+  protected long getLongHeader(String h) throws NumberFormatException {
+    if (this.hasHeader(h)) {
+      Header header = this.response.getFirstHeader(h);
+      String value = header.getValue();
+      if (missingHeader(value)) {
+        Logger.warn(LOG_TAG, h + " header present but empty.");
+        return -1L;
+      }
+      return Long.parseLong(value, 10);
+    }
+    return -1L;
+  }
+
   protected int getIntegerHeader(String h) throws NumberFormatException {
     if (this.hasHeader(h)) {
       Header header = this.response.getFirstHeader(h);
-      String value  = header.getValue();
+      String value = header.getValue();
       if (missingHeader(value)) {
         Logger.warn(LOG_TAG, h + " header present but empty.");
         return -1;
