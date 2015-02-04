@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.mozilla.gecko.background.common.EditorBranch;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
@@ -23,79 +24,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
 public class SyncConfiguration {
-
-  public class EditorBranch implements Editor {
-
-    private final String prefix;
-    private Editor editor;
-
-    public EditorBranch(SyncConfiguration config, String prefix) {
-      if (!prefix.endsWith(".")) {
-        throw new IllegalArgumentException("No trailing period in prefix.");
-      }
-      this.prefix = prefix;
-      this.editor = config.getEditor();
-    }
-
-    public void apply() {
-      // Android <=r8 SharedPreferences.Editor does not contain apply() for overriding.
-      this.editor.commit();
-    }
-
-    @Override
-    public Editor clear() {
-      this.editor = this.editor.clear();
-      return this;
-    }
-
-    @Override
-    public boolean commit() {
-      return this.editor.commit();
-    }
-
-    @Override
-    public Editor putBoolean(String key, boolean value) {
-      this.editor = this.editor.putBoolean(prefix + key, value);
-      return this;
-    }
-
-    @Override
-    public Editor putFloat(String key, float value) {
-      this.editor = this.editor.putFloat(prefix + key, value);
-      return this;
-    }
-
-    @Override
-    public Editor putInt(String key, int value) {
-      this.editor = this.editor.putInt(prefix + key, value);
-      return this;
-    }
-
-    @Override
-    public Editor putLong(String key, long value) {
-      this.editor = this.editor.putLong(prefix + key, value);
-      return this;
-    }
-
-    @Override
-    public Editor putString(String key, String value) {
-      this.editor = this.editor.putString(prefix + key, value);
-      return this;
-    }
-
-    // Not marking as Override, because Android <= 10 doesn't have
-    // putStringSet. Neither can we implement it.
-    public Editor putStringSet(String key, Set<String> value) {
-      throw new RuntimeException("putStringSet not available.");
-    }
-
-    @Override
-    public Editor remove(String key) {
-      this.editor = this.editor.remove(prefix + key);
-      return this;
-    }
-
-  }
 
   /**
    * A wrapper around a portion of the SharedPreferences space.
@@ -124,7 +52,7 @@ public class SyncConfiguration {
 
     @Override
     public Editor edit() {
-      return new EditorBranch(config, prefix);
+      return new EditorBranch(config.getPrefs(), prefix);
     }
 
     @Override
