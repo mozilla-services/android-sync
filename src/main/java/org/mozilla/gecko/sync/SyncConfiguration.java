@@ -27,32 +27,27 @@ public class SyncConfiguration {
 
   /**
    * A wrapper around a portion of the SharedPreferences space.
-   *
-   * @author rnewman
-   *
    */
-  public class ConfigurationBranch implements SharedPreferences {
-
-    private final SyncConfiguration config;
+  public static class ConfigurationBranch implements SharedPreferences {
+    private final SharedPreferences prefs;
     private final String prefix;                // Including trailing period.
 
-    public ConfigurationBranch(SyncConfiguration syncConfiguration,
-        String prefix) {
+    public ConfigurationBranch(SharedPreferences prefs, String prefix) {
       if (!prefix.endsWith(".")) {
         throw new IllegalArgumentException("No trailing period in prefix.");
       }
-      this.config = syncConfiguration;
+      this.prefs = prefs;
       this.prefix = prefix;
     }
 
     @Override
     public boolean contains(String key) {
-      return config.getPrefs().contains(prefix + key);
+      return prefs.contains(prefix + key);
     }
 
     @Override
     public Editor edit() {
-      return new EditorBranch(config.getPrefs(), prefix);
+      return new EditorBranch(prefs, prefix);
     }
 
     @Override
@@ -63,27 +58,27 @@ public class SyncConfiguration {
 
     @Override
     public boolean getBoolean(String key, boolean defValue) {
-      return config.getPrefs().getBoolean(prefix + key, defValue);
+      return prefs.getBoolean(prefix + key, defValue);
     }
 
     @Override
     public float getFloat(String key, float defValue) {
-      return config.getPrefs().getFloat(prefix + key, defValue);
+      return prefs.getFloat(prefix + key, defValue);
     }
 
     @Override
     public int getInt(String key, int defValue) {
-      return config.getPrefs().getInt(prefix + key, defValue);
+      return prefs.getInt(prefix + key, defValue);
     }
 
     @Override
     public long getLong(String key, long defValue) {
-      return config.getPrefs().getLong(prefix + key, defValue);
+      return prefs.getLong(prefix + key, defValue);
     }
 
     @Override
     public String getString(String key, String defValue) {
-      return config.getPrefs().getString(prefix + key, defValue);
+      return prefs.getString(prefix + key, defValue);
     }
 
     // Not marking as Override, because Android <= 10 doesn't have
@@ -94,12 +89,12 @@ public class SyncConfiguration {
 
     @Override
     public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
-      config.getPrefs().registerOnSharedPreferenceChangeListener(listener);
+      prefs.registerOnSharedPreferenceChangeListener(listener);
     }
 
     @Override
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
-      config.getPrefs().unregisterOnSharedPreferenceChangeListener(listener);
+      prefs.unregisterOnSharedPreferenceChangeListener(listener);
     }
   }
 
@@ -231,7 +226,7 @@ public class SyncConfiguration {
    *        section of the preferences space.
    */
   public ConfigurationBranch getBranch(String prefix) {
-    return new ConfigurationBranch(this, prefix);
+    return new ConfigurationBranch(this.getPrefs(), prefix);
   }
 
   /**
