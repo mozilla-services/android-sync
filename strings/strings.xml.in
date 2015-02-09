@@ -205,6 +205,7 @@
 <string name="fxaccount_status_history">&fxaccount_status_history;</string>
 <string name="fxaccount_status_passwords">&fxaccount_status_passwords;</string>
 <string name="fxaccount_status_tabs">&fxaccount_status_tabs;</string>
+<string name="fxaccount_status_reading_list">&reading_list_title;</string>
 <string name="fxaccount_status_legal">&fxaccount_status_legal;</string>
 <string name="fxaccount_status_linktos">&fxaccount_status_linktos;</string>
 <string name="fxaccount_status_linkprivacy">&fxaccount_status_linkprivacy;</string>
