@@ -357,7 +357,8 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
             profile,
             serverURI,
             tokenServerURI,
-            state);
+            state,
+            AndroidFxAccount.DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP);
         if (fxAccount == null) {
           throw new RuntimeException("Could not add Android account.");
         }
