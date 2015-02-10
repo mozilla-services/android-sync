@@ -62,6 +62,7 @@ BACKGROUNDSOURCEDIR="$SOURCEROOT/background"
 BROWSERIDSOURCEDIR="$SOURCEROOT/browserid"
 FXASOURCEDIR="$SOURCEROOT/fxa"
 SYNCSOURCEDIR="$SOURCEROOT/sync"
+READINGSOURCEDIR="$SOURCEROOT/reading"
 TOKENSERVERSOURCEDIR="$SOURCEROOT/tokenserver"
 SOURCEFILES=$(find \
   "$BACKGROUNDSOURCEDIR" \
@@ -78,6 +79,12 @@ SOURCEFILES=$(find \
   -and -not -name 'Locales.java' \
   -and -not -name 'LocaleManager.java' \
   -and -not -path '*testhelpers*' \
+  | sed "s,$SOURCEROOT/,," | $SORT_CMD)
+
+# This is separate so we can turn it off with a build flag.
+READINGSOURCEFILES=$(find \
+  "$READINGSOURCEDIR" \
+  -name '*.java' \
   | sed "s,$SOURCEROOT/,," | $SORT_CMD)
 
 rsync --archive --cvs-exclude --delete \
@@ -109,6 +116,10 @@ rsync --archive --cvs-exclude --delete \
 rsync --archive --cvs-exclude --delete \
   --exclude '*.in' \
   $TOKENSERVERSOURCEDIR $ANDROID/base/
+
+rsync --archive --cvs-exclude --delete \
+  --exclude '*.in' \
+  $READINGSOURCEDIR $ANDROID/base/
 
 echo "Copying preprocessed constants files."
 
@@ -178,6 +189,7 @@ cat tools/mozbuild_mpl.txt > $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_thirdparty_java_files =" "$HTTPLIBFILES" "$JSONLIBFILES" "$APACHEFILES"
 echo >> $MOZBUILDFILE
 dump_mozbuild_variable $MOZBUILDFILE "sync_java_files =" "$SOURCEFILES"
+dump_mozbuild_variable $MOZBUILDFILE "reading_list_service_java_files =" "$READINGSOURCEFILES"
 
 # Creating moz.build for Mozilla.
 MOZBUILDFILE=$ANDROID/tests/background/junit3/background_junit3_sources.mozbuild
