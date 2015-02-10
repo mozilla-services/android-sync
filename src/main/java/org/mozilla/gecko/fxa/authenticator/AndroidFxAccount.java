@@ -194,25 +194,18 @@ public class AndroidFxAccount {
     return o.getByteArrayHex(key);
   }
 
-  protected void updateBundleDataBytes(String key, byte[] value) {
-    updateBundleValue(key, value == null ? null : Utils.byte2Hex(value));
-  }
-
-  protected void updateBundleValue(String key, boolean value) {
+  protected void updateBundleValues(String key, String value, String... more) {
+    if (more.length % 2 != 0) {
+      throw new IllegalArgumentException("more must be a list of key, value pairs");
+    }
     ExtendedJSONObject descriptor = unbundle();
     if (descriptor == null) {
       return;
     }
     descriptor.put(key, value);
-    persistBundle(descriptor);
-  }
-
-  protected void updateBundleValue(String key, String value) {
-    ExtendedJSONObject descriptor = unbundle();
-    if (descriptor == null) {
-      return;
+    for (int i = 0; i + 1 < more.length; i += 2) {
+      descriptor.put(more[i], more[i+1]);
     }
-    descriptor.put(key, value);
     persistBundle(descriptor);
   }
 
@@ -497,8 +490,9 @@ public class AndroidFxAccount {
     }
     Logger.info(LOG_TAG, "Moving account named like " + getObfuscatedEmail() +
         " to state " + state.getStateLabel().toString());
-    updateBundleValue(BUNDLE_KEY_STATE_LABEL, state.getStateLabel().name());
-    updateBundleValue(BUNDLE_KEY_STATE, state.toJSONObject().toJSONString());
+    updateBundleValues(
+        BUNDLE_KEY_STATE_LABEL, state.getStateLabel().name(),
+        BUNDLE_KEY_STATE, state.toJSONObject().toJSONString());
     broadcastAccountStateChangedIntent();
   }
 
