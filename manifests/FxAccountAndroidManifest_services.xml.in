@@ -29,6 +29,7 @@
         </service>
 
         <!-- Reading List. -->
+#ifdef MOZ_ANDROID_READING_LIST_SERVICE
         <service
             android:exported="false"
             android:name="org.mozilla.gecko.reading.ReadingListSyncService" >
@@ -40,3 +41,4 @@
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/readinglist_syncadapter" />
         </service>
+#endif
