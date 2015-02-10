@@ -511,11 +511,10 @@ public class AndroidFxAccount {
   public synchronized State getState() {
     String stateLabelString = getBundleData(BUNDLE_KEY_STATE_LABEL);
     String stateString = getBundleData(BUNDLE_KEY_STATE);
-    if (stateLabelString == null) {
-      throw new IllegalStateException("stateLabelString must not be null");
-    }
-    if (stateString == null) {
-      throw new IllegalStateException("stateString must not be null");
+    if (stateLabelString == null || stateString == null) {
+      throw new IllegalStateException("stateLabelString and stateString must not be null, but: " +
+          "(stateLabelString == null) = " + (stateLabelString == null) +
+          " and (stateString == null) = " + (stateString == null));
     }
 
     try {
