@@ -22,6 +22,8 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.fxa.PasswordStretcher;
+import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.tasks.FxAccountCreateAccountTask;
 import org.mozilla.gecko.sync.Utils;
 
@@ -62,6 +64,8 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   protected View monthDaycombo;
 
   protected Map<String, Boolean> selectedEngines;
+  protected final Map<String, Boolean> authoritiesToSyncAutomaticallyMap =
+      new HashMap<String, Boolean>(AndroidFxAccount.DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP);
 
   /**
    * {@inheritDoc}
@@ -363,12 +367,12 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     dayEdit.setTag(null);
   }
 
-  public void createAccount(String email, String password, Map<String, Boolean> engines) {
+  public void createAccount(String email, String password, Map<String, Boolean> engines, Map<String, Boolean> authoritiesToSyncAutomaticallyMap) {
     String serverURI = getAuthServerEndpoint();
     PasswordStretcher passwordStretcher = makePasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.
-    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI, engines) {
+    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI, engines, authoritiesToSyncAutomaticallyMap) {
       @Override
       public void handleError(Exception e) {
         showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
@@ -413,9 +417,13 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         final Map<String, Boolean> engines = chooseCheckBox.isChecked()
             ? selectedEngines
             : null;
+        // Only include authorities if the user currently has the option checked.
+        final Map<String, Boolean> authoritiesMap = chooseCheckBox.isChecked()
+            ? authoritiesToSyncAutomaticallyMap
+            : AndroidFxAccount.DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP;
         if (FxAccountAgeLockoutHelper.passesAgeCheck(dayOfBirth, zeroBasedMonthOfBirth, yearEdit.getText().toString(), yearItems)) {
           FxAccountUtils.pii(LOG_TAG, "Passed age check.");
-          createAccount(email, password, engines);
+          createAccount(email, password, engines, authoritiesMap);
         } else {
           FxAccountUtils.pii(LOG_TAG, "Failed age check!");
           FxAccountAgeLockoutHelper.lockOut(SystemClock.elapsedRealtime());
@@ -469,6 +477,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         selectedEngines.put("tabs", checkedItems[INDEX_TABS]);
         selectedEngines.put("passwords", checkedItems[INDEX_PASSWORDS]);
         FxAccountUtils.pii(LOG_TAG, "Updating selectedEngines: " + selectedEngines.toString());
+        FxAccountUtils.pii(LOG_TAG, "Updating authorities: " + authoritiesToSyncAutomaticallyMap.toString());
       }
     };
 
