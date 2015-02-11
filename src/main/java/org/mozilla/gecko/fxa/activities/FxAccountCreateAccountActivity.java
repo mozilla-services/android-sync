@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountAgeLockoutHelper;
@@ -443,7 +444,13 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     final int INDEX_HISTORY = 1;
     final int INDEX_TABS = 2;
     final int INDEX_PASSWORDS = 3;
-    final int NUMBER_OF_ENGINES = 4;
+    final int INDEX_READING_LIST = 4; // Only valid if reading list is enabled.
+    final int NUMBER_OF_ENGINES;
+    if (AppConstants.MOZ_ANDROID_READING_LIST_SERVICE) {
+      NUMBER_OF_ENGINES = 5;
+    } else {
+      NUMBER_OF_ENGINES = 4;
+    }
 
     final String items[] = new String[NUMBER_OF_ENGINES];
     final boolean checkedItems[] = new boolean[NUMBER_OF_ENGINES];
@@ -451,6 +458,9 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     items[INDEX_HISTORY] = getResources().getString(R.string.fxaccount_status_history);
     items[INDEX_TABS] = getResources().getString(R.string.fxaccount_status_tabs);
     items[INDEX_PASSWORDS] = getResources().getString(R.string.fxaccount_status_passwords);
+    if (AppConstants.MOZ_ANDROID_READING_LIST_SERVICE) {
+      items[INDEX_READING_LIST] = getResources().getString(R.string.fxaccount_status_reading_list);
+    }
     // Default to everything checked.
     for (int i = 0; i < NUMBER_OF_ENGINES; i++) {
       checkedItems[i] = true;
@@ -476,6 +486,9 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         selectedEngines.put("history", checkedItems[INDEX_HISTORY]);
         selectedEngines.put("tabs", checkedItems[INDEX_TABS]);
         selectedEngines.put("passwords", checkedItems[INDEX_PASSWORDS]);
+        if (AppConstants.MOZ_ANDROID_READING_LIST_SERVICE) {
+          authoritiesToSyncAutomaticallyMap.put(BrowserContract.READING_LIST_AUTHORITY, checkedItems[INDEX_READING_LIST]);
+        }
         FxAccountUtils.pii(LOG_TAG, "Updating selectedEngines: " + selectedEngines.toString());
         FxAccountUtils.pii(LOG_TAG, "Updating authorities: " + authoritiesToSyncAutomaticallyMap.toString());
       }

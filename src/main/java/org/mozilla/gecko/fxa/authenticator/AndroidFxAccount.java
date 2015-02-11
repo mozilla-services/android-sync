@@ -13,6 +13,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
@@ -69,6 +70,10 @@ public class AndroidFxAccount {
     final HashMap<String, Boolean> m = new HashMap<String, Boolean>();
     // By default, Firefox Sync is enabled.
     m.put(BrowserContract.AUTHORITY, true);
+    if (AppConstants.MOZ_ANDROID_READING_LIST_SERVICE) {
+      // Sync the Reading List.
+      m.put(BrowserContract.READING_LIST_AUTHORITY, true);
+    }
     DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP = Collections.unmodifiableMap(m);
   }
 
