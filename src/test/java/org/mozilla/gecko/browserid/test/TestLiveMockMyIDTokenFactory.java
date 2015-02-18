@@ -18,7 +18,8 @@ import org.mozilla.gecko.browserid.MockMyIDTokenFactory;
 import org.mozilla.gecko.browserid.RSACryptoImplementation;
 import org.mozilla.gecko.browserid.SigningPrivateKey;
 import org.mozilla.gecko.browserid.VerifyingPublicKey;
-import org.mozilla.gecko.browserid.verifier.BrowserIDRemoteVerifierClient;
+import org.mozilla.gecko.browserid.verifier.BrowserIDRemoteVerifierClient20;
+import org.mozilla.gecko.browserid.verifier.BrowserIDVerifierClient;
 import org.mozilla.gecko.browserid.verifier.BrowserIDVerifierDelegate;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
@@ -29,10 +30,10 @@ public class TestLiveMockMyIDTokenFactory {
   public static String TEST_EMAIL = TEST_USERNAME + "@" + TEST_CERTIFICATE_ISSUER;
   public static String TEST_AUDIENCE = "http://localhost:8080";
 
-  public static String VERIFIER_URL = "https://verifier.login.persona.org/verify";
-  // public static String VERIFIER_URL = "http://127.0.0.1:10002/verify";
+  public static String VERIFIER_URL_10 = "https://verifier.login.persona.org/verify";
+  public static String VERIFIER_URL_20 = "https://verifier.accounts.firefox.com/v2";
 
-  protected BrowserIDRemoteVerifierClient client;
+  protected BrowserIDVerifierClient client;
   protected BrowserIDKeyPair keyPair;
   protected VerifyingPublicKey publicKey;
   protected SigningPrivateKey privateKey;
@@ -41,7 +42,7 @@ public class TestLiveMockMyIDTokenFactory {
 
   @Before
   public void setUp() throws Exception {
-    client = new BrowserIDRemoteVerifierClient(new URI(VERIFIER_URL));
+    client = new BrowserIDRemoteVerifierClient20(new URI(VERIFIER_URL_20));
 
     mockMyIdTokenFactory = new MockMyIDTokenFactory();
 
@@ -51,6 +52,10 @@ public class TestLiveMockMyIDTokenFactory {
   }
 
   protected void assertVerifySuccess(final String audience, final String assertion) {
+    assertVerifySuccess(client, audience, assertion);
+  }
+
+  public static void assertVerifySuccess(final BrowserIDVerifierClient client, final String audience, final String assertion) {
     WaitHelper.getTestWaiter().performWait(new Runnable() {
       @Override
       public void run() {
