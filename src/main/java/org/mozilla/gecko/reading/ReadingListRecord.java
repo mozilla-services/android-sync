@@ -21,7 +21,7 @@ public class ReadingListRecord {
   public ReadingListRecord(ExtendedJSONObject obj) {
     // Server populated.
     this.lastModified = obj.getLong("last_modified");
-    this.id = obj.getString("_id");
+    this.id = obj.getString("id");
 
     // Required fields.
     this.url = obj.getString("url");

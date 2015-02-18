@@ -218,7 +218,7 @@ public class TestReadingListClient {
 
   @Test
   public final void test() throws Exception {
-    final AuthHeaderProvider auth = new BasicAuthHeaderProvider("rnewmantest", "nopassword");
+    final AuthHeaderProvider auth = new BasicAuthHeaderProvider("rnewmantest" + System.currentTimeMillis(), "nopassword");
     final ReadingListClient client = new ReadingListClient(new URI(DEFAULT_SERVICE_URI), auth);
 
     final TestRecordDelegate delegate = fetchAll(client);
@@ -248,8 +248,8 @@ public class TestReadingListClient {
     Assert.assertEquals(record.url, uploadDelegate.record.url);
     Assert.assertEquals(record.title, uploadDelegate.record.title);
     Assert.assertEquals(record.addedBy, uploadDelegate.record.addedBy);
-    Assert.assertNotNull(uploadDelegate.record.id);
     Assert.assertEquals(201, uploadDelegate.response.getStatusCode());
+    Assert.assertNotNull(uploadDelegate.record.id);
     Assert.assertTrue(lastServerTimestamp < uploadDelegate.record.lastModified);
 
     // Implementation detail.

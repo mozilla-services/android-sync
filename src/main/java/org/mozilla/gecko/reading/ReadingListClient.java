@@ -256,8 +256,8 @@ public class ReadingListClient {
    */
   public ReadingListClient(final URI serviceURI, final AuthHeaderProvider auth) {
     this.serviceURI = serviceURI;
-    this.articlesURI = serviceURI.resolve("articles");
-    this.articlesBaseURI = serviceURI.resolve("articles/");
+    this.articlesURI = this.serviceURI.resolve("articles");
+    this.articlesBaseURI = this.serviceURI.resolve("articles/");
     this.auth = auth;
   }
 
