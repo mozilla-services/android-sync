@@ -110,44 +110,42 @@ public class MozResponse {
     response = res;
   }
 
-  protected long getLongHeader(String h) throws NumberFormatException {
-    if (this.hasHeader(h)) {
-      Header header = this.response.getFirstHeader(h);
-      String value = header.getValue();
-      if (missingHeader(value)) {
-        Logger.warn(LOG_TAG, h + " header present but empty.");
-        return -1L;
-      }
-      return Long.parseLong(value, 10);
+  private String getNonMissingHeader(String h) {
+    if (!this.hasHeader(h)) {
+      return null;
     }
-    return -1L;
+
+    final Header header = this.response.getFirstHeader(h);
+    final String value = header.getValue();
+    if (missingHeader(value)) {
+      Logger.warn(LOG_TAG, h + " header present but empty.");
+      return null;
+    }
+    return value;
+  }
+
+  protected long getLongHeader(String h) throws NumberFormatException {
+    final String value = getNonMissingHeader(h);
+    if (value == null) {
+      return -1L;
+    }
+    return Long.parseLong(value, 10);
   }
 
   protected int getIntegerHeader(String h) throws NumberFormatException {
-    if (this.hasHeader(h)) {
-      Header header = this.response.getFirstHeader(h);
-      String value = header.getValue();
-      if (missingHeader(value)) {
-        Logger.warn(LOG_TAG, h + " header present but empty.");
-        return -1;
-      }
-      return Integer.parseInt(value, 10);
+    final String value = getNonMissingHeader(h);
+    if (value == null) {
+      return -1;
     }
-    return -1;
+    return Integer.parseInt(value, 10);
   }
 
   /**
    * @return A number of seconds, or -1 if the 'Retry-After' header was not present.
    */
   public int retryAfterInSeconds() throws NumberFormatException {
-    if (!this.hasHeader(HEADER_RETRY_AFTER)) {
-      return -1;
-    }
-
-    Header header = this.response.getFirstHeader(HEADER_RETRY_AFTER);
-    String retryAfter = header.getValue();
-    if (missingHeader(retryAfter)) {
-      Logger.warn(LOG_TAG, "Retry-After header present but empty.");
+    final String retryAfter = getNonMissingHeader(HEADER_RETRY_AFTER);
+    if (retryAfter == null) {
       return -1;
     }
 
@@ -174,5 +172,4 @@ public class MozResponse {
   public int backoffInSeconds() throws NumberFormatException {
     return this.getIntegerHeader("x-backoff");
   }
-
 }
