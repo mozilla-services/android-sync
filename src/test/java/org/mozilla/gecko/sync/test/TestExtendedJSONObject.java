@@ -172,6 +172,16 @@ public class TestExtendedJSONObject {
     assertEquals(null, o.getBoolean("missingkey"));
   }
 
+  @Test
+  public void testNullLong() throws Exception {
+    ExtendedJSONObject o = new ExtendedJSONObject("{\"x\": null}");
+    Long x = o.getLong("x");
+    assertNull(x);
+
+    long y = o.getLong("x", 5L);
+    assertEquals(5L, y);
+  }
+
   protected void assertException(ExtendedJSONObject o, String[] requiredFields, Class<?> requiredFieldClass) {
     try {
       o.throwIfFieldsMissingOrMisTyped(requiredFields, requiredFieldClass);

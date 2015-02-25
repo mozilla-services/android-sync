@@ -232,6 +232,18 @@ public class ExtendedJSONObject {
     return this.object.get(key);
   }
 
+  public long getLong(String key, long def) {
+    if (!object.containsKey(key)) {
+      return def;
+    }
+
+    Long val = getLong(key);
+    if (val == null) {
+      return def;
+    }
+    return val.longValue();
+  }
+
   public Long getLong(String key) {
     return (Long) this.get(key);
   }
