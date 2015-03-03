@@ -30,6 +30,17 @@ public class TestExtendedJSONObject {
   public static String exampleIntegral = "{\"modified\":1233702554,}";
 
   @Test
+  public void testDeepCopy() throws NonObjectJSONException, IOException, ParseException, NonArrayJSONException {
+    ExtendedJSONObject a = new ExtendedJSONObject(exampleJSON);
+    ExtendedJSONObject c = a.deepCopy();
+    assertTrue(a != c);
+    assertTrue(a.equals(c));
+    assertTrue(a.get("modified") == c.get("modified"));
+    assertTrue(a.getArray("success") != c.getArray("success"));
+    assertTrue(a.getArray("success").equals(c.getArray("success")));
+  }
+
+  @Test
   public void testFractional() throws IOException, ParseException, NonObjectJSONException {
     ExtendedJSONObject o = new ExtendedJSONObject(exampleJSON);
     assertTrue(o.containsKey("modified"));
@@ -159,6 +170,16 @@ public class TestExtendedJSONObject {
       assertTrue(e instanceof ClassCastException);
     }
     assertEquals(null, o.getBoolean("missingkey"));
+  }
+
+  @Test
+  public void testNullLong() throws Exception {
+    ExtendedJSONObject o = new ExtendedJSONObject("{\"x\": null}");
+    Long x = o.getLong("x");
+    assertNull(x);
+
+    long y = o.getLong("x", 5L);
+    assertEquals(5L, y);
   }
 
   protected void assertException(ExtendedJSONObject o, String[] requiredFields, Class<?> requiredFieldClass) {
