@@ -427,12 +427,16 @@ public class ReadingListSynchronizer {
 
       @Override
       public void onFailure(Exception error) {
+        Logger.error(LOG_TAG, "Download failed. since = " + since + ".", error);
         delegate.fail(error);
       }
 
       @Override
       public void onFailure(MozResponse response) {
-        delegate.fail(new RuntimeException("Failure: " + response));
+        final int statusCode = response.getStatusCode();
+        Logger.error(LOG_TAG, "Download failed. since = " + since + ". Response: " + statusCode);
+        logResponseBody(response);
+        delegate.fail(new RuntimeException("Failure: " + statusCode));
       }
 
       @Override
@@ -458,6 +462,13 @@ public class ReadingListSynchronizer {
     }
   }
 
+
+  protected static void logResponseBody(MozResponse response) {
+    try {
+      Logger.debug(LOG_TAG, "Response body: " + response.body());
+    } catch (IllegalStateException | IOException e) {
+    }
+  }
 
   /**
    * Upload unread changes, then upload new items, then call `done`.

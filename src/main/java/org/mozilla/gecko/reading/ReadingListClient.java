@@ -208,6 +208,15 @@ public class ReadingListClient {
 
     @Override
     void onNonSuccess(T resp) {
+      Logger.debug(LOG_TAG, "Got non-success record response " + resp.getStatusCode());
+      String body;
+      try {
+        body = resp.body();
+        Logger.warn(LOG_TAG, "Body: " + body);
+      } catch (IllegalStateException | IOException e) {
+        Logger.warn(LOG_TAG, "Couldn't extract body.");
+      }
+
       switch (resp.getStatusCode()) {
       case 304:
         onNotModified(resp);
