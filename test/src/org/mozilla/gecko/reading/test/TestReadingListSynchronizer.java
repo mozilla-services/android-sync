@@ -136,6 +136,9 @@ public class TestReadingListSynchronizer extends ReadingListTest {
             final PrefsBranch branch = new PrefsBranch(prefs, "foo.");
             final ReadingListSynchronizer synchronizer = new ReadingListSynchronizer(branch, remote, local);
 
+            assertFalse(prefs.contains("foo." + ReadingListSynchronizer.PREF_LAST_MODIFIED));
+            assertFalse(branch.contains(ReadingListSynchronizer.PREF_LAST_MODIFIED));
+
             CountDownLatch latch = new CountDownLatch(1);
             final TestSynchronizerDelegate delegate = new TestSynchronizerDelegate(latch);
             synchronizer.syncAll(delegate);
@@ -145,6 +148,11 @@ public class TestReadingListSynchronizer extends ReadingListTest {
             assertTrue(delegate.onModifiedUploadCompleteCalled);
             assertTrue(delegate.onNewItemUploadCompleteCalled);
             assertTrue(delegate.onStatusUploadCompleteCalled);
+
+            // We should have a new LM in prefs.
+            assertTrue(prefs.contains("foo." + ReadingListSynchronizer.PREF_LAST_MODIFIED));
+            assertTrue(branch.contains(ReadingListSynchronizer.PREF_LAST_MODIFIED));
+            assertTrue(branch.getLong(ReadingListSynchronizer.PREF_LAST_MODIFIED, -1L) > 1425428783535L);
         } finally {
             cpc.release();
         }
