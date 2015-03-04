@@ -4,16 +4,22 @@
 
 package org.mozilla.gecko.reading;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import org.mozilla.gecko.background.common.PrefsBranch;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountClient;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
+import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.FxAccountLoginStateMachine;
 import org.mozilla.gecko.fxa.login.FxAccountLoginStateMachine.LoginStateMachineDelegate;
@@ -23,6 +29,8 @@ import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.fxa.login.StateFactory;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncDelegate;
+import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -34,7 +42,52 @@ import android.content.SyncResult;
 import android.os.Bundle;
 
 public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
+    static final class SyncAdapterSynchronizerDelegate implements
+      ReadingListSynchronizerDelegate {
+    private final FxAccountSyncDelegate syncDelegate;
+    private final ContentProviderClient cpc;
+
+    SyncAdapterSynchronizerDelegate(FxAccountSyncDelegate syncDelegate,
+                                    ContentProviderClient cpc) {
+      this.syncDelegate = syncDelegate;
+      this.cpc = cpc;
+    }
+
+    @Override
+    public void onUnableToSync(Exception e) {
+      cpc.release();
+      syncDelegate.handleError(e);
+    }
+
+    @Override
+    public void onStatusUploadComplete(Collection<String> uploaded,
+                                       Collection<String> failed) {
+    }
+
+    @Override
+    public void onNewItemUploadComplete(Collection<String> uploaded,
+                                        Collection<String> failed) {
+    }
+
+    @Override
+    public void onModifiedUploadComplete() {
+    }
+
+    @Override
+    public void onDownloadComplete() {
+    }
+
+    @Override
+    public void onComplete() {
+      cpc.release();
+      syncDelegate.handleSuccess();
+    }
+  }
+
+
     private static final String LOG_TAG = ReadingListSyncAdapter.class.getSimpleName();
+
+    private static final long TIMEOUT_SECONDS = 60;
 
     protected final ExecutorService executor;
 
@@ -73,6 +126,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
         final SharedPreferences sharedPrefs = fxAccount.getReadingListPrefs();
         final FxAccountClient client = new FxAccountClient20(authServerEndpoint, executor);
         final FxAccountLoginStateMachine stateMachine = new FxAccountLoginStateMachine();
+
         stateMachine.advance(state, StateLabel.Married, new LoginStateMachineDelegate() {
           @Override
           public FxAccountClient getClient() {
@@ -125,12 +179,33 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
                                          Bundle extras) {
             Logger.info(LOG_TAG, "syncWithAssertion. Nowt to do!");
 
+            // TODO
+            final AuthHeaderProvider auth = new BasicAuthHeaderProvider("test_syncadapter", "nowt");
+
+            final String endpointString = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
+            final URI endpoint;
+            try {
+              endpoint = new URI(endpointString);
+            } catch (URISyntaxException e) {
+              // Should never happen.
+              Logger.error(LOG_TAG, "Unexpected malformed URI for reading list service: " + endpointString);
+              syncDelegate.handleError(e);
+              return;
+            }
+
+            final PrefsBranch branch = new PrefsBranch(sharedPrefs, "readinglist.");
+            final ReadingListClient remote = new ReadingListClient(endpoint, auth);
+            final ContentProviderClient cpc = getContentProviderClient(context);     // TODO: make sure I'm always released!
+
+            final ReadingListStorage local = new LocalReadingListStorage(cpc);
+            final ReadingListSynchronizer synchronizer = new ReadingListSynchronizer(branch, remote, local);
+
+            synchronizer.syncAll(new SyncAdapterSynchronizerDelegate(syncDelegate, cpc));
             // TODO: backoffs, and everything else handled by a SessionCallback.
-            syncDelegate.handleSuccess();
           }
         });
 
-        latch.await();
+        latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       } catch (Exception e) {
         Logger.error(LOG_TAG, "Got error syncing.", e);
         syncDelegate.handleError(e);
@@ -151,5 +226,12 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
        * * Sync scheduling.
        * * Forcing syncs/interactive use.
        */
+    }
+
+
+    private ContentProviderClient getContentProviderClient(Context context) {
+        final ContentResolver contentResolver = context.getContentResolver();
+        final ContentProviderClient client = contentResolver.acquireContentProviderClient(ReadingListItems.CONTENT_URI);
+        return client;
     }
 }
