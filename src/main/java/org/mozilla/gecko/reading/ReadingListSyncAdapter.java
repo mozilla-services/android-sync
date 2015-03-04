@@ -17,6 +17,10 @@ import org.mozilla.gecko.background.common.PrefsBranch;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountClient;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
+import org.mozilla.gecko.background.fxa.oauth.FxAccountAbstractClient.RequestDelegate;
+import org.mozilla.gecko.background.fxa.oauth.FxAccountAbstractClientException.FxAccountAbstractClientRemoteException;
+import org.mozilla.gecko.background.fxa.oauth.FxAccountOAuthClient10;
+import org.mozilla.gecko.background.fxa.oauth.FxAccountOAuthClient10.AuthorizationResponse;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
@@ -31,6 +35,7 @@ import org.mozilla.gecko.fxa.login.StateFactory;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncDelegate;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BearerAuthHeaderProvider;
 
 import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
@@ -167,20 +172,41 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
               final Married married = (Married) state;
               final String assertion = married.generateAssertion(audience, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER);
-              syncWithAssertion(audience, assertion, sharedPrefs, extras);
+              final String clientID = "0fddc2b28f47c2d8";   // This is magic. NIIIICKKKKKK!
+              final String scope = "profile";               // Niiiiiickkk!
+              syncWithAssertion(clientID, scope, assertion, sharedPrefs, extras);
             } catch (Exception e) {
               syncDelegate.handleError(e);
               return;
             }
           }
 
-          private void syncWithAssertion(String audience, String assertion,
-                                         SharedPreferences sharedPrefs,
-                                         Bundle extras) {
-            Logger.info(LOG_TAG, "syncWithAssertion. Nowt to do!");
+          private void syncWithAssertion(final String client_id, final String scope, final String assertion,
+                                         final SharedPreferences sharedPrefs, final Bundle extras) {
+            final String oauthServerUri = "https://oauth-stable.dev.lcip.org/v1";
+            final FxAccountOAuthClient10 oauthClient = new FxAccountOAuthClient10(oauthServerUri, executor);
+            oauthClient.authorization(client_id, assertion, null, scope, new RequestDelegate<FxAccountOAuthClient10.AuthorizationResponse>() {
+              @Override
+              public void handleSuccess(AuthorizationResponse result) {
+                syncWithAuthorization(result, sharedPrefs, extras);
+              }
 
-            // TODO
-            final AuthHeaderProvider auth = new BasicAuthHeaderProvider("test_syncadapter", "nowt");
+              @Override
+              public void handleFailure(FxAccountAbstractClientRemoteException e) {
+                syncDelegate.handleError(e);
+              }
+
+              @Override
+              public void handleError(Exception e) {
+                syncDelegate.handleError(e);
+              }
+            });
+          }
+
+          private void syncWithAuthorization(AuthorizationResponse authResponse,
+                                             SharedPreferences sharedPrefs,
+                                             Bundle extras) {
+            final AuthHeaderProvider auth = new BearerAuthHeaderProvider(authResponse.access_token);
 
             final String endpointString = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
             final URI endpoint;
