@@ -68,6 +68,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
     @Override
     public void onUnableToSync(Exception e) {
+      Logger.info(LOG_TAG, "XXX onUnableToSync.", e);
       cpc.release();
       syncDelegate.handleError(e);
     }
@@ -75,23 +76,28 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onStatusUploadComplete(Collection<String> uploaded,
                                        Collection<String> failed) {
+      Logger.info(LOG_TAG, "XXX onStatusUploadComplete");
     }
 
     @Override
     public void onNewItemUploadComplete(Collection<String> uploaded,
                                         Collection<String> failed) {
+      Logger.info(LOG_TAG, "XXX onNewItemUploadComplete");
     }
 
     @Override
     public void onModifiedUploadComplete() {
+      Logger.info(LOG_TAG, "XXX onModifiedUploadComplete");
     }
 
     @Override
     public void onDownloadComplete() {
+      Logger.info(LOG_TAG, "XXX onDownloadComplete");
     }
 
     @Override
     public void onComplete() {
+      Logger.info(LOG_TAG, "XXX onComplete");
       cpc.release();
       syncDelegate.handleSuccess();
     }
@@ -168,6 +174,8 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
             final Married married = (Married) state;
             final String assertion = married.generateAssertion(audience, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER);
+            Logger.info(LOG_TAG, "XXX Assertion is " + assertion);
+
             final String clientID = "3332a18d142636cb";
             final String scope = "profile";               // Niiiiiickkk!
             syncWithAssertion(clientID, scope, assertion, sharedPrefs, extras);
@@ -181,19 +189,23 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
                                        final SharedPreferences sharedPrefs, final Bundle extras) {
           final String oauthServerUri = ReadingListConstants.OAUTH_ENDPOINT_PROD;
           final FxAccountOAuthClient10 oauthClient = new FxAccountOAuthClient10(oauthServerUri, executor);
+          Logger.info(LOG_TAG, "XXX oauth fetch");
           oauthClient.authorization(client_id, assertion, null, scope, new RequestDelegate<FxAccountOAuthClient10.AuthorizationResponse>() {
             @Override
             public void handleSuccess(AuthorizationResponse result) {
+              Logger.info(LOG_TAG, "XXX oauth success");
               syncWithAuthorization(result, sharedPrefs, extras);
             }
 
             @Override
             public void handleFailure(FxAccountAbstractClientRemoteException e) {
+              Logger.error(LOG_TAG, "XXX oauth failure", e);
               syncDelegate.handleError(e);
             }
 
             @Override
             public void handleError(Exception e) {
+              Logger.error(LOG_TAG, "XXX oauth error", e);
               syncDelegate.handleError(e);
             }
           });
@@ -206,6 +218,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
           final String endpointString = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
           final URI endpoint;
+          Logger.info(LOG_TAG, "XXX Syncing to " + endpointString);
           try {
             endpoint = new URI(endpointString);
           } catch (URISyntaxException e) {
@@ -228,6 +241,8 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
       });
 
       latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      Logger.info(LOG_TAG, "Reading list sync done.");
+
     } catch (Exception e) {
       Logger.error(LOG_TAG, "Got error syncing.", e);
       syncDelegate.handleError(e);
