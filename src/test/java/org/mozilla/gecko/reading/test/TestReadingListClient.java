@@ -13,6 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mozilla.gecko.background.fxa.oauth.FxAccountOAuthClient10.AuthorizationResponse;
+import org.mozilla.gecko.background.fxa.test.FxAccountTestHelper;
+import org.mozilla.gecko.background.fxa.test.FxAccountTestHelper.StableDevTestHelper;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
 import org.mozilla.gecko.reading.FetchSpec;
 import org.mozilla.gecko.reading.ReadingListClient;
@@ -27,9 +30,12 @@ import org.mozilla.gecko.reading.ServerReadingListRecord;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BearerAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.MozResponse;
 
 public class TestReadingListClient {
+  final FxAccountTestHelper helper = new StableDevTestHelper();
+
   public class TestRecordDeleteDelegate implements ReadingListDeleteDelegate {
     public volatile ReadingListRecordResponse response;
     public volatile ReadingListRecord record;
@@ -326,5 +332,36 @@ public class TestReadingListClient {
     final TestRecordDelegate afterDelegate = fetchSince(client, lastServerTimestamp);
     Assert.assertEquals(200, afterDelegate.response.getStatusCode());
     Assert.assertEquals(1, afterDelegate.records.size());
+  }
+
+  @Test
+  public final void testWithAuthorization() throws Throwable {
+    // For now, the scope is "profile". It will be "readinglist" eventually
+    // (tracked by https://github.com/mozilla-services/readinglist/issues/16).
+    final String scope = "profile";
+
+    final AuthorizationResponse authorization = helper.doTestAuthorization("testtesto@mockmyid.com", "testtesto@mockmyid.com", scope);
+    final AuthHeaderProvider auth = new BearerAuthHeaderProvider(authorization.access_token);
+    final ReadingListClient client = new ReadingListClient(new URI(DEFAULT_SERVICE_URI), auth);
+
+    final ClientReadingListRecord record = new ClientReadingListRecord("http://reddit.com", "Reddit", "Test Device");
+
+    // Verify that we can upload a record.
+    final TestRecordUploadDelegate uploadDelegate = uploadRecord(client, record);
+    Assert.assertNull(uploadDelegate.error);
+    Assert.assertNull(uploadDelegate.mozResponse);
+    Assert.assertNotNull(uploadDelegate.response);
+    Assert.assertNotNull(uploadDelegate.record);
+    Assert.assertEquals(record.getURL(), uploadDelegate.record.getURL());
+    Assert.assertEquals(record.getTitle(), uploadDelegate.record.getTitle());
+    Assert.assertEquals(record.getAddedBy(), uploadDelegate.record.getAddedBy());
+    // Accept a 200 (record did not exist on the server) or a 201 (record already existed).
+    Assert.assertEquals(2, uploadDelegate.response.getStatusCode() / 100);
+    Assert.assertNotNull(uploadDelegate.record.getGUID());
+
+    // Verify that we can delete a record.
+    final TestRecordDeleteDelegate deleteDelegate = deleteRecord(client, uploadDelegate.record);
+    Assert.assertTrue(deleteDelegate.response.wasSuccessful());
+    Assert.assertEquals(200, deleteDelegate.response.getStatusCode());
   }
 }
