@@ -168,7 +168,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
             final Married married = (Married) state;
             final String assertion = married.generateAssertion(audience, JSONWebTokenUtils.DEFAULT_ASSERTION_ISSUER);
-            final String clientID = "0fddc2b28f47c2d8";   // This is magic. NIIIICKKKKKK!
+            final String clientID = "3332a18d142636cb";
             final String scope = "profile";               // Niiiiiickkk!
             syncWithAssertion(clientID, scope, assertion, sharedPrefs, extras);
           } catch (Exception e) {
@@ -179,7 +179,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
         private void syncWithAssertion(final String client_id, final String scope, final String assertion,
                                        final SharedPreferences sharedPrefs, final Bundle extras) {
-          final String oauthServerUri = "https://oauth-stable.dev.lcip.org/v1";
+          final String oauthServerUri = ReadingListConstants.OAUTH_ENDPOINT_PROD;
           final FxAccountOAuthClient10 oauthClient = new FxAccountOAuthClient10(oauthServerUri, executor);
           oauthClient.authorization(client_id, assertion, null, scope, new RequestDelegate<FxAccountOAuthClient10.AuthorizationResponse>() {
             @Override
