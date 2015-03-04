@@ -35,6 +35,8 @@ public class ReadingListSynchronizer {
 
   private static final int MAX_FAILURES = 5;
 
+  public static final String PREF_LAST_MODIFIED = "download.lastmodified";
+
   private final PrefsBranch prefs;
   private final ReadingListClient remote;
   private final ReadingListStorage local;
@@ -435,8 +437,13 @@ public class ReadingListSynchronizer {
 
       @Override
       public void onComplete(ReadingListResponse response) {
+        long lastModified = response.getLastModified();
+        Logger.info(LOG_TAG, "Server last modified: " + lastModified);
         try {
           postDownload.finish();
+
+          // Yay. We do this here so that if writing changes fails, we don't advance.
+          advanceLastModified(lastModified);
           delegate.next();
         } catch (Exception e) {
           delegate.fail(e);
@@ -535,6 +542,10 @@ public class ReadingListSynchronizer {
    * Do a bidirectional sync.
    */
   public void syncAll(final ReadingListSynchronizerDelegate syncDelegate) {
+    syncAll(getLastModified(), syncDelegate);
+  }
+
+  public void syncAll(final long since, final ReadingListSynchronizerDelegate syncDelegate) {
     // Fourth: call back to the synchronizer delegate.
     final StageDelegate onModifiedUploadComplete = new NextDelegate(executor) {
       @Override
@@ -575,7 +586,7 @@ public class ReadingListSynchronizer {
         // We can also optimize by keeping the (guid, server timestamp) pair
         // in memory, but of course this runs into invalidation issues if
         // concurrent writes are occurring.
-        downloadIncoming(-1L, onDownloadCompleted);
+        downloadIncoming(since, onDownloadCompleted);
       }
 
       @Override
@@ -599,5 +610,16 @@ public class ReadingListSynchronizer {
     });
 
     // TODO: ensure that records we identified as conflicts have been downloaded.
+  }
+
+  protected long getLastModified() {
+    return prefs.getLong(PREF_LAST_MODIFIED, -1L);
+  }
+
+  protected void advanceLastModified(final long lastModified) {
+    if (getLastModified() > lastModified) {
+      return;
+    }
+    prefs.edit().putLong(PREF_LAST_MODIFIED, lastModified).apply();
   }
 }
