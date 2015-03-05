@@ -35,6 +35,7 @@ import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.fxa.login.StateFactory;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncDelegate;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BearerAuthHeaderProvider;
 
 import android.accounts.Account;
@@ -224,7 +225,14 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
         private void syncWithAuthorization(AuthorizationResponse authResponse,
                                            SharedPreferences sharedPrefs,
                                            Bundle extras) {
-          final AuthHeaderProvider auth = new BearerAuthHeaderProvider(authResponse.access_token);
+
+
+          // We can't use OAuth for realz because the endpoint we're using doesn't accept
+          // production FxA. Instead, let's bravely roll onward with totally unauthenticated
+          // Basic Auth.
+          final AuthHeaderProvider auth =
+              // new BearerAuthHeaderProvider(authResponse.access_token);
+              new BasicAuthHeaderProvider(fxAccount.getEmail(), "development");
 
           final String endpointString = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
           final URI endpoint;
