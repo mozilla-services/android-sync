@@ -26,6 +26,17 @@ import org.mozilla.gecko.browserid.RSACryptoImplementation;
  * Map Firefox Account servers to HTTP clients.
  */
 public abstract class FxAccountTestHelper {
+  public static class ProdTestHelper extends FxAccountTestHelper {
+    public ProdTestHelper() {
+      super(
+          "https://api.accounts.firefox.com/v1",
+          "https://oauth.accounts.firefox.com/v1",
+          "https://profile.accounts.firefox.com/v1",
+          "3332a18d142636cb" // canGrant = true.
+          );
+    }
+  }
+
   public static class StableDevTestHelper extends FxAccountTestHelper {
     public StableDevTestHelper() {
       super(
