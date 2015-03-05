@@ -13,6 +13,7 @@ import java.util.concurrent.Executor;
 
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.reading.ReadingListResponse.ResponseFactory;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
@@ -31,13 +32,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
  */
 public class ReadingListClient {
   static final String LOG_TAG = ReadingListClient.class.getSimpleName();
-
-  static void logResponseBody(MozResponse response) {
-    try {
-      Logger.debug(LOG_TAG, "Response body: " + response.body());
-    } catch (IllegalStateException | IOException e) {
-    }
-  }
+  private static final boolean DEBUG = true;
 
   private final AuthHeaderProvider auth;
 
@@ -73,8 +68,8 @@ public class ReadingListClient {
 
     @Override
     void onFailure(MozResponse response) {
-      Logger.warn(LOG_TAG, "Upload got failure response " + response.getStatusCode());
-      logResponseBody(response);
+      Logger.warn(LOG_TAG, "Upload got failure response " + response.httpResponse().getStatusLine());
+      response.logResponseBody(LOG_TAG);
       if (response.getStatusCode() == 400) {
         // Error response.
         uploadDelegate.onBadRequest(up, response);
@@ -91,6 +86,7 @@ public class ReadingListClient {
 
     @Override
     void onSuccess(ReadingListRecordResponse response) {
+      Logger.debug(LOG_TAG, "Upload: onSuccess: " + response.httpResponse().getStatusLine());
       final ServerReadingListRecord down;
       try {
         down = response.getRecord();
@@ -209,13 +205,7 @@ public class ReadingListClient {
     @Override
     void onNonSuccess(T resp) {
       Logger.debug(LOG_TAG, "Got non-success record response " + resp.getStatusCode());
-      String body;
-      try {
-        body = resp.body();
-        Logger.warn(LOG_TAG, "Body: " + body);
-      } catch (IllegalStateException | IOException e) {
-        Logger.warn(LOG_TAG, "Couldn't extract body.");
-      }
+      resp.logResponseBody(LOG_TAG);
 
       switch (resp.getStatusCode()) {
       case 304:
@@ -231,7 +221,6 @@ public class ReadingListClient {
 
     @Override
     void onFailure(MozResponse response) {
-      logResponseBody(response);
       recordDelegate.onFailure(response);
     }
 
@@ -449,6 +438,9 @@ public class ReadingListClient {
   public void getOne(final String guid, ReadingListRecordDelegate delegate, final long ifModifiedSince) {
     final BaseResource r = getRelativeArticleResource(guid);
     r.delegate = new SingleRecordResourceDelegate(r, auth, delegate, ReadingListRecordResponse.FACTORY, ifModifiedSince, guid);
+    if (DEBUG) {
+      Logger.info(LOG_TAG, "Getting record " + guid);
+    }
     r.get();
   }
 
@@ -457,6 +449,9 @@ public class ReadingListClient {
   public void getAll(final FetchSpec spec, ReadingListRecordDelegate delegate, final long ifModifiedSince) throws URISyntaxException {
     final BaseResource r = new BaseResource(spec.getURI(this.articlesURI));
     r.delegate = new MultipleRecordResourceDelegate(r, auth, delegate, ReadingListStorageResponse.FACTORY, ifModifiedSince);
+    if (DEBUG) {
+      Logger.info(LOG_TAG, "Getting all records from " + r.getURIString());
+    }
     r.get();
   }
 
@@ -485,7 +480,11 @@ public class ReadingListClient {
     r.delegate = new DelegatingUploadResourceDelegate(r, auth, ReadingListRecordResponse.FACTORY, up,
                                                       uploadDelegate);
 
-    r.post(up.toJSON());
+    final ExtendedJSONObject body = up.toJSON();
+    if (DEBUG) {
+      Logger.info(LOG_TAG, "Patching record " + guid + ": " + body.toJSONString());
+    }
+    r.post(body);
   }
 
   /**
@@ -507,7 +506,11 @@ public class ReadingListClient {
     r.delegate = new DelegatingUploadResourceDelegate(r, auth, ReadingListRecordResponse.FACTORY, up,
                                                       uploadDelegate);
 
-    r.post(up.toJSON());
+    final ExtendedJSONObject body = up.toJSON();
+    if (DEBUG) {
+      Logger.info(LOG_TAG, "Uploading new record: " + body.toJSONString());
+    }
+    r.post(body);
   }
 
   public void delete(final String guid, final ReadingListDeleteDelegate delegate, final long ifUnmodifiedSince) {
@@ -563,6 +566,9 @@ public class ReadingListClient {
       }
     };
 
+    if (DEBUG) {
+      Logger.debug(LOG_TAG, "Deleting " + r.getURIString());
+    }
     r.delete();
   }
 
