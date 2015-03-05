@@ -10,6 +10,7 @@ import java.util.Iterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.UnexpectedJSONException;
 
@@ -26,18 +27,20 @@ public class ReadingListStorageResponse extends ReadingListResponse {
     }
   };
 
+  private static final String LOG_TAG = "StorageResponse";
+
   public ReadingListStorageResponse(HttpResponse res) {
     super(res);
   }
 
-  public Iterable<ServerReadingListRecord> getRecords() throws IllegalStateException, IOException, ParseException, UnexpectedJSONException {
+  public Iterable<ServerReadingListRecord> getRecords() throws IOException, ParseException, UnexpectedJSONException {
     final ExtendedJSONObject body = jsonObjectBody();
     final JSONArray items = body.getArray("items");
 
     final int expected = getTotalRecords();
     final int actual = items.size();
-    if (actual != expected) {
-      throw new IllegalStateException("Unexpected number of records. Got " + actual + ", expected " + expected);
+    if (actual < expected) {
+      Logger.warn(LOG_TAG, "Unexpected number of records. Got " + actual + ", expected " + expected);
     }
 
     return new Iterable<ServerReadingListRecord>() {
