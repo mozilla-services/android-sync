@@ -87,6 +87,34 @@ public class TestLocalReadingListStorage extends ReadingListTest {
         }
     }
 
+    /**
+     * This exercises the in-place $local -> device name translation that we
+     * use to avoid figuring out the client name in multiple places.
+     */
+    public final void testNameRewriting() throws Exception {
+        final ContentProviderClient client = getWipedLocalClient();
+        try {
+            final LocalReadingListStorage storage = new LocalReadingListStorage(client);
+            assertIsEmpty(storage);
+
+            addRecordA(client);
+            assertTrue(1 == getCount(client));
+            assertCursorCount(0, storage.getModified());
+
+            storage.updateLocalNames("Foo Bar");
+            Cursor cursor = storage.getNew();
+            try {
+                assertTrue(cursor.moveToFirst());
+                String addedBy = cursor.getString(cursor.getColumnIndexOrThrow(ReadingListItems.ADDED_BY));
+                assertEquals("Foo Bar", addedBy);
+            } finally {
+                cursor.close();
+            }
+        } finally {
+            client.release();
+        }
+    }
+
     public final void testGetNew() throws Exception {
         final ContentProviderClient client = getWipedLocalClient();
         try {
