@@ -31,6 +31,8 @@ import android.os.RemoteException;
 
 public class LocalReadingListStorage implements ReadingListStorage {
 
+  private static final String WHERE_STATUS_NEW = "(" + SYNC_STATUS + " = " + SYNC_STATUS_NEW + ")";
+
   final class LocalReadingListChangeAccumulator implements ReadingListChangeAccumulator {
     private static final String LOG_TAG = "RLChanges";
 
@@ -318,7 +320,7 @@ public class LocalReadingListStorage implements ReadingListStorage {
   public Cursor getNew() {
     // N.B., query for items that have no GUID, regardless of status.
     // They should all be marked as NEW, but belt and braces.
-    final String selection = "(" + SYNC_STATUS + " = " + SYNC_STATUS_NEW + ") OR (" + ReadingListItems.GUID + " IS NULL)";
+    final String selection = WHERE_STATUS_NEW + " OR (" + ReadingListItems.GUID + " IS NULL)";
 
     try {
       return client.query(URI_WITHOUT_DELETED, null, selection, null, null);
@@ -333,6 +335,53 @@ public class LocalReadingListStorage implements ReadingListStorage {
       return client.query(URI_WITHOUT_DELETED, null, null, null, null);
     } catch (RemoteException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  private ContentProviderOperation updateAddedByNames(final String local) {
+    String[] selectionArgs = new String[] {"$local"};
+    String selection = WHERE_STATUS_NEW + " AND (" + ReadingListItems.ADDED_BY + " = ?)";
+    return ContentProviderOperation.newUpdate(URI_WITHOUT_DELETED)
+                                   .withValue(ReadingListItems.ADDED_BY, local)
+                                   .withSelection(selection, selectionArgs)
+                                   .build();
+  }
+
+  private ContentProviderOperation updateMarkedReadByNames(final String local) {
+    String[] selectionArgs = new String[] {"$local"};
+    String selection = ReadingListItems.MARKED_READ_BY + " = ?";
+    return ContentProviderOperation.newUpdate(URI_WITHOUT_DELETED)
+                                   .withValue(ReadingListItems.MARKED_READ_BY, local)
+                                   .withSelection(selection, selectionArgs)
+                                   .build();
+  }
+
+  /**
+   * Consumers of the reading list provider don't know the device name.
+   * Rather than smearing that logic into callers, or requiring the database
+   * to be able to figure out the name of the device, we have the SyncAdapter
+   * do it.
+   *
+   * After all, the SyncAdapter knows everything -- prefs, channels, profiles,
+   * Firefox Account details, etc.
+   *
+   * To allow this, the CP writes the magic string "$local" wherever a device
+   * name is needed. Here in storage, we run a quick UPDATE pass prior to
+   * synchronizing, so the device name is 'calcified' at the time of the first
+   * sync of that record. The SyncAdapter calls this prior to invoking the
+   * synchronizer.
+   */
+  public void updateLocalNames(final String local) {
+    ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>(2);
+    ops.add(updateAddedByNames(local));
+    ops.add(updateMarkedReadByNames(local));
+
+    try {
+      client.applyBatch(ops);
+    } catch (RemoteException e) {
+      return;
+    } catch (OperationApplicationException e) {
+      return;
     }
   }
 
