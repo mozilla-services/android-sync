@@ -62,11 +62,14 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
   static final class SyncAdapterSynchronizerDelegate implements ReadingListSynchronizerDelegate {
     private final FxAccountSyncDelegate syncDelegate;
     private final ContentProviderClient cpc;
+    private final SyncResult result;
 
     SyncAdapterSynchronizerDelegate(FxAccountSyncDelegate syncDelegate,
-                                    ContentProviderClient cpc) {
+                                    ContentProviderClient cpc,
+                                    SyncResult result) {
       this.syncDelegate = syncDelegate;
       this.cpc = cpc;
+      this.result = result;
     }
 
     @Override
@@ -80,22 +83,26 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     public void onStatusUploadComplete(Collection<String> uploaded,
                                        Collection<String> failed) {
       Logger.debug(LOG_TAG, "Step: onStatusUploadComplete");
+      this.result.stats.numEntries += 1;   // TODO
     }
 
     @Override
     public void onNewItemUploadComplete(Collection<String> uploaded,
                                         Collection<String> failed) {
       Logger.debug(LOG_TAG, "Step: onNewItemUploadComplete");
+      this.result.stats.numEntries += 1;   // TODO
     }
 
     @Override
     public void onModifiedUploadComplete() {
       Logger.debug(LOG_TAG, "Step: onModifiedUploadComplete");
+      this.result.stats.numEntries += 1;   // TODO
     }
 
     @Override
     public void onDownloadComplete() {
       Logger.debug(LOG_TAG, "Step: onDownloadComplete");
+      this.result.stats.numInserts += 1;   // TODO
     }
 
     @Override
@@ -246,7 +253,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
           final ReadingListSynchronizer synchronizer = new ReadingListSynchronizer(branch, remote, local);
 
-          synchronizer.syncAll(new SyncAdapterSynchronizerDelegate(syncDelegate, cpc));
+          synchronizer.syncAll(new SyncAdapterSynchronizerDelegate(syncDelegate, cpc, syncResult));
           // TODO: backoffs, and everything else handled by a SessionCallback.
         }
       });
