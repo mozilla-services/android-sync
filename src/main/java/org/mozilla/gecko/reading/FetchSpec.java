@@ -89,5 +89,11 @@ public class FetchSpec {
       b.append(since);
       return this;
     }
+
+    public Builder setExcludeDeleted() {
+      ampersand();
+      b.append("not_deleted=true");
+      return this;
+    }
   }
 }

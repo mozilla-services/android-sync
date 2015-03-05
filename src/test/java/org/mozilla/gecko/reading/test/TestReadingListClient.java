@@ -207,6 +207,7 @@ public class TestReadingListClient {
   private TestRecordDelegate fetchSince(final ReadingListClient client, final long since) throws Exception {
     final FetchSpec spec = new FetchSpec.Builder()
                                         .setSince(since)
+                                        .setExcludeDeleted()
                                         .build();
     final long ifModifiedSince = -1L;
     return fetch(client, spec, ifModifiedSince);
