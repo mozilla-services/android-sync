@@ -47,6 +47,7 @@ import android.content.SyncResult;
 import android.os.Bundle;
 
 public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
+  public static final String PREF_LOCAL_NAME = "device.localname";
   public static final String OAUTH_CLIENT_ID_FENNEC = "3332a18d142636cb";
   private static final String LOG_TAG = ReadingListSyncAdapter.class.getSimpleName();
   private static final long TIMEOUT_SECONDS = 60;
@@ -234,7 +235,15 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
           final ReadingListClient remote = new ReadingListClient(endpoint, auth);
           final ContentProviderClient cpc = getContentProviderClient(context);     // TODO: make sure I'm always released!
 
-          final ReadingListStorage local = new LocalReadingListStorage(cpc);
+          final LocalReadingListStorage local = new LocalReadingListStorage(cpc);
+          String localName = branch.getString(PREF_LOCAL_NAME, null);
+          if (localName == null) {
+            localName = FxAccountUtils.defaultClientName(context);
+          }
+
+          // Make sure DB rows don't refer to placeholder values.
+          local.updateLocalNames(localName);
+
           final ReadingListSynchronizer synchronizer = new ReadingListSynchronizer(branch, remote, local);
 
           synchronizer.syncAll(new SyncAdapterSynchronizerDelegate(syncDelegate, cpc));
