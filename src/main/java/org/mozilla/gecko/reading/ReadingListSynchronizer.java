@@ -44,6 +44,7 @@ public class ReadingListSynchronizer {
 
   private interface StageDelegate {
     void next();
+    void fail();
     void fail(Exception e);
   }
 
@@ -64,6 +65,11 @@ public class ReadingListSynchronizer {
           doNext();
         }
       });
+    }
+
+    @Override
+    public void fail() {
+      fail(null);
     }
 
     @Override
@@ -435,8 +441,8 @@ public class ReadingListSynchronizer {
       public void onFailure(MozResponse response) {
         final int statusCode = response.getStatusCode();
         Logger.error(LOG_TAG, "Download failed. since = " + since + ". Response: " + statusCode);
-        logResponseBody(response);
-        delegate.fail(new RuntimeException("Failure: " + statusCode));
+        response.logResponseBody(LOG_TAG);
+        delegate.fail();
       }
 
       @Override
@@ -459,14 +465,6 @@ public class ReadingListSynchronizer {
       remote.getAll(spec, recordDelegate, since);
     } catch (URISyntaxException e) {
       delegate.fail(e);
-    }
-  }
-
-
-  protected static void logResponseBody(MozResponse response) {
-    try {
-      Logger.debug(LOG_TAG, "Response body: " + response.body());
-    } catch (IllegalStateException | IOException e) {
     }
   }
 
