@@ -99,7 +99,7 @@ public class ReadingListSynchronizer {
     final Queue<String> failed = new LinkedList<>();
     final Queue<String> toEnsureDownloaded = new LinkedList<>();
 
-    public int failures = 0;
+    public volatile int failures = 0;
     private final ReadingListChangeAccumulator acc;
     private final StageDelegate next;
 
@@ -177,11 +177,15 @@ public class ReadingListSynchronizer {
     public void onBatchDone() {
       // We mark uploaded records as synced when we apply the server record with the
       // GUID -- we don't know the GUID yet!
-      try {
-        next.next();
-      } catch (Exception e) {
-        next.fail(e);
+      if (failures == 0) {
+        try {
+          next.next();
+        } catch (Exception e) {
+          next.fail(e);
+        }
+        return;
       }
+      next.fail();
     }
   }
 
@@ -190,7 +194,7 @@ public class ReadingListSynchronizer {
     final Collection<String> failed = new LinkedList<>();
     private final ReadingListChangeAccumulator acc;
 
-    public int failures = 0;
+    public volatile int failures = 0;
     private final StageDelegate next;
 
     StatusUploadDelegate(ReadingListChangeAccumulator acc, StageDelegate next) {
@@ -248,10 +252,18 @@ public class ReadingListSynchronizer {
     public void onBatchDone() {
       try {
         acc.finish();
-        next.next();
       } catch (Exception e) {
         next.fail(e);
+        return;
       }
+
+      if (failures == 0) {
+        try {
+          next.next();
+        } catch (Exception e) {
+        }
+      }
+      next.fail();
     }
   }
 
@@ -370,25 +382,43 @@ public class ReadingListSynchronizer {
 
       final ReadingListChangeAccumulator acc = this.local.getChangeAccumulator();
       final NewItemUploadDelegate uploadDelegate = new NewItemUploadDelegate(acc, new StageDelegate() {
+        private boolean tryFlushChanges() {
+          Logger.debug(LOG_TAG, "Flushing post-upload changes.");
+          try {
+            acc.finish();
+            return true;
+          } catch (Exception e) {
+            Logger.warn(LOG_TAG, "Flushing changes failed! This sync went wrong.", e);
+            delegate.fail(e);
+            return false;
+          }
+        }
+
         @Override
         public void next() {
           // Fuck, can't get the delegate.
           // addEnsureDownloadedToPrefs();
-          Logger.debug(LOG_TAG, "New items uploaded. Flushing resultant changes.");
-          try {
-            acc.finish();
-          } catch (Exception e) {
-            Logger.warn(LOG_TAG, "Flushing changes failed! This sync went wrong.", e);
-            delegate.fail(e);
-          }
+          Logger.debug(LOG_TAG, "New items uploaded successfully.");
 
-          delegate.next();
+          if (tryFlushChanges()) {
+            delegate.next();
+          }
+        }
+
+        @Override
+        public void fail() {
+          Logger.warn(LOG_TAG, "Couldn't upload new items.");
+          if (tryFlushChanges()) {
+            delegate.fail();
+          }
         }
 
         @Override
         public void fail(Exception e) {
           Logger.warn(LOG_TAG, "Couldn't upload new items.", e);
-          delegate.fail(e);
+          if (tryFlushChanges()) {
+            delegate.fail(e);
+          }
         }
       });
 
