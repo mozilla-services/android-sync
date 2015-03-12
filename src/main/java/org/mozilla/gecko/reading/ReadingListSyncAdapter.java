@@ -50,6 +50,8 @@ import android.os.Bundle;
 public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
   public static final String PREF_LOCAL_NAME = "device.localname";
   public static final String OAUTH_CLIENT_ID_FENNEC = "3332a18d142636cb";
+  public static final String OAUTH_SCOPE_READINGLIST = "readinglist";
+
   private static final String LOG_TAG = ReadingListSyncAdapter.class.getSimpleName();
   private static final long TIMEOUT_SECONDS = 60;
   protected final ExecutorService executor;
@@ -189,7 +191,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
             JSONWebTokenUtils.dumpAssertion(assertion);
 
             final String clientID = OAUTH_CLIENT_ID_FENNEC;
-            final String scope = "profile";               // Niiiiiickkk!
+            final String scope = OAUTH_SCOPE_READINGLIST;
             syncWithAssertion(clientID, scope, assertion, sharedPrefs, extras);
           } catch (Exception e) {
             syncDelegate.handleError(e);
