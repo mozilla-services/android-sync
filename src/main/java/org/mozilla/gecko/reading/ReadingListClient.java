@@ -32,7 +32,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
  */
 public class ReadingListClient {
   static final String LOG_TAG = ReadingListClient.class.getSimpleName();
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
 
   private final AuthHeaderProvider auth;
 
