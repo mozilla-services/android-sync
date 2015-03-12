@@ -6,6 +6,7 @@ package org.mozilla.gecko.fxa.sync;
 
 import java.util.concurrent.CountDownLatch;
 
+import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
@@ -59,6 +60,7 @@ public class FxAccountSyncDelegate {
   }
 
   public void handleSuccess() {
+    Logger.info("Gecko", "XXX handleSuccess");
     setSyncResultSuccess();
     latch.countDown();
   }
