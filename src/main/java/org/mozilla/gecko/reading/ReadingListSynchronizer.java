@@ -33,7 +33,7 @@ import android.text.TextUtils;
 public class ReadingListSynchronizer {
   public static final String LOG_TAG = ReadingListSynchronizer.class.getSimpleName();
 
-  public static final String PREF_LAST_MODIFIED = "download.lastmodified";
+  public static final String PREF_LAST_MODIFIED = "download.serverlastmodified";
 
   private final PrefsBranch prefs;
   private final ReadingListClient remote;
