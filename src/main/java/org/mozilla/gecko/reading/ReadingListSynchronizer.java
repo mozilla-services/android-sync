@@ -6,7 +6,6 @@ package org.mozilla.gecko.reading;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.Executor;
@@ -93,8 +92,6 @@ public class ReadingListSynchronizer {
   }
 
   private static final class NewItemUploadDelegate implements ReadingListRecordUploadDelegate {
-    final Queue<String> toEnsureDownloaded = new LinkedList<>();
-
     public volatile int failures = 0;
     private final ReadingListChangeAccumulator acc;
     private final StageDelegate next;
@@ -102,14 +99,6 @@ public class ReadingListSynchronizer {
     NewItemUploadDelegate(ReadingListChangeAccumulator acc, StageDelegate next) {
       this.acc = acc;
       this.next = next;
-    }
-
-    /**
-     * When an operation implies that a server record is a replacement
-     * for a local record, call this to ensure that we have a copy.
-     */
-    private void ensureDownloaded(String id) {
-      toEnsureDownloaded.add(id);
     }
 
     @Override
@@ -127,7 +116,10 @@ public class ReadingListSynchronizer {
         body = response.jsonObjectBody();
         String conflicting = body.getString("id");
         Logger.warn(LOG_TAG, "Conflict detected: remote ID is " + conflicting);
-        ensureDownloaded(conflicting);
+
+        // TODO: When an operation implies that a server record is a replacement
+        // of what we uploaded, we should ensure that we have a local copy of
+        // that server record!
       } catch (IllegalStateException | NonObjectJSONException | IOException |
                ParseException e) {
         // Oops.
@@ -394,8 +386,6 @@ public class ReadingListSynchronizer {
 
         @Override
         public void next() {
-          // Fuck, can't get the delegate.
-          // addEnsureDownloadedToPrefs();
           Logger.debug(LOG_TAG, "New items uploaded successfully.");
 
           if (tryFlushChanges()) {
@@ -428,13 +418,6 @@ public class ReadingListSynchronizer {
       delegate.fail(e);
       return;
     }
-  }
-
-  private void addEnsureDownloadedToPrefs(Queue<String> toEnsureDownloaded) {
-    if (toEnsureDownloaded.isEmpty()) {
-      return;
-    }
-    // TODO
   }
 
   private void uploadModified(final StageDelegate delegate) {
