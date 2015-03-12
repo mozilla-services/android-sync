@@ -185,8 +185,6 @@ public class ReadingListSynchronizer {
   }
 
   private static class StatusUploadDelegate implements ReadingListRecordUploadDelegate {
-    final Collection<String> uploaded = new LinkedList<>();
-    final Collection<String> failed = new LinkedList<>();
     private final ReadingListChangeAccumulator acc;
 
     public volatile int failures = 0;
@@ -208,7 +206,7 @@ public class ReadingListSynchronizer {
                            ReadingListResponse response) {
       // This should never happen for a status-only change.
       // TODO: mark this record as requiring a full upload or download.
-      failed.add(up.getGUID());
+      failures++;
     }
 
     @Override
@@ -226,7 +224,6 @@ public class ReadingListSynchronizer {
         // the numeric ID).
       }
 
-      uploaded.add(up.getGUID());
       acc.addChangedRecord(up.givenServerRecord(down));
     }
 
@@ -246,7 +243,6 @@ public class ReadingListSynchronizer {
     }
 
     private void recordFailed(ClientReadingListRecord up) {
-      failed.add(up.getGUID());
       ++failures;
     }
 
