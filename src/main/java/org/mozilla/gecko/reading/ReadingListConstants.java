@@ -13,4 +13,6 @@ public class ReadingListConstants {
   public static final String DEFAULT_PROD_ENDPOINT = null;     // TODO
 
   public static final String OAUTH_ENDPOINT_PROD = "https://oauth.accounts.firefox.com/v1";
+
+  public static boolean DEBUG = false;
 }

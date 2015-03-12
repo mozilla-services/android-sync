@@ -32,8 +32,6 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
  */
 public class ReadingListClient {
   static final String LOG_TAG = ReadingListClient.class.getSimpleName();
-  private static final boolean DEBUG = false;
-
   private final AuthHeaderProvider auth;
 
   private final URI articlesURI;              // .../articles
@@ -438,7 +436,7 @@ public class ReadingListClient {
   public void getOne(final String guid, ReadingListRecordDelegate delegate, final long ifModifiedSince) {
     final BaseResource r = getRelativeArticleResource(guid);
     r.delegate = new SingleRecordResourceDelegate(r, auth, delegate, ReadingListRecordResponse.FACTORY, ifModifiedSince, guid);
-    if (DEBUG) {
+    if (ReadingListConstants.DEBUG) {
       Logger.info(LOG_TAG, "Getting record " + guid);
     }
     r.get();
@@ -449,7 +447,7 @@ public class ReadingListClient {
   public void getAll(final FetchSpec spec, ReadingListRecordDelegate delegate, final long ifModifiedSince) throws URISyntaxException {
     final BaseResource r = new BaseResource(spec.getURI(this.articlesURI));
     r.delegate = new MultipleRecordResourceDelegate(r, auth, delegate, ReadingListStorageResponse.FACTORY, ifModifiedSince);
-    if (DEBUG) {
+    if (ReadingListConstants.DEBUG) {
       Logger.info(LOG_TAG, "Getting all records from " + r.getURIString());
     }
     r.get();
@@ -481,7 +479,7 @@ public class ReadingListClient {
                                                       uploadDelegate);
 
     final ExtendedJSONObject body = up.toJSON();
-    if (DEBUG) {
+    if (ReadingListConstants.DEBUG) {
       Logger.info(LOG_TAG, "Patching record " + guid + ": " + body.toJSONString());
     }
     r.post(body);
@@ -507,7 +505,7 @@ public class ReadingListClient {
                                                       uploadDelegate);
 
     final ExtendedJSONObject body = up.toJSON();
-    if (DEBUG) {
+    if (ReadingListConstants.DEBUG) {
       Logger.info(LOG_TAG, "Uploading new record: " + body.toJSONString());
     }
     r.post(body);
@@ -566,7 +564,7 @@ public class ReadingListClient {
       }
     };
 
-    if (DEBUG) {
+    if (ReadingListConstants.DEBUG) {
       Logger.debug(LOG_TAG, "Deleting " + r.getURIString());
     }
     r.delete();
