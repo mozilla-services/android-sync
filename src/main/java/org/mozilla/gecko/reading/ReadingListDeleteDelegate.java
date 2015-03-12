@@ -6,6 +6,10 @@ package org.mozilla.gecko.reading;
 
 import org.mozilla.gecko.sync.net.MozResponse;
 
+/**
+ * Response delegate for a server DELETE.
+ * Only one of these methods will be called, and it will be called precisely once.
+ */
 public interface ReadingListDeleteDelegate {
   void onSuccess(ReadingListRecordResponse response, ReadingListRecord record);
   void onPreconditionFailed(String guid, MozResponse response);

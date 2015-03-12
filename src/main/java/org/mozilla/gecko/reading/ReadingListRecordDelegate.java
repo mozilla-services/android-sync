@@ -6,6 +6,17 @@ package org.mozilla.gecko.reading;
 
 import org.mozilla.gecko.sync.net.MozResponse;
 
+/**
+ * Delegate for downloading records.
+ *
+ * onRecordReceived will be called at most once per record.
+ * onComplete will be called at the end of a successful download.
+ *
+ * Otherwise, one of the failure methods will be called.
+ *
+ * onRecordMissingOrDeleted will only be called when fetching a single
+ * record by ID.
+ */
 public interface ReadingListRecordDelegate {
   void onRecordReceived(ServerReadingListRecord record);
   void onComplete(ReadingListResponse response);
