@@ -34,7 +34,7 @@ import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 
-public class TestReadingListSynchronizer extends ReadingListTest {
+public class TestLiveReadingListSynchronizer extends ReadingListTest {
     static final class TestSynchronizerDelegate implements ReadingListSynchronizerDelegate {
         private final CountDownLatch latch;
         public volatile boolean onDownloadCompleteCalled = false;
