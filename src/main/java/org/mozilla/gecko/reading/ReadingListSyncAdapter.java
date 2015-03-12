@@ -86,26 +86,26 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     public void onStatusUploadComplete(Collection<String> uploaded,
                                        Collection<String> failed) {
       Logger.debug(LOG_TAG, "Step: onStatusUploadComplete");
-      this.result.stats.numEntries += 1;   // TODO
+      this.result.stats.numEntries += 1;   // TODO: Bug 1140809.
     }
 
     @Override
     public void onNewItemUploadComplete(Collection<String> uploaded,
                                         Collection<String> failed) {
       Logger.debug(LOG_TAG, "Step: onNewItemUploadComplete");
-      this.result.stats.numEntries += 1;   // TODO
+      this.result.stats.numEntries += 1;   // TODO: Bug 1140809.
     }
 
     @Override
     public void onModifiedUploadComplete() {
       Logger.debug(LOG_TAG, "Step: onModifiedUploadComplete");
-      this.result.stats.numEntries += 1;   // TODO
+      this.result.stats.numEntries += 1;   // TODO: Bug 1140809.
     }
 
     @Override
     public void onDownloadComplete() {
       Logger.debug(LOG_TAG, "Step: onDownloadComplete");
-      this.result.stats.numInserts += 1;   // TODO
+      this.result.stats.numInserts += 1;   // TODO: Bug 1140809.
     }
 
     @Override
