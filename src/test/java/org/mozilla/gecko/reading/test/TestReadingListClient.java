@@ -15,7 +15,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mozilla.gecko.background.fxa.oauth.FxAccountOAuthClient10.AuthorizationResponse;
 import org.mozilla.gecko.background.fxa.test.FxAccountTestHelper;
-import org.mozilla.gecko.background.fxa.test.FxAccountTestHelper.ProdTestHelper;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
 import org.mozilla.gecko.reading.FetchSpec;
 import org.mozilla.gecko.reading.ReadingListClient;
@@ -34,7 +33,7 @@ import org.mozilla.gecko.sync.net.BearerAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.MozResponse;
 
 public class TestReadingListClient {
-  final FxAccountTestHelper helper = new ProdTestHelper();
+  final FxAccountTestHelper helper = new FxAccountTestHelper.StableDevTestHelper();
 
   public class TestRecordDeleteDelegate implements ReadingListDeleteDelegate {
     public volatile ReadingListRecordResponse response;
@@ -334,12 +333,9 @@ public class TestReadingListClient {
     Assert.assertEquals(1, afterDelegate.records.size());
   }
 
-  /*
   @Test
   public final void testWithAuthorization() throws Throwable {
-    // For now, the scope is "profile". It will be "readinglist" eventually
-    // (tracked by https://github.com/mozilla-services/readinglist/issues/16).
-    final String scope = "profile";
+    final String scope = "readinglist";
 
     final AuthorizationResponse authorization = helper.doTestAuthorization("testtesto@mockmyid.com", "testtesto@mockmyid.com", scope);
     final AuthHeaderProvider auth = new BearerAuthHeaderProvider(authorization.access_token);
@@ -365,5 +361,4 @@ public class TestReadingListClient {
     Assert.assertTrue(deleteDelegate.response.wasSuccessful());
     Assert.assertEquals(200, deleteDelegate.response.getStatusCode());
   }
-  */
 }
