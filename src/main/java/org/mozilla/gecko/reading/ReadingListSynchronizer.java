@@ -217,6 +217,13 @@ public class ReadingListSynchronizer {
                           ServerReadingListRecord down) {
       if (!TextUtils.equals(up.getGUID(), down.getGUID())) {
         // Uh oh!
+        // This should never occur. We should get an onConflict instead,
+        // so this would imply a server bug, or something like a truncated
+        // over-long GUID string.
+        //
+        // Should we wish to recover from this case, probably the right approach
+        // is to ensure that the GUID is overwritten locally (given that we know
+        // the numeric ID).
       }
 
       uploaded.add(up.getGUID());
