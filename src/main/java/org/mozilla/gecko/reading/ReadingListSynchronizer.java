@@ -33,8 +33,6 @@ import android.text.TextUtils;
 public class ReadingListSynchronizer {
   public static final String LOG_TAG = ReadingListSynchronizer.class.getSimpleName();
 
-  private static final int MAX_FAILURES = 5;
-
   public static final String PREF_LAST_MODIFIED = "download.lastmodified";
 
   private final PrefsBranch prefs;
@@ -95,8 +93,6 @@ public class ReadingListSynchronizer {
   }
 
   private static final class NewItemUploadDelegate implements ReadingListRecordUploadDelegate {
-    final Queue<String> uploaded = new LinkedList<>();
-    final Queue<String> failed = new LinkedList<>();
     final Queue<String> toEnsureDownloaded = new LinkedList<>();
 
     public volatile int failures = 0;
@@ -169,7 +165,6 @@ public class ReadingListSynchronizer {
     }
 
     private void recordFailed(ClientReadingListRecord up) {
-      failed.add(up.getGUID());
       ++failures;
     }
 
