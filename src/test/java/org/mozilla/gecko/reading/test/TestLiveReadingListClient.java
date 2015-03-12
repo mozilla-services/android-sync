@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
 import org.mozilla.gecko.background.fxa.oauth.FxAccountOAuthClient10.AuthorizationResponse;
 import org.mozilla.gecko.background.fxa.test.FxAccountTestHelper;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
@@ -32,7 +34,8 @@ import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BearerAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.MozResponse;
 
-public class TestReadingListClient {
+@Category(IntegrationTestCategory.class)
+public class TestLiveReadingListClient {
   final FxAccountTestHelper helper = new FxAccountTestHelper.StableDevTestHelper();
 
   public class TestRecordDeleteDelegate implements ReadingListDeleteDelegate {
