@@ -269,7 +269,7 @@ public class ReadingListSynchronizer {
     }
   }
 
-  private Queue<ClientReadingListRecord> accumulateStatusChanges(final Cursor cursor) {
+  private Queue<ClientReadingListRecord> collectStatusChangesFromCursor(final Cursor cursor) {
     try {
       final Queue<ClientReadingListRecord> toUpload = new LinkedList<>();
 
@@ -343,7 +343,7 @@ public class ReadingListSynchronizer {
         return;
       }
 
-      final Queue<ClientReadingListRecord> toUpload = accumulateStatusChanges(cursor);
+      final Queue<ClientReadingListRecord> toUpload = collectStatusChangesFromCursor(cursor);
 
       // Nothing to do.
       if (toUpload.isEmpty()) {
