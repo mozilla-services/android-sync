@@ -14,33 +14,45 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 public class Cohabiting extends TokensAndKeysState {
   private static final String LOG_TAG = Cohabiting.class.getSimpleName();
 
-  public Cohabiting(String email, String uid, byte[] sessionToken, byte[] kA, byte[] kB, BrowserIDKeyPair keyPair) {
+  public Cohabiting(String email, String uid, byte[] sessionToken, byte[] kA,
+      byte[] kB, BrowserIDKeyPair keyPair) {
     super(StateLabel.Cohabiting, email, uid, sessionToken, kA, kB, keyPair);
+  }
+
+  public Married withCertificate(String certificate) {
+    return new Married(email, uid, sessionToken, kA, kB, keyPair, certificate);
   }
 
   @Override
   public void execute(final ExecuteDelegate delegate) {
-    delegate.getClient().sign(sessionToken, keyPair.getPublic().toJSONObject(), delegate.getCertificateDurationInMilliseconds(),
-        new BaseRequestDelegate<String>(this, delegate) {
-      @Override
-      public void handleSuccess(String certificate) {
-        if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
-          try {
-            FxAccountUtils.pii(LOG_TAG, "Fetched certificate: " + certificate);
-            ExtendedJSONObject c = JSONWebTokenUtils.parseCertificate(certificate);
-            if (c != null) {
-              FxAccountUtils.pii(LOG_TAG, "Header   : " + c.getObject("header"));
-              FxAccountUtils.pii(LOG_TAG, "Payload  : " + c.getObject("payload"));
-              FxAccountUtils.pii(LOG_TAG, "Signature: " + c.getString("signature"));
-            } else {
-              FxAccountUtils.pii(LOG_TAG, "Could not parse certificate!");
+    delegate.getClient()
+      .sign(sessionToken, keyPair.getPublic()
+        .toJSONObject(), delegate.getCertificateDurationInMilliseconds(),
+          new BaseRequestDelegate<String>(this, delegate) {
+            @Override
+            public void handleSuccess(String certificate) {
+              if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
+                try {
+                  FxAccountUtils.pii(LOG_TAG, "Fetched certificate: "
+                      + certificate);
+                  ExtendedJSONObject c = JSONWebTokenUtils.parseCertificate(certificate);
+                  if (c != null) {
+                    FxAccountUtils.pii(LOG_TAG, "Header   : "
+                        + c.getObject("header"));
+                    FxAccountUtils.pii(LOG_TAG, "Payload  : "
+                        + c.getObject("payload"));
+                    FxAccountUtils.pii(LOG_TAG, "Signature: "
+                        + c.getString("signature"));
+                  } else {
+                    FxAccountUtils.pii(LOG_TAG, "Could not parse certificate!");
+                  }
+                } catch (Exception e) {
+                  FxAccountUtils.pii(LOG_TAG, "Could not parse certificate!");
+                }
+              }
+              delegate.handleTransition(new LogMessage("sign succeeded"),
+                  withCertificate(certificate));
             }
-          } catch (Exception e) {
-            FxAccountUtils.pii(LOG_TAG, "Could not parse certificate!");
-          }
-        }
-        delegate.handleTransition(new LogMessage("sign succeeded"), new Married(email, uid, sessionToken, kA, kB, keyPair, certificate));
-      }
-    });
+          });
   }
 }

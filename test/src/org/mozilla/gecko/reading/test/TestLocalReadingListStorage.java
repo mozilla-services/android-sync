@@ -71,7 +71,7 @@ public class TestLocalReadingListStorage extends ReadingListTest {
             assertCursorCount(0, storage.getModified());
             assertCursorCount(0, storage.getNew());
 
-            // Make a change.
+            // Make a status change.
             ContentValues v = new ContentValues();
             v.put(ReadingListItems.SYNC_CHANGE_FLAGS, ReadingListItems.SYNC_CHANGE_UNREAD_CHANGED);
             v.put(ReadingListItems.MARKED_READ_ON, System.currentTimeMillis());
@@ -85,6 +85,32 @@ public class TestLocalReadingListStorage extends ReadingListTest {
         } finally {
             client.release();
         }
+    }
+
+    public final void testGetNonStatusChanges() throws Exception {
+      final ContentProviderClient client = getWipedLocalClient();
+      try {
+          final LocalReadingListStorage storage = new LocalReadingListStorage(client);
+          assertIsEmpty(storage);
+
+          long id = addRecordASynced(client);
+          assertTrue(1 == getCount(client));
+
+          assertCursorCount(0, storage.getModified());
+          assertCursorCount(0, storage.getNew());
+
+          // Make a material change.
+          ContentValues v = new ContentValues();
+          v.put(ReadingListItems.SYNC_CHANGE_FLAGS, ReadingListItems.SYNC_CHANGE_RESOLVED);
+          v.put(ReadingListItems.EXCERPT, Long.toString(System.currentTimeMillis()));
+          assertEquals(1, client.update(CONTENT_URI, v, ReadingListItems._ID + " = " + id, null));
+          assertCursorCount(0, storage.getNew());
+          assertCursorCount(0, storage.getStatusChanges());
+          assertCursorCount(1, storage.getNonStatusModified());
+          assertCursorCount(1, storage.getModified());            // Modified includes material/non-status.
+      } finally {
+        client.release();
+      }
     }
 
     /**
