@@ -268,13 +268,13 @@ public class LocalReadingListStorage implements ReadingListStorage {
       ReadingListItems.EXCERPT,
     };
 
-
     try {
       return client.query(URI_WITHOUT_DELETED, projection, selection, null, null);
     } catch (RemoteException e) {
       throw new IllegalStateException(e);
     }
   }
+
   @Override
   public Cursor getModified() {
     final String selection = ReadingListItems.SYNC_STATUS + " = " + ReadingListItems.SYNC_STATUS_MODIFIED;
