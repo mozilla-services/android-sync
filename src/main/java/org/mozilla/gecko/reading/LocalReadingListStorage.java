@@ -266,6 +266,8 @@ public class LocalReadingListStorage implements ReadingListStorage {
       ReadingListItems.RESOLVED_TITLE,
       ReadingListItems.RESOLVED_URL,
       ReadingListItems.EXCERPT,
+      // TODO: ReadingListItems.IS_ARTICLE,
+      // TODO: ReadingListItems.WORD_COUNT,
     };
 
     try {
