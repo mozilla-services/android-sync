@@ -36,7 +36,7 @@ public class ReadingListTest extends AndroidSyncTestCase {
     protected ContentProviderClient getWipedLocalClient() throws RemoteException {
         final ContentProviderClient client = getClient();
         client.delete(CONTENT_URI_IS_SYNC, null, null);
-        assertTrue(0 == getCount(client));
+        assertEquals(0, getCount(client));
         return client;
     }
 
@@ -51,7 +51,7 @@ public class ReadingListTest extends AndroidSyncTestCase {
 
     protected void assertCursorCount(int expected, Cursor cursor) {
         try {
-            assertTrue(expected == cursor.getCount());
+            assertEquals(expected, cursor.getCount());
         } finally {
             cursor.close();
         }
@@ -60,7 +60,7 @@ public class ReadingListTest extends AndroidSyncTestCase {
     protected void assertIsEmpty(LocalReadingListStorage storage) throws Exception {
         Cursor modified = storage.getModified();
         try {
-            assertTrue(0 == modified.getCount());
+            assertEquals(0, modified.getCount());
         } finally {
             modified.close();
         }
