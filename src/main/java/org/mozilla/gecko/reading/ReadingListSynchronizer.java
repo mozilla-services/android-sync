@@ -248,11 +248,10 @@ public class ReadingListSynchronizer {
       }
 
       if (failures == 0) {
-        try {
-          next.next();
-        } catch (Exception e) {
-        }
+        next.next();
+        return;
       }
+
       next.fail();
     }
   }
