@@ -47,6 +47,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.widget.Toast;
 
 
 /**
@@ -60,15 +61,16 @@ public class FxAccountStatusFragment
     implements OnPreferenceClickListener, OnPreferenceChangeListener {
   private static final String LOG_TAG = FxAccountStatusFragment.class.getSimpleName();
 
-    /**
-     * If a device claims to have synced before this date, we will assume it has never synced.
-     */
-    private static final Date EARLIEST_VALID_SYNCED_DATE;
-    static {
-        final Calendar c = GregorianCalendar.getInstance();
-        c.set(2000, Calendar.JANUARY, 1, 0, 0, 0);
-        EARLIEST_VALID_SYNCED_DATE = c.getTime();
-    }
+  /**
+   * If a device claims to have synced before this date, we will assume it has never synced.
+   */
+  private static final Date EARLIEST_VALID_SYNCED_DATE;
+  static {
+    final Calendar c = GregorianCalendar.getInstance();
+    c.set(2000, Calendar.JANUARY, 1, 0, 0, 0);
+    EARLIEST_VALID_SYNCED_DATE = c.getTime();
+  }
+
   // When a checkbox is toggled, wait 5 seconds (for other checkbox actions)
   // before trying to sync. Should we kill off the fragment before the sync
   // request happens, that's okay: the runnable will run if the UI thread is
@@ -85,6 +87,15 @@ public class FxAccountStatusFragment
   // By default, the Sync server preference is only shown when the account is
   // configured to use a custom Sync server. In debug mode, this is set.
   private static boolean ALWAYS_SHOW_SYNC_SERVER = false;
+
+  // If the user clicks the email field this many times, the debug / personal
+  // information logging setting will toggle. The setting is not permanent: it
+  // lasts until this process is killed. We don't want to dump PII to the log
+  // for a long time!
+  private final int NUMBER_OF_CLICKS_TO_TOGGLE_DEBUG =
+      // !defined(MOZILLA_OFFICIAL) || defined(NIGHTLY_BUILD) || defined(MOZ_DEBUG)
+      (!AppConstants.MOZILLA_OFFICIAL || AppConstants.NIGHTLY_BUILD || AppConstants.DEBUG_BUILD) ? 5 : -1 /* infinite */;
+  private int debugClickCount = 0;
 
   protected PreferenceCategory accountCategory;
   protected Preference emailPreference;
@@ -179,6 +190,8 @@ public class FxAccountStatusFragment
       ALWAYS_SHOW_SYNC_SERVER = true;
     }
 
+    emailPreference.setOnPreferenceClickListener(this);
+
     needsPasswordPreference.setOnPreferenceClickListener(this);
     needsVerificationPreference.setOnPreferenceClickListener(this);
     needsFinishMigratingPreference.setOnPreferenceClickListener(this);
@@ -216,6 +229,17 @@ public class FxAccountStatusFragment
 
   @Override
   public boolean onPreferenceClick(Preference preference) {
+    if (preference == emailPreference) {
+      debugClickCount += 1;
+      if (NUMBER_OF_CLICKS_TO_TOGGLE_DEBUG > 0 && debugClickCount >= NUMBER_OF_CLICKS_TO_TOGGLE_DEBUG) {
+        debugClickCount = 0;
+        FxAccountUtils.LOG_PERSONAL_INFORMATION = !FxAccountUtils.LOG_PERSONAL_INFORMATION;
+        Toast.makeText(getActivity(), "Toggled logging Firefox Account personal information!", Toast.LENGTH_LONG).show();
+        hardRefresh(); // Display or hide debug options.
+      }
+      return true;
+    }
+
     if (preference == needsPasswordPreference) {
       Intent intent = new Intent(getActivity(), FxAccountUpdateCredentialsActivity.class);
       final Bundle extras = getExtrasForAccount();
