@@ -46,7 +46,6 @@ import org.mozilla.gecko.tokenserver.TokenServerException;
 import org.mozilla.gecko.tokenserver.TokenServerToken;
 
 import android.accounts.Account;
-import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -55,7 +54,7 @@ import android.content.SyncResult;
 import android.os.Bundle;
 import android.os.SystemClock;
 
-public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
+public class FxAccountSyncAdapter extends AbstractSequentialSyncAdapter {
   private static final String LOG_TAG = FxAccountSyncAdapter.class.getSimpleName();
 
   public static final String SYNC_EXTRAS_RESPECT_LOCAL_RATE_LIMIT = "respect_local_rate_limit";
@@ -360,7 +359,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
    * token implementation.
    */
   @Override
-  public void onPerformSync(final Account account, final Bundle extras, final String authority, ContentProviderClient provider, final SyncResult syncResult) {
+  protected void performSync(final Account account, final Bundle extras, final String authority, ContentProviderClient provider, final SyncResult syncResult) {
     Logger.setThreadLogTag(FxAccountConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
 

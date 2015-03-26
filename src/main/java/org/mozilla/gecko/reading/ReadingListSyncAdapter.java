@@ -17,13 +17,13 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+import org.mozilla.gecko.fxa.sync.AbstractSequentialSyncAdapter;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncDelegate;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BearerAuthHeaderProvider;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -31,7 +31,7 @@ import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.os.Bundle;
 
-public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
+public class ReadingListSyncAdapter extends AbstractSequentialSyncAdapter {
   public static final String PREF_LOCAL_NAME = "device.localname";
 
   private static final String LOG_TAG = ReadingListSyncAdapter.class.getSimpleName();
@@ -152,7 +152,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
   }
 
   @Override
-  public void onPerformSync(final Account account, final Bundle extras, final String authority, final ContentProviderClient provider, final SyncResult syncResult) {
+  protected void performSync(final Account account, final Bundle extras, final String authority, final ContentProviderClient provider, final SyncResult syncResult) {
     Logger.setThreadLogTag(ReadingListConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
 
