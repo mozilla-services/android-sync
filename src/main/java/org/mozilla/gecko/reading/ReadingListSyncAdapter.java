@@ -111,7 +111,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
                                      final Bundle extras) {
     final AuthHeaderProvider auth = new BearerAuthHeaderProvider(authToken);
 
-    final String endpointString = ReadingListConstants.DEFAULT_DEV_ENDPOINT; // DEFAULT_PROD_ENDPOINT;
+    final String endpointString = ReadingListConstants.DEFAULT_PROD_ENDPOINT;
     final URI endpoint;
     Logger.info(LOG_TAG, "Syncing reading list against " + endpointString);
     try {
