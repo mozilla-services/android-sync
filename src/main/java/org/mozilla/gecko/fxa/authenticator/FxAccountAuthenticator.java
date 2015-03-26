@@ -181,7 +181,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
 
     final Responder responder = new Responder(response, fxAccount.getAndroidAccount());
 
-    final String oauthServerUri = FxAccountConstants.STAGE_OAUTH_SERVER_ENDPOINT;
+    final String oauthServerUri = FxAccountConstants.DEFAULT_OAUTH_SERVER_ENDPOINT;
     final String audience;
     try {
       audience = FxAccountUtils.getAudienceForURL(oauthServerUri); // The assertion gets traded in for an oauth bearer token.
