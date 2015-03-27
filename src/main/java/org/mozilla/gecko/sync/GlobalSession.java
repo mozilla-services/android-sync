@@ -59,6 +59,7 @@ import org.mozilla.gecko.sync.stage.UploadMetaGlobalStage;
 
 import android.content.Context;
 import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
 
 public class GlobalSession implements HttpResponseObserver {
   private static final String LOG_TAG = "GlobalSession";
@@ -1141,7 +1142,15 @@ public class GlobalSession implements HttpResponseObserver {
    * Observe all HTTP response for backoff requests on all status codes, not just errors.
    */
   @Override
-  public void observeHttpResponse(HttpResponse response) {
+  public void observeHttpResponse(HttpUriRequest request, HttpResponse response) {
+    // Ignore non-Sync storage requests.
+    final URI clusterURL = config.getClusterURL();
+    if (clusterURL != null && !clusterURL.getHost().equals(request.getURI().getHost())) {
+      // It's possible to see requests without a clusterURL (in particular,
+      // during testing); allow some extra backoffs in this case.
+      return;
+    }
+
     long responseBackoff = (new SyncResponse(response)).totalBackoffInMilliseconds(); // TODO: don't allocate object?
     if (responseBackoff <= 0) {
       return;
