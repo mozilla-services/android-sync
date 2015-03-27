@@ -14,7 +14,7 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.db.CursorDumper;
 import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
-import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.background.testhelpers.WaitHelper.InnerError;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.reading.ClientMetadata;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
@@ -239,6 +239,14 @@ static final class TestSynchronizerDelegate implements ReadingListSynchronizerDe
       assertCursorCount(0, local.getModified());
       assertCursorCount(0, local.getStatusChanges());
       assertCursorCount(0, local.getAll());
+
+      // Now touch the server to verify that the item is missing.
+      try {
+        getOne(remote, guid);
+        fail("Should be 404.");
+      } catch (InnerError e) {
+        assertEquals("onRecordMissingOrDeleted", e.innerError.getMessage());
+      }
 
       if (guid != null) {
         blindWipe(remote, guid);
