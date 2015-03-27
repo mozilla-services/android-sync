@@ -1124,8 +1124,8 @@ public class GlobalSession implements HttpResponseObserver {
    * requests.
    */
   protected void installAsHttpResponseObserver() {
-    Logger.debug(LOG_TAG, "Installing " + this + " as BaseResource HttpResponseObserver.");
-    BaseResource.setHttpResponseObserver(this);
+    Logger.debug(LOG_TAG, "Adding " + this + " as a BaseResource HttpResponseObserver.");
+    BaseResource.addHttpResponseObserver(this);
     largestBackoffObserved.set(-1);
   }
 
@@ -1133,8 +1133,8 @@ public class GlobalSession implements HttpResponseObserver {
    * Stop observing HttpResponses for backoff requests.
    */
   protected void uninstallAsHttpResponseObserver() {
-    Logger.debug(LOG_TAG, "Uninstalling " + this + " as BaseResource HttpResponseObserver.");
-    BaseResource.setHttpResponseObserver(null);
+    Logger.debug(LOG_TAG, "Removing " + this + " as a BaseResource HttpResponseObserver.");
+    BaseResource.removeHttpResponseObserver(this);
   }
 
   /**
