@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 
+import org.mozilla.gecko.background.ReadingListConstants;
 import org.mozilla.gecko.background.common.PrefsBranch;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.db.CursorDumper;
@@ -20,7 +21,6 @@ import org.mozilla.gecko.reading.ClientMetadata;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
 import org.mozilla.gecko.reading.LocalReadingListStorage;
 import org.mozilla.gecko.reading.ReadingListClient;
-import org.mozilla.gecko.reading.ReadingListConstants;
 import org.mozilla.gecko.reading.ReadingListDeleteDelegate;
 import org.mozilla.gecko.reading.ReadingListRecord;
 import org.mozilla.gecko.reading.ReadingListRecord.ServerMetadata;
