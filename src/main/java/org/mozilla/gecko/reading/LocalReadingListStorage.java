@@ -319,6 +319,20 @@ public class LocalReadingListStorage implements ReadingListStorage {
   }
 
   @Override
+  public Cursor getDeletedItems() {
+    final String[] projection = new String[] {
+      ReadingListItems.GUID,
+    };
+
+    final String selection = "(" + ReadingListItems.IS_DELETED + " = 1) AND (" + ReadingListItems.GUID + " IS NOT NULL)";
+    try {
+      return client.query(URI_WITH_DELETED, projection, selection, null, null);
+    } catch (RemoteException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @Override
   public Cursor getNew() {
     // N.B., query for items that have no GUID, regardless of status.
     // They should all be marked as NEW, but belt and braces.
