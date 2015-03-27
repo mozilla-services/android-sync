@@ -581,6 +581,17 @@ public class ReadingListClient {
     r.post(body);
   }
 
+  public void delete(final Queue<String> guids, final Executor executor, final ReadingListDeleteDelegate batchDeleteDelegate) {
+    if (guids.isEmpty()) {
+      batchDeleteDelegate.onBatchDone();
+      return;
+    }
+
+    final ReadingListDeleteDelegate deleteDelegate = new DeleteBatchingDelegate(guids, batchDeleteDelegate, executor);
+
+    delete(guids.poll(), deleteDelegate, -1L);
+  }
+
   public void delete(final String guid, final ReadingListDeleteDelegate delegate, final long ifUnmodifiedSince) {
     final BaseResource r = getRelativeArticleResource(guid);
 
