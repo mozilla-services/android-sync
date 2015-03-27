@@ -14,6 +14,7 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.db.CursorDumper;
 import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.reading.ClientMetadata;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
@@ -41,6 +42,7 @@ import android.content.ContentProviderClient;
 import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.RemoteException;
 
 public class TestLiveReadingListSynchronizer extends ReadingListTest {
@@ -217,6 +219,26 @@ static final class TestSynchronizerDelegate implements ReadingListSynchronizerDe
       } finally {
         c.close();
       }
+
+      // Now delete the record locally as Fennec would. The deletion should be uploaded during a sync.
+      final Uri uri = ReadingListItems.CONTENT_URI;
+      int deleted = cpc.delete(uri, ReadingListItems.GUID + " = ?", new String[] { guid });
+      assertEquals(1, deleted);
+      final Cursor deletedCursor = local.getDeletedItems();
+      try {
+        assertEquals(1, deletedCursor.getCount());
+        deletedCursor.moveToFirst();
+        assertEquals(guid, deletedCursor.getString(0));
+      } finally {
+        deletedCursor.close();
+      }
+
+      assertSuccessfulSync(synchronizer);
+
+      assertCursorCount(0, local.getNew());
+      assertCursorCount(0, local.getModified());
+      assertCursorCount(0, local.getStatusChanges());
+      assertCursorCount(0, local.getAll());
 
       if (guid != null) {
         blindWipe(remote, guid);
