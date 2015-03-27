@@ -473,6 +473,10 @@ public class TestLiveReadingListSynchronizer extends ReadingListTest {
       @Override
       public void onFailure(Exception e) {
       }
+
+      @Override
+      public void onBatchDone() {
+      }
     }, -1L);
   }
 }

@@ -88,6 +88,12 @@ public class TestLiveReadingListClient {
       this.mozResponse = response;
       latch.countDown();
     }
+
+    @Override
+    public void onBatchDone() {
+      // Should never be called.
+      Assert.fail("Deletion batch handler called!");
+    }
   }
 
   public static final class TestRecordDelegate implements ReadingListRecordDelegate {

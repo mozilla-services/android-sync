@@ -493,6 +493,12 @@ public class ReadingListClient {
       batchDeleteDelegate.onFailure(response);
       next();
     }
+
+    @Override
+    public void onBatchDone() {
+      // This should never occur, but if it does, pass through.
+      batchDeleteDelegate.onBatchDone();
+    }
   }
 
   // Deliberately declare `delegate` non-final so we can't capture it below. We prefer
