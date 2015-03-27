@@ -6,8 +6,6 @@ package org.mozilla.android.sync.net.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -226,9 +224,6 @@ public class TestGlobalSession {
   }
 
   public void doRequest() {
-    // We should have installed our HTTP response observer before starting the sync.
-    assertNotNull(BaseResource.getHttpResponseObserver());
-
     final WaitHelper innerWaitHelper = new WaitHelper();
     innerWaitHelper.performWait(new Runnable() {
       @Override
@@ -258,6 +253,9 @@ public class TestGlobalSession {
     final MockServerSyncStage stage = new MockServerSyncStage() {
       @Override
       public void execute() {
+        // We should have installed our HTTP response observer before starting the sync.
+        assertTrue(BaseResource.isHttpResponseObserver(session));
+
         doRequest();
         if (stageShouldAdvance) {
           session.advance();
@@ -288,7 +286,7 @@ public class TestGlobalSession {
     data.stopHTTPServer();
 
     // We should have uninstalled our HTTP response observer when the session is terminated.
-    assertNull(BaseResource.getHttpResponseObserver());
+    assertFalse(BaseResource.isHttpResponseObserver(session));
 
     return callback;
   }

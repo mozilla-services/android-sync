@@ -16,10 +16,15 @@ import org.mozilla.gecko.background.ReadingListConstants;
 import org.mozilla.gecko.background.common.PrefsBranch;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncDelegate;
+import org.mozilla.gecko.sync.BackoffHandler;
+import org.mozilla.gecko.sync.PrefsBackoffHandler;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
+import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BearerAuthHeaderProvider;
 
 import android.accounts.Account;
@@ -110,25 +115,13 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
   }
 
   private void syncWithAuthorization(final Context context,
-                                     final Account account,
+                                     final URI endpoint,
                                      final SyncResult syncResult,
                                      final FxAccountSyncDelegate syncDelegate,
                                      final String authToken,
                                      final SharedPreferences sharedPrefs,
                                      final Bundle extras) {
     final AuthHeaderProvider auth = new BearerAuthHeaderProvider(authToken);
-
-    final String endpointString = ReadingListConstants.DEFAULT_PROD_ENDPOINT;
-    final URI endpoint;
-    Logger.info(LOG_TAG, "Syncing reading list against " + endpointString);
-    try {
-      endpoint = new URI(endpointString);
-    } catch (URISyntaxException e) {
-      // Should never happen.
-      Logger.error(LOG_TAG, "Unexpected malformed URI for reading list service: " + endpointString);
-      syncDelegate.handleError(e);
-      return;
-    }
 
     final PrefsBranch branch = new PrefsBranch(sharedPrefs, "readinglist.");
     final ReadingListClient remote = new ReadingListClient(endpoint, auth);
@@ -152,7 +145,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
         // time through, we'll request a new one, which will drive the login
         // state machine, produce a new assertion, and eventually a fresh token.
         Logger.info(LOG_TAG, "Invalidating oauth token after 401!");
-        AccountManager.get(context).invalidateAuthToken(account.type, authToken);
+        AccountManager.get(context).invalidateAuthToken(FxAccountConstants.ACCOUNT_TYPE, authToken);
       }
     });
     // TODO: backoffs, and everything else handled by a SessionCallback.
@@ -166,6 +159,45 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     final Context context = getContext();
     final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
 
+    // Don't sync Reading List if we're in a non-default configuration, but allow testing against stage.
+    final String accountServerURI = fxAccount.getAccountServerURI();
+    final boolean usingDefaultAuthServer = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(accountServerURI);
+    final boolean usingStageAuthServer = FxAccountConstants.STAGE_AUTH_SERVER_ENDPOINT.equals(accountServerURI);
+    if (!usingDefaultAuthServer && !usingStageAuthServer) {
+      Logger.error(LOG_TAG, "Skipping Reading List sync because Firefox Account is not using prod or stage auth server.");
+      // Stop syncing the Reading List entirely.
+      ContentResolver.setIsSyncable(account, BrowserContract.READING_LIST_AUTHORITY, 0);
+      return;
+    }
+    final String tokenServerURI = fxAccount.getTokenServerURI();
+    final boolean usingDefaultSyncServer = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(tokenServerURI);
+    final boolean usingStageSyncServer = FxAccountConstants.STAGE_TOKEN_SERVER_ENDPOINT.equals(tokenServerURI);
+    if (!usingDefaultSyncServer && !usingStageSyncServer) {
+      Logger.error(LOG_TAG, "Skipping Reading List sync because Sync is not using the prod or stage Sync (token) server.");
+      Logger.debug(LOG_TAG, "If the user has chosen to not store Sync data with Mozilla, we shouldn't store Reading List data with Mozilla .");
+      // Stop syncing the Reading List entirely.
+      ContentResolver.setIsSyncable(account, BrowserContract.READING_LIST_AUTHORITY, 0);
+      return;
+    }
+
+    // Allow testing against stage.
+    final String endpointString;
+    if (usingStageAuthServer) {
+      endpointString = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
+    } else {
+      endpointString = ReadingListConstants.DEFAULT_PROD_ENDPOINT;
+    }
+
+    Logger.info(LOG_TAG, "Syncing reading list against " + endpointString);
+    final URI endpointURI;
+    try {
+      endpointURI = new URI(endpointString);
+    } catch (URISyntaxException e) {
+      // Should never happen.
+      Logger.error(LOG_TAG, "Unexpected malformed URI for reading list service: " + endpointString);
+      return;
+    }
+
     final CountDownLatch latch = new CountDownLatch(1);
     final FxAccountSyncDelegate syncDelegate = new FxAccountSyncDelegate(latch, syncResult);
 
@@ -176,14 +208,35 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     // Mysterious Internal Work to try to get the token.
     final boolean notifyAuthFailure = true;
     try {
+      final SharedPreferences sharedPrefs = fxAccount.getReadingListPrefs();
+      final BackoffHandler storageBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "storage");
+
+      // TODO: allow overriding based on flags.
+      final long delayMilliseconds = storageBackoffHandler.delayMilliseconds();
+      if (delayMilliseconds > 0) {
+        Logger.warn(LOG_TAG, "Not syncing: storage requested additional backoff: " + delayMilliseconds + " milliseconds.");
+        return;
+      }
+
       final String authToken = accountManager.blockingGetAuthToken(account, ReadingListConstants.AUTH_TOKEN_TYPE, notifyAuthFailure);
       if (authToken == null) {
         throw new RuntimeException("Couldn't get oauth token!  Aborting sync.");
       }
-      final SharedPreferences sharedPrefs = fxAccount.getReadingListPrefs();
-      syncWithAuthorization(context, account, syncResult, syncDelegate, authToken, sharedPrefs, extras);
 
-      latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      final ReadingListBackoffObserver observer = new ReadingListBackoffObserver(endpointURI.getHost());
+      BaseResource.addHttpResponseObserver(observer);
+      try {
+        syncWithAuthorization(context, endpointURI, syncResult, syncDelegate, authToken, sharedPrefs, extras);
+        latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      } finally {
+        long backoffInSeconds = observer.largestBackoffObservedInSeconds.get();
+        BaseResource.removeHttpResponseObserver(observer);
+        if (backoffInSeconds > 0) {
+          Logger.warn(LOG_TAG, "Observed " + backoffInSeconds + " second backoff request.");
+          storageBackoffHandler.extendEarliestNextRequest(System.currentTimeMillis() + 1000 * backoffInSeconds);
+        }
+      }
+
       Logger.info(LOG_TAG, "Reading list sync done.");
     } catch (Exception e) {
       // We can get lots of exceptions here; handle them uniformly.
@@ -203,7 +256,6 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
      * * Server URI lookup.
      * * Syncing.
      * * Error handling.
-     * * Backoff and retry-after.
      * * Sync scheduling.
      * * Forcing syncs/interactive use.
      */
