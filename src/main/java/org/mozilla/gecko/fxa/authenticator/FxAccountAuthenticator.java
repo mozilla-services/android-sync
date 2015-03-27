@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.fxa.authenticator;
 
+import java.util.concurrent.Semaphore;
+
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountGetStartedActivity;
@@ -19,6 +21,31 @@ import android.os.Bundle;
 
 public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
   public static final String LOG_TAG = FxAccountAuthenticator.class.getSimpleName();
+
+  /**
+   * Take the lock to own updating any Firefox Account's internal state.
+   *
+   * We use a <code>Semaphore</code> rather than a <code>ReentrantLock</code>
+   * because the callback that needs to release the lock may not be invoked on
+   * the thread that initially acquired the lock. Be aware!
+   */
+  protected static final Semaphore sLock = new Semaphore(1, true /* fair */);
+
+  public static final long acquireSharedAccountStateLock(final String tag) throws InterruptedException {
+    final long id = Thread.currentThread().getId();
+    Logger.info(LOG_TAG, "Thread with tag and thread id acquiring lock: " + tag + ", " + id + " ...");
+    sLock.acquire();
+    Logger.info(LOG_TAG, "Thread with tag and thread id acquiring lock: " + tag + ", " + id + " ... ACQUIRED");
+    return System.currentTimeMillis();
+  }
+
+  public static final long releaseSharedAccountStateLock(final String tag) {
+    final long id = Thread.currentThread().getId();
+    Logger.info(LOG_TAG, "Thread with tag and thread id releasing lock: " + tag + ", " + id + " ...");
+    sLock.release();
+    Logger.info(LOG_TAG, "Thread with tag and thread id releasing lock: " + tag + ", " + id + " ... RELEASED");
+    return System.currentTimeMillis();
+  }
 
   protected final Context context;
   protected final AccountManager accountManager;

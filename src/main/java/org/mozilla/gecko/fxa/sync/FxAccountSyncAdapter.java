@@ -253,6 +253,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       @Override
       public void handleSuccess(final TokenServerToken token) {
         FxAccountUtils.pii(LOG_TAG, "Got token! uid is " + token.uid + " and endpoint is " + token.endpoint + ".");
+        FxAccountAuthenticator.releaseSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
 
         if (!didReceiveBackoff) {
           // We must be OK to touch this token server.
@@ -330,18 +331,24 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
       @Override
       public void handleFailure(TokenServerException e) {
-        // We should only get here *after* we're locked into the married state.
-        State state = fxAccount.getState();
-        if (state.getStateLabel() == StateLabel.Married) {
-          Married married = (Married) state;
-          fxAccount.setState(married.makeCohabitingState());
+        Logger.error(LOG_TAG, "Failed to get token.", e);
+        try {
+          // We should only get here *after* we're locked into the married state.
+          State state = fxAccount.getState();
+          if (state.getStateLabel() == StateLabel.Married) {
+            Married married = (Married) state;
+            fxAccount.setState(married.makeCohabitingState());
+          }
+        } finally {
+          FxAccountAuthenticator.releaseSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
         }
-        handleError(e);
+        callback.handleError(null, e);
       }
 
       @Override
       public void handleError(Exception e) {
         Logger.error(LOG_TAG, "Failed to get token.", e);
+        FxAccountAuthenticator.releaseSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
         callback.handleError(null, e);
       }
 
@@ -423,14 +430,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     final SyncDelegate syncDelegate = new SyncDelegate(latch, syncResult, fxAccount, stageNamesToSync);
 
     try {
-      final State state;
-      try {
-        state = fxAccount.getState();
-      } catch (Exception e) {
-        syncDelegate.handleError(e);
-        return;
-      }
-
       // This will be the same chunk of SharedPreferences that we pass through to GlobalSession/SyncConfiguration.
       final SharedPreferences sharedPrefs = fxAccount.getSyncPrefs();
 
@@ -467,6 +466,24 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       final String tokenServerEndpoint = fxAccount.getTokenServerURI();
       final URI tokenServerEndpointURI = new URI(tokenServerEndpoint);
       final String audience = FxAccountUtils.getAudienceForURL(tokenServerEndpoint);
+
+      // The clock starts... now!
+      try {
+        FxAccountAuthenticator.acquireSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
+      } catch (InterruptedException e) {
+        // OK, skip this sync.
+        syncDelegate.handleError(e);
+        return;
+      }
+
+      final State state;
+      try {
+        state = fxAccount.getState();
+      } catch (Exception e) {
+        FxAccountAuthenticator.releaseSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
+        syncDelegate.handleError(e);
+        return;
+      }
 
       // TODO: why doesn't the loginPolicy extract the audience from the account?
       final FxAccountClient client = new FxAccountClient20(authServerEndpoint, executor);
@@ -509,6 +526,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
           notificationManager.update(context, fxAccount);
           try {
             if (state.getStateLabel() != StateLabel.Married) {
+              FxAccountAuthenticator.releaseSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
               syncDelegate.handleCannotSync(state);
               return;
             }
@@ -538,6 +556,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
             // in the Married state, so instead we simply do this here, once.
             final BackoffHandler tokenBackoffHandler = new PrefsBackoffHandler(sharedPrefs, "token");
             if (!shouldRequestToken(tokenBackoffHandler, extras)) {
+              FxAccountAuthenticator.releaseSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
               Logger.info(LOG_TAG, "Not syncing (token server).");
               syncDelegate.postponeSync(tokenBackoffHandler.delayMilliseconds());
               return;
@@ -548,14 +567,20 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
             final String clientState = married.getClientState();
             syncWithAssertion(audience, assertion, tokenServerEndpointURI, tokenBackoffHandler, sharedPrefs, syncKeyBundle, clientState, sessionCallback, extras, fxAccount);
           } catch (Exception e) {
+            FxAccountAuthenticator.releaseSharedAccountStateLock(FxAccountSyncAdapter.LOG_TAG);
             syncDelegate.handleError(e);
             return;
           }
         }
       });
 
-      latch.await();
-    } catch (Exception e) {
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        Logger.error(LOG_TAG, "Got error syncing.", e);
+        syncDelegate.handleError(e);
+      }
+    } catch (RuntimeException e) {
       Logger.error(LOG_TAG, "Got error syncing.", e);
       syncDelegate.handleError(e);
     }
