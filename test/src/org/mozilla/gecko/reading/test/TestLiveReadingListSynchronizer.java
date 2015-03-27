@@ -44,13 +44,15 @@ import android.database.Cursor;
 import android.os.RemoteException;
 
 public class TestLiveReadingListSynchronizer extends ReadingListTest {
-  static final class TestSynchronizerDelegate implements ReadingListSynchronizerDelegate {
+
+static final class TestSynchronizerDelegate implements ReadingListSynchronizerDelegate {
     private final CountDownLatch latch;
     public volatile boolean onDownloadCompleteCalled = false;
     public volatile boolean onModifiedUploadCompleteCalled = false;
     public volatile boolean onNewItemUploadCompleteCalled = false;
     public volatile boolean onStatusUploadCompleteCalled = false;
     public volatile boolean onUnableToSyncCalled = false;
+    public volatile boolean onDeletionsUploadCompleteCalled = false;
     public volatile Exception onUnableToSyncException = null;
 
     public TestSynchronizerDelegate(CountDownLatch latch) {
@@ -90,6 +92,11 @@ public class TestLiveReadingListSynchronizer extends ReadingListTest {
     @Override
     public void onComplete() {
       latch.countDown();
+    }
+
+    @Override
+    public void onDeletionsUploadComplete() {
+        onDeletionsUploadCompleteCalled = true;
     }
   }
 
@@ -232,6 +239,7 @@ public class TestLiveReadingListSynchronizer extends ReadingListTest {
     assertTrue(delegate.onDownloadCompleteCalled);
     assertTrue(delegate.onModifiedUploadCompleteCalled);
     assertTrue(delegate.onStatusUploadCompleteCalled);
+    assertTrue(delegate.onDeletionsUploadCompleteCalled);
     assertTrue(delegate.onNewItemUploadCompleteCalled);
     return delegate;
   }
