@@ -121,7 +121,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     protected final Collection<String> stageNamesToSync;
 
     public SyncDelegate(CountDownLatch latch, SyncResult syncResult, AndroidFxAccount fxAccount, Collection<String> stageNamesToSync) {
-      super(latch, syncResult, fxAccount);
+      super(latch, syncResult);
       this.stageNamesToSync = Collections.unmodifiableCollection(stageNamesToSync);
     }
 
@@ -240,7 +240,8 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
                                    final KeyBundle syncKeyBundle,
                                    final String clientState,
                                    final SessionCallback callback,
-                                   final Bundle extras) {
+                                   final Bundle extras,
+                                   final AndroidFxAccount fxAccount) {
     final TokenServerClientDelegate delegate = new TokenServerClientDelegate() {
       private boolean didReceiveBackoff = false;
 
@@ -329,6 +330,12 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
       @Override
       public void handleFailure(TokenServerException e) {
+        // We should only get here *after* we're locked into the married state.
+        State state = fxAccount.getState();
+        if (state.getStateLabel() == StateLabel.Married) {
+          Married married = (Married) state;
+          fxAccount.setState(married.makeCohabitingState());
+        }
         handleError(e);
       }
 
@@ -539,7 +546,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
             final SessionCallback sessionCallback = new SessionCallback(syncDelegate, schedulePolicy);
             final KeyBundle syncKeyBundle = married.getSyncKeyBundle();
             final String clientState = married.getClientState();
-            syncWithAssertion(audience, assertion, tokenServerEndpointURI, tokenBackoffHandler, sharedPrefs, syncKeyBundle, clientState, sessionCallback, extras);
+            syncWithAssertion(audience, assertion, tokenServerEndpointURI, tokenBackoffHandler, sharedPrefs, syncKeyBundle, clientState, sessionCallback, extras, fxAccount);
           } catch (Exception e) {
             syncDelegate.handleError(e);
             return;

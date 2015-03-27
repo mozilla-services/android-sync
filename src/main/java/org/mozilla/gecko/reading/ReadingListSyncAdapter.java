@@ -129,7 +129,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
             extras.getBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false));
 
     final CountDownLatch latch = new CountDownLatch(1);
-    final FxAccountSyncDelegate syncDelegate = new FxAccountSyncDelegate(latch, syncResult, fxAccount);
+    final FxAccountSyncDelegate syncDelegate = new FxAccountSyncDelegate(latch, syncResult);
     try {
       final State state;
       try {
