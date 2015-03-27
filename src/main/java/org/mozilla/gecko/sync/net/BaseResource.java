@@ -300,7 +300,7 @@ public class BaseResource implements Resource {
     for (WeakReference<HttpResponseObserver> weakReference : httpResponseObservers) {
       HttpResponseObserver observer = weakReference.get();
       if (observer != null) {
-        observer.observeHttpResponse(response);
+        observer.observeHttpResponse(request, response);
       }
     }
     delegate.handleHttpResponse(response);

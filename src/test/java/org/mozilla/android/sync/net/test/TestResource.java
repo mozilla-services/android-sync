@@ -20,6 +20,7 @@ import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.HttpResponseObserver;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
 
 public class TestResource {
   private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
@@ -67,7 +68,7 @@ public class TestResource {
     public HttpResponse response = null;
 
     @Override
-    public void observeHttpResponse(HttpResponse response) {
+    public void observeHttpResponse(HttpUriRequest request, HttpResponse response) {
       this.response = response;
     }
   }
