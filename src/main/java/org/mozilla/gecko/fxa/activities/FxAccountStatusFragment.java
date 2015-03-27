@@ -61,15 +61,16 @@ public class FxAccountStatusFragment
     implements OnPreferenceClickListener, OnPreferenceChangeListener {
   private static final String LOG_TAG = FxAccountStatusFragment.class.getSimpleName();
 
-    /**
-     * If a device claims to have synced before this date, we will assume it has never synced.
-     */
-    private static final Date EARLIEST_VALID_SYNCED_DATE;
-    static {
-        final Calendar c = GregorianCalendar.getInstance();
-        c.set(2000, Calendar.JANUARY, 1, 0, 0, 0);
-        EARLIEST_VALID_SYNCED_DATE = c.getTime();
-    }
+  /**
+   * If a device claims to have synced before this date, we will assume it has never synced.
+   */
+  private static final Date EARLIEST_VALID_SYNCED_DATE;
+  static {
+    final Calendar c = GregorianCalendar.getInstance();
+    c.set(2000, Calendar.JANUARY, 1, 0, 0, 0);
+    EARLIEST_VALID_SYNCED_DATE = c.getTime();
+  }
+
   // When a checkbox is toggled, wait 5 seconds (for other checkbox actions)
   // before trying to sync. Should we kill off the fragment before the sync
   // request happens, that's okay: the runnable will run if the UI thread is
