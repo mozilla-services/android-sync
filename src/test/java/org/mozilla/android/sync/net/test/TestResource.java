@@ -6,7 +6,6 @@ package org.mozilla.android.sync.net.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URISyntaxException;
@@ -74,20 +73,27 @@ public class TestResource {
   }
 
   @Test
-  public void testObserver() throws URISyntaxException {
+  public void testObservers() throws URISyntaxException {
     data.startHTTPServer();
     // Check that null observer doesn't fail.
-    BaseResource.setHttpResponseObserver(null);
+    BaseResource.addHttpResponseObserver(null);
     doGet(); // HTTP server stopped in callback.
 
-    // Check that non-null observer gets called with reasonable HttpResponse.
-    MockHttpResponseObserver observer = new MockHttpResponseObserver();
-    BaseResource.setHttpResponseObserver(observer);
-    assertSame(observer, BaseResource.getHttpResponseObserver());
-    assertNull(observer.response);
+    // Check that multiple non-null observers gets called with reasonable HttpResponse.
+    MockHttpResponseObserver observers[] = { new MockHttpResponseObserver(), new MockHttpResponseObserver() };
+    for (MockHttpResponseObserver observer : observers) {
+      BaseResource.addHttpResponseObserver(observer);
+      assertTrue(BaseResource.isHttpResponseObserver(observer));
+      assertNull(observer.response);
+    }
+
     doGet(); // HTTP server stopped in callback.
-    assertNotNull(observer.response);
-    assertEquals(200, observer.response.getStatusLine().getStatusCode());
+
+    for (MockHttpResponseObserver observer : observers) {
+      assertNotNull(observer.response);
+      assertEquals(200, observer.response.getStatusLine().getStatusCode());
+    }
+
     data.stopHTTPServer();
   }
 }
