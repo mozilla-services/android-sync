@@ -10,6 +10,7 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.common.telemetry.TelemetryWrapper;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.FxAccountServerConfiguration;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.MigratedFromSync11;
 import org.mozilla.gecko.fxa.login.State;
@@ -78,8 +79,7 @@ public class MigrationSentinelSyncStage extends AbstractNonRepositorySyncStage {
       final AndroidFxAccount fxAccount = AndroidFxAccount.addAndroidAccount(session.context,
           email,
           profile,
-          authServerURI,
-          tokenServerURI,
+          new FxAccountServerConfiguration(authServerURI, tokenServerURI),
           state,
           AndroidFxAccount.DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP);
 

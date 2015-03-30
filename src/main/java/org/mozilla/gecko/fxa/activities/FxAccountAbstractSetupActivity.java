@@ -22,12 +22,12 @@ import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.fxa.PasswordStretcher;
 import org.mozilla.gecko.background.fxa.QuickPasswordStretcher;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.FxAccountServerConfiguration;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.tasks.FxAccountSetupTask.ProgressDisplay;
 import org.mozilla.gecko.fxa.tasks.FxAccountUnlockCodeResender;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
@@ -71,10 +71,6 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   public static final String EXTRA_DAY = "day";
   public static final String EXTRA_EXTRAS = "extras";
 
-  public static final String JSON_KEY_AUTH = "auth";
-  public static final String JSON_KEY_SERVICES = "services";
-  public static final String JSON_KEY_SYNC = "sync";
-
   public FxAccountAbstractSetupActivity() {
     super(CANNOT_RESUME_WHEN_ACCOUNTS_EXIST | CANNOT_RESUME_WHEN_LOCKED_OUT);
   }
@@ -98,16 +94,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   protected Button button;
   protected ProgressBar progressBar;
 
-  private String authServerEndpoint;
-  private String syncServerEndpoint;
-
-  protected String getAuthServerEndpoint() {
-    return authServerEndpoint;
-  }
-
-  protected String getTokenServerEndpoint() {
-    return syncServerEndpoint;
-  }
+  protected FxAccountServerConfiguration serverConfiguration;
 
   protected void createShowPasswordButton() {
     showPasswordButton.setOnClickListener(new OnClickListener() {
@@ -198,7 +185,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
         } catch (UnsupportedEncodingException e) {
           // It's okay, we'll fail in the code resender.
         }
-        FxAccountUnlockCodeResender.resendUnlockCode(FxAccountAbstractSetupActivity.this, getAuthServerEndpoint(), emailUTF8);
+        FxAccountUnlockCodeResender.resendUnlockCode(FxAccountAbstractSetupActivity.this, serverConfiguration.authServerEndpoint, emailUTF8);
       }
     });
     remoteErrorTextView.setMovementMethod(LinkMovementMethod.getInstance());
@@ -346,7 +333,6 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
       AndroidFxAccount fxAccount;
       try {
         final String profile = Constants.DEFAULT_PROFILE;
-        final String tokenServerURI = getTokenServerEndpoint();
         // It is crucial that we use the email address provided by the server
         // (rather than whatever the user entered), because the user's keys are
         // wrapped and salted with the initial email they provided to
@@ -361,8 +347,7 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
         fxAccount = AndroidFxAccount.addAndroidAccount(getApplicationContext(),
             email,
             profile,
-            serverURI,
-            tokenServerURI,
+            serverConfiguration,
             state,
             this.authoritiesToSyncAutomaticallyMap);
         if (fxAccount == null) {
@@ -466,11 +451,21 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     }
 
     // This sets defaults as well as extracting from extras, so it's not conditional.
-    updateServersFromIntentExtras(getIntent());
+    serverConfiguration = FxAccountServerConfiguration.fromIntent(getIntent());
+
+    if (FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(serverConfiguration.syncServerEndpoint) &&
+        !FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(serverConfiguration.authServerEndpoint)) {
+      // We really don't want to hard-code assumptions about server
+      // configurations into client code in such a way that if and when the
+      // situation is relaxed, the client code stops valid usage. Instead, we
+      // warn. This configuration should present itself as an auth exception at
+      // Sync time.
+      Logger.warn(LOG_TAG, "Mozilla's Sync token servers only works with Mozilla's auth servers. Sync will likely be mis-configured.");
+    }
 
     if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
-      FxAccountUtils.pii(LOG_TAG, "Using auth server: " + authServerEndpoint);
-      FxAccountUtils.pii(LOG_TAG, "Using sync server: " + syncServerEndpoint);
+      FxAccountUtils.pii(LOG_TAG, "Using auth server: " + serverConfiguration.authServerEndpoint);
+      FxAccountUtils.pii(LOG_TAG, "Using sync server: " + serverConfiguration.syncServerEndpoint);
     }
 
     updateCustomServerView();
@@ -526,58 +521,11 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
     startActivityForResult(intent, requestCode);
   }
 
-  protected void updateServersFromIntentExtras(Intent intent) {
-    // Start with defaults.
-    this.authServerEndpoint = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
-    this.syncServerEndpoint = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT;
-
-    if (intent == null) {
-      Logger.warn(LOG_TAG, "Intent is null; ignoring and using default servers.");
-      return;
-    }
-
-    final String extrasString = intent.getStringExtra(EXTRA_EXTRAS);
-
-    if (extrasString == null) {
-      return;
-    }
-
-    final ExtendedJSONObject extras;
-    final ExtendedJSONObject services;
-    try {
-      extras = new ExtendedJSONObject(extrasString);
-      services = extras.getObject(JSON_KEY_SERVICES);
-    } catch (Exception e) {
-      Logger.warn(LOG_TAG, "Got exception parsing extras; ignoring and using default servers.");
-      return;
-    }
-
-    String authServer = extras.getString(JSON_KEY_AUTH);
-    String syncServer = services == null ? null : services.getString(JSON_KEY_SYNC);
-
-    if (authServer != null) {
-      this.authServerEndpoint = authServer;
-    }
-    if (syncServer != null) {
-      this.syncServerEndpoint = syncServer;
-    }
-
-    if (FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(syncServerEndpoint) &&
-        !FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(authServerEndpoint)) {
-      // We really don't want to hard-code assumptions about server
-      // configurations into client code in such a way that if and when the
-      // situation is relaxed, the client code stops valid usage. Instead, we
-      // warn. This configuration should present itself as an auth exception at
-      // Sync time.
-      Logger.warn(LOG_TAG, "Mozilla's Sync token servers only works with Mozilla's auth servers. Sync will likely be mis-configured.");
-    }
-  }
-
   protected void updateCustomServerView() {
     final boolean shouldShow =
         ALWAYS_SHOW_CUSTOM_SERVER_LAYOUT ||
-        !FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(authServerEndpoint) ||
-        !FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(syncServerEndpoint);
+        !FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(serverConfiguration.authServerEndpoint) ||
+        !FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(serverConfiguration.syncServerEndpoint);
 
     if (!shouldShow) {
       setCustomServerViewVisibility(View.GONE);
@@ -586,8 +534,8 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
     final TextView authServerView = (TextView) ensureFindViewById(null, R.id.account_server_summary, "account server");
     final TextView syncServerView = (TextView) ensureFindViewById(null, R.id.sync_server_summary, "Sync server");
-    authServerView.setText(authServerEndpoint);
-    syncServerView.setText(syncServerEndpoint);
+    authServerView.setText(serverConfiguration.authServerEndpoint);
+    syncServerView.setText(serverConfiguration.syncServerEndpoint);
 
     setCustomServerViewVisibility(View.VISIBLE);
   }

@@ -27,6 +27,7 @@ import org.mozilla.gecko.background.sync.TestSyncAccounts;
 import org.mozilla.gecko.fxa.AccountLoader;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.FxAccountServerConfiguration;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Separated;
 import org.mozilla.gecko.fxa.login.State;
@@ -175,7 +176,9 @@ public class TestAccountLoader extends AndroidSyncTestCaseWithAccounts {
     // This account will get cleaned up in tearDown.
     final State state = new Separated(TEST_USERNAME, "uid", false); // State choice is arbitrary.
     final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context,
-        TEST_USERNAME, TEST_PROFILE, TEST_AUTH_SERVER_URI, TEST_TOKEN_SERVER_URI, state,
+        TEST_USERNAME, TEST_PROFILE,
+        new FxAccountServerConfiguration(TEST_AUTH_SERVER_URI, TEST_TOKEN_SERVER_URI),
+        state,
         AndroidSyncTestCaseWithAccounts.TEST_SYNC_AUTOMATICALLY_MAP_WITH_ALL_AUTHORITIES_DISABLED);
     assertNotNull(account);
     assertFirefoxAccount(getLoaderResultSynchronously(loader));

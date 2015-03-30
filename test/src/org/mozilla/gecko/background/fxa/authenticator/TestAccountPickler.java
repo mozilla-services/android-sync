@@ -5,6 +5,7 @@ package org.mozilla.gecko.background.fxa.authenticator;
 
 import org.mozilla.gecko.background.sync.AndroidSyncTestCaseWithAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.FxAccountServerConfiguration;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Separated;
@@ -55,7 +56,9 @@ public class TestAccountPickler extends AndroidSyncTestCaseWithAccounts {
   public AndroidFxAccount addTestAccount() throws Exception {
     final State state = new Separated(TEST_USERNAME, "uid", false); // State choice is arbitrary.
     final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context, TEST_USERNAME,
-        TEST_PROFILE, TEST_AUTH_SERVER_URI, TEST_TOKEN_SERVER_URI, state,
+        TEST_PROFILE,
+        new FxAccountServerConfiguration(TEST_AUTH_SERVER_URI, TEST_TOKEN_SERVER_URI),
+        state,
         AndroidSyncTestCaseWithAccounts.TEST_SYNC_AUTOMATICALLY_MAP_WITH_ALL_AUTHORITIES_DISABLED);
     assertNotNull(account);
     assertNotNull(account.getProfile());

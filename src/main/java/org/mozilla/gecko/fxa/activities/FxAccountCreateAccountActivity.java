@@ -369,7 +369,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   }
 
   public void createAccount(String email, String password, Map<String, Boolean> engines, Map<String, Boolean> authoritiesToSyncAutomaticallyMap) {
-    String serverURI = getAuthServerEndpoint();
+    String serverURI = serverConfiguration.authServerEndpoint;
     PasswordStretcher passwordStretcher = makePasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.

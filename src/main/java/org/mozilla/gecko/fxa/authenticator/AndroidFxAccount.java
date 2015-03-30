@@ -22,6 +22,7 @@ import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.FxAccountServerConfiguration;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.fxa.login.StateFactory;
@@ -268,12 +269,20 @@ public class AndroidFxAccount {
     return accountManager.getUserData(account, ACCOUNT_KEY_PROFILE);
   }
 
+  public FxAccountServerConfiguration getServerConfiguration() {
+    final String authServerEndpoint = accountManager.getUserData(account, ACCOUNT_KEY_IDP_SERVER);
+    final String syncServerEndpoint = accountManager.getUserData(account, ACCOUNT_KEY_TOKEN_SERVER);
+    return new FxAccountServerConfiguration(
+        authServerEndpoint,
+        syncServerEndpoint);
+  }
+
   public String getAccountServerURI() {
-    return accountManager.getUserData(account, ACCOUNT_KEY_IDP_SERVER);
+    return getServerConfiguration().authServerEndpoint;
   }
 
   public String getTokenServerURI() {
-    return accountManager.getUserData(account, ACCOUNT_KEY_TOKEN_SERVER);
+    return getServerConfiguration().syncServerEndpoint;
   }
 
   private String constructPrefsPath(String product, long version, String extra) throws GeneralSecurityException, UnsupportedEncodingException {
@@ -350,12 +359,11 @@ public class AndroidFxAccount {
       Context context,
       String email,
       String profile,
-      String idpServerURI,
-      String tokenServerURI,
+      FxAccountServerConfiguration serverConfiguration,
       State state,
       final Map<String, Boolean> authoritiesToSyncAutomaticallyMap)
           throws UnsupportedEncodingException, GeneralSecurityException, URISyntaxException {
-    return addAndroidAccount(context, email, profile, idpServerURI, tokenServerURI, state,
+    return addAndroidAccount(context, email, profile, serverConfiguration, state,
         authoritiesToSyncAutomaticallyMap,
         CURRENT_ACCOUNT_VERSION, false, null);
   }
@@ -364,8 +372,7 @@ public class AndroidFxAccount {
       Context context,
       String email,
       String profile,
-      String idpServerURI,
-      String tokenServerURI,
+      FxAccountServerConfiguration serverConfiguration,
       State state,
       final Map<String, Boolean> authoritiesToSyncAutomaticallyMap,
       final int accountVersion,
@@ -378,11 +385,8 @@ public class AndroidFxAccount {
     if (profile == null) {
       throw new IllegalArgumentException("profile must not be null");
     }
-    if (idpServerURI == null) {
-      throw new IllegalArgumentException("idpServerURI must not be null");
-    }
-    if (tokenServerURI == null) {
-      throw new IllegalArgumentException("tokenServerURI must not be null");
+    if (serverConfiguration == null) {
+      throw new IllegalArgumentException("serverConfiguration must not be null");
     }
     if (state == null) {
       throw new IllegalArgumentException("state must not be null");
@@ -398,8 +402,8 @@ public class AndroidFxAccount {
     // bundle to be strings. *sigh*
     Bundle userdata = new Bundle();
     userdata.putString(ACCOUNT_KEY_ACCOUNT_VERSION, "" + CURRENT_ACCOUNT_VERSION);
-    userdata.putString(ACCOUNT_KEY_IDP_SERVER, idpServerURI);
-    userdata.putString(ACCOUNT_KEY_TOKEN_SERVER, tokenServerURI);
+    userdata.putString(ACCOUNT_KEY_IDP_SERVER, serverConfiguration.authServerEndpoint);
+    userdata.putString(ACCOUNT_KEY_TOKEN_SERVER, serverConfiguration.syncServerEndpoint);
     userdata.putString(ACCOUNT_KEY_PROFILE, profile);
 
     if (bundle == null) {

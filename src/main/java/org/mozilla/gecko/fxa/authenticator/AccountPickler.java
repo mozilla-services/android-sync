@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.FxAccountServerConfiguration;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.fxa.login.StateFactory;
@@ -186,7 +187,8 @@ public class AccountPickler {
     final AndroidFxAccount account;
     try {
       account = AndroidFxAccount.addAndroidAccount(context, params.email, params.profile,
-          params.authServerURI, params.tokenServerURI, params.state,
+          new FxAccountServerConfiguration(params.authServerURI, params.tokenServerURI),
+          params.state,
           params.authoritiesToSyncAutomaticallyMap,
           params.accountVersion,
           true, params.bundle);

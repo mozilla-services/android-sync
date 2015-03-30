@@ -25,7 +25,6 @@ import org.mozilla.gecko.fxa.login.Married;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
 import org.mozilla.gecko.fxa.tasks.FxAccountCodeResender;
-import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SharedPreferencesClientsDataDelegate;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.util.HardwareUtils;
@@ -92,6 +91,7 @@ public class FxAccountStatusFragment
   // information logging setting will toggle. The setting is not permanent: it
   // lasts until this process is killed. We don't want to dump PII to the log
   // for a long time!
+  @SuppressWarnings("unused")
   private final int NUMBER_OF_CLICKS_TO_TOGGLE_DEBUG =
       // !defined(MOZILLA_OFFICIAL) || defined(NIGHTLY_BUILD) || defined(MOZ_DEBUG)
       (!AppConstants.MOZILLA_OFFICIAL || AppConstants.NIGHTLY_BUILD || AppConstants.DEBUG_BUILD) ? 5 : -1 /* infinite */;
@@ -242,7 +242,7 @@ public class FxAccountStatusFragment
 
     if (preference == needsPasswordPreference) {
       Intent intent = new Intent(getActivity(), FxAccountUpdateCredentialsActivity.class);
-      final Bundle extras = getExtrasForAccount();
+      final Bundle extras = fxAccount.getServerConfiguration().toBundle();
       if (extras != null) {
         intent.putExtras(extras);
       }
@@ -256,7 +256,7 @@ public class FxAccountStatusFragment
 
     if (preference == needsFinishMigratingPreference) {
       final Intent intent = new Intent(getActivity(), FxAccountFinishMigratingActivity.class);
-      final Bundle extras = getExtrasForAccount();
+      final Bundle extras = fxAccount.getServerConfiguration().toBundle();
       if (extras != null) {
         intent.putExtras(extras);
       }
@@ -309,17 +309,6 @@ public class FxAccountStatusFragment
     }
 
     return false;
-  }
-
-  protected Bundle getExtrasForAccount() {
-    final Bundle extras = new Bundle();
-    final ExtendedJSONObject o = new ExtendedJSONObject();
-    o.put(FxAccountAbstractSetupActivity.JSON_KEY_AUTH, fxAccount.getAccountServerURI());
-    final ExtendedJSONObject services = new ExtendedJSONObject();
-    services.put(FxAccountAbstractSetupActivity.JSON_KEY_SYNC, fxAccount.getTokenServerURI());
-    o.put(FxAccountAbstractSetupActivity.JSON_KEY_SERVICES, services);
-    extras.putString(FxAccountAbstractSetupActivity.EXTRA_EXTRAS, o.toJSONString());
-    return extras;
   }
 
   protected void setCheckboxesEnabled(boolean enabled) {

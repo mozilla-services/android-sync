@@ -92,7 +92,7 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
   }
 
   public void signIn(String email, String password) {
-    String serverURI = getAuthServerEndpoint();
+    String serverURI = serverConfiguration.authServerEndpoint;
     PasswordStretcher passwordStretcher = makePasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.
