@@ -200,9 +200,9 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     // Allow testing against stage.
     final String endpointString;
     if (usingStageAuthServer) {
-      endpointString = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
+      endpointString = FxAccountConstants.STAGE_READING_LIST_SERVER_ENDPOINT;
     } else {
-      endpointString = ReadingListConstants.DEFAULT_PROD_ENDPOINT;
+      endpointString = FxAccountConstants.DEFAULT_READING_LIST_SERVER_ENDPOINT;
     }
 
     Logger.info(LOG_TAG, "Syncing reading list against endpoint: " + endpointString);

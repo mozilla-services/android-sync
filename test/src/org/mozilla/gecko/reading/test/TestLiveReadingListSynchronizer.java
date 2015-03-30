@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 
-import org.mozilla.gecko.background.ReadingListConstants;
 import org.mozilla.gecko.background.common.PrefsBranch;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.db.CursorDumper;
@@ -17,6 +16,7 @@ import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.background.testhelpers.WaitHelper.InnerError;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.reading.ClientMetadata;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
 import org.mozilla.gecko.reading.LocalReadingListStorage;
@@ -102,7 +102,7 @@ static final class TestSynchronizerDelegate implements ReadingListSynchronizerDe
     }
   }
 
-  private static final String DEFAULT_SERVICE_URI = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
+  private static final String DEFAULT_SERVICE_URI = FxAccountConstants.STAGE_READING_LIST_SERVER_ENDPOINT;
 
   private static ReadingListClient getTestClient(final String username) throws URISyntaxException, InterruptedException {
     return getTestClient(username, false);

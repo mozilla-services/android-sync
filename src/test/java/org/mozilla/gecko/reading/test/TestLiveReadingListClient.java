@@ -15,9 +15,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mozilla.android.sync.test.integration.IntegrationTestCategory;
-import org.mozilla.gecko.background.ReadingListConstants;
 import org.mozilla.gecko.background.fxa.oauth.FxAccountOAuthClient10.AuthorizationResponse;
 import org.mozilla.gecko.background.fxa.test.FxAccountTestHelper;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
 import org.mozilla.gecko.reading.FetchSpec;
 import org.mozilla.gecko.reading.ReadingListClient;
@@ -199,7 +199,7 @@ public class TestLiveReadingListClient {
     }
   }
 
-  private static final String DEFAULT_SERVICE_URI = ReadingListConstants.DEFAULT_DEV_ENDPOINT;
+  private static final String DEFAULT_SERVICE_URI = FxAccountConstants.STAGE_READING_LIST_SERVER_ENDPOINT;
 
   static void checkFor500(MozResponse response) {
     if (response.getStatusCode() == 500) {

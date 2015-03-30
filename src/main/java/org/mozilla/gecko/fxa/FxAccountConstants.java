@@ -16,10 +16,12 @@ public class FxAccountConstants {
   public static final String DEFAULT_AUTH_SERVER_ENDPOINT = "https://api.accounts.firefox.com/v1";
   public static final String DEFAULT_TOKEN_SERVER_ENDPOINT = "https://token.services.mozilla.com/1.0/sync/1.5";
   public static final String DEFAULT_OAUTH_SERVER_ENDPOINT = "https://oauth.accounts.firefox.com/v1";
+  public static final String DEFAULT_READING_LIST_SERVER_ENDPOINT = "https://readinglist.services.mozilla.com/v1/";
 
   public static final String STAGE_AUTH_SERVER_ENDPOINT = "https://stable.dev.lcip.org/auth/v1";
   public static final String STAGE_TOKEN_SERVER_ENDPOINT = "https://stable.dev.lcip.org/syncserver/token/1.0/sync/1.5";
   public static final String STAGE_OAUTH_SERVER_ENDPOINT = "https://oauth-stable.dev.lcip.org/v1";
+  public static final String STAGE_READING_LIST_SERVER_ENDPOINT = "https://readinglist.dev.mozaws.net/v1/";
 
   // You must be at least 13 years old, on the day of creation, to create a Firefox Account.
   public static final int MINIMUM_AGE_TO_CREATE_AN_ACCOUNT = 13;
