@@ -325,9 +325,15 @@ public class AndroidFxAccount {
   }
 
   public String getReadingListPrefsPath() throws GeneralSecurityException, UnsupportedEncodingException {
+    String readingListServerURI = getServerConfiguration().readingListServerEndpoint;
+    if (readingListServerURI == null) {
+      // Can be null.
+      readingListServerURI = "";
+    }
+
     final String product = GlobalConstants.BROWSER_INTENT_PACKAGE + ".reading";
     final long version = CURRENT_RL_PREFS_VERSION;
-    return constructPrefsPath(product, version, "");
+    return constructPrefsPath(product, version, readingListServerURI);
   }
 
   public SharedPreferences getSyncPrefs() throws UnsupportedEncodingException, GeneralSecurityException {
