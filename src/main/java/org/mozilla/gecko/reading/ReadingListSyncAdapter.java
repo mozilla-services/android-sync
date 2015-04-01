@@ -23,6 +23,7 @@ import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.FirefoxAccounts.SyncHint;
 import org.mozilla.gecko.fxa.FxAccountConstants;
+import org.mozilla.gecko.fxa.FxAccountServerConfiguration;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncDelegate;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncDelegate.Result;
@@ -171,22 +172,19 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
 
     final Context context = getContext();
     final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
+    final FxAccountServerConfiguration serverConfiguration = fxAccount.getServerConfiguration();
 
-    // Don't sync Reading List if we're in a non-default configuration, but allow testing against stage.
-    final String accountServerURI = fxAccount.getAccountServerURI();
-    final boolean usingDefaultAuthServer = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(accountServerURI);
-    final boolean usingStageAuthServer = FxAccountConstants.STAGE_AUTH_SERVER_ENDPOINT.equals(accountServerURI);
-    if (!usingDefaultAuthServer && !usingStageAuthServer) {
-      Logger.error(LOG_TAG, "Skipping Reading List sync because Firefox Account is not using prod or stage auth server.");
+    // Don't sync Reading List if we can't request OAuth tokens.
+    if (serverConfiguration.oauthServerEndpoint == null) {
+      Logger.error(LOG_TAG, "Skipping Reading List sync because the Firefox Account is not configured with an OAuth server.");
+      Logger.debug(LOG_TAG, "This means that the user is not using either production auth or stage auth.");
       // Stop syncing the Reading List entirely.
       ContentResolver.setIsSyncable(account, BrowserContract.READING_LIST_AUTHORITY, 0);
       return;
     }
-    final String tokenServerURI = fxAccount.getTokenServerURI();
-    final boolean usingDefaultSyncServer = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(tokenServerURI);
-    final boolean usingStageSyncServer = FxAccountConstants.STAGE_TOKEN_SERVER_ENDPOINT.equals(tokenServerURI);
-    if (!usingDefaultSyncServer && !usingStageSyncServer) {
-      Logger.error(LOG_TAG, "Skipping Reading List sync because Sync is not using the prod or stage Sync (token) server.");
+    if (serverConfiguration.readingListServerEndpoint == null) {
+      Logger.error(LOG_TAG, "Skipping Reading List sync because the Firefox Account is not configured with a Reading List server.");
+      Logger.debug(LOG_TAG, "This means that the user is not using one of (production auth, production Sync) or (stage auth, stage Sync).");
       Logger.debug(LOG_TAG, "If the user has chosen to not store Sync data with Mozilla, we shouldn't store Reading List data with Mozilla .");
       // Stop syncing the Reading List entirely.
       ContentResolver.setIsSyncable(account, BrowserContract.READING_LIST_AUTHORITY, 0);
@@ -197,14 +195,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     final BlockingQueue<Result> latch = new LinkedBlockingQueue<Result>(1);
     final FxAccountSyncDelegate syncDelegate = new FxAccountSyncDelegate(latch, syncResult);
 
-    // Allow testing against stage.
-    final String endpointString;
-    if (usingStageAuthServer) {
-      endpointString = FxAccountConstants.STAGE_READING_LIST_SERVER_ENDPOINT;
-    } else {
-      endpointString = FxAccountConstants.DEFAULT_READING_LIST_SERVER_ENDPOINT;
-    }
-
+    final String endpointString = serverConfiguration.readingListServerEndpoint;
     Logger.info(LOG_TAG, "Syncing reading list against endpoint: " + endpointString);
     final URI endpointURI;
     try {

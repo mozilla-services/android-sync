@@ -183,13 +183,12 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
 
     final Responder responder = new Responder(response, fxAccount);
 
-    // Allow testing against stage.
-    final boolean usingStageAuthServer = FxAccountConstants.STAGE_AUTH_SERVER_ENDPOINT.equals(fxAccount.getAccountServerURI());
-    final String oauthServerUri;
-    if (usingStageAuthServer) {
-      oauthServerUri = FxAccountConstants.STAGE_OAUTH_SERVER_ENDPOINT;
-    } else {
-      oauthServerUri = FxAccountConstants.DEFAULT_OAUTH_SERVER_ENDPOINT;
+    final String oauthServerUri = fxAccount.getServerConfiguration().oauthServerEndpoint;
+    if (oauthServerUri == null) {
+      final Exception e = new IllegalStateException("Firefox Account has null oauthServerEndpoint; cannot request OAuth token!");
+      Logger.error(LOG_TAG, "Got exception fetching oauth token.", e);
+      responder.fail(e);
+      return;
     }
 
     final String audience;
