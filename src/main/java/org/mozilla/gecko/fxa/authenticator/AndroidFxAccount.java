@@ -58,10 +58,9 @@ public class AndroidFxAccount {
   public static final String ACCOUNT_KEY_ACCOUNT_VERSION = "version";
   public static final String ACCOUNT_KEY_PROFILE = "profile";
   public static final String ACCOUNT_KEY_IDP_SERVER = "idpServerURI";
-
-  // The audience should always be a prefix of the token server URI.
-  public static final String ACCOUNT_KEY_AUDIENCE = "audience";                 // Sync-specific.
-  public static final String ACCOUNT_KEY_TOKEN_SERVER = "tokenServerURI";       // Sync-specific.
+  public static final String ACCOUNT_KEY_OAUTH_SERVER = "oauthServerURI";
+  public static final String ACCOUNT_KEY_TOKEN_SERVER = "tokenServerURI";
+  public static final String ACCOUNT_KEY_READING_LIST_SERVER = "readingListServerURI";
   public static final String ACCOUNT_KEY_DESCRIPTOR = "descriptor";
 
   public static final int CURRENT_BUNDLE_VERSION = 2;
@@ -271,10 +270,14 @@ public class AndroidFxAccount {
 
   public FxAccountServerConfiguration getServerConfiguration() {
     final String authServerEndpoint = accountManager.getUserData(account, ACCOUNT_KEY_IDP_SERVER);
+    final String oauthServerEndpoint = accountManager.getUserData(account, ACCOUNT_KEY_OAUTH_SERVER);
     final String syncServerEndpoint = accountManager.getUserData(account, ACCOUNT_KEY_TOKEN_SERVER);
+    final String readingListServerEndpoint = accountManager.getUserData(account, ACCOUNT_KEY_READING_LIST_SERVER);
     return new FxAccountServerConfiguration(
         authServerEndpoint,
-        syncServerEndpoint);
+        oauthServerEndpoint,
+        syncServerEndpoint,
+        readingListServerEndpoint);
   }
 
   public String getAccountServerURI() {
@@ -404,6 +407,13 @@ public class AndroidFxAccount {
     userdata.putString(ACCOUNT_KEY_ACCOUNT_VERSION, "" + CURRENT_ACCOUNT_VERSION);
     userdata.putString(ACCOUNT_KEY_IDP_SERVER, serverConfiguration.authServerEndpoint);
     userdata.putString(ACCOUNT_KEY_TOKEN_SERVER, serverConfiguration.syncServerEndpoint);
+    // OAuth and Reading List servers can be null.
+    if (serverConfiguration.oauthServerEndpoint != null) {
+      userdata.putString(ACCOUNT_KEY_OAUTH_SERVER, serverConfiguration.oauthServerEndpoint);
+    }
+    if (serverConfiguration.readingListServerEndpoint != null) {
+      userdata.putString(ACCOUNT_KEY_READING_LIST_SERVER, serverConfiguration.readingListServerEndpoint);
+    }
     userdata.putString(ACCOUNT_KEY_PROFILE, profile);
 
     if (bundle == null) {

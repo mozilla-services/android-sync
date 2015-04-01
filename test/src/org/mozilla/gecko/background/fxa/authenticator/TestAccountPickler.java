@@ -57,7 +57,7 @@ public class TestAccountPickler extends AndroidSyncTestCaseWithAccounts {
     final State state = new Separated(TEST_USERNAME, "uid", false); // State choice is arbitrary.
     final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context, TEST_USERNAME,
         TEST_PROFILE,
-        new FxAccountServerConfiguration(TEST_AUTH_SERVER_URI, TEST_TOKEN_SERVER_URI),
+        new FxAccountServerConfiguration(TEST_AUTH_SERVER_URI, null, TEST_TOKEN_SERVER_URI, null),
         state,
         AndroidSyncTestCaseWithAccounts.TEST_SYNC_AUTOMATICALLY_MAP_WITH_ALL_AUTHORITIES_DISABLED);
     assertNotNull(account);

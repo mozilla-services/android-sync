@@ -187,7 +187,7 @@ public class AccountPickler {
     final AndroidFxAccount account;
     try {
       account = AndroidFxAccount.addAndroidAccount(context, params.email, params.profile,
-          new FxAccountServerConfiguration(params.authServerURI, params.tokenServerURI),
+          new FxAccountServerConfiguration(params.authServerURI, null, params.tokenServerURI, null),
           params.state,
           params.authoritiesToSyncAutomaticallyMap,
           params.accountVersion,
