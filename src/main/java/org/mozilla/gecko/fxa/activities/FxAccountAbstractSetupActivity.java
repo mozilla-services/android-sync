@@ -465,7 +465,9 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
 
     if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
       FxAccountUtils.pii(LOG_TAG, "Using auth server: " + serverConfiguration.authServerEndpoint);
+      FxAccountUtils.pii(LOG_TAG, "Using oauth server: " + serverConfiguration.oauthServerEndpoint);
       FxAccountUtils.pii(LOG_TAG, "Using sync server: " + serverConfiguration.syncServerEndpoint);
+      FxAccountUtils.pii(LOG_TAG, "Using reading list server: " + serverConfiguration.readingListServerEndpoint);
     }
 
     updateCustomServerView();

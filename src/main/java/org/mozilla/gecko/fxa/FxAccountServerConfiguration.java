@@ -47,6 +47,47 @@ public class FxAccountServerConfiguration {
     this.readingListServerEndpoint = readingListServerEndpoint;
   }
 
+  public static FxAccountServerConfiguration withDefaultsFrom(String authServerEndpoint, String syncServerEndpoint) {
+    final boolean usingDefaultAuthServer = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(authServerEndpoint);
+    final boolean usingStageAuthServer = FxAccountConstants.STAGE_AUTH_SERVER_ENDPOINT.equals(authServerEndpoint);
+
+    // If the user isn't using Mozilla's Firefox Account endpoint, we won't
+    // request OAuth tokens at all for now. In future, the account may have a
+    // custom OAuth server attached.
+    final String oauthServerEndpoint;
+    if (usingDefaultAuthServer) {
+      oauthServerEndpoint = FxAccountConstants.DEFAULT_OAUTH_SERVER_ENDPOINT;
+    } else if (usingStageAuthServer) {
+      oauthServerEndpoint = FxAccountConstants.STAGE_OAUTH_SERVER_ENDPOINT;
+    } else {
+      // OAuth server endpoint can be null: we just won't request OAuth tokens.
+      // (For any service, including future services.)
+      oauthServerEndpoint = null;
+    }
+
+    final boolean usingDefaultSyncServer = FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(syncServerEndpoint);
+    final boolean usingStageSyncServer = FxAccountConstants.STAGE_TOKEN_SERVER_ENDPOINT.equals(syncServerEndpoint);
+
+    // We interpret the user not using both Mozilla's Firefox Account endpoint
+    // and Mozilla's storage as a sign we should not upload their Reading List
+    // data to Mozilla's Reading List storage.
+    final String readingListServerEndpoint;
+    if (usingDefaultAuthServer && usingDefaultSyncServer) {
+      readingListServerEndpoint = FxAccountConstants.DEFAULT_READING_LIST_SERVER_ENDPOINT;
+    } else if (usingStageAuthServer && usingStageSyncServer) {
+      readingListServerEndpoint = FxAccountConstants.STAGE_READING_LIST_SERVER_ENDPOINT;
+    } else {
+      // Reading List server endpoint can be null: we just won't sync Reading List.
+      readingListServerEndpoint = null;
+    }
+
+    return new FxAccountServerConfiguration(
+        authServerEndpoint,
+        oauthServerEndpoint,
+        syncServerEndpoint,
+        readingListServerEndpoint);
+  }
+
   public static FxAccountServerConfiguration fromIntent(Intent intent) {
     String authServerEndpoint = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
     String oauthServerEndpoint = FxAccountConstants.DEFAULT_OAUTH_SERVER_ENDPOINT;
@@ -74,20 +115,24 @@ public class FxAccountServerConfiguration {
       return new FxAccountServerConfiguration(authServerEndpoint, syncServerEndpoint, oauthServerEndpoint, readingListServerEndpoint);
     }
 
+    // Auth and Sync are both optional (may not be included, which means use default); and null is treated as not included.
     String authServer = extras.getString(JSON_KEY_AUTH);
-    String oauthServer = extras.getString(JSON_KEY_OAUTH);
     String syncServer = services == null ? null : services.getString(JSON_KEY_SYNC);
-    String readingListServer = services == null ? null : services.getString(JSON_KEY_READING_LIST);
-
     if (authServer != null) {
       authServerEndpoint = authServer;
     }
     if (syncServer != null) {
       syncServerEndpoint = syncServer;
     }
-    // OAuth and Reading List can both be null.
-    oauthServerEndpoint = oauthServer;
-    readingListServerEndpoint = readingListServer;
+    // OAuth and Reading List are both optional (may not be included, which means use default); and can be null (which means don't use at all).
+    if (services != null) {
+      if (services.containsKey(JSON_KEY_OAUTH)) {
+        oauthServerEndpoint = extras.getString(JSON_KEY_OAUTH);
+      }
+      if (services.containsKey(JSON_KEY_READING_LIST)) {
+        readingListServerEndpoint = extras.getString(JSON_KEY_READING_LIST);
+      }
+    }
 
     return new FxAccountServerConfiguration(authServerEndpoint, syncServerEndpoint, oauthServerEndpoint, readingListServerEndpoint);
   }
@@ -95,13 +140,11 @@ public class FxAccountServerConfiguration {
   public Bundle toBundle() {
     final Bundle extras = new Bundle();
     final ExtendedJSONObject o = new ExtendedJSONObject();
-    if (!FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT.equals(authServerEndpoint)) {
-      o.put(JSON_KEY_AUTH, authServerEndpoint);
-    }
     final ExtendedJSONObject services = new ExtendedJSONObject();
-    if (!FxAccountConstants.DEFAULT_TOKEN_SERVER_ENDPOINT.equals(syncServerEndpoint)) {
-      services.put(JSON_KEY_SYNC, syncServerEndpoint);
-    }
+    services.put(JSON_KEY_SYNC, syncServerEndpoint);
+    services.put(JSON_KEY_OAUTH, oauthServerEndpoint);
+    services.put(JSON_KEY_READING_LIST, readingListServerEndpoint);
+    o.put(JSON_KEY_AUTH, authServerEndpoint);
     o.put(JSON_KEY_SERVICES, services);
     extras.putString(FxAccountAbstractSetupActivity.EXTRA_EXTRAS, o.toJSONString());
     return extras;

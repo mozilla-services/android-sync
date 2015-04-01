@@ -79,7 +79,7 @@ public class MigrationSentinelSyncStage extends AbstractNonRepositorySyncStage {
       final AndroidFxAccount fxAccount = AndroidFxAccount.addAndroidAccount(session.context,
           email,
           profile,
-          new FxAccountServerConfiguration(authServerURI, null, tokenServerURI, null),
+          FxAccountServerConfiguration.withDefaultsFrom(authServerURI, tokenServerURI),
           state,
           AndroidFxAccount.DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP);
 
