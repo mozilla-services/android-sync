@@ -59,7 +59,7 @@ import android.content.Context;
 public class AccountPickler {
   public static final String LOG_TAG = AccountPickler.class.getSimpleName();
 
-  public static final long PICKLE_VERSION = 3;
+  public static final long PICKLE_VERSION = 4;
 
   public static final String KEY_PICKLE_VERSION = "pickle_version";
   public static final String KEY_PICKLE_TIMESTAMP = "pickle_timestamp";
@@ -70,6 +70,8 @@ public class AccountPickler {
   public static final String KEY_PROFILE = "profile";
   public static final String KEY_IDP_SERVER_URI = "idpServerURI";
   public static final String KEY_TOKEN_SERVER_URI = "tokenServerURI";
+  public static final String KEY_OAUTH_SERVER_URI = "oauthServerURI";
+  public static final String KEY_READING_LIST_SERVER_URI = "readingListServerURI";
 
   public static final String KEY_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP = "authoritiesToSyncAutomaticallyMap";
 
@@ -98,8 +100,11 @@ public class AccountPickler {
     o.put(KEY_ACCOUNT_TYPE, FxAccountConstants.ACCOUNT_TYPE);
     o.put(KEY_EMAIL, account.getEmail());
     o.put(KEY_PROFILE, account.getProfile());
-    o.put(KEY_IDP_SERVER_URI, account.getAccountServerURI());
-    o.put(KEY_TOKEN_SERVER_URI, account.getTokenServerURI());
+    final FxAccountServerConfiguration serverConfiguration = account.getServerConfiguration();
+    o.put(KEY_IDP_SERVER_URI, serverConfiguration.authServerEndpoint);
+    o.put(KEY_TOKEN_SERVER_URI, serverConfiguration.syncServerEndpoint);
+    o.put(KEY_OAUTH_SERVER_URI, serverConfiguration.oauthServerEndpoint);
+    o.put(KEY_READING_LIST_SERVER_URI, serverConfiguration.readingListServerEndpoint);
 
     final ExtendedJSONObject p = new ExtendedJSONObject();
     for (Entry<String, Boolean> pair : account.getAuthoritiesToSyncAutomaticallyMap().entrySet()) {
@@ -187,7 +192,7 @@ public class AccountPickler {
     final AndroidFxAccount account;
     try {
       account = AndroidFxAccount.addAndroidAccount(context, params.email, params.profile,
-          new FxAccountServerConfiguration(params.authServerURI, null, params.tokenServerURI, null),
+          params.serverConfiguration,
           params.state,
           params.authoritiesToSyncAutomaticallyMap,
           params.accountVersion,
@@ -220,8 +225,7 @@ public class AccountPickler {
     private int accountVersion;
     private String email;
     private String profile;
-    private String authServerURI;
-    private String tokenServerURI;
+    private FxAccountServerConfiguration serverConfiguration;
     private final Map<String, Boolean> authoritiesToSyncAutomaticallyMap = new HashMap<>();
 
     private ExtendedJSONObject bundle;
@@ -247,8 +251,22 @@ public class AccountPickler {
        * Version 3 replaces "isSyncEnabled" with a map (String -> Boolean)
        * associating Android authorities to whether or not they are configured
        * to sync automatically.
+       *
+       * Version 4 is identical to version 3, except it also includes OAuth and
+       * Reading List server endpoints, which may be null.
        */
       switch (params.pickleVersion.intValue()) {
+      case 4: {
+        // Sanity check.
+        final String accountType = json.getString(KEY_ACCOUNT_TYPE);
+        if (!FxAccountConstants.ACCOUNT_TYPE.equals(accountType)) {
+          throw new IllegalStateException("Account type has changed from " + accountType + " to " + FxAccountConstants.ACCOUNT_TYPE + ".");
+        }
+
+        params.unpickleV4(json);
+      }
+      break;
+
       case 3: {
         // Sanity check.
         final String accountType = json.getString(KEY_ACCOUNT_TYPE);
@@ -295,8 +313,9 @@ public class AccountPickler {
       this.accountVersion = json.getIntegerSafely(KEY_ACCOUNT_VERSION);
       this.email = json.getString(KEY_EMAIL);
       this.profile = json.getString(KEY_PROFILE);
-      this.authServerURI = json.getString(KEY_IDP_SERVER_URI);
-      this.tokenServerURI = json.getString(KEY_TOKEN_SERVER_URI);
+      String authServerURI = json.getString(KEY_IDP_SERVER_URI);
+      String tokenServerURI = json.getString(KEY_TOKEN_SERVER_URI);
+      this.serverConfiguration = FxAccountServerConfiguration.withDefaultsFrom(authServerURI, tokenServerURI);
 
       // We get the default value for everything except syncing browser data.
       this.authoritiesToSyncAutomaticallyMap.put(BrowserContract.AUTHORITY, json.getBoolean(KEY_IS_SYNCING_ENABLED));
@@ -314,6 +333,32 @@ public class AccountPickler {
       unpickleV1(json);
 
       // Extract the map of authorities to sync automatically.
+      authoritiesToSyncAutomaticallyMap.clear();
+      final ExtendedJSONObject o = json.getObject(KEY_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP);
+      if (o == null) {
+        return;
+      }
+      for (String key : o.keySet()) {
+        final Boolean enabled = o.getBoolean(key);
+        if (enabled != null) {
+          authoritiesToSyncAutomaticallyMap.put(key, enabled);
+        }
+      }
+    }
+
+    private void unpickleV4(final ExtendedJSONObject json)
+        throws NonObjectJSONException, NoSuchAlgorithmException, InvalidKeySpecException {
+      // We'll add the additional endpoints after.
+      unpickleV3(json);
+
+      // Extract the new OAuth and Reading List endpoints, only overwriting
+      // defaults (from V3) if specified.
+      final FxAccountServerConfiguration newServerConfiguration = new FxAccountServerConfiguration(serverConfiguration.authServerEndpoint,
+          json.containsKey(KEY_OAUTH_SERVER_URI) ? json.getString(KEY_OAUTH_SERVER_URI) : serverConfiguration.oauthServerEndpoint,
+          serverConfiguration.syncServerEndpoint,
+          json.containsKey(KEY_READING_LIST_SERVER_URI) ? json.getString(KEY_READING_LIST_SERVER_URI) : serverConfiguration.readingListServerEndpoint);
+      serverConfiguration = newServerConfiguration;
+
       authoritiesToSyncAutomaticallyMap.clear();
       final ExtendedJSONObject o = json.getObject(KEY_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP);
       if (o == null) {

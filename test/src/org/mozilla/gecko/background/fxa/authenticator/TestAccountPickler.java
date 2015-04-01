@@ -20,6 +20,8 @@ import android.test.RenamingDelegatingContext;
 public class TestAccountPickler extends AndroidSyncTestCaseWithAccounts {
   private static final String TEST_TOKEN_SERVER_URI = "tokenServerURI";
   private static final String TEST_AUTH_SERVER_URI = "serverURI";
+  private static final String TEST_OAUTH_SERVER_URI = "oauthServerURI";
+  private static final String TEST_READING_LIST_SERVER_URI = "readingListServerURI";
   private static final String TEST_PROFILE = "profile";
   private final static String FILENAME_PREFIX = "TestAccountPickler-";
   private final static String PICKLE_FILENAME = "pickle";
@@ -57,7 +59,7 @@ public class TestAccountPickler extends AndroidSyncTestCaseWithAccounts {
     final State state = new Separated(TEST_USERNAME, "uid", false); // State choice is arbitrary.
     final AndroidFxAccount account = AndroidFxAccount.addAndroidAccount(context, TEST_USERNAME,
         TEST_PROFILE,
-        new FxAccountServerConfiguration(TEST_AUTH_SERVER_URI, null, TEST_TOKEN_SERVER_URI, null),
+        new FxAccountServerConfiguration(TEST_AUTH_SERVER_URI, TEST_OAUTH_SERVER_URI, TEST_TOKEN_SERVER_URI, TEST_READING_LIST_SERVER_URI),
         state,
         AndroidSyncTestCaseWithAccounts.TEST_SYNC_AUTOMATICALLY_MAP_WITH_ALL_AUTHORITIES_DISABLED);
     assertNotNull(account);
@@ -74,7 +76,7 @@ public class TestAccountPickler extends AndroidSyncTestCaseWithAccounts {
     final ExtendedJSONObject o = AccountPickler.toJSON(account, now);
     assertNotNull(o.toJSONString());
 
-    assertEquals(3, o.getLong(AccountPickler.KEY_PICKLE_VERSION).longValue());
+    assertEquals(4, o.getLong(AccountPickler.KEY_PICKLE_VERSION).longValue());
     assertTrue(o.getLong(AccountPickler.KEY_PICKLE_TIMESTAMP).longValue() < System.currentTimeMillis());
 
     assertEquals(AndroidFxAccount.CURRENT_ACCOUNT_VERSION, o.getIntegerSafely(AccountPickler.KEY_ACCOUNT_VERSION).intValue());
@@ -84,6 +86,8 @@ public class TestAccountPickler extends AndroidSyncTestCaseWithAccounts {
     assertEquals(TEST_PROFILE, o.getString(AccountPickler.KEY_PROFILE));
     assertEquals(TEST_AUTH_SERVER_URI, o.getString(AccountPickler.KEY_IDP_SERVER_URI));
     assertEquals(TEST_TOKEN_SERVER_URI, o.getString(AccountPickler.KEY_TOKEN_SERVER_URI));
+    assertEquals(TEST_OAUTH_SERVER_URI, o.getString(AccountPickler.KEY_OAUTH_SERVER_URI));
+    assertEquals(TEST_READING_LIST_SERVER_URI, o.getString(AccountPickler.KEY_READING_LIST_SERVER_URI));
 
     assertNotNull(o.getObject(AccountPickler.KEY_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP));
     assertNotNull(o.get(AccountPickler.KEY_BUNDLE));
