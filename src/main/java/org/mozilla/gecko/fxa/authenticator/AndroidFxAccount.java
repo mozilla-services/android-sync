@@ -54,7 +54,12 @@ public class AndroidFxAccount {
   public static final int CURRENT_RL_PREFS_VERSION = 1;
 
   // When updating the account, do not forget to update AccountPickler.
-  public static final int CURRENT_ACCOUNT_VERSION = 3;
+  /**
+   * Version 4 is version 3 plus (possibly null) OAuth and Reading List
+   * endpoints. We bump versions because null is a valid value that we can't use
+   * as a sentinel.
+   */
+  public static final int CURRENT_ACCOUNT_VERSION = 4;
   public static final String ACCOUNT_KEY_ACCOUNT_VERSION = "version";
   public static final String ACCOUNT_KEY_PROFILE = "profile";
   public static final String ACCOUNT_KEY_IDP_SERVER = "idpServerURI";
@@ -139,7 +144,7 @@ public class AndroidFxAccount {
     return this.account;
   }
 
-  protected int getAccountVersion() {
+  public static int getAccountVersion(AccountManager accountManager, Account account) {
     String v = accountManager.getUserData(account, ACCOUNT_KEY_ACCOUNT_VERSION);
     if (v == null) {
       return 0;         // Implicit.
@@ -178,7 +183,7 @@ public class AndroidFxAccount {
       }
     }
 
-    final int version = getAccountVersion();
+    final int version = getAccountVersion(accountManager, account);
     if (version < CURRENT_ACCOUNT_VERSION) {
       // Needs upgrade. For now, do nothing. We'd like to just put your account
       // into the Separated state here and have you update your credentials.

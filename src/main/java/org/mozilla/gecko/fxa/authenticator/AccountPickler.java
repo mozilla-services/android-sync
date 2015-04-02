@@ -189,6 +189,12 @@ public class AccountPickler {
       return null;
     }
 
+    // Account version 4 is version 3 plus OAuth and Reading List server URLs.
+    // It's safe to unpickle a V3 account when we're creating V4 accounts.
+    if (params.accountVersion == 3 && AndroidFxAccount.CURRENT_ACCOUNT_VERSION == 4) {
+      params.accountVersion = 4;
+    }
+
     final AndroidFxAccount account;
     try {
       account = AndroidFxAccount.addAndroidAccount(context, params.email, params.profile,

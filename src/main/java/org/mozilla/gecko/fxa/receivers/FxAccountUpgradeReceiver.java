@@ -19,6 +19,7 @@ import org.mozilla.gecko.fxa.login.State.StateLabel;
 import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -42,6 +43,7 @@ public class FxAccountUpgradeReceiver extends BroadcastReceiver {
   protected List<Runnable> onUpgradeRunnables(Context context) {
     List<Runnable> runnables = new LinkedList<Runnable>();
     runnables.add(new MaybeUnpickleRunnable(context));
+    runnables.add(new MaybeAddOAuthAndReadingListRunnable(context));
     // Recovering accounts that are in the Doghouse should happen *after* we
     // unpickle any accounts saved to disk.
     runnables.add(new AdvanceFromDoghouseRunnable(context));
@@ -86,6 +88,43 @@ public class FxAccountUpgradeReceiver extends BroadcastReceiver {
       // Querying the accounts will unpickle any pickled Firefox Account.
       Logger.info(LOG_TAG, "Trying to unpickle any pickled Firefox Account.");
       FirefoxAccounts.getFirefoxAccounts(context);
+    }
+  }
+
+  /**
+   * A Runnable that tries to set default OAuth and Reading List endpoints for
+   * existing Firefox Accounts.
+   */
+  protected static class MaybeAddOAuthAndReadingListRunnable implements Runnable {
+    protected final Context context;
+
+    public MaybeAddOAuthAndReadingListRunnable(Context context) {
+      this.context = context;
+    }
+
+    @Override
+    public void run() {
+      final AccountManager accountManager = AccountManager.get(context);
+
+      final Account[] accounts = FirefoxAccounts.getFirefoxAccounts(context);
+      Logger.info(LOG_TAG, "Trying to add OAuth and Reading List endpoints to " + accounts.length + " existing Firefox Accounts (if necessary).");
+      for (Account account : accounts) {
+        try {
+          final int version = AndroidFxAccount.getAccountVersion(accountManager, account);
+          if (version == 3 && AndroidFxAccount.CURRENT_ACCOUNT_VERSION == 4) {
+            // Version 4 is version 3 plus additional OAuth and Reading List URLs.
+            final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
+            // For great debugging.
+            if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
+              fxAccount.dump();
+            }
+
+          }
+        } catch (Exception e) {
+          Logger.warn(LOG_TAG, "Got exception trying to advance account named like " + Utils.obfuscateEmail(account.name) +
+              " from Doghouse to Separated state; ignoring.", e);
+        }
+      }
     }
   }
 
