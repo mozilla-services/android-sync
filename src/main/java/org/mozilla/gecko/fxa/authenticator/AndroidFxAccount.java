@@ -281,6 +281,15 @@ public class AndroidFxAccount {
     return accountManager.getUserData(account, ACCOUNT_KEY_TOKEN_SERVER);
   }
 
+  public String getOAuthServerURI() {
+    // Allow testing against stage.
+    if (FxAccountConstants.STAGE_AUTH_SERVER_ENDPOINT.equals(getAccountServerURI())) {
+      return FxAccountConstants.STAGE_OAUTH_SERVER_ENDPOINT;
+    } else {
+      return FxAccountConstants.DEFAULT_OAUTH_SERVER_ENDPOINT;
+    }
+  }
+
   private String constructPrefsPath(String product, long version, String extra) throws GeneralSecurityException, UnsupportedEncodingException {
     String profile = getProfile();
     String username = account.name;

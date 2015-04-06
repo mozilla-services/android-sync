@@ -182,15 +182,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
     Logger.info(LOG_TAG, "Fetching oauth token with scope: " + scope);
 
     final Responder responder = new Responder(response, fxAccount);
-
-    // Allow testing against stage.
-    final boolean usingStageAuthServer = FxAccountConstants.STAGE_AUTH_SERVER_ENDPOINT.equals(fxAccount.getAccountServerURI());
-    final String oauthServerUri;
-    if (usingStageAuthServer) {
-      oauthServerUri = FxAccountConstants.STAGE_OAUTH_SERVER_ENDPOINT;
-    } else {
-      oauthServerUri = FxAccountConstants.DEFAULT_OAUTH_SERVER_ENDPOINT;
-    }
+    final String oauthServerUri = fxAccount.getOAuthServerURI();
 
     final String audience;
     try {
