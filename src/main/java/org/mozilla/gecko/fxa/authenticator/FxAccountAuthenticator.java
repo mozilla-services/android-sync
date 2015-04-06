@@ -352,7 +352,8 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
     //
     // Broadcast intents protected with permissions are secure, so it's okay
     // to include private information such as a password.
-    final Intent intent = AndroidFxAccount.makeDeletedAccountIntent(context, account);
+    final AndroidFxAccount androidFxAccount = new AndroidFxAccount(context, account);
+    final Intent intent = androidFxAccount.makeDeletedAccountIntent();
     Logger.info(LOG_TAG, "Account named " + account.name + " being removed; " +
         "broadcasting secure intent " + intent.getAction() + ".");
     context.sendBroadcast(intent, FxAccountConstants.PER_ACCOUNT_TYPE_PERMISSION);
