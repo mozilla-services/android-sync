@@ -7,7 +7,10 @@ package org.mozilla.gecko.reading.test;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.reading.ClientReadingListRecord;
 import org.mozilla.gecko.reading.LocalReadingListStorage;
+import org.mozilla.gecko.reading.ReadingListChangeAccumulator;
 import org.mozilla.gecko.reading.ReadingListClientRecordFactory;
+import org.mozilla.gecko.reading.ServerReadingListRecord;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import android.content.ContentProviderClient;
 import android.content.ContentUris;
@@ -111,6 +114,42 @@ public class TestLocalReadingListStorage extends ReadingListTest {
       } finally {
         client.release();
       }
+    }
+
+    public final void testDownloadedDeletion() throws Exception {
+        final ContentProviderClient client = getWipedLocalClient();
+        try {
+            final LocalReadingListStorage storage = new LocalReadingListStorage(client);
+            assertIsEmpty(storage);
+
+            ReadingListChangeAccumulator accumulator = storage.getChangeAccumulator();
+
+            addRecordASynced(client);
+            assertTrue(1 == getCount(client));
+
+            // Exists locally.
+            final ExtendedJSONObject objA = new ExtendedJSONObject();
+            objA.put("id", "abcdefghi");
+            objA.put("deleted", true);
+            objA.put("last_modified", 1425054475110L);
+
+            // Doesn't exist locally.
+            final ExtendedJSONObject objB = new ExtendedJSONObject();
+            objB.put("id", "aaaaaaaaa");
+            objB.put("deleted", true);
+            objB.put("last_modified", 1425050000110L);
+
+            final ServerReadingListRecord recA = new ServerReadingListRecord(objA);
+            final ServerReadingListRecord recB = new ServerReadingListRecord(objB);
+
+            accumulator.addDownloadedRecord(recA);
+            accumulator.addDownloadedRecord(recB);
+
+            accumulator.finish();
+            assertTrue(0 == getCount(client));
+        } finally {
+          client.release();
+        }
     }
 
     /**
