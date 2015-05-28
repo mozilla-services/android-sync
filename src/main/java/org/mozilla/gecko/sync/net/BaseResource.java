@@ -27,7 +27,6 @@ import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpHeaders;
 import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.HttpVersion;
 import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.client.AuthCache;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
@@ -42,25 +41,14 @@ import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
 import ch.boye.httpclientandroidlib.client.protocol.ClientContext;
 import ch.boye.httpclientandroidlib.config.Registry;
 import ch.boye.httpclientandroidlib.config.RegistryBuilder;
-import ch.boye.httpclientandroidlib.conn.ClientConnectionManager;
-import ch.boye.httpclientandroidlib.conn.scheme.PlainSocketFactory;
-import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
-import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
 import ch.boye.httpclientandroidlib.conn.socket.ConnectionSocketFactory;
 import ch.boye.httpclientandroidlib.conn.socket.PlainConnectionSocketFactory;
-import ch.boye.httpclientandroidlib.conn.ssl.SSLConnectionSocketFactory;
-import ch.boye.httpclientandroidlib.conn.ssl.SSLContextBuilder;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLInitializationException;
-import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.impl.client.BasicAuthCache;
 import ch.boye.httpclientandroidlib.impl.client.CloseableHttpClient;
 import ch.boye.httpclientandroidlib.impl.client.HttpClientBuilder;
 import ch.boye.httpclientandroidlib.impl.conn.PoolingHttpClientConnectionManager;
-import ch.boye.httpclientandroidlib.impl.conn.tsccm.ThreadSafeClientConnManager;
-import ch.boye.httpclientandroidlib.params.HttpConnectionParams;
-import ch.boye.httpclientandroidlib.params.HttpParams;
-import ch.boye.httpclientandroidlib.params.HttpProtocolParams;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 import ch.boye.httpclientandroidlib.protocol.HttpContext;
 import ch.boye.httpclientandroidlib.util.EntityUtils;
@@ -256,8 +244,7 @@ public class BaseResource implements Resource {
     }
   }
 
-  public static PoolingHttpClientConnectionManager getConnectionManager() throws KeyManagementException, NoSuchAlgorithmException
-                                                         {
+  public static PoolingHttpClientConnectionManager getConnectionManager() throws KeyManagementException, NoSuchAlgorithmException {
     // TODO: shutdown.
     synchronized (connManagerMonitor) {
       if (connManager != null) {
