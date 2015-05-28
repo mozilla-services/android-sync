@@ -25,10 +25,13 @@ import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
+import ch.boye.httpclientandroidlib.HttpHeaders;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.HttpVersion;
+import ch.boye.httpclientandroidlib.ProtocolVersion;
 import ch.boye.httpclientandroidlib.client.AuthCache;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.client.config.RequestConfig;
 import ch.boye.httpclientandroidlib.client.methods.HttpDelete;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
 import ch.boye.httpclientandroidlib.client.methods.HttpPatch;
@@ -37,14 +40,23 @@ import ch.boye.httpclientandroidlib.client.methods.HttpPut;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
 import ch.boye.httpclientandroidlib.client.protocol.ClientContext;
+import ch.boye.httpclientandroidlib.config.Registry;
+import ch.boye.httpclientandroidlib.config.RegistryBuilder;
 import ch.boye.httpclientandroidlib.conn.ClientConnectionManager;
 import ch.boye.httpclientandroidlib.conn.scheme.PlainSocketFactory;
 import ch.boye.httpclientandroidlib.conn.scheme.Scheme;
 import ch.boye.httpclientandroidlib.conn.scheme.SchemeRegistry;
+import ch.boye.httpclientandroidlib.conn.socket.ConnectionSocketFactory;
+import ch.boye.httpclientandroidlib.conn.socket.PlainConnectionSocketFactory;
+import ch.boye.httpclientandroidlib.conn.ssl.SSLConnectionSocketFactory;
+import ch.boye.httpclientandroidlib.conn.ssl.SSLContextBuilder;
+import ch.boye.httpclientandroidlib.conn.ssl.SSLInitializationException;
 import ch.boye.httpclientandroidlib.conn.ssl.SSLSocketFactory;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
 import ch.boye.httpclientandroidlib.impl.client.BasicAuthCache;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.impl.client.CloseableHttpClient;
+import ch.boye.httpclientandroidlib.impl.client.HttpClientBuilder;
+import ch.boye.httpclientandroidlib.impl.conn.PoolingHttpClientConnectionManager;
 import ch.boye.httpclientandroidlib.impl.conn.tsccm.ThreadSafeClientConnManager;
 import ch.boye.httpclientandroidlib.params.HttpConnectionParams;
 import ch.boye.httpclientandroidlib.params.HttpParams;
@@ -74,7 +86,7 @@ public class BaseResource implements Resource {
 
   protected final URI uri;
   protected BasicHttpContext context;
-  protected DefaultHttpClient client;
+  protected CloseableHttpClient client;
   public    ResourceDelegate delegate;
   protected HttpRequestBase request;
   public final String charset = "utf-8";
@@ -180,7 +192,7 @@ public class BaseResource implements Resource {
 
     // We could reuse these client instances, except that we mess around
     // with their parameters… so we'd need a pool of some kind.
-    client = new DefaultHttpClient(getConnectionManager());
+    client = HttpClientBuilder.create().setConnectionManager(getConnectionManager()).build();
 
     // TODO: Eventually we should use Apache HttpAsyncClient. It's not out of alpha yet.
     // Until then, we synchronously make the request, then invoke our delegate's callback.
@@ -195,39 +207,56 @@ public class BaseResource implements Resource {
 
     addAuthCacheToContext(request, context);
 
-    HttpParams params = client.getParams();
-    HttpConnectionParams.setConnectionTimeout(params, delegate.connectionTimeout());
-    HttpConnectionParams.setSoTimeout(params, delegate.socketTimeout());
-    HttpConnectionParams.setStaleCheckingEnabled(params, false);
-    HttpProtocolParams.setContentCharset(params, charset);
-    HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+    // TODO: .setContentCharset(charset)
+    final RequestConfig config = RequestConfig.custom()
+        .setConnectTimeout(delegate.connectionTimeout())
+        .setSocketTimeout(delegate.socketTimeout())
+        .setStaleConnectionCheckEnabled(false)
+        .build();
+
+    request.setConfig(config);
+    request.setProtocolVersion(new ProtocolVersion("HTTP", 1, 1));
+
     final String userAgent = delegate.getUserAgent();
     if (userAgent != null) {
-      HttpProtocolParams.setUserAgent(params, userAgent);
+      request.setHeader(HttpHeaders.USER_AGENT, userAgent);
     }
+
     delegate.addHeaders(request, client);
   }
 
   private static final Object connManagerMonitor = new Object();
-  private static ClientConnectionManager connManager;
+  private static PoolingHttpClientConnectionManager connManager;
 
   // Call within a synchronized block on connManagerMonitor.
-  private static ClientConnectionManager enableTLSConnectionManager() throws KeyManagementException, NoSuchAlgorithmException  {
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(null, null, new SecureRandom());
-    SSLSocketFactory sf = new TLSSocketFactory(sslContext);
-    SchemeRegistry schemeRegistry = new SchemeRegistry();
-    schemeRegistry.register(new Scheme("https", 443, sf));
-    schemeRegistry.register(new Scheme("http", 80, new PlainSocketFactory()));
-    ThreadSafeClientConnManager cm = new ThreadSafeClientConnManager(schemeRegistry);
-
-    cm.setMaxTotal(MAX_TOTAL_CONNECTIONS);
-    cm.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_ROUTE);
-    connManager = cm;
-    return cm;
+  private static PoolingHttpClientConnectionManager enableTLSConnectionManager() {
+    Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+        .register("http", PlainConnectionSocketFactory.getSocketFactory())
+        .register("https", new TLSSocketFactory(getSSLContext()))
+        .build();
+    final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(registry);
+    connectionManager.setMaxTotal(MAX_TOTAL_CONNECTIONS);
+    connectionManager.setDefaultMaxPerRoute(MAX_CONNECTIONS_PER_ROUTE);
+    connManager = connectionManager;
+    return connectionManager;
   }
 
-  public static ClientConnectionManager getConnectionManager() throws KeyManagementException, NoSuchAlgorithmException
+  /**
+   * Just like SSLContext.createDefault, but explicitly initializes with SecureRandom.
+   */
+  private static SSLContext getSSLContext() throws SSLInitializationException {
+    try {
+      final SSLContext sslcontext = SSLContext.getInstance("TLS");
+      sslcontext.init(null, null, new SecureRandom());
+      return sslcontext;
+    } catch (final NoSuchAlgorithmException ex) {
+      throw new SSLInitializationException(ex.getMessage(), ex);
+    } catch (final KeyManagementException ex) {
+      throw new SSLInitializationException(ex.getMessage(), ex);
+    }
+  }
+
+  public static PoolingHttpClientConnectionManager getConnectionManager() throws KeyManagementException, NoSuchAlgorithmException
                                                          {
     // TODO: shutdown.
     synchronized (connManagerMonitor) {
@@ -242,7 +271,7 @@ public class BaseResource implements Resource {
    * Do some cleanup, so we don't need the stale connection check.
    */
   public static void closeExpiredConnections() {
-    ClientConnectionManager connectionManager;
+    PoolingHttpClientConnectionManager connectionManager;
     synchronized (connManagerMonitor) {
       connectionManager = connManager;
     }
@@ -254,7 +283,7 @@ public class BaseResource implements Resource {
   }
 
   public static void shutdownConnectionManager() {
-    ClientConnectionManager connectionManager;
+    PoolingHttpClientConnectionManager connectionManager;
     synchronized (connManagerMonitor) {
       connectionManager = connManager;
       connManager = null;

@@ -5,8 +5,8 @@
 package org.mozilla.gecko.sync.net;
 
 import ch.boye.httpclientandroidlib.Header;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 
@@ -28,7 +28,7 @@ public abstract class AbstractBearerTokenAuthHeaderProvider implements AuthHeade
   protected abstract String getPrefix();
 
   @Override
-  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client) {
+  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client) {
     return new BasicHeader("Authorization", header);
   }
 }

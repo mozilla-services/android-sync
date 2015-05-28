@@ -22,7 +22,7 @@ import org.mozilla.gecko.sync.setup.Constants;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class AuthenticateAccountStage implements AuthenticatorStage {
@@ -100,16 +100,16 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
       }
 
       @Override
-      public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+      public void addHeaders(HttpRequestBase request, HttpClient client) {
         // Make reference to request, to abort if necessary.
         httpRequest = request;
-        client.log.enableDebug(true);
+
         // Host header is not set for some reason, so do it explicitly.
         try {
           URI authServerUri = new URI(authRequestUrl);
           request.setHeader(new BasicHeader("Host", authServerUri.getHost()));
         } catch (URISyntaxException e) {
-          Logger.error(LOG_TAG, "Malformed uri, will be caught elsewhere.", e);
+          Logger.error(LOG_TAG, "Malformed URI; will be caught elsewhere.", e);
         }
         request.setHeader(new BasicHeader("Authorization", authHeader));
       }

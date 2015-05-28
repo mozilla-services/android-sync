@@ -18,9 +18,9 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.Utils;
 
 import ch.boye.httpclientandroidlib.Header;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 
@@ -64,7 +64,7 @@ public class HMACAuthHeaderProvider implements AuthHeaderProvider {
   }
 
   @Override
-  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client) throws GeneralSecurityException {
+  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client) throws GeneralSecurityException {
     long timestamp = System.currentTimeMillis() / 1000;
     String nonce = Base64.encodeBase64String(Utils.generateRandomBytes(NONCE_LENGTH_IN_BYTES));
     String extra = "";
@@ -120,7 +120,7 @@ public class HMACAuthHeaderProvider implements AuthHeaderProvider {
    * @throws NoSuchAlgorithmException 
    * @throws InvalidKeyException 
    */
-  protected Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client,
+  protected Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client,
       long timestamp, String nonce, String extra)
       throws UnsupportedEncodingException, InvalidKeyException, NoSuchAlgorithmException {
     // Validate timestamp.  From the MAC Authentication spec:

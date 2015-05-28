@@ -23,9 +23,9 @@ import org.mozilla.gecko.sync.net.SyncResponse;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 
@@ -98,7 +98,7 @@ public class TestLiveHawkAuth {
     // PUT with *bad* payload verification.
     HawkAuthHeaderProvider provider = new HawkAuthHeaderProvider(id, key, true, 0L) {
       @Override
-      public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client) throws GeneralSecurityException {
+      public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client) throws GeneralSecurityException {
         Header header = super.getAuthHeader(request, context, client);
         // Here's a cheap way of breaking the hash.
         String newValue = header.getValue().replaceAll("hash=\"....", "hash=\"XXXX");

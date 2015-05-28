@@ -5,7 +5,7 @@
 package org.mozilla.gecko.sync.net;
 
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 
 /**
  * Shared abstract class for resource delegate that use the same timeouts
@@ -39,6 +39,6 @@ public abstract class BaseResourceDelegate implements ResourceDelegate {
   }
 
   @Override
-  public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+  public void addHeaders(HttpRequestBase request, HttpClient client) {
   }
 }

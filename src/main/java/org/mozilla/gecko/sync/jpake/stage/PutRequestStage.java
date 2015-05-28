@@ -23,7 +23,7 @@ import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class PutRequestStage extends JPakeStage {
@@ -99,7 +99,7 @@ public class PutRequestStage extends JPakeStage {
       }
 
       @Override
-      public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+      public void addHeaders(HttpRequestBase request, HttpClient client) {
         request.setHeader(new BasicHeader("X-KeyExchange-Id", jpakeClient.clientId));
         if (jpakeClient.theirEtag != null) {
           request.setHeader(new BasicHeader("If-Match", jpakeClient.theirEtag));

@@ -9,8 +9,8 @@ import java.security.GeneralSecurityException;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 
 /**
  * ResourceDelegate implementers must ensure that HTTP responses
@@ -24,7 +24,7 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 public interface ResourceDelegate {
   // Request augmentation.
   AuthHeaderProvider getAuthHeaderProvider();
-  void addHeaders(HttpRequestBase request, DefaultHttpClient client);
+  void addHeaders(HttpRequestBase request, HttpClient client);
 
   /**
    * The value of the User-Agent header to include with the request.

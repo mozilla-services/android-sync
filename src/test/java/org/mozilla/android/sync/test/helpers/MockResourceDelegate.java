@@ -16,8 +16,8 @@ import org.mozilla.gecko.sync.net.ResourceDelegate;
 
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 
 public class MockResourceDelegate implements ResourceDelegate {
   public WaitHelper waitHelper = null;
@@ -41,7 +41,7 @@ public class MockResourceDelegate implements ResourceDelegate {
   }
 
   @Override
-  public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+  public void addHeaders(HttpRequestBase request, HttpClient client) {
   }
 
   @Override

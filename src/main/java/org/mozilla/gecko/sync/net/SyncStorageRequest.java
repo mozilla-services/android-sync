@@ -17,7 +17,7 @@ import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 
 public class SyncStorageRequest implements Resource {
   public static HashMap<String, String> SERVER_ERROR_MESSAGES;
@@ -149,7 +149,7 @@ public class SyncStorageRequest implements Resource {
     }
 
     @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    public void addHeaders(HttpRequestBase request, HttpClient client) {
       // Clients can use their delegate interface to specify X-If-Unmodified-Since.
       String ifUnmodifiedSince = this.request.delegate.ifUnmodifiedSince();
       if (ifUnmodifiedSince != null) {

@@ -24,9 +24,9 @@ import org.mozilla.gecko.sync.Utils;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpEntityEnclosingRequest;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 
@@ -106,7 +106,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
   }
 
   @Override
-  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client) throws GeneralSecurityException {
+  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client) throws GeneralSecurityException {
     long timestamp = getTimestampSeconds();
     String nonce = Base64.encodeBase64String(Utils.generateRandomBytes(NONCE_LENGTH_IN_BYTES));
     String extra = "";
@@ -127,7 +127,7 @@ public class HawkAuthHeaderProvider implements AuthHeaderProvider {
    * @throws InvalidKeyException
    * @throws IOException
    */
-  protected Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client,
+  protected Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client,
       long timestamp, String nonce, String extra, boolean includePayloadHash)
           throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     if (timestamp < 0) {
