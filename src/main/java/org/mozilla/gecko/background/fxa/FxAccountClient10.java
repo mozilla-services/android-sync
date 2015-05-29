@@ -40,7 +40,7 @@ import ch.boye.httpclientandroidlib.HttpHeaders;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 
 /**
  * An HTTP client for talking to an FxAccount server.
@@ -312,7 +312,7 @@ public class FxAccountClient10 {
     }
 
     @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    public void addHeaders(HttpRequestBase request, HttpClient client) {
       super.addHeaders(request, client);
 
       // The basics.

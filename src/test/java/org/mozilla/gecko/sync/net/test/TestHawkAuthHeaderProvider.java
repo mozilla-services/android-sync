@@ -15,12 +15,12 @@ import org.junit.Test;
 import org.mozilla.gecko.sync.net.HawkAuthHeaderProvider;
 
 import ch.boye.httpclientandroidlib.Header;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
 import ch.boye.httpclientandroidlib.client.methods.HttpPost;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.client.methods.HttpUriRequest;
 import ch.boye.httpclientandroidlib.entity.StringEntity;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 
@@ -49,7 +49,7 @@ public class TestHawkAuthHeaderProvider {
 
     // Public for testing.
     @Override
-    public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client,
+    public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client,
         long timestamp, String nonce, String extra, boolean includePayloadHash)
             throws InvalidKeyException, NoSuchAlgorithmException, IOException {
       return super.getAuthHeader(request, context, client, timestamp, nonce, extra, includePayloadHash);

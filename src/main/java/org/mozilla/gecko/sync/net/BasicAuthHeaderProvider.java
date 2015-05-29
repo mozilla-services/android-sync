@@ -7,9 +7,9 @@ package org.mozilla.gecko.sync.net;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.auth.Credentials;
 import ch.boye.httpclientandroidlib.auth.UsernamePasswordCredentials;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.auth.BasicScheme;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 
 /**
@@ -42,7 +42,7 @@ public class BasicAuthHeaderProvider implements AuthHeaderProvider {
    * Basic.
    */
   @Override
-  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, DefaultHttpClient client) {
+  public Header getAuthHeader(HttpRequestBase request, BasicHttpContext context, HttpClient client) {
     Credentials creds = new UsernamePasswordCredentials(credentials);
 
     // This must be UTF-8 to generate the same Basic Auth headers as desktop for non-ASCII passwords.

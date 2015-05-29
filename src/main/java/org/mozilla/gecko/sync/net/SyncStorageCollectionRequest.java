@@ -16,7 +16,7 @@ import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 
 /**
  * A request class that handles line-by-line responses. Eventually this will
@@ -66,7 +66,7 @@ public class SyncStorageCollectionRequest extends SyncStorageRequest {
     }
 
     @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    public void addHeaders(HttpRequestBase request, HttpClient client) {
       super.addHeaders(request, client);
       request.setHeader("Accept", CONTENT_TYPE_INCREMENTAL);
       // Caller is responsible for setting full=1.

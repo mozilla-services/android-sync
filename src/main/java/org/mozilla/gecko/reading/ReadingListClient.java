@@ -25,7 +25,7 @@ import org.mozilla.gecko.sync.net.Resource;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 
 /**
  * This client exposes an API for the reading list service, documented at
@@ -155,7 +155,7 @@ public class ReadingListClient {
     }
 
     @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    public void addHeaders(HttpRequestBase request, HttpClient client) {
     }
   }
 
@@ -175,7 +175,7 @@ public class ReadingListClient {
     }
 
     @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    public void addHeaders(HttpRequestBase request, HttpClient client) {
       if (ifModifiedSince != -1L) {
         // TODO: format?
         request.addHeader("If-Modified-Since", "" + ifModifiedSince);
@@ -602,7 +602,7 @@ public class ReadingListClient {
     // Otherwise, the response will be the deleted record.
     r.delegate = new ReadingListResourceDelegate<ReadingListRecordResponse>(r, auth, ReadingListRecordResponse.FACTORY) {
       @Override
-      public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+      public void addHeaders(HttpRequestBase request, HttpClient client) {
         if (ifUnmodifiedSince != -1) {
           request.addHeader("If-Unmodified-Since", "" + ifUnmodifiedSince);
         }

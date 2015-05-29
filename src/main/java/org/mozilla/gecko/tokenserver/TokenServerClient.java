@@ -34,7 +34,7 @@ import ch.boye.httpclientandroidlib.HttpHeaders;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 /**
@@ -305,7 +305,7 @@ public class TokenServerClient {
     }
 
     @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    public void addHeaders(HttpRequestBase request, HttpClient client) {
       String host = request.getURI().getHost();
       request.setHeader(new BasicHeader(HttpHeaders.HOST, host));
       if (clientState != null) {

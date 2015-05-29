@@ -21,7 +21,7 @@ import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
+import ch.boye.httpclientandroidlib.client.HttpClient;
 import ch.boye.httpclientandroidlib.protocol.HTTP;
 
 /**
@@ -247,7 +247,7 @@ public class BagheeraClient {
     }
 
     @Override
-    public void addHeaders(HttpRequestBase request, DefaultHttpClient client) {
+    public void addHeaders(HttpRequestBase request, HttpClient client) {
       super.addHeaders(request, client);
       request.setHeader(HTTP.CONTENT_TYPE, COMPRESSED_CONTENT_TYPE);
       if (this.obsoleteDocumentIDs != null && this.obsoleteDocumentIDs.size() > 0) {
