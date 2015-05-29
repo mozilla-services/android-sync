@@ -79,9 +79,4 @@ public class TestLiveTLSSocketFactory {
   public void testWeakerCiphersuitesNotAllowed() throws Exception {
     testSSLConnection("https://global-root.digicert.com");
   }
-
-  @Test
-  public void testIDPWeakerCiphersuitesNotAllowed() throws Exception {
-    testSSLConnection("https://api-accounts.dev.lcip.org");
-  }
 }
