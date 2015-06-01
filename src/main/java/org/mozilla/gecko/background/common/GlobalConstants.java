@@ -38,6 +38,13 @@ public class GlobalConstants {
 
   // Acceptable cipher suites.
   /**
+   * We support only a very limited range of strong cipher suites and protocols:
+   * no SSLv3 or TLSv1.0 (if we can), no DHE ciphers that might be vulnerable to Logjam
+   * (https://weakdh.org/), no RC4.
+   *
+   * Backstory: Bug 717691 (we no longer support Android 2.2, so the name
+   * workaround is unnecessary), Bug 1081953, Bug 1061273, Bug 1166839.
+   *
    * See <http://developer.android.com/reference/javax/net/ssl/SSLSocket.html> for
    * supported Android versions for each set of protocols and cipher suites.
    */
@@ -45,16 +52,42 @@ public class GlobalConstants {
   public static final String[] DEFAULT_PROTOCOLS;
 
   static {
-    DEFAULT_CIPHER_SUITES = new String[]
-        {
-          "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",
-          "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",
-          "SSL_RSA_WITH_RC4_128_SHA", // "RC4_SHA"
-        };
-    DEFAULT_PROTOCOLS = new String[]
-        {
-          "SSLv3",
-          "TLSv1",
-        };
+    if (Versions.feature20Plus) {
+      DEFAULT_CIPHER_SUITES = new String[]
+          {
+           "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",        // 11+
+           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",        // 11+
+          };
+    } else if (Versions.feature11Plus) {
+      DEFAULT_CIPHER_SUITES = new String[]
+          {
+           "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",        // 11+
+           "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",        // 11+
+          };
+    } else {       // 9+
+      // Fall back to the only half-decent cipher suite supported on Gingerbread.
+      DEFAULT_CIPHER_SUITES = new String[]
+          {
+           "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"           // 9+
+          };
+    }
+
+    if (Versions.feature16Plus) {
+      DEFAULT_PROTOCOLS = new String[]
+          {
+           "TLSv1.2",
+           "TLSv1.1",
+          };
+    } else {
+      // Fall back to TLSv1 if there's nothing better.
+      DEFAULT_PROTOCOLS = new String[]
+          {
+           "TLSv1",
+          };
+    }
   }
 }
