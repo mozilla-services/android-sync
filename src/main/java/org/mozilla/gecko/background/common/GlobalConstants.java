@@ -5,10 +5,10 @@
 package org.mozilla.gecko.background.common;
 
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.AppConstants.Versions;
 
 /**
- * Preprocessed class for storing preprocessed values common to all
- * Android services.
+ * Constant values common to all Android services.
  */
 public class GlobalConstants {
   public static final String BROWSER_INTENT_PACKAGE = AppConstants.ANDROID_PACKAGE_NAME;
@@ -35,4 +35,59 @@ public class GlobalConstants {
   // Common time values.
   public static final long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
   public static final long MILLISECONDS_PER_SIX_MONTHS = 180 * MILLISECONDS_PER_DAY;
+
+  // Acceptable cipher suites.
+  /**
+   * We support only a very limited range of strong cipher suites and protocols:
+   * no SSLv3 or TLSv1.0 (if we can), no DHE ciphers that might be vulnerable to Logjam
+   * (https://weakdh.org/), no RC4.
+   *
+   * Backstory: Bug 717691 (we no longer support Android 2.2, so the name
+   * workaround is unnecessary), Bug 1081953, Bug 1061273, Bug 1166839.
+   *
+   * See <http://developer.android.com/reference/javax/net/ssl/SSLSocket.html> for
+   * supported Android versions for each set of protocols and cipher suites.
+   */
+  public static final String[] DEFAULT_CIPHER_SUITES;
+  public static final String[] DEFAULT_PROTOCOLS;
+
+  static {
+    if (Versions.feature20Plus) {
+      DEFAULT_CIPHER_SUITES = new String[]
+          {
+           "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",        // 11+
+           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",     // 20+
+           "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",        // 11+
+          };
+    } else if (Versions.feature11Plus) {
+      DEFAULT_CIPHER_SUITES = new String[]
+          {
+           "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",        // 11+
+           "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",        // 11+
+          };
+    } else {       // 9+
+      // Fall back to the only half-decent cipher suite supported on Gingerbread.
+      DEFAULT_CIPHER_SUITES = new String[]
+          {
+           "TLS_DHE_RSA_WITH_AES_256_CBC_SHA"           // 9+
+          };
+    }
+
+    if (Versions.feature16Plus) {
+      DEFAULT_PROTOCOLS = new String[]
+          {
+           "TLSv1.2",
+           "TLSv1.1",
+          };
+    } else {
+      // Fall back to TLSv1 if there's nothing better.
+      DEFAULT_PROTOCOLS = new String[]
+          {
+           "TLSv1",
+          };
+    }
+  }
 }
