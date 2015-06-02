@@ -218,7 +218,7 @@ public class BaseResource implements Resource {
     sslContext.init(null, null, new SecureRandom());
     //SSLSocketFactory sf = new TLSSocketFactory(sslContext);
     Logger.info(LOG_TAG, "XXX: API " + android.os.Build.VERSION.SDK_INT);
-    SSLSocketFactory sf = new SSLSocketFactory(sslContext, GlobalConstants.DEFAULT_PROTOCOLS, null, null);
+    SSLSocketFactory sf = new SSLSocketFactory(sslContext, GlobalConstants.DEFAULT_PROTOCOLS, GlobalConstants.DEFAULT_CIPHER_SUITES, null);
     SchemeRegistry schemeRegistry = new SchemeRegistry();
     schemeRegistry.register(new Scheme("https", 443, sf));
     schemeRegistry.register(new Scheme("http", 80, new PlainSocketFactory()));
