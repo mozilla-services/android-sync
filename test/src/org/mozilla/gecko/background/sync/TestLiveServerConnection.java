@@ -16,6 +16,7 @@ import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.ResourceDelegate;
 
+import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpException;
 import ch.boye.httpclientandroidlib.HttpHost;
 import ch.boye.httpclientandroidlib.HttpRequest;
@@ -29,7 +30,8 @@ import ch.boye.httpclientandroidlib.protocol.HttpContext;
 
 public class TestLiveServerConnection extends AndroidSyncTestCase {
     public void testLiveConnection() throws Exception {
-        final String url = "https://accounts.firefox.com/";
+        //final String url = "https://accounts.firefox.com/";
+        final String url = "https://phx-sync-12-3-5.services.mozilla.com/1.1/holygoat/storage/meta/global";
         //final String url = FxAccountConstants.DEFAULT_AUTH_SERVER_ENDPOINT;
         //final String url = "https://account.services.mozilla.com/";
         //final String url = "https://google.com/";
@@ -55,6 +57,7 @@ public class TestLiveServerConnection extends AndroidSyncTestCase {
             
             @Override
             public void handleHttpResponse(HttpResponse response) {
+                Log.i("FxXXX", "Got response.");
             }
             
             @Override
