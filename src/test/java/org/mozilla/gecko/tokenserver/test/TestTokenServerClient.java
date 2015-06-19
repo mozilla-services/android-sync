@@ -65,6 +65,9 @@ public class TestTokenServerClient {
   public static final String TEST_ERROR_RESPONSE = "{\"status\": \"error\"," +
       "\"errors\": [{\"location\": \"body\", \"name\": \"\", \"description\": \"Unauthorized EXTENDED\"}]}";
 
+  public static final String TEST_INVALID_TIMESTAMP_RESPONSE = "{\"status\": \"invalid-timestamp\", " +
+      "\"errors\": [{\"location\": \"body\", \"name\": \"\", \"description\": \"Unauthorized\"}]}";
+
   protected TokenServerClient client;
 
   @Before
@@ -128,6 +131,7 @@ public class TestTokenServerClient {
 
     // Status code 401.
     expectProcessResponseFailure(401, JSON, new ExtendedJSONObject(), TokenServerInvalidCredentialsException.class);
+    expectProcessResponseFailure(401, JSON, TEST_INVALID_TIMESTAMP_RESPONSE, TokenServerInvalidCredentialsException.class);
 
     // Status code 404.
     expectProcessResponseFailure(404, JSON, new ExtendedJSONObject(), TokenServerUnknownServiceException.class);
