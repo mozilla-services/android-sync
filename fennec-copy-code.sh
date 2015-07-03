@@ -209,8 +209,6 @@ rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable $ANDRO
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-xxhdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-xhdpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-hdpi $ANDROID/base/resources/
-rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-mdpi $ANDROID/base/resources/
-rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-ldpi $ANDROID/base/resources/
 rsync -a --exclude 'icon.png' --exclude 'ic_status_logo.png' res/drawable-v12 $ANDROID/base/resources/
 rsync -a res/layout/*.xml $ANDROID/base/resources/layout/
 
