@@ -82,7 +82,7 @@
           <version>3.8.0</version>
           <configuration>
             <sdk>
-              <platform>17</platform>
+              <platform>22</platform>
             </sdk>
             <emulator>
               <avd>23</avd>
