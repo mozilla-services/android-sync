@@ -1,3 +1,10 @@
+============
+DEFUNCT REPO
+============
+
+This repo sticks around for reference purposes. Real work should be done
+in mozilla-central.
+
 ===========================================
 Background Services for Firefox for Android
 ===========================================
