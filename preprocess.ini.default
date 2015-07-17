@@ -79,6 +79,9 @@ MOZ_APP_DISPLAYNAME = FxSync
 MOZ_APP_VERSION = 0
 ANDROID_TARGET_SDK = 16
 
+# Pretend to be release so that Send Tab works.
+RELEASE_BUILD=1
+
 # Fennec needs these.
 GRE_MILESTONE = 24.0a1
 MOZILLA_VERSION = "24.0a1"
