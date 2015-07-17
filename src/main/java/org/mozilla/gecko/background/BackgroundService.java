@@ -17,9 +17,14 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 
 public abstract class BackgroundService extends IntentService {
   private static final String LOG_TAG = BackgroundService.class.getSimpleName();
+  private static final long WAKE_LOCK_TIMEOUT = 1000; // milliseconds
+
+  private static WakeLock wakeLock;
 
   protected BackgroundService() {
     super(LOG_TAG);
@@ -34,6 +39,15 @@ public abstract class BackgroundService extends IntentService {
     service.setAction(intent.getAction());
     service.putExtras(intent);
     context.startService(service);
+
+    // We need a wake lock to ensure that the device stays awake long enough after the Intent's
+    // BroadcastReceiver returns so our IntentService will actually run. Because BackgroundService
+    // can be invoked without calling runIntentInService() and thus acquiring a wake lock, we
+    // acquire a timed wake lock here so BackgroundService doesn't need to worry about whether a
+    // wake lock needs to be released. If multiple intents are queued for this IntentService, then
+    // each intent (launched from runIntentInService) will have acquired its own timed wake lock.
+    WakeLock wakeLock = getWakeLock(context);
+    wakeLock.acquire(WAKE_LOCK_TIMEOUT);
   }
 
   /**
@@ -106,5 +120,13 @@ public abstract class BackgroundService extends IntentService {
     } catch (IllegalArgumentException | InvocationTargetException | IllegalAccessException e) {
       Logger.error(LOG_TAG, "Got exception invoking " + methodName + ".");
     }
+  }
+
+  protected static synchronized WakeLock getWakeLock(Context context) {
+    if (BackgroundService.wakeLock == null) {
+      PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+      BackgroundService.wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG);
+    }
+    return BackgroundService.wakeLock;
   }
 }
