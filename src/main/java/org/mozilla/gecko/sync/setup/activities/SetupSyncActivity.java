@@ -46,21 +46,21 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   private boolean pairWithPin = false;
 
   // UI elements for pairing through PIN entry.
-  private EditText            row1;
-  private EditText            row2;
-  private EditText            row3;
-  private Button              connectButton;
-  private LinearLayout        pinError;
+  EditText            row1;
+  EditText            row2;
+  EditText            row3;
+  Button              connectButton;
+  LinearLayout        pinError;
 
   // UI elements for pairing through PIN generation.
-  private TextView            pinTextView1;
-  private TextView            pinTextView2;
-  private TextView            pinTextView3;
-  private JPakeClient         jClient;
+  TextView            pinTextView1;
+  TextView            pinTextView2;
+  TextView            pinTextView3;
+  JPakeClient         jClient;
 
   // Android context.
-  private AccountManager      mAccountManager;
-  private Context             mContext;
+  AccountManager      mAccountManager;
+  Context             mContext;
 
   public SetupSyncActivity() {
     super();
@@ -418,7 +418,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
     }
   }
 
-  private void displayResultAndFinish(final boolean isSuccess) {
+  void displayResultAndFinish(final boolean isSuccess) {
     jClient = null;
     runOnUiThread(new Runnable() {
       @Override
@@ -451,12 +451,12 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
   /*
    * Helper functions
    */
-  private void activateButton(Button button, boolean toActivate) {
+  void activateButton(Button button, boolean toActivate) {
     button.setEnabled(toActivate);
     button.setClickable(toActivate);
   }
 
-  private void enablePinEntry(boolean toEnable) {
+  void enablePinEntry(boolean toEnable) {
     row1.setEnabled(toEnable);
     row2.setEnabled(toEnable);
     row3.setEnabled(toEnable);
@@ -468,7 +468,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * @param isSetup
    *          true if account was set up successfully, false otherwise.
    */
-  private void displayResult(boolean isSuccess) {
+  void displayResult(boolean isSuccess) {
     Intent intent = null;
     if (isSuccess) {
       intent = new Intent(mContext, SetupSuccessActivity.class);
@@ -492,7 +492,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    *
    * @return true, if all PIN fields have 4 characters, false otherwise
    */
-  private boolean pinEntryCompleted() {
+  boolean pinEntryCompleted() {
     if (row1.length() == 4 &&
         row2.length() == 4 &&
         row3.length() == 4) {
@@ -596,7 +596,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    * Displays layout with PIN for pairing with another device.
    * No Sync Account has been set up yet.
    */
-  private void displayReceiveNoPin() {
+  void displayReceiveNoPin() {
     Logger.debug(LOG_TAG, "ReceiveNoPin initiated");
     runOnUiThread(new Runnable(){
 

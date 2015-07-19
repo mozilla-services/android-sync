@@ -32,7 +32,7 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
 
   public class MiddlewareRepositorySessionBeginDelegate implements RepositorySessionBeginDelegate {
 
-    private final MiddlewareRepositorySession outerSession;
+    final MiddlewareRepositorySession outerSession;
     private final RepositorySessionBeginDelegate next;
 
     public MiddlewareRepositorySessionBeginDelegate(MiddlewareRepositorySession outerSession, RepositorySessionBeginDelegate next) {
@@ -81,7 +81,7 @@ public abstract class MiddlewareRepositorySession extends RepositorySession {
   }
 
   public class MiddlewareRepositorySessionFinishDelegate implements RepositorySessionFinishDelegate {
-    private final MiddlewareRepositorySession outerSession;
+    final MiddlewareRepositorySession outerSession;
     private final RepositorySessionFinishDelegate next;
 
     public MiddlewareRepositorySessionFinishDelegate(MiddlewareRepositorySession outerSession, RepositorySessionFinishDelegate next) {

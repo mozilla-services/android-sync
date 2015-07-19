@@ -219,7 +219,7 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
       return session.getAuthHeaderProvider();
     }
 
-    private void setUploadDetails(boolean isLocalRecord) {
+    void setUploadDetails(boolean isLocalRecord) {
       // Use the timestamp for the whole collection per Sync storage 1.1 spec.
       currentlyUploadingRecordTimestamp = session.config.getPersistedServerClientsTimestamp();
       currentlyUploadingLocalRecord = isLocalRecord;

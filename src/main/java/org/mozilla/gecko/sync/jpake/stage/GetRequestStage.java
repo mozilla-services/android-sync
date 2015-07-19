@@ -29,7 +29,7 @@ import ch.boye.httpclientandroidlib.message.BasicHeader;
 public class GetRequestStage extends JPakeStage {
 
   private final Timer timerScheduler = new Timer();
-  private int pollTries;
+  int pollTries;
   private GetStepTimerTask getStepTimerTask;
 
   private interface GetRequestStageDelegate {
@@ -204,7 +204,7 @@ public class GetRequestStage extends JPakeStage {
    * Helper method to schedule a GET request with some delay.
    * Basically, run another GetRequestStage.
    */
-  private void scheduleGetRequest(int delay, final JPakeClient jClient) {
+  void scheduleGetRequest(int delay, final JPakeClient jClient) {
     timerScheduler.schedule(new TimerTask() {
 
       @Override

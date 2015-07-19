@@ -31,7 +31,7 @@ import android.content.Context;
 public class SafeConstrainedServer11Repository extends ConstrainedServer11Repository {
 
   // This can be lazily evaluated if we need it.
-  private final JSONRecordFetcher countFetcher;
+  final JSONRecordFetcher countFetcher;
 
   public SafeConstrainedServer11Repository(String collection,
                                            String storageURL,

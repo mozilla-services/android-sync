@@ -26,7 +26,7 @@ import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 
 public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
-  private static final String LOG_TAG = EnsureClusterURLStage.class.getSimpleName();
+  static final String LOG_TAG = EnsureClusterURLStage.class.getSimpleName();
 
   public interface ClusterURLFetchDelegate {
     /**

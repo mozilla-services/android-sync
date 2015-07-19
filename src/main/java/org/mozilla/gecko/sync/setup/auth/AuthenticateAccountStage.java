@@ -27,7 +27,7 @@ import ch.boye.httpclientandroidlib.message.BasicHeader;
 
 public class AuthenticateAccountStage implements AuthenticatorStage {
   private final String LOG_TAG = "AuthAccountStage";
-  private HttpRequestBase httpRequest = null;
+  HttpRequestBase httpRequest = null;
 
   public interface AuthenticateAccountStageDelegate {
     public void handleSuccess(boolean isSuccess);

@@ -42,9 +42,9 @@ import ch.boye.httpclientandroidlib.entity.ContentProducer;
 import ch.boye.httpclientandroidlib.entity.EntityTemplate;
 
 public class Server11RepositorySession extends RepositorySession {
-  private static byte[] recordsStart;
-  private static byte[] recordSeparator;
-  private static byte[] recordsEnd;
+  static byte[] recordsStart;
+  static byte[] recordSeparator;
+  static byte[] recordsEnd;
 
   static {
     try {
@@ -95,7 +95,7 @@ public class Server11RepositorySession extends RepositorySession {
   /**
    * Used to track outstanding requests, so that we can abort them as needed.
    */
-  private final Set<SyncStorageCollectionRequest> pending = Collections.synchronizedSet(new HashSet<SyncStorageCollectionRequest>());
+  final Set<SyncStorageCollectionRequest> pending = Collections.synchronizedSet(new HashSet<SyncStorageCollectionRequest>());
 
   @Override
   public void abort() {
@@ -209,7 +209,7 @@ public class Server11RepositorySession extends RepositorySession {
   Server11Repository serverRepository;
   AtomicLong uploadTimestamp = new AtomicLong(0);
 
-  private void bumpUploadTimestamp(long ts) {
+  void bumpUploadTimestamp(long ts) {
     while (true) {
       long existing = uploadTimestamp.get();
       if (existing > ts) {
